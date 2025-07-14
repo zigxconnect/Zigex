@@ -29,8 +29,10 @@ export const Navbar = () => {
         </nav>
 
         <div className="flex items-center gap-4">
-          <Link href="/sign-in">
-            <Button variant="secondary">Sign In</Button>
+          <Link href="/sign-in" legacyBehavior>
+            <a>
+              <Button variant="secondary">Sign In</Button>
+            </a>
           </Link>
           {/* A mobile menu button would go here, but we'll skip it for now for simplicity. */}
         </div>

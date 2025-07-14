@@ -16,16 +16,25 @@ export const AuthForm = ({ type }: AuthFormProps) => {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    console.log({
-      type,
-      fullName: isSignUp ? fullName : undefined,
-      email,
-      password,
-    });
+    setIsLoading(true);
+    try {
+      // Simulate async submission
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      console.log({
+        type,
+        fullName: isSignUp ? fullName : undefined,
+        email,
+        password,
+      });
+    } catch (error) {
+      // Handle error if needed
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -95,8 +104,36 @@ export const AuthForm = ({ type }: AuthFormProps) => {
           />
         </div>
 
-        <Button type="submit" className="w-full !mt-6">
-          {isSignUp ? "Create Account" : "Sign In"}
+        <Button type="submit" className="w-full !mt-6" disabled={isLoading}>
+          {isLoading ? (
+            <span className="flex items-center justify-center gap-2">
+              <svg
+                className="animate-spin h-4 w-4 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                ></path>
+              </svg>
+              Loading...
+            </span>
+          ) : isSignUp ? (
+            "Create Account"
+          ) : (
+            "Sign In"
+          )}
         </Button>
       </form>
 
