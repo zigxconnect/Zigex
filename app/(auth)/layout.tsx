@@ -1,13 +1,7 @@
-/**
- * AuthLayout
- * This layout applies ONLY to the routes within the `(auth)` group (e.g., /sign-in).
- *
- * Its existence OVERRIDES the root layout.
- *
- * It provides a minimal structure to center the authentication form on the page,
- * and it intentionally OMITS the main site's Navbar and Footer for a focused
- * user experience.
- */
+export const metadata = {
+  title: "Authentication",
+  description: "Sign in or sign up to access your account.",
+};
 export default function AuthLayout({
   children,
 }: {
