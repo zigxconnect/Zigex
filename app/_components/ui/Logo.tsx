@@ -27,11 +27,7 @@ export const Logo = ({ className, isLink = true }: LogoProps) => {
   );
 
   if (isLink) {
-    return (
-      <Link href="/" passHref legacyBehavior>
-        <a>{logoContent}</a>
-      </Link>
-    );
+    return <Link href="/">{logoContent}</Link>;
   }
 
   return logoContent;

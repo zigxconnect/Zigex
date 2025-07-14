@@ -1,11 +1,3 @@
-/**
- * This is the main landing page.
- * For now, it contains simple placeholder content.
- *
- * Once the section components are built, you will replace the content
- * of this file with the commented-out code at the bottom.
- */
-
 export default function LandingPage() {
   return (
     <main className="container mx-auto px-6 py-24 text-center">
