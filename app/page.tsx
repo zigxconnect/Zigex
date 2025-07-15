@@ -1,12 +1,15 @@
+import { WhyChoose } from "./_components/sections/landing/Whychoose";
+
 export default function LandingPage() {
   return (
-    <main className="container mx-auto px-6 py-24 text-center">
+    <main className="container mx-auto text-center">
       <h1 className="text-4xl font-bold text-gray-900">
         Welcome to futureProspect
       </h1>
       <p className="mt-4 text-lg text-gray-600">
         The main content for the landing page will be built here.
       </p>
+      <WhyChoose />
     </main>
   );
 }

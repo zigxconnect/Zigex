@@ -1,93 +1,45 @@
-import Link from "next/link";
-import { Logo } from "../ui/Logo";
+import React from 'react';
 
-const footerLinks = {
-  company: [
-    { href: "/about", label: "About Us" },
-    { href: "/careers", label: "Careers" },
-    { href: "/blog", label: "Blog" },
-  ],
-  support: [
-    { href: "/contact", label: "Contact Us" },
-    { href: "/faq", label: "FAQ" },
-    { href: "/help", label: "Help Center" },
-  ],
-  legal: [
-    { href: "/privacy", label: "Privacy Policy" },
-    { href: "/terms", label: "Terms of Service" },
-  ],
-};
-
-export const Footer = () => {
+export const Footer: React.FC = () => {
   return (
-    <footer className="bg-gray-50 text-gray-600">
-      <div className="container mx-auto py-12 px-6 md:px-12 lg:px-24">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Column 1: Logo and Description */}
-          <div className="space-y-4">
-            <Logo isLink={false} />
-            <p className="text-sm">
-              Helping you build the future, one prospect at a time.
-            </p>
-          </div>
-
-          {/* Column 2: Company Links */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-gray-900">Company</h3>
-            <ul className="space-y-2">
-              {footerLinks.company.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-sm hover:text-blue-600"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Column 3: Support Links */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-gray-900">Support</h3>
-            <ul className="space-y-2">
-              {footerLinks.support.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-sm hover:text-blue-600"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Column 4: Legal Links */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-gray-900">Legal</h3>
-            <ul className="space-y-2">
-              {footerLinks.legal.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-sm hover:text-blue-600"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
-        <div className="mt-12 pt-8 border-t border-gray-200 text-center text-sm">
-          <p>
-            © {new Date().getFullYear()} futureProspect. All rights reserved.
+    <footer className="bg-[#1E3A8A] text-[#E2E8F0] py-12 px-6 mt-0">
+      <div className="max-w-6xl mx-auto grid gap-17 md:grid-cols-3">
+        <div>
+          <h3 className="text-2xl font-bold">FutureProspect</h3>
+          <p className="text-gray-300 mt-2">
+            Connecting talented individuals with amazing internship opportunities in Bamenda and beyond.
+            Your future starts here.
           </p>
+          <div className="flex space-x-4 mt-4">
+            <a href="#"><img src="/twitter.png" alt="Twitter" className="w-7 h-7 p-2 bg-[#EA580C] align-middle rounded-md" /></a>
+            <a href="#"><img src="/twitter.png" alt="Twitter" className="w-7 h-7 p-2 bg-[#EA580C] align-middle rounded-md" /></a>
+            <a href="#"><img src="/linkedin.png" alt="LinkedIn" className="w-7 h-7 p-2 bg-[#EA580C] align-middle rounded-md" /></a>
+          </div>
         </div>
+
+        <div>
+          <h4 className="text-[#FFFFFF] font-semibold mb-2">Quick Links</h4>
+          <ul className="space-y-2 text-gray-300">
+            <li><a href="#">Browse Jobs</a></li>
+            <li><a href="#">Companies</a></li>
+            <li><a href="#">Career Advice</a></li>
+            <li><a href="#">Success Stories</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 className="text-[#FFFFFF] font-semibold mb-2">Support</h4>
+          <ul className="space-y-2 text-gray-300">
+            <li><a href="#">Help Center</a></li>
+            <li><a href="#">Contact Us</a></li>
+            <li><a href="#">Privacy Policy</a></li>
+            <li><a href="#">Terms of Service</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div className="text-center text-sm text-[#E2E8F0] mt-8">
+        © 2025 FutureProspect. All rights reserved. Made with ❤ in Bamenda.
       </div>
     </footer>
   );
