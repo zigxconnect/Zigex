@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import React, { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 interface NavItem {
   name: string;
@@ -14,10 +14,10 @@ const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navItems: NavItem[] = [
-    { name: 'Home', href: '/' },
-    { name: 'Jobs', href: '/jobs' },
-    { name: 'Companies', href: '/companies' },
-    { name: 'About', href: '/about' },
+    { name: "Home", href: "/" },
+    { name: "Jobs", href: "/jobs" },
+    { name: "Companies", href: "/companies" },
+    { name: "About", href: "/about" },
   ];
 
   const isActive = (href: string): boolean => {
@@ -37,8 +37,8 @@ const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <Link 
-            href="/" 
+          <Link
+            href="/"
             className="text-white text-lg sm:text-xl font-bold hover:text-blue-100 transition-colors duration-200 flex-shrink-0"
           >
             FutureProspect
@@ -51,7 +51,7 @@ const Navbar: React.FC = () => {
                 key={item.name}
                 href={item.href}
                 className={`text-white hover:text-blue-100 transition-colors duration-200 font-medium ${
-                  isActive(item.href) ? 'border-b-2 border-white pb-1' : ''
+                  isActive(item.href) ? "border-b-2 border-white pb-1" : ""
                 }`}
               >
                 {item.name}
@@ -62,13 +62,13 @@ const Navbar: React.FC = () => {
           {/* Desktop Auth Buttons */}
           <div className="hidden sm:flex items-center space-x-2 lg:space-x-3">
             <Link
-              href="/signin"
+              href="/sign-in"
               className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 lg:px-4 lg:py-2 rounded-md transition-colors duration-200 font-medium text-sm lg:text-base"
             >
               Sign In
             </Link>
             <Link
-              href="/signup"
+              href="/sign-up"
               className="border border-white text-white hover:bg-white hover:text-blue-800 px-3 py-2 lg:px-4 lg:py-2 rounded-md transition-colors duration-200 font-medium text-sm lg:text-base"
             >
               Sign Up
@@ -76,14 +76,14 @@ const Navbar: React.FC = () => {
           </div>
 
           {/* Mobile Menu Button */}
-          <button 
+          <button
             className="lg:hidden text-white p-2 rounded-md hover:bg-blue-700 transition-colors duration-200"
             onClick={toggleMobileMenu}
             aria-label="Toggle mobile menu"
           >
             <svg
               className={`h-6 w-6 transform transition-transform duration-200 ${
-                isMobileMenuOpen ? 'rotate-90' : ''
+                isMobileMenuOpen ? "rotate-90" : ""
               }`}
               fill="none"
               strokeLinecap="round"
@@ -102,9 +102,11 @@ const Navbar: React.FC = () => {
         </div>
 
         {/* Mobile Menu */}
-        <div className={`lg:hidden transition-all duration-300 ease-in-out ${
-          isMobileMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-        } overflow-hidden`}>
+        <div
+          className={`lg:hidden transition-all duration-300 ease-in-out ${
+            isMobileMenuOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+          } overflow-hidden`}
+        >
           <div className="py-4 space-y-1">
             {/* Mobile Navigation Links */}
             {navItems.map((item) => (
@@ -113,24 +115,26 @@ const Navbar: React.FC = () => {
                 href={item.href}
                 onClick={closeMobileMenu}
                 className={`block text-white hover:text-blue-100 hover:bg-blue-700 py-3 px-4 rounded-md transition-colors duration-200 font-medium ${
-                  isActive(item.href) ? 'bg-blue-700 border-l-4 border-white' : ''
+                  isActive(item.href)
+                    ? "bg-blue-700 border-l-4 border-white"
+                    : ""
                 }`}
               >
                 {item.name}
               </Link>
             ))}
-            
+
             {/* Mobile Auth Buttons */}
             <div className="pt-4 space-y-3 sm:hidden">
               <Link
-                href="/signin"
+                href="/sign-in"
                 onClick={closeMobileMenu}
                 className="block w-full bg-orange-500 hover:bg-orange-600 text-white py-3 px-4 rounded-md transition-colors duration-200 font-medium text-center"
               >
                 Sign In
               </Link>
               <Link
-                href="/signup"
+                href="/sign-up"
                 onClick={closeMobileMenu}
                 className="block w-full border border-white text-white hover:bg-white hover:text-blue-800 py-3 px-4 rounded-md transition-colors duration-200 font-medium text-center"
               >
