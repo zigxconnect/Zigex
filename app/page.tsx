@@ -11,21 +11,17 @@
 //   );
 // }
 
-
-
 // --- GOAL STATE ---
-  // After the team builds the sections, this file should look like this:
+// After the team builds the sections, this file should look like this:
 import FeaturedInternships from "./_components/sections/landing/FeaturesSection";
 import HeroSection from "./_components/sections/landing/HeroSection";
 
-  
-  export default function LandingPage() {
-    return (
-      <div className="flex flex-col">
-        <HeroSection />
-        <FeaturedInternships />
-        {/* <TestimonialsSection /> */}
-      </div>
-    );
-  }
-
+export default function LandingPage() {
+  return (
+    <div className="flex flex-col">
+      <HeroSection />
+      <FeaturedInternships />
+      {/* <TestimonialsSection /> */}
+    </div>
+  );
+}
