@@ -5,11 +5,9 @@ import { supabaseAdmin } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
-  const { email, password, role, profileData } = await request.json();
+  const { email, password, role, fullName, companyName } = await request.json();
 
-  console.log('REGISTER_ROUTE_BODY:', { email, role }); // Log request body for debugging
-
-  if (!email || !password || !role || !profileData) {
+  if (!email || !password || !role) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
   }
 
@@ -29,18 +27,23 @@ export async function POST(request: Request) {
 
   // 2. Create the corresponding profile
   if (role === 'student') {
+    if (!fullName) {
+        await supabaseAdmin.auth.admin.deleteUser(userId);
+        return NextResponse.json({ error: 'Full name is required for student registration.' }, { status: 400 });
+    }
     const { error } = await supabaseAdmin.from('student_profiles').insert({
       user_id: userId,
-      full_name: profileData.fullName,
-      university: profileData.university,
-      // ...other student fields
+      full_name: fullName,
     });
     profileError = error;
   } else if (role === 'company') {
+    if (!companyName) {
+        await supabaseAdmin.auth.admin.deleteUser(userId);
+        return NextResponse.json({ error: 'Company name is required for company registration.' }, { status: 400 });
+    }
     const { error } = await supabaseAdmin.from('company_profiles').insert({
       user_id: userId,
-      company_name: profileData.companyName,
-      // ...other company fields
+      company_name: companyName,
     });
     profileError = error;
   } else {
