@@ -3,7 +3,7 @@ import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "primary" | "secondary" | "orange";
+  variant?: "primary" | "secondary" | "orange" | "premium";
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -18,6 +18,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         "border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 focus:ring-gray-500",
       orange:
         "bg-orange-500 text-white hover:bg-orange-600 focus:ring-orange-500",
+      premium:
+        "relative bg-white text-orange-500 border border-orange-500 hover:bg-orange-50 focus:ring-orange-500 overflow-hidden",
     };
 
     const mergedClasses = twMerge(
