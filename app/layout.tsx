@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-// import { Navbar } from "./_components/layout/Navbar";
-import { Footer } from "./_components/layout/Footer";
-import Navbar from "./_components/layout/Navbar";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -13,11 +10,11 @@ export const metadata: Metadata = {
 };
 
 /**
- * RootLayout
- * This is the primary layout for the application.
- * It includes the main Navbar and Footer.
- * The flexbox classes ensure the footer sticks to the bottom of the viewport
- * on pages with short content.
+ * This is the new ROOT layout.
+ * It is the top-level layout shared by every page and route group in the app.
+ * It contains only the essential <html> and <body> tags, loads global CSS, and sets the font.
+ * IT DOES NOT CONTAIN THE NAVBAR OR FOOTER. Each route group is now responsible
+ * for its own specific layout (e.g., the (main) group's layout has the Navbar).
  */
 export default function RootLayout({
   children,
@@ -26,11 +23,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} flex flex-col min-h-screen`}>
-        <Navbar />
-        <main className="flex-1">{children}</main>
-        <Footer />
-      </body>
+      <body className={inter.className}>{children}</body>
     </html>
   );
 }
