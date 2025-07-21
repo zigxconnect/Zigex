@@ -13,8 +13,8 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   }
-  
-  // This is the simplest way to handle cookies for Supabase in a Route Handler
+
+  // Handle cookies for Supabase
   const cookieStore = await cookies();
 
   const supabase = createServerClient(
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
   );
 
   // Attempt to sign in
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
@@ -49,6 +49,13 @@ export async function POST(request: Request) {
     );
   }
 
-  // If successful, return a success message
-  return NextResponse.json({ message: 'Login successful' }, { status: 200 });
+  // If successful, return a success message and token
+  return NextResponse.json(
+    {
+      message: 'Login successful',
+      token: data.session?.access_token, // Include the token in the response
+      // user: data.user,
+    },
+    { status: 200 }
+  );
 }
