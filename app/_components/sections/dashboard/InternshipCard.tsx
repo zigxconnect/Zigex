@@ -30,8 +30,8 @@ export const InternshipCard = ({ internship }: { internship: Internship }) => {
               Added h-full to ensure all cards in a row have the same height.
             */}
       <Card className="flex flex-col p-0 overflow-hidden h-full transition-all duration-200 hover:shadow-xl hover:-translate-y-1">
-        <div className="h-24 bg-gray-200 flex items-center justify-center text-gray-400 font-bold text-xl relative">
-          {internship.office}
+        <div className="h-40 bg-gray-200 flex items-center justify-center text-gray-400 font-bold text-xl relative">
+          <img src={internship.office} alt="office" className="h-full w-full" /> 
           <div className="absolute top-2 right-2">
             <Badge variant={internship.isPaid ? "paid" : "unpaid"}>
               {internship.isPaid ? "Paid" : "Unpaid"}
@@ -40,7 +40,7 @@ export const InternshipCard = ({ internship }: { internship: Internship }) => {
         </div>
         <div className="flex flex-col p-6 flex-grow">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-orange-500 rounded-md flex-shrink-0 flex items-center justify-center text-white font-bold text-xl">
+            <div className="w-12 h-12 bg-[#EA580C] rounded-md flex-shrink-0 flex items-center justify-center text-white font-bold text-xl">
               {internship.companyInitial}
             </div>
             <div>
