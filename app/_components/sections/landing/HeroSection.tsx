@@ -123,7 +123,7 @@ const BamendaHeroSection: React.FC = () => {
             <div className={`transform transition-all duration-1000 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500/10 to-blue-500/10 rounded-full border border-blue-200">
                 {/* <Sparkles className="w-4 h-4 text-orange-500" /> */}
-                <span className="text-sm font-semibold text-blue-700">#1 Internship Platform in Bamenda</span>
+                <span className="text-sm font-semibold text-blue-700">Your #1 Career Platform </span>
               </div>
             </div>
 
