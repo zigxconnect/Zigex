@@ -1,5 +1,5 @@
 import { forwardRef } from "react";
-import { Slot } from "@radix-ui/react-slot";
+
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
