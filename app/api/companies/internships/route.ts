@@ -10,6 +10,28 @@ import { internshipSchema } from '@/lib/validation/internship';
 //     process.env.SUPABASE_ANON_KEY || ''
 // );
 
+/**
+ * @swagger
+ * /api/companies/internships:
+ *   post:
+ *     description: Create a new internship
+ *     responses:
+ *       201:
+ *         description: Internship created successfully
+ *       400:
+ *         description: Bad request
+ *       403:
+ *         description: Unauthorized access
+ *       404:
+ *         description: Company profile not found
+ *   get:
+ *     description: Get all items
+ *     responses:
+ *       200:
+ *         description: Success
+ */
+
+
 
 export async function GET(request: Request) {
 
