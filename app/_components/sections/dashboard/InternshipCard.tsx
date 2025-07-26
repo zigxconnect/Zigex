@@ -29,9 +29,9 @@ export const InternshipCard = ({ internship }: { internship: Internship }) => {
               3. Added transition and hover classes for a nice visual effect.
               Added h-full to ensure all cards in a row have the same height.
             */}
-      <Card className="flex flex-col p-0 overflow-hidden h-full transition-all duration-200 hover:shadow-xl hover:-translate-y-1">
-        <div className="h-40 bg-gray-200 flex items-center justify-center text-gray-400 font-bold text-xl relative">
-          <img src={internship.office} alt="office" className="h-full w-full" /> 
+      <Card className="flex flex-col p-0 overflow-hidden h-full transition-all duration-200 hover:shadow-xl hover:-translate-y-1 ">
+        <div className="md:h-50 h-60 bg-gray-200 flex items-center justify-center text-gray-400 font-bold text-xl relative">
+          <img src={internship.office} alt="office" className="md:h-50 md:w-90 w-100 h-60" /> 
           <div className="absolute top-2 right-2">
             <Badge variant={internship.isPaid ? "paid" : "unpaid"}>
               {internship.isPaid ? "Paid" : "Unpaid"}

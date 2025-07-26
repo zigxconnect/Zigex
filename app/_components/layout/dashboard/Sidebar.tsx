@@ -100,7 +100,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* User Profile Section */}
         <div className="flex flex-col items-center mt-6 md:mt-4 text-center px-6">
           <div className="relative group">
-            <div className="w-20 h-20 md:w-24 md:h-24 bg-blue-900 rounded-full flex items-center justify-center text-white text-3xl md:text-4xl font-bold transition-transform duration-200 group-hover:scale-105 shadow-lg">
+            <div className="w-20 h-20 md:w-24 md:h-24 bg-blue-800 rounded-full flex items-center justify-center text-white text-3xl md:text-4xl font-bold transition-transform duration-200 group-hover:scale-105 shadow-lg">
               {userData.avatar}
             </div>
             <div className="absolute inset-0 bg-blue-800 rounded-full opacity-0 group-hover:opacity-20 transition-opacity duration-200"></div>
