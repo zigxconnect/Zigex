@@ -1,9 +1,12 @@
+"use client";
+
+import { useState } from "react";
 import { FileUpload } from "@/app/_components/ui/FileUpload";
 import { Input } from "@/app/_components/ui/Input";
 import { Select } from "@/app/_components/ui/Select";
 import { Textarea } from "@/app/_components/ui/Textarea";
 
-// A reusable component for each card-like section of the form
+// Reusable section
 const FormSection = ({
   title,
   children,
@@ -12,12 +15,12 @@ const FormSection = ({
   children: React.ReactNode;
 }) => (
   <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-    <h2 className="text-lg font-semibold text-gray-800 mb-6">{title}</h2>
-    <div className="space-y-6">{children}</div>
+    <h2 className="text-xl font-semibold text-blue-700 mb-6">{title}</h2>
+    <div className="space-y-6 ">{children}</div>
   </div>
 );
 
-// A reusable component for each form field
+// Reusable field
 const FormField = ({
   label,
   children,
@@ -26,7 +29,7 @@ const FormField = ({
   children: React.ReactNode;
 }) => (
   <div>
-    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+    <label className="block text-sm font-medium text-blue-700 mb-1.5">
       {label}
     </label>
     {children}
@@ -34,18 +37,40 @@ const FormField = ({
 );
 
 export const ProfileForm = () => {
+  const [companyName, setCompanyName] = useState("");
+  const [industry, setIndustry] = useState("");
+  const [description, setDescription] = useState("");
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+
+  const handleLogoChange = (file: File) => {
+    setLogoFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setLogoPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  
+
   return (
-    <form className="space-y-8">
+    <form className="space-y-8" >
       <FormSection title="Company Logo">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
           <div className="flex justify-center md:justify-start">
-            <div className="w-32 h-32 bg-slate-200 rounded-lg flex items-center justify-center text-slate-500 text-4xl font-bold">
-              TC
+            <div className="w-32 h-32 bg-slate-200 rounded-lg flex items-center justify-center overflow-hidden">
+              {logoPreview ? (
+                <img src={logoPreview} alt="Preview" className="h-full object-cover" />
+              ) : (
+                <span className="text-slate-500 text-4xl font-bold">TC</span>
+              )}
             </div>
           </div>
           <div className="md:col-span-2">
             <FormField label="Upload New Logo">
-              <FileUpload />
+              {/* Update FileUpload component to accept onChange handler */}
+              <FileUpload onFileSelect={handleLogoChange} />
             </FormField>
             <ul className="mt-4 text-xs text-gray-500 list-disc list-inside space-y-1">
               <li>Recommended size: 400x400 pixels</li>
@@ -58,21 +83,32 @@ export const ProfileForm = () => {
 
       <FormSection title="Company Information">
         <FormField label="Company Name *">
-          <Input type="text" placeholder="Enter your company name" />
+          <Input
+            type="text"
+            placeholder="Enter your company name"
+            value={companyName}
+            onChange={(e) => setCompanyName(e.target.value)}
+          />
         </FormField>
         <FormField label="Industry *">
-          <Select>
-            <option>Select your industry</option>
-            <option>Technology</option>
-            <option>Finance</option>
-            <option>Healthcare</option>
-            <option>Education</option>
+          <Select value={industry} onChange={(e) => setIndustry(e.target.value)}>
+            <option value="">Select your industry</option>
+            <option value="Technology">Technology</option>
+            <option value="Finance">Finance</option>
+            <option value="Healthcare">Healthcare</option>
+            <option value="Education">Education</option>
           </Select>
         </FormField>
         <FormField label="Company Description">
-          <Textarea placeholder="Tell us about your company..." rows={5} />
+          <Textarea
+            placeholder="Tell us about your company..."
+            rows={5}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
         </FormField>
       </FormSection>
+
     </form>
   );
 };
