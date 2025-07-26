@@ -1,4 +1,5 @@
-import { AdminHeader } from "@/app/_components/layout/admin/AdminHeader";
+// import { AdminHeader } from "@/app/_components/layout/admin/AdminHeader";
+import { AdminHeader } from "../_components/layout/admin/AdminHeader";
 import { AdminSidebar } from "../_components/layout/admin/AdminSiderbar";
 
 // In a real app, this data would be fetched from your database
