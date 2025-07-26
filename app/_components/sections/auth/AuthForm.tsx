@@ -2,15 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
-
+import { useRouter } from "next/navigation";
+import { Button } from "@/app/_components/ui/Button";
+import { Input } from "@/app/_components/ui/Input";
 import { SocialButton } from "./SocialButton";
 import { GoogleIcon } from "./GoogleIcon";
 import { Cloud, GraduationCap, Eye, EyeOff, Linkedin } from "lucide-react";
-import { Button } from "../../ui/Button";
-import { Input } from "../../ui/Input";
 
 type AuthFormProps = { type: "signIn" | "signUp" };
 
+// A reusable visual divider component with text.
 const Divider = () => (
   <div className="relative my-5">
     <div className="absolute inset-0 flex items-center">
@@ -24,15 +25,16 @@ const Divider = () => (
 
 /**
  * AuthForm Component
- * A comprehensive, reusable form for both user sign-in and sign-up.
- * It adapts its content and functionality based on the `type` prop.
+ * The complete, reusable form for both user sign-in and sign-up.
+ * It adapts its content and functionality based on the `type` prop and
+ * handles redirection after a successful form submission.
  */
 export const AuthForm = ({ type }: AuthFormProps) => {
   const isSignUp = type === "signUp";
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
 
-  // A configuration object to hold all dynamic text and icons.
-  // This makes the component cleaner and easier to manage.
+  // The complete configuration object holding all dynamic text and icons.
   const content = {
     signIn: {
       Icon: Cloud,
@@ -60,8 +62,22 @@ export const AuthForm = ({ type }: AuthFormProps) => {
   const finePrint =
     "By continuing, you agree to our Terms of Service and Privacy Policy.";
 
+  // Handles form submission and redirects the user.
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // In a real application, you would send data to your backend API here.
+    // We simulate a successful response and then redirect.
+
+    if (isSignUp) {
+      // After signing up, redirect to the create-profile page.
+      router.push("/create-profile");
+    } else {
+      // After signing in, redirect to the main dashboard.
+      router.push("/dashboard");
+    }
+  };
+
   return (
-    // Main card container. Fixed height and flex layout ensure consistent size.
     <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl flex flex-col justify-center min-h-[650px]">
       {/* Header Section */}
       <div className="text-center">
@@ -90,7 +106,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
       <Divider />
 
       {/* Main Form Section */}
-      <form className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
         {isSignUp && (
           <div>
             <label className="text-sm font-medium text-gray-700">
@@ -142,7 +158,11 @@ export const AuthForm = ({ type }: AuthFormProps) => {
           </div>
         </div>
 
-        <Button variant="orange" className="w-full !mt-6 text-base py-2.5">
+        <Button
+          variant="orange"
+          type="submit"
+          className="w-full !mt-6 text-base py-2.5"
+        >
           {currentContent.buttonText}
         </Button>
       </form>
