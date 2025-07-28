@@ -1,22 +1,22 @@
-// File Path: /app/_components/sections/create-profile/Step1Personal.tsx
 import { Input } from "@/app/_components/ui/Input";
+import { Textarea } from "@/app/_components/ui/Textarea";
+import { ProfileFormData } from "@/app/types/profile";
 
-const Textarea = (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
-  <textarea
-    {...props}
-    className="w-full rounded-md border border-gray-300 p-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-black"
-  />
-);
+type StepProps = {
+  data: Partial<ProfileFormData>;
+  onUpdate: (update: Partial<ProfileFormData>) => void;
+};
 
-type StepProps = { updateFormData: (data: object) => void };
-
-export const Step1Personal = ({ updateFormData }: StepProps) => (
+export const Step1Personal = ({ data, onUpdate }: StepProps) => (
   <div className="space-y-6">
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div>
         <label className="text-sm font-medium">First Name</label>
         <Input
+          name="first_name"
           type="text"
+          value={data.first_name || ""}
+          onChange={(e) => onUpdate({ first_name: e.target.value })}
           placeholder="Enter your first name"
           className="mt-1"
         />
@@ -24,31 +24,43 @@ export const Step1Personal = ({ updateFormData }: StepProps) => (
       <div>
         <label className="text-sm font-medium">Last Name</label>
         <Input
+          name="last_name"
           type="text"
+          value={data.last_name || ""}
+          onChange={(e) => onUpdate({ last_name: e.target.value })}
           placeholder="Enter your last name"
           className="mt-1"
         />
       </div>
     </div>
     <div>
-      <label className="text-sm font-medium">Email</label>
-      <Input type="email" placeholder="Enter your email" className="mt-1" />
-    </div>
-    <div>
-      <label className="text-sm font-medium">Phone</label>
+      <label className="text-sm font-medium">Phone Number</label>
       <Input
+        name="phone"
         type="tel"
-        placeholder="Enter your phone number"
+        value={data.phone || ""}
+        onChange={(e) => onUpdate({ phone: e.target.value })}
+        placeholder="e.g., +123 456 7890"
         className="mt-1"
       />
     </div>
     <div>
       <label className="text-sm font-medium">Location</label>
-      <Input type="text" placeholder="Enter your location" className="mt-1" />
+      <Input
+        name="location"
+        type="text"
+        value={data.location || ""}
+        onChange={(e) => onUpdate({ location: e.target.value })}
+        placeholder="e.g., Bamenda, Cameroon"
+        className="mt-1"
+      />
     </div>
     <div>
       <label className="text-sm font-medium">About Me</label>
       <Textarea
+        name="about"
+        value={data.about || ""}
+        onChange={(e) => onUpdate({ about: e.target.value })}
         placeholder="A brief introduction about yourself"
         rows={4}
         className="mt-1"

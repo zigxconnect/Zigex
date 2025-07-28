@@ -1,10 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { DashboardHeader } from "../_components/layout/dashboard/DashboardHeader";
-import { Sidebar } from "../_components/layout/dashboard/Sidebar";
-import { AIChatButton } from "../_components/ui/AIChatButton";
+import { useState, useEffect } from "react";
+import { DashboardHeader } from "@/app/_components/layout/dashboard/DashboardHeader";
+import { Sidebar } from "@/app/_components/layout/dashboard/Sidebar";
 
+/**
+ * The main layout for the student dashboard.
+ * This component is responsible for the overall page structure and managing the
+ * state of the universally toggleable sidebar.
+ */
 export default function DashboardLayout({
   children,
 }: {
@@ -12,18 +16,34 @@ export default function DashboardLayout({
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  // This effect runs once to intelligently open the sidebar by default on desktop.
+  useEffect(() => {
+    if (window.innerWidth >= 1024) {
+      // 1024px is Tailwind's 'lg' breakpoint
+      setIsSidebarOpen(true);
+    }
+  }, []);
+
   return (
-    <div className="flex h-screen bg-gray-50 text-gray-800">
+    // The root container for the dashboard.
+    <div className="relative h-screen bg-[#F8FAFC]">
+      {/* The Sidebar is a floating panel controlled by the `isOpen` state. */}
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-      <div className="flex-1 flex flex-col overflow-hidden">
+
+      {/* 
+        This is the main content area.
+        The conditional margin (`lg:ml-64`) is the key to creating the side-by-side
+        view on desktop. It "pushes" the content to the right only when the sidebar is open.
+      */}
+      <div
+        className={`flex flex-col h-full transition-all duration-300 ease-in-out
+          ${isSidebarOpen ? "lg:ml-64" : "lg:ml-0"}
+        `}
+      >
         <DashboardHeader onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto p-6">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto">
           {children}
         </main>
-      </div>
-      {/* Floating AI Chat Button (Mobile Only) */}
-      <div className="sm:hidden fixed bottom-6 right-6 z-50">
-        <AIChatButton />
       </div>
     </div>
   );
