@@ -14,3 +14,22 @@ export const getApiDocs = async () => {
   });
   return spec;
 };
+
+
+// scripts/swagger.ts
+import swaggerAutogen from 'swagger-autogen';
+
+const doc = {
+  info: {
+    title: 'My API',
+    description: 'Auto-generated Swagger docs',
+    version: '1.0.0',
+  },
+  host: 'localhost:3000',
+  schemes: ['http'],
+};
+
+const outputFile = './swagger-output.json';
+const endpointsFiles = ['./src/routes/index.ts']; // Adjust to your entry route file
+
+swaggerAutogen({ openapi: '3.0.0' })(outputFile, endpointsFiles, doc);
