@@ -1,10 +1,12 @@
-import { CheckCircle2 } from "lucide-react";
+import { Check } from "lucide-react";
 
 export const ListItem = ({ children }: { children: React.ReactNode }) => {
   return (
     <li className="flex items-start gap-3">
-      <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-gray-400 mt-0.5" />
-      <span className="flex-1 text-gray-700">{children}</span>
+      <div className="flex-shrink-0 mt-1">
+        <Check size={16} className="text-orange-500" />
+      </div>
+      <span>{children}</span>
     </li>
   );
 };
