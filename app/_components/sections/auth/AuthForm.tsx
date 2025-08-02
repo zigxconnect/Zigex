@@ -25,14 +25,20 @@ const Divider = () => (
 
 /**
  * AuthForm Component
- * The complete, reusable form for both user sign-in and sign-up.
- * It adapts its content and functionality based on the `type` prop and
- * handles redirection after a successful form submission.
+ * The complete, reusable form with full API integration for both user
+ * registration (sign-up) and authentication (sign-in) with intelligent redirection.
  */
 export const AuthForm = ({ type }: AuthFormProps) => {
   const isSignUp = type === "signUp";
   const router = useRouter();
+
+  // State management for all form fields, loading status, and error messages
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // The complete configuration object holding all dynamic text and icons.
   const content = {
@@ -62,18 +68,73 @@ export const AuthForm = ({ type }: AuthFormProps) => {
   const finePrint =
     "By continuing, you agree to our Terms of Service and Privacy Policy.";
 
-  // Handles form submission and redirects the user.
-  const handleSubmit = (e: React.FormEvent) => {
+  // Handles form submission by calling the appropriate API endpoint.
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real application, you would send data to your backend API here.
-    // We simulate a successful response and then redirect.
+    setError(null);
+    setIsLoading(true);
 
     if (isSignUp) {
-      // After signing up, redirect to the create-profile page.
-      router.push("/create-profile");
+      // --- SIGN UP LOGIC ---
+      try {
+        // Step 1: Register the user
+        const registerResponse = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password, fullName }),
+        });
+        const registerData = await registerResponse.json();
+        if (!registerResponse.ok) {
+          throw new Error(registerData.error || "Sign-up failed.");
+        }
+
+        // Step 2: CRITICAL - Immediately log the user in to create a session
+        const loginResponse = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+        const loginData = await loginResponse.json();
+        if (!loginResponse.ok) {
+          throw new Error(
+            loginData.error ||
+              "Auto-login failed after sign-up. Please try logging in manually."
+          );
+        }
+
+        // Step 3: After sign-up, always redirect to the profile creation page.
+        router.push("/create-profile");
+      } catch (err) {
+        setError((err as Error).message);
+      } finally {
+        setIsLoading(false);
+      }
     } else {
-      // After signing in, redirect to the main dashboard.
-      router.push("/dashboard");
+      // --- SIGN IN LOGIC ---
+      try {
+        const response = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(
+            data.error || "Login failed. Please check your credentials."
+          );
+        }
+
+        // Intelligently redirect based on the API response
+        if (data.profileComplete) {
+          router.push("/dashboard");
+        } else {
+          router.push("/create-profile");
+        }
+      } catch (err) {
+        setError((err as Error).message);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -102,7 +163,6 @@ export const AuthForm = ({ type }: AuthFormProps) => {
           text={`${currentContent.socialButtonText} with Google`}
         />
       </div>
-
       <Divider />
 
       {/* Main Form Section */}
@@ -113,18 +173,31 @@ export const AuthForm = ({ type }: AuthFormProps) => {
               Full Name
             </label>
             <Input
+              id="fullName"
+              name="fullName"
               type="text"
               placeholder="Enter your full name"
               className="mt-1"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              required
+              disabled={isLoading}
             />
           </div>
         )}
         <div>
           <label className="text-sm font-medium text-gray-700">Email</label>
           <Input
+            id="email"
+            name="email"
             type="email"
+            autoComplete="email"
             placeholder="Enter your email address"
             className="mt-1"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            disabled={isLoading}
           />
         </div>
         <div>
@@ -143,34 +216,46 @@ export const AuthForm = ({ type }: AuthFormProps) => {
           </div>
           <div className="relative mt-1">
             <Input
+              id="password"
+              name="password"
               type={showPassword ? "text" : "password"}
+              autoComplete={isSignUp ? "new-password" : "current-password"}
               placeholder={
                 isSignUp ? "Create a strong password" : "Enter your password"
               }
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              disabled={isLoading}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 cursor-pointer"
+              disabled={isLoading}
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
         </div>
 
+        {/* Error message display */}
+        {error && (
+          <p className="text-sm text-red-500 text-center pt-1">{error}</p>
+        )}
+
         <Button
           variant="orange"
           type="submit"
           className="w-full !mt-6 text-base py-2.5"
+          disabled={isLoading}
         >
-          {currentContent.buttonText}
+          {isLoading ? "Processing..." : currentContent.buttonText}
         </Button>
       </form>
 
-      {/* Spacer to push footer content down */}
+      {/* Spacer and Footer Links */}
       <div className="flex-grow"></div>
-
-      {/* Footer Links */}
       <p className="text-center text-sm text-gray-600 mt-5">
         {currentContent.linkText}{" "}
         <Link
@@ -180,8 +265,6 @@ export const AuthForm = ({ type }: AuthFormProps) => {
           {currentContent.linkActionText}
         </Link>
       </p>
-
-      {/* Fine Print */}
       <p className="text-center text-xs text-gray-400 pt-2 mt-2">{finePrint}</p>
     </div>
   );

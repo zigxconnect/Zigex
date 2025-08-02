@@ -1,26 +1,40 @@
-// File Path: /app/_components/sections/create-profile/Step5Additional.tsx
+"use client";
+
 import { useState } from "react";
 import { ToggleChip } from "@/app/_components/ui/ToggleChip";
+import { Textarea } from "@/app/_components/ui/Textarea";
+import { ProfileFormData } from "@/app/types/profile";
 
-const interests = ["Sports", "Music", "Art", "Technology"];
+const interests = [
+  "Sports",
+  "Music",
+  "Art",
+  "Technology",
+  "Volunteering",
+  "Travel",
+];
 
-const Textarea = (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
-  <textarea
-    {...props}
-    className="w-full rounded-md border border-gray-300 p-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-black"
-  />
-);
+type StepProps = {
+  data: Partial<ProfileFormData>;
+  onUpdate: (update: Partial<ProfileFormData>) => void;
+};
 
-type StepProps = { updateFormData: (data: object) => void };
+export const Step5Additional = ({ data, onUpdate }: StepProps) => {
+  const [selectedInterests, setSelectedInterests] = useState<string[]>(
+    data.interests || []
+  );
 
-export const Step5Additional = ({ updateFormData }: StepProps) => {
-  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
-
-  const handleToggle = (item: string, list: string[], setter: Function) => {
+  const handleToggle = (
+    item: string,
+    list: string[],
+    setter: Function,
+    fieldName: "interests"
+  ) => {
     const newList = list.includes(item)
       ? list.filter((s) => s !== item)
       : [...list, item];
     setter(newList);
+    onUpdate({ [fieldName]: newList });
   };
 
   return (
@@ -33,16 +47,36 @@ export const Step5Additional = ({ updateFormData }: StepProps) => {
               key={item}
               text={item}
               isSelected={selectedInterests.includes(item)}
+              // THE FIX IS HERE: The prop is now correctly named 'onToggle'
               onToggle={() =>
-                handleToggle(item, selectedInterests, setSelectedInterests)
+                handleToggle(
+                  item,
+                  selectedInterests,
+                  setSelectedInterests,
+                  "interests"
+                )
               }
             />
           ))}
         </div>
       </div>
       <div>
-        <label className="text-sm font-medium">Accommodations</label>
+        <label className="text-sm font-medium">Achievements (Optional)</label>
         <Textarea
+          name="achievements"
+          value={data.achievements || ""}
+          onChange={(e) => onUpdate({ achievements: e.target.value })}
+          placeholder="List any awards, honors, or significant accomplishments."
+          rows={4}
+          className="mt-1"
+        />
+      </div>
+      <div>
+        <label className="text-sm font-medium">Accommodations (Optional)</label>
+        <Textarea
+          name="accommodations"
+          value={data.accommodations || ""}
+          onChange={(e) => onUpdate({ accommodations: e.target.value })}
           placeholder="Enter any specific accommodations needed"
           rows={4}
           className="mt-1"
