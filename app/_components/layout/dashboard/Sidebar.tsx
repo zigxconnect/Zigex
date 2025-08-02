@@ -1,11 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation"; // NEW: Import the router for redirection
 import { Logo } from "@/app/_components/ui/Logo";
 import { Button } from "@/app/_components/ui/Button";
-import { User, Upload, Briefcase, LogOut, X } from "lucide-react";
-import { AiOutlineWechat } from "react-icons/ai"; // Your new icon import
+import {
+  User,
+  Upload,
+  Briefcase,
+  LogOut,
+  X,
+  Users,
+  TrendingUp,
+} from "lucide-react";
+import { AiOutlineWechat } from "react-icons/ai";
+import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
+import router from "next/router";
 
 interface SidebarProps {
   // The user prop is no longer needed in this version if not used
@@ -15,7 +25,7 @@ interface SidebarProps {
 }
 
 const navItems = [
-  { href: "/profile-settings", icon: User, label: "Profile Settings" },
+  { href: "/dashboard", icon: User, label: "Dashboard" },
   { href: "/upload-resume", icon: Upload, label: "Upload Resume" },
   {
     href: "/applied-internships",
@@ -24,7 +34,17 @@ const navItems = [
     badge: 5,
   },
   {
-    href: "/chat", // Your new link
+    href: "/dashboard/student-directory",
+    icon: Users,
+    label: "Student Directory",
+  },
+  {
+    href: "/track-progress",
+    icon: TrendingUp,
+    label: "Track Progress",
+  },
+  {
+    href: "/chat",
     icon: AiOutlineWechat,
     label: "Chat with Fupro Ai",
   },
@@ -33,11 +53,29 @@ const navItems = [
 export const Sidebar: React.FC<SidebarProps> = ({
   isOpen = false,
   onClose,
-  activeRoute = "/applied-internships",
+  activeRoute,
 }) => {
-  const router = useRouter(); // NEW: Initialize the router
+  const pathname = usePathname();
+  const [currentActiveRoute, setCurrentActiveRoute] = useState(
+    activeRoute || pathname || "/applied-internships"
+  );
 
-  const handleLinkClick = () => {
+  // Update active route when pathname changes (for navigation)
+  useEffect(() => {
+    if (pathname) {
+      setCurrentActiveRoute(pathname);
+    }
+  }, [pathname]);
+
+  // Update active route when activeRoute prop changes
+  useEffect(() => {
+    if (activeRoute) {
+      setCurrentActiveRoute(activeRoute);
+    }
+  }, [activeRoute]);
+
+  const handleLinkClick = (href: string) => {
+    setCurrentActiveRoute(href);
     if (onClose) onClose();
   };
 
@@ -88,12 +126,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;
-              const isActive = activeRoute === item.href;
+              const isActive = currentActiveRoute === item.href;
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  onClick={handleLinkClick}
+                  onClick={() => handleLinkClick(item.href)}
                   className={`group flex items-center justify-between px-3 py-3 rounded-lg transition-all duration-200 ${
                     isActive
                       ? "text-orange-700 bg-orange-50 font-semibold"
