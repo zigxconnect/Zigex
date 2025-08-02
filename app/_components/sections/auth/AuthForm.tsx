@@ -3,15 +3,31 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Button } from "@/app/_components/ui/Button";
 import { Input } from "@/app/_components/ui/Input";
+import { Spinner } from "@/app/_components/ui/Spinner"; // NEW: Import the spinner
 import { SocialButton } from "./SocialButton";
 import { GoogleIcon } from "./GoogleIcon";
 import { Cloud, GraduationCap, Eye, EyeOff, Linkedin } from "lucide-react";
 
+// Validation schema using Zod
+const formSchema = z.object({
+  fullName: z
+    .string()
+    .min(2, { message: "Full name must be at least 2 characters." }),
+  email: z.string().email({ message: "Please enter a valid email address." }),
+  password: z
+    .string()
+    .min(6, { message: "Password must be at least 6 characters." }),
+});
+
+type SignUpFormData = z.infer<typeof formSchema>;
+type SignInFormData = Omit<SignUpFormData, "fullName">;
 type AuthFormProps = { type: "signIn" | "signUp" };
 
-// A reusable visual divider component with text.
 const Divider = () => (
   <div className="relative my-5">
     <div className="absolute inset-0 flex items-center">
@@ -23,24 +39,21 @@ const Divider = () => (
   </div>
 );
 
-/**
- * AuthForm Component
- * The complete, reusable form with full API integration for both user
- * registration (sign-up) and authentication (sign-in) with intelligent redirection.
- */
 export const AuthForm = ({ type }: AuthFormProps) => {
   const isSignUp = type === "signUp";
   const router = useRouter();
-
-  // State management for all form fields, loading status, and error messages
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
 
-  // The complete configuration object holding all dynamic text and icons.
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<SignUpFormData>({
+    resolver: zodResolver(formSchema),
+    shouldUnregister: !isSignUp,
+  });
+
   const content = {
     signIn: {
       Icon: Cloud,
@@ -68,79 +81,51 @@ export const AuthForm = ({ type }: AuthFormProps) => {
   const finePrint =
     "By continuing, you agree to our Terms of Service and Privacy Policy.";
 
-  // Handles form submission by calling the appropriate API endpoint.
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setIsLoading(true);
-
+  const onSubmit = async (data: SignUpFormData | SignInFormData) => {
+    setApiError(null);
     if (isSignUp) {
-      // --- SIGN UP LOGIC ---
       try {
-        // Step 1: Register the user
         const registerResponse = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password, fullName }),
+          body: JSON.stringify(data),
         });
         const registerData = await registerResponse.json();
-        if (!registerResponse.ok) {
+        if (!registerResponse.ok)
           throw new Error(registerData.error || "Sign-up failed.");
-        }
 
-        // Step 2: CRITICAL - Immediately log the user in to create a session
         const loginResponse = await fetch("/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify({ email: data.email, password: data.password }),
         });
-        const loginData = await loginResponse.json();
-        if (!loginResponse.ok) {
-          throw new Error(
-            loginData.error ||
-              "Auto-login failed after sign-up. Please try logging in manually."
-          );
-        }
+        if (!loginResponse.ok)
+          throw new Error("Auto-login failed after sign-up.");
 
-        // Step 3: After sign-up, always redirect to the profile creation page.
         router.push("/create-profile");
       } catch (err) {
-        setError((err as Error).message);
-      } finally {
-        setIsLoading(false);
+        setApiError((err as Error).message);
       }
     } else {
-      // --- SIGN IN LOGIC ---
       try {
         const response = await fetch("/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify(data),
         });
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(
-            data.error || "Login failed. Please check your credentials."
-          );
-        }
-
-        // Intelligently redirect based on the API response
-        if (data.profileComplete) {
-          router.push("/dashboard");
-        } else {
-          router.push("/create-profile");
-        }
+        const responseData = await response.json();
+        if (!response.ok)
+          throw new Error(responseData.error || "Login failed.");
+        if (responseData.profileComplete) router.push("/dashboard");
+        else router.push("/create-profile");
       } catch (err) {
-        setError((err as Error).message);
-      } finally {
-        setIsLoading(false);
+        setApiError((err as Error).message);
       }
     }
   };
 
   return (
     <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl flex flex-col justify-center min-h-[650px]">
-      {/* Header Section */}
       <div className="text-center">
         <div className="mx-auto w-12 h-12 bg-blue-900 rounded-full flex items-center justify-center">
           <currentContent.Icon className="w-7 h-7 text-white" />
@@ -150,8 +135,6 @@ export const AuthForm = ({ type }: AuthFormProps) => {
         </h1>
         <p className="mt-1 text-sm text-gray-600">{currentContent.subtitle}</p>
       </div>
-
-      {/* Social Login Section */}
       <div className="mt-5 space-y-3">
         <SocialButton
           icon={Linkedin}
@@ -164,9 +147,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
         />
       </div>
       <Divider />
-
-      {/* Main Form Section */}
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {isSignUp && (
           <div>
             <label className="text-sm font-medium text-gray-700">
@@ -174,31 +155,33 @@ export const AuthForm = ({ type }: AuthFormProps) => {
             </label>
             <Input
               id="fullName"
-              name="fullName"
               type="text"
               placeholder="Enter your full name"
               className="mt-1"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              required
-              disabled={isLoading}
+              {...register("fullName")}
+              disabled={isSubmitting}
             />
+            {errors.fullName && (
+              <p className="text-xs text-red-500 mt-1">
+                {errors.fullName.message}
+              </p>
+            )}
           </div>
         )}
         <div>
           <label className="text-sm font-medium text-gray-700">Email</label>
           <Input
             id="email"
-            name="email"
             type="email"
             autoComplete="email"
             placeholder="Enter your email address"
             className="mt-1"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            disabled={isLoading}
+            {...register("email")}
+            disabled={isSubmitting}
           />
+          {errors.email && (
+            <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>
+          )}
         </div>
         <div>
           <div className="flex justify-between items-center">
@@ -217,44 +200,46 @@ export const AuthForm = ({ type }: AuthFormProps) => {
           <div className="relative mt-1">
             <Input
               id="password"
-              name="password"
               type={showPassword ? "text" : "password"}
               autoComplete={isSignUp ? "new-password" : "current-password"}
-              placeholder={
-                isSignUp ? "Create a strong password" : "Enter your password"
-              }
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={isLoading}
+              placeholder="Create a strong password"
+              {...register("password")}
+              disabled={isSubmitting}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 cursor-pointer"
-              disabled={isLoading}
+              disabled={isSubmitting}
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
+          {errors.password && (
+            <p className="text-xs text-red-500 mt-1">
+              {errors.password.message}
+            </p>
+          )}
         </div>
-
-        {/* Error message display */}
-        {error && (
-          <p className="text-sm text-red-500 text-center pt-1">{error}</p>
+        {apiError && (
+          <p className="text-sm text-red-500 text-center pt-1">{apiError}</p>
         )}
-
         <Button
           variant="orange"
           type="submit"
-          className="w-full !mt-6 text-base py-2.5"
-          disabled={isLoading}
+          className="w-full !mt-6 text-base py-2.5 flex items-center justify-center gap-2"
+          disabled={isSubmitting}
         >
-          {isLoading ? "Processing..." : currentContent.buttonText}
+          {isSubmitting ? (
+            <>
+              <Spinner />
+              <span>Processing...</span>
+            </>
+          ) : (
+            currentContent.buttonText
+          )}
         </Button>
       </form>
-
-      {/* Spacer and Footer Links */}
       <div className="flex-grow"></div>
       <p className="text-center text-sm text-gray-600 mt-5">
         {currentContent.linkText}{" "}
