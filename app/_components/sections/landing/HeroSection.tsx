@@ -149,7 +149,7 @@ const BamendaHeroSection: React.FC = () => {
             {/* CTA Buttons */}
             <div className={`transform transition-all duration-1000 delay-400 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
               <div className="flex flex-col sm:flex-row gap-4">
-                <button className="group relative px-8 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-orange-500/25">
+                <button className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-800 text-white font-semibold rounded-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-orange-500/25">
                   <span className="relative z-10 flex items-center justify-center gap-2">
                     <Users className="w-5 h-5" />
                     Find Your Internship
@@ -170,7 +170,7 @@ const BamendaHeroSection: React.FC = () => {
               <div className="flex items-center gap-6 pt-4">
                 <div className="flex -space-x-2">
                   {[1,2,3,4,5].map(i => (
-                    <div key={i} className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 border-2 border-white flex items-center justify-center text-white text-xs font-bold">
+                    <div key={i} className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-indigo-500 border-2 border-white flex items-center justify-center text-white text-xs font-bold">
                       {String.fromCharCode(64 + i)}
                     </div>
                   ))}
@@ -212,7 +212,7 @@ const BamendaHeroSection: React.FC = () => {
                       {[65, 80, 45, 90, 70, 85, 95].map((height, i) => (
                         <div 
                           key={i}
-                          className="bg-gradient-to-t from-blue-400 to-blue-500 rounded-t-sm animate-grow"
+                          className="bg-gradient-to-t from-blue-600 to-blue-800 rounded-t-sm animate-grow"
                           style={{ 
                             width: '12px', 
                             height: `${height}%`,
@@ -228,7 +228,7 @@ const BamendaHeroSection: React.FC = () => {
                     {['Software Developer', 'Digital Marketing', 'Data Analyst'].map((job, i) => (
                       <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-400 to-blue-700"></div>
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 to-blue-800"></div>
                           <div>
                             <div className="font-medium text-gray-800 text-sm">{job}</div>
                             <div className="text-xs text-gray-500">Bamenda • Remote</div>
