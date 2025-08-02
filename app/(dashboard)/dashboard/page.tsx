@@ -38,6 +38,7 @@ export default async function DashboardPage() {
             <InternshipCard
               key={internship.id}
               id={internship.id}
+              headQuarterImage={internship.headQuarterImage}
               title={internship.title}
               company={internship.company}
               location={internship.location}

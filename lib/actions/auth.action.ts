@@ -3,19 +3,14 @@
 import { createServerActionClient } from "@/lib/supabase/server";
 import { z } from "zod";
 import { redirect } from "next/navigation";
-import { User } from "@supabase/supabase-js"; // Import the User type
+import { User } from "@supabase/supabase-js";
 
-// --- Define return types for better TypeScript support ---
 interface AuthResult {
   user: User;
   isAuthenticated: true;
 }
 
-/**
- * NEW: Server Action to check if a user is authenticated.
- * This is used on pages like /sign-in and /sign-up to redirect
- * users who are already logged in.
- *
+/** * Server Action to check if the user is authenticated.
  * @param redirectTo - The path to redirect to if the user is NOT authenticated.
  * @returns An AuthResult if the user is authenticated.
  * @throws {Error} Throws an error (which is caught by redirect()) if the user is not authenticated.
@@ -30,8 +25,6 @@ export async function checkAuthStatus(
   } = await supabase.auth.getUser();
 
   if (!user) {
-    // If no user is found, redirect to the specified path.
-    // This throws an error that can be caught in Server Components.
     redirect(redirectTo);
   }
 
@@ -41,7 +34,6 @@ export async function checkAuthStatus(
   };
 }
 
-// --- Define validation schemas for the actions ---
 const signUpSchema = z.object({
   fullName: z.string(),
   email: z.string().email(),
