@@ -1,4 +1,5 @@
 import { Button } from "@/app/_components/ui/Button";
+import Link from "next/link";
 
 interface InternshipCardProps {
   title: string;
@@ -47,9 +48,11 @@ export const InternshipCard = ({
       </div>
 
       <div className="mt-auto pt-4 border-t border-gray-100">
+      <Link href="intenships/1">
         <Button variant="secondary-outline" className="w-full">
           View Details
         </Button>
+        </Link>
       </div>
     </div>
   );
