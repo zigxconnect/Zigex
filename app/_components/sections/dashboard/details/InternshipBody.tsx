@@ -9,7 +9,7 @@ export const InternshipBody = ({ internship }: { internship: any }) => {
         {internship.office}
       </div>
       <div className="mt-8 flex items-center gap-4">
-        <div className="w-16 h-16 bg-blue-900 rounded-lg flex items-center justify-center text-white font-bold text-2xl">
+        <div className="w-16 h-16 bg-blue-800 rounded-lg flex items-center justify-center text-white font-bold text-2xl">
           {internship.companyInitial}
         </div>
         <div>
