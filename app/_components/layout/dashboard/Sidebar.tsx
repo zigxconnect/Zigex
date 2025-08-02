@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Logo } from "@/app/_components/ui/Logo";
 import { Button } from "@/app/_components/ui/Button";
 import { User, Upload, Briefcase, LogOut, X } from "lucide-react";
+import { AiOutlineWechat } from "react-icons/ai";
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -18,6 +19,13 @@ const navItems = [
     href: "/applied-internships",
     icon: Briefcase,
     label: "Applied Internships",
+    badge: 5,
+  },
+
+   {
+    href: "/chat",
+    icon: AiOutlineWechat,
+    label: "Chat with Fupro Ai",
     badge: 5,
   },
 ];
