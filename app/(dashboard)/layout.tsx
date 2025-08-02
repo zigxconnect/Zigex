@@ -1,50 +1,47 @@
-"use client";
+import { redirect } from "next/navigation";
+import { createServerActionClient } from "@/lib/supabase/server";
+import { DashboardClientLayout } from "./DashboardClientLayout.tsx/page";
 
-import { useState, useEffect } from "react";
-import { DashboardHeader } from "@/app/_components/layout/dashboard/DashboardHeader";
-import { Sidebar } from "@/app/_components/layout/dashboard/Sidebar";
-
-/**
- * The main layout for the student dashboard.
- * This component is responsible for the overall page structure and managing the
- * state of the universally toggleable sidebar.
- */
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const supabase = createServerActionClient();
 
-  // This effect runs once to intelligently open the sidebar by default on desktop.
-  useEffect(() => {
-    if (window.innerWidth >= 1024) {
-      // 1024px is Tailwind's 'lg' breakpoint
-      setIsSidebarOpen(true);
-    }
-  }, []);
+  // 1. Get the authenticated user
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    redirect("/sign-in");
+  }
 
+  // 2. Fetch the user's profile from the database
+  const { data: profile } = await supabase
+    .from("student_profiles")
+    .select("*")
+    .eq("user_id", user.id)
+    .single();
+
+  if (!profile) {
+    // This is a safeguard if the profile wasn't created, ensuring onboarding is complete.
+    redirect("/create-profile");
+  }
+
+  // 3. Prepare a clean user data object to pass to client components
+  const userData = {
+    name: profile.full_name || "New User",
+    university: profile.university || "University not specified",
+    initials:
+      `${profile.first_name?.[0] || ""}${
+        profile.last_name?.[0] || ""
+      }`.toUpperCase() || "FU",
+    skills: profile.hard_skills || [],
+  };
+
+  // 4. Render the Client Layout and pass the user data and children to it
   return (
-    // The root container for the dashboard.
-    <div className="relative h-screen bg-[#F8FAFC]">
-      {/* The Sidebar is a floating panel controlled by the `isOpen` state. */}
-      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-
-      {/* 
-        This is the main content area.
-        The conditional margin (`lg:ml-64`) is the key to creating the side-by-side
-        view on desktop. It "pushes" the content to the right only when the sidebar is open.
-      */}
-      <div
-        className={`flex flex-col h-full transition-all duration-300 ease-in-out
-          ${isSidebarOpen ? "lg:ml-64" : "lg:ml-0"}
-        `}
-      >
-        <DashboardHeader onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto">
-          {children}
-        </main>
-      </div>
-    </div>
+    <DashboardClientLayout user={userData}>{children}</DashboardClientLayout>
   );
 }

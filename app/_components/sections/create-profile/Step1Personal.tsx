@@ -1,70 +1,47 @@
+// File Path: /app/_components/sections/create-profile/Step1Personal.tsx
+import { useFormContext } from "react-hook-form";
 import { Input } from "@/app/_components/ui/Input";
 import { Textarea } from "@/app/_components/ui/Textarea";
+import { FormField } from "@/app/_components/ui/FormField";
 import { ProfileFormData } from "@/app/types/profile";
 
-type StepProps = {
-  data: Partial<ProfileFormData>;
-  onUpdate: (update: Partial<ProfileFormData>) => void;
+export const Step1Personal = () => {
+  const {
+    register,
+    formState: { errors },
+  } = useFormContext<ProfileFormData>();
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <FormField label="First Name" error={errors.first_name}>
+          <Input
+            placeholder="Enter your first name"
+            {...register("first_name")}
+          />
+        </FormField>
+        <FormField label="Last Name" error={errors.last_name}>
+          <Input
+            placeholder="Enter your last name"
+            {...register("last_name")}
+          />
+        </FormField>
+      </div>
+      <FormField label="Phone Number" error={errors.phone}>
+        <Input placeholder="e.g., +123 456 7890" {...register("phone")} />
+      </FormField>
+      <FormField label="Location" error={errors.location}>
+        <Input
+          placeholder="e.g., Bamenda, Cameroon"
+          {...register("location")}
+        />
+      </FormField>
+      <FormField label="About Me" error={errors.about}>
+        <Textarea
+          placeholder="A brief introduction..."
+          rows={4}
+          {...register("about")}
+        />
+      </FormField>
+    </div>
+  );
 };
-
-export const Step1Personal = ({ data, onUpdate }: StepProps) => (
-  <div className="space-y-6">
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div>
-        <label className="text-sm font-medium">First Name</label>
-        <Input
-          name="first_name"
-          type="text"
-          value={data.first_name || ""}
-          onChange={(e) => onUpdate({ first_name: e.target.value })}
-          placeholder="Enter your first name"
-          className="mt-1"
-        />
-      </div>
-      <div>
-        <label className="text-sm font-medium">Last Name</label>
-        <Input
-          name="last_name"
-          type="text"
-          value={data.last_name || ""}
-          onChange={(e) => onUpdate({ last_name: e.target.value })}
-          placeholder="Enter your last name"
-          className="mt-1"
-        />
-      </div>
-    </div>
-    <div>
-      <label className="text-sm font-medium">Phone Number</label>
-      <Input
-        name="phone"
-        type="tel"
-        value={data.phone || ""}
-        onChange={(e) => onUpdate({ phone: e.target.value })}
-        placeholder="e.g., +123 456 7890"
-        className="mt-1"
-      />
-    </div>
-    <div>
-      <label className="text-sm font-medium">Location</label>
-      <Input
-        name="location"
-        type="text"
-        value={data.location || ""}
-        onChange={(e) => onUpdate({ location: e.target.value })}
-        placeholder="e.g., Bamenda, Cameroon"
-        className="mt-1"
-      />
-    </div>
-    <div>
-      <label className="text-sm font-medium">About Me</label>
-      <Textarea
-        name="about"
-        value={data.about || ""}
-        onChange={(e) => onUpdate({ about: e.target.value })}
-        placeholder="A brief introduction about yourself"
-        rows={4}
-        className="mt-1"
-      />
-    </div>
-  </div>
-);

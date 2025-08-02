@@ -1,8 +1,8 @@
-"use client";
-
-import { useState } from "react";
+// File Path: /app/_components/sections/create-profile/Step3Skills.tsx
+import { useFormContext, Controller } from "react-hook-form";
 import { Input } from "@/app/_components/ui/Input";
 import { ToggleChip } from "@/app/_components/ui/ToggleChip";
+import { FormField } from "@/app/_components/ui/FormField";
 import { ProfileFormData } from "@/app/types/profile";
 
 const hardSkillsOptions = [
@@ -25,134 +25,109 @@ const softSkillsOptions = [
 ];
 const languageOptions = ["English", "French", "Spanish", "German"];
 
-type StepProps = {
-  data: Partial<ProfileFormData>;
-  onUpdate: (update: Partial<ProfileFormData>) => void;
-};
-
-export const Step3Skills = ({ data, onUpdate }: StepProps) => {
-  const [selectedHard, setSelectedHard] = useState<string[]>(
-    data.hard_skills || []
-  );
-  const [selectedSoft, setSelectedSoft] = useState<string[]>(
-    data.soft_skills || []
-  );
-  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(
-    data.languages || []
-  );
-
-  const handleToggle = (
-    item: string,
-    list: string[],
-    setter: Function,
-    fieldName: "hard_skills" | "soft_skills" | "languages"
-  ) => {
-    const newList = list.includes(item)
-      ? list.filter((s) => s !== item)
-      : [...list, item];
-    setter(newList);
-    onUpdate({ [fieldName]: newList });
-  };
+export const Step3Skills = () => {
+  const {
+    control,
+    register,
+    formState: { errors },
+  } = useFormContext<ProfileFormData>();
 
   return (
     <div className="space-y-8">
-      <div>
-        <label className="text-sm font-medium">Hard Skills</label>
-        <div className="flex flex-wrap gap-2 mt-2">
-          {hardSkillsOptions.map((skill) => (
-            <ToggleChip
-              key={skill}
-              text={skill}
-              isSelected={selectedHard.includes(skill)}
-              // THE FIX IS HERE: The prop is now correctly named 'onToggle'
-              onToggle={() =>
-                handleToggle(
-                  skill,
-                  selectedHard,
-                  setSelectedHard,
-                  "hard_skills"
-                )
-              }
-            />
-          ))}
-        </div>
-      </div>
-      <div>
-        <label className="text-sm font-medium">Soft Skills</label>
-        <div className="flex flex-wrap gap-2 mt-2">
-          {softSkillsOptions.map((skill) => (
-            <ToggleChip
-              key={skill}
-              text={skill}
-              isSelected={selectedSoft.includes(skill)}
-              // THE FIX IS HERE: The prop is now correctly named 'onToggle'
-              onToggle={() =>
-                handleToggle(
-                  skill,
-                  selectedSoft,
-                  setSelectedSoft,
-                  "soft_skills"
-                )
-              }
-            />
-          ))}
-        </div>
-      </div>
-      <div>
-        <label className="text-sm font-medium">Languages</label>
-        <div className="flex flex-wrap gap-2 mt-2">
-          {languageOptions.map((lang) => (
-            <ToggleChip
-              key={lang}
-              text={lang}
-              isSelected={selectedLanguages.includes(lang)}
-              // THE FIX IS HERE: The prop is now correctly named 'onToggle'
-              onToggle={() =>
-                handleToggle(
-                  lang,
-                  selectedLanguages,
-                  setSelectedLanguages,
-                  "languages"
-                )
-              }
-            />
-          ))}
-        </div>
-      </div>
+      <FormField label="Hard Skills" error={errors.hard_skills}>
+        <Controller
+          control={control}
+          name="hard_skills"
+          defaultValue={[]}
+          render={({ field: { onChange, value } }) => (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {hardSkillsOptions.map((skill) => (
+                <ToggleChip
+                  key={skill}
+                  text={skill}
+                  isSelected={value.includes(skill)}
+                  onToggle={(toggledSkill) => {
+                    const newValue = value.includes(toggledSkill)
+                      ? value.filter((s) => s !== toggledSkill)
+                      : [...value, toggledSkill];
+                    onChange(newValue);
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        />
+      </FormField>
+      <FormField label="Soft Skills" error={errors.soft_skills}>
+        <Controller
+          control={control}
+          name="soft_skills"
+          defaultValue={[]}
+          render={({ field: { onChange, value } }) => (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {softSkillsOptions.map((skill) => (
+                <ToggleChip
+                  key={skill}
+                  text={skill}
+                  isSelected={value.includes(skill)}
+                  onToggle={(toggledSkill) => {
+                    const newValue = value.includes(toggledSkill)
+                      ? value.filter((s) => s !== toggledSkill)
+                      : [...value, toggledSkill];
+                    onChange(newValue);
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        />
+      </FormField>
+      <FormField label="Languages" error={errors.languages}>
+        <Controller
+          control={control}
+          name="languages"
+          defaultValue={[]}
+          render={({ field: { onChange, value } }) => (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {languageOptions.map((lang) => (
+                <ToggleChip
+                  key={lang}
+                  text={lang}
+                  isSelected={value.includes(lang)}
+                  onToggle={(toggledLang) => {
+                    const newValue = value.includes(toggledLang)
+                      ? value.filter((s) => s !== toggledLang)
+                      : [...value, toggledLang];
+                    onChange(newValue);
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        />
+      </FormField>
       <div className="space-y-6 border-t border-gray-200 pt-8">
-        <div>
-          <label className="text-sm font-medium">Portfolio URL</label>
+        <FormField
+          label="Portfolio URL (Optional)"
+          error={errors.portfolio_url}
+        >
           <Input
-            name="portfolio_url"
-            type="url"
-            value={data.portfolio_url || ""}
-            onChange={(e) => onUpdate({ portfolio_url: e.target.value })}
             placeholder="https://your-portfolio.com"
-            className="mt-1"
+            {...register("portfolio_url")}
           />
-        </div>
-        <div>
-          <label className="text-sm font-medium">GitHub URL</label>
+        </FormField>
+        <FormField label="GitHub URL (Optional)" error={errors.github_url}>
           <Input
-            name="github_url"
-            type="url"
-            value={data.github_url || ""}
-            onChange={(e) => onUpdate({ github_url: e.target.value })}
             placeholder="https://github.com/your-username"
-            className="mt-1"
+            {...register("github_url")}
           />
-        </div>
-        <div>
-          <label className="text-sm font-medium">LinkedIn URL</label>
+        </FormField>
+        <FormField label="LinkedIn URL (Optional)" error={errors.linkedin_url}>
           <Input
-            name="linkedin_url"
-            type="url"
-            value={data.linkedin_url || ""}
-            onChange={(e) => onUpdate({ linkedin_url: e.target.value })}
             placeholder="https://linkedin.com/in/your-profile"
-            className="mt-1"
+            {...register("linkedin_url")}
           />
-        </div>
+        </FormField>
       </div>
     </div>
   );
