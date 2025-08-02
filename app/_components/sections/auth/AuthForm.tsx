@@ -8,13 +8,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/app/_components/ui/Button";
 import { Input } from "@/app/_components/ui/Input";
-import { Spinner } from "@/app/_components/ui/Spinner"; // NEW: Import the spinner
+import { Spinner } from "@/app/_components/ui/Spinner";
 import { SocialButton } from "./SocialButton";
 import { GoogleIcon } from "./GoogleIcon";
 import { Cloud, GraduationCap, Eye, EyeOff, Linkedin } from "lucide-react";
 
-// Validation schema using Zod
-const formSchema = z.object({
+// --- Schema for the Sign Up form (requires fullName) ---
+const signUpSchema = z.object({
   fullName: z
     .string()
     .min(2, { message: "Full name must be at least 2 characters." }),
@@ -24,8 +24,14 @@ const formSchema = z.object({
     .min(6, { message: "Password must be at least 6 characters." }),
 });
 
-type SignUpFormData = z.infer<typeof formSchema>;
-type SignInFormData = Omit<SignUpFormData, "fullName">;
+// --- Schema for the Sign In form (does NOT require fullName) ---
+const signInSchema = z.object({
+  email: z.string().email({ message: "Please enter a valid email address." }),
+  password: z.string().min(1, { message: "Password is required." }),
+});
+
+// A unified type to satisfy the useForm hook, though validation will differ.
+type FormData = z.infer<typeof signUpSchema>;
 type AuthFormProps = { type: "signIn" | "signUp" };
 
 const Divider = () => (
@@ -49,9 +55,9 @@ export const AuthForm = ({ type }: AuthFormProps) => {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<SignUpFormData>({
-    resolver: zodResolver(formSchema),
-    shouldUnregister: !isSignUp,
+  } = useForm<FormData>({
+    // Conditionally select the resolver based on the form type
+    resolver: zodResolver(isSignUp ? signUpSchema : signInSchema),
   });
 
   const content = {
@@ -81,7 +87,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
   const finePrint =
     "By continuing, you agree to our Terms of Service and Privacy Policy.";
 
-  const onSubmit = async (data: SignUpFormData | SignInFormData) => {
+  const onSubmit = async (data: FormData) => {
     setApiError(null);
     if (isSignUp) {
       try {
@@ -111,11 +117,12 @@ export const AuthForm = ({ type }: AuthFormProps) => {
         const response = await fetch("/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
+          body: JSON.stringify({ email: data.email, password: data.password }),
         });
         const responseData = await response.json();
         if (!response.ok)
           throw new Error(responseData.error || "Login failed.");
+
         if (responseData.profileComplete) router.push("/dashboard");
         else router.push("/create-profile");
       } catch (err) {
@@ -202,7 +209,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
               id="password"
               type={showPassword ? "text" : "password"}
               autoComplete={isSignUp ? "new-password" : "current-password"}
-              placeholder="Create a strong password"
+              placeholder="Enter your password"
               {...register("password")}
               disabled={isSubmitting}
             />
