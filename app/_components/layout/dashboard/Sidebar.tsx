@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation"; // NEW: Import the router for redirection
 import { Logo } from "@/app/_components/ui/Logo";
 import { Button } from "@/app/_components/ui/Button";
 import { User, Upload, Briefcase, LogOut, X } from "lucide-react";
-import { AiOutlineWechat } from "react-icons/ai";
+import { AiOutlineWechat } from "react-icons/ai"; // Your new icon import
 
 interface SidebarProps {
+  // The user prop is no longer needed in this version if not used
   isOpen?: boolean;
   onClose?: () => void;
   activeRoute?: string;
@@ -21,12 +23,10 @@ const navItems = [
     label: "Applied Internships",
     badge: 5,
   },
-
-   {
-    href: "/chat",
+  {
+    href: "/chat", // Your new link
     icon: AiOutlineWechat,
     label: "Chat with Fupro Ai",
-    badge: 5,
   },
 ];
 
@@ -35,13 +35,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onClose,
   activeRoute = "/applied-internships",
 }) => {
+  const router = useRouter(); // NEW: Initialize the router
+
   const handleLinkClick = () => {
     if (onClose) onClose();
   };
 
+  /**
+   * NEW: This function handles the sign-out process.
+   * It calls our API endpoint and redirects the user upon success.
+   */
+  const handleSignOut = async () => {
+    const response = await fetch("/api/auth/logout", {
+      method: "POST",
+    });
+
+    if (response.ok) {
+      router.push("/sign-in");
+    } else {
+      alert("Logout failed. Please try again.");
+    }
+  };
+
   return (
     <>
-      {/* Overlay for mobile/tablet, shown when the sidebar is open */}
       {isOpen && (
         <div
           className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 lg:hidden"
@@ -50,7 +67,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
         />
       )}
 
-      {/* The Sidebar itself. It is ALWAYS a fixed panel. */}
       <aside
         className={`w-64 flex-col bg-white fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out flex shadow-lg
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
@@ -108,10 +124,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </nav>
 
+        {/* THE FIX IS HERE: The Button now calls the handleSignOut function */}
         <div className="mt-auto p-6">
           <Button
             variant="secondary-outline"
             className="w-full justify-start gap-3 hover:bg-red-50 hover:text-red-600 hover:border-red-300"
+            onClick={handleSignOut} // Use the new sign-out handler
           >
             <LogOut size={20} />
             <span>Sign Out</span>
