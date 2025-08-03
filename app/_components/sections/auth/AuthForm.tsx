@@ -107,9 +107,9 @@ export const AuthForm = ({ type }: AuthFormProps) => {
   };
 
   return (
-    <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl flex flex-col justify-center min-h-[650px]">
+    <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl flex flex-col justify-center h-screen fixed top-2 bottom-8 gap-0 left-0 right-0 mx-auto">
       {/* Header Section */}
-      <div className="text-center">
+      <div className="text-center " >
         <div className="mx-auto w-12 h-12 bg-blue-900 rounded-full flex items-center justify-center">
           <currentContent.Icon className="w-7 h-7 text-white" />
         </div>
@@ -134,7 +134,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
       <Divider />
 
       {/* Main Form Section */}
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 ">
         {isSignUp && (
           <div>
             <label className="text-sm font-medium text-gray-700">
@@ -230,8 +230,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
         </Button>
       </form>
 
-      {/* Spacer and Footer Links */}
-      <div className="flex-grow"></div>
+      
       <p className="text-center text-sm text-gray-600 mt-5">
         {currentContent.linkText}{" "}
         <Link

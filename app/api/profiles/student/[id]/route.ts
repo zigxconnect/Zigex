@@ -91,6 +91,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   const supabase = createSupabaseServerClient();
+  let updates;
 
   try {
     // 1. Get the authenticated user securely.
@@ -112,13 +113,15 @@ export async function PUT(
     }
 
     // 3. Get the update data from the request body.
-    const updates = await request.json();
+    updates = await request.json();
 
     // 4. Perform the update in the database.
+    const { education, experience, skills, ...profileData } = updates;
+
     const { data, error: updateError } = await supabase
       .from("student_profiles")
       .update({
-        ...updates,
+        ...profileData,
         updated_at: new Date().toISOString(),
         profile_status: "complete",
       })
@@ -130,12 +133,34 @@ export async function PUT(
       throw updateError;
     }
 
+    // 5. Handle education, experience, and skills updates.
+    if (education) {
+      await supabase.from("student_education").delete().eq("user_id", id);
+      if (education.length > 0) {
+        await supabase.from("student_education").insert(education.map((edu: any) => ({ ...edu, user_id: id })));
+      }
+    }
+
+    if (experience) {
+      await supabase.from("student_experience").delete().eq("user_id", id);
+      if (experience.length > 0) {
+        await supabase.from("student_experience").insert(experience.map((exp: any) => ({ ...exp, user_id: id })));
+      }
+    }
+
+    if (skills) {
+      await supabase.from("student_skills").delete().eq("user_id", id);
+      if (skills.length > 0) {
+        await supabase.from("student_skills").insert(skills.map((skill: any) => ({ ...skill, user_id: id })));
+      }
+    }
+
     return NextResponse.json(
       { success: true, message: "Profile updated successfully", data },
       { status: 200 }
     );
   } catch (error: any) {
-    console.error("API Route Error (PUT):", error);
+    console.error("API Route Error (PUT):", error, "Updates:", updates);
     return NextResponse.json(
       {
         error: "Update failed",
