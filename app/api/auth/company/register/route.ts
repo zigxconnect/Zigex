@@ -5,18 +5,39 @@
 
 import { supabaseAdmin } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
+import { companySchema } from '@/lib/validation/company';
+import { authMiddleware } from '@/lib/middleware/auth';
 
+
+/**
+ * @swagger
+ * /api/auth/company/register:
+ *   post:
+ *     tags:
+ *        - Authentication
+ *     description: Register a new company
+ *     responses:
+ *       201:
+ *         description: Company registered successfully
+ *       400:
+ *         description: Bad request
+ *       500:
+ *         description: Internal server error
+ */
 export async function POST(request: Request) {
   // 1. Get and validate the required fields from the request body
-  const { email, password, companyName } = await request.json();
+  const data = await request.json();
+  const { email, password, company_name } = data;
 
-  if (!email || !password || !companyName) {
-    console.log('Validation Error: Missing required fields.', { email: !!email, password: !!password, companyName: !!companyName });
+  if (!email || !password || !company_name) {
+    console.log('Validation Error: Missing required fields.', { email: !!email, password: !!password, company_name: !!company_name });
     return NextResponse.json(
       { error: 'Email, password, and company name are required.' },
       { status: 400 }
     );
   }
+
+
 
   // 2. Create the user in Supabase Auth
   console.log(`Attempting to create auth user for: ${email}`);
@@ -37,15 +58,21 @@ export async function POST(request: Request) {
   console.log(`Auth user created successfully with ID: ${authData.user.id}`);
   const userId = authData.user.id;
 
+
   // 3. Create the corresponding profile in the 'company_profile' table
   console.log(`Attempting to create profile for user ID: ${userId}`);
+  const companyData = companySchema.parse(
+    {
+      ...data, 
+      user_id: userId
+      }
+    )
   const { error: profileError } = await supabaseAdmin
     .from('company_profiles')
-    .insert({
-      user_id: userId,
-      company_name: companyName,
+    .insert(
+      companyData
       // You can add other default fields here if needed
-    });
+      );
 
   // 4. Handle profile creation errors (CRITICAL STEP)
   if (profileError) {
@@ -66,7 +93,8 @@ export async function POST(request: Request) {
 
   // 5. If everything succeeded, return a success response
   return NextResponse.json(
-    { message: 'Company registered successfully', user: authData.user },
+    { message: 'Company registered successfully', user: authData.user.id, company: companyData },
     { status: 201 }
   );
 }
+
