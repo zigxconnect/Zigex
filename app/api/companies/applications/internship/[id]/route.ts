@@ -7,7 +7,7 @@ import { NextResponse } from "next/server";
 
 /**
  * @swagger
- * /api/companies/internships/applications/[id]:
+ * /api/companies/applications/internships/[id]:
  *   post:
  *     description: Create a new internship
  *     responses:
@@ -20,7 +20,7 @@ import { NextResponse } from "next/server";
  *       404:
  *         description: Company profile not found
  *   get:
- *     description: Get all applications for a particular internship
+ *     description: Get all applications for a particular internship. id is the internship id
  *     responses:
  *       200:
  *         description: Success

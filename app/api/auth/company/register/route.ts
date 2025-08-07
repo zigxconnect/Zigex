@@ -13,6 +13,8 @@ import { authMiddleware } from '@/lib/middleware/auth';
  * @swagger
  * /api/auth/company/register:
  *   post:
+ *     tags:
+ *        - Authentication
  *     description: Register a new company
  *     responses:
  *       201:
