@@ -3,6 +3,7 @@ import { Orbitron } from "next/font/google";
 import { clsx } from "clsx";
 
 // This component renders a logo that can be used as a link or a static element.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const orbitron = Orbitron({
   subsets: ["latin"],
   weight: ["400", "700"],

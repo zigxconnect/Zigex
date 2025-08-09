@@ -11,23 +11,17 @@ function createSupabaseServerClient() {
     {
       cookies: {
         get: (name: string) => {
-          
           return cookieStore.get(name)?.value;
         },
         set: (name: string, value: string, options: CookieOptions) => {
           try {
             cookieStore.set({ name, value, ...options });
-          } catch (error) {
-            // This can happen if the headers have already been sent, a known issue
-            // in certain Next.js middleware scenarios. It can be safely ignored.
-          }
+          } catch (error) {}
         },
         remove: (name: string, options: CookieOptions) => {
           try {
             cookieStore.set({ name, value: "", ...options });
-          } catch (error) {
-            // Same as above.
-          }
+          } catch (error) {}
         },
       },
     }
@@ -67,7 +61,6 @@ export async function GET(
       .single();
 
     if (error) {
-      // If Supabase returns an error (e.g., no profile found), throw it.
       throw error;
     }
 
@@ -91,7 +84,6 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   const supabase = createSupabaseServerClient();
-  let updates;
 
   try {
     // 1. Get the authenticated user securely.
@@ -113,15 +105,13 @@ export async function PUT(
     }
 
     // 3. Get the update data from the request body.
-    updates = await request.json();
+    const updates = await request.json();
 
     // 4. Perform the update in the database.
-    const { education, experience, skills, ...profileData } = updates;
-
     const { data, error: updateError } = await supabase
       .from("student_profiles")
       .update({
-        ...profileData,
+        ...updates,
         updated_at: new Date().toISOString(),
         profile_status: "complete",
       })
@@ -133,34 +123,12 @@ export async function PUT(
       throw updateError;
     }
 
-    // 5. Handle education, experience, and skills updates.
-    if (education) {
-      await supabase.from("student_education").delete().eq("user_id", id);
-      if (education.length > 0) {
-        await supabase.from("student_education").insert(education.map((edu: any) => ({ ...edu, user_id: id })));
-      }
-    }
-
-    if (experience) {
-      await supabase.from("student_experience").delete().eq("user_id", id);
-      if (experience.length > 0) {
-        await supabase.from("student_experience").insert(experience.map((exp: any) => ({ ...exp, user_id: id })));
-      }
-    }
-
-    if (skills) {
-      await supabase.from("student_skills").delete().eq("user_id", id);
-      if (skills.length > 0) {
-        await supabase.from("student_skills").insert(skills.map((skill: any) => ({ ...skill, user_id: id })));
-      }
-    }
-
     return NextResponse.json(
       { success: true, message: "Profile updated successfully", data },
       { status: 200 }
     );
   } catch (error: any) {
-    console.error("API Route Error (PUT):", error, "Updates:", updates);
+    console.error("API Route Error (PUT):", error);
     return NextResponse.json(
       {
         error: "Update failed",
