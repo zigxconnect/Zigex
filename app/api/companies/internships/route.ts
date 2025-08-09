@@ -14,6 +14,7 @@ import { internshipSchema } from '@/lib/validation/internship';
  * @swagger
  * /api/companies/internships:
  *   post:
+ *     summary: add company postings(internships, events, etc)
  *     description: Create a new Post 
  *     tags:
  *          - Company Postings
@@ -28,6 +29,7 @@ import { internshipSchema } from '@/lib/validation/internship';
  *         description: Company profile not found
  * 
  *   get:
+ *      summary: get all company postings(internships, events, etc)
  *      description: Get all postings for a company(internship, event, etc)
  *      tags:
  *          - Company Postings
@@ -35,14 +37,6 @@ import { internshipSchema } from '@/lib/validation/internship';
  *       200:
  *         description: Success
  * 
- *   patch:
- *      description: Update posting for a company
- *      tags:
- *          - Company Postings
- *   delete:
- *      description: delete posting for a company
- *      tags:
- *          - Company Postings
  */
 
 

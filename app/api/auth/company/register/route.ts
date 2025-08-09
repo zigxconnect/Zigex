@@ -13,9 +13,10 @@ import { authMiddleware } from '@/lib/middleware/auth';
  * @swagger
  * /api/auth/company/register:
  *   post:
+ *     summary: Register a company
  *     tags:
  *        - Authentication
- *     description: Register a new company
+ *     description: Register a new company. data format in company schema
  *     responses:
  *       201:
  *         description: Company registered successfully
@@ -28,6 +29,8 @@ export async function POST(request: Request) {
   // 1. Get and validate the required fields from the request body
   const data = await request.json();
   const { email, password, company_name } = data;
+
+  console.log(email)
 
   if (!email || !password || !company_name) {
     console.log('Validation Error: Missing required fields.', { email: !!email, password: !!password, company_name: !!company_name });

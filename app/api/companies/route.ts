@@ -10,7 +10,10 @@ import { companySchema } from '@/lib/validation/company';
  * @swagger
  * /api/companies:
  *   get:
- *     description: Get all companies
+ *     summary: Get company profile details
+ *     tags:
+ *      - Company Profile
+ *     description: Get company information. 
  *     responses:
  *       200:
  *         description: Success
@@ -69,6 +72,9 @@ export async function GET(request: Request){
  * @swagger
   * /api/companies/:
   *   patch:
+  *     summary: update details of company profile
+  *     tags:
+  *         - Company Profile
   *     description: Update a company profile data
   *     parameters: company Schema
   *     responses:

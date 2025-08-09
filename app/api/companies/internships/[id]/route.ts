@@ -11,6 +11,9 @@ import { internshipSchema } from "@/lib/validation/internship";
  *  @swagger
  *  /api/companies/internships/[id]:
  *    patch:
+ *      tags:
+ *        - Company Postings
+ *      summary: Update an existing internship for a company
  *      description: Update an existing internship for a particular company
  *      responses:
 *    200:
@@ -89,8 +92,8 @@ export async function PATCH(
  * /api/companies/internships/[id]:
  *  delete:
  *      tags:
- *          - Internships
- *      id: id of internship
+ *          - Company Postings
+ *      summary: Delete an internship for a company
  *      description: 
  *          delete company internship or posting.
  *          id is the id of the internship.
@@ -152,8 +155,9 @@ export async function DELETE
  * /api/companies/internships/[id]:
  *  get:
  *      tags:
- *          - Internships
+ *          - Company Postings
  *      description: get a unique internship for a company. id is the id of the internship
+ *      summary: Get details of a specific internship for a company
  */
 export async function GET(
     request: Request,
