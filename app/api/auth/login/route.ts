@@ -3,6 +3,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { authMiddleware } from '@/lib/middleware/auth';
 
 export async function POST(request: Request) {
   const { email, password } = await request.json();
@@ -48,6 +49,9 @@ export async function POST(request: Request) {
       { status: 401 }
     );
   }
+
+  // // Authenticat the  user
+  // const auth = await authMiddleware(request)
 
   // If successful, return a success message and token
   return NextResponse.json(
