@@ -4,6 +4,16 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
+
+/**
+ * @swagger 
+ *  /api/internships:
+ *  get:
+ *     summary: this route gets all internships available in the databasee
+ *     description: This route gets available internships found in the database. 
+ *     tags:
+ *          - STUDENT 
+ */
 export async function GET(request: Request) {
   const cookieStore = await cookies()
 

@@ -1,6 +1,23 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
+/**
+ * @swagger
+ *  /api/student/[id]:
+ *    put:
+ *     summary: this route updates student profiles
+ *     description: This route updates a particular authenticated student profile and also gets the profile 
+ *     tags:
+ *          - STUDENT 
+ * 
+ *    get:
+ *     summary: this route updates student profiles
+ *     description: This route gets a particular authenticated student profile 
+ *     tags:
+ *          - STUDENT  
+ * 
+ */
+
 export async function PUT(
   request: Request,
   { params }: { params: { id: string } }
@@ -95,6 +112,8 @@ export async function PUT(
     )
   }
 }
+
+
 
 
 
