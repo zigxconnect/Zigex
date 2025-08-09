@@ -46,9 +46,10 @@ export async function POST(request: Request) {
 
   // 2. Create the user in Supabase Auth
   console.log(`Attempting to create auth user for: ${email}`);
-  const { data: authData, error: authError } = await supabaseAdmin.auth.signUp({
+  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
     email,
     password,
+    email_confirm: true, // Automatically confirm the email
   });
 
   // Handle authentication errors
