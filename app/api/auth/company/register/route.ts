@@ -46,10 +46,9 @@ export async function POST(request: Request) {
 
   // 2. Create the user in Supabase Auth
   console.log(`Attempting to create auth user for: ${email}`);
-  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+  const { data: authData, error: authError } = await supabaseAdmin.auth.signUp({
     email,
-    password,
-    email_confirm: true, // Automatically confirm the email
+    password
   });
 
   // Handle authentication errors
@@ -68,7 +67,7 @@ export async function POST(request: Request) {
   if (image && image.size > 0) {
     // 2.1 Upload the company logo to Supabase Storage
     const ext = image.name.split('.').pop() || 'png'; // Default to png if no extension
-    const filePath = `company-assets/${data.company_name}.${ext}`;
+    const filePath = `company-images/${data.company_name}/${authData.user.id[0] + authData.user.id[5] + authData.user.id[10] }/${data.company_name}.${ext}`;
     const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
       .from('company-assets')
       .upload(filePath, image, { contentType: image.type });
