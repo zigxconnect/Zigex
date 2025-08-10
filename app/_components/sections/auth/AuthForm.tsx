@@ -1,14 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
+import { Button } from "@/app/_components/ui/Button";
+import { Input } from "@/app/_components/ui/Input";
+import { Spinner } from "@/app/_components/ui/Spinner";
 import { SocialButton } from "./SocialButton";
 import { GoogleIcon } from "./GoogleIcon";
 import { Cloud, GraduationCap, Eye, EyeOff, Linkedin } from "lucide-react";
-import { Button } from "../../ui/Button";
-import { Input } from "../../ui/Input";
+import { signInAction, signUpAction } from "@/lib/actions/auth.action";
 
+// Schema for the Sign Up form (requires fullName)
+const signUpSchema = z.object({
+  fullName: z
+    .string()
+    .min(2, { message: "Full name must be at least 2 characters." }),
+  email: z.string().email({ message: "Please enter a valid email address." }),
+  password: z
+    .string()
+    .min(6, { message: "Password must be at least 6 characters." }),
+});
+
+// Schema for the Sign In form (does NOT require fullName)
+const signInSchema = z.object({
+  email: z.string().email({ message: "Please enter a valid email address." }),
+  password: z.string().min(1, { message: "Password is required." }),
+});
+
+// A unified type to satisfy the useForm hook, though validation will differ.
+type FormData = z.infer<typeof signUpSchema>;
 type AuthFormProps = { type: "signIn" | "signUp" };
 
 const Divider = () => (
@@ -22,17 +46,20 @@ const Divider = () => (
   </div>
 );
 
-/**
- * AuthForm Component
- * A comprehensive, reusable form for both user sign-in and sign-up.
- * It adapts its content and functionality based on the `type` prop.
- */
 export const AuthForm = ({ type }: AuthFormProps) => {
   const isSignUp = type === "signUp";
   const [showPassword, setShowPassword] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
-  // A configuration object to hold all dynamic text and icons.
-  // This makes the component cleaner and easier to manage.
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormData>({
+    resolver: zodResolver(isSignUp ? signUpSchema : signInSchema),
+  });
+
   const content = {
     signIn: {
       Icon: Cloud,
@@ -60,11 +87,29 @@ export const AuthForm = ({ type }: AuthFormProps) => {
   const finePrint =
     "By continuing, you agree to our Terms of Service and Privacy Policy.";
 
+  const onSubmit = (data: FormData) => {
+    setApiError(null);
+    startTransition(async () => {
+      let result;
+      if (isSignUp) {
+        result = await signUpAction(data);
+      } else {
+        result = await signInAction({
+          email: data.email,
+          password: data.password,
+        });
+      }
+
+      if (result?.error) {
+        setApiError(result.error);
+      }
+    });
+  };
+
   return (
-    // Main card container. Fixed height and flex layout ensure consistent size.
-    <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl flex flex-col justify-center min-h-[650px]">
+    <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl flex flex-col justify-center h-screen fixed top-2 bottom-8 gap-0 left-0 right-0 mx-auto">
       {/* Header Section */}
-      <div className="text-center">
+      <div className="text-center " >
         <div className="mx-auto w-12 h-12 bg-blue-900 rounded-full flex items-center justify-center">
           <currentContent.Icon className="w-7 h-7 text-white" />
         </div>
@@ -86,30 +131,44 @@ export const AuthForm = ({ type }: AuthFormProps) => {
           text={`${currentContent.socialButtonText} with Google`}
         />
       </div>
-
       <Divider />
 
       {/* Main Form Section */}
-      <form className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 ">
         {isSignUp && (
           <div>
             <label className="text-sm font-medium text-gray-700">
               Full Name
             </label>
             <Input
+              id="fullName"
               type="text"
               placeholder="Enter your full name"
               className="mt-1"
+              {...register("fullName")}
+              disabled={isPending}
             />
+            {errors.fullName && (
+              <p className="text-xs text-red-500 mt-1">
+                {errors.fullName.message}
+              </p>
+            )}
           </div>
         )}
         <div>
           <label className="text-sm font-medium text-gray-700">Email</label>
           <Input
+            id="email"
             type="email"
+            autoComplete="email"
             placeholder="Enter your email address"
             className="mt-1"
+            {...register("email")}
+            disabled={isPending}
           />
+          {errors.email && (
+            <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>
+          )}
         </div>
         <div>
           <div className="flex justify-between items-center">
@@ -127,30 +186,51 @@ export const AuthForm = ({ type }: AuthFormProps) => {
           </div>
           <div className="relative mt-1">
             <Input
+              id="password"
               type={showPassword ? "text" : "password"}
-              placeholder={
-                isSignUp ? "Create a strong password" : "Enter your password"
-              }
+              autoComplete={isSignUp ? "new-password" : "current-password"}
+              placeholder="Enter your password"
+              {...register("password")}
+              disabled={isPending}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 cursor-pointer"
+              className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer text-gray-500"
+              disabled={isPending}
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
+          {errors.password && (
+            <p className="text-xs text-red-500 mt-1">
+              {errors.password.message}
+            </p>
+          )}
         </div>
 
-        <Button variant="orange" className="w-full !mt-6 text-base py-2.5">
-          {currentContent.buttonText}
+        {apiError && (
+          <p className="text-sm text-red-500 text-center pt-1">{apiError}</p>
+        )}
+
+        <Button
+          variant="orange"
+          type="submit"
+          className="w-full !mt-6 text-base py-2.5 flex items-center justify-center gap-2"
+          disabled={isPending}
+        >
+          {isPending ? (
+            <>
+              <Spinner />
+              <span>Processing...</span>
+            </>
+          ) : (
+            currentContent.buttonText
+          )}
         </Button>
       </form>
 
-      {/* Spacer to push footer content down */}
-      <div className="flex-grow"></div>
-
-      {/* Footer Links */}
+      
       <p className="text-center text-sm text-gray-600 mt-5">
         {currentContent.linkText}{" "}
         <Link
@@ -160,8 +240,6 @@ export const AuthForm = ({ type }: AuthFormProps) => {
           {currentContent.linkActionText}
         </Link>
       </p>
-
-      {/* Fine Print */}
       <p className="text-center text-xs text-gray-400 pt-2 mt-2">{finePrint}</p>
     </div>
   );

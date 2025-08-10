@@ -30,61 +30,124 @@ export async function PUT(
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
+        get: (name: string) => {
+          
+          return cookieStore.get(name)?.value;
         },
-        set(name: string, value: string, options: CookieOptions) {
-          cookieStore.set({ name, value, ...options })
+        set: (name: string, value: string, options: CookieOptions) => {
+          try {
+            cookieStore.set({ name, value, ...options });
+          } catch (error) {
+            // This can happen if the headers have already been sent, a known issue
+            // in certain Next.js middleware scenarios. It can be safely ignored.
+          }
         },
-        remove(name: string, options: CookieOptions) {
-          cookieStore.set({ name, value: '', ...options })
-        }
-      }
+        remove: (name: string, options: CookieOptions) => {
+          try {
+            cookieStore.set({ name, value: "", ...options });
+          } catch (error) {
+            // Same as above.
+          }
+        },
+      },
     }
-  )
+  );
+}
+
+/**
+ * Handles fetching a single student profile by their user ID.
+ */
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  const supabase = createSupabaseServerClient();
 
   try {
-    // 2. Get session with debug logging
-    const { data: { session }, error: authError } = await supabase.auth.getSession()
-    
-    console.log('Session data:', session)
-    console.log('Auth error:', authError)
-    console.log('Cookies:', cookieStore.getAll())
+    // 1. Get the authenticated user securely to ensure the request is authorized.
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    if (!session?.user) {
-      return new Response(
-        JSON.stringify({ 
-          error: 'Not authenticated',
-          details: authError?.message || 'No session found'
-        }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      )
+    if (!user) {
+      return NextResponse.json(
+        { error: "Unauthorized. Please log in." },
+        { status: 401 }
+      );
     }
 
-    // 3. Verify user owns the profile
-    if (params.id !== session.user.id) {
-      return new Response(
-        JSON.stringify({ 
-          error: 'Unauthorized',
-          detail: 'You can only update your own profile'
-        }),
-        { status: 403, headers: { 'Content-Type': 'application/json' } }
-      )
+    // 2. Get the target user ID from the URL parameters.
+    const { id } = params;
+
+    // 3. Fetch the user profile from the database using the user_id.
+    const { data, error } = await supabase
+      .from("student_profiles")
+      .select("*")
+      .eq("user_id", id) // Query by the `user_id` foreign key.
+      .single();
+
+    if (error) {
+      // If Supabase returns an error (e.g., no profile found), throw it.
+      throw error;
     }
 
-    // 4. Process the update
-    const updates = await request.json()
-    console.log('Request updates:', updates)
+    // 4. Return the user profile data.
+    return NextResponse.json(data, { status: 200 });
+  } catch (error: any) {
+    console.error("API Route Error (GET):", error);
+    return NextResponse.json(
+      { error: "Profile not found or an error occurred." },
+      { status: 404 }
+    );
+  }
+}
+
+/**
+ * Handles updating a student's profile.
+ * This is called by the multi-step form upon submission.
+ */
+export async function PUT(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  const supabase = createSupabaseServerClient();
+  let updates;
+
+  try {
+    // 1. Get the authenticated user securely.
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
+    // 2. Verify that the user is updating their own profile.
+    const { id } = params;
+    if (id !== user.id) {
+      return NextResponse.json(
+        { error: "Unauthorized: You can only update your own profile" },
+        { status: 403 }
+      );
+    }
+
+    // 3. Get the update data from the request body.
+    updates = await request.json();
+
+    // 4. Perform the update in the database.
+    const { education, experience, skills, ...profileData } = updates;
 
     const { data, error: updateError } = await supabase
-      .from('student_profiles')
+      .from("student_profiles")
       .update({
-        ...updates,
-        updated_at: new Date().toISOString()
+        ...profileData,
+        updated_at: new Date().toISOString(),
+        profile_status: "complete",
       })
-      .eq('user_id', params.id)
+      .eq("user_id", id)
       .select()
-      .single()
+      .single();
 
     if (updateError) {
       console.error('Update error:', updateError)
@@ -170,3 +233,4 @@ export async function GET(request: Request, { params }: { params: { id: string }
     // Return the user profile
     return Response.json(data, { status: 200 });
   }
+}

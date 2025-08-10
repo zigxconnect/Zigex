@@ -17,9 +17,9 @@ export const Logo = ({ className, isLink = true }: LogoProps) => {
   const logoContent = (
     <div className={clsx("flex items-center gap-2", className)}>
       {/* You can replace this with an <Image> component if you have a graphical logo */}
-      <div className="w-8 h-8 bg-blue-900 rounded-border" />
+      <div className="w-8 h-8 bg-blue-800 rounded-border" />
       <span
-        className={clsx("text-2xl ext-lg sm:text-xl font-bold hover:text-blue-100 transition-colors duration-200 flex-shrink-0 text-blue-900")}
+        className={clsx("text-2xl ext-lg sm:text-xl font-bold hover:text-blue-100 transition-colors duration-200 flex-shrink-0 text-blue-800")}
 
       >
         FutureProspect

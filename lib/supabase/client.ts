@@ -1,9 +1,13 @@
-import { createClient } from '@supabase/supabase-js'
+import { createBrowserClient } from "@supabase/ssr";
 
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-console.log(supabaseUrl)
-
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+/**
+ * Creates a Supabase client that can run in the browser (in client components).
+ * This version from '@supabase/ssr' is essential for correctly reading the
+ * authentication cookies set by server components and API routes.
+ */
+export function createClient() {
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}

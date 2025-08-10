@@ -1,8 +1,9 @@
 import React from "react";
+import { FaLinkedin, FaTwitter, FaFacebook } from "react-icons/fa";
 
 export const Footer: React.FC = () => {
   return (
-    <footer className="bg-[#1E3A8A] text-[#E2E8F0] py-12 px-6 mt-0 mx-0">
+    <footer className="bg-[#193CB8] text-[#E2E8F0] py-12 px-6 mt-0 mx-0">
       <div className="max-w-7xl flex flex-col md:flex-row gap-10 md:gap-[12rem] p-2">
         <div className="md:w-[26rem]">
           <h3 className="text-2xl font-bold">FutureProspect</h3>
@@ -12,24 +13,16 @@ export const Footer: React.FC = () => {
           </p>
           <div className="flex space-x-4 mt-4">
             <a href="#">
-              <img
-                src="/twitter.png"
-                alt="Twitter"
-                className="w-7 h-7 p-1 text-[24px] bg-[#EA580C] align-middle rounded-md"
+              <FaLinkedin className="w-7 h-7 p-1 text-white text-[24px] bg-[#EA580C] align-middle rounded-md"/>
+            </a>
+            <a href="#">
+              <FaTwitter
+                className="w-7 h-7 p-1  text-white bg-[#EA580C] align-middle rounded-md"
               />
             </a>
             <a href="#">
-              <img
-                src="/twitter.png"
-                alt="Twitter"
-                className="w-7 h-7 p-1 bg-[#EA580C] align-middle rounded-md"
-              />
-            </a>
-            <a href="#">
-              <img
-                src="/linkedin.png"
-                alt="LinkedIn"
-                className="w-7 h-7 p-1  bg-[#EA580C] align-middle rounded-md"
+              <FaFacebook
+                className="w-7 h-7 p-1  text-white  bg-[#EA580C] align-middle rounded-md"
               />
             </a>
           </div>

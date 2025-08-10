@@ -14,6 +14,7 @@ interface Internship {
   logoColor: string;
   badgeColor: string;
   applyLink: string;
+  office: string;
 }
 
 const FeaturedInternships: React.FC = () => {
@@ -29,9 +30,10 @@ const FeaturedInternships: React.FC = () => {
       description: 'Join our dynamic team and work on cutting-edge projects',
       location: 'Bamenda',
       logoText: 'TC',
-      logoColor: 'bg-blue-600',
+      logoColor: 'bg-blue-800',
       badgeColor: 'bg-orange-500',
-      applyLink: '/apply/software-dev'
+      applyLink: '/apply/software-dev',
+      office: "https://i.ibb.co/VchKJd69/seedLogo.webp" 
     },
     {
       id: '2',
@@ -42,7 +44,8 @@ const FeaturedInternships: React.FC = () => {
       logoText: 'CS',
       logoColor: 'bg-orange-600',
       badgeColor: 'bg-orange-500',
-      applyLink: '/apply/marketing'
+      applyLink: '/apply/marketing',
+      office: "https://i.ibb.co/bMcCwpSp/nervtech.png",
     },
     {
       id: '3',
@@ -51,9 +54,10 @@ const FeaturedInternships: React.FC = () => {
       description: 'Learn financial analysis and banking operations',
       location: 'Bamenda',
       logoText: 'BP',
-      logoColor: 'bg-blue-600',
+      logoColor: 'bg-blue-800',
       badgeColor: 'bg-orange-500',
-      applyLink: '/apply/finance'
+      applyLink: '/apply/finance',
+      office: "https://i.ibb.co/yF80L7jc/ccc.png"
     },
     {
       id: '4',
@@ -64,7 +68,8 @@ const FeaturedInternships: React.FC = () => {
       logoText: 'DF',
       logoColor: 'bg-orange-600',
       badgeColor: 'bg-orange-500',
-      applyLink: '/apply/data-analyst'
+      applyLink: '/apply/data-analyst',
+      office: "https://i.ibb.co/qSQTbpk/unib.png"
     },
     {
       id: '5',
@@ -73,9 +78,10 @@ const FeaturedInternships: React.FC = () => {
       description: 'Support recruitment and employee relations',
       location: 'Bamenda',
       logoText: 'PF',
-      logoColor: 'bg-blue-600',
+      logoColor: 'bg-blue-800',
       badgeColor: 'bg-orange-500',
-      applyLink: '/apply/hr'
+      applyLink: '/apply/hr',
+      office: "https://i.ibb.co/MkXDZsfx/Civil-Salt.jpg"
     },
     {
       id: '6',
@@ -86,7 +92,8 @@ const FeaturedInternships: React.FC = () => {
       logoText: 'VA',
       logoColor: 'bg-orange-600',
       badgeColor: 'bg-orange-500',
-      applyLink: '/apply/graphic-design'
+      applyLink: '/apply/graphic-design',
+      office: "https://i.ibb.co/Fk55D4CJ/skye8-internship.jpg"
     }
   ];
 
@@ -207,7 +214,7 @@ const FeaturedInternships: React.FC = () => {
                 key={internship.id}
                 ref={setCardRef(internship.id)}
                 data-card-id={internship.id}
-                className={`bg-white rounded-lg shadow-lg p-4 sm:p-6 relative group cursor-pointer transition-all duration-500 hover:shadow-2xl hover:scale-105 hover:-translate-y-2 ${
+                className={`bg-white rounded-lg md:w-80 w-90 mx-auto shadow-lg md:p-0 sm:p-6 relative group cursor-pointer transition-all duration-500 hover:shadow-2xl hover:scale-105 hover:-translate-y-2 ${
                   visibleCards.has(internship.id) 
                     ? 'card-visible' 
                     : 'card-hidden'
@@ -224,8 +231,18 @@ const FeaturedInternships: React.FC = () => {
                   NEW
                 </div>
 
+                {/* office picture */}
+                <div className="md:w-80 md:h-40 h-45 bg-gray-200 rounded-md overflow-hidden mb-3 ">
+                  <img 
+                    src={internship.office} 
+                    alt={internship.title} 
+                    className=" w-90 h-45 md:w-80 md:h-40 " 
+                  />
+                </div>
+
+
                 {/* Logo and Title */}
-                <div className="flex items-start mb-3 sm:mb-4 relative z-10">
+                <div className="flex items-start mb-3 sm:mb-4 relative z-10 px-7 ">
                   <div className={`${internship.logoColor} text-white rounded-lg w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center font-bold text-sm sm:text-base mr-3 sm:mr-4 flex-shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6`}>
                     {internship.logoText}
                   </div>
@@ -240,12 +257,12 @@ const FeaturedInternships: React.FC = () => {
                 </div>
 
                 {/* Description */}
-                <p className="text-gray-700 text-xs sm:text-sm leading-relaxed mb-4 sm:mb-6 line-clamp-2 transition-colors duration-300 group-hover:text-gray-900 relative z-10">
+                <p className="text-gray-700 px-7   text-xs sm:text-sm leading-relaxed mb-4 sm:mb-6 line-clamp-2 transition-colors duration-300 group-hover:text-gray-900 relative z-10">
                   {internship.description}
                 </p>
 
                 {/* Footer */}
-                <div className="flex items-center justify-between relative z-10">
+                <div className="flex items-center justify-between relative z-10 px-7 pb-5">
                   <div className="flex items-center text-gray-600 text-xs sm:text-sm transition-colors duration-300 group-hover:text-gray-800">
                     <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-1 flex-shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:text-blue-600" />
                     <span className="truncate">{internship.location}</span>

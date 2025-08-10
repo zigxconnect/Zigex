@@ -1,14 +1,7 @@
-import { clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
-
-type TagProps = React.HTMLAttributes<HTMLSpanElement>;
-
-export const Tag = ({ className, ...props }: TagProps) => {
-  const mergedClasses = twMerge(
-    clsx(
-      "inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700",
-      className
-    )
+export const Tag = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <span className="px-3 py-1 text-xs text-orange-800 bg-orange-100 rounded-full font-medium">
+      {children}
+    </span>
   );
-  return <span className={mergedClasses} {...props} />;
 };

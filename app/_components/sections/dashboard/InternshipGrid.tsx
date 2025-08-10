@@ -10,7 +10,7 @@ const mockInternships: Internship[] = [
     isPaid: true,
     skills: ["JavaScript", "React", "Node.js"],
     companyInitial: "TC",
-    office: "Bamenda Office",
+    office: "https://i.ibb.co/Fk55D4CJ/skye8-internship.jpg"
   },
   {
     id: 2,
@@ -21,7 +21,7 @@ const mockInternships: Internship[] = [
     isPaid: true,
     skills: ["Social Media", "Content Creation", "Analytics"],
     companyInitial: "CS",
-    office: "Creative Studio",
+    office:  "https://i.ibb.co/qSQTbpk/unib.png"
   },
   {
     id: 3,
@@ -32,7 +32,7 @@ const mockInternships: Internship[] = [
     isPaid: true,
     skills: ["Excel", "Financial Analysis", "Accounting"],
     companyInitial: "BP",
-    office: "Douala Branch",
+    office: "https://i.ibb.co/yF80L7jc/ccc.png",
   },
   {
     id: 4,
@@ -43,7 +43,7 @@ const mockInternships: Internship[] = [
     isPaid: true,
     skills: ["Python", "SQL", "Data Visualization"],
     companyInitial: "DF",
-    office: "Data Center",
+    office: "https://i.ibb.co/VchKJd69/seedLogo.webp"
   },
   {
     id: 5,
@@ -54,7 +54,8 @@ const mockInternships: Internship[] = [
     isPaid: false,
     skills: ["Communication", "Recruitment", "Employee Relations"],
     companyInitial: "PF",
-    office: "HR Office",
+    office: "https://i.ibb.co/MkXDZsfx/Civil-Salt.jpg"
+    
   },
   {
     id: 6,
@@ -65,7 +66,7 @@ const mockInternships: Internship[] = [
     isPaid: true,
     skills: ["Photoshop", "Illustrator", "Figma"],
     companyInitial: "VA",
-    office: "Design Studio",
+    office: "https://i.ibb.co/bMcCwpSp/nervtech.png"
   },
 ];
 
@@ -83,3 +84,4 @@ export const InternshipGrid = () => {
     </div>
   );
 };
+// upload images to imgbb.com and create the link and replace
