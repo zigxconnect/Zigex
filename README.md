@@ -1,4 +1,4 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+This is  the documentation for futureProspect and how it endpoints works.
 
 ## Getting Started
 
@@ -13,24 +13,51 @@ pnpm dev
 # or
 bun dev
 ```
-
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Student Endpoints
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+These endpoints are for authenticated students.
 
-## Learn More
+### 1. Task Management (by Student)
 
-To learn more about Next.js, take a look at the following resources:
+#### `GET /api/student/tasks`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+-   **Description:** Retrieves all tasks assigned to the currently logged-in student.
+-   **Auth:** Student.
+-   **Success Response (200):** An array of task objects, joined with mentor details.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+#### `PUT /api/student/tasks/[taskId]`
 
-## Deploy on Vercel
+-   **Description:** Updates the status of a specific task. Students can typically only update the `status` field.
+-   **Auth:** Student.
+-   **Params:** `taskId` - The ID of the task to update.
+-   **Request Body:**
+    ```json
+    {
+      "status": "in_progress" // or "completed"
+    }
+    ```
+-   **Success Response (200):** The updated task object.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+#### `POST /api/student/tasks/[taskId]/progress`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+-   **Description:** Submits a new progress log for a specific task.
+-   **Auth:** Student.
+-   **Params:** `taskId` - The ID of the task being updated.
+-   **Request Body:**
+    ```json
+    {
+      "log_content": "I have successfully cloned the repo and installed all dependencies. The project is running on my local machine. I encountered a small issue with Node versions but resolved it by using NVM."
+    }
+    ```
+-   **Success Response (201):** The newly created progress log object.
+
+### 2. Student Directory
+
+#### `GET /api/students/student`
+
+-   **Description:** Retrieves a list of all other registered students on the platform for networking.
+-   **Auth:** Student.
+-   **Success Response (200):** An array of public student profiles (name, university, skills, avatar_url).
+
