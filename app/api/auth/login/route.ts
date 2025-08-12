@@ -13,6 +13,7 @@ export async function POST(request: Request) {
   }
 
   const cookieStore = cookies();
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -44,10 +45,10 @@ export async function POST(request: Request) {
     );
   }
 
-  // 2. THE FIX IS HERE: Check the reliable 'profile_status' field.
+  // 2. Check the reliable 'profile_status' field.
   const { data: profile } = await supabase
     .from("student_profiles")
-    .select("profile_status") // Select the new status field
+    .select("profile_status")
     .eq("user_id", data.user.id)
     .single();
 
@@ -55,7 +56,6 @@ export async function POST(request: Request) {
   return NextResponse.json(
     {
       message: "Login successful",
-      // The logic is now explicit: is the status 'complete'?
       profileComplete: profile?.profile_status === "complete",
     },
     { status: 200 }
