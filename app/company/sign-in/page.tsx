@@ -1,0 +1,10 @@
+import { CompanyAuthForm } from "@/app/_components/sections/auth/CompanyAuthForm";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Company Sign In",
+};
+
+export default function CompanySignInPage() {
+  return <CompanyAuthForm type="signIn" />;
+}
