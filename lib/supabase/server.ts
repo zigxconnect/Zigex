@@ -68,10 +68,8 @@ export function createServerActionClient() {
         set(name: string, value: string, options: CookieOptions) {
           try {
             cookieStore.set({ name, value, ...options });
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          } catch (error) {
-            
-          }
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          } catch (error) {}
         },
         remove(name: string, options: CookieOptions) {
           try {
