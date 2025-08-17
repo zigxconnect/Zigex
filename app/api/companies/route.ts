@@ -5,6 +5,12 @@ import { supabaseAdmin } from '@/lib/supabase/server';
 import { companySchema } from '@/lib/validation/company';
 
 
+
+
+
+
+
+
 // get company info
 /**
  * @swagger
