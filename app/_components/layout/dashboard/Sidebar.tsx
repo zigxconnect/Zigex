@@ -1,19 +1,29 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { Logo } from "@/app/_components/ui/Logo";
 import { Button } from "@/app/_components/ui/Button";
-import { User, Upload, Briefcase, LogOut, X } from "lucide-react";
+import {
+  User,
+  Upload,
+  Briefcase,
+  LogOut,
+  X,
+  Users,
+  TrendingUp,
+} from "lucide-react";
 import { AiOutlineWechat } from "react-icons/ai";
 
 interface SidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
-  activeRoute?: string;
 }
 
+// Updated navigation items
 const navItems = [
-  { href: "/profile-settings", icon: User, label: "Profile Settings" },
+  { href: "/dashboard", icon: User, label: "Dashboard" },
   { href: "/upload-resume", icon: Upload, label: "Upload Resume" },
   {
     href: "/applied-internships",
@@ -21,27 +31,42 @@ const navItems = [
     label: "Applied Internships",
     badge: 5,
   },
-
-   {
-    href: "/chat",
-    icon: AiOutlineWechat,
-    label: "Chat with Fupro Ai",
-    badge: 5,
+  {
+    href: "/dashboard/student-directory",
+    icon: Users,
+    label: "Student Directory",
   },
+  { href: "/track-progress", icon: TrendingUp, label: "Track Progress" },
+  { href: "/dashboard/fupro-ai", icon: AiOutlineWechat, label: "Chat with Fupro Ai" },
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({
   isOpen = false,
   onClose,
-  activeRoute = "/applied-internships",
 }) => {
+  const pathname = usePathname(); // Get the current URL path
+
   const handleLinkClick = () => {
     if (onClose) onClose();
   };
 
+  const handleSignOut = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      // Use window.location.href for a robust, full-page reload to the homepage
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Logout failed:", error);
+      alert("Logout failed. Please try again.");
+    }
+  };
+
   return (
     <>
-      {/* Overlay for mobile/tablet, shown when the sidebar is open */}
+      {/* 
+        THE Z-INDEX FIX - PART 1:
+        The overlay now has a high z-index (z-40) to appear above other content but below the sidebar.
+      */}
       {isOpen && (
         <div
           className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 lg:hidden"
@@ -50,7 +75,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
         />
       )}
 
-      {/* The Sidebar itself. It is ALWAYS a fixed panel. */}
+      {/* 
+        THE Z-INDEX FIX - PART 2:
+        The sidebar itself has the highest z-index (z-50) to ensure it is always on top.
+      */}
       <aside
         className={`w-64 flex-col bg-white fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out flex shadow-lg
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
@@ -72,7 +100,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;
-              const isActive = activeRoute === item.href;
+              // Active state is now determined by the current URL `pathname`
+              const isActive = pathname === item.href;
               return (
                 <Link
                   key={item.href}
@@ -112,6 +141,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <Button
             variant="secondary-outline"
             className="w-full justify-start gap-3 hover:bg-red-50 hover:text-red-600 hover:border-red-300"
+            onClick={handleSignOut}
           >
             <LogOut size={20} />
             <span>Sign Out</span>

@@ -2,19 +2,22 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/navigation"; // Import the router for client-side redirection
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+
 import { Button } from "@/app/_components/ui/Button";
 import { Input } from "@/app/_components/ui/Input";
-import { Spinner } from "@/app/_components/ui/Spinner"; // NEW: Import the spinner
+import { Spinner } from "@/app/_components/ui/Spinner";
 import { SocialButton } from "./SocialButton";
 import { GoogleIcon } from "./GoogleIcon";
 import { Cloud, GraduationCap, Eye, EyeOff, Linkedin } from "lucide-react";
+// REMOVED: No longer importing Server Actions
+// import { signInAction, signUpAction } from "@/lib/actions/auth.action";
 
-// Validation schema using Zod
-const formSchema = z.object({
+// Schema for the Sign Up form
+const signUpSchema = z.object({
   fullName: z
     .string()
     .min(2, { message: "Full name must be at least 2 characters." }),
@@ -24,8 +27,13 @@ const formSchema = z.object({
     .min(6, { message: "Password must be at least 6 characters." }),
 });
 
-type SignUpFormData = z.infer<typeof formSchema>;
-type SignInFormData = Omit<SignUpFormData, "fullName">;
+// Schema for the Sign In form
+const signInSchema = z.object({
+  email: z.string().email({ message: "Please enter a valid email address." }),
+  password: z.string().min(1, { message: "Password is required." }),
+});
+
+type FormData = z.infer<typeof signUpSchema>;
 type AuthFormProps = { type: "signIn" | "signUp" };
 
 const Divider = () => (
@@ -49,9 +57,8 @@ export const AuthForm = ({ type }: AuthFormProps) => {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<SignUpFormData>({
-    resolver: zodResolver(formSchema),
-    shouldUnregister: !isSignUp,
+  } = useForm<FormData>({
+    resolver: zodResolver(isSignUp ? signUpSchema : signInSchema),
   });
 
   const content = {
@@ -81,43 +88,48 @@ export const AuthForm = ({ type }: AuthFormProps) => {
   const finePrint =
     "By continuing, you agree to our Terms of Service and Privacy Policy.";
 
-  const onSubmit = async (data: SignUpFormData | SignInFormData) => {
+  // THE MAIN FIX IS HERE: This function now uses `fetch` to call your API routes.
+  const onSubmit = async (data: FormData) => {
     setApiError(null);
     if (isSignUp) {
       try {
+        // Step 1: Register the user. The API handles auto-login.
         const registerResponse = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         });
         const registerData = await registerResponse.json();
-        if (!registerResponse.ok)
+        if (!registerResponse.ok) {
           throw new Error(registerData.error || "Sign-up failed.");
+        }
 
-        const loginResponse = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: data.email, password: data.password }),
-        });
-        if (!loginResponse.ok)
-          throw new Error("Auto-login failed after sign-up.");
-
+        // Step 2: The API has already logged the user in, so we can redirect.
         router.push("/create-profile");
       } catch (err) {
         setApiError((err as Error).message);
       }
     } else {
+      // --- SIGN IN LOGIC ---
       try {
         const response = await fetch("/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
+          body: JSON.stringify({ email: data.email, password: data.password }),
         });
         const responseData = await response.json();
-        if (!response.ok)
-          throw new Error(responseData.error || "Login failed.");
-        if (responseData.profileComplete) router.push("/dashboard");
-        else router.push("/create-profile");
+        if (!response.ok) {
+          throw new Error(
+            responseData.error || "Login failed. Please check your credentials."
+          );
+        }
+
+        // Intelligently redirect based on the API response
+        if (responseData.profileComplete) {
+          router.push("/dashboard");
+        } else {
+          router.push("/create-profile");
+        }
       } catch (err) {
         setApiError((err as Error).message);
       }
@@ -202,14 +214,14 @@ export const AuthForm = ({ type }: AuthFormProps) => {
               id="password"
               type={showPassword ? "text" : "password"}
               autoComplete={isSignUp ? "new-password" : "current-password"}
-              placeholder="Create a strong password"
+              placeholder="Enter your password"
               {...register("password")}
               disabled={isSubmitting}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 cursor-pointer"
+              className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer text-gray-500"
               disabled={isSubmitting}
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}

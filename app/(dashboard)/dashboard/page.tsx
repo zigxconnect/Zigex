@@ -1,73 +1,26 @@
 import { redirect } from "next/navigation";
-
-import { InternshipCard } from "@/app/_components/sections/dashboard/InternshipCard";
+import { allInternships } from "@/lib/data/internshipData";
 import { WelcomeCard } from "@/app/_components/sections/dashboard/WelcomeCard";
-import { Sparkles } from "lucide-react";
-import { createServerActionClient } from "@/lib/supabase/server";
 import { DashboardSearch } from "@/app/_components/sections/dashboard/InternshipSearch";
-
-// Mock data for recommendations can remain for now
-const recommendedInternships = [
-  {
-    title: "Frontend Developer Intern",
-    company: "Vercel",
-    location: "Remote",
-    type: "Full-time",
-    skills: ["React", "Next.js", "TypeScript"],
-  },
-  {
-    title: "UX/UI Design Intern",
-    company: "Figma",
-    location: "San Francisco",
-    type: "Part-time",
-    skills: ["UI Design", "Prototyping"],
-  },
-];
+import { InternshipCard } from "@/app/_components/sections/dashboard/InternshipCard";
+import { Sparkles } from "lucide-react";
+import { getProfileInfo } from "@/lib/actions/profile.actions";
 
 /**
- * The main dashboard page, now an async Server Component that securely fetches user data directly.
+ * The main dashboard page, now refactored to use a Server Action
+ * to fetch all necessary user data.
  */
 export default async function DashboardPage() {
-  const supabase = createServerActionClient();
+  const userData = await getProfileInfo();
 
-  // 1. Get the current user's session securely.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    // This is a safeguard, as the middleware should already handle this.
+  if (!userData) {
     redirect("/sign-in");
   }
 
-  // 2. Fetch the user's complete profile from the database.
-  // This request is made directly from the server to the database.
-  const { data: profile } = await supabase
-    .from("student_profiles")
-    .select("*")
-    .eq("user_id", user.id) // Query by the foreign key `user_id`
-    .single();
-
-  if (!profile) {
-    // If the profile doesn't exist, ensure they complete it.
-    redirect("/create-profile");
-  }
-
-  // 3. Prepare the real, fetched data to be passed to the WelcomeCard.
-  const userData = {
-    name: profile.full_name || "New User",
-    avatarUrl: profile.avatar_url,
-    initials:
-      `${profile.first_name?.[0] || ""}${
-        profile.last_name?.[0] || ""
-      }`.toUpperCase() || "FU",
-    university: profile.university || "University not specified",
-    skills: profile.hard_skills || [],
-    coverImageUrl: "/placeholder-cover.jpg", // This can be a future field in your DB
-  };
+  const internships = allInternships;
 
   return (
     <div className="md:p-6 lg:p-8 space-y-8">
-      {/* Pass the real, fetched user data to the WelcomeCard */}
       <WelcomeCard user={userData} />
 
       <DashboardSearch />
@@ -79,9 +32,20 @@ export default async function DashboardPage() {
             Recommended For You
           </h2>
         </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-6 md:px-0">
-          {recommendedInternships.map((internship, index) => (
-            <InternshipCard key={index} {...internship} />
+          {internships.slice(0, 9).map((internship) => (
+            <InternshipCard
+              key={internship.id}
+              id={internship.id}
+              headQuarterImage={internship.headQuarterImage}
+              title={internship.title}
+              company={internship.company}
+              location={internship.location}
+              type={internship.type}
+              category={internship.category}
+              logoColor={internship.logoColor}
+            />
           ))}
         </div>
       </div>

@@ -1,48 +1,122 @@
-"use server"
+"use server";
 
-// lib/auth/server-actions.ts
 import { createServerActionClient } from "@/lib/supabase/server";
+import { z } from "zod";
 import { redirect } from "next/navigation";
-import { User } from "@supabase/supabase-js";
-
-// Return type for auth functions
-interface AuthResult {
-  user: User;
-  isAuthenticated: true;
-}
-// BELOW IS CALLED A DOCUMENTATION IN JS/TS HOVER WERE THE FUNCTION IS CALLED TO SEE MORE
 
 /**
- * Server action to check if user is authenticated
- * @param redirectTo - Where to redirect if not authenticated
- * @returns User data
+ * Server Action to check if a user is already authenticated.
+ * Used to protect pages like /sign-in from logged-in users.
  */
 export async function checkAuthStatus(
-  redirectTo: string = "/sign-in"
-): Promise<AuthResult> {
+  redirectTo: string = "/dashboard"
+): Promise<void> {
   const supabase = createServerActionClient();
-
-  // Check if user is authenticated
   const {
     data: { user },
-    error: authError
   } = await supabase.auth.getUser();
 
-  if (!user || authError) {
+  // If a user is found, they are already logged in. Redirect them.
+  if (user) {
     redirect(redirectTo);
   }
+}
 
-  return {
-    user,
-    isAuthenticated: true as const
-  };
+// Validation schema for the Sign-Up form
+const signUpSchema = z.object({
+  fullName: z.string().min(2, "Full name is required."),
+  email: z.string().email("A valid email is required."),
+  password: z.string().min(6, "Password must be at least 6 characters."),
+});
+
+// Validation schema for the Sign-In form
+const signInSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1, "Password is required."),
+});
+
+/**
+ * Server Action for User Sign-Up
+ * Handles registration, auto-login, and redirection.
+ * Relies on a database trigger to create the user's profile.
+ */
+export async function signUpAction(formData: z.infer<typeof signUpSchema>) {
+  const supabase = createServerActionClient();
+
+  const result = signUpSchema.safeParse(formData);
+  if (!result.success) {
+    return { error: "Invalid form data. Please check your inputs." };
+  }
+
+  const { email, password, fullName } = result.data;
+
+  // 1. Create the user in Supabase Auth.
+  const { error: signUpError } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        full_name: fullName, // Pass fullName to be used by the database trigger
+      },
+    },
+  });
+
+  if (signUpError) {
+    return { error: signUpError.message };
+  }
+
+  // 2. Immediately log the new user in to create a session.
+  const { error: signInError } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (signInError) {
+    return {
+      error:
+        "Registration successful, but auto-login failed. Please log in manually.",
+    };
+  }
+
+  // 3. If everything is successful, redirect to the profile creation page.
+  redirect("/create-profile");
 }
 
 /**
- * Lightweight version that checks authentication with default redirect
+ * Server Action for User Sign-In
+ * Handles login and redirects the user based on their profile completion status.
  */
-export async function requireAuth(
-  redirectTo: string = "/sign-in"
-): Promise<AuthResult> {
-  return checkAuthStatus(redirectTo);
+export async function signInAction(formData: z.infer<typeof signInSchema>) {
+  const supabase = createServerActionClient();
+
+  const result = signInSchema.safeParse(formData);
+  if (!result.success) {
+    return { error: "Invalid form data. Please check your inputs." };
+  }
+
+  const { email, password } = result.data;
+
+  // 1. Log the user in.
+  const { error: signInError, data } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (signInError || !data.user) {
+    return { error: "Invalid email or password. Please try again." };
+  }
+
+  // 2. Check the user's profile status.
+  const { data: profile } = await supabase
+    .from("student_profiles")
+    .select("profile_status")
+    .eq("user_id", data.user.id)
+    .single();
+
+  // 3. Redirect based on the profile status.
+  if (profile?.profile_status === "complete") {
+    redirect("/dashboard");
+  } else {
+    redirect("/create-profile");
+  }
 }

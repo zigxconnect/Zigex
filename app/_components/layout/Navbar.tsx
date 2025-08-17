@@ -15,9 +15,9 @@ const Navbar: React.FC = () => {
 
   const navItems: NavItem[] = [
     { name: "Home", href: "/" },
-    { name: "Jobs", href: "/jobs" },
-    { name: "Companies", href: "/companies" },
-    { name: "About", href: "/about" },
+    { name: "Jobs", href: "#" },
+    { name: "Companies", href: "#" },
+    { name: "About", href: "#" },
   ];
 
   const isActive = (href: string): boolean => {
