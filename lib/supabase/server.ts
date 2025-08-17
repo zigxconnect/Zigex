@@ -1,6 +1,13 @@
+<<<<<<< HEAD
 import { createServerClient, CookieOptions } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
+=======
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { createClient } from "@supabase/supabase-js";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { cookies } from "next/headers";
+>>>>>>> 273ed6e6992338811da974c3ebbec65e700ee996
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!||"https://tmvipinvvhgklmqwvows.supabase.co";
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!|| "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRtdmlwaW52dmhna2xtcXd2b3dzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MjE4MjQ4MiwiZXhwIjoyMDY3NzU4NDgyfQ.8YJlls7rDdK5DvezGosyRbk7gMUHXXAK8XqZlwGZMWU";
@@ -45,8 +52,9 @@ export async function createServerActionClient() {
         set(name: string, value: string, options: CookieOptions) {
           try {
             cookieStore.set({ name, value, ...options });
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           } catch (error) {
-            // This is a known issue with Next.js Middleware and can be safely ignored
+            
           }
         },
         remove(name: string, options: CookieOptions) {

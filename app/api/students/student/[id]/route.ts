@@ -31,23 +31,17 @@ export async function PUT(
     {
       cookies: {
         get: (name: string) => {
-          
           return cookieStore.get(name)?.value;
         },
         set: (name: string, value: string, options: CookieOptions) => {
           try {
             cookieStore.set({ name, value, ...options });
-          } catch (error) {
-            // This can happen if the headers have already been sent, a known issue
-            // in certain Next.js middleware scenarios. It can be safely ignored.
-          }
+          } catch (error) {}
         },
         remove: (name: string, options: CookieOptions) => {
           try {
             cookieStore.set({ name, value: "", ...options });
-          } catch (error) {
-            // Same as above.
-          }
+          } catch (error) {}
         },
       },
     }
@@ -87,7 +81,6 @@ export async function GET(
       .single();
 
     if (error) {
-      // If Supabase returns an error (e.g., no profile found), throw it.
       throw error;
     }
 
@@ -111,7 +104,6 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   const supabase = createSupabaseServerClient();
-  let updates;
 
   try {
     // 1. Get the authenticated user securely.
@@ -133,15 +125,13 @@ export async function PUT(
     }
 
     // 3. Get the update data from the request body.
-    updates = await request.json();
+    const updates = await request.json();
 
     // 4. Perform the update in the database.
-    const { education, experience, skills, ...profileData } = updates;
-
     const { data, error: updateError } = await supabase
       .from("student_profiles")
       .update({
-        ...profileData,
+        ...updates,
         updated_at: new Date().toISOString(),
         profile_status: "complete",
       })

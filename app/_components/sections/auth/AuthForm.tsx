@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation"; // Import the router for client-side redirection
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -12,9 +13,10 @@ import { Spinner } from "@/app/_components/ui/Spinner";
 import { SocialButton } from "./SocialButton";
 import { GoogleIcon } from "./GoogleIcon";
 import { Cloud, GraduationCap, Eye, EyeOff, Linkedin } from "lucide-react";
-import { signInAction, signUpAction } from "@/lib/actions/auth.action";
+// REMOVED: No longer importing Server Actions
+// import { signInAction, signUpAction } from "@/lib/actions/auth.action";
 
-// Schema for the Sign Up form (requires fullName)
+// Schema for the Sign Up form
 const signUpSchema = z.object({
   fullName: z
     .string()
@@ -25,13 +27,12 @@ const signUpSchema = z.object({
     .min(6, { message: "Password must be at least 6 characters." }),
 });
 
-// Schema for the Sign In form (does NOT require fullName)
+// Schema for the Sign In form
 const signInSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
   password: z.string().min(1, { message: "Password is required." }),
 });
 
-// A unified type to satisfy the useForm hook, though validation will differ.
 type FormData = z.infer<typeof signUpSchema>;
 type AuthFormProps = { type: "signIn" | "signUp" };
 
@@ -48,14 +49,14 @@ const Divider = () => (
 
 export const AuthForm = ({ type }: AuthFormProps) => {
   const isSignUp = type === "signUp";
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(isSignUp ? signUpSchema : signInSchema),
   });
@@ -87,29 +88,57 @@ export const AuthForm = ({ type }: AuthFormProps) => {
   const finePrint =
     "By continuing, you agree to our Terms of Service and Privacy Policy.";
 
-  const onSubmit = (data: FormData) => {
+  // THE MAIN FIX IS HERE: This function now uses `fetch` to call your API routes.
+  const onSubmit = async (data: FormData) => {
     setApiError(null);
-    startTransition(async () => {
-      let result;
-      if (isSignUp) {
-        result = await signUpAction(data);
-      } else {
-        result = await signInAction({
-          email: data.email,
-          password: data.password,
+    if (isSignUp) {
+      try {
+        // Step 1: Register the user. The API handles auto-login.
+        const registerResponse = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
         });
-      }
+        const registerData = await registerResponse.json();
+        if (!registerResponse.ok) {
+          throw new Error(registerData.error || "Sign-up failed.");
+        }
 
-      if (result?.error) {
-        setApiError(result.error);
+        // Step 2: The API has already logged the user in, so we can redirect.
+        router.push("/create-profile");
+      } catch (err) {
+        setApiError((err as Error).message);
       }
-    });
+    } else {
+      // --- SIGN IN LOGIC ---
+      try {
+        const response = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: data.email, password: data.password }),
+        });
+        const responseData = await response.json();
+        if (!response.ok) {
+          throw new Error(
+            responseData.error || "Login failed. Please check your credentials."
+          );
+        }
+
+        // Intelligently redirect based on the API response
+        if (responseData.profileComplete) {
+          router.push("/dashboard");
+        } else {
+          router.push("/create-profile");
+        }
+      } catch (err) {
+        setApiError((err as Error).message);
+      }
+    }
   };
 
   return (
-    <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl flex flex-col justify-center h-screen fixed top-2 bottom-8 gap-0 left-0 right-0 mx-auto">
-      {/* Header Section */}
-      <div className="text-center " >
+    <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl flex flex-col justify-center min-h-[650px]">
+      <div className="text-center">
         <div className="mx-auto w-12 h-12 bg-blue-900 rounded-full flex items-center justify-center">
           <currentContent.Icon className="w-7 h-7 text-white" />
         </div>
@@ -118,8 +147,6 @@ export const AuthForm = ({ type }: AuthFormProps) => {
         </h1>
         <p className="mt-1 text-sm text-gray-600">{currentContent.subtitle}</p>
       </div>
-
-      {/* Social Login Section */}
       <div className="mt-5 space-y-3">
         <SocialButton
           icon={Linkedin}
@@ -132,9 +159,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
         />
       </div>
       <Divider />
-
-      {/* Main Form Section */}
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 ">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {isSignUp && (
           <div>
             <label className="text-sm font-medium text-gray-700">
@@ -146,7 +171,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
               placeholder="Enter your full name"
               className="mt-1"
               {...register("fullName")}
-              disabled={isPending}
+              disabled={isSubmitting}
             />
             {errors.fullName && (
               <p className="text-xs text-red-500 mt-1">
@@ -164,7 +189,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
             placeholder="Enter your email address"
             className="mt-1"
             {...register("email")}
-            disabled={isPending}
+            disabled={isSubmitting}
           />
           {errors.email && (
             <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>
@@ -191,13 +216,13 @@ export const AuthForm = ({ type }: AuthFormProps) => {
               autoComplete={isSignUp ? "new-password" : "current-password"}
               placeholder="Enter your password"
               {...register("password")}
-              disabled={isPending}
+              disabled={isSubmitting}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer text-gray-500"
-              disabled={isPending}
+              disabled={isSubmitting}
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -208,18 +233,16 @@ export const AuthForm = ({ type }: AuthFormProps) => {
             </p>
           )}
         </div>
-
         {apiError && (
           <p className="text-sm text-red-500 text-center pt-1">{apiError}</p>
         )}
-
         <Button
           variant="orange"
           type="submit"
           className="w-full !mt-6 text-base py-2.5 flex items-center justify-center gap-2"
-          disabled={isPending}
+          disabled={isSubmitting}
         >
-          {isPending ? (
+          {isSubmitting ? (
             <>
               <Spinner />
               <span>Processing...</span>
@@ -229,8 +252,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
           )}
         </Button>
       </form>
-
-      
+      <div className="flex-grow"></div>
       <p className="text-center text-sm text-gray-600 mt-5">
         {currentContent.linkText}{" "}
         <Link
