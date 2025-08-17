@@ -18,7 +18,6 @@ export const VerifyOtpForm = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email");
-
   const {
     register,
     handleSubmit,
@@ -29,18 +28,23 @@ export const VerifyOtpForm = () => {
   });
 
   const onSubmit = async (data: FormData) => {
-    console.log("Verifying OTP:", data.token, "for email:", email);
+    console.log(
+      "Simulating OTP verification:",
+      data.token,
+      "for email:",
+      email
+    );
     await new Promise((resolve) => setTimeout(resolve, 1000));
     router.push("/admin/postings");
   };
 
   if (!email) {
     return (
-      <div className="text-center text-red-500">
+      <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl text-center text-red-500">
         <p>Error: Email not found in URL.</p>
         <p>
           Please{" "}
-          <a href="/sign-in" className="underline">
+          <a href="/sign-in" className="underline font-semibold">
             try signing in again
           </a>
           .
@@ -64,7 +68,6 @@ export const VerifyOtpForm = () => {
           enter it below.
         </p>
       </div>
-
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-8">
         <div>
           <label className="text-sm font-medium text-gray-700">
