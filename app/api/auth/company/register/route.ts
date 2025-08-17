@@ -27,9 +27,10 @@ import { authMiddleware } from '@/lib/middleware/auth';
  */
 export async function POST(request: Request) {
   // 1. Get and validate the required fields from the request body
-  const formData = await request.formData();
-  const image = formData.get('image') as File
-  const data = Object.fromEntries(formData.entries());
+  // const formData = await request.formData();
+  const data  = await request.json()
+  // const image = formData.get('image') as File
+  // const data = Object.fromEntries(formData.entries());
   const { email, password, company_name } = data;
 
   console.log(email)
@@ -63,31 +64,31 @@ export async function POST(request: Request) {
   console.log(`Auth user created successfully with ID: ${authData.user.id}`);
   const userId = authData.user.id;
 
-  let logoUrl : string = '';
-  if (image && image.size > 0) {
-    // 2.1 Upload the company logo to Supabase Storage
-    const ext = image.name.split('.').pop() || 'png'; // Default to png if no extension
-    const filePath = `company-images/${data.company_name}/${authData.user.id[0] + authData.user.id[5] + authData.user.id[10] }/${data.company_name}.${ext}`;
-    const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
-      .from('company-assets')
-      .upload(filePath, image, { contentType: image.type });
-    // Handle upload errors
-    if (uploadError) {
-      console.error('Supabase Storage Upload Error:', uploadError);
-      // If upload fails, we MUST delete the auth user to avoid orphans.
-      console.log(`Attempting to clean up and delete orphaned auth user: ${userId}`);
-      await supabaseAdmin.auth.admin.deleteUser(userId);
-      console.log(`Cleanup successful for user: ${userId}`);
-      return NextResponse.json(
-        { error: 'Failed to upload company logo.' },
-        { status: 500 }
-      );
-    }
+  // let logoUrl : string = '';
+  // if (image && image.size > 0) {
+  //   // 2.1 Upload the company logo to Supabase Storage
+  //   const ext = image.name.split('.').pop() || 'png'; // Default to png if no extension
+  //   const filePath = `company-images/${data.company_name}/${authData.user.id[0] + authData.user.id[5] + authData.user.id[10] }/${data.company_name}.${ext}`;
+  //   const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
+  //     .from('company-assets')
+  //     .upload(filePath, image, { contentType: image.type });
+  //   // Handle upload errors
+  //   if (uploadError) {
+  //     console.error('Supabase Storage Upload Error:', uploadError);
+  //     // If upload fails, we MUST delete the auth user to avoid orphans.
+  //     console.log(`Attempting to clean up and delete orphaned auth user: ${userId}`);
+  //     await supabaseAdmin.auth.admin.deleteUser(userId);
+  //     console.log(`Cleanup successful for user: ${userId}`);
+  //     return NextResponse.json(
+  //       { error: 'Failed to upload company logo.' },
+  //       { status: 500 }
+  //     );
+  //   }
 
-    logoUrl = supabaseAdmin.storage
-      .from('company-assets')
-      .getPublicUrl(filePath).data.publicUrl;
-  }
+  //   logoUrl = supabaseAdmin.storage
+  //     .from('company-assets')
+  //     .getPublicUrl(filePath).data.publicUrl;
+  // }
 
   // 3. Create the corresponding profile in the 'company_profile' table
   console.log(`Attempting to create profile for user ID: ${userId}`);
@@ -95,7 +96,7 @@ export async function POST(request: Request) {
     {
       ...data, 
       user_id: userId,
-      logo_url: logoUrl, // Use the uploaded logo URL if available
+      // logo_url: logoUrl, // Use the uploaded logo URL if available
       }
     )
   const { error: profileError } = await supabaseAdmin

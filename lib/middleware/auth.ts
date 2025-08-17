@@ -5,7 +5,8 @@ import { supabaseAdmin } from "../supabase/server";
 
 export async function authMiddleware(request: Request) {
     const authHeader = request.headers.get("Authorization");
-    const token = authHeader ? authHeader.split(" ")[1] : null;
+    const split = authHeader ? authHeader.split(" ").filter(value => value!=""&& value): null;
+    const token = split? split[1] : null
 
     if(!token) {
         return NextResponse.json(
@@ -13,6 +14,7 @@ export async function authMiddleware(request: Request) {
             { status: 401 }
         )
     }
+
 
     const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
 

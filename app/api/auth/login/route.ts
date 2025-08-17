@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -57,6 +57,7 @@ export async function POST(request: Request) {
     {
       message: "Login successful",
       profileComplete: profile?.profile_status === "complete",
+      token: data.session?.access_token,
     },
     { status: 200 }
   );
