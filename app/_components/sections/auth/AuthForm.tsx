@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation"; // Import the router for client-side redirection
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -13,8 +13,6 @@ import { Spinner } from "@/app/_components/ui/Spinner";
 import { SocialButton } from "./SocialButton";
 import { GoogleIcon } from "./GoogleIcon";
 import { Cloud, GraduationCap, Eye, EyeOff, Linkedin } from "lucide-react";
-// REMOVED: No longer importing Server Actions
-// import { signInAction, signUpAction } from "@/lib/actions/auth.action";
 
 // Schema for the Sign Up form
 const signUpSchema = z.object({
@@ -88,29 +86,36 @@ export const AuthForm = ({ type }: AuthFormProps) => {
   const finePrint =
     "By continuing, you agree to our Terms of Service and Privacy Policy.";
 
-  // THE MAIN FIX IS HERE: This function now uses `fetch` to call your API routes.
   const onSubmit = async (data: FormData) => {
     setApiError(null);
     if (isSignUp) {
       try {
-        // Step 1: Register the user. The API handles auto-login.
         const registerResponse = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
+          body: JSON.stringify({
+            email: data.email,
+            password: data.password,
+            fullName: data.fullName,
+          }),
         });
         const registerData = await registerResponse.json();
-        if (!registerResponse.ok) {
+        if (!registerResponse.ok)
           throw new Error(registerData.error || "Sign-up failed.");
-        }
 
-        // Step 2: The API has already logged the user in, so we can redirect.
+        const loginResponse = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: data.email, password: data.password }),
+        });
+        if (!loginResponse.ok)
+          throw new Error("Auto-login failed after sign-up.");
+
         router.push("/create-profile");
       } catch (err) {
         setApiError((err as Error).message);
       }
     } else {
-      // --- SIGN IN LOGIC ---
       try {
         const response = await fetch("/api/auth/login", {
           method: "POST",
@@ -118,18 +123,10 @@ export const AuthForm = ({ type }: AuthFormProps) => {
           body: JSON.stringify({ email: data.email, password: data.password }),
         });
         const responseData = await response.json();
-        if (!response.ok) {
-          throw new Error(
-            responseData.error || "Login failed. Please check your credentials."
-          );
-        }
-
-        // Intelligently redirect based on the API response
-        if (responseData.profileComplete) {
-          router.push("/dashboard");
-        } else {
-          router.push("/create-profile");
-        }
+        if (!response.ok)
+          throw new Error(responseData.error || "Login failed.");
+        if (responseData.profileComplete) router.push("/dashboard");
+        else router.push("/create-profile");
       } catch (err) {
         setApiError((err as Error).message);
       }
@@ -252,17 +249,37 @@ export const AuthForm = ({ type }: AuthFormProps) => {
           )}
         </Button>
       </form>
+
       <div className="flex-grow"></div>
-      <p className="text-center text-sm text-gray-600 mt-5">
-        {currentContent.linkText}{" "}
-        <Link
-          href={currentContent.linkHref}
-          className="font-semibold text-orange-500 hover:underline cursor-pointer"
-        >
-          {currentContent.linkActionText}
-        </Link>
-      </p>
-      <p className="text-center text-xs text-gray-400 pt-2 mt-2">{finePrint}</p>
+
+      {/* Footer Links Section */}
+      <div className="space-y-4 text-center mt-5">
+        {/* This link ONLY appears on the sign-up page */}
+        {isSignUp && (
+          <p className="text-sm text-gray-500">
+            Looking to hire?{" "}
+            <Link
+              href="company/sign-up"
+              className="font-semibold text-orange-500 hover:underline"
+            >
+              Sign up as a company
+            </Link>
+          </p>
+        )}
+
+        {/* This is the original link to toggle between sign-in/sign-up */}
+        <p className="text-sm text-gray-600">
+          {currentContent.linkText}{" "}
+          <Link
+            href={currentContent.linkHref}
+            className="font-semibold text-orange-500 hover:underline cursor-pointer"
+          >
+            {currentContent.linkActionText}
+          </Link>
+        </p>
+      </div>
+
+      <p className="text-center text-xs text-gray-400 pt-4 mt-2">{finePrint}</p>
     </div>
   );
 };

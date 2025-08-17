@@ -2,9 +2,9 @@ import { CompanyAuthForm } from "@/app/_components/sections/auth/CompanyAuthForm
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Company Sign In",
+  title: "Company Registration",
 };
 
-export default function CompanySignInPage() {
-  return <CompanyAuthForm type="signIn" />;
+export default function CompanySignUpPage() {
+  return <CompanyAuthForm />;
 }

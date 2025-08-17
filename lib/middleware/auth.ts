@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "../supabase/server";
-import { profile } from "console";
+
 
 
 export async function authMiddleware(request: Request) {
