@@ -190,7 +190,49 @@ const baseInternshipSources = [
   "https://tratz.tech/",
   "https://civilsalt.com/",
   "https://techchantier.com/",
-  // ... rest of your sources
+// // Your list of websites remains the same
+// Job & Internship Aggregators
+"https://www.cameroondesk.com/category/internship/",
+"https://www.akwajobs.com/",
+"https://www.iagora.com/work/internships/cameroon",
+"https://www.goabroad.com/intern-abroad/cameroon",
+"https://www.gooverseas.com/internships-abroad/cameroon",
+"https://payyourinterns.com/",
+"https://princemesue.com/",
+"https://untalent.org/internships",
+"https://uncareer.net/",
+"https://aijobs.net/",
+"https://skye8.tech/",
+// Tech, Creative & Innovation Hubs
+"https://innovatewithseed.com/",
+"https://www.skyborn.cm/",
+"https://tratz.tech/",
+"https://civilsalt.com/",
+"https://techchantier.com/",
+"https://www.oppnergy.com/",
+"https://nasiatech.com/",
+"https://www.zixtechcorporation.com/",
+"https://www.activspaces.com/",
+"https://skademy.org/",
+"https://waspito.com/",
+"http://agrixtech.com/",
+"https://www.clonesystems.org/",
+"https://njaka.com/",
+// Media & Digital Marketing
+"https://fabafriq.com/",
+"https://www.makonjomedia.com/",
+// NGOs and Development Organizations
+"https://lukmefcameroon.org/",
+"https://www.hisrcameroon.org/",
+"https://gci-cameroon.org/",
+"https://www.icenecdev.org/",
+"https://hofna.org/",
+"http://rudec.org/",
+// Professional Services & Other Institutions
+"https://www.wso2.com/careers/internships/", // WSO2 Main Internship Page
+"https://www.pwc.com/cm/en.html", // PwC Cameroon
+"https://www.cuib-cameroon.net/", // Catholic University Institute of Buea (CUIB)
+"https://www.ubuea.cm/" // University of Buea
 ];
 
 // Enhanced system prompt with personalization
