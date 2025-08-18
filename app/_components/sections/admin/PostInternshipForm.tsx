@@ -63,12 +63,16 @@ export const PostInternshipForm = () => {
     }));
   };
 
+  const token = localStorage.getItem('authToken');
+  console.log('Token:', token);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const response = await fetch('/api/companies/internships', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer ${token}'
       },
       body: JSON.stringify({
         ...formData,

@@ -7,6 +7,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
  * @swagger
  * /api/companies/applications/[id]:
  *  get:
+ *      summary: get a details of a unique application
  *      description: get details of a unique student application, id is the application id
  *      tags:
  *          - Company Applications
@@ -71,7 +72,8 @@ export async function GET(request: Request, { params }: { params: { id: string }
  * @swagger
  * /api/companies/applications/[id]:
  *  patch:
- *      description: update details of a student application. id is  the application id
+ *      summary: update status of a unique application
+ *      description: update details (status) of a student application. id is  the application id
  *      tags:
  *          - Company Applications
  */

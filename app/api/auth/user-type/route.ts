@@ -6,6 +6,7 @@ import { authMiddleware } from "@/lib/middleware/auth";
  * @swagger
  * /api/auth/user-type:
  *  get:
+ *     summary: Get user type (student or company)
  *     description: Get the type of user (student or company)
  *     tags:
  *      - Authentication
