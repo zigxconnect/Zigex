@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-
 import { Button } from "@/app/_components/ui/Button";
 import { Input } from "@/app/_components/ui/Input";
 import { Spinner } from "@/app/_components/ui/Spinner";
@@ -93,24 +92,12 @@ export const AuthForm = ({ type }: AuthFormProps) => {
         const registerResponse = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: data.email,
-            password: data.password,
-            fullName: data.fullName,
-          }),
+          body: JSON.stringify(data),
         });
-        const registerData = await registerResponse.json();
         if (!registerResponse.ok)
-          throw new Error(registerData.error || "Sign-up failed.");
-
-        const loginResponse = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: data.email, password: data.password }),
-        });
-        if (!loginResponse.ok)
-          throw new Error("Auto-login failed after sign-up.");
-
+          throw new Error(
+            (await registerResponse.json()).error || "Sign-up failed."
+          );
         router.push("/create-profile");
       } catch (err) {
         setApiError((err as Error).message);
@@ -125,8 +112,16 @@ export const AuthForm = ({ type }: AuthFormProps) => {
         const responseData = await response.json();
         if (!response.ok)
           throw new Error(responseData.error || "Login failed.");
-        if (responseData.profileComplete) router.push("/dashboard");
-        else router.push("/create-profile");
+
+        if (responseData.otpSent) {
+          router.push(`/verify-otp?email=${encodeURIComponent(data.email)}`);
+        } else {
+          if (responseData.profileComplete) {
+            router.push("/dashboard");
+          } else {
+            router.push("/create-profile");
+          }
+        }
       } catch (err) {
         setApiError((err as Error).message);
       }
@@ -249,25 +244,19 @@ export const AuthForm = ({ type }: AuthFormProps) => {
           )}
         </Button>
       </form>
-
       <div className="flex-grow"></div>
-
-      {/* Footer Links Section */}
       <div className="space-y-4 text-center mt-5">
-        {/* This link ONLY appears on the sign-up page */}
         {isSignUp && (
           <p className="text-sm text-gray-500">
             Looking to hire?{" "}
             <Link
-              href="company/sign-up"
+              href="/company/sign-up"
               className="font-semibold text-orange-500 hover:underline"
             >
               Sign up as a company
             </Link>
           </p>
         )}
-
-        {/* This is the original link to toggle between sign-in/sign-up */}
         <p className="text-sm text-gray-600">
           {currentContent.linkText}{" "}
           <Link
@@ -278,7 +267,6 @@ export const AuthForm = ({ type }: AuthFormProps) => {
           </Link>
         </p>
       </div>
-
       <p className="text-center text-xs text-gray-400 pt-4 mt-2">{finePrint}</p>
     </div>
   );

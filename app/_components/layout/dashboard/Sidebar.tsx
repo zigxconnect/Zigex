@@ -37,19 +37,24 @@ const navItems = [
     label: "Student Directory",
   },
   { href: "/track-progress", icon: TrendingUp, label: "Track Progress" },
-  { href: "/chat", icon: AiOutlineWechat, label: "Chat with Fupro Ai", special: true },
+  {
+    href: "/chat",
+    icon: AiOutlineWechat,
+    label: "Chat with Fupro Ai",
+    special: true,
+  },
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({
   isOpen = false,
   onClose,
 }) => {
-  const pathname = usePathname(); // Get the current URL path
+  const pathname = usePathname();
 
   const handleSignOut = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
-      // Use window.location.href for a robust, full-page reload to the homepage
+
       window.location.href = "/";
     } catch (error) {
       console.error("Logout failed:", error);
@@ -99,7 +104,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               // Active state is now determined by the current URL `pathname`
               const isActive = pathname === item.href;
               const isSpecialButton = item.special;
-              
+
               return (
                 <Link
                   key={item.href}

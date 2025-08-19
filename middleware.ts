@@ -1,16 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
-/**
- * This middleware function runs on every request to the routes specified in `config.matcher`.
- * Its purpose is to protect all student-facing dashboard and profile pages.
- */
 export async function middleware(request: NextRequest) {
   const response = NextResponse.next({
     request: { headers: request.headers },
   });
 
-  // Create a Supabase client that can be used in the middleware.
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -31,31 +26,55 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // 1. Check for an authenticated user.
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const pathname = request.nextUrl.pathname;
 
-  // If there is no user, redirect them to the sign-in page immediately.
   if (!user) {
     return NextResponse.redirect(new URL("/sign-in", request.url));
   }
 
-  // 2. If the user is authenticated, check their profile status.
-  const { data: profile } = await supabase
+  const { data: studentProfile } = await supabase
     .from("student_profiles")
-    .select("profile_status") // We use our reliable status field.
+    .select("role, profile_status")
+    .eq("user_id", user.id)
+    .single();
+  const { data: companyProfile } = await supabase
+    .from("company_profiles")
+    .select("role")
     .eq("user_id", user.id)
     .single();
 
-  const isProfileIncomplete = profile?.profile_status !== "complete";
-  const isTryingToAccessMainDashboard =
-    request.nextUrl.pathname.startsWith("/dashboard");
+  const userRole = studentProfile?.role || companyProfile?.role;
 
-  // 3. If their profile is incomplete AND they are trying to access the main dashboard,
-  //    force them back to the profile creation page.
-  if (isProfileIncomplete && isTryingToAccessMainDashboard) {
-    return NextResponse.redirect(new URL("/create-profile", request.url));
+  // A. Protect Admin Routes
+  if (pathname.startsWith("/admin")) {
+    if (userRole !== "company") {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+  }
+
+  const studentProtectedPaths = [
+    "/dashboard",
+    "/create-profile",
+    "/profile-settings",
+    "/upload-resume",
+    "/applied-internships",
+    "/track-progress",
+    "/chat",
+  ];
+  if (studentProtectedPaths.some((p) => pathname.startsWith(p))) {
+    if (userRole !== "student") {
+      return NextResponse.redirect(new URL("/admin/postings", request.url));
+    }
+
+    if (
+      studentProfile?.profile_status !== "complete" &&
+      pathname.startsWith("/dashboard")
+    ) {
+      return NextResponse.redirect(new URL("/create-profile", request.url));
+    }
   }
 
   return response;
@@ -63,10 +82,16 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/dashboard/:path*", // Protects the main dashboard
+    // Student Routes
+    "/dashboard/:path*", // Protects /dashboard AND /dashboard/student-directory
     "/create-profile", // Protects the onboarding form
     "/profile-settings", // Protects the settings page
     "/upload-resume", // Protects the resume page
     "/applied-internships", // Protects the applications page
+    "/track-progress", // Protects the progress tracking page
+    "/chat", // Protects the FuproAI chat page
+
+    // Admin (Company) Routes from your sidebar
+    "/admin/:path*", // This single line protects all admin routes like:
   ],
 };
