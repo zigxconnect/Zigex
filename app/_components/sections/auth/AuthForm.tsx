@@ -147,6 +147,9 @@ export const AuthForm = ({ type }: AuthFormProps) => {
         />
         <SocialButton
           icon={GoogleIcon}
+
+
+          
           text={`${currentContent.socialButtonText} with Google`}
         />
       </div>
@@ -161,7 +164,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
               id="fullName"
               type="text"
               placeholder="Enter your full name"
-              className="mt-1"
+              className="mt-1 text-gray-900"
               {...register("fullName")}
               disabled={isSubmitting}
             />
@@ -179,7 +182,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
             type="email"
             autoComplete="email"
             placeholder="Enter your email address"
-            className="mt-1"
+            className="mt-1 text-gray-900"
             {...register("email")}
             disabled={isSubmitting}
           />
