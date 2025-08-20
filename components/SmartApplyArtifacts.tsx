@@ -11,6 +11,8 @@ interface SmartApplyArtifactProps {
   isGenerating: boolean;
 }
 
+// It exist truelly
+
 export default function SmartApplyArtifact({ title, initialContent, onClose, onSend, isGenerating }: SmartApplyArtifactProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [content, setContent] = useState(initialContent);
