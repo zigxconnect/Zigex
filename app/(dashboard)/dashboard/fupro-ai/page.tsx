@@ -5,6 +5,7 @@ import { History, Wrench, Send, Sparkles, User, Loader2, Phone, Brain, Square, T
 import React from "react";
 import Image from "next/image";
 import SmartApplyArtifact from "@/components/SmartApplyArtifacts";
+// import SmartApplyArtifact from "@/components/SmartApplyArtifacts";
 
 // Deployment test
 

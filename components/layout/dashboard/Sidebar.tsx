@@ -17,6 +17,8 @@ import { AiOutlineWechat } from "react-icons/ai";
 import { Button } from "@/components/ui/Button";
 import { Logo } from "@/components/uiComponenet/Logo";
 
+// import aliase
+
 interface SidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
