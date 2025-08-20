@@ -75,7 +75,7 @@ export const MultiStepForm = () => {
       return;
     }
     try {
-      const response = await fetch(`/api/profiles/student/${userId}`, {
+      const response = await fetch(`/api/students/student/${userId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
