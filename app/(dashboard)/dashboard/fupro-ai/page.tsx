@@ -6,6 +6,8 @@ import React from "react";
 import Image from "next/image";
 import SmartApplyArtifact from "@/components/SmartApplyArtifacts";
 
+// Deployment test
+
 // The tool configuration now includes pricing and subscription status
 const initialTools = [
   { id: "smartapply", name: "SmartApply", icon: "🎯", isPro: true, description: "AI-powered application optimization that tailors your resume and cover letter for each specific internship, increasing your chances by 3x.", price: 2000, currency: "XAF", billingCycle: "monthly" },
