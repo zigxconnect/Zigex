@@ -45,6 +45,8 @@ export default function SmartApplyArtifact({ title, initialContent, onClose, onS
         </button>
       </div>
 
+      {/* live weather */}
+
       {/* Content Area */}
       <div className="flex-grow p-6 overflow-y-auto custom-scrollbar">
         {isGenerating ? (
