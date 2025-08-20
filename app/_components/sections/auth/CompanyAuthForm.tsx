@@ -54,6 +54,7 @@ const Button = ({
     </button>
   );
 };
+
 const Input = ({
   className = "",
   ...props
@@ -66,6 +67,7 @@ const Input = ({
     {...props}
   />
 );
+
 const TextArea = ({
   className = "",
   ...props
@@ -114,9 +116,11 @@ const SuccessMessage = ({ onClose }: { onClose: () => void }) => (
         Your company account has been created. You will now be redirected to
         sign in.
       </p>
-      <Button variant="orange" onClick={onClose}>
-        Continue to Sign In
-      </Button>
+      <Link href="/sign-in">
+        <Button variant="orange" onClick={onClose} className="cursor-pointer">
+          Continue to Sign In
+        </Button>
+      </Link>
     </div>
   </div>
 );
@@ -125,6 +129,7 @@ const SuccessMessage = ({ onClose }: { onClose: () => void }) => (
 export const CompanyAuthForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
   const router = useRouter();
   const {
     register,
@@ -134,10 +139,25 @@ export const CompanyAuthForm = () => {
   } = useForm<SignUpFormData>({ resolver: zodResolver(signUpSchema) });
 
   const onSubmit = async (data: SignUpFormData) => {
-    console.log("Simulating company registration with data:", data);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setShowSuccess(true);
-    reset();
+    setApiError(null);
+    try {
+      const response = await fetch("/api/auth/company/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        // The form data is sent directly as it now matches the API's expectations.
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "An unknown error occurred.");
+      }
+
+      setShowSuccess(true);
+      reset();
+    } catch (err) {
+      setApiError((err as Error).message);
+    }
   };
 
   const handleSuccessClose = () => {
@@ -306,6 +326,9 @@ export const CompanyAuthForm = () => {
                 </p>
               )}
             </div>
+            {apiError && (
+              <p className="text-sm text-red-500 text-center">{apiError}</p>
+            )}
             <Button variant="orange" type="submit" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>

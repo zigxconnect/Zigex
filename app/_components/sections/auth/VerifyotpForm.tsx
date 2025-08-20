@@ -4,6 +4,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/app/_components/ui/Button";
 import { Input } from "@/app/_components/ui/Input";
 import { Spinner } from "@/app/_components/ui/Spinner";
@@ -18,36 +20,77 @@ export const VerifyOtpForm = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email");
+  const supabase = createClient();
+
+  // NEW: State for the resend functionality
+  const [isResending, setIsResending] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState<string | null>(null);
+  const [resendError, setResendError] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState(0);
+
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<FormData>({
-    resolver: zodResolver(formSchema),
-    defaultValues: { token: "" },
-  });
+  } = useForm<FormData>({ resolver: zodResolver(formSchema) });
+
+  // This effect manages the cooldown timer
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer); // Cleanup the timer
+    }
+  }, [countdown]);
 
   const onSubmit = async (data: FormData) => {
-    console.log(
-      "Simulating OTP verification:",
-      data.token,
-      "for email:",
-      email
-    );
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    router.push("/admin/postings");
+    if (!email) return alert("Email not found. Please try signing in again.");
+
+    const { error } = await supabase.auth.verifyOtp({
+      email,
+      token: data.token,
+      type: "email",
+    });
+
+    if (error) {
+      alert(error.message || "Invalid OTP. Please try again.");
+    } else {
+      router.push("/admin/postings");
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (!email) return;
+    setIsResending(true);
+    setResendSuccess(null);
+    setResendError(null);
+
+    try {
+      const response = await fetch("/api/auth/resend-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (!response.ok) throw new Error("Failed to send code.");
+
+      setResendSuccess("A new code has been sent to your email.");
+      setCountdown(30); // Start a 30-second cooldown
+    } catch (error) {
+      setResendError("An error occurred. Please try again.");
+    } finally {
+      setIsResending(false);
+    }
   };
 
   if (!email) {
     return (
       <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl text-center text-red-500">
-        <p>Error: Email not found in URL.</p>
+        <p>Error: Email parameter is missing.</p>
         <p>
           Please{" "}
           <a href="/sign-in" className="underline font-semibold">
-            try signing in again
-          </a>
-          .
+            return to the sign-in page
+          </a>{" "}
+          and try again.
         </p>
       </div>
     );
@@ -64,10 +107,10 @@ export const VerifyOtpForm = () => {
         </h1>
         <p className="mt-2 text-sm text-gray-600">
           We've sent a 6-digit verification code to{" "}
-          <span className="font-semibold text-gray-800">{email}</span>. Please
-          enter it below.
+          <span className="font-semibold text-gray-800">{email}</span>.
         </p>
       </div>
+
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-8">
         <div>
           <label className="text-sm font-medium text-gray-700">
@@ -98,6 +141,26 @@ export const VerifyOtpForm = () => {
           )}
         </Button>
       </form>
+
+      {/* NEW: Resend OTP UI */}
+      <div className="mt-6 text-center text-sm">
+        {resendSuccess && (
+          <p className="text-green-600 mb-2">{resendSuccess}</p>
+        )}
+        {resendError && <p className="text-red-600 mb-2">{resendError}</p>}
+        <button
+          type="button"
+          onClick={handleResendOtp}
+          disabled={isResending || countdown > 0}
+          className="text-orange-500 font-semibold hover:underline disabled:text-gray-400 disabled:no-underline disabled:cursor-wait"
+        >
+          {isResending
+            ? "Sending..."
+            : countdown > 0
+            ? `Resend code in ${countdown}s`
+            : "Didn't receive a code? Resend"}
+        </button>
+      </div>
     </div>
   );
 };

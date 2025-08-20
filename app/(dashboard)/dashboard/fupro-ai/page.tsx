@@ -1,12 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef, KeyboardEvent } from "react";
-import { History, Wrench, Send, Sparkles, User, Loader2, Phone, Brain } from "lucide-react";
+import { History, Wrench, Send, Sparkles, User, Loader2, Phone, Brain, Square, Trash2 } from "lucide-react";
 import React from "react";
 import Image from "next/image";
 import SmartApplyArtifact from "@/components/SmartApplyArtifacts";
-// ✨ NEW: Import the artifact component
-// import SmartApplyArtifact from "@/components/SmartApplyArtifact"; 
 
 // The tool configuration now includes pricing and subscription status
 const initialTools = [
@@ -70,6 +68,7 @@ export default function FuproAiPage() {
   const [streamingMessage, setStreamingMessage] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [showProModal, setShowProModal] = useState(false);
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
   
   const [thinkingState, setThinkingState] = useState<ThinkingState>({
     isThinking: false, currentStep: 0, totalSteps: 0, currentMessage: "", steps: []
@@ -82,10 +81,13 @@ export default function FuproAiPage() {
   const [tools, setTools] = useState(initialTools);
   const [selectedProTool, setSelectedProTool] = useState<(typeof initialTools[0]) | null>(null);
 
-  // ✨ NEW: State for the SmartApply Artifact
+  // State for the SmartApply Artifact
   const [showArtifact, setShowArtifact] = useState(false);
   const [artifactContent, setArtifactContent] = useState({ title: '', content: '' });
   const [isGeneratingArtifact, setIsGeneratingArtifact] = useState(false);
+  
+  // Chat history state
+  const [chatHistory, setChatHistory] = useState<string[]>([]);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -109,6 +111,12 @@ export default function FuproAiPage() {
     };
     setMessages([welcomeMessage]);
     
+    // Load chat history from localStorage
+    const savedHistory = localStorage.getItem('fupro-chat-history');
+    if (savedHistory) {
+      setChatHistory(JSON.parse(savedHistory));
+    }
+    
     const interval = setInterval(() => {
       setGreeting(getTimeBasedGreeting());
       setTimeEmoji(getTimeEmoji());
@@ -116,6 +124,25 @@ export default function FuproAiPage() {
 
     return () => clearInterval(interval);
   }, []);
+
+  // Save to chat history
+  const saveToHistory = (userMessage: string) => {
+    const newHistory = [userMessage, ...chatHistory.filter(h => h !== userMessage)].slice(0, 10);
+    setChatHistory(newHistory);
+    localStorage.setItem('fupro-chat-history', JSON.stringify(newHistory));
+  };
+
+  // Stop generation function
+  const stopGeneration = () => {
+    if (abortController) {
+      abortController.abort();
+      setAbortController(null);
+    }
+    setIsLoading(false);
+    setIsStreaming(false);
+    setThinkingState(prev => ({ ...prev, isThinking: false }));
+    setStreamingMessage("");
+  };
 
   const streamResponse = (text: string) => {
     setIsStreaming(true);
@@ -140,31 +167,25 @@ export default function FuproAiPage() {
     if (!message.trim() || isLoading || isGeneratingArtifact) return;
 
     const userMessage: ChatMessage = { role: 'user', content: message, timestamp: new Date() };
+    const currentInput = message;
+    
+    saveToHistory(currentInput);
 
-    // ✨ MODIFICATION: SmartApply tool logic is now handled here
     if (selectedTool === 'smartapply' && subscribedToolIds.includes('smartapply')) {
         const companyName = message.trim();
         setMessage("");
-        
         setShowArtifact(true);
         setIsGeneratingArtifact(true);
         setArtifactContent({ title: `Application for ${companyName}`, content: '' });
-
         const thinkingMessage: ChatMessage = { role: 'assistant', content: `Creating a professional draft for **${companyName}**...`, timestamp: new Date() };
         setMessages(prev => [...prev, userMessage, thinkingMessage]);
-
         try {
             const response = await fetch('/api/smartApply', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    companyName, 
-                    userProfile: { name: userName, university: "University of Bamenda", skills: ["React", "Node.js", "Team Collaboration"] }
-                }),
+                body: JSON.stringify({ companyName, userProfile: { name: userName, university: "University of Bamenda", skills: ["React", "Node.js", "Team Collaboration"] } }),
             });
-
             if (!response.ok) throw new Error("Failed to generate application.");
-            
             const data = await response.json();
             setArtifactContent(prev => ({ ...prev, content: data.coverLetterText }));
         } catch (error) {
@@ -172,21 +193,22 @@ export default function FuproAiPage() {
             setArtifactContent(prev => ({ ...prev, content: "Sorry, I couldn't generate the draft. Please try again." }));
         } finally {
             setIsGeneratingArtifact(false);
-            setSelectedTool(null); // Reset the tool after use
+            setSelectedTool(null);
         }
         return;
     }
 
-    // Original chat logic continues here
     const historyForApi = messages.slice(1).map(msg => ({ 
       role: msg.role === 'user' ? 'user' as const : 'model' as const, 
       parts: [{ text: msg.content }] 
     }));
     
     setMessages(prev => [...prev, userMessage]);
-    const currentInput = message;
     setMessage("");
     setIsLoading(true);
+    
+    const controller = new AbortController();
+    setAbortController(controller);
     
     setThinkingState({ isThinking: false, currentStep: 0, totalSteps: 0, currentMessage: "", steps: [] });
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
@@ -196,6 +218,7 @@ export default function FuproAiPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
         body: JSON.stringify({ query: currentInput, history: historyForApi }),
+        signal: controller.signal,
       });
 
       if (!response.ok) throw new Error('Failed to get a response.');
@@ -219,6 +242,7 @@ export default function FuproAiPage() {
             if (data === '[DONE]') {
               setIsLoading(false);
               setThinkingState(prev => ({ ...prev, isThinking: false }));
+              setAbortController(null);
               break;
             }
             try {
@@ -237,11 +261,13 @@ export default function FuproAiPage() {
                   setThinkingState(prev => ({ ...prev, isThinking: false }));
                   if (parsed.userProfile && !userProfile) setUserProfile(parsed.userProfile);
                   setIsLoading(false);
+                  setAbortController(null);
                   streamResponse(parsed.answer);
                   break;
                 case 'error':
                   setIsLoading(false);
                   setThinkingState(prev => ({ ...prev, isThinking: false }));
+                  setAbortController(null);
                   const errorMessage: ChatMessage = { role: 'assistant', content: "Sorry, I encountered an error. Please try again.", timestamp: new Date() };
                   setMessages(prev => [...prev, errorMessage]);
                   break;
@@ -252,12 +278,18 @@ export default function FuproAiPage() {
           }
         }
       }
-    } catch (error) {
-      console.error('Error sending message:', error);
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        const abortedMessage: ChatMessage = { role: 'assistant', content: "Response was stopped.", timestamp: new Date() };
+        setMessages(prev => [...prev, abortedMessage]);
+      } else {
+        console.error('Error sending message:', error);
+        const errorMessage: ChatMessage = { role: 'assistant', content: "Sorry, I encountered an error. Please try again.", timestamp: new Date() };
+        setMessages(prev => [...prev, errorMessage]);
+      }
       setIsLoading(false);
       setThinkingState(prev => ({ ...prev, isThinking: false }));
-      const errorMessage: ChatMessage = { role: 'assistant', content: "Sorry, I encountered an error. Please try again.", timestamp: new Date() };
-      setMessages(prev => [...prev, errorMessage]);
+      setAbortController(null);
     }
   };
 
@@ -316,8 +348,13 @@ export default function FuproAiPage() {
     }
   };
 
-  const recentHistory = messages.filter(msg => msg.role === 'user').slice(-5).map(msg => msg.content).reverse();
+  const clearHistory = () => {
+    setChatHistory([]);
+    localStorage.removeItem('fupro-chat-history');
+  };
+
   const hasMessages = messages.length > 1;
+  const isProcessing = isLoading || isStreaming || thinkingState.isThinking || isGeneratingArtifact;
 
   const ThinkingComponent = () => {
     if (!thinkingState.isThinking) return null;
@@ -351,8 +388,13 @@ export default function FuproAiPage() {
         <div className={`flex flex-col flex-1 transition-all duration-300 ${showArtifact || showHistory ? 'mr-0 lg:mr-[32rem]' : 'mr-0'}`}>
             <button
                 onClick={() => setShowHistory(!showHistory)}
-                className={`fixed top-[5rem] right-4 z-20 p-3 rounded-full shadow-lg transition-all duration-200 ${showHistory ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'} lg:top-[6rem] lg:right-6 ${recentHistory.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                disabled={recentHistory.length === 0}
+                className={`fixed top-[5rem] right-4 z-20 p-3 rounded-full shadow-lg transition-all duration-200 ${
+                    showHistory 
+                        ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                        : 'bg-white text-gray-600 hover:bg-gray-50 hover:text-blue-600 border border-gray-200'
+                } lg:top-[6rem] lg:right-6 ${chatHistory.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105 active:scale-95'}`}
+                disabled={chatHistory.length === 0}
+                title="Chat History"
             >
                 <History className="w-5 h-5" />
             </button>
@@ -369,8 +411,17 @@ export default function FuproAiPage() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl px-2">
                   {quickPrompts.map((prompt, index) => (
-                    <button key={index} onClick={() => handlePromptClick(prompt)} className="p-3 sm:p-4 text-left bg-gray-50 hover:bg-gray-100 rounded-xl border border-gray-200 transition-colors group">
-                      <div className="flex items-start gap-3"><div className="w-7 h-7 sm:w-8 sm:h-8 bg-white rounded-lg flex items-center justify-center text-sm flex-shrink-0">💡</div><div className="flex-1"><p className="text-xs sm:text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors">{prompt}</p></div></div>
+                    <button 
+                        key={index} 
+                        onClick={() => handlePromptClick(prompt)} 
+                        className="p-3 sm:p-4 text-left bg-gray-50 hover:bg-blue-50 hover:border-blue-200 rounded-xl border border-gray-200 transition-all group hover:scale-[1.02] active:scale-[0.98]"
+                    >
+                      <div className="flex items-start gap-3">
+                          <div className="w-7 h-7 sm:w-8 sm:h-8 bg-white rounded-lg flex items-center justify-center text-sm flex-shrink-0 group-hover:bg-blue-100">💡</div>
+                          <div className="flex-1">
+                              <p className="text-xs sm:text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors">{prompt}</p>
+                          </div>
+                      </div>
                     </button>
                   ))}
                 </div>
@@ -395,12 +446,6 @@ export default function FuproAiPage() {
                       <div className="max-w-[80%] rounded-2xl px-4 py-3 bg-gray-100 text-gray-900"><div className="text-sm leading-relaxed">{streamingMessage}<span className="inline-block w-2 h-4 bg-blue-600 ml-1 animate-pulse rounded-sm"></span></div></div>
                     </div>
                   )}
-                  {isLoading && !isStreaming && !thinkingState.isThinking && (
-                    <div className="flex gap-3 justify-start">
-                      <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0"><Image src="/ai.png" alt="FuproAI Assistant" className="rounded-full" width={32} height={32} /></div>
-                      <div className="bg-gray-100 rounded-2xl px-4 py-3"><div className="flex items-center gap-2"><div className="flex space-x-1"><div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div><div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div><div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div></div><span className="text-sm text-gray-600">Processing...</span></div></div>
-                    </div>
-                  )}
                   <div ref={messagesEndRef} />
                 </div>
               </div>
@@ -413,96 +458,109 @@ export default function FuproAiPage() {
                     <div className="mb-3 flex items-center gap-2">
                         <span className="text-xs text-gray-500">Using tool:</span>
                         <div className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-1 rounded-md text-xs">
-                        <span>{tools.find(t => t.id === selectedTool)?.icon}</span>
-                        <span>{tools.find(t => t.id === selectedTool)?.name}</span>
-                        <button onClick={() => setSelectedTool(null)} className="ml-1 text-blue-400 hover:text-blue-600">×</button>
+                          <span>{tools.find(t => t.id === selectedTool)?.icon}</span>
+                          <span>{tools.find(t => t.id === selectedTool)?.name}</span>
+                          <button onClick={() => setSelectedTool(null)} className="ml-1 text-blue-400 hover:text-blue-600">×</button>
                         </div>
                     </div>
                     )}
+                    
+                    {isProcessing && (
+                        <div className="mb-3 flex justify-center">
+                            <button
+                                onClick={stopGeneration}
+                                className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg border border-red-200 transition-all hover:scale-105 active:scale-95"
+                            >
+                                <Square className="w-4 h-4" />
+                                <span className="text-sm font-medium">Stop generating</span>
+                            </button>
+                        </div>
+                    )}
+                    
                     <div className="relative">
                         <div className="flex items-end gap-2 bg-gray-50 rounded-2xl p-2 sm:p-3 border border-gray-200 focus-within:border-blue-300 focus-within:bg-white transition-all">
                             <div className="relative">
-                            <button onClick={() => setShowTools(!showTools)} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-white rounded-lg transition-colors flex-shrink-0" disabled={isLoading || isStreaming || thinkingState.isThinking || isGeneratingArtifact}>
-                                <Wrench className="w-4 h-4 sm:w-5 sm:h-5" />
-                            </button>
-                            {showTools && (
-                                <div className="absolute bottom-full left-0 mb-2 bg-white rounded-lg shadow-lg border border-gray-200 py-2 min-w-[140px] z-10">
-                                {tools.map((tool) => {
-                                    const isSubscribed = subscribedToolIds.includes(tool.id);
-                                    return (
-                                    <button key={tool.id} onClick={() => { if (tool.isPro && !isSubscribed) { setSelectedProTool(tool); setShowProModal(true); } else { setSelectedTool(tool.id); } setShowTools(false); }} className="w-full cursor-pointer border-b border-gray-100 last:border-b-0 flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 transition-colors relative">
-                                        <span>{tool.icon}</span>
-                                        <span className="text-sm text-gray-700">{tool.name}</span>
-                                        {tool.isPro && !isSubscribed && (
-                                        <div className="ml-auto flex items-center gap-1">
-                                            <div className="w-1.5 h-1.5 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full"></div>
-                                            <span className="text-xs font-medium text-transparent bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text">PRO</span>
-                                        </div>
-                                        )}
-                                    </button>
-                                    );
-                                })}
-                                </div>
-                            )}
+                              <button 
+                                  onClick={() => setShowTools(!showTools)} 
+                                  className={`p-2 rounded-lg transition-all flex-shrink-0 ${
+                                      showTools 
+                                          ? 'text-blue-600 bg-blue-50' 
+                                          : 'text-gray-400 hover:text-blue-600 hover:bg-white'
+                                  } ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                  disabled={isProcessing}
+                                  title="AI Tools"
+                              >
+                                  <Wrench className="w-4 h-4 sm:w-5 sm:h-5" />
+                              </button>
+                              {showTools && (
+                                  <div className="absolute bottom-full left-0 mb-2 bg-white rounded-lg shadow-lg border border-gray-200 py-2 min-w-[140px] z-10">
+                                  {tools.map((tool) => {
+                                      const isSubscribed = subscribedToolIds.includes(tool.id);
+                                      return (
+                                      <button key={tool.id} onClick={() => { if (tool.isPro && !isSubscribed) { setSelectedProTool(tool); setShowProModal(true); } else { setSelectedTool(tool.id); } setShowTools(false); }} className="w-full cursor-pointer border-b border-gray-100 last:border-b-0 flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 transition-colors relative">
+                                          <span>{tool.icon}</span>
+                                          <span className="text-sm text-gray-700">{tool.name}</span>
+                                          {tool.isPro && !isSubscribed && (
+                                          <div className="ml-auto flex items-center gap-1">
+                                              <div className="w-1.5 h-1.5 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full"></div>
+                                              <span className="text-xs font-medium text-transparent bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text">PRO</span>
+                                          </div>
+                                          )}
+                                      </button>
+                                      );
+                                  })}
+                                  </div>
+                              )}
                             </div>
-                            <textarea ref={textareaRef} value={message} onChange={handleTextareaChange} onKeyDown={handleKeyPress} placeholder={selectedTool === 'smartapply' ? "Enter company name..." : "Ask me about internships..."} className="flex-1 bg-transparent border-none outline-none resize-none text-gray-900 placeholder-gray-500 max-h-[120px] min-h-[40px] text-sm sm:text-base" rows={1} disabled={isLoading || isStreaming || thinkingState.isThinking || isGeneratingArtifact} />
-                            <button onClick={handleSend} disabled={!message.trim() || isLoading || isStreaming || thinkingState.isThinking || isGeneratingArtifact} className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 flex-shrink-0 transform hover:scale-105 active:scale-95">
-                                {isLoading || isStreaming || thinkingState.isThinking || isGeneratingArtifact ? <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" /> : <Send className="w-4 h-4 sm:w-5 sm:h-5" />}
+                            
+                            <textarea 
+                                ref={textareaRef} 
+                                value={message} 
+                                onChange={handleTextareaChange} 
+                                onKeyDown={handleKeyPress} 
+                                placeholder={selectedTool === 'smartapply' ? "Enter company name..." : "Ask me about internships..."} 
+                                className="flex-1 bg-transparent border-none outline-none resize-none text-gray-900 placeholder-gray-500 max-h-[120px] min-h-[40px] text-sm sm:text-base" 
+                                rows={1} 
+                                disabled={isProcessing} 
+                            />
+                            <button 
+                                onClick={handleSend} 
+                                disabled={!message.trim() || isProcessing} 
+                                className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 flex-shrink-0 transform hover:scale-105 active:scale-95"
+                            >
+                                <Send className="w-4 h-4 sm:w-5 sm:h-5" />
                             </button>
                         </div>
                     </div>
-                    {hasMessages && (
-                    <div className="flex gap-2 mt-3 flex-wrap">
-                        {['Ask about requirements', 'Application tips', 'Company info'].map((suggestion) => (
-                        <button key={suggestion} onClick={() => setMessage(suggestion)} disabled={isLoading || isStreaming || thinkingState.isThinking || isGeneratingArtifact} className="px-3 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                            {suggestion}
-                        </button>
-                        ))}
-                    </div>
-                    )}
-                    <p className="text-xs text-gray-400 text-center mt-2">FuproAI can make mistakes. Consider checking important information.</p>
                 </div>
             </div>
         </div>
 
-        {/* Sidebar Panels */}
-        <div className="absolute top-0 right-0 h-full w-full max-w-lg z-40">
-            {showArtifact && (
-                <SmartApplyArtifact
-                    title={artifactContent.title}
-                    initialContent={artifactContent.content}
-                    isGenerating={isGeneratingArtifact}
-                    onClose={() => setShowArtifact(false)}
-                    onSend={(finalContent) => {
-                        const sentMessage: ChatMessage = {
-                            role: 'assistant',
-                            content: `Great! Your application for **${artifactContent.title.replace('Application for ', '')}** has been sent.`,
-                            timestamp: new Date()
-                        };
-                        setMessages(prev => [...prev, sentMessage]);
-                    }}
-                />
-            )}
+        {/* Sidebars Panel */}
+        <div className="absolute top-0 right-0 h-full w-full max-w-lg z-30 pointer-events-none">
+            {showArtifact && <div className="pointer-events-auto"><SmartApplyArtifact title={artifactContent.title} initialContent={artifactContent.content} isGenerating={isGeneratingArtifact} onClose={() => setShowArtifact(false)} onSend={(finalContent) => { setMessages(prev => [...prev, {role: 'assistant', content: `Great! Your application for **${artifactContent.title.replace('Application for ', '')}** has been sent.`, timestamp: new Date()}]); }} /></div>}
             {showHistory && (
-                <div className="h-full bg-white border-l border-gray-200 shadow-2xl flex flex-col">
-                    <div className="flex items-center justify-between p-4 border-b border-gray-200">
-                        <h3 className="font-medium text-gray-900">Recent Conversations</h3>
-                        <button onClick={() => setShowHistory(false)} className="p-1 text-gray-400 hover:text-gray-600">×</button>
-                    </div>
-                    <div className="p-4 space-y-2 overflow-y-auto custom-scrollbar flex-grow">
-                        {recentHistory.length > 0 ? recentHistory.map((item, index) => (
-                            <button key={index} onClick={() => handleHistoryClick(item)} className="w-full text-left p-3 rounded-lg hover:bg-gray-100 transition-colors text-sm text-gray-700">
-                                <div className="truncate">{item}</div>
-                            </button>
-                        )) : (
-                            <div className="text-center text-gray-500 text-sm mt-8">
-                                <Image src="/ai.png" alt="FuproAI Assistant" className="w-8 h-8 mx-auto mb-2" width={32} height={32} />
-                                <p>No recent history yet.</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
+              <div className="pointer-events-auto h-full bg-white border-l border-gray-200 shadow-2xl flex flex-col">
+                  <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                      <h3 className="font-medium text-gray-900">Recent History</h3>
+                      <button onClick={clearHistory} className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-700 p-1 rounded-md hover:bg-red-50 transition-colors" title="Clear History">
+                          <Trash2 className="w-3 h-3"/>
+                          Clear
+                      </button>
+                  </div>
+                  <div className="p-4 space-y-2 overflow-y-auto custom-scrollbar flex-grow">
+                      {chatHistory.length > 0 ? chatHistory.map((item, index) => (
+                          <button key={index} onClick={() => handleHistoryClick(item)} className="w-full text-left p-3 rounded-lg hover:bg-gray-100 transition-colors text-sm text-gray-700">
+                              <div className="truncate">{item}</div>
+                          </button>
+                      )) : (
+                          <div className="text-center text-gray-500 text-sm mt-8">
+                              <p>No recent history.</p>
+                          </div>
+                      )}
+                  </div>
+              </div>
+          )}
         </div>
         
         {/* Modals */}

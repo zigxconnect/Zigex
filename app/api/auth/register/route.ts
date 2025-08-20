@@ -1,54 +1,46 @@
-// Use your dedicated admin client
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { createServerClient, type CookieOptions } from "@supabase/ssr"; // Import for auto-login
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   const { email, password, fullName } = await request.json();
-
   if (!email || !password || !fullName) {
     return NextResponse.json(
-      { error: "Email, password, and full name are required." },
+      { error: "All fields are required." },
       { status: 400 }
     );
   }
 
-  // 1. Create the user in Supabase Auth using the ADMIN client.
   const { data: authData, error: authError } = await supabaseAdmin.auth.signUp({
     email,
     password,
   });
-
   if (authError || !authData.user) {
-    console.error("Supabase Auth Error:", authError);
     return NextResponse.json(
       { error: authError?.message || "Could not sign up user." },
       { status: 400 }
     );
   }
 
-  const userId = authData.user.id;
-
-  // 2. Create the corresponding profile in the 'student_profiles' table.
   const { error: profileError } = await supabaseAdmin
     .from("student_profiles")
     .insert({
-      user_id: userId,
+      user_id: authData.user.id,
       full_name: fullName,
+      email: email,
       profile_status: "incomplete",
+      role: "student",
     });
 
   if (profileError) {
-    console.error("Supabase Profile Creation Error:", profileError);
-    await supabaseAdmin.auth.admin.deleteUser(userId); // Cleanup orphaned auth user
+    await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
     return NextResponse.json(
-      { error: "Failed to create user profile after authentication." },
+      { error: "Failed to create student profile." },
       { status: 500 }
     );
   }
 
-  // 3. NEW: Automatically log the user in to create a session.
   const cookieStore = cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -67,32 +59,20 @@ export async function POST(request: Request) {
       },
     }
   );
-
   const { error: signInError } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
 
   if (signInError) {
-    // This is a critical fallback. The user was created but could not be logged in.
-    console.error("Auto-login failed after sign-up:", signInError);
-    // We still return a success because the user exists, but we can't create a session.
-    // The user will have to log in manually.
     return NextResponse.json(
-      {
-        message:
-          "Registration successful, but auto-login failed. Please log in manually.",
-      },
+      { message: "Registration successful, but auto-login failed." },
       { status: 201 }
     );
   }
 
-  // 4. Return a success response. The session cookie is now set.
   return NextResponse.json(
-    {
-      message: "Student registered and logged in successfully",
-      user: authData.user,
-    },
+    { message: "Student registered and logged in successfully" },
     { status: 201 }
   );
 }

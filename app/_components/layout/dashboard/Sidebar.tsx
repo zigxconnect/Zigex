@@ -37,21 +37,18 @@ const navItems = [
     label: "Student Directory",
   },
   { href: "/track-progress", icon: TrendingUp, label: "Track Progress" },
-
   { href: "/dashboard/fupro-ai", icon: AiOutlineWechat, label: "Chat with Fupro Ai" },
-
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({
   isOpen = false,
   onClose,
 }) => {
-  const pathname = usePathname(); // Get the current URL path
+  const pathname = usePathname();
 
   const handleSignOut = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
-      // Use window.location.href for a robust, full-page reload to the homepage
       window.location.href = "/";
     } catch (error) {
       console.error("Logout failed:", error);
@@ -61,10 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      {/* 
-        THE Z-INDEX FIX - PART 1:
-        The overlay now has a high z-index (z-40) to appear above other content but below the sidebar.
-      */}
+      {/* Overlay for mobile */}
       {isOpen && (
         <div
           className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 lg:hidden"
@@ -73,78 +67,64 @@ export const Sidebar: React.FC<SidebarProps> = ({
         />
       )}
 
-      {/* 
-        THE Z-INDEX FIX - PART 2:
-        The sidebar itself has the highest z-index (z-50) to ensure it is always on top.
-      */}
+      {/* Sidebar */}
       <aside
-        className={`w-64 flex-col bg-white fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out flex shadow-lg
+        className={`w-64 flex-col bg-white fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out flex shadow-lg border-r border-gray-100
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
         `}
       >
-        <div className="flex items-center justify-between p-4 h-16 border-b border-gray-200">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 h-16 border-b border-gray-100">
           <Logo />
           {onClose && (
             <button
               onClick={onClose}
-              className="p-2 rounded-md text-gray-500 hover:bg-gray-100"
+              className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors duration-200"
             >
               <X size={20} />
             </button>
           )}
         </div>
 
-        <nav className="flex-1 mt-8 px-3">
-          <div className="space-y-3">
-            {navItems.map((item, index) => {
+        {/* Navigation */}
+        <nav className="flex-1 mt-6 px-4">
+          <div className="space-y-2">
+            {navItems.map((item) => {
               const Icon = item.icon;
-              // Active state is now determined by the current URL `pathname`
               const isActive = pathname === item.href;
-              const isSpecialButton = item.special;
-              
+
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`group flex items-center justify-between px-3 py-3.5 rounded-xl transition-all duration-300 transform hover:scale-[1.02] ${
-                    isSpecialButton
-                      ? isActive
-                        ? "text-white bg-gradient-to-r from-orange-500 to-orange-600 shadow-lg shadow-orange-200 font-semibold"
-                        : "text-orange-700 bg-gradient-to-r from-orange-50 to-orange-100 hover:from-orange-100 hover:to-orange-200 border-2 border-orange-200 hover:border-orange-300 font-medium shadow-md hover:shadow-lg"
-                      : isActive
-                      ? "text-orange-700 bg-orange-50 font-semibold shadow-sm"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50 hover:shadow-sm"
+                  className={`group flex items-center justify-between px-3 py-3 rounded-lg transition-all duration-200 ${
+                    isActive
+                      ? "bg-blue-50 text-blue-700 border border-blue-100"
+                      : "text-gray-600 hover:text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-100"
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <Icon
                       size={20}
-                      className={`${
-                        isSpecialButton
-                          ? isActive
-                            ? "text-white"
-                            : "text-orange-600"
-                          : isActive
-                          ? "text-orange-600"
-                          : "text-gray-500 group-hover:text-gray-700"
-                      } transition-colors duration-200`}
+                      className={`transition-colors duration-200 ${
+                        isActive
+                          ? "text-blue-600"
+                          : "text-gray-400 group-hover:text-blue-500"
+                      }`}
                     />
-                    <span className={isSpecialButton ? "font-medium" : ""}>
+                    <span className={`font-medium ${
+                      isActive ? "text-blue-700" : "text-gray-700 group-hover:text-blue-600"
+                    }`}>
                       {item.label}
                     </span>
-                    {isSpecialButton && !isActive && (
-                      <div className="ml-auto">
-                        <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></div>
-                      </div>
-                    )}
                   </div>
                   {item.badge && (
                     <span
-                      className={`text-xs font-medium ${
+                      className={`text-xs font-semibold px-2 py-1 rounded-full transition-colors duration-200 ${
                         isActive
-                          ? "bg-orange-100 text-orange-700"
-                          : "bg-gray-100 text-gray-600 group-hover:bg-gray-200"
-                      } px-2.5 py-1 rounded-full transition-colors duration-200`}
+                          ? "bg-blue-100 text-blue-700"
+                          : "bg-gray-100 text-gray-600 group-hover:bg-blue-100 group-hover:text-blue-600"
+                      }`}
                     >
                       {item.badge}
                     </span>
@@ -155,10 +135,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </nav>
 
-        <div className="mt-auto p-6">
+        {/* Sign Out Button */}
+        <div className="mt-auto p-4 border-t border-gray-100">
           <Button
             variant="secondary-outline"
-            className="w-full justify-start gap-3 hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-all duration-200"
+            className="w-full justify-start gap-3 text-gray-600 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition-all duration-200"
             onClick={handleSignOut}
           >
             <LogOut size={20} />
