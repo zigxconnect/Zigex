@@ -1,7 +1,14 @@
-import { Button } from "@/app/_components/ui/Button";
-import { Card } from "@/app/_components/ui/Card";
-import { Tag } from "@/app/_components/ui/Tag";
-import { Alert } from "@/app/_components/ui/Alert";
+// import { Button } from "@/app/_components/ui/Button";
+// import { Card } from "@/app/_components/ui/Card";
+// import { Tag } from "@/app/_components/ui/Tag";
+// import { Alert } from "@/app/_components/ui/Alert";
+// import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/Button";
+// import { Card } from "@/components/ui/card";
+import { Alert } from "@/components/uiComponenet/Alert";
+import { Card } from "@/components/uiComponenet/card";
+import { Tag } from "@/components/uiComponenet/Tag";
+// import { Button } from "@/components/uiComponenet/Button";
 import { Sparkles, TriangleAlert } from "lucide-react";
 
 const DetailItem = ({ label, value }: { label: string; value: string }) => (

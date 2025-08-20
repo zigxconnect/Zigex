@@ -1,5 +1,8 @@
-import { Input } from "@/app/_components/ui/Input";
-import { Button } from "@/app/_components/ui/Button";
+
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/uiComponenet/input";
+// import { Input } from "@/components/ui/input";
+// import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 
 export const DashboardSearch = () => {

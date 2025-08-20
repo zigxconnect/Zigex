@@ -6,12 +6,15 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Button } from "@/app/_components/ui/Button";
-import { Input } from "@/app/_components/ui/Input";
-import { Spinner } from "@/app/_components/ui/Spinner";
+// import { Button } from "@/app/_components/ui/Button";
+// import { Input } from "@/app/_components/ui/Input";
+// import { Spinner } from "@/app/_components/ui/Spinner";
 import { SocialButton } from "./SocialButton";
 import { GoogleIcon } from "./GoogleIcon";
 import { Cloud, GraduationCap, Eye, EyeOff, Linkedin } from "lucide-react";
+import { Input } from "@/components/uiComponenet/input";
+import { Spinner } from "@/components/uiComponenet/Spinner";
+import { Button } from "@/components/ui/Button";
 
 // Schema for the Sign Up form
 const signUpSchema = z.object({

@@ -1,4 +1,5 @@
-import { ListItem } from "@/app/_components/ui/ListItem";
+// import { ListItem } from "@/app/_components/ui/ListItem";
+import { ListItem } from "@/components/uiComponenet/ListItem";
 import { MapPin } from "lucide-react";
 
 // This is the shape of the data this component now expects

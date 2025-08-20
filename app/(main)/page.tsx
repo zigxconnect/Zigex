@@ -1,9 +1,12 @@
 import { redirect } from "next/navigation";
-import FeaturedInternships from "../_components/sections/landing/FeaturesSection";
-import BamendaHeroSection from "../_components/sections/landing/HeroSection";
-import { WhyChoose } from "../_components/sections/landing/Whychoose";
+// import FeaturedInternships from "../_components/sections/landing/FeaturesSection";
+// import BamendaHeroSection from "../_components/sections/landing/HeroSection";
+// import { WhyChoose } from "../_components/sections/landing/Whychoose";
 import { checkAuthStatus } from "@/lib/actions/auth.action";
 import { getProfileInfo, hasCompletedProfile } from "@/lib/actions/profile.actions";
+import BamendaHeroSection from "@/components/sections/landing/HeroSection";
+import FeaturedInternships from "@/components/sections/landing/FeaturesSection";
+import { WhyChoose } from "@/components/sections/landing/Whychoose";
 
 export default async function LandingPage() {
      const hasCompletedYourProfile=await hasCompletedProfile()

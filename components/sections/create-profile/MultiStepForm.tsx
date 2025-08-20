@@ -6,14 +6,18 @@ import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createClient } from "@/lib/supabase/client";
 import { profileSchema, ProfileFormData } from "@/app/types/profile";
-import { Button } from "@/app/_components/ui/Button";
-import { Spinner } from "@/app/_components/ui/Spinner"; // NEW: Import the spinner
+// import { Button } from "@/app/_components/ui/Button";
+// import { Spinner } from "@/app/_components/ui/Spinner"; // NEW: Import the spinner
 import { FormStepper } from "./FormStepper";
 import { Step1Personal } from "./Step1Personal";
 import { Step2Education } from "./Step2Education";
 import { Step3Skills } from "./Step3Skills";
 import { Step4Experience } from "./Step4Experience";
 import { Step5Additional } from "./Step5Additional";
+// import { Button } from "@/components/uiComponenet/Button";
+import { Spinner } from "@/components/uiComponenet/Spinner";
+import { Button } from "@/components/ui/Button";
+// import { Button } from "@/components/uiComponenet/Button";
 
 const stepsFields: (keyof ProfileFormData)[][] = [
   ["first_name", "last_name", "phone", "location", "about"],

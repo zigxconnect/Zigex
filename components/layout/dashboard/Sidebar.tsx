@@ -3,8 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Logo } from "@/app/_components/ui/Logo";
-import { Button } from "@/app/_components/ui/Button";
+
 import {
   User,
   Upload,
@@ -15,6 +14,8 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { AiOutlineWechat } from "react-icons/ai";
+import { Button } from "@/components/ui/Button";
+import { Logo } from "@/components/uiComponenet/Logo";
 
 interface SidebarProps {
   isOpen?: boolean;

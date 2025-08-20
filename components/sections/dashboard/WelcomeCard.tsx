@@ -1,6 +1,7 @@
-import { Button } from "@/app/_components/ui/Button";
+// import { Button } from "@/app/_components/ui/Button";
 import Link from "next/link";
 import { Edit } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 
 interface WelcomeCardProps {
   user: {

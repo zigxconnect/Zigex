@@ -1,8 +1,10 @@
 "use client";
 
+import { DashboardHeader } from "@/components/layout/dashboard/DashboardHeader";
+import { Sidebar } from "@/components/layout/dashboard/Sidebar";
 import { useState, useEffect } from "react";
-import { DashboardHeader } from "@/app/_components/layout/dashboard/DashboardHeader";
-import { Sidebar } from "@/app/_components/layout/dashboard/Sidebar";
+// import { DashboardHeader } from "@/app/_components/layout/dashboard/DashboardHeader";
+// import { Sidebar } from "@/app/_components/layout/dashboard/Sidebar";
 
 /**
  * The main layout for the student dashboard.

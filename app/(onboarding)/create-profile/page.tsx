@@ -1,4 +1,5 @@
-import { MultiStepForm } from "@/app/_components/sections/create-profile/MultiStepForm";
+// import { MultiStepForm } from "@/app/_components/sections/create-profile/MultiStepForm";
+import { MultiStepForm } from "@/components/sections/create-profile/MultiStepForm";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

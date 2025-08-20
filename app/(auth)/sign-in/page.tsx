@@ -1,4 +1,5 @@
-import { AuthForm } from "@/app/_components/sections/auth/AuthForm";
+// import { AuthForm } from "@/app/_components/sections/auth/AuthForm";
+import { AuthForm } from "@/components/sections/auth/AuthForm";
 import { checkAuthStatus } from "@/lib/actions/auth.action";
 
 import type { Metadata } from "next";

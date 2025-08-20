@@ -1,9 +1,10 @@
 // File Path: /app/_components/sections/create-profile/Step5Additional.tsx
 import { useFormContext, Controller } from "react-hook-form";
-import { ToggleChip } from "@/app/_components/ui/ToggleChip";
-import { Textarea } from "@/app/_components/ui/Textarea";
-import { FormField } from "@/app/_components/ui/FormField";
+
 import { ProfileFormData } from "@/app/types/profile";
+import { Textarea } from "@/components/uiComponenet/Textarea";
+import { FormField } from "@/components/uiComponenet/FormField";
+import { ToggleChip } from "@/components/uiComponenet/ToggleChip";
 
 const interests = [
   "Sports",

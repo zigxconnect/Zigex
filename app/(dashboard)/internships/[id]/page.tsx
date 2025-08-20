@@ -1,6 +1,6 @@
-import { InternshipBody } from "@/app/_components/sections/dashboard/details/InternshipBody";
-import { InternshipInfoPanel } from "@/app/_components/sections/dashboard/details/InternshipInfoPanel";
 
+import { InternshipBody } from "@/components/sections/dashboard/details/InternshipBody";
+import { InternshipInfoPanel } from "@/components/sections/dashboard/details/InternshipInfoPanel";
 import { allInternships, Internship } from "@/lib/data/internshipData";
 import { notFound } from "next/navigation";
 

@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
 import { allInternships } from "@/lib/data/internshipData";
-import { WelcomeCard } from "@/app/_components/sections/dashboard/WelcomeCard";
-import { DashboardSearch } from "@/app/_components/sections/dashboard/InternshipSearch";
-import { InternshipCard } from "@/app/_components/sections/dashboard/InternshipCard";
 import { Sparkles } from "lucide-react";
 import { getProfileInfo } from "@/lib/actions/profile.actions";
+import { WelcomeCard } from "@/components/sections/dashboard/WelcomeCard";
+import { DashboardSearch } from "@/components/sections/dashboard/InternshipSearch";
+import { InternshipCard } from "@/components/sections/dashboard/InternshipCard";
 
 /**
  * The main dashboard page, now refactored to use a Server Action
