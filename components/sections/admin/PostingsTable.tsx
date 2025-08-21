@@ -1,4 +1,5 @@
-import { StatusBadge } from "@/app/_components/ui/StatusBadge";
+// import { StatusBadge } from "@/app/_components/ui/StatusBadge";
+import { StatusBadge } from "@/components/uiComponenet/StatusBadge";
 import { FilePenLine, Trash2 } from "lucide-react";
 import Link from "next/link";
 

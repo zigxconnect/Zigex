@@ -1,6 +1,9 @@
 // import { AdminHeader } from "@/app/_components/layout/admin/AdminHeader";
-import { AdminHeader } from "../_components/layout/admin/AdminHeader";
-import { AdminSidebar } from "../_components/layout/admin/AdminSiderbar";
+// import { AdminHeader } from "../_components/layout/admin/AdminHeader";
+// import { AdminSidebar } from "../_components/layout/admin/AdminSiderbar";
+
+import { AdminHeader } from "@/components/layout/admin/AdminHeader";
+import { AdminSidebar } from "@/components/layout/admin/AdminSiderbar";
 
 // In a real app, this data would be fetched from your database
 const headerStats = {
