@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "swagger": "ts-node lib/swagger.ts"
+    "swagger": "ts-node lib/swagger.ts",
+    "install": "npm install --legacy-peer-deps"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
