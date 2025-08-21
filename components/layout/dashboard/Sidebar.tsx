@@ -14,7 +14,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { AiOutlineWechat } from "react-icons/ai";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/uiComponenet/Logo";
 
 // import aliase

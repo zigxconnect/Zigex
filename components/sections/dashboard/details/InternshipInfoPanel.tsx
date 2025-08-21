@@ -3,7 +3,7 @@
 // import { Tag } from "@/app/_components/ui/Tag";
 // import { Alert } from "@/app/_components/ui/Alert";
 // import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 // import { Card } from "@/components/ui/card";
 import { Alert } from "@/components/uiComponenet/Alert";
 import { Card } from "@/components/uiComponenet/card";

@@ -1,4 +1,5 @@
-import { VerifyOtpForm } from "@/app/_components/sections/auth/VerifyotpForm";
+// import { VerifyOtpForm } from "@/app/_components/sections/auth/VerifyotpForm";
+import { VerifyOtpForm } from "@/components/sections/auth/VerifyotpForm";
 import { Suspense } from "react";
 
 /**

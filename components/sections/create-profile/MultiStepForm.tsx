@@ -16,7 +16,7 @@ import { Step4Experience } from "./Step4Experience";
 import { Step5Additional } from "./Step5Additional";
 // import { Button } from "@/components/uiComponenet/Button";
 import { Spinner } from "@/components/uiComponenet/Spinner";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 // import { Button } from "@/components/uiComponenet/Button";
 
 const stepsFields: (keyof ProfileFormData)[][] = [

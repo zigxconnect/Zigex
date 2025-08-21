@@ -1,7 +1,7 @@
 // import { Button } from "@/app/_components/ui/Button";
 import Link from "next/link";
 import Image from "next/image"; // NEW: Import the Next.js Image component
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 
 // Add 'headQuarterImage' to the props
 interface InternshipCardProps {

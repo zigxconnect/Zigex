@@ -14,7 +14,7 @@ import { GoogleIcon } from "./GoogleIcon";
 import { Cloud, GraduationCap, Eye, EyeOff, Linkedin } from "lucide-react";
 import { Input } from "@/components/uiComponenet/input";
 import { Spinner } from "@/components/uiComponenet/Spinner";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 
 // Schema for the Sign Up form
 const signUpSchema = z.object({
