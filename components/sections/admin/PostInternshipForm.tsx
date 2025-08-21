@@ -1,9 +1,9 @@
 "use client";
 
-import { Input } from "@/app/_components/ui/Input";
-import { Select } from "@/app/_components/ui/Select";
-import { Textarea } from "@/app/_components/ui/Textarea";
-import { Button } from "@/app/_components/ui/Button";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/uiComponenet/Select";
+import { Textarea } from "@/components/uiComponenet/Textarea";
 import { useState } from "react";
 
 // ✅ Embedded Checkbox component
