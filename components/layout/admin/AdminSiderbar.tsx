@@ -2,8 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Logo } from "@/app/_components/ui/Logo";
-import { Button } from "@/app/_components/ui/Button";
 import {
   Menu,
   X,
@@ -14,6 +12,8 @@ import {
   Sparkles,
   LogOut,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Logo } from "@/components/uiComponenet/Logo";
 
 const companyData = {
   name: "TechCorp Bamenda",
