@@ -1,16 +1,13 @@
-
-
-
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
 // import { Inter } from 'next/font/google'
 
-const inter = Inter({ 
-  subsets: ['latin'],
-  display: 'swap',
-})
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "futureProspect",
@@ -31,10 +28,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-        <link
-          href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
-          rel="stylesheet"
-        />
       <body className={inter.className}>{children}</body>
     </html>
   );
