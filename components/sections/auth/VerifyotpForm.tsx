@@ -8,7 +8,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { KeyRound } from "lucide-react";
 import { Spinner } from "@/components/uiComponenet/Spinner";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/uiComponenet/input";
 
 const formSchema = z.object({
