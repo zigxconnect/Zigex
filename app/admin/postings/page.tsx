@@ -1,5 +1,7 @@
-import { PostingsTable } from "@/app/_components/sections/admin/PostingsTable";
+// import { PostingsTable } from "@/app/_components/sections/admin/PostingsTable";
 // import { EmptyStatePostings } from "@/app/_components/sections/admin/EmptyStatePostings";
+
+import { PostingsTable } from "@/components/sections/admin/PostingsTable";
 
 export default function PostingsPage() {
   // In a real application, you would fetch data and set this boolean accordingly.

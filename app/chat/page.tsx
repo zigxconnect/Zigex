@@ -1,8 +1,9 @@
 // app/dashboard/chat/page.tsx
 // import { PersonalizedInternshipChat } from '@/components/PersonalizedInternshipChat';
 
+import { PersonalizedInternshipChat } from "@/components/AiTest";
 import { getProfileInfo, hasCompletedProfile } from "@/lib/actions/profile.actions";
-import { PersonalizedInternshipChat } from "../_components/AiTest";
+// import { PersonalizedInternshipChat } from "../_components/AiTest";
 import { redirect } from "next/navigation";
 
 export default async function ChatPage() {
