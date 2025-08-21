@@ -6,10 +6,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/app/_components/ui/Button";
-import { Input } from "@/app/_components/ui/Input";
-import { Spinner } from "@/app/_components/ui/Spinner";
 import { KeyRound } from "lucide-react";
+import { Spinner } from "@/components/uiComponenet/Spinner";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/uiComponenet/input";
 
 const formSchema = z.object({
   token: z.string().length(6, { message: "Your code must be 6 digits." }),

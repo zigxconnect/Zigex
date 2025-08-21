@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { FileUpload } from "@/app/_components/ui/FileUpload";
-import { Input } from "@/app/_components/ui/Input";
-import { Select } from "@/app/_components/ui/Select";
-import { Textarea } from "@/app/_components/ui/Textarea";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/uiComponenet/Select";
+import { Textarea } from "@/components/uiComponenet/Textarea";
+import { FileUpload } from "@/components/uiComponenet/FileUpload";
+// import { Textarea } from "@/components/ui/textarea"; 
 
 // Reusable section
 const FormSection = ({

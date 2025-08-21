@@ -1,5 +1,4 @@
-import { Button } from "@/app/_components/ui/Button";
-import { ProfileForm } from "@/app/_components/sections/admin/ProfileForm";
+import { ProfileForm } from "@/components/sections/admin/ProfileForm";
 
 export default function EditProfilePage() {
   return (
