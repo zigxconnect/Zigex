@@ -12,6 +12,7 @@ import { useState, useEffect } from "react";
  * The main layout for the student dashboard.
  * This component is responsible for the overall page structure and managing the
  * state of the universally toggleable sidebar.
+//  * ddd
  */
 export default function DashboardLayout({
   children,
