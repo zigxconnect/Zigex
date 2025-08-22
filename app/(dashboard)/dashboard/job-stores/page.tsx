@@ -438,6 +438,8 @@ export default function JobStoresPage() {
     setFilteredJobs(filtered);
   }, [selectedRegion, searchTerm]);
 
+// tracking changes in the master branch
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header Section */}
