@@ -432,7 +432,7 @@ export default function FuproAiPage() {
                   {messages.map((msg, index) => (
                     <div key={index} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                       {msg.role === 'assistant' && (<div className="w-8 h-8 bg-blue-900 rounded-full flex items-center justify-center flex-shrink-0"><Image src="/ai.png" alt="FuproAI Assistant" className="rounded-full" width={32} height={32} /></div>)}
-                      <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${msg.role === 'user' ? 'bg-blue-600 text-white ml-auto' : 'bg-blue-900 text-gray-100'}`}>
+                      <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${msg.role === 'user' ? 'bg-blue-900 text-white ml-auto' : 'bg-white/50 backdrop-blur-sm text-gray-900'}`}>
                         <div className="text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: msg.content.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="underline hover:no-underline">$1</a>') }} />
                         <div className="text-xs opacity-70 mt-2">{msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                       </div>

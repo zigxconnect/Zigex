@@ -66,10 +66,10 @@ const UserProfile: React.FC<{ isActive: boolean }> = ({ isActive }) => (
       />
     </div>
     <div className="flex flex-col min-w-0">
-      <span className={`font-medium truncate ${
+      <span className={`font-medium truncate text-sm ${
         isActive ? "text-white" : "text-blue-100"
       }`}>
-        John Doe {/* Replace with actual user name */}
+        Fonyuy Gita {/* Replace with actual user name */}
       </span>
       <span className="text-blue-200 text-sm">Student</span>
     </div>
@@ -102,6 +102,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   user
 }) => {
   const pathname = usePathname();
+  console.log("User is : ", user);
 
   const handleSignOut = async () => {
     try {
