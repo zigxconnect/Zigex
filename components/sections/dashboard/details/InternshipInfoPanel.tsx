@@ -1,19 +1,17 @@
-// import { Button } from "@/app/_components/ui/Button";
-// import { Card } from "@/app/_components/ui/Card";
-// import { Tag } from "@/app/_components/ui/Tag";
-// import { Alert } from "@/app/_components/ui/Alert";
-// import { Card } from "@/components/ui/card";
+"use client";
+
 import { Button } from "@/components/ui/button";
-// import { Card } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Alert } from "@/components/uiComponenet/Alert";
-import { Card } from "@/components/uiComponenet/card";
 import { Tag } from "@/components/uiComponenet/Tag";
-// import { Button } from "@/components/uiComponenet/Button";
+
 import { Sparkles, TriangleAlert } from "lucide-react";
 
 const DetailItem = ({ label, value }: { label: string; value: string }) => (
-  <div className="flex justify-between items-center py-3 border-b border-gray-100 last:border-b-0">
-    <span className="text-sm text-gray-500">{label}</span>
+  <div className="flex justify-between items-start py-3 border-b border-gray-100 last:border-b-0">
+    <span className="text-sm text-gray-500 font-medium flex-shrink-0 mr-4">
+      {label}
+    </span>
     <span className="text-sm font-semibold text-gray-800 text-right">
       {value}
     </span>
@@ -27,49 +25,55 @@ interface TransformedInternship {
 
 export const InternshipInfoPanel = ({
   internship,
+  onApplyClick,
 }: {
   internship: TransformedInternship;
+  onApplyClick: () => void;
 }) => {
   return (
     <div className="space-y-6 sticky top-8">
       <Card>
-        <h3 className="font-bold text-lg mb-2 text-[#193CB8]">
-          Internship Details
-        </h3>
-        {Object.entries(internship.details).map(([key, value]) => (
-          <DetailItem
-            key={key}
-            label={
-              key.charAt(0).toUpperCase() +
-              key
-                .slice(1)
-                .replace(/([A-Z])/g, " $1")
-                .trim()
-            } // Format camelCase to Title Case
-            value={value}
-          />
-        ))}
+        <div className="p-6">
+          <h3 className="font-bold text-lg mb-4 text-[#193CB8]">
+            Internship Details
+          </h3>
+          <div className="space-y-1">
+            {Object.entries(internship.details).map(([key, value]) => (
+              <DetailItem
+                key={key}
+                label={key.charAt(0).toUpperCase() + key.slice(1)}
+                value={value}
+              />
+            ))}
+          </div>
+        </div>
       </Card>
-      <div className="space-y-3">
-        <Button variant="primary-orange" className="w-full text-base py-3">
+
+      <div className="hidden lg:block space-y-3">
+        <Button
+          className="w-full text-base py-3 font-semibold"
+          onClick={onApplyClick}
+        >
           Apply Now
         </Button>
         <Button
-          variant="secondary-outline"
-          className="w-full text-base py-3 gap-2"
+          variant="secondary"
+          className="w-full text-base py-3 gap-2 font-medium"
         >
-          <Sparkles size={18} />
-          Smart Apply
+          <Sparkles size={18} /> Smart Apply
         </Button>
       </div>
+
       <Card>
-        <h3 className="font-bold text-lg mb-4 text-[#193CB8]">
-          Required Skills
-        </h3>
-        <div className="flex flex-wrap gap-2">
-          {internship.requiredSkillsTags.map((tag: string) => (
-            <Tag key={tag}>{tag}</Tag>
-          ))}
+        <div className="p-6">
+          <h3 className="font-bold text-lg mb-4 text-[#193CB8]">
+            Required Skills
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {internship.requiredSkillsTags.map((tag: string) => (
+              <Tag key={tag}>{tag}</Tag>
+            ))}
+          </div>
         </div>
       </Card>
       <Alert icon={TriangleAlert} variant="danger">

@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, Bell } from "lucide-react";
+import { Bell } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 
@@ -9,22 +9,18 @@ interface DashboardHeaderProps {
   onMenuClick: () => void;
 }
 
-export const DashboardHeader = ({ user, onMenuClick }: DashboardHeaderProps) => {
-  const [notificationCount, setNotificationCount] = useState(3); // Example notification count
+export const DashboardHeader = ({ onMenuClick }: DashboardHeaderProps) => {
+  const [notificationCount, setNotificationCount] = useState(3);
 
   const handleNotificationClick = () => {
-    // Handle notification click - could open a dropdown, navigate to notifications page, etc.
     console.log("Notifications clicked");
-    // For example, you could reset the count or navigate somewhere
-    // setNotificationCount(0);
   };
 
   return (
     <header className="flex items-center justify-between p-4 bg-white/50 backdrop-blur-sm h-16 sticky top-0 z-30 border-b border-gray-200">
-      {/* Mobile Avatar Toggle Button - Only visible on mobile */}
       <button
         onClick={onMenuClick}
-        className="lg:hidden w-10 h-10 rounded-full overflow-hidden bg-blue-900 border-2 border-blue-700 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        className=" w-10 h-10 rounded-full overflow-hidden bg-blue-900 border-2 border-blue-700 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         aria-label="Toggle sidebar"
       >
         <Image
@@ -38,20 +34,18 @@ export const DashboardHeader = ({ user, onMenuClick }: DashboardHeaderProps) => 
         <div className="absolute inset-0 bg-blue-900/20 hover:bg-blue-900/10 transition-colors duration-200"></div>
       </button>
 
-      {/* Spacer for desktop */}
       <div className="hidden lg:flex flex-1"></div>
 
-      {/* Mobile Notification Icon - Only visible on mobile */}
       <button
         onClick={handleNotificationClick}
         className="lg:hidden relative p-2 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         aria-label="View notifications"
       >
         <Bell size={22} />
-        {/* Notification badge - only show if there are notifications */}
+
         {notificationCount > 0 && (
           <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
-            {notificationCount > 9 ? '9+' : notificationCount}
+            {notificationCount > 9 ? "9+" : notificationCount}
           </span>
         )}
       </button>
@@ -66,7 +60,7 @@ export const DashboardHeader = ({ user, onMenuClick }: DashboardHeaderProps) => 
           <Bell size={22} />
           {notificationCount > 0 && (
             <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
-              {notificationCount > 9 ? '9+' : notificationCount}
+              {notificationCount > 9 ? "9+" : notificationCount}
             </span>
           )}
         </button>
