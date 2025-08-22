@@ -27,8 +27,8 @@ export default async function DashboardPage() {
 
       <div>
         <div className="flex items-center gap-2 mb-4 px-6 md:px-0">
-          <Sparkles className="text-[#EA580C]" size={20} />
-          <h2 className="text-xl font-bold text-[#EA580C]">
+          <Sparkles className="text-blue-800" size={20} />
+          <h2 className="text-xl font-bold text-blue-900">
             Recommended For You
           </h2>
         </div>

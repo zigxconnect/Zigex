@@ -1,7 +1,9 @@
 "use client";
 
 import { DashboardHeader } from "@/components/layout/dashboard/DashboardHeader";
+import { DashboardFooter } from "@/components/layout/dashboard/Footer";
 import { Sidebar } from "@/components/layout/dashboard/Sidebar";
+
 import { useState, useEffect } from "react";
 
 /**
@@ -27,7 +29,7 @@ export default function DashboardLayout({
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       <div
-        className={`flex flex-col h-full transition-all duration-300 ease-in-out
+        className={`flex flex-col min-h-screen transition-all duration-300 ease-in-out
           ${isSidebarOpen ? "lg:ml-64" : "lg:ml-0"}
         `}
       >
@@ -35,6 +37,8 @@ export default function DashboardLayout({
         <main className="flex-1 overflow-x-hidden overflow-y-auto">
           {children}
         </main>
+        {/* Added the footer component */}
+        <DashboardFooter />
       </div>
     </div>
   );
