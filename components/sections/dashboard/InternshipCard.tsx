@@ -49,15 +49,15 @@ export const InternshipCard = ({
               {company.charAt(0)}
             </div>
             <div>
-              <h3 className="text-lg font-bold text-[#EA580C] leading-tight">
+              <h3 className="text-lg font-bold text-blue-900 leading-tight">
                 {title}
               </h3>
-              <p className="text-sm text-[#64748B]">{company}</p>
+              <p className="text-sm text-blue-800">{company}</p>
             </div>
           </div>
         </div>
 
-        <div className="my-4 text-sm text-[#64748B]">
+        <div className="my-4 text-sm text-blue-800">
           <span>{location}</span> · <span>{type}</span>
         </div>
 
@@ -67,9 +67,9 @@ export const InternshipCard = ({
           </span>
         </div>
 
-        <div className="mt-auto pt-4 border-t border-gray-100">
+        <div className="mt-auto pt-4 ">
           <Link href={`/internships/${id}`}>
-            <Button variant="secondary-outline" className="w-full">
+            <Button variant="secondary-outline" className="w-full bg-blue-800 hover:bg-blue-700 text-white">
               View Details
             </Button>
           </Link>

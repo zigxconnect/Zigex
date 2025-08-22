@@ -1,7 +1,9 @@
 "use client";
 
 import { DashboardHeader } from "@/components/layout/dashboard/DashboardHeader";
+import { DashboardFooter } from "@/components/layout/dashboard/Footer";
 import { Sidebar } from "@/components/layout/dashboard/Sidebar";
+// import { DashboardFooter } from "@/components/layout/dashboard/DashboardFooter";
 import { useState, useEffect } from "react";
 // import { DashboardHeader } from "@/app/_components/layout/dashboard/DashboardHeader";
 // import { Sidebar } from "@/app/_components/layout/dashboard/Sidebar";
@@ -27,8 +29,8 @@ export default function DashboardLayout({
   }, []);
 
   return (
-    // The root container for the dashboard.
-    <div className="relative h-screen bg-[#F8FAFC]">
+    // The root container for the dashboard - changed to min-h-screen for footer support.
+    <div className="relative min-h-screen bg-[#F8FAFC]">
       {/* The Sidebar is a floating panel controlled by the `isOpen` state. */}
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
@@ -38,7 +40,7 @@ export default function DashboardLayout({
         view on desktop. It "pushes" the content to the right only when the sidebar is open.
       */}
       <div
-        className={`flex flex-col h-full transition-all duration-300 ease-in-out
+        className={`flex flex-col min-h-screen transition-all duration-300 ease-in-out
           ${isSidebarOpen ? "lg:ml-64" : "lg:ml-0"}
         `}
       >
@@ -46,6 +48,8 @@ export default function DashboardLayout({
         <main className="flex-1 overflow-x-hidden overflow-y-auto">
           {children}
         </main>
+        {/* Added the footer component */}
+        <DashboardFooter />
       </div>
     </div>
   );
