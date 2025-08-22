@@ -202,7 +202,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           : "bg-blue-800 text-blue-200 group-hover:bg-blue-700 group-hover:text-blue-100"
                       }`}
                     >
-                      {item.badge}
+                    {item.badge}
                     </span>
                   )}
                 </Link>
