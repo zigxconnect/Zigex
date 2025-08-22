@@ -383,7 +383,7 @@ export default function FuproAiPage() {
   };
 
   return (
-    <div className="flex flex-row h-[70vh] bg-white relative overflow-hidden">
+    <div className="flex flex-row h-[90vh] bg-white relative overflow-hidden">
         {/* Main Chat Panel */}
         <div className={`flex flex-col flex-1 transition-all duration-300 ${showArtifact || showHistory ? 'mr-0 lg:mr-[32rem]' : 'mr-0'}`}>
             <button
@@ -414,12 +414,12 @@ export default function FuproAiPage() {
                     <button 
                         key={index} 
                         onClick={() => handlePromptClick(prompt)} 
-                        className="p-3 sm:p-4 text-left bg-gray-50 hover:bg-blue-50 hover:border-blue-200 rounded-xl border border-gray-200 transition-all group hover:scale-[1.02] active:scale-[0.98]"
+                        className="p-3 sm:p-4 text-white text-left bg-blue-900 hover:bg-blue-800 hover:border-blue-200 rounded-xl border border-gray-200 transition-all group hover:scale-[1.02] active:scale-[0.98]"
                     >
                       <div className="flex items-start gap-3">
                           <div className="w-7 h-7 sm:w-8 sm:h-8 bg-white rounded-lg flex items-center justify-center text-sm flex-shrink-0 group-hover:bg-blue-100">💡</div>
                           <div className="flex-1">
-                              <p className="text-xs sm:text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors">{prompt}</p>
+                              <p className="text-xs sm:text-sm font-medium text-gray-100 group-hover:text-blue-600 transition-colors">{prompt}</p>
                           </div>
                       </div>
                     </button>
@@ -431,8 +431,8 @@ export default function FuproAiPage() {
                 <div className="max-w-4xl mx-auto space-y-4">
                   {messages.map((msg, index) => (
                     <div key={index} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                      {msg.role === 'assistant' && (<div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0"><Image src="/ai.png" alt="FuproAI Assistant" className="rounded-full" width={32} height={32} /></div>)}
-                      <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${msg.role === 'user' ? 'bg-blue-600 text-white ml-auto' : 'bg-gray-100 text-gray-900'}`}>
+                      {msg.role === 'assistant' && (<div className="w-8 h-8 bg-blue-900 rounded-full flex items-center justify-center flex-shrink-0"><Image src="/ai.png" alt="FuproAI Assistant" className="rounded-full" width={32} height={32} /></div>)}
+                      <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${msg.role === 'user' ? 'bg-blue-600 text-white ml-auto' : 'bg-blue-900 text-gray-100'}`}>
                         <div className="text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: msg.content.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="underline hover:no-underline">$1</a>') }} />
                         <div className="text-xs opacity-70 mt-2">{msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                       </div>
@@ -442,8 +442,8 @@ export default function FuproAiPage() {
                   <ThinkingComponent />
                   {isStreaming && streamingMessage && (
                     <div className="flex gap-3 justify-start">
-                      <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0"><Image src="/ai.png" alt="FuproAI Assistant" className="rounded-full" width={32} height={32} /></div>
-                      <div className="max-w-[80%] rounded-2xl px-4 py-3 bg-gray-100 text-gray-900"><div className="text-sm leading-relaxed">{streamingMessage}<span className="inline-block w-2 h-4 bg-blue-600 ml-1 animate-pulse rounded-sm"></span></div></div>
+                      <div className="w-8 h-8 bg-blue-900 rounded-full flex items-center justify-center flex-shrink-0"><Image src="/ai.png" alt="FuproAI Assistant" className="rounded-full" width={32} height={32} /></div>
+                      <div className="max-w-[80%] rounded-2xl px-4 py-3 bg-blue-900 text-gray-100"><div className="text-sm leading-relaxed">{streamingMessage}<span className="inline-block w-2 h-4 bg-blue-600 ml-1 animate-pulse rounded-sm"></span></div></div>
                     </div>
                   )}
                   <div ref={messagesEndRef} />
@@ -526,7 +526,7 @@ export default function FuproAiPage() {
                             <button 
                                 onClick={handleSend} 
                                 disabled={!message.trim() || isProcessing} 
-                                className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 flex-shrink-0 transform hover:scale-105 active:scale-95"
+                                className="p-2 bg-blue-900 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 flex-shrink-0 transform hover:scale-105 active:scale-95"
                             >
                                 <Send className="w-4 h-4 sm:w-5 sm:h-5" />
                             </button>

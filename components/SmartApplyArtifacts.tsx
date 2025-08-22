@@ -33,13 +33,13 @@ export default function SmartApplyArtifact({ title, initialContent, onClose, onS
   };
 
   return (
-    <div className="absolute top-0 right-0 h-full w-full max-w-lg bg-white z-40 border-l border-gray-200 shadow-2xl flex flex-col transition-transform duration-300 transform translate-x-0">
+    <div className="absolute top-0 right-0 h-full w-full max-w-lg bg-white/50 backdrop-blur-sm  z-40 border-l border-blue-600 shadow-2xl flex flex-col transition-transform duration-300 transform translate-x-0">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50 flex-shrink-0">
-        <h3 className="font-semibold text-gray-800">{title}</h3>
+      <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white/50 backdrop-blur-sm  flex-shrink-0">
+        <h3 className="font-semibold text-gray-900">{title}</h3>
         <button
           onClick={onClose}
-          className="p-2 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-800 transition-colors"
+          className="p-2 rounded-full text-gray-800 hover:bg-gray-200 hover:text-gray-100 transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
@@ -51,8 +51,8 @@ export default function SmartApplyArtifact({ title, initialContent, onClose, onS
       <div className="flex-grow p-6 overflow-y-auto custom-scrollbar">
         {isGenerating ? (
           <div className="flex items-center justify-center h-full">
-            <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-            <p className="ml-3 text-gray-600">Generating your draft...</p>
+            <Loader2 className="w-8 h-8 font-bold text-gray-900 animate-spin" />
+            <p className="ml-3 text-gray-100">Generating your draft...</p>
           </div>
         ) : isEditing ? (
           <textarea
@@ -62,7 +62,7 @@ export default function SmartApplyArtifact({ title, initialContent, onClose, onS
           />
         ) : (
           <div
-            className="prose prose-sm max-w-none whitespace-pre-wrap"
+            className="prose prose-sm max-w-none whitespace-pre-wrap text-gray-900"
             dangerouslySetInnerHTML={{ __html: content.replace(/\n/g, '<br />') }}
           />
         )}
@@ -80,7 +80,7 @@ export default function SmartApplyArtifact({ title, initialContent, onClose, onS
         <button
           onClick={handleSend}
           disabled={isGenerating || isEditing}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors active:scale-95"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-900 border border-transparent rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors active:scale-95"
         >
           <Send className="w-4 h-4" />
           Send Application

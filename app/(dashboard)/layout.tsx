@@ -39,7 +39,7 @@ export default function DashboardLayout({
           {children}
         </main>
         {/* Added the footer component */}
-        <DashboardFooter />
+        {/* <DashboardFooter /> */}
       </div>
     </div>
   );
