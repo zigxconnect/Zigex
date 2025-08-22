@@ -40,6 +40,8 @@ const navItems = [
   },
   { href: "/dashboard/track-progress", icon: TrendingUp, label: "Track Progress" },
   { href: "/dashboard/fupro-ai", icon: AiOutlineWechat, label: "Chat with FP AI" },
+  { href: "/dashboard/job-stores", icon: AiOutlineWechat, label: "Job Stores" },
+
 ];
 
 // Professional FP Logo Component
