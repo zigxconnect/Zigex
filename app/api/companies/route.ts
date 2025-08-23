@@ -119,21 +119,51 @@ export async function PATCH(
     );
   }
 
-  const updates = await request.json();
+
+
+  const formData = await request.formData();
+  const image = formData.get('image') as File
+  const data = Object.fromEntries(formData.entries());
+
+
+  
+  let logoUrl : string = '';
+  if (image && image.size > 0) {
+    // 2.1 Upload the company logo to Supabase Storage
+    const ext = image.name.split('.').pop() || 'png'; // Default to png if no extension
+    const filePath = `company-images/${data.company_name}/${user.id[0] + user.id[5] + user.id[10] }/${data.company_name}.${ext}`;
+    const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
+      .from('company-assets')
+      .upload(filePath, image, { contentType: image.type });
+    // Handle upload errors
+    if (uploadError) {
+      return NextResponse.json(
+        { error: 'Failed to upload company logo.' },
+        { status: 500 }
+      );
+    }
+
+    logoUrl = supabaseAdmin.storage
+      .from('company-assets')
+      .getPublicUrl(filePath).data.publicUrl;
+  }
+
+
+  // const updates = await request.json();
   
   // Validate the updates against the company schema
-  const validatedUpdates = companySchema.partial().parse(updates);
+  const validatedUpdates = companySchema.partial().parse(data);
   
 
   // Update the company profile in the database
-  const { data, error } = await supabaseAdmin
+  const { data: updatedData, error } = await supabaseAdmin
     .from('company_profiles')
-    .update(validatedUpdates)
+    .update({...validatedUpdates, logo_url: logoUrl})
     .eq('id', company.id)
     .single();
 
 
-  console.log(data)
+  console.log(updatedData)
 
   if (error) {
     console.error('Error updating company profile:', error);
@@ -143,5 +173,5 @@ export async function PATCH(
     );
   }
 
-  return NextResponse.json({ message: 'Company profile updated successfully', data });
+  return NextResponse.json({ message: 'Company profile updated successfully', updatedData });
 }
