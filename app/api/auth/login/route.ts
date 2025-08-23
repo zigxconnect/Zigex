@@ -37,7 +37,7 @@ export async function POST(request: Request) {
   //    This query is fast because we only select one column.
   const { data: companyProfile } = await supabase
     .from("company_profiles")
-    .select("role")
+    .select("role, is_verified")
     .eq("email", email)
     .single();
 
@@ -67,6 +67,7 @@ export async function POST(request: Request) {
       { status: 200 }
     );
   }
+
 
   // 2. If not a company, check the student_profiles table.
   const { data: studentProfile } = await supabase
@@ -102,5 +103,14 @@ export async function POST(request: Request) {
   return NextResponse.json(
     { error: "Invalid email or password." },
     { status: 401 }
+  )
+  // 3. Return a response indicating if the profile is complete.
+  return NextResponse.json(
+    {
+      message: "Login successful",
+      // profileComplete: profile?.profile_status === "complete",
+      token: data.session?.access_token,
+    },
+    { status: 200 }
   );
 }
