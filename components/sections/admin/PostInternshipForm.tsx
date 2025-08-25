@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/uiComponenet/Select";
 import { Textarea } from "@/components/uiComponenet/Textarea";
 import { useState } from "react";
+import { useRouter } from "next/navigation"; // For redirection
+import { toast } from "sonner"; // For success/error messages
 
 // Helper Component: Checkbox
 const Checkbox = ({ id, className, ...props }) => (
@@ -38,19 +40,19 @@ const FormField = ({ label, children, className }) => (
 
 // --- MAIN FORM COMPONENT ---
 export const PostInternshipForm = () => {
-  // State updated to match the Zod schema
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [title, setTitle] = useState("");
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
   const [requiredSkills, setRequiredSkills] = useState<string[]>([]);
   const [skillInput, setSkillInput] = useState("");
   const [isPaid, setIsPaid] = useState(false);
-  
-  // New state variables for schema fields
   const [category, setCategory] = useState("");
   const [startDate, setStartDate] = useState("");
   const [deadline, setDeadline] = useState("");
-  const [internshipType, setInternshipType] = useState("onsite"); // Default to 'onsite' as in schema
+  const [internshipType, setInternshipType] = useState("onsite");
   const [compensation, setCompensation] = useState("");
 
   const addSkill = () => {
@@ -63,8 +65,8 @@ export const PostInternshipForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
-    // Ensure dates are converted to ISO 8601 format (datetime) required by the schema
     const formattedStartDate = startDate ? new Date(startDate).toISOString() : "";
     const formattedDeadline = deadline ? new Date(deadline).toISOString() : "";
     
@@ -77,19 +79,18 @@ export const PostInternshipForm = () => {
       start_date: formattedStartDate,
       deadline: formattedDeadline,
       type: internshipType,
-      required_skills: requiredSkills,
-      // Only include compensation if the internship is paid and details are provided
+      required_skills: requiredSkills, // <--- THE FIX IS HERE
       compensation: isPaid ? compensation : undefined,
     };
 
-    // The browser automatically sends the auth cookie. Your server middleware reads it.
-    // We REMOVE the manual token fetching from localStorage and the Authorization header.
+    // For debugging, you can see exactly what's being sent
+    console.log("Submitting Internship Data:", internshipData);
+
     try {
       const response = await fetch("/api/companies/internships", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // The "Authorization: Bearer <token>" header is intentionally removed.
         },
         body: JSON.stringify(internshipData),
       });
@@ -97,18 +98,21 @@ export const PostInternshipForm = () => {
       const result = await response.json();
 
       if (!response.ok) {
-        // Log the detailed error from the backend for easier debugging
-        console.error("Failed to create internship:", result.error || response.statusText);
         throw new Error(result.error || "Failed to create internship");
       }
       
-      console.log("Internship created:", result);
-      alert("Internship published successfully!");
-      // You can add logic here to reset the form or redirect the user
-      // e.g., router.push('/company/dashboard');
+      // --- SUCCESS LOGIC ---
+      toast.success("Internship published successfully!");
+
+      // Wait a moment for the user to see the message, then redirect
+      setTimeout(() => {
+        router.push("/admin/postings");
+      }, 1500); // 1.5-second delay
+
     } catch (error) {
       console.error("Error submitting form:", error);
-      alert(`Error: ${error.message}`);
+      toast.error(error.message || "An unexpected error occurred.");
+      setIsSubmitting(false);
     }
   };
 
@@ -258,13 +262,15 @@ export const PostInternshipForm = () => {
 
       {/* Action Buttons */}
       <div className="flex justify-end gap-4">
-        <Button variant="outline" type="button">
+        <Button variant="outline" type="button" disabled={isSubmitting}>
           Cancel
         </Button>
-        <Button variant="primary" type="button">
+        <Button variant="primary" type="button" disabled={isSubmitting}>
           Save as Draft
         </Button>
-        <Button type="submit" variant="orange">Publish Internship</Button>
+        <Button type="submit" variant="orange" disabled={isSubmitting}>
+          {isSubmitting ? "Publishing..." : "Publish Internship"}
+        </Button>
       </div>
     </form>
   );
