@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Loader2, X, Edit, Save, Send, Eye } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { Loader2, X, Edit, Save, Send } from "lucide-react";
 
 interface SmartApplyArtifactProps {
   title: string;
@@ -11,25 +11,28 @@ interface SmartApplyArtifactProps {
   isGenerating: boolean;
 }
 
-// It exist truelly
-
-export default function SmartApplyArtifact({ title, initialContent, onClose, onSend, isGenerating }: SmartApplyArtifactProps) {
+export default function SmartApplyArtifact({
+  title,
+  initialContent,
+  onClose,
+  onSend,
+  isGenerating,
+}: SmartApplyArtifactProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [content, setContent] = useState(initialContent);
   const [isPreviewing, setIsPreviewing] = useState(false);
 
   useEffect(() => {
-    // When new content is generated, update the state and exit editing mode.
     setContent(initialContent);
     setIsEditing(false);
   }, [initialContent]);
-  
+
   const handleSend = () => {
     // In a real app, this would trigger an email API
     console.log("--- SENDING APPLICATION ---");
     console.log(content);
     onSend(content);
-    onClose(); // Close the panel after sending
+    onClose();
   };
 
   return (
@@ -63,11 +66,13 @@ export default function SmartApplyArtifact({ title, initialContent, onClose, onS
         ) : (
           <div
             className="prose prose-sm max-w-none whitespace-pre-wrap"
-            dangerouslySetInnerHTML={{ __html: content.replace(/\n/g, '<br />') }}
+            dangerouslySetInnerHTML={{
+              __html: content.replace(/\n/g, "<br />"),
+            }}
           />
         )}
       </div>
-      
+
       {/* Footer with Actions */}
       <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-200 bg-gray-50 flex-shrink-0">
         <button
@@ -75,7 +80,15 @@ export default function SmartApplyArtifact({ title, initialContent, onClose, onS
           disabled={isGenerating}
           className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 transition-colors"
         >
-          {isEditing ? <><Save className="w-4 h-4" /> Save</> : <><Edit className="w-4 h-4" /> Edit</>}
+          {isEditing ? (
+            <>
+              <Save className="w-4 h-4" /> Save
+            </>
+          ) : (
+            <>
+              <Edit className="w-4 h-4" /> Edit
+            </>
+          )}
         </button>
         <button
           onClick={handleSend}

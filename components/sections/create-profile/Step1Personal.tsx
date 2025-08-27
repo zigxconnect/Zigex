@@ -1,14 +1,8 @@
-// File Path: /app/_components/sections/create-profile/Step1Personal.tsx
 import { useFormContext } from "react-hook-form";
-// import { Input } from "@/app/_components/ui/Input";
-// import { Textarea } from "@/app/_components/ui/Textarea";
-// import { FormField } from "@/app/_components/ui/FormField";
 import { ProfileFormData } from "@/app/types/profile";
 import { FormField } from "@/components/uiComponenet/FormField";
 import { Textarea } from "@/components/uiComponenet/Textarea";
 import { Input } from "@/components/uiComponenet/input";
-// import { Input } from "@/components/ui/input";
-// import { Input } from "@/components/ui/input";
 
 export const Step1Personal = () => {
   const {

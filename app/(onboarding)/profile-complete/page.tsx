@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle } from "lucide-react";
+import { Spinner } from "@/components/uiComponenet/Spinner";
 
 /**
  * This is the correct code for the Profile Complete success page.
@@ -11,11 +12,10 @@ import { CheckCircle } from "lucide-react";
 export default function ProfileCompletePage() {
   const router = useRouter();
 
-  // This hook handles the automatic redirection after 3 seconds.
   useEffect(() => {
     const timer = setTimeout(() => {
       router.push("/dashboard");
-    }, 3000);
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, [router]);
@@ -33,7 +33,7 @@ export default function ProfileCompletePage() {
       </p>
       <div className="mt-8 text-sm text-gray-500 flex items-center gap-2">
         <span>Redirecting you to your dashboard</span>
-        {/* ... (loading spinner dots) ... */}
+        <Spinner />
       </div>
     </div>
   );

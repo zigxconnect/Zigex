@@ -1,6 +1,4 @@
-// File Path: /app/_components/sections/create-profile/Step3Skills.tsx
 import { useFormContext, Controller } from "react-hook-form";
-
 import { ProfileFormData } from "@/app/types/profile";
 import { FormField } from "@/components/uiComponenet/FormField";
 import { ToggleChip } from "@/components/uiComponenet/ToggleChip";

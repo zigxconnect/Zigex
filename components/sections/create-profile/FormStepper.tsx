@@ -34,13 +34,6 @@ export const FormStepper = ({ currentStep }: FormStepperProps) => {
 
   return (
     <div className="md:sticky md:top-12 h-full">
-      {/*
-        THE FIX IS HERE:
-        - The top label is now uppercase with letter spacing for a premium feel.
-        - The main title uses a dark, readable text color for the static part.
-        - The orange color is applied ONLY to the dynamic part of the title.
-        - The subtitle has more relaxed line spacing for readability.
-      */}
       <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
         STUDENT PROFILE
       </p>

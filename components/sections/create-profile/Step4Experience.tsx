@@ -1,6 +1,4 @@
-// File Path: /app/_components/sections/create-profile/Step4Experience.tsx
 import { useFormContext, Controller } from "react-hook-form";
-
 import { ProfileFormData } from "@/app/types/profile";
 import { Textarea } from "@/components/uiComponenet/Textarea";
 import { FormField } from "@/components/uiComponenet/FormField";
