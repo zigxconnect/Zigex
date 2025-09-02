@@ -4,28 +4,21 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button"; // Assuming you are using ShadCN UI Button
+import { Button } from "@/components/ui/button";
 
-/**
- * An enhanced success page shown after a user completes their profile.
- * It features a professional UI, staggered animations, a visual progress bar,
- * and an immediate redirect option for a superior user experience.
- */
 export default function ProfileCompletePage() {
   const router = useRouter();
   const [progress, setProgress] = useState(0);
-  const redirectDelay = 3000; // 3 seconds
+  const redirectDelay = 3000;
 
   useEffect(() => {
-    // Timer for the automatic redirect
     const redirectTimer = setTimeout(() => {
       router.push("/dashboard");
     }, redirectDelay);
 
-    // Interval to update the visual progress bar
     const progressInterval = setInterval(() => {
       setProgress((prev) => {
-        const newProgress = prev + 100 / (redirectDelay / 50); // Update every 50ms
+        const newProgress = prev + 100 / (redirectDelay / 50);
         if (newProgress >= 100) {
           clearInterval(progressInterval);
           return 100;
@@ -34,7 +27,6 @@ export default function ProfileCompletePage() {
       });
     }, 50);
 
-    // Cleanup function to clear timers if the component unmounts
     return () => {
       clearTimeout(redirectTimer);
       clearInterval(progressInterval);
@@ -42,15 +34,11 @@ export default function ProfileCompletePage() {
   }, [router]);
 
   return (
-    // Use the brand's gradient background for consistency
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-orange-50 p-4">
-      {/* The main content card */}
       <div className="relative w-full max-w-md bg-white p-8 rounded-2xl shadow-2xl text-center animate-in fade-in-50 zoom-in-95 duration-500">
-        {/* Decorative sparkles for a celebratory feel */}
         <div className="absolute -top-3 -left-3 w-12 h-12 bg-orange-400 rounded-full opacity-20 filter blur-xl animate-pulse"></div>
         <div className="absolute -bottom-4 -right-2 w-16 h-16 bg-blue-400 rounded-full opacity-20 filter blur-xl animate-pulse delay-500"></div>
 
-        {/* Checkmark Icon */}
         <div className="mx-auto w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
           <CheckCircle className="w-12 h-12 text-green-500" />
         </div>
@@ -60,10 +48,9 @@ export default function ProfileCompletePage() {
           Profile Complete!
         </h1>
         <p className="mt-2 text-md text-gray-600 animate-in fade-in slide-in-from-bottom-3 duration-500 delay-300">
-          You're all set. Welcome to the FutureProspect community.
+          You&apos;re all set. Welcome to the FutureProspect community.
         </p>
 
-        {/* Immediate Action Button */}
         <div className="mt-8 animate-in fade-in slide-in-from-bottom-3 duration-500 delay-500">
           <Link href="/dashboard">
             <Button className="w-full group">
@@ -74,7 +61,6 @@ export default function ProfileCompletePage() {
         </div>
       </div>
 
-      {/* Redirect Progress Bar and Text */}
       <div className="mt-8 w-full max-w-md animate-in fade-in duration-500 delay-400">
         <p className="text-sm text-gray-500 mb-2">
           Redirecting automatically...
