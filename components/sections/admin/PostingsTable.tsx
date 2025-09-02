@@ -1,4 +1,4 @@
-"use client"; // This must be a Client Component for state and event handlers (like delete)
+"use client";
 
 import { useState, useEffect } from "react";
 import { StatusBadge } from "@/components/uiComponenet/StatusBadge";
@@ -6,7 +6,6 @@ import { FilePenLine, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
-// Define the type for a single posting
 type Posting = {
   id: string;
   title: string;
@@ -15,8 +14,11 @@ type Posting = {
   applications: number;
 };
 
-// The component accepts the initial data fetched from the server
-export const PostingsTable = ({ initialPostings }: { initialPostings: Posting[] }) => {
+export const PostingsTable = ({
+  initialPostings,
+}: {
+  initialPostings: Posting[];
+}) => {
   // Use state to manage the list, allowing us to remove items on delete
   const [postings, setPostings] = useState(initialPostings);
 
@@ -26,7 +28,11 @@ export const PostingsTable = ({ initialPostings }: { initialPostings: Posting[] 
   }, [initialPostings]);
 
   const handleDelete = async (postingId: string) => {
-    if (!window.confirm("Are you sure you want to delete this posting? This action cannot be undone.")) {
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this posting? This action cannot be undone."
+      )
+    ) {
       return;
     }
 
