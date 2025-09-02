@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, createContext, useContext, useEffect } from "react";
 import Link from "next/link";
 import {
   Menu, X, FileText, Users, FileEdit, CheckCheck, Sparkles, LogOut, FilePen
@@ -27,14 +27,44 @@ const navLinks = [
   { href: "/admin/accepted", icon: CheckCheck, label: "Accepted Interns" },
 ];
 
-export const AdminSidebar = ({ companyProfile }) => {
-  const [isOpen, setIsOpen] = useState(true); // Start with the sidebar open by default
-  
-  if (!companyProfile) {
-      return null;
-  }
+// Create context for sidebar state
+const SidebarContext = createContext({
+  isOpen: true,
+  setIsOpen: (open: boolean) => {},
+  toggleSidebar: () => {}
+});
 
-  const closeSidebar = () => setIsOpen(false);
+export const useSidebar = () => useContext(SidebarContext);
+
+// Main Provider Component that manages all state
+export const AdminSidebarProvider = ({ 
+  children, 
+  companyProfile 
+}: { 
+  children: React.ReactNode;
+  companyProfile: any;
+}) => {
+  // Initialize based on screen size
+  const [isOpen, setIsOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check screen size on mount and resize
+  useEffect(() => {
+    const checkScreenSize = () => {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      // On mobile, start closed; on desktop, start open
+      if (mobile) {
+        setIsOpen(false);
+      }
+    };
+
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
+
+  const toggleSidebar = () => setIsOpen(!isOpen);
 
   const handleSignOut = async () => {
     try {
@@ -46,97 +76,267 @@ export const AdminSidebar = ({ companyProfile }) => {
     }
   };
 
+  if (!companyProfile) {
+    return null;
+  }
+
   return (
-    <>
-      {/* THE FIX: Removed `lg:hidden`. This button is now ALWAYS visible. */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-4 left-4 z-50 p-2 rounded-lg bg-white shadow-lg border border-gray-200 hover:bg-gray-50"
-        aria-label="Toggle sidebar"
-      >
-        <Menu size={24} className="text-gray-700" />
-      </button>
-
-      {/* THE FIX: Removed `lg:hidden`. The overlay works on all screen sizes when the sidebar is open. */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-black/20 backdrop-blur-sm"
-          onClick={closeSidebar}
-        />
-      )}
-
-      <aside
-        // THE FIX: Removed `lg:translate-x-0`. The sidebar's visibility is now controlled ONLY by the `isOpen` state.
-        className={`fixed top-0 left-0 h-full w-80 bg-white shadow-2xl border-r border-gray-200 z-40 transform transition-transform duration-300 ease-in-out flex flex-col ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <div className="flex items-center justify-between p-6 border-b border-gray-100">
-          <Logo />
-          {/* THE FIX: Removed `lg:hidden`. The close button is always visible when the sidebar is open. */}
-          <button onClick={closeSidebar} className="p-1 text-gray-500 hover:text-gray-700">
-            <X size={20} />
+    <SidebarContext.Provider value={{ isOpen, setIsOpen, toggleSidebar }}>
+      <div className="min-h-screen bg-gray-50">
+        {/* Mobile Hamburger Button - Only show when sidebar is closed */}
+        {!isOpen && (
+          <button
+            onClick={toggleSidebar}
+            className="fixed top-4 left-4 z-50 p-3 rounded-xl bg-white shadow-lg border border-gray-200 hover:bg-gray-50 transition-all duration-200 lg:hidden"
+            aria-label="Toggle sidebar"
+          >
+            <Menu size={20} className="text-gray-700" />
           </button>
-        </div>
+        )}
 
-        <div className="flex flex-col items-center p-6 text-center bg-gradient-to-b from-slate-50 to-white border-b border-gray-100">
-          <div className="relative">
-            <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center text-blue-800 text-2xl font-bold shadow-sm ring-4 ring-white">
-              {/* THE FIX: Changed `companyProfile.name` to `companyProfile.company_name` */}
-              {getInitials(companyProfile.company_name)}
-            </div>
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white"></div>
-          </div>
-          <h2 className="mt-4 text-xl font-bold text-gray-900">
-            {/* THE FIX: Changed `companyProfile.name` to `companyProfile.company_name` */}
-            {companyProfile.company_name || "Company Name"}
-          </h2>
-          <p className="text-sm font-medium text-blue-700 bg-blue-50 px-3 py-1 rounded-full mt-1">
-            {companyProfile.industry || "Industry"}
-          </p>
-          <p className="mt-3 text-xs text-gray-600 leading-relaxed max-w-xs">
-            {companyProfile.description || "No description provided."}
-          </p>
-        </div>
+        {/* Desktop Toggle Button - Shows when sidebar is closed */}
+        {!isOpen && (
+          <button
+            onClick={toggleSidebar}
+            className="hidden lg:block fixed top-4 left-4 z-50 p-3 rounded-xl bg-white shadow-lg border border-gray-200 hover:bg-gray-50 transition-all duration-200"
+            aria-label="Open sidebar"
+          >
+            <Menu size={20} className="text-gray-700" />
+          </button>
+        )}
 
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {navLinks.map((link) => (
-            <Link
-              key={link.label}
-              href={link.href}
-              onClick={closeSidebar}
-              className="group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+        {/* Mobile Overlay */}
+        {isOpen && isMobile && (
+          <div
+            className="fixed inset-0 z-30 bg-black/50"
+            onClick={() => setIsOpen(false)}
+          />
+        )}
+
+        {/* Sidebar */}
+        <aside
+          className={`fixed top-0 left-0 h-full w-80 bg-white shadow-2xl border-r border-gray-200 z-40 flex flex-col transition-all duration-300 ease-in-out
+            ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+          `}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 border-b border-gray-100">
+            <Logo />
+            {/* Close button */}
+            <button 
+              onClick={() => setIsOpen(false)} 
+              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
             >
-              <link.icon size={20} className="text-gray-500 group-hover:text-blue-700 transition-colors duration-200" />
-              <span className="font-medium">{link.label}</span>
-            </Link>
-          ))}
-          <Link
-            href="/admin/fupro-ai"
-            onClick={closeSidebar}
-            className="group flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gradient-to-r hover:from-orange-50 hover:to-orange-100 hover:text-orange-800"
-          >
-            <div className="flex items-center gap-3">
-              <Sparkles size={20} className="text-orange-600 group-hover:text-orange-700" />
-              <span className="font-medium">FuproAI</span>
-            </div>
-            <span className="text-xs font-bold text-white bg-gradient-to-r from-orange-500 to-orange-600 px-3 py-1 rounded-full shadow-sm">
-              NEW
-            </span>
-          </Link>
-        </nav>
+              <X size={18} />
+            </button>
+          </div>
 
-        <div className="p-4 border-t border-gray-100 bg-gray-50">
-          <Button
-            variant="secondary"
-            className="w-full justify-start gap-3 hover:bg-red-50 hover:text-red-700"
-            onClick={handleSignOut}
-          >
-            <LogOut size={20} />
-            <span>Sign Out</span>
-          </Button>
+          {/* Company Profile Section */}
+          <div className="flex flex-col items-center p-6 text-center bg-gradient-to-b from-slate-50 to-white border-b border-gray-100">
+            <div className="relative">
+              <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center text-blue-800 text-2xl font-bold shadow-sm ring-4 ring-white">
+                {getInitials(companyProfile.company_name)}
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white"></div>
+            </div>
+            <h2 className="mt-4 text-xl font-bold text-gray-900">
+              {companyProfile.company_name || "Company Name"}
+            </h2>
+            <p className="text-sm font-medium text-blue-700 bg-blue-50 px-3 py-1 rounded-full mt-1">
+              {companyProfile.industry || "Industry"}
+            </p>
+            <p className="mt-3 text-xs text-gray-600 leading-relaxed max-w-xs">
+              {companyProfile.description || "No description provided."}
+            </p>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+            {navLinks.map((link) => (
+              <Link
+                key={link.label}
+                href={link.href}
+                onClick={() => {
+                  // Only close on mobile
+                  if (isMobile) {
+                    setIsOpen(false);
+                  }
+                }}
+                className="group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+              >
+                <link.icon size={20} className="text-gray-500 group-hover:text-blue-700 transition-colors duration-200" />
+                <span className="font-medium">{link.label}</span>
+              </Link>
+            ))}
+            <Link
+              href="/admin/fupro-ai"
+              onClick={() => {
+                if (isMobile) {
+                  setIsOpen(false);
+                }
+              }}
+              className="group flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gradient-to-r hover:from-orange-50 hover:to-orange-100 hover:text-orange-800"
+            >
+              <div className="flex items-center gap-3">
+                <Sparkles size={20} className="text-orange-600 group-hover:text-orange-700" />
+                <span className="font-medium">FuproAI</span>
+              </div>
+              <span className="text-xs font-bold text-white bg-gradient-to-r from-orange-500 to-orange-600 px-3 py-1 rounded-full shadow-sm">
+                NEW
+              </span>
+            </Link>
+          </nav>
+
+          {/* Sign Out */}
+          <div className="p-4 border-t border-gray-100 bg-gray-50">
+            <Button
+              variant="secondary"
+              className="w-full justify-start gap-3 hover:bg-red-50 hover:text-red-700"
+              onClick={handleSignOut}
+            >
+              <LogOut size={20} />
+              <span>Sign Out</span>
+            </Button>
+          </div>
+        </aside>
+
+        {/* Main Content Area - This now properly shifts based on sidebar state */}
+        <div className={`transition-all duration-300 ease-in-out ${
+          isOpen && !isMobile ? 'ml-80' : 'ml-0'
+        }`}>
+          {/* Content wrapper with mobile spacing */}
+          <div className="pt-16 lg:pt-0">
+            {children}
+          </div>
         </div>
-      </aside>
-    </>
+      </div>
+    </SidebarContext.Provider>
+  );
+};
+
+// Simplified AdminSidebar component (now just exports the provider)
+export const AdminSidebar = AdminSidebarProvider;
+
+// Enhanced AdminHeader that responds to sidebar state
+export const EnhancedAdminHeader = ({ 
+  stats,
+  title = "Your Internship Postings",
+  className = ""
+}: {
+  stats: {
+    total: number;
+    active: number;
+    applications: number;
+  };
+  title?: string;
+  className?: string;
+}) => {
+  return (
+    <header className={`bg-white/60 backdrop-blur-sm border-b border-gray-200 p-4 sm:p-6 ${className}`}>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex-1">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+            {title}
+          </h1>
+          {/* Mobile: Stack stats vertically */}
+          <div className="mt-2 sm:hidden">
+            <div className="flex flex-col gap-1 text-sm text-gray-500">
+              <div>
+                Total Postings:{" "}
+                <span className="font-semibold text-gray-700">{stats.total}</span>
+              </div>
+              <div>
+                Active:{" "}
+                <span className="font-semibold text-green-600">{stats.active}</span>
+              </div>
+              <div>
+                Total Applications:{" "}
+                <span className="font-semibold text-gray-700">
+                  {stats.applications}
+                </span>
+              </div>
+            </div>
+          </div>
+          {/* Desktop: Inline stats */}
+          <p className="text-sm text-gray-500 mt-1 hidden sm:block">
+            Total Postings:{" "}
+            <span className="font-semibold text-gray-700">{stats.total}</span> ·
+            Active:{" "}
+            <span className="font-semibold text-green-600">{stats.active}</span>{" "}
+            · Total Applications:{" "}
+            <span className="font-semibold text-gray-700">
+              {stats.applications}
+            </span>
+          </p>
+        </div>
+        <div className="flex-shrink-0">
+          <Link href="/admin/postings/new" passHref>
+            <Button variant="orange" className="flex items-center justify-center gap-2 w-full sm:w-auto">
+              <FileEdit size={18} className="flex-shrink-0" />
+              <span className="whitespace-nowrap">Post New Internship</span>
+            </Button>
+          </Link>
+        </div>
+      </div>
+    </header>
+  );
+};
+
+// Content wrapper component that responds to sidebar state
+export const AdminContent = ({ 
+  children,
+  className = ""
+}: { 
+  children: React.ReactNode;
+  className?: string;
+}) => {
+  return (
+    <main className={`p-4 sm:p-6 ${className}`}>
+      {children}
+    </main>
+  );
+};
+
+// Usage Example - This shows the complete working implementation
+export const ExampleImplementation = () => {
+  const mockCompanyProfile = {
+    company_name: "TechCorp Inc",
+    industry: "Technology",
+    description: "Leading software development company specializing in innovative solutions."
+  };
+
+  const mockStats = {
+    total: 15,
+    active: 8,
+    applications: 142
+  };
+
+  return (
+    <AdminSidebarProvider companyProfile={mockCompanyProfile}>
+      <EnhancedAdminHeader stats={mockStats} />
+      
+      <AdminContent>
+        <div className="space-y-6">
+          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <h2 className="text-lg font-semibold mb-4">Dashboard Content</h2>
+            <p className="text-gray-600">
+              This content and header will now properly shift when the sidebar opens/closes on desktop!
+              The sidebar state is properly managed and shared across all components.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((item) => (
+              <div key={item} className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <h3 className="font-semibold mb-2">Card {item}</h3>
+                <p className="text-sm text-gray-600">
+                  All content shifts together when sidebar state changes.
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </AdminContent>
+    </AdminSidebarProvider>
   );
 };
