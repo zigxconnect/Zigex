@@ -20,7 +20,6 @@ export default function SmartApplyArtifact({
 }: SmartApplyArtifactProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [content, setContent] = useState(initialContent);
-  const [isPreviewing, setIsPreviewing] = useState(false);
 
   useEffect(() => {
     setContent(initialContent);
