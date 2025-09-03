@@ -1,9 +1,7 @@
-// import { Button } from "@/app/_components/ui/Button";
 import Link from "next/link";
-import Image from "next/image"; // NEW: Import the Next.js Image component
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 
-// Add 'headQuarterImage' to the props
 interface InternshipCardProps {
   id: string;
   title: string;
@@ -12,7 +10,7 @@ interface InternshipCardProps {
   type: string;
   category: string;
   logoColor: string;
-  headQuarterImage: string; // NEW PROP
+  cover_image_url: string;
 }
 
 export const InternshipCard = ({
@@ -23,22 +21,21 @@ export const InternshipCard = ({
   type,
   category,
   logoColor,
-  headQuarterImage,
+  cover_image_url,
 }: InternshipCardProps) => {
   return (
-    // We've added `overflow-hidden` to contain the image corners and `group` for hover effects
     <div className="bg-white rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden group">
-      {/* --- NEW: Image Section --- */}
+      {/* Image Section */}
       <div className="relative h-40 w-full">
         <Image
-          src={headQuarterImage}
-          alt={`Headquarters of ${company}`}
-          fill // This makes the image fill the container
-          className="object-cover transition-transform duration-300 group-hover:scale-105" // Cover the area and zoom slightly on hover
+          src={cover_image_url}
+          alt={`Cover image for ${company}`}
+          fill
+          className="object-cover transition-transform duration-300 group-hover:scale-105"
         />
       </div>
 
-      {/* --- The rest of the card content is now wrapped in a div with padding --- */}
+      {/* Card Content */}
       <div className="p-6 flex flex-col flex-grow">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
@@ -67,9 +64,12 @@ export const InternshipCard = ({
           </span>
         </div>
 
-        <div className="mt-auto pt-4 ">
+        <div className="mt-auto pt-4 border-t border-gray-100">
           <Link href={`/internships/${id}`}>
-            <Button variant="secondary-outline" className="w-full bg-blue-800 hover:bg-blue-700 text-white">
+            <Button
+              variant="secondary-outline"
+              className="w-full bg-blue-800 hover:bg-blue-700 text-white"
+            >
               View Details
             </Button>
           </Link>
