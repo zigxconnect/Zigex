@@ -62,18 +62,15 @@ export async function GET(
       .eq("id", id) // Filter by the ID from the URL
       .single(); // Expect only one result
 
-    // 4. Handle cases where the internship is not found
     if (error) {
       console.error("Supabase query error:", error);
-      // The .single() method throws an error if no rows are found,
-      // which is perfect for a 404 response.
+
       return NextResponse.json(
         { error: `Internship with ID ${id} not found.` },
         { status: 404 }
       );
     }
 
-    // 5. Return the detailed internship object
     return NextResponse.json(internship, { status: 200 });
   } catch (error: any) {
     console.error("API Endpoint Error:", error);
