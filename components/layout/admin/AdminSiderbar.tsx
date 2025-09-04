@@ -3,7 +3,7 @@
 import React, { useState, createContext, useContext, useEffect } from "react";
 import Link from "next/link";
 import {
-  Menu, X, FileText, Users, FileEdit, CheckCheck, Sparkles, LogOut, FilePen
+  Menu, X, FileText, Users, FileEdit, CheckCheck, Sparkles, LogOut, FilePen, LayoutDashboard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/uiComponenet/Logo";
@@ -21,6 +21,7 @@ const getInitials = (name: string = "") => {
 };
 
 const navLinks = [
+  { href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/admin/postings", icon: FileText, label: "Internship Postings" },
   { href: "/admin/applicants", icon: Users, label: "Applicants" },
   { href: "/admin/profile", icon: FilePen, label: "Edit Profile" },
