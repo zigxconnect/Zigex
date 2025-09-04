@@ -1,11 +1,3 @@
-// import { AdminHeader } from "@/app/_components/layout/admin/AdminHeader";
-// import { AdminHeader } from "../_components/layout/admin/AdminHeader";
-// import { AdminSidebar } from "../_components/layout/admin/AdminSiderbar";
-
-// app/admin/layout.tsx
-
-// app/admin/layout.tsx
-
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -43,7 +35,7 @@ export default async function AdminDashboardLayout({
   // This gives us the name, industry, description, etc., for the sidebar.
   const { data: companyProfile } = await supabase
     .from("company_profiles")
-    .select("*") 
+    .select("*")
     .eq("user_id", user.id)
     .single();
 
@@ -64,7 +56,14 @@ export default async function AdminDashboardLayout({
   if (internshipsError) {
     console.error("Error fetching internships for stats:", internshipsError);
     // Render with zeroed stats on error
-    return <LayoutUI companyProfile={companyProfile} stats={{ total: 0, active: 0, applications: 0 }}>{children}</LayoutUI>;
+    return (
+      <LayoutUI
+        companyProfile={companyProfile}
+        stats={{ total: 0, active: 0, applications: 0 }}
+      >
+        {children}
+      </LayoutUI>
+    );
   }
 
   const internshipIds = internships.map((i) => i.id);
@@ -74,8 +73,10 @@ export default async function AdminDashboardLayout({
       .from("applications")
       .select("*", { count: "exact", head: true })
       .in("internship_id", internshipIds),
-    
-    Promise.resolve(internships.filter(i => new Date(i.deadline) >= new Date()).length)
+
+    Promise.resolve(
+      internships.filter((i) => new Date(i.deadline) >= new Date()).length
+    ),
   ]);
 
   const headerStats = {
@@ -96,7 +97,15 @@ export default async function AdminDashboardLayout({
 
 // Helper component to avoid repeating JSX
 // THE CHANGE: Accept the `companyProfile` prop.
-const LayoutUI = ({ children, stats, companyProfile }: { children: ReactNode, stats: any, companyProfile: any }) => (
+const LayoutUI = ({
+  children,
+  stats,
+  companyProfile,
+}: {
+  children: ReactNode;
+  stats: any;
+  companyProfile: any;
+}) => (
   <div className="flex h-screen bg-slate-50 text-gray-800">
     {/* THE CHANGE: Pass the profile data to the AdminSidebar component. */}
     <AdminSidebar companyProfile={companyProfile} />

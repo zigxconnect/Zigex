@@ -81,7 +81,7 @@ export const InternshipListings = () => {
                 type={internship.type}
                 category={internship.category}
                 logoColor={internship.logoColor}
-                headQuarterImage={internship.headQuarterImage}
+                cover_image_url={internship.cover_image_url}
               />
             ))
           ) : (

@@ -1,17 +1,11 @@
-// single internship operation
-
-// File: app/api/internships/[id]/route.ts
-
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-// The GET function now accepts a 'params' object to access the dynamic [id]
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  // 1. Get the specific internship ID from the URL
   const { id } = params;
 
   if (!id) {
@@ -21,21 +15,21 @@ export async function GET(
     );
   }
 
-  const cookieStore = await cookies();
-
-  // 2. Create the Supabase client
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
+        get: async (name: string) => {
+          const cookieStore = await cookies();
           return cookieStore.get(name)?.value;
         },
-        set(name: string, value: string, options: CookieOptions) {
+        set: async (name: string, value: string, options: CookieOptions) => {
+          const cookieStore = await cookies();
           cookieStore.set({ name, value, ...options });
         },
-        remove(name: string, options: CookieOptions) {
+        remove: async (name: string, options: CookieOptions) => {
+          const cookieStore = await cookies();
           cookieStore.set({ name, value: "", ...options });
         },
       },
@@ -43,8 +37,6 @@ export async function GET(
   );
 
   try {
-    // 3. Fetch the single internship that matches the ID.
-    // We are also joining with 'company_profiles' to get extended company details.
     const { data: internship, error } = await supabase
       .from("internships")
       .select(
@@ -59,8 +51,8 @@ export async function GET(
         )
       `
       )
-      .eq("id", id) // Filter by the ID from the URL
-      .single(); // Expect only one result
+      .eq("id", id)
+      .single();
 
     if (error) {
       console.error("Supabase query error:", error);
