@@ -12,10 +12,12 @@ export async function POST(request: Request) {
     );
   }
 
+  // 1. Use the admin client to create the user.
   const { data: authData, error: authError } = await supabaseAdmin.auth.signUp({
     email,
     password,
   });
+
   if (authError || !authData.user) {
     return NextResponse.json(
       { error: authError?.message || "Could not sign up user." },
@@ -23,6 +25,7 @@ export async function POST(request: Request) {
     );
   }
 
+  // 2. Create the corresponding profile for the new user.
   const { error: profileError } = await supabaseAdmin
     .from("student_profiles")
     .insert({
@@ -41,24 +44,27 @@ export async function POST(request: Request) {
     );
   }
 
-  const cookieStore = cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
+        get: async (name: string) => {
+          const cookieStore = await cookies();
           return cookieStore.get(name)?.value;
         },
-        set(name: string, value: string, options: CookieOptions) {
+        set: async (name: string, value: string, options: CookieOptions) => {
+          const cookieStore = await cookies();
           cookieStore.set({ name, value, ...options });
         },
-        remove(name: string, options: CookieOptions) {
+        remove: async (name: string, options: CookieOptions) => {
+          const cookieStore = await cookies();
           cookieStore.set({ name, value: "", ...options });
         },
       },
     }
   );
+
   const { error: signInError } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -71,6 +77,7 @@ export async function POST(request: Request) {
     );
   }
 
+  // The user is created and a session cookie is now set in their browser.
   return NextResponse.json(
     { message: "Student registered and logged in successfully" },
     { status: 201 }

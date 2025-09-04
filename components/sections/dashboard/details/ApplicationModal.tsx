@@ -4,7 +4,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-
 import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
@@ -14,7 +13,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-
 import { X } from "lucide-react";
 import { FileUploadButton } from "@/components/ui/FileUploadButton";
 import { Spinner } from "@/components/uiComponenet/Spinner";
@@ -27,7 +25,6 @@ const applicationSchema = z.object({
   cover_letter: z
     .string()
     .min(20, { message: "Cover letter must be at least 20 characters." }),
-
   cv_file: z
     .instanceof(File, { message: "A resume file is required." })
     .refine(
@@ -113,7 +110,6 @@ export const ApplicationModal = ({
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="cv_file"
@@ -130,7 +126,6 @@ export const ApplicationModal = ({
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="answers"
@@ -148,7 +143,6 @@ export const ApplicationModal = ({
                   </FormItem>
                 )}
               />
-
               <div className="pt-6 border-t border-gray-200 flex justify-end">
                 <Button
                   type="submit"
