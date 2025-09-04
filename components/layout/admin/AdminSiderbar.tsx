@@ -53,9 +53,11 @@ export const AdminSidebarProvider = ({
     const checkScreenSize = () => {
       const mobile = window.innerWidth < 1024;
       setIsMobile(mobile);
-      // On mobile, start closed; on desktop, start open
+      // On mobile, start closed; on desktop, ALWAYS OPEN (static)
       if (mobile) {
         setIsOpen(false);
+      } else {
+        setIsOpen(true); // Force open on desktop
       }
     };
 
@@ -64,7 +66,13 @@ export const AdminSidebarProvider = ({
     return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
 
-  const toggleSidebar = () => setIsOpen(!isOpen);
+  // Modified toggle - only works on mobile
+  const toggleSidebar = () => {
+    if (isMobile) {
+      setIsOpen(!isOpen);
+    }
+    // Do nothing on desktop - sidebar stays static
+  };
 
   const handleSignOut = async () => {
     try {
@@ -83,29 +91,20 @@ export const AdminSidebarProvider = ({
   return (
     <SidebarContext.Provider value={{ isOpen, setIsOpen, toggleSidebar }}>
       <div className="min-h-screen bg-gray-50">
-        {/* Mobile Hamburger Button - Only show when sidebar is closed */}
-        {!isOpen && (
+        {/* Mobile Hamburger Button - Only show on mobile when sidebar is closed */}
+        {!isOpen && isMobile && (
           <button
             onClick={toggleSidebar}
-            className="fixed top-4 left-4 z-50 p-3 rounded-xl bg-white shadow-lg border border-gray-200 hover:bg-gray-50 transition-all duration-200 lg:hidden"
+            className="fixed top-4 left-4 z-50 p-3 rounded-xl bg-white shadow-lg border border-gray-200 hover:bg-gray-50 transition-all duration-200"
             aria-label="Toggle sidebar"
           >
             <Menu size={20} className="text-gray-700" />
           </button>
         )}
 
-        {/* Desktop Toggle Button - Shows when sidebar is closed */}
-        {!isOpen && (
-          <button
-            onClick={toggleSidebar}
-            className="hidden lg:block fixed top-4 left-4 z-50 p-3 rounded-xl bg-white shadow-lg border border-gray-200 hover:bg-gray-50 transition-all duration-200"
-            aria-label="Open sidebar"
-          >
-            <Menu size={20} className="text-gray-700" />
-          </button>
-        )}
+        {/* NO DESKTOP TOGGLE BUTTON - Sidebar is static */}
 
-        {/* Mobile Overlay */}
+        {/* Mobile Overlay - Only on mobile */}
         {isOpen && isMobile && (
           <div
             className="fixed inset-0 z-30 bg-black/50"
@@ -116,19 +115,25 @@ export const AdminSidebarProvider = ({
         {/* Sidebar */}
         <aside
           className={`fixed top-0 left-0 h-full w-80 bg-white shadow-2xl border-r border-gray-200 z-40 flex flex-col transition-all duration-300 ease-in-out
-            ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+            ${
+              isMobile 
+                ? (isOpen ? 'translate-x-0' : '-translate-x-full') // Mobile: can hide/show
+                : 'translate-x-0' // Desktop: always visible
+            }
           `}
         >
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-100">
             <Logo />
-            {/* Close button */}
-            <button 
-              onClick={() => setIsOpen(false)} 
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <X size={18} />
-            </button>
+            {/* Close button - Only show on mobile */}
+            {isMobile && (
+              <button 
+                onClick={() => setIsOpen(false)} 
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X size={18} />
+              </button>
+            )}
           </div>
 
           {/* Company Profile Section */}
@@ -177,13 +182,7 @@ export const AdminSidebarProvider = ({
               }}
               className="group flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gradient-to-r hover:from-orange-50 hover:to-orange-100 hover:text-orange-800"
             >
-              <div className="flex items-center gap-3">
-                <Sparkles size={20} className="text-orange-600 group-hover:text-orange-700" />
-                <span className="font-medium">FuproAI</span>
-              </div>
-              <span className="text-xs font-bold text-white bg-gradient-to-r from-orange-500 to-orange-600 px-3 py-1 rounded-full shadow-sm">
-                NEW
-              </span>
+              
             </Link>
           </nav>
 
@@ -200,9 +199,9 @@ export const AdminSidebarProvider = ({
           </div>
         </aside>
 
-        {/* Main Content Area - This now properly shifts based on sidebar state */}
+        {/* Main Content Area - On desktop, always ml-80 since sidebar is static */}
         <div className={`transition-all duration-300 ease-in-out ${
-          isOpen && !isMobile ? 'ml-80' : 'ml-0'
+          isMobile ? 'ml-0' : 'ml-80' // Desktop always has left margin, mobile never does
         }`}>
           {/* Content wrapper with mobile spacing */}
           <div className="pt-16 lg:pt-0">
@@ -320,8 +319,8 @@ export const ExampleImplementation = () => {
           <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
             <h2 className="text-lg font-semibold mb-4">Dashboard Content</h2>
             <p className="text-gray-600">
-              This content and header will now properly shift when the sidebar opens/closes on desktop!
-              The sidebar state is properly managed and shared across all components.
+              Desktop sidebar is now static (always visible, no toggle). 
+              Mobile behavior remains unchanged with hamburger menu and overlay.
             </p>
           </div>
           
@@ -330,7 +329,7 @@ export const ExampleImplementation = () => {
               <div key={item} className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
                 <h3 className="font-semibold mb-2">Card {item}</h3>
                 <p className="text-sm text-gray-600">
-                  All content shifts together when sidebar state changes.
+                  Content always has consistent spacing on desktop.
                 </p>
               </div>
             ))}
