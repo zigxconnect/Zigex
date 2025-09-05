@@ -13,14 +13,10 @@ export default async function DashboardPage() {
     redirect("/sign-in");
   }
 
-  // This Server Component no longer needs to fetch the internships itself.
-  // The client component will handle both the initial fetch and subsequent searches.
-
   return (
     <div className="md:p-6 lg:p-8 space-y-8">
       <WelcomeCard user={userData} />
 
-      {/* Render the interactive client component */}
       <InternshipListings />
     </div>
   );

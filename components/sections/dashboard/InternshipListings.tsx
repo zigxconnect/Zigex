@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -28,7 +29,6 @@ export const InternshipListings = () => {
 
       const data = await response.json();
 
-      // Flatten the data to match the InternshipCard's props
       const flattenedData = data.map((internship: any) => ({
         ...internship,
         company: internship.company_profiles?.company_name || "Confidential",

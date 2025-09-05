@@ -32,7 +32,7 @@ export const WelcomeCard = ({ user }: WelcomeCardProps) => {
           </div>
           <Link href="/profile-settings">
             <Button
-              variant=""
+              variant="secondary"
               className="bg-blue-700 hover:bg-blue-600 text-white"
             >
               <Edit size={16} className="mr-2" />
