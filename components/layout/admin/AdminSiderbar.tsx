@@ -2,6 +2,7 @@
 
 import React, { useState, createContext, useContext, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Menu,
   X,
@@ -56,6 +57,7 @@ export const AdminSidebarProvider = ({
   // Initialize based on screen size
   const [isOpen, setIsOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const pathname = usePathname(); // Get current pathname to determine active link
 
   // Check screen size on mount and resize
   useEffect(() => {
@@ -91,6 +93,11 @@ export const AdminSidebarProvider = ({
       console.error("Logout failed:", error);
       toast.error("Logout failed. Please try again.");
     }
+  };
+
+  // Function to check if a link is active
+  const isLinkActive = (href: string) => {
+    return pathname === href;
   };
 
   if (!companyProfile) {
@@ -168,25 +175,41 @@ export const AdminSidebarProvider = ({
 
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-            {navLinks.map((link) => (
-              <Link
-                key={link.label}
-                href={link.href}
-                onClick={() => {
-                  // Only close on mobile
-                  if (isMobile) {
-                    setIsOpen(false);
-                  }
-                }}
-                className="group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-              >
-                <link.icon
-                  size={20}
-                  className="text-gray-500 group-hover:text-blue-700 transition-colors duration-200"
-                />
-                <span className="font-medium">{link.label}</span>
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              const isActive = isLinkActive(link.href);
+              return (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  onClick={() => {
+                    // Only close on mobile
+                    if (isMobile) {
+                      setIsOpen(false);
+                    }
+                  }}
+                  className={`group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                    isActive
+                      ? "bg-blue-50 text-blue-700 border border-blue-200 shadow-sm"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  }`}
+                >
+                  <link.icon
+                    size={20}
+                    className={`transition-colors duration-200 ${
+                      isActive
+                        ? "text-blue-700"
+                        : "text-gray-500 group-hover:text-blue-700"
+                    }`}
+                  />
+                  <span className={`font-medium ${isActive ? "font-semibold" : ""}`}>
+                    {link.label}
+                  </span>
+                  {isActive && (
+                    <div className="ml-auto w-2 h-2 bg-blue-600 rounded-full"></div>
+                  )}
+                </Link>
+              );
+            })}
             <Link
               href="/admin/fupro-ai"
               onClick={() => {
@@ -194,7 +217,11 @@ export const AdminSidebarProvider = ({
                   setIsOpen(false);
                 }
               }}
-              className="group flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gradient-to-r hover:from-orange-50 hover:to-orange-100 hover:text-orange-800"
+              className={`group flex items-center justify-between gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                isLinkActive("/admin/fupro-ai")
+                  ? "bg-orange-50 text-orange-700 border border-orange-200 shadow-sm"
+                  : "text-gray-600 hover:bg-gradient-to-r hover:from-orange-50 hover:to-orange-100 hover:text-orange-800"
+              }`}
             ></Link>
           </nav>
 
@@ -338,7 +365,8 @@ export const ExampleImplementation = () => {
             <h2 className="text-lg font-semibold mb-4">Dashboard Content</h2>
             <p className="text-gray-600">
               Desktop sidebar is now static (always visible, no toggle). Mobile
-              behavior remains unchanged with hamburger menu and overlay.
+              behavior remains unchanged with hamburger menu and overlay. Active
+              navigation links are now highlighted with blue background and indicator dot.
             </p>
           </div>
 

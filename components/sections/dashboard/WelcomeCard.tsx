@@ -30,7 +30,7 @@ export const WelcomeCard = ({ user }: WelcomeCardProps) => {
               priority
             />
           </div>
-          <Link href="/profile-settings">
+          <Link href="/dashboard/edit-profile">
             <Button
               variant="secondary"
               className="bg-blue-700 hover:bg-blue-600 text-white"
