@@ -1,6 +1,5 @@
-'use client';
+"use client";
 import { Button } from "@/components/ui/button";
-// import { Button } from "@/app/_components/ui/Button";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 
@@ -20,16 +19,20 @@ export const AdminHeader = ({ stats }: AdminHeaderProps) => {
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
             Your Internship Postings
           </h1>
-          {/* Mobile: Stack stats vertically */}
+
           <div className="mt-2 sm:hidden">
             <div className="flex flex-col gap-1 text-sm text-gray-500">
               <div>
                 Total Postings:{" "}
-                <span className="font-semibold text-gray-700">{stats.total}</span>
+                <span className="font-semibold text-gray-700">
+                  {stats.total}
+                </span>
               </div>
               <div>
                 Active:{" "}
-                <span className="font-semibold text-green-600">{stats.active}</span>
+                <span className="font-semibold text-green-600">
+                  {stats.active}
+                </span>
               </div>
               <div>
                 Total Applications:{" "}
@@ -39,7 +42,7 @@ export const AdminHeader = ({ stats }: AdminHeaderProps) => {
               </div>
             </div>
           </div>
-          {/* Desktop: Inline stats */}
+
           <p className="text-sm text-gray-500 mt-1 hidden sm:block">
             Total Postings:{" "}
             <span className="font-semibold text-gray-700">{stats.total}</span> ·
@@ -53,9 +56,12 @@ export const AdminHeader = ({ stats }: AdminHeaderProps) => {
         </div>
         <div className="flex-shrink-0">
           <Link href="/admin/postings/new" passHref>
-            <Button variant="orange" className="flex items-center justify-center gap-2 w-full sm:w-auto">
+            <Button
+              variant="orange"
+              className="flex items-center justify-center gap-2 w-full sm:w-auto"
+            >
               <Plus size={18} className="flex-shrink-0" />
-              <span className="whitespace-nowrap">Post New Internship</span>
+              <span className="whitespace-nowrap">Post New Program</span>
             </Button>
           </Link>
         </div>
