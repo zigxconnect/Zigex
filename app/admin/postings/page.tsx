@@ -1,5 +1,3 @@
-// FILE: app/admin/postings/page.tsx
-
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
@@ -13,16 +11,16 @@ import { redirect } from "next/navigation";
 export default async function PostingsPage() {
   const companyProfile = await getAuthenticatedCompanyProfile();
   if (!companyProfile) {
-    redirect("/sign-in"); // Or handle appropriately
+    redirect("/sign-in");
   }
 
-  const formattedPostings = await getAllCompanyPostings(companyProfile.id);
+  const postingsData = await getAllCompanyPostings(companyProfile.id);
 
-  if (formattedPostings.length === 0) {
+  if (!postingsData.hasData) {
     return <EmptyStatePostings />;
   }
 
-  return <PostingsListClient initialPostings={formattedPostings} />;
+  return <PostingsListClient initialPostings={postingsData.postings} />;
 }
 
 const EmptyStatePostings = () => (
