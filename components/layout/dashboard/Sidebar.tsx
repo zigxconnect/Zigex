@@ -102,7 +102,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-gray-900 truncate">John Doe</h3>
+              <h3 className="font-bold text-gray-900 truncate">Fonyuy Gita</h3>
               <p className="text-sm text-gray-600">Student</p>
               <div className="flex items-center gap-1 mt-1">
                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -131,9 +131,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   key={item.href}
                   href={item.href}
                   className={`
-                    group flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200
+                    group flex items-center gap-3 px-4 py-2 rounded-xl text-sm  transition-all duration-200
                     ${isActive
-                      ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25"
+                      ? "bg-blue-600 shadow-xl p-2 hover:bg-blue-500 hover:shadow-2xl rounded-md text-white"
                       : "text-gray-700 hover:bg-gray-50 hover:text-blue-600"
                     }
                   `}
@@ -141,7 +141,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <div className={`
                     p-2 rounded-lg transition-colors
                     ${isActive 
-                      ? "bg-white/20" 
+                      ? "bg-blue-700" 
                       : "bg-gray-100 group-hover:bg-blue-50"
                     }
                   `}>

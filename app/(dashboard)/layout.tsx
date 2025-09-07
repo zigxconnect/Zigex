@@ -20,7 +20,7 @@ export default function DashboardLayout({
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 w-full">
       <DashboardHeader onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
       
       <div className="flex">
@@ -40,7 +40,7 @@ export default function DashboardLayout({
         </main>
       </div>
       
-      <DashboardFooter />
+      {/* <DashboardFooter /> */}
     </div>
   );
 }

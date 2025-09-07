@@ -17,7 +17,7 @@ export const DashboardHeader = ({ onMenuClick }: DashboardHeaderProps) => {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm">
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm w-full">
       <div className="flex items-center justify-between px-4 h-16">
         
         {/* Left Side - Mobile Menu & Logo */}

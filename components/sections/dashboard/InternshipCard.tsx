@@ -37,7 +37,7 @@ export const InternshipCard = ({
 
   if (viewMode === 'list') {
     return (
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300 overflow-hidden group">
+      <div className="bg-gray-200 rounded-2xl shadow-xl border border-gray-200 hover:shadow-xl transition-all duration-300 overflow-hidden group">
         <div className="flex">
           {/* Image Section - Left Side */}
           <div className="relative w-48 h-32 flex-shrink-0">

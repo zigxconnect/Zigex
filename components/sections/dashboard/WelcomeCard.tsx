@@ -26,7 +26,7 @@ export const WelcomeCard = ({ user }: WelcomeCardProps) => {
   };
 
   return (
-    <div className="relative bg-white md:rounded-2xl md:wfull mx-auto shadow-lg md:border md:border-gray-200 overflow-hidden">
+    <div className="relative bg-white md:rounded-2xl md:w-full mx-auto shadow-lg md:border md:border-gray-200 overflow-hidden">
       {/* Cover Image with Dark Overlay */}
       <div className="relative h-40 md:h-32 w-full overflow-hidden">
         <Image
@@ -134,28 +134,28 @@ export const WelcomeCard = ({ user }: WelcomeCardProps) => {
         </div>
 
         <div className="mt-4 flex items-center gap-1 md:gap-2 flex-wrap">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 bg-gray-200 shadow-xl p-2 hover:bg-gray-100 hover:shadow-2xl rounded-md">
             <div className="flex items-center justify-center bg-blue-700 text-white p-1 rounded-full">
-              <UserCheck2 size={6} className="md:w-2 md:h-2" />
+              <UserCheck2 size={10} className="md:w-4 md:h-4" />
             </div>
             <p className="text-[10px] md:text-[12px] font-bold text-blue-900">{user.name} |</p>
           </div>
           
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 bg-gray-200 shadow-xl p-2 hover:bg-gray-100 hover:shadow-2xl rounded-md">
             <div className="flex items-center justify-center bg-blue-700 text-white p-1 rounded-full">
-              <LocationEdit size={6} className="md:w-2 md:h-2" />
+              <LocationEdit size={10} className="md:w-4 md:h-4" />
             </div>
             <p className="text-[10px] md:text-[14px] text-blue-800">{user.university} |</p>
           </div>
-          <Link href={user.profile.linkedin_url || ""} className="flex items-center gap-1">
+          <Link href={user.profile.linkedin_url || ""} className="flex items-center gap-1 bg-gray-200 shadow-xl p-2 hover:bg-gray-100 hover:shadow-2xl rounded-md">
             <div className="flex items-center justify-center bg-blue-700 text-white p-1 rounded-full">
-              <Link2 size={6} className="md:w-[10px] md:h-[10px]" /> 
+              <Link2 size={6} className="md:w-4 md:h-4" /> 
             </div>
             <p className="text-[10px] md:text-[12px] text-blue-800">Portfolio</p>
           </Link>
-          <Link href={user.profile.linkedin_url || ""} className="flex items-center gap-1">
+          <Link href={user.profile.linkedin_url || ""} className="flex items-center gap-1 bg-gray-200 shadow-xl p-2 hover:bg-gray-100 hover:shadow-2xl rounded-md">
             <div className="flex items-center justify-center bg-blue-700 text-white p-1 rounded-full">
-              <Github size={6} className="md:w-[10px] md:h-[10px]" /> 
+              <Github size={6} className="md:w-4 md:h-4" /> 
             </div>
             <p className="text-[10px] md:text-[12px] text-blue-800">Github</p>
           </Link>
