@@ -45,6 +45,54 @@ const SidebarContext = createContext({
 
 export const useSidebar = () => useContext(SidebarContext);
 
+// ========================================================================
+// 1. NEW COMPONENT TO HANDLE "READ MORE" FUNCTIONALITY
+// ========================================================================
+const ReadMore = ({
+  text,
+  maxLength = 50,
+}: {
+  text: string;
+  maxLength?: number;
+}) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Return a placeholder if no text is provided from the backend
+  if (!text) {
+    return (
+      <p className="mt-3 text-xs text-gray-600 leading-relaxed max-w-xs">
+        No description provided.
+      </p>
+    );
+  }
+
+  // If the text is shorter than the max length, just display it without a toggle
+  if (text.length <= maxLength) {
+    return (
+      <p className="mt-3 text-xs text-gray-600 leading-relaxed max-w-xs">
+        {text}
+      </p>
+    );
+  }
+
+  const toggleText = () => {
+    setIsExpanded(!isExpanded);
+  };
+
+  return (
+    <p className="mt-3 text-xs text-gray-600 leading-relaxed max-w-xs">
+      {isExpanded ? text : `${text.substring(0, maxLength)}... `}
+      <span
+        onClick={toggleText}
+        className="text-blue-600 font-semibold cursor-pointer hover:underline"
+        style={{ whiteSpace: "nowrap" }} // Prevents the link from wrapping to a new line
+      >
+        {isExpanded ? "Read Less" : "Read More"}
+      </span>
+    </p>
+  );
+};
+
 // Main Provider Component that manages all state
 export const AdminSidebarProvider = ({
   children,
@@ -111,8 +159,6 @@ export const AdminSidebarProvider = ({
           </button>
         )}
 
-        {/* NO DESKTOP TOGGLE BUTTON - Sidebar is static */}
-
         {/* Mobile Overlay - Only on mobile */}
         {isOpen && isMobile && (
           <div
@@ -161,9 +207,11 @@ export const AdminSidebarProvider = ({
             <p className="text-sm font-medium text-blue-700 bg-blue-50 px-3 py-1 rounded-full mt-1">
               {companyProfile.industry || "Industry"}
             </p>
-            <p className="mt-3 text-xs text-gray-600 leading-relaxed max-w-xs">
-              {companyProfile.description || "No description provided."}
-            </p>
+
+            {/* ======================================================================== */}
+            {/* 2. OLD DESCRIPTION PARAGRAPH REPLACED WITH THE NEW COMPONENT */}
+            {/* ======================================================================== */}
+            <ReadMore text={companyProfile.description} />
           </div>
 
           {/* Navigation */}
@@ -316,10 +364,10 @@ export const AdminContent = ({
 // Usage Example - This shows the complete working implementation
 export const ExampleImplementation = () => {
   const mockCompanyProfile = {
-    company_name: "TechCorp Inc",
-    industry: "Technology",
+    company_name: "Innovate Solutions LLC",
+    industry: "Cloud Computing",
     description:
-      "Leading software development company specializing in innovative solutions.",
+      "Innovate Solutions LLC is a forward-thinking tech company that specializes in scalable cloud infrastructure and AI-driven analytics. We empower businesses to leverage data for growth and efficiency.",
   };
 
   const mockStats = {
@@ -337,8 +385,8 @@ export const ExampleImplementation = () => {
           <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
             <h2 className="text-lg font-semibold mb-4">Dashboard Content</h2>
             <p className="text-gray-600">
-              Desktop sidebar is now static (always visible, no toggle). Mobile
-              behavior remains unchanged with hamburger menu and overlay.
+              This is the main content area. The description in the sidebar is
+              now truncated with a "Read More" link.
             </p>
           </div>
 
@@ -350,7 +398,7 @@ export const ExampleImplementation = () => {
               >
                 <h3 className="font-semibold mb-2">Card {item}</h3>
                 <p className="text-sm text-gray-600">
-                  Content always has consistent spacing on desktop.
+                  Some placeholder content here.
                 </p>
               </div>
             ))}
