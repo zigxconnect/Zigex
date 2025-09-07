@@ -17,6 +17,7 @@ export async function POST(request: Request) {
     website,
   } = await request.json();
 
+    console.log("Received registration data:")
   // Basic validation for the required fields
   if (!email || !password || !company_name || !description) {
     return NextResponse.json(
@@ -25,6 +26,8 @@ export async function POST(request: Request) {
     );
   }
 
+
+  console.log("Creating user with email:", email);
   // 2. Create the user in Supabase Auth.
   const { data: authData, error: authError } = await supabaseAdmin.auth.signUp({
     email,
