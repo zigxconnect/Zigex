@@ -2,8 +2,17 @@
 
 import React, { useState, createContext, useContext, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
-  Menu, X, FileText, Users, FileEdit, CheckCheck, Sparkles, LogOut, FilePen, LayoutDashboard
+  Menu,
+  X,
+  FileText,
+  Users,
+  FileEdit,
+  CheckCheck,
+  LogOut,
+  FilePen,
+  LayoutDashboard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/uiComponenet/Logo";
@@ -13,10 +22,10 @@ import { toast } from "sonner";
 const getInitials = (name: string = "") => {
   if (!name) return "";
   return name
-    .split(' ')
-    .map(word => word[0])
+    .split(" ")
+    .map((word) => word[0])
     .slice(0, 2)
-    .join('')
+    .join("")
     .toUpperCase();
 };
 
@@ -32,22 +41,23 @@ const navLinks = [
 const SidebarContext = createContext({
   isOpen: true,
   setIsOpen: (open: boolean) => {},
-  toggleSidebar: () => {}
+  toggleSidebar: () => {},
 });
 
 export const useSidebar = () => useContext(SidebarContext);
 
 // Main Provider Component that manages all state
-export const AdminSidebarProvider = ({ 
-  children, 
-  companyProfile 
-}: { 
+export const AdminSidebarProvider = ({
+  children,
+  companyProfile,
+}: {
   children: React.ReactNode;
   companyProfile: any;
 }) => {
   // Initialize based on screen size
   const [isOpen, setIsOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const pathname = usePathname(); // Get current pathname to determine active link
 
   // Check screen size on mount and resize
   useEffect(() => {
@@ -63,8 +73,8 @@ export const AdminSidebarProvider = ({
     };
 
     checkScreenSize();
-    window.addEventListener('resize', checkScreenSize);
-    return () => window.removeEventListener('resize', checkScreenSize);
+    window.addEventListener("resize", checkScreenSize);
+    return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
   // Modified toggle - only works on mobile
@@ -83,6 +93,11 @@ export const AdminSidebarProvider = ({
       console.error("Logout failed:", error);
       toast.error("Logout failed. Please try again.");
     }
+  };
+
+  // Function to check if a link is active
+  const isLinkActive = (href: string) => {
+    return pathname === href;
   };
 
   if (!companyProfile) {
@@ -117,9 +132,11 @@ export const AdminSidebarProvider = ({
         <aside
           className={`fixed top-0 left-0 h-full w-80 bg-white shadow-2xl border-r border-gray-200 z-40 flex flex-col transition-all duration-300 ease-in-out
             ${
-              isMobile 
-                ? (isOpen ? 'translate-x-0' : '-translate-x-full') // Mobile: can hide/show
-                : 'translate-x-0' // Desktop: always visible
+              isMobile
+                ? isOpen
+                  ? "translate-x-0"
+                  : "-translate-x-full" // Mobile: can hide/show
+                : "translate-x-0" // Desktop: always visible
             }
           `}
         >
@@ -128,8 +145,8 @@ export const AdminSidebarProvider = ({
             <Logo />
             {/* Close button - Only show on mobile */}
             {isMobile && (
-              <button 
-                onClick={() => setIsOpen(false)} 
+              <button
+                onClick={() => setIsOpen(false)}
                 className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <X size={18} />
@@ -158,22 +175,41 @@ export const AdminSidebarProvider = ({
 
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-            {navLinks.map((link) => (
-              <Link
-                key={link.label}
-                href={link.href}
-                onClick={() => {
-                  // Only close on mobile
-                  if (isMobile) {
-                    setIsOpen(false);
-                  }
-                }}
-                className="group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-              >
-                <link.icon size={20} className="text-gray-500 group-hover:text-blue-700 transition-colors duration-200" />
-                <span className="font-medium">{link.label}</span>
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              const isActive = isLinkActive(link.href);
+              return (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  onClick={() => {
+                    // Only close on mobile
+                    if (isMobile) {
+                      setIsOpen(false);
+                    }
+                  }}
+                  className={`group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                    isActive
+                      ? "bg-blue-50 text-blue-700 border border-blue-200 shadow-sm"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  }`}
+                >
+                  <link.icon
+                    size={20}
+                    className={`transition-colors duration-200 ${
+                      isActive
+                        ? "text-blue-700"
+                        : "text-gray-500 group-hover:text-blue-700"
+                    }`}
+                  />
+                  <span className={`font-medium ${isActive ? "font-semibold" : ""}`}>
+                    {link.label}
+                  </span>
+                  {isActive && (
+                    <div className="ml-auto w-2 h-2 bg-blue-600 rounded-full"></div>
+                  )}
+                </Link>
+              );
+            })}
             <Link
               href="/admin/fupro-ai"
               onClick={() => {
@@ -181,10 +217,12 @@ export const AdminSidebarProvider = ({
                   setIsOpen(false);
                 }
               }}
-              className="group flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gradient-to-r hover:from-orange-50 hover:to-orange-100 hover:text-orange-800"
-            >
-              
-            </Link>
+              className={`group flex items-center justify-between gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                isLinkActive("/admin/fupro-ai")
+                  ? "bg-orange-50 text-orange-700 border border-orange-200 shadow-sm"
+                  : "text-gray-600 hover:bg-gradient-to-r hover:from-orange-50 hover:to-orange-100 hover:text-orange-800"
+              }`}
+            ></Link>
           </nav>
 
           {/* Sign Out */}
@@ -201,13 +239,13 @@ export const AdminSidebarProvider = ({
         </aside>
 
         {/* Main Content Area - On desktop, always ml-80 since sidebar is static */}
-        <div className={`transition-all duration-300 ease-in-out ${
-          isMobile ? 'ml-0' : 'ml-80' // Desktop always has left margin, mobile never does
-        }`}>
+        <div
+          className={`transition-all duration-300 ease-in-out ${
+            isMobile ? "ml-0" : "ml-80" // Desktop always has left margin, mobile never does
+          }`}
+        >
           {/* Content wrapper with mobile spacing */}
-          <div className="pt-16 lg:pt-0">
-            {children}
-          </div>
+          <div className="pt-16 lg:pt-0">{children}</div>
         </div>
       </div>
     </SidebarContext.Provider>
@@ -218,10 +256,10 @@ export const AdminSidebarProvider = ({
 export const AdminSidebar = AdminSidebarProvider;
 
 // Enhanced AdminHeader that responds to sidebar state
-export const EnhancedAdminHeader = ({ 
+export const EnhancedAdminHeader = ({
   stats,
   title = "Your Internship Postings",
-  className = ""
+  className = "",
 }: {
   stats: {
     total: number;
@@ -232,7 +270,9 @@ export const EnhancedAdminHeader = ({
   className?: string;
 }) => {
   return (
-    <header className={`bg-white/60 backdrop-blur-sm border-b border-gray-200 p-4 sm:p-6 ${className}`}>
+    <header
+      className={`bg-white/60 backdrop-blur-sm border-b border-gray-200 p-4 sm:p-6 ${className}`}
+    >
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex-1">
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
@@ -243,11 +283,15 @@ export const EnhancedAdminHeader = ({
             <div className="flex flex-col gap-1 text-sm text-gray-500">
               <div>
                 Total Postings:{" "}
-                <span className="font-semibold text-gray-700">{stats.total}</span>
+                <span className="font-semibold text-gray-700">
+                  {stats.total}
+                </span>
               </div>
               <div>
                 Active:{" "}
-                <span className="font-semibold text-green-600">{stats.active}</span>
+                <span className="font-semibold text-green-600">
+                  {stats.active}
+                </span>
               </div>
               <div>
                 Total Applications:{" "}
@@ -271,7 +315,10 @@ export const EnhancedAdminHeader = ({
         </div>
         <div className="flex-shrink-0">
           <Link href="/admin/postings/new" passHref>
-            <Button variant="orange" className="flex items-center justify-center gap-2 w-full sm:w-auto">
+            <Button
+              variant="orange"
+              className="flex items-center justify-center gap-2 w-full sm:w-auto"
+            >
               <FileEdit size={18} className="flex-shrink-0" />
               <span className="whitespace-nowrap">Post New Internship</span>
             </Button>
@@ -283,18 +330,14 @@ export const EnhancedAdminHeader = ({
 };
 
 // Content wrapper component that responds to sidebar state
-export const AdminContent = ({ 
+export const AdminContent = ({
   children,
-  className = ""
-}: { 
+  className = "",
+}: {
   children: React.ReactNode;
   className?: string;
 }) => {
-  return (
-    <main className={`p-4 sm:p-6 ${className}`}>
-      {children}
-    </main>
-  );
+  return <main className={`p-4 sm:p-6 ${className}`}>{children}</main>;
 };
 
 // Usage Example - This shows the complete working implementation
@@ -302,32 +345,37 @@ export const ExampleImplementation = () => {
   const mockCompanyProfile = {
     company_name: "TechCorp Inc",
     industry: "Technology",
-    description: "Leading software development company specializing in innovative solutions."
+    description:
+      "Leading software development company specializing in innovative solutions.",
   };
 
   const mockStats = {
     total: 15,
     active: 8,
-    applications: 142
+    applications: 142,
   };
 
   return (
     <AdminSidebarProvider companyProfile={mockCompanyProfile}>
       <EnhancedAdminHeader stats={mockStats} />
-      
+
       <AdminContent>
         <div className="space-y-6">
           <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
             <h2 className="text-lg font-semibold mb-4">Dashboard Content</h2>
             <p className="text-gray-600">
-              Desktop sidebar is now static (always visible, no toggle). 
-              Mobile behavior remains unchanged with hamburger menu and overlay.
+              Desktop sidebar is now static (always visible, no toggle). Mobile
+              behavior remains unchanged with hamburger menu and overlay. Active
+              navigation links are now highlighted with blue background and indicator dot.
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((item) => (
-              <div key={item} className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+              <div
+                key={item}
+                className="bg-white rounded-lg p-6 shadow-sm border border-gray-200"
+              >
                 <h3 className="font-semibold mb-2">Card {item}</h3>
                 <p className="text-sm text-gray-600">
                   Content always has consistent spacing on desktop.
