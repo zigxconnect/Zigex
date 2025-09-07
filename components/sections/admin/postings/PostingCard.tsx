@@ -91,7 +91,7 @@ export const PostingCard = ({ posting }: { posting: FormattedPosting }) => {
             </Button>
           </Link>
           <Button
-            variant="destructiveOutline"
+            variant="secondary"
             size="sm"
             className="flex items-center gap-2"
             onClick={handleDeleteClick}
