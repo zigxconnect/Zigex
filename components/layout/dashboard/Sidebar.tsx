@@ -28,7 +28,7 @@ const navItems = [
   { href: "/dashboard", icon: null, label: "Profile", isProfile: true },
   { href: "/dashboard/upload-resume", icon: Upload, label: "Upload Resume" },
   {
-    href: "/dashboard/applied-internships",
+    href: "/dashboard/applied-intenships",
     icon: Briefcase,
     label: "Applied Internships",
     badge: 5,
