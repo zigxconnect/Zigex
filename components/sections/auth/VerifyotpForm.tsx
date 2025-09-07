@@ -22,7 +22,6 @@ export const VerifyOtpForm = () => {
   const email = searchParams.get("email");
   const supabase = createClient();
 
-  // NEW: State for the resend functionality
   const [isResending, setIsResending] = useState(false);
   const [resendSuccess, setResendSuccess] = useState<string | null>(null);
   const [resendError, setResendError] = useState<string | null>(null);
@@ -34,11 +33,10 @@ export const VerifyOtpForm = () => {
     formState: { errors, isSubmitting },
   } = useForm<FormData>({ resolver: zodResolver(formSchema) });
 
-  // This effect manages the cooldown timer
   useEffect(() => {
     if (countdown > 0) {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-      return () => clearTimeout(timer); // Cleanup the timer
+      return () => clearTimeout(timer);
     }
   }, [countdown]);
 
@@ -54,7 +52,7 @@ export const VerifyOtpForm = () => {
     if (error) {
       alert(error.message || "Invalid OTP. Please try again.");
     } else {
-      router.push("/admin/postings");
+      router.push("/admin/dashboard");
     }
   };
 
@@ -73,7 +71,7 @@ export const VerifyOtpForm = () => {
       if (!response.ok) throw new Error("Failed to send code.");
 
       setResendSuccess("A new code has been sent to your email.");
-      setCountdown(30); // Start a 30-second cooldown
+      setCountdown(30);
     } catch (error) {
       setResendError("An error occurred. Please try again.");
     } finally {
@@ -106,7 +104,7 @@ export const VerifyOtpForm = () => {
           Check your email
         </h1>
         <p className="mt-2 text-sm text-gray-600">
-          We've sent a 6-digit verification code to{" "}
+          We&apos;ve sent a 6-digit verification code to{" "}
           <span className="font-semibold text-gray-800">{email}</span>.
         </p>
       </div>
@@ -142,7 +140,6 @@ export const VerifyOtpForm = () => {
         </Button>
       </form>
 
-      {/* NEW: Resend OTP UI */}
       <div className="mt-6 text-center text-sm">
         {resendSuccess && (
           <p className="text-green-600 mb-2">{resendSuccess}</p>
