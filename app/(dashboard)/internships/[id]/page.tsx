@@ -1,9 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-
-// NEW: Import the `use` hook from React
 import { useState, useEffect, use } from "react";
 import { notFound } from "next/navigation";
-
 import { Button } from "@/components/ui/button";
 import { ApplicationModal } from "@/components/sections/dashboard/details/ApplicationModal";
 import { InternshipInfoPanel } from "@/components/sections/dashboard/details/InternshipInfoPanel";
