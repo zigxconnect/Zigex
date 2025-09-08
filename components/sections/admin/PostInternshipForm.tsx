@@ -5,11 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/uiComponenet/Select";
 import { Textarea } from "@/components/uiComponenet/Textarea";
 import { useState } from "react";
-import { useRouter } from "next/navigation"; // For redirection
-import { toast } from "sonner"; // For success/error messages
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
-// Helper Component: Checkbox
-const Checkbox = ({ id, className, ...props }) => (
+const Checkbox = ({ id, className, ...props }: any) => (
   <input
     id={id}
     type="checkbox"
@@ -18,8 +17,7 @@ const Checkbox = ({ id, className, ...props }) => (
   />
 );
 
-// Helper Component: FormSection
-const FormSection = ({ title, children }) => (
+const FormSection = ({ title, children }: any) => (
   <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
     <h2 className="text-lg font-semibold text-blue-700 mb-6">{title}</h2>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 ">
@@ -28,8 +26,7 @@ const FormSection = ({ title, children }) => (
   </div>
 );
 
-// Helper Component: FormField
-const FormField = ({ label, children, className }) => (
+const FormField = ({ label, children, className }: any) => (
   <div className={className}>
     <label className="block text-sm font-medium text-blue-700 mb-1.5">
       {label}
@@ -38,22 +35,39 @@ const FormField = ({ label, children, className }) => (
   </div>
 );
 
-// --- MAIN FORM COMPONENT ---
-export const PostInternshipForm = () => {
+export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isEditMode = Boolean(initialData);
 
-  const [title, setTitle] = useState("");
-  const [location, setLocation] = useState("");
-  const [description, setDescription] = useState("");
-  const [requiredSkills, setRequiredSkills] = useState<string[]>([]);
+  const formatDateForInput = (dateString: string) => {
+    if (!dateString) return "";
+    return new Date(dateString).toISOString().split("T")[0];
+  };
+
+  const [title, setTitle] = useState(initialData?.title || "");
+  const [location, setLocation] = useState(initialData?.location || "");
+  const [description, setDescription] = useState(
+    initialData?.description || ""
+  );
+  const [requiredSkills, setRequiredSkills] = useState<string[]>(
+    initialData?.required_skills || []
+  );
   const [skillInput, setSkillInput] = useState("");
-  const [isPaid, setIsPaid] = useState(false);
-  const [category, setCategory] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [deadline, setDeadline] = useState("");
-  const [internshipType, setInternshipType] = useState("onsite");
-  const [compensation, setCompensation] = useState("");
+  const [category, setCategory] = useState(initialData?.category || "");
+  const [startDate, setStartDate] = useState(
+    formatDateForInput(initialData?.start_date)
+  );
+  const [deadline, setDeadline] = useState(
+    formatDateForInput(initialData?.deadline)
+  );
+  const [internshipType, setInternshipType] = useState(
+    initialData?.type || "onsite"
+  );
+  const [compensation, setCompensation] = useState(
+    initialData?.compensation || ""
+  );
+  const [isPaid, setIsPaid] = useState(Boolean(initialData?.compensation));
 
   const addSkill = () => {
     const trimmed = skillInput.trim();
@@ -63,54 +77,47 @@ export const PostInternshipForm = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const formattedStartDate = startDate ? new Date(startDate).toISOString() : "";
-    const formattedDeadline = deadline ? new Date(deadline).toISOString() : "";
-    
-    // Construct the data object to match the 'internshipSchema'
     const internshipData = {
       title,
       description,
       location,
       category,
-      start_date: formattedStartDate,
-      deadline: formattedDeadline,
+      start_date: startDate ? new Date(startDate).toISOString() : null,
+      deadline: deadline ? new Date(deadline).toISOString() : null,
       type: internshipType,
-      required_skills: requiredSkills, // <--- THE FIX IS HERE
-      compensation: isPaid ? compensation : undefined,
+      required_skills: requiredSkills,
+      compensation: isPaid ? compensation : null,
     };
 
-    // For debugging, you can see exactly what's being sent
-    console.log("Submitting Internship Data:", internshipData);
-
     try {
-      const response = await fetch("/api/companies/internships", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+      const endpoint = isEditMode
+        ? `/api/companies/internships/${initialData.id}`
+        : "/api/companies/internships";
+      const method = isEditMode ? "PATCH" : "POST";
+
+      const response = await fetch(endpoint, {
+        method,
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(internshipData),
       });
 
       const result = await response.json();
+      if (!response.ok)
+        throw new Error(result.error || "Failed to submit form");
 
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to create internship");
-      }
-      
-      // --- SUCCESS LOGIC ---
-      toast.success("Internship published successfully!");
+      toast.success(
+        `Internship ${isEditMode ? "updated" : "published"} successfully!`
+      );
 
-      // Wait a moment for the user to see the message, then redirect
       setTimeout(() => {
         router.push("/admin/postings");
-      }, 1500); // 1.5-second delay
-
-    } catch (error) {
-      console.error("Error submitting form:", error);
+        router.refresh();
+      }, 1500);
+    } catch (error: any) {
       toast.error(error.message || "An unexpected error occurred.");
       setIsSubmitting(false);
     }
@@ -118,18 +125,15 @@ export const PostInternshipForm = () => {
 
   return (
     <form className="space-y-8" onSubmit={handleSubmit}>
-      {/* Basic Info */}
       <FormSection title="Internship Information">
         <FormField label="Internship Title*" className="md:col-span-2">
           <Input
             type="text"
-            placeholder="e.g., Software Development Intern"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
           />
         </FormField>
-
         <FormField label="Category*">
           <Select
             value={category}
@@ -144,54 +148,50 @@ export const PostInternshipForm = () => {
             <option>Design</option>
           </Select>
         </FormField>
-
         <FormField label="Location*">
           <Input
             type="text"
-            placeholder="e.g., Bamenda, Cameroon"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             required
           />
         </FormField>
-        
         <FormField label="Internship Type*">
-            <Select
-                value={internshipType}
-                onChange={(e) => setInternshipType(e.target.value)}
-                required
-            >
-                <option value="onsite">On-site</option>
-                <option value="remote">Remote</option>
-                <option value="hybrid">Hybrid</option>
-            </Select>
+          <Select
+            value={internshipType}
+            onChange={(e) => setInternshipType(e.target.value)}
+            required
+          >
+            <option value="onsite">On-site</option>
+            <option value="remote">Remote</option>
+            <option value="hybrid">Hybrid</option>
+          </Select>
         </FormField>
-
         <FormField label="Start Date*">
-            <Input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                required
-            />
+          <Input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            required
+          />
         </FormField>
-
         <FormField label="Application Deadline*">
-            <Input
-                type="date"
-                value={deadline}
-                onChange={(e) => setDeadline(e.target.value)}
-                required
-            />
+          <Input
+            type="date"
+            value={deadline}
+            onChange={(e) => setDeadline(e.target.value)}
+            required
+          />
         </FormField>
       </FormSection>
 
-      {/* Job Details */}
       <FormSection title="Job Details">
-        <FormField label="Job Description & Responsibilities*" className="md:col-span-2">
+        <FormField
+          label="Job Description & Responsibilities*"
+          className="md:col-span-2"
+        >
           <Textarea
             rows={8}
-            placeholder="Provide a detailed description of the role, day-to-day tasks, and key responsibilities..."
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             required
@@ -199,13 +199,11 @@ export const PostInternshipForm = () => {
         </FormField>
       </FormSection>
 
-      {/* Requirements */}
       <FormSection title="Requirements & Skills">
         <FormField label="Required Skills" className="md:col-span-2">
           <div className="flex gap-2">
             <Input
               type="text"
-              placeholder="e.g., JavaScript, Communication"
               value={skillInput}
               onChange={(e) => setSkillInput(e.target.value)}
             />
@@ -226,7 +224,6 @@ export const PostInternshipForm = () => {
         </FormField>
       </FormSection>
 
-      {/* Compensation */}
       <FormSection title="Compensation">
         <div className="md:col-span-2 space-y-4">
           <div className="flex items-start gap-3">
@@ -237,7 +234,10 @@ export const PostInternshipForm = () => {
               onChange={() => setIsPaid(!isPaid)}
             />
             <div>
-              <label htmlFor="paid" className="text-sm font-medium text-blue-700">
+              <label
+                htmlFor="paid"
+                className="text-sm font-medium text-blue-700"
+              >
                 This is a paid internship
               </label>
               <p className="text-sm text-gray-500 mt-1">
@@ -245,31 +245,35 @@ export const PostInternshipForm = () => {
               </p>
             </div>
           </div>
-          
           {isPaid && (
             <FormField label="Compensation Details">
-                <Input 
-                    type="text"
-                    placeholder="e.g., $20/hour, $3000/month stipend"
-                    value={compensation}
-                    onChange={(e) => setCompensation(e.target.value)}
-                />
+              <Input
+                type="text"
+                value={compensation}
+                onChange={(e) => setCompensation(e.target.value)}
+              />
             </FormField>
           )}
-
         </div>
       </FormSection>
 
-      {/* Action Buttons */}
       <div className="flex justify-end gap-4">
-        <Button variant="outline" type="button" disabled={isSubmitting}>
+        <Button
+          variant="secondary"
+          type="button"
+          onClick={() => router.back()}
+          disabled={isSubmitting}
+        >
           Cancel
         </Button>
-        <Button variant="primary" type="button" disabled={isSubmitting}>
-          Save as Draft
-        </Button>
         <Button type="submit" variant="orange" disabled={isSubmitting}>
-          {isSubmitting ? "Publishing..." : "Publish Internship"}
+          {isSubmitting
+            ? isEditMode
+              ? "Saving Changes..."
+              : "Publishing..."
+            : isEditMode
+            ? "Save Changes"
+            : "Publish Internship"}
         </Button>
       </div>
     </form>
