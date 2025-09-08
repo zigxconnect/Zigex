@@ -12,7 +12,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL("https://innovatewithseed.com"),
   title: {
-    default: "Fp",
+    default: "ZIGEX",
     template: "%s  SeedTechCmr| SEED | innovatewithseed | skills enhancement and empowerment throgh digitalization, seed bamenda "
   },
 

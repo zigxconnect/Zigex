@@ -33,9 +33,9 @@ export const DashboardHeader = ({ onMenuClick }: DashboardHeaderProps) => {
           {/* Logo/Brand */}
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-md">
-              <span className="text-white font-bold text-sm">FP</span>
+              <span className="text-white font-bold text-sm">Z</span>
             </div>
-            <span className="hidden sm:block font-bold text-gray-900 text-lg">Future Prospect</span>
+            <span className="hidden sm:block font-bold text-gray-900 text-lg">ZIGEX</span>
           </div>
         </div>
 
@@ -68,7 +68,7 @@ export const DashboardHeader = ({ onMenuClick }: DashboardHeaderProps) => {
               />
             </div>
             <div className="hidden xl:block">
-              <p className="text-sm font-medium text-gray-900">John Doe</p>
+              <p className="text-sm font-medium text-gray-900">Fonyuy Gita</p>
               <p className="text-xs text-gray-500">Student</p>
             </div>
           </div>

@@ -26,7 +26,7 @@ export const WelcomeCard = ({ user }: WelcomeCardProps) => {
   };
 
   return (
-    <div className="relative bg-white md:rounded-2xl md:w-full mx-auto shadow-lg md:border md:border-gray-200 overflow-hidden">
+    <div className="relative bg-white md:rounded-2xl  md:w-full mx-auto shadow-lg md:border md:border-gray-200">
       {/* Cover Image with Dark Overlay */}
       <div className="relative h-40 md:h-32 w-full overflow-hidden">
         <Image
