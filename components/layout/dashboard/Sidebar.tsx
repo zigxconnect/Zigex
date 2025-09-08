@@ -163,7 +163,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     href={item.href}
                     onClick={handleNavClick}
                     className={`
-                      group flex items-center gap-3 px-3 lg:px-4 py-2 lg:py-3 rounded-xl text-sm font-medium transition-all duration-200
+                      group hover:bg-blue-600 flex items-center gap-3 px-3 lg:px-3 py-2 lg:py-2 rounded-xl text-sm font-medium transition-all shadow-lg duration-200 
                       ${isActive
                         ? "bg-blue-600 text-white shadow-lg hover:bg-blue-700"
                         : "text-gray-700 hover:bg-gray-50 hover:text-blue-600"

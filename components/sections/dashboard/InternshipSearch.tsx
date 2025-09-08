@@ -24,7 +24,7 @@ export const DashboardSearch = ({ onSearch }: DashboardSearchProps) => {
   };
 
   return (
-    <div className="w-[500px] mb-8">
+    <div className="lg:w-[40%] w-[100%] mb-10  flex-end">
       <div className="relative">
         <Search
           className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
@@ -33,7 +33,7 @@ export const DashboardSearch = ({ onSearch }: DashboardSearchProps) => {
         <Input
           type="text"
           placeholder="Search internships by title, company, or location..."
-          className="w-full pl-12 pr-12 h-12 text-base border-gray-200 focus:border-blue-400 focus:ring-blue-400 rounded-xl bg-white shadow-sm"
+          className="w-full pl-12 pr-12 h-9 text-base border-gray-200 focus:border-blue-400 focus:ring-blue-400 rounded-sm bg-white shadow-sm"
           value={query}
           onChange={handleInputChange}
         />

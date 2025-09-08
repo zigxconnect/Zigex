@@ -88,7 +88,7 @@ export default function DashboardLayout({
         ${!isMobile && isSidebarOpen ? 'lg:ml-72' : 'ml-0'}
         transition-all duration-300
       `}>
-        {/* <DashboardFooter /> */}
+        <DashboardFooter />
       </div>
     </div>
   );

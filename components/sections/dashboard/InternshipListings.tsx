@@ -232,6 +232,7 @@ export const InternshipListings = () => {
       <div className="max-w-6xl mx-auto px-4">
         
         {/* Search */}
+        <div className="flex lg:flex-row flex-col flex-col-reverse flex-start items-center justify-between w-full ">
         <DashboardSearch onSearch={handleSearch} />
 
         {/* Beautiful Tabs */}
@@ -275,6 +276,7 @@ export const InternshipListings = () => {
               })}
             </div>
           </div>
+        </div>
         </div>
 
         {/* Dynamic Header based on active tab */}
