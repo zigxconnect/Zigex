@@ -32,7 +32,6 @@ interface Internship {
   salary?: string;
 }
 interface ApplicationForm {
-  cover_letter?: string;
   support_letter_url?: string;
   cover_letter_url?: string;
 }
@@ -367,12 +366,7 @@ export default function AppliedInternshipsPage() {
                   <div className="flex items-center gap-2"><Clock size={14} /> {app.internship?.duration || "-"}</div>
                   <div className="font-medium text-green-600">{app.internship?.salary || ""}</div>
                 </div>
-                <div className="mt-4">
-                  <h3 className="text-sm font-bold text-gray-700 mb-1">Cover Letter</h3>
-                  <p className="text-gray-800 whitespace-pre-line border-l-4 border-blue-200 pl-4">
-                    {app.form?.cover_letter || "No cover letter submitted."}
-                  </p>
-                </div>
+                
                 <div className="flex gap-2 mt-6">
                   <button onClick={() => handleView(app)} className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"><Eye size={14} /> View</button>
                   <button onClick={() => handleEdit(app)} className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"><Edit3 size={14} /> Edit</button>
