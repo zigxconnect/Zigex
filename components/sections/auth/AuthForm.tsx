@@ -9,8 +9,8 @@ import { z } from "zod";
 import { SocialButton } from "./SocialButton";
 import { GoogleIcon } from "./GoogleIcon";
 import { Cloud, GraduationCap, Eye, EyeOff, Linkedin } from "lucide-react";
-import { Input } from "@/components/uiComponenet/input";
-import { Spinner } from "@/components/uiComponenet/Spinner";
+import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/uiComponent/Spinner";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 
@@ -95,19 +95,36 @@ export const AuthForm = ({ type }: AuthFormProps) => {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          // This will redirect the user back to your app after authentication
-          redirectTo: `${location.origin}/api/auth/callback`,
+          // Use window.location.origin for better browser compatibility
+          redirectTo: `${window.location.origin}/api/auth/callback`,
+          queryParams: {
+            access_type: "offline",
+            prompt: "consent",
+          },
         },
       });
 
       if (error) {
-        throw new Error(
-          "Could not authenticate with Google. Please try again."
-        );
+        // Provide more specific error messages
+        if (error.message.includes("popup")) {
+          throw new Error(
+            "Pop-up was blocked. Please allow pop-ups for this site."
+          );
+        } else if (error.message.includes("network")) {
+          throw new Error(
+            "Network error. Please check your connection and try again."
+          );
+        } else {
+          throw new Error(
+            error.message ||
+              "Could not authenticate with Google. Please try again."
+          );
+        }
       }
 
       if (data.url) {
-        window.location.href = data.url;
+        // Use router.push for better SPA experience if the URL is internal
+        router.push(data.url);
       }
     } catch (err) {
       setApiError((err as Error).message);

@@ -1,24 +1,64 @@
-"use client";
+export interface InternshipFormData {
+  title: string;
+  description: string;
+  location?: string;
+  startDate?: string | Date;
+  duration?: number;
+  stipend?: number;
+  tags?: string[];
+  // Add other fields as used in the form
+}
+("use client");
+interface CheckboxProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  id: string;
+  className?: string;
+}
+import React from "react";
+
+interface FormSectionProps {
+  title: string;
+  children: React.ReactNode;
+  className?: string;
+}
+
+interface FormFieldProps {
+  label: string;
+  children: React.ReactNode;
+  className?: string;
+  name?: string;
+  required?: boolean;
+  hint?: string;
+}
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/uiComponenet/Select";
-import { Textarea } from "@/components/uiComponenet/Textarea";
+import { Select } from "@/components/uiComponent/Select";
+import { Textarea } from "@/components/uiComponent/Textarea";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-const Checkbox = ({ id, className, ...props }: any) => (
+const Checkbox: React.FC<CheckboxProps> = ({ id, className, ...props }) => (
   <input
     id={id}
     type="checkbox"
-    className={`h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 ${className}`}
+    className={`h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 ${
+      className ?? ""
+    }`}
     {...props}
   />
 );
 
-const FormSection = ({ title, children }: any) => (
-  <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+const FormSection: React.FC<FormSectionProps> = ({
+  title,
+  children,
+  className,
+}) => (
+  <div
+    className={`bg-white p-8 rounded-xl shadow-sm border border-gray-100 ${
+      className ?? ""
+    }`}
+  >
     <h2 className="text-lg font-semibold text-blue-700 mb-6">{title}</h2>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 ">
       {children}
@@ -26,16 +66,32 @@ const FormSection = ({ title, children }: any) => (
   </div>
 );
 
-const FormField = ({ label, children, className }: any) => (
+const FormField: React.FC<FormFieldProps> = ({
+  label,
+  children,
+  className,
+  name,
+  required,
+  hint,
+}) => (
   <div className={className}>
-    <label className="block text-sm font-medium text-blue-700 mb-1.5">
+    <label
+      className="block text-sm font-medium text-blue-700 mb-1.5"
+      htmlFor={name}
+    >
       {label}
+      {required && <span className="text-red-500 ml-1">*</span>}
     </label>
     {children}
+    {hint && <div className="text-xs text-gray-500 mt-1">{hint}</div>}
   </div>
 );
 
-export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
+export const PostInternshipForm = ({
+  initialData,
+}: {
+  initialData?: Partial<InternshipFormData>;
+}) => {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isEditMode = Boolean(initialData);
@@ -86,8 +142,8 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
       description,
       location,
       category,
-      start_date: startDate ? new Date(startDate).toISOString() : null,
-      deadline: deadline ? new Date(deadline).toISOString() : null,
+      start_date: startDate ? `${startDate}T00:00:00.000Z` : null,
+      deadline: deadline ? `${deadline}T23:59:59.999Z` : null,
       type: internshipType,
       required_skills: requiredSkills,
       compensation: isPaid ? compensation : null,

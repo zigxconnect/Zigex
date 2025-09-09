@@ -1,8 +1,8 @@
 import { useFormContext } from "react-hook-form";
 import { ProfileFormData } from "@/app/types/profile";
-import { FormField } from "@/components/uiComponenet/FormField";
-import { Textarea } from "@/components/uiComponenet/Textarea";
-import { Input } from "@/components/uiComponenet/input";
+import { FormField } from "@/components/uiComponent/FormField";
+import { Textarea } from "@/components/uiComponent/Textarea";
+import { Input } from "@/components/uiComponent/input";
 
 export const Step1Personal = () => {
   const {

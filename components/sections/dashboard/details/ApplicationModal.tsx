@@ -17,9 +17,10 @@ import {
 } from "@/components/ui/form";
 import { X, ArrowRight, ArrowLeft, AlertTriangle } from "lucide-react";
 import { FileUploadButton } from "@/components/ui/FileUploadButton";
-import { Spinner } from "@/components/uiComponenet/Spinner";
-import { ApplicationPreview } from "../../intenships/ApllicationPreview";
+import { Spinner } from "@/components/uiComponent/Spinner";
+
 import { getRawProfileInfo, UserProfile } from "@/lib/actions/profile.actions";
+import { ApplicationPreview } from "../../internships/ApllicationPreview";
 
 // --- Validation Schema ---
 const MAX_FILE_SIZE_MB = 2;

@@ -116,7 +116,45 @@ export async function POST(request: Request) {
 
     // Handle image upload to Supabase Storage
     if (programPicture) {
-      const fileExtension = programPicture.name.split(".").pop();
+      // Validate file extension and MIME type
+      const allowedExtensions = ["jpg", "jpeg", "png", "gif", "webp"];
+      const allowedMimeTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+      ];
+      let fileExtension = programPicture.name.split(".").pop();
+      if (!fileExtension) {
+        return NextResponse.json(
+          { error: "Uploaded file must have an extension." },
+          { status: 400 }
+        );
+      }
+      fileExtension = fileExtension.toLowerCase().trim();
+      if (!allowedExtensions.includes(fileExtension)) {
+        return NextResponse.json(
+          {
+            error: `File type .${fileExtension} is not allowed. Allowed types: ${allowedExtensions.join(
+              ", "
+            )}`,
+          },
+          { status: 400 }
+        );
+      }
+      if (
+        programPicture.type &&
+        !allowedMimeTypes.includes(programPicture.type)
+      ) {
+        return NextResponse.json(
+          {
+            error: `MIME type ${
+              programPicture.type
+            } is not allowed. Allowed types: ${allowedMimeTypes.join(", ")}`,
+          },
+          { status: 400 }
+        );
+      }
       const fileName = `${uuidv4()}.${fileExtension}`; // Use UUID for unique filename
       const filePath = `${company.id}/${fileName}`; // Store images per company ID
 

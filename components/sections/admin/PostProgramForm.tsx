@@ -1,15 +1,22 @@
 "use client";
 
+import React, { ReactNode } from "react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/uiComponenet/Select";
-import { Textarea } from "@/components/uiComponenet/Textarea";
+import { Select } from "@/components/uiComponent/Select";
+import { Textarea } from "@/components/uiComponent/Textarea";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Image from "next/image";
 
-const FormSection = ({ title, children }: any) => (
+interface FormSectionProps {
+  title: string;
+  children: ReactNode;
+}
+
+const FormSection = ({ title, children }: FormSectionProps) => (
   <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
     <h2 className="text-lg font-semibold text-blue-700 mb-6">{title}</h2>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 ">
@@ -18,7 +25,13 @@ const FormSection = ({ title, children }: any) => (
   </div>
 );
 
-const FormField = ({ label, children, className }: any) => (
+interface FormFieldProps {
+  label: string;
+  children: ReactNode;
+  className?: string;
+}
+
+const FormField = ({ label, children, className }: FormFieldProps) => (
   <div className={className}>
     <label className="block text-sm font-medium text-blue-700 mb-1.5">
       {label}
@@ -27,7 +40,24 @@ const FormField = ({ label, children, className }: any) => (
   </div>
 );
 
-export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
+interface ProgramData {
+  id?: string;
+  title?: string;
+  description?: string;
+  program_category?: string;
+  start_date?: string;
+  end_date?: string;
+  application_deadline?: string;
+  program_format?: string;
+  required_skills?: string[];
+  program_picture_url?: string;
+}
+
+export const PostProgramForm = ({
+  initialData,
+}: {
+  initialData?: ProgramData;
+}) => {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isEditMode = Boolean(initialData);
@@ -35,7 +65,13 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
   // Helper to format ISO date strings to YYYY-MM-DD for date inputs
   const formatDateForInput = (dateString?: string) => {
     if (!dateString) return "";
-    return new Date(dateString).toISOString().split("T")[0];
+    try {
+      const d = new Date(dateString);
+      if (isNaN(d.getTime())) return "";
+      return d.toISOString().split("T")[0];
+    } catch {
+      return "";
+    }
   };
 
   // State initialization for all form fields
@@ -59,13 +95,33 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
     initialData?.program_format || "remote"
   );
   const [requiredSkills, setRequiredSkills] = useState(
-    (initialData?.required_skills || []).join(",")
+    Array.isArray(initialData?.required_skills)
+      ? initialData.required_skills.join(",")
+      : ""
   );
   const [programPicture, setProgramPicture] = useState<File | null>(null);
 
+  const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+  const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+  const [fileError, setFileError] = useState<string>("");
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setProgramPicture(e.target.files[0]);
+      const file = e.target.files[0];
+      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+        setFileError("Only JPG, PNG, or WEBP images are allowed.");
+        setProgramPicture(null);
+        e.target.value = "";
+        return;
+      }
+      if (file.size > MAX_IMAGE_SIZE) {
+        setFileError("Image size must be less than 5MB.");
+        setProgramPicture(null);
+        e.target.value = "";
+        return;
+      }
+      setFileError("");
+      setProgramPicture(file);
     }
   };
 
@@ -73,8 +129,44 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
     e.preventDefault();
     setIsSubmitting(true);
 
+    // Validate dates before appending
+    const errors: string[] = [];
+    const isValidDate = (value: string) => {
+      if (!value) return false;
+      const d = new Date(value);
+      return d.toString() !== "Invalid Date";
+    };
+
+    if (!isValidDate(startDate)) errors.push("Start date is invalid.");
+    if (!isValidDate(endDate)) errors.push("End date is invalid.");
+    if (applicationDeadline && !isValidDate(applicationDeadline))
+      errors.push("Application deadline is invalid.");
+
+    // Logical date validation
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const deadline = applicationDeadline ? new Date(applicationDeadline) : null;
+
+    if (isValidDate(startDate) && isValidDate(endDate) && end <= start) {
+      toast.error("End date must be after start date.");
+      setIsSubmitting(false);
+      return;
+    }
+    if (deadline && isValidDate(applicationDeadline) && deadline >= start) {
+      toast.error(
+        "Application deadline must be before the program start date."
+      );
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (errors.length > 0) {
+      toast.error(errors.join(" "));
+      setIsSubmitting(false);
+      return;
+    }
+
     const formData = new FormData();
-    // Append all data fields to FormData
     formData.append("title", title);
     formData.append("description", description);
     formData.append("program_category", programCategory);
@@ -89,7 +181,6 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
     if (requiredSkills) formData.append("required_skills", requiredSkills);
     if (programPicture) formData.append("program_picture", programPicture);
 
-    // If in edit mode, we must include the program ID for the PATCH request
     if (isEditMode) {
       formData.append("id", initialData.id);
     }
@@ -220,6 +311,9 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
             </div>
           )}
           <Input type="file" accept="image/*" onChange={handleFileChange} />
+          {fileError && (
+            <p className="text-xs text-red-600 mt-2">{fileError}</p>
+          )}
           <p className="text-xs text-gray-500 mt-1">
             {isEditMode
               ? "Upload a new file to replace the current one."

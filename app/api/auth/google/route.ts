@@ -1,42 +1,48 @@
-// app/api/auth/google/route.ts
-import { createServerClient } from "@supabase/ssr";
+// app/api/auth/callback/route.ts
+
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-export async function POST() {
-  const cookieStore = cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-        set(name: string, value: string, options) {
-          cookieStore.set({ name, value, ...options });
-        },
-        remove(name: string, options) {
-          cookieStore.set({ name, value: "", ...options });
-        },
-      },
-    }
-  );
+export async function GET(request: Request) {
+  const { searchParams, origin } = new URL(request.url);
+  const code = searchParams.get("code");
+  const next = searchParams.get("next") ?? "/dashboard";
 
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback`,
-    },
-  });
+  if (code) {
+    // 1. Get the cookie store instance.
+    // const cookieStore = cookies();
 
-  if (error) {
-    console.error("Error signing in with Google:", error);
-    return NextResponse.json(
-      { error: "Could not authenticate with Google." },
-      { status: 500 }
+    // 2. Create the Supabase client.
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get: async (name: string) => {
+            const cookieStore = await cookies();
+            return cookieStore.get(name)?.value;
+          },
+          set: async (name: string, value: string, options: CookieOptions) => {
+            const cookieStore = await cookies();
+            cookieStore.set({ name, value, ...options });
+          },
+          remove: async (name: string, options: CookieOptions) => {
+            const cookieStore = await cookies();
+            cookieStore.set({ name, value: "", ...options });
+          },
+        },
+      }
     );
+
+    // 4. Exchange the code for a session.
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error) {
+      return NextResponse.redirect(`${origin}${next}`);
+    }
   }
 
-  return NextResponse.json({ url: data.url });
+  // Redirect to an error page if something goes wrong.
+  console.error("Auth callback error: Could not exchange code for session.");
+  return NextResponse.redirect(`${origin}/auth/auth-code-error`);
 }

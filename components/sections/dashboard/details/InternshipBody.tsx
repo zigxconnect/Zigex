@@ -1,4 +1,4 @@
-import { ListItem } from "@/components/uiComponenet/ListItem";
+import { ListItem } from "@/components/uiComponent/ListItem";
 import { MapPin } from "lucide-react";
 
 export const InternshipBody = ({ internship }: { internship: any }) => {
