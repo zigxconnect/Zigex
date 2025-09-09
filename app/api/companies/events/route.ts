@@ -1,4 +1,4 @@
-// api/companies/events/route.ts
+
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../../lib/supabase/server';
 import { authMiddleware } from '@/lib/middleware/auth';
@@ -43,6 +43,7 @@ import { eventSchema } from '@/lib/validation/event';
  *         description: Internal server error
  */
 
+
 export async function GET(request: Request) {
   const auth = await authMiddleware(request);
   if (auth instanceof NextResponse) {
@@ -67,7 +68,7 @@ export async function GET(request: Request) {
 
   // Fetch events from Supabase
     const {data, error} = await supabaseAdmin
-      .from('events')
+      .from('event')
       .select('*')
       .eq('company_id', company.id)
       .order('created_at', { ascending: false });
@@ -81,6 +82,45 @@ export async function GET(request: Request) {
     }
     return NextResponse.json(data);
 }
+
+
+
+
+/*
+Handles the creation of a new company event with image upload.
+
+Usage:
+Send a POST request to /api/companies/events with multipart/form-data encoding.
+
+Required Form Fields:
+- title: The title of the event (string)
+- description: A description of the event (string)
+- event_type: The type of event (e.g., conference, workshop, webinar, networking, hackathon) (string)
+- start_date: The start date of the event (ISO 8601 string)
+- end_date: The end date of the event (ISO 8601 string)
+- location: The location of the event (string)
+- event_image: The image file for the event (File)
+
+Authentication:
+- The request must be authenticated as a company user. Unauthorized or non-company users will receive a 403 error.
+
+Behavior:
+- Validates the form data using the eventSchema.
+- Uploads the provided image to Supabase Storage under the company's assets.
+- Stores the event data, including the public URL of the uploaded image, in the Supabase event table.
+- Returns the created event object on success.
+
+Responses:
+- 201: Event created successfully. Returns the event object.
+- 400: Validation error or missing required fields.
+- 403: Unauthorized access (not a company user).
+- 404: Company profile not found.
+- 500: Internal server error (e.g., failed image upload or database error).
+
+@param request - The incoming HTTP request containing form data for the new event.
+@returns A JSON response with the created event or an error message.
+*/
+
 
 export async function POST(request: Request) {
   const auth = await authMiddleware(request);
@@ -153,7 +193,7 @@ export async function POST(request: Request) {
 
     // Insert the new event into Supabase
     const { data, error } = await supabaseAdmin
-      .from('events')
+      .from('event')
       .insert([validatedData])
       .select()
       .single();

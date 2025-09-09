@@ -30,7 +30,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
 
   // Fetch event from Supabase
     const {data, error} = await supabaseAdmin
-      .from('events')
+      .from('event')
       .select('*')
       .eq('id', eventId)
       .eq('company_id', company.id)
@@ -75,7 +75,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
 
   // Delete event from Supabase
     const {error} = await supabaseAdmin
-      .from('events')
+      .from('event')
       .delete()
       .eq('id', eventId)
       .eq('company_id', company.id);

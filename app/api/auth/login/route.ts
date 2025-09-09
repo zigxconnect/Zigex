@@ -13,7 +13,6 @@ export async function POST(request: Request) {
     );
   }
 
-    console.log("Creating Supabase client with email:", email);
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -35,7 +34,6 @@ export async function POST(request: Request) {
     }
   );
 
-  console.log("Supabase client created.");
 
   // 1. Check if user is a company
   const { data: companyProfile } = await supabase
@@ -43,8 +41,6 @@ export async function POST(request: Request) {
     .select("role")
     .eq("email", email)
     .single();
-
-    console.log("Company profile query result:", companyProfile);
 
   if (companyProfile) {
     console.log("Company profile found:");
