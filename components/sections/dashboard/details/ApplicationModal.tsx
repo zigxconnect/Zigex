@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useParams } from "next/navigation"; // ✅ import params
 
 // --- UI Components ---
 import { Button } from "@/components/ui/button";
@@ -53,17 +54,24 @@ type ApplicationFormData = z.infer<typeof applicationSchema>;
 
 interface ApplicationModalProps {
   internshipTitle: string;
+  internshipId?: string; // optional, can fallback to URL
   onClose: () => void;
 }
 
 export const ApplicationModal = ({
   internshipTitle,
+  internshipId,
   onClose,
 }: ApplicationModalProps) => {
+  const params = useParams(); // ✅ get params
+  const urlId = params?.id as string | undefined; // id from URL
+  const finalInternshipId = internshipId || urlId; // ✅ fallback logic
+
   const [currentStep, setCurrentStep] = useState(1);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [profileError, setProfileError] = useState<string | null>(null);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
 
   const form = useForm<ApplicationFormData>({
     resolver: zodResolver(applicationSchema),
@@ -76,10 +84,9 @@ export const ApplicationModal = ({
     getValues,
   } = form;
 
-  // This still runs on mount, but now it happens silently in the background.
+  // --- Load Profile ---
   useEffect(() => {
     const fetchProfile = async () => {
-      // Reset state on mount in case modal is re-opened
       setIsLoadingProfile(true);
       setProfileError(null);
       try {
@@ -105,8 +112,7 @@ export const ApplicationModal = ({
   }, []);
 
   const handleNextToPreview = async () => {
-    const isValid = await trigger();
-    // Only proceed if the form is valid AND we have the profile data ready.
+    const isValid = await trigger(["cover_letter_file", "support_letter_file"]);
     if (isValid && profile) {
       setCurrentStep(2);
     }
@@ -114,26 +120,68 @@ export const ApplicationModal = ({
 
   const handleBackToForm = () => {
     setCurrentStep(1);
+    setSubmissionError(null);
   };
 
   const onSubmit = async () => {
+    setSubmissionError(null);
+
+    if (!finalInternshipId) {
+      setSubmissionError("Internship ID is missing. Please refresh and try again.");
+      return;
+    }
+
     const data = getValues();
-    console.log("Submitting Final Application Data:", {
-      profileData: profile,
-      applicationData: {
-        cover_letter_file: data.cover_letter_file?.name,
-        support_letter_file: data.support_letter_file?.name,
-      },
-    });
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    alert(`Application for ${internshipTitle} submitted successfully!`);
-    onClose();
+    const formData = new FormData();
+
+    console.log("Submitting Application with Internship ID:", finalInternshipId);
+
+    formData.append("internship_id", finalInternshipId);
+    formData.append("cover_letter_file", data.cover_letter_file);
+
+    if (data.support_letter_file) {
+      formData.append("support_letter_file", data.support_letter_file);
+    }
+
+    try {
+      const response = await fetch("/api/students/applications/manual", {
+        method: "POST",
+        body: formData,
+      });
+
+      const responseText = await response.text();
+      console.log("Server Response:", responseText);
+
+      if (!response.ok) {
+        let errorData;
+        try {
+          errorData = JSON.parse(responseText);
+        } catch {
+          errorData = { error: responseText };
+        }
+        throw new Error(errorData.error || "Failed to submit application.");
+      }
+
+      let responseData;
+      try {
+        responseData = JSON.parse(responseText);
+      } catch {
+        responseData = { message: "Application submitted successfully!" };
+      }
+
+      alert(responseData.message || `Application for ${internshipTitle} submitted successfully!`);
+      onClose();
+    } catch (error) {
+      console.error("Submission error:", error);
+      setSubmissionError((error as Error).message);
+    }
   };
 
+  // --- UI (same as before) ---
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-        {/* --- Header --- */}
+        {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
             <h2 className="text-2xl font-bold text-[#193CB8]">
@@ -144,17 +192,13 @@ export const ApplicationModal = ({
               {currentStep === 1 ? "Upload Documents" : "Review & Submit"}
             </p>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full hover:bg-gray-100"
-          >
+          <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100">
             <X size={20} />
           </button>
         </div>
 
-        {/* --- Main Content --- */}
+        {/* Main Content */}
         <div className="p-6 overflow-y-auto">
-          {/* NEW: Non-blocking error message */}
           {profileError && (
             <div className="p-4 mb-6 text-sm text-red-800 rounded-lg bg-red-50 flex items-start gap-3">
               <AlertTriangle className="w-5 h-5 flex-shrink-0" />
@@ -165,14 +209,22 @@ export const ApplicationModal = ({
             </div>
           )}
 
-          {/* Step 1: Upload Form (Always visible at the start) */}
+          {submissionError && (
+            <div className="p-4 mb-6 text-sm text-red-800 rounded-lg bg-red-50 flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+              <div>
+                <p className="font-semibold">Submission Error</p>
+                <p>{submissionError}</p>
+              </div>
+            </div>
+          )}
+
           {currentStep === 1 && (
             <Form {...form}>
               <form className="space-y-6">
                 <FormField
                   control={form.control}
                   name="cover_letter_file"
-                  // ... (rest of the field is unchanged)
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Cover Letter (PDF, Max 2MB)</FormLabel>
@@ -189,12 +241,9 @@ export const ApplicationModal = ({
                 <FormField
                   control={form.control}
                   name="support_letter_file"
-                  // ... (rest of the field is unchanged)
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>
-                        Support Letter (Optional PDF, Max 2MB)
-                      </FormLabel>
+                      <FormLabel>Support Letter (Optional PDF, Max 2MB)</FormLabel>
                       <FormControl>
                         <FileUploadButton
                           value={field.value}
@@ -209,7 +258,6 @@ export const ApplicationModal = ({
             </Form>
           )}
 
-          {/* Step 2: Preview (Only shown after clicking next) */}
           {currentStep === 2 && profile && (
             <ApplicationPreview
               profileData={profile}
@@ -218,7 +266,7 @@ export const ApplicationModal = ({
           )}
         </div>
 
-        {/* --- Footer / Actions --- */}
+        {/* Footer */}
         <div className="p-6 border-t border-gray-200 flex justify-between items-center">
           {currentStep === 2 && (
             <Button variant="secondary" onClick={handleBackToForm}>
