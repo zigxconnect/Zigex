@@ -6,15 +6,13 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-// import { Button } from "@/app/_components/ui/Button";
-// import { Input } from "@/app/_components/ui/Input";
-// import { Spinner } from "@/app/_components/ui/Spinner";
 import { SocialButton } from "./SocialButton";
 import { GoogleIcon } from "./GoogleIcon";
 import { Cloud, GraduationCap, Eye, EyeOff, Linkedin } from "lucide-react";
 import { Input } from "@/components/uiComponenet/input";
 import { Spinner } from "@/components/uiComponenet/Spinner";
 import { Button } from "@/components/ui/button";
+import { createClient } from "@/lib/supabase/client";
 
 // Schema for the Sign Up form
 const signUpSchema = z.object({
@@ -53,6 +51,8 @@ export const AuthForm = ({ type }: AuthFormProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
+  const supabase = createClient();
+
   const {
     register,
     handleSubmit,
@@ -87,6 +87,32 @@ export const AuthForm = ({ type }: AuthFormProps) => {
   const currentContent = content[type];
   const finePrint =
     "By continuing, you agree to our Terms of Service and Privacy Policy.";
+
+  // New handler for Google Sign-In
+  const handleGoogleSignIn = async () => {
+    setApiError(null);
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          // This will redirect the user back to your app after authentication
+          redirectTo: `${location.origin}/api/auth/callback`,
+        },
+      });
+
+      if (error) {
+        throw new Error(
+          "Could not authenticate with Google. Please try again."
+        );
+      }
+
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      setApiError((err as Error).message);
+    }
+  };
 
   const onSubmit = async (data: FormData) => {
     setApiError(null);
@@ -150,9 +176,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
         />
         <SocialButton
           icon={GoogleIcon}
-
-
-          
+          onClick={handleGoogleSignIn} // The onClick handler is now connected
           text={`${currentContent.socialButtonText} with Google`}
         />
       </div>
