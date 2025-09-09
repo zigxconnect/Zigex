@@ -1,8 +1,9 @@
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+// FILE: app/admin/postings/[id]/page.tsx
+
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { getPostingById, Posting } from "@/lib/data/postings"; // Refactored data source
 import {
   Edit,
   Briefcase,
@@ -11,8 +12,10 @@ import {
   Calendar,
   CheckCircle,
   LucideIcon,
+  Zap, // Added for Program type
 } from "lucide-react";
 
+// Helper component for displaying a single detail item with an icon
 const DetailItem = ({
   icon: Icon,
   label,
@@ -33,59 +36,29 @@ const DetailItem = ({
   </div>
 );
 
-export default async function PostingDetailsPage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { get: (name: string) => cookieStore.get(name)?.value } }
-  );
+// Helper component to render a list of skills
+const SkillsList = ({ skills }: { skills: string[] }) => (
+  <div className="flex flex-wrap gap-2 mt-1">
+    {skills.map((skill) => (
+      <span
+        key={skill}
+        className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs"
+      >
+        {skill}
+      </span>
+    ))}
+  </div>
+);
 
-  const { data: posting, error } = await supabase
-    .from("internships")
-    .select("*")
-    .eq("id", params.id)
-    .single();
+// This component conditionally renders the correct set of details based on the posting's type
+const DetailsSidebar = ({ posting }: { posting: Posting }) => {
+  let status: "Active" | "Expired";
 
-  if (error || !posting) {
-    notFound();
-  }
-
-  const status = new Date(posting.deadline) < new Date() ? "Expired" : "Active";
-
-  return (
-    <div className="max-w-4xl mx-auto space-y-8">
-      <div className="flex justify-between items-center">
-        <div>
-          <span className="text-sm font-semibold text-blue-600 bg-blue-100 px-3 py-1 rounded-full">
-            Internship
-          </span>
-          <h1 className="text-3xl font-bold text-gray-900 mt-2">
-            {posting.title}
-          </h1>
-        </div>
-        <Button asChild>
-          <Link href={`/admin/postings/${posting.id}/edit`}>
-            <Edit className="mr-2 h-4 w-4" /> Edit Posting
-          </Link>
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="md:col-span-2 bg-white p-6 rounded-lg border">
-          <h2 className="text-lg font-bold mb-4 text-gray-800">
-            Job Description
-          </h2>
-          <div className="prose max-w-none text-gray-700 whitespace-pre-wrap">
-            {posting.description}
-          </div>
-        </div>
-
-        <div className="space-y-6 bg-white p-6 rounded-lg border">
+  switch (posting.type) {
+    case "Internship":
+      status = new Date(posting.deadline) < new Date() ? "Expired" : "Active";
+      return (
+        <>
           <DetailItem
             icon={CheckCircle}
             label="Status"
@@ -100,7 +73,11 @@ export default async function PostingDetailsPage({
             }
           />
           <DetailItem icon={MapPin} label="Location" value={posting.location} />
-          <DetailItem icon={Briefcase} label="Type" value={posting.type} />
+          <DetailItem
+            icon={Briefcase}
+            label="Internship Type"
+            value={posting.type}
+          />
           <DetailItem
             icon={Calendar}
             label="Start Date"
@@ -111,22 +88,111 @@ export default async function PostingDetailsPage({
             label="Application Deadline"
             value={new Date(posting.deadline).toLocaleDateString()}
           />
+          {posting.required_skills?.length > 0 && (
+            <DetailItem
+              icon={CheckCircle}
+              label="Skills"
+              value={<SkillsList skills={posting.required_skills} />}
+            />
+          )}
+        </>
+      );
+
+    case "Program":
+      status = new Date(posting.end_date) < new Date() ? "Expired" : "Active";
+      return (
+        <>
           <DetailItem
             icon={CheckCircle}
-            label="Skills"
+            label="Status"
             value={
-              <div className="flex flex-wrap gap-2 mt-1">
-                {posting.required_skills.map((skill: string) => (
-                  <span
-                    key={skill}
-                    className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs"
-                  >
-                    {skill}
-                  </span>
-                ))}
-              </div>
+              <span
+                className={`font-bold ${
+                  status === "Active" ? "text-green-600" : "text-red-600"
+                }`}
+              >
+                {status}
+              </span>
             }
           />
+          <DetailItem
+            icon={Zap}
+            label="Category"
+            value={posting.program_category}
+          />
+          <DetailItem
+            icon={MapPin}
+            label="Format"
+            value={posting.program_format}
+          />
+          <DetailItem
+            icon={Calendar}
+            label="Start Date"
+            value={new Date(posting.start_date).toLocaleDateString()}
+          />
+          <DetailItem
+            icon={Calendar}
+            label="End Date"
+            value={new Date(posting.end_date).toLocaleDateString()}
+          />
+          {posting.required_skills?.length > 0 && (
+            <DetailItem
+              icon={CheckCircle}
+              label="Skills"
+              value={<SkillsList skills={posting.required_skills} />}
+            />
+          )}
+        </>
+      );
+
+    // Add a 'case' for 'Event' here when you implement it
+
+    default:
+      return <p>This posting type has no details defined.</p>;
+  }
+};
+
+export default async function PostingDetailsPage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  // A single, simple call to our new service function
+  const posting = await getPostingById(params.id);
+
+  if (!posting) {
+    notFound();
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-8">
+      <div className="flex justify-between items-center">
+        <div>
+          <span className="text-sm font-semibold text-blue-600 bg-blue-100 px-3 py-1 rounded-full">
+            {posting.type}
+          </span>
+          <h1 className="text-3xl font-bold text-gray-900 mt-2">
+            {posting.title}
+          </h1>
+        </div>
+        <Button asChild>
+          <Link href={`/admin/postings/${posting.id}/edit`}>
+            <Edit className="mr-2 h-4 w-4" /> Edit Posting
+          </Link>
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="md:col-span-2 bg-white p-6 rounded-lg border">
+          <h2 className="text-lg font-bold mb-4 text-gray-800">Description</h2>
+          <div className="prose max-w-none text-gray-700 whitespace-pre-wrap">
+            {posting.description}
+          </div>
+        </div>
+
+        <div className="space-y-6 bg-white p-6 rounded-lg border">
+          {/* The dynamic sidebar component renders the correct details */}
+          <DetailsSidebar posting={posting} />
         </div>
       </div>
     </div>

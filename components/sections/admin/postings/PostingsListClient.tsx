@@ -53,7 +53,8 @@ export const PostingsListClient = ({
             No Postings Found
           </h3>
           <p className="mt-1 text-sm text-gray-500">
-            There are no postings matching the filter "{activeFilter}".
+            There are no postings matching the filter &quot;{activeFilter}
+            &quot;.
           </p>
         </div>
       )}

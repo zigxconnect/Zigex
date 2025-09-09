@@ -2,7 +2,6 @@
 
 import React, { useState, createContext, useContext, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import {
   Menu,
   X,
@@ -46,6 +45,54 @@ const SidebarContext = createContext({
 
 export const useSidebar = () => useContext(SidebarContext);
 
+// ========================================================================
+// 1. NEW COMPONENT TO HANDLE "READ MORE" FUNCTIONALITY
+// ========================================================================
+const ReadMore = ({
+  text,
+  maxLength = 50,
+}: {
+  text: string;
+  maxLength?: number;
+}) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Return a placeholder if no text is provided from the backend
+  if (!text) {
+    return (
+      <p className="mt-3 text-xs text-gray-600 leading-relaxed max-w-xs">
+        No description provided.
+      </p>
+    );
+  }
+
+  // If the text is shorter than the max length, just display it without a toggle
+  if (text.length <= maxLength) {
+    return (
+      <p className="mt-3 text-xs text-gray-600 leading-relaxed max-w-xs">
+        {text}
+      </p>
+    );
+  }
+
+  const toggleText = () => {
+    setIsExpanded(!isExpanded);
+  };
+
+  return (
+    <p className="mt-3 text-xs text-gray-600 leading-relaxed max-w-xs">
+      {isExpanded ? text : `${text.substring(0, maxLength)}... `}
+      <span
+        onClick={toggleText}
+        className="text-blue-600 font-semibold cursor-pointer hover:underline"
+        style={{ whiteSpace: "nowrap" }} // Prevents the link from wrapping to a new line
+      >
+        {isExpanded ? "Read Less" : "Read More"}
+      </span>
+    </p>
+  );
+};
+
 // Main Provider Component that manages all state
 export const AdminSidebarProvider = ({
   children,
@@ -57,7 +104,6 @@ export const AdminSidebarProvider = ({
   // Initialize based on screen size
   const [isOpen, setIsOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
-  const pathname = usePathname(); // Get current pathname to determine active link
 
   // Check screen size on mount and resize
   useEffect(() => {
@@ -95,11 +141,6 @@ export const AdminSidebarProvider = ({
     }
   };
 
-  // Function to check if a link is active
-  const isLinkActive = (href: string) => {
-    return pathname === href;
-  };
-
   if (!companyProfile) {
     return null;
   }
@@ -117,8 +158,6 @@ export const AdminSidebarProvider = ({
             <Menu size={20} className="text-gray-700" />
           </button>
         )}
-
-        {/* NO DESKTOP TOGGLE BUTTON - Sidebar is static */}
 
         {/* Mobile Overlay - Only on mobile */}
         {isOpen && isMobile && (
@@ -168,48 +207,34 @@ export const AdminSidebarProvider = ({
             <p className="text-sm font-medium text-blue-700 bg-blue-50 px-3 py-1 rounded-full mt-1">
               {companyProfile.industry || "Industry"}
             </p>
-            <p className="mt-3 text-xs text-gray-600 leading-relaxed max-w-xs">
-              {companyProfile.description || "No description provided."}
-            </p>
+
+            {/* ======================================================================== */}
+            {/* 2. OLD DESCRIPTION PARAGRAPH REPLACED WITH THE NEW COMPONENT */}
+            {/* ======================================================================== */}
+            <ReadMore text={companyProfile.description} />
           </div>
 
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-            {navLinks.map((link) => {
-              const isActive = isLinkActive(link.href);
-              return (
-                <Link
-                  key={link.label}
-                  href={link.href}
-                  onClick={() => {
-                    // Only close on mobile
-                    if (isMobile) {
-                      setIsOpen(false);
-                    }
-                  }}
-                  className={`group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                    isActive
-                      ? "bg-blue-50 text-blue-700 border border-blue-200 shadow-sm"
-                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                  }`}
-                >
-                  <link.icon
-                    size={20}
-                    className={`transition-colors duration-200 ${
-                      isActive
-                        ? "text-blue-700"
-                        : "text-gray-500 group-hover:text-blue-700"
-                    }`}
-                  />
-                  <span className={`font-medium ${isActive ? "font-semibold" : ""}`}>
-                    {link.label}
-                  </span>
-                  {isActive && (
-                    <div className="ml-auto w-2 h-2 bg-blue-600 rounded-full"></div>
-                  )}
-                </Link>
-              );
-            })}
+            {navLinks.map((link) => (
+              <Link
+                key={link.label}
+                href={link.href}
+                onClick={() => {
+                  // Only close on mobile
+                  if (isMobile) {
+                    setIsOpen(false);
+                  }
+                }}
+                className="group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+              >
+                <link.icon
+                  size={20}
+                  className="text-gray-500 group-hover:text-blue-700 transition-colors duration-200"
+                />
+                <span className="font-medium">{link.label}</span>
+              </Link>
+            ))}
             <Link
               href="/admin/fupro-ai"
               onClick={() => {
@@ -217,11 +242,7 @@ export const AdminSidebarProvider = ({
                   setIsOpen(false);
                 }
               }}
-              className={`group flex items-center justify-between gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                isLinkActive("/admin/fupro-ai")
-                  ? "bg-orange-50 text-orange-700 border border-orange-200 shadow-sm"
-                  : "text-gray-600 hover:bg-gradient-to-r hover:from-orange-50 hover:to-orange-100 hover:text-orange-800"
-              }`}
+              className="group flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gradient-to-r hover:from-orange-50 hover:to-orange-100 hover:text-orange-800"
             ></Link>
           </nav>
 
@@ -343,10 +364,10 @@ export const AdminContent = ({
 // Usage Example - This shows the complete working implementation
 export const ExampleImplementation = () => {
   const mockCompanyProfile = {
-    company_name: "TechCorp Inc",
-    industry: "Technology",
+    company_name: "Innovate Solutions LLC",
+    industry: "Cloud Computing",
     description:
-      "Leading software development company specializing in innovative solutions.",
+      "Innovate Solutions LLC is a forward-thinking tech company that specializes in scalable cloud infrastructure and AI-driven analytics. We empower businesses to leverage data for growth and efficiency.",
   };
 
   const mockStats = {
@@ -364,9 +385,8 @@ export const ExampleImplementation = () => {
           <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
             <h2 className="text-lg font-semibold mb-4">Dashboard Content</h2>
             <p className="text-gray-600">
-              Desktop sidebar is now static (always visible, no toggle). Mobile
-              behavior remains unchanged with hamburger menu and overlay. Active
-              navigation links are now highlighted with blue background and indicator dot.
+              This is the main content area. The description in the sidebar is
+              now truncated with a "Read More" link.
             </p>
           </div>
 
@@ -378,7 +398,7 @@ export const ExampleImplementation = () => {
               >
                 <h3 className="font-semibold mb-2">Card {item}</h3>
                 <p className="text-sm text-gray-600">
-                  Content always has consistent spacing on desktop.
+                  Some placeholder content here.
                 </p>
               </div>
             ))}

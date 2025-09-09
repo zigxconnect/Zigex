@@ -9,12 +9,14 @@ import { InternshipListings } from "@/components/sections/dashboard/InternshipLi
  */
 export default async function DashboardPage() {
   const userData = await getProfileInfo();
+  // console.log("Here is the users data: ", userData)
   if (!userData) {
     redirect("/sign-in");
   }
 
   return (
-    <div className="md:p-6 lg:p-8 space-y-8">
+    <div className="md:p-6 lg:p-8 space-y-8 w-full overflow-x-hidden">
+      {/* ts-ignore */}
       <WelcomeCard user={userData} />
 
       <InternshipListings />
