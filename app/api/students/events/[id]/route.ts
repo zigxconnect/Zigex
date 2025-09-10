@@ -42,7 +42,7 @@ export async function GET(
             .select(
                 `
         *,
-        company_profiles (
+        company:company_profiles (
           company_name,
           logo_url,
           email,

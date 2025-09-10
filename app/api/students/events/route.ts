@@ -32,7 +32,7 @@ export async function GET(request: Request) {
 
     const { data: events, error } = await supabase
         .from("event")
-        .select('*, company_profiles (company_name, logo_url)')
+        .select('*, company:company_profiles (company_name, logo_url)')
         .order("created_at", { ascending: false });
 
     if (error) {
