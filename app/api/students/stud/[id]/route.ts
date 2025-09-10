@@ -1,6 +1,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { v4 as uuidv4 } from 'uuid'; // To generate unique file names
 
 function createSupabaseServerClient() {
   const cookieStore = cookies();
@@ -29,55 +30,7 @@ function createSupabaseServerClient() {
 }
 
 /**
- * Handles fetching a single student profile by their user ID.
- */
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  const supabase = createSupabaseServerClient();
-
-  try {
-    // 1. Get the authenticated user securely to ensure the request is authorized.
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized. Please log in." },
-        { status: 401 }
-      );
-    }
-
-    // 2. Get the target user ID from the URL parameters.
-    const { id } = params;
-
-    // 3. Fetch the user profile from the database using the user_id.
-    const { data, error } = await supabase
-      .from("student_profiles")
-      .select("*")
-      .eq("user_id", id) // Query by the `user_id` foreign key.
-      .single();
-
-    if (error) {
-      throw error;
-    }
-
-    // 4. Return the user profile data.
-    return NextResponse.json(data, { status: 200 });
-  } catch (error: any) {
-    console.error("API Route Error (GET):", error);
-    return NextResponse.json(
-      { error: "Profile not found or an error occurred." },
-      { status: 404 }
-    );
-  }
-}
-
-/**
- * Handles updating a student's profile.
- * This is called by the multi-step form upon submission.
+ * Handles updating a student's profile including file uploads.
  */
 export async function PUT(
   request: Request,
@@ -105,16 +58,61 @@ export async function PUT(
     }
 
     // 3. Get the update data from the request body.
-    const updates = await request.json();
+    const formData = await request.formData();
+
+    // Extract fields from form data
+    const updates: any = {
+      full_name: formData.get('full_name'),
+      first_name: formData.get('first_name'),
+      last_name: formData.get('last_name'),
+      university: formData.get('university'),
+      email: formData.get('email'),
+      phone: formData.get('phone'),
+      about: formData.get('about'),
+      linkedin_url: formData.get('linkedin_url'),
+      github_url: formData.get('github_url'),
+      portfolio_url: formData.get('portfolio_url'),
+      hard_skills: typeof formData.get('hard_skills') === 'string'
+        ? (formData.get('hard_skills') as string).split(',')
+        : null,
+    };
+
+    // Handle file uploads for avatar and cover image
+    const avatarFile = formData.get('avatar') as File | null;
+    const coverImageFile = formData.get('cover_image') as File | null;
+
+    if (avatarFile) {
+      const avatarFileName = `${uuidv4()}.${avatarFile.name.split('.').pop()}`;
+      const { error: avatarUploadError } = await supabase
+        .storage
+        .from('student-assets') // Use the correct bucket name
+        .upload(`avatars/${avatarFileName}`, avatarFile);
+
+      if (avatarUploadError) {
+        throw avatarUploadError;
+      }
+
+      updates.avatar_url = supabase.storage.from('student-assets').getPublicUrl(`avatars/${avatarFileName}`).data.publicUrl;
+    }
+
+    if (coverImageFile) {
+      const coverImageFileName = `${uuidv4()}.${coverImageFile.name.split('.').pop()}`;
+      const { error: coverImageUploadError } = await supabase
+        .storage
+        .from('student-assets') // Use the correct bucket name
+        .upload(`covers/${coverImageFileName}`, coverImageFile);
+
+      if (coverImageUploadError) {
+        throw coverImageUploadError;
+      }
+
+      updates.cover_image = supabase.storage.from('student-assets').getPublicUrl(`covers/${coverImageFileName}`).data.publicUrl;
+    }
 
     // 4. Perform the update in the database.
     const { data, error: updateError } = await supabase
       .from("student_profiles")
-      .update({
-        ...updates,
-        updated_at: new Date().toISOString(),
-        profile_status: "complete",
-      })
+      .update({ ...updates, updated_at: new Date().toISOString() })
       .eq("user_id", id)
       .select()
       .single();
