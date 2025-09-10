@@ -4,8 +4,9 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  paramsPromise: Promise<{ params: { id: string } }>
 ) {
+  const { params } = await paramsPromise;
   const { id } = params;
 
   if (!id) {
@@ -66,11 +67,14 @@ export async function GET(
     return NextResponse.json(internship, { status: 200 });
   } catch (error: any) {
     console.error("API Endpoint Error:", error);
+    const isProd = process.env.NODE_ENV === "production";
     return NextResponse.json(
-      {
-        error: "Failed to fetch internship details",
-        details: error.message,
-      },
+      isProd
+        ? { error: "Failed to fetch internship details" }
+        : {
+            error: "Failed to fetch internship details",
+            details: error instanceof Error ? error.message : String(error),
+          },
       { status: 500 }
     );
   }

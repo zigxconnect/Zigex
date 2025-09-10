@@ -1,22 +1,44 @@
 "use client";
 
+// TypeScript interface for company profile
+export interface CompanyProfile {
+  id: string;
+  company_name: string;
+  industry?: string;
+  description?: string;
+  logoUrl?: string;
+  website?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  [key: string]: any;
+}
+
 import React, { useState, createContext, useContext, useEffect } from "react";
 import Link from "next/link";
 import {
-  Menu, X, FileText, Users, FileEdit, CheckCheck, Sparkles, LogOut, FilePen, LayoutDashboard
+  Menu,
+  X,
+  FileText,
+  Users,
+  FileEdit,
+  CheckCheck,
+  LogOut,
+  FilePen,
+  LayoutDashboard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Logo } from "@/components/uiComponenet/Logo";
+import { Logo } from "@/components/uiComponent/Logo";
 import { toast } from "sonner";
 
 // Helper function to get initials from a company name
 const getInitials = (name: string = "") => {
   if (!name) return "";
   return name
-    .split(' ')
-    .map(word => word[0])
+    .split(" ")
+    .map((word) => word[0])
     .slice(0, 2)
-    .join('')
+    .join("")
     .toUpperCase();
 };
 
@@ -32,18 +54,71 @@ const navLinks = [
 const SidebarContext = createContext({
   isOpen: true,
   setIsOpen: (open: boolean) => {},
-  toggleSidebar: () => {}
+  toggleSidebar: () => {},
 });
 
 export const useSidebar = () => useContext(SidebarContext);
 
+// ========================================================================
+// 1. NEW COMPONENT TO HANDLE "READ MORE" FUNCTIONALITY
+// ========================================================================
+const ReadMore = ({
+  text,
+  maxLength = 50,
+}: {
+  text: string;
+  maxLength?: number;
+}) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Return a placeholder if no text is provided from the backend
+  if (!text) {
+    return (
+      <p className="mt-3 text-xs text-gray-600 leading-relaxed max-w-xs">
+        No description provided.
+      </p>
+    );
+  }
+
+  // If the text is shorter than the max length, just display it without a toggle
+  if (text.length <= maxLength) {
+    return (
+      <p className="mt-3 text-xs text-gray-600 leading-relaxed max-w-xs">
+        {text}
+      </p>
+    );
+  }
+
+  const toggleText = () => {
+    setIsExpanded(!isExpanded);
+  };
+
+  return (
+    <p className="mt-3 text-xs text-gray-600 leading-relaxed max-w-xs">
+      {isExpanded ? text : `${text.substring(0, maxLength)}... `}
+      <button
+        onClick={toggleText}
+        className="text-blue-600 font-semibold hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded"
+        style={{ whiteSpace: "nowrap" }}
+        type="button"
+        aria-expanded={isExpanded}
+        aria-label={
+          isExpanded ? "Show less description" : "Show full description"
+        }
+      >
+        {isExpanded ? "Read Less" : "Read More"}
+      </button>
+    </p>
+  );
+};
+
 // Main Provider Component that manages all state
-export const AdminSidebarProvider = ({ 
-  children, 
-  companyProfile 
-}: { 
+export const AdminSidebarProvider = ({
+  children,
+  companyProfile,
+}: {
   children: React.ReactNode;
-  companyProfile: any;
+  companyProfile: CompanyProfile;
 }) => {
   // Initialize based on screen size
   const [isOpen, setIsOpen] = useState(true);
@@ -63,8 +138,8 @@ export const AdminSidebarProvider = ({
     };
 
     checkScreenSize();
-    window.addEventListener('resize', checkScreenSize);
-    return () => window.removeEventListener('resize', checkScreenSize);
+    window.addEventListener("resize", checkScreenSize);
+    return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
   // Modified toggle - only works on mobile
@@ -77,8 +152,15 @@ export const AdminSidebarProvider = ({
 
   const handleSignOut = async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
-      window.location.href = "/";
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+          // Include CSRF token if your framework provides one
+          // 'X-CSRF-Token': getCsrfToken(),
+        },
+      });
     } catch (error) {
       console.error("Logout failed:", error);
       toast.error("Logout failed. Please try again.");
@@ -103,8 +185,6 @@ export const AdminSidebarProvider = ({
           </button>
         )}
 
-        {/* NO DESKTOP TOGGLE BUTTON - Sidebar is static */}
-
         {/* Mobile Overlay - Only on mobile */}
         {isOpen && isMobile && (
           <div
@@ -117,9 +197,11 @@ export const AdminSidebarProvider = ({
         <aside
           className={`fixed top-0 left-0 h-full w-80 bg-white shadow-2xl border-r border-gray-200 z-40 flex flex-col transition-all duration-300 ease-in-out
             ${
-              isMobile 
-                ? (isOpen ? 'translate-x-0' : '-translate-x-full') // Mobile: can hide/show
-                : 'translate-x-0' // Desktop: always visible
+              isMobile
+                ? isOpen
+                  ? "translate-x-0"
+                  : "-translate-x-full" // Mobile: can hide/show
+                : "translate-x-0" // Desktop: always visible
             }
           `}
         >
@@ -128,8 +210,8 @@ export const AdminSidebarProvider = ({
             <Logo />
             {/* Close button - Only show on mobile */}
             {isMobile && (
-              <button 
-                onClick={() => setIsOpen(false)} 
+              <button
+                onClick={() => setIsOpen(false)}
                 className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <X size={18} />
@@ -151,9 +233,11 @@ export const AdminSidebarProvider = ({
             <p className="text-sm font-medium text-blue-700 bg-blue-50 px-3 py-1 rounded-full mt-1">
               {companyProfile.industry || "Industry"}
             </p>
-            <p className="mt-3 text-xs text-gray-600 leading-relaxed max-w-xs">
-              {companyProfile.description || "No description provided."}
-            </p>
+
+            {/* ======================================================================== */}
+            {/* 2. OLD DESCRIPTION PARAGRAPH REPLACED WITH THE NEW COMPONENT */}
+            {/* ======================================================================== */}
+            <ReadMore text={companyProfile.description} />
           </div>
 
           {/* Navigation */}
@@ -170,21 +254,14 @@ export const AdminSidebarProvider = ({
                 }}
                 className="group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
               >
-                <link.icon size={20} className="text-gray-500 group-hover:text-blue-700 transition-colors duration-200" />
+                <link.icon
+                  size={20}
+                  className="text-gray-500 group-hover:text-blue-700 transition-colors duration-200"
+                />
                 <span className="font-medium">{link.label}</span>
               </Link>
             ))}
-            <Link
-              href="/admin/fupro-ai"
-              onClick={() => {
-                if (isMobile) {
-                  setIsOpen(false);
-                }
-              }}
-              className="group flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gradient-to-r hover:from-orange-50 hover:to-orange-100 hover:text-orange-800"
-            >
-              
-            </Link>
+            {/* TODO: Add FuPro AI link when ready */}
           </nav>
 
           {/* Sign Out */}
@@ -201,13 +278,13 @@ export const AdminSidebarProvider = ({
         </aside>
 
         {/* Main Content Area - On desktop, always ml-80 since sidebar is static */}
-        <div className={`transition-all duration-300 ease-in-out ${
-          isMobile ? 'ml-0' : 'ml-80' // Desktop always has left margin, mobile never does
-        }`}>
+        <div
+          className={`transition-all duration-300 ease-in-out ${
+            isMobile ? "ml-0" : "ml-80" // Desktop always has left margin, mobile never does
+          }`}
+        >
           {/* Content wrapper with mobile spacing */}
-          <div className="pt-16 lg:pt-0">
-            {children}
-          </div>
+          <div className="pt-16 lg:pt-0">{children}</div>
         </div>
       </div>
     </SidebarContext.Provider>
@@ -218,10 +295,10 @@ export const AdminSidebarProvider = ({
 export const AdminSidebar = AdminSidebarProvider;
 
 // Enhanced AdminHeader that responds to sidebar state
-export const EnhancedAdminHeader = ({ 
+export const EnhancedAdminHeader = ({
   stats,
   title = "Your Internship Postings",
-  className = ""
+  className = "",
 }: {
   stats: {
     total: number;
@@ -232,7 +309,9 @@ export const EnhancedAdminHeader = ({
   className?: string;
 }) => {
   return (
-    <header className={`bg-white/60 backdrop-blur-sm border-b border-gray-200 p-4 sm:p-6 ${className}`}>
+    <header
+      className={`bg-white/60 backdrop-blur-sm border-b border-gray-200 p-4 sm:p-6 ${className}`}
+    >
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex-1">
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
@@ -243,11 +322,15 @@ export const EnhancedAdminHeader = ({
             <div className="flex flex-col gap-1 text-sm text-gray-500">
               <div>
                 Total Postings:{" "}
-                <span className="font-semibold text-gray-700">{stats.total}</span>
+                <span className="font-semibold text-gray-700">
+                  {stats.total}
+                </span>
               </div>
               <div>
                 Active:{" "}
-                <span className="font-semibold text-green-600">{stats.active}</span>
+                <span className="font-semibold text-green-600">
+                  {stats.active}
+                </span>
               </div>
               <div>
                 Total Applications:{" "}
@@ -271,7 +354,10 @@ export const EnhancedAdminHeader = ({
         </div>
         <div className="flex-shrink-0">
           <Link href="/admin/postings/new" passHref>
-            <Button variant="orange" className="flex items-center justify-center gap-2 w-full sm:w-auto">
+            <Button
+              variant="orange"
+              className="flex items-center justify-center gap-2 w-full sm:w-auto"
+            >
               <FileEdit size={18} className="flex-shrink-0" />
               <span className="whitespace-nowrap">Post New Internship</span>
             </Button>
@@ -283,60 +369,12 @@ export const EnhancedAdminHeader = ({
 };
 
 // Content wrapper component that responds to sidebar state
-export const AdminContent = ({ 
+export const AdminContent = ({
   children,
-  className = ""
-}: { 
+  className = "",
+}: {
   children: React.ReactNode;
   className?: string;
 }) => {
-  return (
-    <main className={`p-4 sm:p-6 ${className}`}>
-      {children}
-    </main>
-  );
-};
-
-// Usage Example - This shows the complete working implementation
-export const ExampleImplementation = () => {
-  const mockCompanyProfile = {
-    company_name: "TechCorp Inc",
-    industry: "Technology",
-    description: "Leading software development company specializing in innovative solutions."
-  };
-
-  const mockStats = {
-    total: 15,
-    active: 8,
-    applications: 142
-  };
-
-  return (
-    <AdminSidebarProvider companyProfile={mockCompanyProfile}>
-      <EnhancedAdminHeader stats={mockStats} />
-      
-      <AdminContent>
-        <div className="space-y-6">
-          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-            <h2 className="text-lg font-semibold mb-4">Dashboard Content</h2>
-            <p className="text-gray-600">
-              Desktop sidebar is now static (always visible, no toggle). 
-              Mobile behavior remains unchanged with hamburger menu and overlay.
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((item) => (
-              <div key={item} className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                <h3 className="font-semibold mb-2">Card {item}</h3>
-                <p className="text-sm text-gray-600">
-                  Content always has consistent spacing on desktop.
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </AdminContent>
-    </AdminSidebarProvider>
-  );
+  return <main className={`p-4 sm:p-6 ${className}`}>{children}</main>;
 };

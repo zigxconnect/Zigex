@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/uiComponenet/Select";
-import { Textarea } from "@/components/uiComponenet/Textarea";
-import { FileUpload } from "@/components/uiComponenet/FileUpload";
-// import { Textarea } from "@/components/ui/textarea"; 
+import { Select } from "@/components/uiComponent/Select";
+import { Textarea } from "@/components/uiComponent/Textarea";
+import { FileUpload } from "@/components/uiComponent/FileUpload";
+// import { Textarea } from "@/components/ui/textarea";
 
 // Reusable section
 const FormSection = ({
@@ -53,16 +53,18 @@ export const ProfileForm = () => {
     reader.readAsDataURL(file);
   };
 
-  
-
   return (
-    <form className="space-y-8" >
+    <form className="space-y-8">
       <FormSection title="Company Logo">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
           <div className="flex justify-center md:justify-start">
             <div className="w-32 h-32 bg-slate-200 rounded-lg flex items-center justify-center overflow-hidden">
               {logoPreview ? (
-                <img src={logoPreview} alt="Preview" className="h-full object-cover" />
+                <img
+                  src={logoPreview}
+                  alt="Preview"
+                  className="h-full object-cover"
+                />
               ) : (
                 <span className="text-slate-500 text-4xl font-bold">TC</span>
               )}
@@ -92,7 +94,10 @@ export const ProfileForm = () => {
           />
         </FormField>
         <FormField label="Industry *">
-          <Select value={industry} onChange={(e) => setIndustry(e.target.value)}>
+          <Select
+            value={industry}
+            onChange={(e) => setIndustry(e.target.value)}
+          >
             <option value="">Select your industry</option>
             <option value="Technology">Technology</option>
             <option value="Finance">Finance</option>
@@ -109,7 +114,6 @@ export const ProfileForm = () => {
           />
         </FormField>
       </FormSection>
-
     </form>
   );
 };

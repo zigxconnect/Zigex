@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 import {
   Upload,
@@ -12,20 +11,37 @@ import {
   X,
   Users,
   TrendingUp,
+  User,
 } from "lucide-react";
 import { AiOutlineWechat } from "react-icons/ai";
 import { Button } from "@/components/ui/button";
 
 interface SidebarProps {
-  user:any;
+  user: User;
   isOpen?: boolean;
   onClose?: () => void;
-  onToggle?: () => void; // Add toggle function prop
+  onToggle?: () => void;
 }
 
-// Updated navigation items with Profile instead of Dashboard
+interface User {
+  id?: string;
+  name?: string;
+  email?: string;
+  avatar?: string;
+  avatarUrl?: string;
+  role?: string;
+  stats?: {
+    applications?: number;
+    profileViews?: number;
+  };
+  applicationsCount?: number;
+  profileViews?: number;
+  // Add other fields as needed
+}
+
+// Updated navigation items
 const navItems = [
-  { href: "/dashboard", icon: null, label: "Profile", isProfile: true },
+  { href: "/dashboard", icon: User, label: "Profile" },
   { href: "/dashboard/upload-resume", icon: Upload, label: "Upload Resume" },
   {
     href: "/dashboard/applied-internships",
@@ -38,68 +54,22 @@ const navItems = [
     icon: Users,
     label: "Student Directory",
   },
-  { href: "/dashboard/track-progress", icon: TrendingUp, label: "Track Progress" },
-  { href: "/dashboard/fupro-ai", icon: AiOutlineWechat, label: "Chat with FP AI" },
+  {
+    href: "/dashboard/track-progress",
+    icon: TrendingUp,
+    label: "Track Progress",
+  },
+  {
+    href: "/dashboard/fupro-ai",
+    icon: AiOutlineWechat,
+    label: "Chat with FP AI",
+  },
 ];
-
-// Professional FP Logo Component
-const FPLogo: React.FC = () => (
-  <div className="flex items-center gap-3">
-    <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-      <span className="text-blue-600 font-bold text-lg">FP</span>
-    </div>
-    <span className="text-white font-semibold text-lg">Future Prospect</span>
-  </div>
-);
-
-// User Profile Component
-const UserProfile: React.FC<{ isActive: boolean }> = ({ isActive }) => (
-  <div className="flex items-center gap-3 w-full">
-    <div className="relative w-10 h-10 rounded-full overflow-hidden bg-white/10 border-2 border-white/20">
-      <Image
-        src="/gita.png" // Replace with actual user avatar path
-        alt="User Avatar"
-        width={40}
-        height={40}
-        className="object-cover"
-        priority
-      />
-    </div>
-    <div className="flex flex-col min-w-0">
-      <span className={`font-medium truncate ${
-        isActive ? "text-white" : "text-blue-100"
-      }`}>
-        John Doe {/* Replace with actual user name */}
-      </span>
-      <span className="text-blue-200 text-sm">Student</span>
-    </div>
-  </div>
-);
-
-// Mobile Avatar Toggle Button Component
-const MobileAvatarToggle: React.FC<{ onClick: () => void }> = ({ onClick }) => (
-  <button
-    onClick={onClick}
-    className="lg:hidden fixed top-4 left-4 z-60 w-12 h-12 rounded-full overflow-hidden bg-blue-900 border-2 border-blue-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-    aria-label="Toggle sidebar"
-  >
-    <Image
-      src="/gita.png" // Replace with actual user avatar path
-      alt="User Avatar"
-      width={48}
-      height={48}
-      className="object-cover"
-      priority
-    />
-    <div className="absolute inset-0 bg-blue-900/20 hover:bg-blue-900/10 transition-colors duration-200"></div>
-  </button>
-);
 
 export const Sidebar: React.FC<SidebarProps> = ({
   isOpen = false,
   onClose,
-  onToggle,
-  user
+  user,
 }) => {
   const pathname = usePathname();
 
@@ -113,112 +83,202 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
-  // Function to check if a route is active
   const isRouteActive = (href: string) => {
     if (href === "/dashboard") {
-      // For dashboard/profile, match exact path or just "/dashboard"
       return pathname === "/dashboard" || pathname === "/dashboard/";
     }
     return pathname === href;
   };
 
+  // Handle nav item click on mobile
+  const handleNavClick = () => {
+    if (window.innerWidth < 1024 && onClose) {
+      onClose();
+    }
+  };
+
   return (
     <>
-      {/* Mobile Avatar Toggle Button */}
-      {onToggle && <MobileAvatarToggle onClick={onToggle} />}
+      {/* Custom Scrollbar Styles */}
+      <style jsx>{`
+        .custom-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: #3b82f6 #dbeafe;
+        }
 
-      {/* Overlay for mobile */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
-          onClick={onClose}
-          aria-label="Close sidebar"
-        />
-      )}
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 8px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #dbeafe;
+          border-radius: 10px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #3b82f6;
+          border-radius: 10px;
+          border: 2px solid #dbeafe;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #1d4ed8;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:active {
+          background: #1e40af;
+        }
+      `}</style>
 
       {/* Sidebar */}
       <aside
-        className={`w-64 flex-col bg-blue-900 fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out flex shadow-xl
+        className={`
+          fixed top-16 left-0 h-[calc(100vh-4rem)] w-72 bg-white border-r border-gray-200 shadow-lg z-40
+          transform transition-transform duration-300 ease-in-out
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
+          lg:translate-x-0 flex flex-col
         `}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 h-16 border-b border-blue-800">
-          <FPLogo />
-          {onClose && (
+        {/* Header with User Profile - Fixed at top */}
+        <div className="flex-shrink-0 p-4 lg:p-6 border-b border-gray-100">
+          <div className="flex items-center gap-3 lg:gap-4">
+            <div className="relative w-12 h-12 lg:w-14 lg:h-14 rounded-full overflow-hidden border-4 border-white shadow-md flex-shrink-0">
+              <Image
+                src={user?.avatar || "/default-avatar.png"}
+                alt="User Avatar"
+                width={56}
+                height={56}
+                className="object-cover"
+                priority
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-bold text-gray-900 truncate text-sm lg:text-base">
+                {user?.name || "Guest User"}
+              </h3>
+              +{" "}
+              <p className="text-xs lg:text-sm text-gray-600">
+                {user?.role || "Student"}
+              </p>
+              <div className="flex items-center gap-1 mt-1">
+                <div
+                  className={`w-2 h-2 rounded-full ${
+                    user?.isOnline ? "bg-green-500" : "bg-gray-400"
+                  }`}
+                ></div>
+                <span
+                  className={`text-xs font-medium ${
+                    user?.isOnline ? "text-green-600" : "text-gray-600"
+                  }`}
+                >
+                  {user?.isOnline ? "Online" : "Offline"}
+                </span>
+              </div>
+            </div>
+            {/* Mobile Close Button */}
             <button
               onClick={onClose}
-              className="p-2 rounded-lg text-blue-200 hover:text-white hover:bg-blue-800 transition-colors duration-200 lg:hidden"
+              className="lg:hidden p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors flex-shrink-0"
             >
               <X size={20} />
             </button>
-          )}
+          </div>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 mt-6 px-4">
-          <div className="space-y-2">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = isRouteActive(item.href);
+        {/* Scrollable Navigation Area */}
+        <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+          <nav className="flex-1 px-3 lg:px-4 py-4 lg:py-6 overflow-y-auto custom-scrollbar">
+            <div className="space-y-1 lg:space-y-2">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = isRouteActive(item.href);
 
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  // Removed onClick={onClose} so sidebar stays open when links are clicked
-                  className={`text-sm group flex items-center justify-between px-3 py-3 rounded-lg transition-all duration-200 ${
-                    isActive
-                      ? "bg-blue-800 text-white border border-blue-700 shadow-lg"
-                      : "text-blue-100 hover:text-white hover:bg-blue-800 border border-transparent hover:border-blue-700"
-                  }`}
-                >
-                  {item.isProfile ? (
-                    <UserProfile isActive={isActive} />
-                  ) : (
-                    <div className="flex items-center gap-3">
-                      {Icon && (
-                        <Icon
-                          size={20}
-                          className={`transition-colors duration-200 ${
-                            isActive
-                              ? "text-blue-200"
-                              : "text-blue-300 group-hover:text-blue-100"
-                          }`}
-                        />
-                      )}
-                      <span className={`font-medium ${
-                        isActive ? "text-white" : "text-blue-100 group-hover:text-white"
-                      }`}>
-                        {item.label}
-                      </span>
-                    </div>
-                  )}
-                  {item.badge && (
-                    <span
-                      className={`text-xs font-semibold px-2 py-1 rounded-full transition-colors duration-200 ${
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={handleNavClick}
+                    className={`
+                      group hover:bg-blue-600 flex items-center gap-3 px-3 lg:px-3 py-2 lg:py-2 rounded-xl text-sm font-medium transition-all shadow-lg duration-200 
+                      ${
                         isActive
-                          ? "bg-blue-700 text-blue-100"
-                          : "bg-blue-800 text-blue-200 group-hover:bg-blue-700 group-hover:text-blue-100"
-                      }`}
+                          ? "bg-blue-600 text-white shadow-lg hover:bg-blue-700"
+                          : "text-gray-700 hover:bg-gray-50 hover:text-blue-600"
+                      }
+                    `}
+                  >
+                    <div
+                      className={`
+                      p-1.5 lg:p-2 rounded-lg transition-colors flex-shrink-0
+                      ${
+                        isActive
+                          ? "bg-blue-700"
+                          : "bg-gray-100 group-hover:bg-blue-50"
+                      }
+                    `}
                     >
-                      {item.badge}
+                      <Icon
+                        size={16}
+                        className={`lg:w-[18px] lg:h-[18px]
+                          ${
+                            isActive
+                              ? "text-white"
+                              : "text-gray-600 group-hover:text-blue-600"
+                          }
+                        `}
+                      />
+                    </div>
+                    <span className="flex-1 truncate text-xs lg:text-sm">
+                      {item.label}
                     </span>
-                  )}
-                </Link>
-              );
-            })}
-          </div>
-        </nav>
+                    {item.badge && (
+                      <span
+                        className={`
+                        px-2 py-1 text-xs font-semibold rounded-full flex-shrink-0
+                        ${
+                          isActive
+                            ? "bg-white/20 text-white"
+                            : "bg-blue-100 text-blue-600 group-hover:bg-blue-600 group-hover:text-white"
+                        }
+                      `}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
 
-        {/* Sign Out Button */}
-        <div className="mt-auto p-4 border-t border-blue-800">
+            {/* Quick Stats Card - Hidden on small screens - Inside scrollable area */}
+            <div className="mt-6 lg:mt-8 p-3 lg:p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200 hidden lg:block">
+              <h4 className="font-semibold text-blue-900 mb-2 text-sm">
+                Quick Stats
+              </h4>
+              <div className="space-y-2 text-xs lg:text-sm">
+                <div className="flex justify-between">
+                  <span className="text-blue-700">Applications</span>
+                  <span className="font-semibold text-blue-900">12</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-blue-700">Profile Views</span>
+                  <span className="font-semibold text-blue-900">48</span>
+                </div>
+              </div>
+            </div>
+          </nav>
+        </div>
+
+        {/* Sign Out Button - Fixed at bottom */}
+        <div className="flex-shrink-0 p-3 lg:p-4 border-t border-gray-100">
           <Button
-            variant="secondary-outline"
-            className="w-full justify-start gap-3 text-white hover:text-red-200 hover:bg-blue-600/20 hover:border-blue-700 transition-all duration-200 border-blue-700 bg-blue-800"
+            variant="secondary"
+            className="w-full justify-start bg-blue-600 gap-2 lg:gap-3 text-gray-100 hover:text-red-600 hover:bg-red-50 hover:border-red-200 border-gray-200 transition-all duration-200 text-xs lg:text-sm"
             onClick={handleSignOut}
           >
-            <LogOut size={20} />
+            <div className="p-1 rounded-lg bg-gray-100 hover:bg-red-100 flex-shrink-0">
+              <LogOut size={14} className="lg:w-4 lg:h-4" />
+            </div>
             <span>Sign Out</span>
           </Button>
         </div>
