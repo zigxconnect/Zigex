@@ -19,7 +19,6 @@ import {
 import { X, ArrowRight, ArrowLeft, AlertTriangle } from "lucide-react";
 import { FileUploadButton } from "@/components/ui/FileUploadButton";
 import { Spinner } from "@/components/uiComponent/Spinner";
-
 import { getRawProfileInfo, UserProfile } from "@/lib/actions/profile.actions";
 import { ApplicationPreview } from "../../internships/ApllicationPreview";
 
