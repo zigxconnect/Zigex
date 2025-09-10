@@ -1,3 +1,5 @@
+"use client"
+
 export interface InternshipFormData {
   title: string;
   description: string;
@@ -8,7 +10,7 @@ export interface InternshipFormData {
   tags?: string[];
   // Add other fields as used in the form
 }
-("use client");
+
 interface CheckboxProps extends React.InputHTMLAttributes<HTMLInputElement> {
   id: string;
   className?: string;
