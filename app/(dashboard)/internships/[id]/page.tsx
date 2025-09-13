@@ -14,7 +14,7 @@ export default function InternshipDetailsPage({
   params: { id: string };
 }) {
   const router = useRouter();
-  const resolvedParams = use(params);
+  const resolvedParams = useState(params);
 
   const [internship, setInternship] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);

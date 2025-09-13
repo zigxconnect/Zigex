@@ -44,7 +44,7 @@ const getInitials = (name: string = "") => {
 
 const navLinks = [
   { href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/admin/postings", icon: FileText, label: "Internship Postings" },
+  { href: "/admin/postings", icon: FileText, label: "Postings" },
   { href: "/admin/applicants", icon: Users, label: "Applicants" },
   { href: "/admin/profile", icon: FilePen, label: "Edit Profile" },
   { href: "/admin/accepted", icon: CheckCheck, label: "Accepted Interns" },
@@ -234,9 +234,6 @@ export const AdminSidebarProvider = ({
               {companyProfile.industry || "Industry"}
             </p>
 
-            {/* ======================================================================== */}
-            {/* 2. OLD DESCRIPTION PARAGRAPH REPLACED WITH THE NEW COMPONENT */}
-            {/* ======================================================================== */}
             <ReadMore text={companyProfile.description} />
           </div>
 
