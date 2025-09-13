@@ -1,22 +1,17 @@
 "use client";
 
-import React, { ReactNode } from "react";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/uiComponent/Select";
-import { Textarea } from "@/components/uiComponent/Textarea";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Image from "next/image";
+import { Select } from "@/components/uiComponent/Select";
+import { Textarea } from "@/components/uiComponent/Textarea";
 
-interface FormSectionProps {
-  title: string;
-  children: ReactNode;
-}
-
-const FormSection = ({ title, children }: FormSectionProps) => (
+// Reusable layout components
+const FormSection = ({ title, children }: any) => (
   <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
     <h2 className="text-lg font-semibold text-blue-700 mb-6">{title}</h2>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 ">
@@ -25,13 +20,7 @@ const FormSection = ({ title, children }: FormSectionProps) => (
   </div>
 );
 
-interface FormFieldProps {
-  label: string;
-  children: ReactNode;
-  className?: string;
-}
-
-const FormField = ({ label, children, className }: FormFieldProps) => (
+const FormField = ({ label, children, className }: any) => (
   <div className={className}>
     <label className="block text-sm font-medium text-blue-700 mb-1.5">
       {label}
@@ -40,38 +29,16 @@ const FormField = ({ label, children, className }: FormFieldProps) => (
   </div>
 );
 
-interface ProgramData {
-  id?: string;
-  title?: string;
-  description?: string;
-  program_category?: string;
-  start_date?: string;
-  end_date?: string;
-  application_deadline?: string;
-  program_format?: string;
-  required_skills?: string[];
-  program_picture_url?: string;
-}
-
-export const PostProgramForm = ({
-  initialData,
-}: {
-  initialData?: ProgramData;
-}) => {
+export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // *** 1. DETECT EDIT MODE ***
   const isEditMode = Boolean(initialData);
 
-  // Helper to format ISO date strings to YYYY-MM-DD for date inputs
   const formatDateForInput = (dateString?: string) => {
     if (!dateString) return "";
-    try {
-      const d = new Date(dateString);
-      if (isNaN(d.getTime())) return "";
-      return d.toISOString().split("T")[0];
-    } catch {
-      return "";
-    }
+    return new Date(dateString).toISOString().split("T")[0];
   };
 
   // State initialization for all form fields
@@ -95,76 +62,20 @@ export const PostProgramForm = ({
     initialData?.program_format || "remote"
   );
   const [requiredSkills, setRequiredSkills] = useState(
-    Array.isArray(initialData?.required_skills)
-      ? initialData.required_skills.join(",")
-      : ""
+    (initialData?.required_skills || []).join(",")
   );
   const [programPicture, setProgramPicture] = useState<File | null>(null);
 
-  const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
-  const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
-  const [fileError, setFileError] = useState<string>("");
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-        setFileError("Only JPG, PNG, or WEBP images are allowed.");
-        setProgramPicture(null);
-        e.target.value = "";
-        return;
-      }
-      if (file.size > MAX_IMAGE_SIZE) {
-        setFileError("Image size must be less than 5MB.");
-        setProgramPicture(null);
-        e.target.value = "";
-        return;
-      }
-      setFileError("");
-      setProgramPicture(file);
+      setProgramPicture(e.target.files[0]);
     }
   };
 
+  // *** 2. THE CORRECTED SUBMIT HANDLER ***
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-
-    // Validate dates before appending
-    const errors: string[] = [];
-    const isValidDate = (value: string) => {
-      if (!value) return false;
-      const d = new Date(value);
-      return d.toString() !== "Invalid Date";
-    };
-
-    if (!isValidDate(startDate)) errors.push("Start date is invalid.");
-    if (!isValidDate(endDate)) errors.push("End date is invalid.");
-    if (applicationDeadline && !isValidDate(applicationDeadline))
-      errors.push("Application deadline is invalid.");
-
-    // Logical date validation
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const deadline = applicationDeadline ? new Date(applicationDeadline) : null;
-
-    if (isValidDate(startDate) && isValidDate(endDate) && end <= start) {
-      toast.error("End date must be after start date.");
-      setIsSubmitting(false);
-      return;
-    }
-    if (deadline && isValidDate(applicationDeadline) && deadline >= start) {
-      toast.error(
-        "Application deadline must be before the program start date."
-      );
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (errors.length > 0) {
-      toast.error(errors.join(" "));
-      setIsSubmitting(false);
-      return;
-    }
 
     const formData = new FormData();
     formData.append("title", title);
@@ -181,16 +92,15 @@ export const PostProgramForm = ({
     if (requiredSkills) formData.append("required_skills", requiredSkills);
     if (programPicture) formData.append("program_picture", programPicture);
 
+    // ** THIS IS THE CRITICAL FIX: INCLUDE THE ID FOR PATCH REQUESTS **
     if (isEditMode) {
       formData.append("id", initialData.id);
     }
 
     try {
-      // Your API uses the same endpoint for POST and PATCH with form-data
-      const endpoint = "/api/companies/programs";
+      // DYNAMICALLY SET THE HTTP METHOD
       const method = isEditMode ? "PATCH" : "POST";
-
-      const response = await fetch(endpoint, {
+      const response = await fetch("/api/companies/programs", {
         method,
         body: formData,
       });
@@ -203,13 +113,11 @@ export const PostProgramForm = ({
         `Program ${isEditMode ? "updated" : "published"} successfully!`
       );
 
-      // Redirect back to the postings list after success
-      setTimeout(() => {
-        router.push("/admin/postings");
-        router.refresh();
-      }, 1500);
+      router.push("/admin/postings");
+      router.refresh();
     } catch (error: any) {
       toast.error(error.message || "An unexpected error occurred.");
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -275,7 +183,7 @@ export const PostProgramForm = ({
         </FormField>
       </FormSection>
 
-      <FormSection title="Program Details">
+      <FormSection title="Details & Branding">
         <FormField label="Description & Activities*" className="md:col-span-2">
           <Textarea
             rows={8}
@@ -291,12 +199,9 @@ export const PostProgramForm = ({
           <Input
             value={requiredSkills}
             onChange={(e) => setRequiredSkills(e.target.value)}
-            placeholder="e.g., JavaScript,Project Management,Public Speaking"
+            placeholder="e.g., JavaScript,Project Management"
           />
         </FormField>
-      </FormSection>
-
-      <FormSection title="Branding">
         <FormField label="Program Picture" className="md:col-span-2">
           {isEditMode && initialData.program_picture_url && !programPicture && (
             <div className="mb-4">
@@ -311,13 +216,10 @@ export const PostProgramForm = ({
             </div>
           )}
           <Input type="file" accept="image/*" onChange={handleFileChange} />
-          {fileError && (
-            <p className="text-xs text-red-600 mt-2">{fileError}</p>
-          )}
           <p className="text-xs text-gray-500 mt-1">
             {isEditMode
               ? "Upload a new file to replace the current one."
-              : "Upload an image for your program."}
+              : "An image is required."}
           </p>
         </FormField>
       </FormSection>

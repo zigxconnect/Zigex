@@ -1,28 +1,26 @@
-"use client"
+"use client";
 
-export interface InternshipFormData {
-  title: string;
-  description: string;
-  location?: string;
-  startDate?: string | Date;
-  duration?: number;
-  stipend?: number;
-  tags?: string[];
-  // Add other fields as used in the form
-}
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import React from "react";
+import { Select } from "@/components/uiComponent/Select";
+import { Textarea } from "@/components/uiComponent/Textarea";
+
+// Helper UI Components
 
 interface CheckboxProps extends React.InputHTMLAttributes<HTMLInputElement> {
   id: string;
   className?: string;
 }
-import React from "react";
-
 interface FormSectionProps {
   title: string;
   children: React.ReactNode;
   className?: string;
 }
-
 interface FormFieldProps {
   label: string;
   children: React.ReactNode;
@@ -31,14 +29,6 @@ interface FormFieldProps {
   required?: boolean;
   hint?: string;
 }
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/uiComponent/Select";
-import { Textarea } from "@/components/uiComponent/Textarea";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 
 const Checkbox: React.FC<CheckboxProps> = ({ id, className, ...props }) => (
   <input
@@ -89,11 +79,9 @@ const FormField: React.FC<FormFieldProps> = ({
   </div>
 );
 
-export const PostInternshipForm = ({
-  initialData,
-}: {
-  initialData?: Partial<InternshipFormData>;
-}) => {
+// Main Form Component
+
+export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isEditMode = Boolean(initialData);
@@ -119,9 +107,11 @@ export const PostInternshipForm = ({
   const [deadline, setDeadline] = useState(
     formatDateForInput(initialData?.deadline)
   );
+
   const [internshipType, setInternshipType] = useState(
     initialData?.type || "onsite"
   );
+
   const [compensation, setCompensation] = useState(
     initialData?.compensation || ""
   );
@@ -140,12 +130,13 @@ export const PostInternshipForm = ({
     setIsSubmitting(true);
 
     const internshipData = {
+      id: isEditMode ? initialData.id : undefined,
       title,
       description,
       location,
       category,
-      start_date: startDate ? `${startDate}T00:00:00.000Z` : null,
-      deadline: deadline ? `${deadline}T23:59:59.999Z` : null,
+      start_date: startDate ? new Date(startDate).toISOString() : null,
+      deadline: deadline ? new Date(deadline).toISOString() : null,
       type: internshipType,
       required_skills: requiredSkills,
       compensation: isPaid ? compensation : null,
@@ -164,19 +155,22 @@ export const PostInternshipForm = ({
       });
 
       const result = await response.json();
-      if (!response.ok)
-        throw new Error(result.error || "Failed to submit form");
+      if (!response.ok) {
+        console.error("API Error:", result);
+        throw new Error(
+          result.error?.message || result.error || "Failed to submit form"
+        );
+      }
 
       toast.success(
         `Internship ${isEditMode ? "updated" : "published"} successfully!`
       );
 
-      setTimeout(() => {
-        router.push("/admin/postings");
-        router.refresh();
-      }, 1500);
+      router.push("/admin/postings");
+      router.refresh();
     } catch (error: any) {
       toast.error(error.message || "An unexpected error occurred.");
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -184,7 +178,7 @@ export const PostInternshipForm = ({
   return (
     <form className="space-y-8" onSubmit={handleSubmit}>
       <FormSection title="Internship Information">
-        <FormField label="Internship Title*" className="md:col-span-2">
+        <FormField label="Internship Title" required className="md:col-span-2">
           <Input
             type="text"
             value={title}
@@ -192,7 +186,7 @@ export const PostInternshipForm = ({
             required
           />
         </FormField>
-        <FormField label="Category*">
+        <FormField label="Category" required>
           <Select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
@@ -206,7 +200,7 @@ export const PostInternshipForm = ({
             <option>Design</option>
           </Select>
         </FormField>
-        <FormField label="Location*">
+        <FormField label="Location" required>
           <Input
             type="text"
             value={location}
@@ -214,7 +208,7 @@ export const PostInternshipForm = ({
             required
           />
         </FormField>
-        <FormField label="Internship Type*">
+        <FormField label="Internship Type" required>
           <Select
             value={internshipType}
             onChange={(e) => setInternshipType(e.target.value)}
@@ -225,7 +219,7 @@ export const PostInternshipForm = ({
             <option value="hybrid">Hybrid</option>
           </Select>
         </FormField>
-        <FormField label="Start Date*">
+        <FormField label="Start Date" required>
           <Input
             type="date"
             value={startDate}
@@ -233,7 +227,7 @@ export const PostInternshipForm = ({
             required
           />
         </FormField>
-        <FormField label="Application Deadline*">
+        <FormField label="Application Deadline" required>
           <Input
             type="date"
             value={deadline}
@@ -245,7 +239,8 @@ export const PostInternshipForm = ({
 
       <FormSection title="Job Details">
         <FormField
-          label="Job Description & Responsibilities*"
+          label="Job Description & Responsibilities"
+          required
           className="md:col-span-2"
         >
           <Textarea
@@ -264,6 +259,7 @@ export const PostInternshipForm = ({
               type="text"
               value={skillInput}
               onChange={(e) => setSkillInput(e.target.value)}
+              placeholder="e.g., JavaScript"
             />
             <Button type="button" onClick={addSkill} variant="orange">
               Add
@@ -309,6 +305,7 @@ export const PostInternshipForm = ({
                 type="text"
                 value={compensation}
                 onChange={(e) => setCompensation(e.target.value)}
+                placeholder="e.g., $20/hour, $3000 stipend"
               />
             </FormField>
           )}
