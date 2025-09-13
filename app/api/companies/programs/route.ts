@@ -431,3 +431,39 @@ export async function DELETE(request: Request) {
     );
   }
 }
+/*
+* Function to get programs posted by the authenticated company
+*/
+// GET /api/companies/programs (Authenticated: returns programs for the authenticated company)
+export async function getAuthenticatedCompanyPrograms(request: Request) {
+  const auth = await authMiddleware(request);
+  if (auth instanceof NextResponse) {
+    return auth;
+  }
+
+  const { type, company } = auth;
+  if (type !== "company") {
+    return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
+  }
+
+  if (!company) {
+    return NextResponse.json(
+      { error: "Company profile not found" },
+      { status: 404 }
+    );
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from("programs")
+    .select("*")
+    .eq("company_id", company.id);
+
+  if (error) {
+    console.error("Error fetching programs:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json(data);
+}
+
+
