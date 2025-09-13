@@ -7,9 +7,9 @@ import { z } from "zod";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { KeyRound } from "lucide-react";
-import { Spinner } from "@/components/uiComponenet/Spinner";
+import { Spinner } from "@/components/uiComponent/Spinner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/uiComponenet/input";
+import { Input } from "@/components/uiComponent/input";
 
 const formSchema = z.object({
   token: z.string().length(6, { message: "Your code must be 6 digits." }),

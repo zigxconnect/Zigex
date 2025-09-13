@@ -1,9 +1,7 @@
-// FILE: app/admin/postings/[id]/page.tsx
-
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { getPostingById, Posting } from "@/lib/data/postings"; // Refactored data source
+import { getPostingById, Posting } from "@/lib/data/postings";
 import {
   Edit,
   Briefcase,
@@ -12,7 +10,7 @@ import {
   Calendar,
   CheckCircle,
   LucideIcon,
-  Zap, // Added for Program type
+  Zap,
 } from "lucide-react";
 
 // Helper component for displaying a single detail item with an icon
@@ -56,7 +54,7 @@ const DetailsSidebar = ({ posting }: { posting: Posting }) => {
 
   switch (posting.type) {
     case "Internship":
-      status = new Date(posting.deadline) < new Date() ? "Expired" : "Active";
+      status = new Date(posting.deadline) > new Date() ? "Active" : "Expired";
       return (
         <>
           <DetailItem
@@ -88,7 +86,7 @@ const DetailsSidebar = ({ posting }: { posting: Posting }) => {
             label="Application Deadline"
             value={new Date(posting.deadline).toLocaleDateString()}
           />
-          {posting.required_skills?.length > 0 && (
+          {posting.required_skills && posting.required_skills.length > 0 && (
             <DetailItem
               icon={CheckCircle}
               label="Skills"
@@ -99,7 +97,7 @@ const DetailsSidebar = ({ posting }: { posting: Posting }) => {
       );
 
     case "Program":
-      status = new Date(posting.end_date) < new Date() ? "Expired" : "Active";
+      status = new Date(posting.end_date) > new Date() ? "Active" : "Expired";
       return (
         <>
           <DetailItem
@@ -135,7 +133,7 @@ const DetailsSidebar = ({ posting }: { posting: Posting }) => {
             label="End Date"
             value={new Date(posting.end_date).toLocaleDateString()}
           />
-          {posting.required_skills?.length > 0 && (
+          {posting.required_skills && posting.required_skills.length > 0 && (
             <DetailItem
               icon={CheckCircle}
               label="Skills"

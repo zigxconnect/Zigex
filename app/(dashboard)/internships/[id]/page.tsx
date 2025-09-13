@@ -1,19 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { useState, useEffect, use } from "react";
-import { notFound } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ApplicationModal } from "@/components/sections/dashboard/details/ApplicationModal";
 import { InternshipInfoPanel } from "@/components/sections/dashboard/details/InternshipInfoPanel";
 import { InternshipBody } from "@/components/sections/dashboard/details/InternshipBody";
-import { Spinner } from "@/components/uiComponenet/Spinner";
+import { Spinner } from "@/components/uiComponent/Spinner";
 
 export default function InternshipDetailsPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }) {
-  const resolvedParams = use(params);
+  const router = useRouter();
+  const resolvedParams = useState(params);
 
   const [internship, setInternship] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -26,11 +27,14 @@ export default function InternshipDetailsPage({
         setIsLoading(true);
         // We now use the resolved ID for the API call
         const response = await fetch(
-          `/api/students/internships/${resolvedParams.id}`
+          `/api/students/internships/${encodeURIComponent(params.id)}`
         );
 
         if (!response.ok) {
-          if (response.status === 404) notFound();
+          if (response.status === 404) {
+            router.replace("/404");
+            return;
+          }
           const errorData = await response.json();
           throw new Error(
             errorData.error || "Failed to fetch internship details."
@@ -47,7 +51,7 @@ export default function InternshipDetailsPage({
     };
 
     fetchDetails();
-  }, [resolvedParams.id]);
+  }, [params.id, resolvedParams.id]);
 
   if (isLoading) {
     return (
@@ -63,7 +67,11 @@ export default function InternshipDetailsPage({
   }
 
   if (!internship) {
-    return null;
+    return (
+      <div className="text-center p-12 text-gray-500">
+        Internship not found.
+      </div>
+    );
   }
 
   return (

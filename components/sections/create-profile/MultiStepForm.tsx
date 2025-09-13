@@ -14,7 +14,7 @@ import { Step2Education } from "./Step2Education";
 import { Step3Skills } from "./Step3Skills";
 import { Step4Experience } from "./Step4Experience";
 import { Step5Additional } from "./Step5Additional";
-import { Spinner } from "@/components/uiComponenet/Spinner";
+import { Spinner } from "@/components/uiComponent/Spinner";
 
 const stepsFields: (keyof ProfileFormData)[][] = [
   ["first_name", "last_name", "phone", "location", "about"],

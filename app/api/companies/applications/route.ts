@@ -2,7 +2,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { authMiddleware } from "@/lib/middleware/auth";
 
-
+//Fetch all applications for internships posted by the authenticated company
 export async function GET (request: Request){
     //authenticate user
     const auth = await authMiddleware(request)

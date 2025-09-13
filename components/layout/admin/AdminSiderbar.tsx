@@ -1,5 +1,19 @@
 "use client";
 
+// TypeScript interface for company profile
+export interface CompanyProfile {
+  id: string;
+  company_name: string;
+  industry?: string;
+  description?: string;
+  logoUrl?: string;
+  website?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  [key: string]: any;
+}
+
 import React, { useState, createContext, useContext, useEffect } from "react";
 import Link from "next/link";
 import {
@@ -14,7 +28,7 @@ import {
   LayoutDashboard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Logo } from "@/components/uiComponenet/Logo";
+import { Logo } from "@/components/uiComponent/Logo";
 import { toast } from "sonner";
 
 // Helper function to get initials from a company name
@@ -30,7 +44,7 @@ const getInitials = (name: string = "") => {
 
 const navLinks = [
   { href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/admin/postings", icon: FileText, label: "Internship Postings" },
+  { href: "/admin/postings", icon: FileText, label: "Postings" },
   { href: "/admin/applicants", icon: Users, label: "Applicants" },
   { href: "/admin/profile", icon: FilePen, label: "Edit Profile" },
   { href: "/admin/accepted", icon: CheckCheck, label: "Accepted Interns" },
@@ -82,13 +96,18 @@ const ReadMore = ({
   return (
     <p className="mt-3 text-xs text-gray-600 leading-relaxed max-w-xs">
       {isExpanded ? text : `${text.substring(0, maxLength)}... `}
-      <span
+      <button
         onClick={toggleText}
-        className="text-blue-600 font-semibold cursor-pointer hover:underline"
-        style={{ whiteSpace: "nowrap" }} // Prevents the link from wrapping to a new line
+        className="text-blue-600 font-semibold hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded"
+        style={{ whiteSpace: "nowrap" }}
+        type="button"
+        aria-expanded={isExpanded}
+        aria-label={
+          isExpanded ? "Show less description" : "Show full description"
+        }
       >
         {isExpanded ? "Read Less" : "Read More"}
-      </span>
+      </button>
     </p>
   );
 };
@@ -99,7 +118,7 @@ export const AdminSidebarProvider = ({
   companyProfile,
 }: {
   children: React.ReactNode;
-  companyProfile: any;
+  companyProfile: CompanyProfile;
 }) => {
   // Initialize based on screen size
   const [isOpen, setIsOpen] = useState(true);
@@ -133,8 +152,15 @@ export const AdminSidebarProvider = ({
 
   const handleSignOut = async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
-      window.location.href = "/";
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+          // Include CSRF token if your framework provides one
+          // 'X-CSRF-Token': getCsrfToken(),
+        },
+      });
     } catch (error) {
       console.error("Logout failed:", error);
       toast.error("Logout failed. Please try again.");
@@ -208,9 +234,6 @@ export const AdminSidebarProvider = ({
               {companyProfile.industry || "Industry"}
             </p>
 
-            {/* ======================================================================== */}
-            {/* 2. OLD DESCRIPTION PARAGRAPH REPLACED WITH THE NEW COMPONENT */}
-            {/* ======================================================================== */}
             <ReadMore text={companyProfile.description} />
           </div>
 
@@ -235,15 +258,7 @@ export const AdminSidebarProvider = ({
                 <span className="font-medium">{link.label}</span>
               </Link>
             ))}
-            <Link
-              href="/admin/fupro-ai"
-              onClick={() => {
-                if (isMobile) {
-                  setIsOpen(false);
-                }
-              }}
-              className="group flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gradient-to-r hover:from-orange-50 hover:to-orange-100 hover:text-orange-800"
-            ></Link>
+            {/* TODO: Add FuPro AI link when ready */}
           </nav>
 
           {/* Sign Out */}
@@ -359,52 +374,4 @@ export const AdminContent = ({
   className?: string;
 }) => {
   return <main className={`p-4 sm:p-6 ${className}`}>{children}</main>;
-};
-
-// Usage Example - This shows the complete working implementation
-export const ExampleImplementation = () => {
-  const mockCompanyProfile = {
-    company_name: "Innovate Solutions LLC",
-    industry: "Cloud Computing",
-    description:
-      "Innovate Solutions LLC is a forward-thinking tech company that specializes in scalable cloud infrastructure and AI-driven analytics. We empower businesses to leverage data for growth and efficiency.",
-  };
-
-  const mockStats = {
-    total: 15,
-    active: 8,
-    applications: 142,
-  };
-
-  return (
-    <AdminSidebarProvider companyProfile={mockCompanyProfile}>
-      <EnhancedAdminHeader stats={mockStats} />
-
-      <AdminContent>
-        <div className="space-y-6">
-          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-            <h2 className="text-lg font-semibold mb-4">Dashboard Content</h2>
-            <p className="text-gray-600">
-              This is the main content area. The description in the sidebar is
-              now truncated with a "Read More" link.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((item) => (
-              <div
-                key={item}
-                className="bg-white rounded-lg p-6 shadow-sm border border-gray-200"
-              >
-                <h3 className="font-semibold mb-2">Card {item}</h3>
-                <p className="text-sm text-gray-600">
-                  Some placeholder content here.
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </AdminContent>
-    </AdminSidebarProvider>
-  );
 };

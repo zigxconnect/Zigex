@@ -5,18 +5,8 @@ import { NextResponse } from "next/server";
 
 
 
-/**
- * @swagger
- * /api/companies/applications/internship/[id]:
- *   get:
- *     tags:
- *          - Company Applications
- *     summary: Get all applications for a particular internship
- *     description: Get all applications for a particular internship. id is the internship id
- *     responses:
- *       200:
- *         description: Success
- */
+// Get all applications for a unique internship posted by the authenticated company
+// The id is the internship ID
 
 export async function GET(
     request: Request,
@@ -42,20 +32,41 @@ export async function GET(
         );
     }
     const id = params?.id;
-    const { data, error } = await supabaseAdmin
-        .from('applications')
-        .select('*, internship:internship_id(title)')
-        .eq('internship_id', id)
+    
+    // Verify internship belongs to company
+    const { data: existingInternship, error: fetchError } = await supabaseAdmin
+        .from('internships')
+        .select('*')
+        .eq('id', id)
+        .eq('company_id', company.id)
         .single();
-    if (error || !data) {
+    if (fetchError || !existingInternship) {
         return NextResponse.json(
             { error: 'Internship not found or does not belong to this company' },
+            { status: 404 }
+        );
+    }
+    // Fetch applications for the internship
+    const { data, error } = await supabaseAdmin
+        .from('applications')
+        .select('*, internship:internships(title, company_id)')
+        .eq('internship_id', id)
+        // .eq('internship_id:company_id', company.id); // Ensure the internship belongs to the authenticated company
+
+    console.log(company.id);
+    console.log(data);
+    console.log(error);
+    if (error || !data) {
+        return NextResponse.json(
+            { error: 'Internship is not found or does not belong to this company' },
             { status: 404 }
         );
     }
     return NextResponse.json(data);
 }
 
+
+// Update the status of an application for a specific internship
 export async function PATCH(
     request: Request,
     { params }: { params: { id: string } }

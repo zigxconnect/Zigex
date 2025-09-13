@@ -1,7 +1,14 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { MapPin, Clock, Building2, ExternalLink, Bookmark, BookmarkCheck } from "lucide-react";
+import {
+  MapPin,
+  Clock,
+  Building2,
+  ExternalLink,
+  Bookmark,
+  BookmarkCheck,
+} from "lucide-react";
 import { useState } from "react";
 
 interface InternshipCardProps {
@@ -13,7 +20,7 @@ interface InternshipCardProps {
   category: string;
   logoColor: string;
   cover_image_url: string;
-  viewMode?: 'grid' | 'list';
+  viewMode?: "grid" | "list";
 }
 
 export const InternshipCard = ({
@@ -25,7 +32,7 @@ export const InternshipCard = ({
   category,
   logoColor,
   cover_image_url,
-  viewMode = 'grid'
+  viewMode = "grid",
 }: InternshipCardProps) => {
   const [isBookmarked, setIsBookmarked] = useState(false);
 
@@ -35,7 +42,7 @@ export const InternshipCard = ({
     setIsBookmarked(!isBookmarked);
   };
 
-  if (viewMode === 'list') {
+  if (viewMode === "list") {
     return (
       <div className="bg-gray-200 rounded-2xl shadow-xl border border-gray-200 hover:shadow-xl transition-all duration-300 overflow-hidden group">
         <div className="flex">
@@ -68,7 +75,9 @@ export const InternshipCard = ({
                     </h3>
                     <div className="flex items-center gap-1">
                       <Building2 size={14} className="text-blue-600" />
-                      <p className="text-sm text-blue-800 font-medium">{company}</p>
+                      <p className="text-sm text-blue-800 font-medium">
+                        {company}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -107,7 +116,7 @@ export const InternshipCard = ({
                     <Bookmark size={18} className="text-gray-400" />
                   )}
                 </Button>
-                <Link href={`/internships/${id}`}>
+                <Link href={`students/internships/${id}`}>
                   <Button className="bg-blue-700 hover:bg-blue-600 text-white px-6 py-2 rounded-lg flex items-center gap-2">
                     View Details
                     <ExternalLink size={14} />
@@ -147,7 +156,7 @@ export const InternshipCard = ({
           className="object-cover transition-transform duration-300 group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-        
+
         {/* Category Badge on Image */}
         <div className="absolute bottom-3 left-3">
           <span className="px-3 py-1.5 text-xs text-white bg-blue-800/90 rounded-full font-medium backdrop-blur-sm border border-white/20">
@@ -172,7 +181,9 @@ export const InternshipCard = ({
             </h3>
             <div className="flex items-center gap-1">
               <Building2 size={14} className="text-blue-600 flex-shrink-0" />
-              <p className="text-sm text-blue-800 font-medium truncate">{company}</p>
+              <p className="text-sm text-blue-800 font-medium truncate">
+                {company}
+              </p>
             </div>
           </div>
         </div>
@@ -198,7 +209,10 @@ export const InternshipCard = ({
           <Link href={`/internships/${id}`} className="block">
             <Button className="w-full bg-blue-700 hover:bg-blue-600 text-white rounded-lg py-3 flex items-center justify-center gap-2 group/btn">
               <span>View Details</span>
-              <ExternalLink size={14} className="transition-transform group-hover/btn:translate-x-0.5" />
+              <ExternalLink
+                size={14}
+                className="transition-transform group-hover/btn:translate-x-0.5"
+              />
             </Button>
           </Link>
         </div>

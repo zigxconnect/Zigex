@@ -1,11 +1,9 @@
-import { AuthResponse } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { authMiddleware } from "@/lib/middleware/auth";
 import { internshipSchema } from "@/lib/validation/internship";
 
 //Update Company Internhip details
-
 
 /**
  *  @swagger
@@ -16,75 +14,67 @@ import { internshipSchema } from "@/lib/validation/internship";
  *      summary: Update an existing internship for a company
  *      description: Update an existing internship for a particular company
  *      responses:
-*    200:
-*      description: Internship updated successfully
-*    400:
-*      description: Bad request
-*    403:
-*      description: Unauthorized access
-*    404:
-*      description: Internship not found or does not belong to this company
+ *    200:
+ *      description: Internship updated successfully
+ *    400:
+ *      description: Bad request
+ *    403:
+ *      description: Unauthorized access
+ *    404:
+ *      description: Internship not found or does not belong to this company
  */
 export async function PATCH(
-    request: Request,
-    { params }: {params: { id: string}}
-    ) {
-    // Authenticate the user
-    const auth = await authMiddleware(request);
-    if (auth instanceof NextResponse) {
-        return auth; // Return the NextResponse if authentication fails
-    }
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  // Authenticate the user
+  const auth = await authMiddleware(request);
+  if (auth instanceof NextResponse) {
+    return auth;
+  }
 
-    const id = params?.id;
+  const id = params?.id;
 
-    const {user, type} = auth;
-    if (type !== 'company') {
-        return NextResponse.json(
-            { error: 'Unauthorized access' },
-            { status: 403 }
-        );
-    }
+  const { user, type } = auth;
+  if (type !== "company") {
+    return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
+  }
 
-    const {company} = auth;
-    if (!company) {
-        return NextResponse.json(
-            { error: 'Company profile not found' },
-            { status: 404 }
-        );
-    }
+  const { company } = auth;
+  if (!company) {
+    return NextResponse.json(
+      { error: "Company profile not found" },
+      { status: 404 }
+    );
+  }
 
+  // Validate data
+  const body = await request.json();
+  const { ...updates } = internshipSchema.partial().parse(body);
 
-    // Validate data
-    const body = await request.json();
-    const { ...updates } = internshipSchema.partial().parse(body);
+  const { data: existingInternship, error: fetchError } = await supabaseAdmin
+    .from("internships")
+    .select("*")
+    .eq("id", id)
+    .eq("company_id", company.id)
+    .single();
+  if (fetchError || !existingInternship) {
+    return NextResponse.json(
+      { error: "Internship not found or does not belong to this company" },
+      { status: 404 }
+    );
+  }
 
-
-    const { data: existingInternship, error: fetchError } = await supabaseAdmin
-        .from('internships')
-        .select('*')
-        .eq('id', id)
-        .eq('company_id', company.id)
-        .single();
-    if (fetchError || !existingInternship) {
-        return NextResponse.json(
-            { error: 'Internship not found or does not belong to this company' },
-            { status: 404 }
-        );
-    }
-
-    // Update data
-    const { data, error } = await supabaseAdmin
-        .from('internships')
-        .update(updates)
-        .eq('id', id);
-    if (error) {
-        return NextResponse.json(
-            { error: error.message }, 
-            { status: 500 });
-    }
-    return NextResponse.json(data);
+  // Update data
+  const { data, error } = await supabaseAdmin
+    .from("internships")
+    .update(updates)
+    .eq("id", id);
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+  return NextResponse.json(data);
 }
-
 
 //Delete Company Internship
 /**
@@ -94,61 +84,57 @@ export async function PATCH(
  *      tags:
  *          - Company Postings
  *      summary: Delete an internship for a company
- *      description: 
+ *      description:
  *          delete company internship or posting.
  *          id is the id of the internship.
  *          no body.
  */
-export async function DELETE
-(request: Request,
-    { params }: {params: { id: string}}
+export async function DELETE(
+  request: Request,
+  { params }: { params: { id: string } }
 ) {
+  // Authenticate the user
+  const auth = await authMiddleware(request);
+  if (auth instanceof NextResponse) {
+    return auth;
+  }
 
-    // Authenticate the user
-    const auth = await authMiddleware(request);
-    if (auth instanceof NextResponse) {
-        return auth; // Return the NextResponse if authentication fails
-    }
+  const { user, type } = auth;
+  if (type !== "company") {
+    return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
+  }
 
-    const {user, type} = auth;
-    if (type !== 'company') {
-        return NextResponse.json(
-            { error: 'Unauthorized access' },
-            { status: 403 }
-        );
-    }
+  const { company } = auth;
+  if (!company) {
+    return NextResponse.json(
+      { error: "Company profile not found" },
+      { status: 404 }
+    );
+  }
 
-    const {company} = auth;
-    if (!company) {
-        return NextResponse.json(
-            { error: 'Company profile not found' },
-            { status: 404 }
-        );
-    }
+  // verify internship belongs to company
+  const { data: existingInternship, error: fetchError } = await supabaseAdmin
+    .from("internships")
+    .select("*")
+    .eq("id", params?.id)
+    .eq("company_id", company.id)
+    .single();
+  if (fetchError || !existingInternship) {
+    return NextResponse.json(
+      { error: "Internship not found or does not belong to this company" },
+      { status: 404 }
+    );
+  }
 
-    
-
-    // verify internship belongs to company
-    const { data: existingInternship, error: fetchError } = await supabaseAdmin
-        .from('internships')
-        .select('*')
-        .eq('id', params?.id)
-        .eq('company_id', company.id)
-        .single();
-    if (fetchError || !existingInternship) {
-        return NextResponse.json(
-            { error: 'Internship not found or does not belong to this company' },
-            { status: 404 }
-        );
-    }
-
-    const { data, error } = await supabaseAdmin.from('internships').delete().eq('id',  params?.id);
-    if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-    return NextResponse.json(data);
+  const { data, error } = await supabaseAdmin
+    .from("internships")
+    .delete()
+    .eq("id", params?.id);
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+  return NextResponse.json(data);
 }
-
 
 /**
  * @swagger
@@ -160,50 +146,49 @@ export async function DELETE
  *      summary: Get details of a specific internship for a company
  */
 export async function GET(
-    request: Request,
-    { params }: { params: { id: string } }
+  request: Request,
+  { params }: { params: { id: string } }
 ) {
-    // Authenticate the user
-    const auth = await authMiddleware(request);
-    if (auth instanceof NextResponse) {
-        return auth; // Return the NextResponse if authentication fails
-    }
+  // Authenticate the user
+  const auth = await authMiddleware(request);
+  if (auth instanceof NextResponse) {
+    return auth;
+  }
 
-    const {user, type} = auth;
-    if (type !== 'company') {
-        return NextResponse.json(
-            { error: 'Unauthorized access' },
-            { status: 403 }
-        );
-    }
+  const { user, type } = auth;
+  if (type !== "company") {
+    return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
+  }
 
-    const {company} = auth;
-    if (!company) {
-        return NextResponse.json(
-            { error: 'Company profile not found' },
-            { status: 404 }
-        );
-    }
+  const { company } = auth;
+  if (!company) {
+    return NextResponse.json(
+      { error: "Company profile not found" },
+      { status: 404 }
+    );
+  }
 
-    const id = params?.id;
+  const id = params?.id;
 
-    // Fetch the single internship that matches the ID.
-    const { data: internship, error } = await supabaseAdmin
-        .from('internships')
-        .select(`
+  // Fetch the single internship that matches the ID.
+  const { data: internship, error } = await supabaseAdmin
+    .from("internships")
+    .select(
+      `
             *
-        `)
-        .eq('id', id)  // Filter by the ID from the URL
-        .single();     // Expect only one result
+        `
+    )
+    .eq("id", id)
+    .single();
 
-    // Handle cases where the internship is not found
-    if (error || !internship) {
-        console.error('Supabase query error:', error);
-        return NextResponse.json(
-            { error: 'Internship not found' },
-            { status: 404 }
-        );
-    }
+  // Handle cases where the internship is not found
+  if (error || !internship) {
+    console.error("Supabase query error:", error);
+    return NextResponse.json(
+      { error: "Internship not found" },
+      { status: 404 }
+    );
+  }
 
-    return NextResponse.json(internship);
+  return NextResponse.json(internship);
 }

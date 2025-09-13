@@ -10,17 +10,17 @@ function createSupabaseServerClient() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get: (name: string) => {
-          return cookieStore.get(name)?.value;
+        get: async (name: string) => {
+          return (await cookieStore).get(name)?.value;
         },
-        set: (name: string, value: string, options: CookieOptions) => {
+        set: async (name: string, value: string, options: CookieOptions) => {
           try {
-            cookieStore.set({ name, value, ...options });
+            (await cookieStore).set({ name, value, ...options });
           } catch (error) {}
         },
-        remove: (name: string, options: CookieOptions) => {
+        remove: async (name: string, options: CookieOptions) => {
           try {
-            cookieStore.set({ name, value: "", ...options });
+            (await cookieStore).set({ name, value: "", ...options });
           } catch (error) {}
         },
       },

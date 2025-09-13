@@ -1,3 +1,4 @@
+
 "use client";
 import { useRouter } from "next/navigation";
 import { Sparkles } from "lucide-react";
@@ -17,3 +18,4 @@ export default function AIChatButton() {
     </button>
   );
 }
+
