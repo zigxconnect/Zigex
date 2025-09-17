@@ -1,3 +1,5 @@
+// app/api/auth/register/route.ts
+
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
@@ -12,53 +14,48 @@ export async function POST(request: Request) {
     );
   }
 
-  // 1. Use the admin client to create the user.
+  // 1. Create the user and pass metadata for the trigger.
   const { data: authData, error: authError } = await supabaseAdmin.auth.signUp({
     email,
     password,
+    options: {
+      data: {
+        full_name: fullName,
+        user_role: "student", // This metadata tells our trigger to create a student profile.
+      },
+    },
   });
 
   if (authError || !authData.user) {
+    if (authError?.message.includes("User already registered")) {
+      return NextResponse.json(
+        { error: "A user with this email already exists." },
+        { status: 400 }
+      );
+    }
+    console.error("Supabase SignUp Error:", authError?.message);
     return NextResponse.json(
-      { error: authError?.message || "Could not sign up user." },
+      { error: "There was an error creating the user." },
       { status: 400 }
     );
   }
 
-  // 2. Create the corresponding profile for the new user.
-  const { error: profileError } = await supabaseAdmin
-    .from("student_profiles")
-    .insert({
-      user_id: authData.user.id,
-      full_name: fullName,
-      email: email,
-      profile_status: "incomplete",
-      role: "student",
-    });
+  // The manual profile creation is correctly removed, as the trigger handles it.
 
-  if (profileError) {
-    await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
-    return NextResponse.json(
-      { error: "Failed to create student profile." },
-      { status: 500 }
-    );
-  }
-
+  // 2. Sign in the new user to create a session.
+  const cookieStore = cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get: async (name: string) => {
-          const cookieStore = await cookies();
+        get(name: string) {
           return cookieStore.get(name)?.value;
         },
-        set: async (name: string, value: string, options: CookieOptions) => {
-          const cookieStore = await cookies();
+        set(name: string, value: string, options: CookieOptions) {
           cookieStore.set({ name, value, ...options });
         },
-        remove: async (name: string, options: CookieOptions) => {
-          const cookieStore = await cookies();
+        remove(name: string, options: CookieOptions) {
           cookieStore.set({ name, value: "", ...options });
         },
       },
@@ -77,7 +74,6 @@ export async function POST(request: Request) {
     );
   }
 
-  // The user is created and a session cookie is now set in their browser.
   return NextResponse.json(
     { message: "Student registered and logged in successfully" },
     { status: 201 }

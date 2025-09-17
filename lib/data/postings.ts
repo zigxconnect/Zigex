@@ -1,11 +1,43 @@
 import { createSupabaseServerClient } from "../supabase/server";
 
+// TYPE DEFINITIONS
+
 export type Posting = {
   id: string;
-  type: "Internship" | "Program" | "Event";
+  postingType: "Internship" | "Program" | "Event";
   title: string;
   description: string;
   created_at: string;
+  type?: "onsite" | "remote" | "hybrid";
+  [key: string]: any;
+};
+
+type Internship = {
+  id: string;
+  deadline: string;
+  category: string;
+  created_at: string;
+  [key: string]: any;
+};
+type Program = {
+  id: string;
+  end_date: string;
+  program_category: string;
+  created_at: string;
+  [key: string]: any;
+};
+type Event = {
+  id: string;
+  end_date: string;
+  created_at: string;
+  [key: string]: any;
+};
+type Application = {
+  id: string;
+  created_at: string;
+  status: string;
+  internship_id?: string;
+  program_id?: string;
   [key: string]: any;
 };
 
@@ -19,9 +51,9 @@ type RecentApplication = {
   status: string;
 };
 
-/**
- * Fetches the company profile for the currently authenticated user.
- */
+// PUBLIC-FACING API FUNCTIONS
+
+/** Fetches the company profile for the currently authenticated user. */
 export async function getAuthenticatedCompanyProfile() {
   const supabase = createSupabaseServerClient();
   const {
@@ -39,16 +71,18 @@ export async function getAuthenticatedCompanyProfile() {
 }
 
 /**
- * Fetches a single posting by its ID, searching across all relevant tables.
+ * Fetches a single posting by its ID, adding a generic 'postingType' property
+ * while preserving the original 'type' field from the database.
  */
 export async function getPostingById(id: string): Promise<Posting | null> {
   const supabase = createSupabaseServerClient();
   const tables: Array<{
-    name: "internships" | "programs";
-    type: Posting["type"];
+    name: "internships" | "programs" | "event";
+    type: Posting["postingType"];
   }> = [
     { name: "internships", type: "Internship" },
     { name: "programs", type: "Program" },
+    { name: "event", type: "Event" },
   ];
   for (const table of tables) {
     const { data } = await supabase
@@ -56,23 +90,30 @@ export async function getPostingById(id: string): Promise<Posting | null> {
       .select("*")
       .eq("id", id)
       .single();
-    if (data) return { ...data, type: table.type };
+    if (data) {
+      return { ...data, postingType: table.type };
+    }
   }
   return null;
 }
 
-/**
- * Fetches and formats all postings for a given company, including applicant counts.
- */
+/** Fetches and formats all postings for a given company. */
 export async function getAllCompanyPostings(companyId: string) {
   const supabase = createSupabaseServerClient();
-  const [internships, programs] = await _fetchAllPostings(supabase, companyId);
+  const { internships, programs, events } = await _fetchAllPostings(
+    supabase,
+    companyId
+  );
 
-  if (internships.length === 0 && programs.length === 0) {
+  if (
+    internships.length === 0 &&
+    programs.length === 0 &&
+    events.length === 0
+  ) {
     return { hasData: false, postings: [] };
   }
 
-  const allPostings = _combineAndSortPostings(internships, programs);
+  const allPostings = _combineAndSortPostings(internships, programs, events);
   const countsMap = await _fetchApplicationCounts(
     supabase,
     internships.map((p) => p.id),
@@ -83,23 +124,25 @@ export async function getAllCompanyPostings(companyId: string) {
   return { hasData: true, postings: formattedPostings };
 }
 
-/**
- * Fetches and calculates the header stats (total, active, applications) for a company.
- */
+/** Fetches and calculates the header stats for a company. */
 export async function getHeaderStats(companyId: string) {
   const supabase = createSupabaseServerClient();
-  const [internships, programs] = await _fetchAllPostings(
+  const { internships, programs, events } = await _fetchAllPostings(
     supabase,
     companyId,
-    "id, deadline",
-    "id, end_date"
+    {
+      internshipCols: "id, deadline",
+      programCols: "id, end_date",
+      eventCols: "id, end_date",
+    }
   );
 
-  const totalPostings = internships.length + programs.length;
+  const totalPostings = internships.length + programs.length + events.length;
   const now = new Date();
   const activePostings =
     internships.filter((p) => new Date(p.deadline) >= now).length +
-    programs.filter((p) => new Date(p.end_date) >= now).length;
+    programs.filter((p) => new Date(p.end_date) >= now).length +
+    events.filter((p) => new Date(p.end_date) >= now).length;
 
   const totalApplicationsCount = await _fetchTotalApplicationCount(
     supabase,
@@ -114,76 +157,101 @@ export async function getHeaderStats(companyId: string) {
   };
 }
 
-/**
- * Fetches and processes all analytical data needed for the main admin dashboard.
- */
+/** Fetches and processes all analytical data for the main admin dashboard. */
 export async function getDashboardAnalytics(companyId: string) {
   const supabase = createSupabaseServerClient();
-  const [internships, programs, allApplications] = await _fetchAllAnalyticsData(
-    supabase,
-    companyId
-  );
-  const allPostings = [...internships, ...programs];
+  const { internships, programs, events, applications } =
+    await _fetchAllAnalyticsData(supabase, companyId);
+  const allPostings: (Internship | Program | Event)[] = [
+    ...internships,
+    ...programs,
+    ...events,
+  ];
 
-  const stats = _calculateKPIs(allPostings, allApplications);
-  const applicationsTrend = _processTrendData(allApplications);
-  const fieldBreakdown = _processFieldBreakdown(allApplications);
-  const recentApplications = _processRecentApplications(allApplications);
-
-  return { stats, applicationsTrend, fieldBreakdown, recentApplications };
+  return {
+    stats: _calculateKPIs(allPostings, applications),
+    applicationsTrend: _processTrendData(applications),
+    fieldBreakdown: _processFieldBreakdown(applications),
+    recentApplications: _processRecentApplications(applications),
+  };
 }
 
+// PRIVATE HELPER FUNCTIONS
+
+/** A single, reusable function to fetch all types of postings. */
 async function _fetchAllPostings(
   supabase: any,
   companyId: string,
-  internshipCols = "*",
-  programCols = "*"
+  cols: {
+    internshipCols?: string;
+    programCols?: string;
+    eventCols?: string;
+  } = {}
 ) {
-  const [internshipsResult, programsResult] = await Promise.all([
+  const { internshipCols = "*", programCols = "*", eventCols = "*" } = cols;
+  const [internshipsResult, programsResult, eventsResult] = await Promise.all([
     supabase
       .from("internships")
       .select(internshipCols)
       .eq("company_id", companyId),
     supabase.from("programs").select(programCols).eq("company_id", companyId),
+    supabase.from("event").select(eventCols).eq("company_id", companyId),
   ]);
-  return [internshipsResult.data || [], programsResult.data || []];
+  return {
+    internships: (internshipsResult.data || []) as Internship[],
+    programs: (programsResult.data || []) as Program[],
+    events: (eventsResult.data || []) as Event[],
+  };
 }
 
+/** Fetches all data required for the main dashboard analytics. */
 async function _fetchAllAnalyticsData(supabase: any, companyId: string) {
-  const [internshipsResult, programsResult, applicationsResult] =
-    await Promise.all([
-      supabase
-        .from("internships")
-        .select("id, deadline, category")
-        .eq("company_id", companyId),
-      supabase
-        .from("programs")
-        .select("id, end_date, program_category")
-        .eq("company_id", companyId),
-      supabase
-        .from("applications")
-        .select(
-          "*, profiles(full_name), internships(title, category), programs(title, program_category)"
-        )
-        .eq("company_id", companyId),
-    ]);
-  return [
-    internshipsResult.data || [],
-    programsResult.data || [],
-    applicationsResult.data || [],
-  ];
+  const { internships, programs, events } = await _fetchAllPostings(
+    supabase,
+    companyId,
+    {
+      internshipCols: "id, deadline, category, created_at, title",
+      programCols: "id, end_date, program_category, created_at, title",
+      eventCols: "id, end_date, created_at, title",
+    }
+  );
+
+  const { data: applications } = await supabase
+    .from("applications")
+    .select(
+      "*, profiles(full_name), internships(title, category), programs(title, program_category)"
+    )
+    .eq("company_id", companyId);
+
+  return {
+    internships,
+    programs,
+    events,
+    applications: (applications || []) as Application[],
+  };
 }
 
-function _combineAndSortPostings(internships: any[], programs: any[]) {
-  return [
-    ...internships.map((item) => ({ ...item, type: "Internship" as const })),
-    ...programs.map((item) => ({ ...item, type: "Program" as const })),
-  ].sort(
+/** Combines separate posting arrays into one, adding a `postingType` property and sorting. */
+function _combineAndSortPostings(
+  internships: Internship[],
+  programs: Program[],
+  events: Event[]
+) {
+  const allPostings = [
+    ...internships.map((item) => ({
+      ...item,
+      postingType: "Internship" as const,
+    })),
+    ...programs.map((item) => ({ ...item, postingType: "Program" as const })),
+    ...events.map((item) => ({ ...item, postingType: "Event" as const })),
+  ];
+  return allPostings.sort(
     (a, b) =>
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
 }
 
+/** Fetches application counts for postings that can have applicants. */
 async function _fetchApplicationCounts(
   supabase: any,
   internshipIds: string[],
@@ -209,35 +277,39 @@ async function _fetchApplicationCounts(
   }, {} as Record<string, number>);
 }
 
+/** Fetches the total application count. */
 async function _fetchTotalApplicationCount(
   supabase: any,
   internshipIds: string[],
   programIds: string[]
 ) {
+  if (internshipIds.length === 0 && programIds.length === 0) return 0;
+
   const orConditions = [];
   if (internshipIds.length > 0)
     orConditions.push(`internship_id.in.(${internshipIds.join(",")})`);
   if (programIds.length > 0)
     orConditions.push(`program_id.in.(${programIds.join(",")})`);
-  if (orConditions.length === 0) return 0;
 
   const { count } = await supabase
     .from("applications")
-    .select("*", { count: "exact", head: true })
+    .select("id", { count: "exact", head: true })
     .or(orConditions.join(","));
   return count ?? 0;
 }
 
+/** Formats the combined posting data for the client-side list view. */
 function _formatPostingsForClient(
   allPostings: any[],
   countsMap: Record<string, number>
 ) {
   return allPostings.map((p) => {
-    const isExpired = new Date(p.deadline || p.end_date) < new Date();
+    const endDate = new Date(p.deadline || p.end_date);
+    const isExpired = endDate < new Date();
     return {
       id: p.id,
       title: p.title,
-      type: p.type,
+      type: p.postingType,
       createdAt: new Date(p.created_at).toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
@@ -249,7 +321,11 @@ function _formatPostingsForClient(
   });
 }
 
-function _calculateKPIs(allPostings: any[], allApplications: any[]) {
+/** Calculates the high-level KPI stats for the dashboard cards. */
+function _calculateKPIs(
+  allPostings: (Internship | Program | Event)[],
+  allApplications: Application[]
+) {
   const totalPostings = allPostings.length;
   const totalApplications = allApplications.length;
   const totalHired = allApplications.filter(
@@ -273,7 +349,8 @@ function _calculateKPIs(allPostings: any[], allApplications: any[]) {
   };
 }
 
-function _processTrendData(allApplications: any[]) {
+/** Processes application data for the monthly trend chart. */
+function _processTrendData(allApplications: Application[]) {
   if (allApplications.length === 0) {
     return {
       hasData: false,
@@ -295,7 +372,8 @@ function _processTrendData(allApplications: any[]) {
   return { hasData: true, data: Object.values(monthlyData) };
 }
 
-function _processFieldBreakdown(allApplications: any[]) {
+/** Processes application data for the field breakdown pie chart. */
+function _processFieldBreakdown(allApplications: Application[]) {
   if (allApplications.length === 0) {
     return {
       hasData: false,
@@ -305,7 +383,7 @@ function _processFieldBreakdown(allApplications: any[]) {
       },
     };
   }
-  const fieldData = allApplications.reduce((acc, app) => {
+  const fieldData = allApplications.reduce((acc, app: any) => {
     const field =
       app.internships?.category ||
       app.programs?.program_category ||
@@ -318,7 +396,8 @@ function _processFieldBreakdown(allApplications: any[]) {
   return { hasData: true, data: Object.values(fieldData) };
 }
 
-function _processRecentApplications(allApplications: any[]) {
+/** Processes application data for the recent applications table. */
+function _processRecentApplications(allApplications: Application[]) {
   if (allApplications.length === 0) {
     return {
       hasData: false,
@@ -335,7 +414,7 @@ function _processRecentApplications(allApplications: any[]) {
     )
     .slice(0, 5)
     .map(
-      (app): RecentApplication => ({
+      (app: any): RecentApplication => ({
         id: app.id,
         name: app.profiles?.full_name || "N/A",
         field: app.internships?.title || app.programs?.title || "N/A",

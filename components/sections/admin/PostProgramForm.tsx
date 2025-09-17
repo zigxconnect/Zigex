@@ -2,13 +2,15 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/uiComponenet/Select";
-import { Textarea } from "@/components/uiComponenet/Textarea";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Image from "next/image";
+import { Select } from "@/components/uiComponent/Select";
+import { Textarea } from "@/components/uiComponent/Textarea";
 
+// Reusable layout components
 const FormSection = ({ title, children }: any) => (
   <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
     <h2 className="text-lg font-semibold text-blue-700 mb-6">{title}</h2>
@@ -30,9 +32,10 @@ const FormField = ({ label, children, className }: any) => (
 export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // *** 1. DETECT EDIT MODE ***
   const isEditMode = Boolean(initialData);
 
-  // Helper to format ISO date strings to YYYY-MM-DD for date inputs
   const formatDateForInput = (dateString?: string) => {
     if (!dateString) return "";
     return new Date(dateString).toISOString().split("T")[0];
@@ -69,12 +72,12 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
     }
   };
 
+  // *** 2. THE CORRECTED SUBMIT HANDLER ***
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     const formData = new FormData();
-    // Append all data fields to FormData
     formData.append("title", title);
     formData.append("description", description);
     formData.append("program_category", programCategory);
@@ -89,17 +92,15 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
     if (requiredSkills) formData.append("required_skills", requiredSkills);
     if (programPicture) formData.append("program_picture", programPicture);
 
-    // If in edit mode, we must include the program ID for the PATCH request
+    // ** THIS IS THE CRITICAL FIX: INCLUDE THE ID FOR PATCH REQUESTS **
     if (isEditMode) {
       formData.append("id", initialData.id);
     }
 
     try {
-      // Your API uses the same endpoint for POST and PATCH with form-data
-      const endpoint = "/api/companies/programs";
+      // DYNAMICALLY SET THE HTTP METHOD
       const method = isEditMode ? "PATCH" : "POST";
-
-      const response = await fetch(endpoint, {
+      const response = await fetch("/api/companies/programs", {
         method,
         body: formData,
       });
@@ -112,13 +113,11 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
         `Program ${isEditMode ? "updated" : "published"} successfully!`
       );
 
-      // Redirect back to the postings list after success
-      setTimeout(() => {
-        router.push("/admin/postings");
-        router.refresh();
-      }, 1500);
+      router.push("/admin/postings");
+      router.refresh();
     } catch (error: any) {
       toast.error(error.message || "An unexpected error occurred.");
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -184,7 +183,7 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
         </FormField>
       </FormSection>
 
-      <FormSection title="Program Details">
+      <FormSection title="Details & Branding">
         <FormField label="Description & Activities*" className="md:col-span-2">
           <Textarea
             rows={8}
@@ -200,12 +199,9 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
           <Input
             value={requiredSkills}
             onChange={(e) => setRequiredSkills(e.target.value)}
-            placeholder="e.g., JavaScript,Project Management,Public Speaking"
+            placeholder="e.g., JavaScript,Project Management"
           />
         </FormField>
-      </FormSection>
-
-      <FormSection title="Branding">
         <FormField label="Program Picture" className="md:col-span-2">
           {isEditMode && initialData.program_picture_url && !programPicture && (
             <div className="mb-4">
@@ -223,7 +219,7 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
           <p className="text-xs text-gray-500 mt-1">
             {isEditMode
               ? "Upload a new file to replace the current one."
-              : "Upload an image for your program."}
+              : "An image is required."}
           </p>
         </FormField>
       </FormSection>

@@ -21,7 +21,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Spinner } from "@/components/uiComponenet/Spinner";
+import { Spinner } from "@/components/uiComponent/Spinner";
 
 interface EditFormProps {
   initialData: Partial<EditCompanyFormData & { email?: string }>;
