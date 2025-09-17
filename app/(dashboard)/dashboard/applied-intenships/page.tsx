@@ -11,12 +11,8 @@ import {
   Trash2, 
   Plus,
   Search,
-  Filter,
   Calendar,
   MapPin,
-  User,
-  Mail,
-  Phone,
   FileText,
   X,
   Save
