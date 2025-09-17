@@ -30,8 +30,6 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
  * EXPORT 2: The Server Action / User-Context Client Factory
  */
 export function createServerActionClient() {
-  const cookieStore = cookies();
-
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL! ||
       "https://tmvipinvvhgklmqwvows.supabase.co",
@@ -39,15 +37,18 @@ export function createServerActionClient() {
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRtdmlwaW52dmhna2xtcXd2b3dzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIxODI0ODIsImV4cCI6MjA2Nzc1ODQ4Mn0.QJWhxJzHgdP07_YTBOmS7i8P-ZWMK2VaNZmD1fwBPho",
     {
       cookies: {
-        get(name: string) {
+        async get(name: string) {
+          const cookieStore = await cookies();
           return cookieStore.get(name)?.value;
         },
-        set(name: string, value: string, options: CookieOptions) {
+        async set(name: string, value: string, options: CookieOptions) {
+          const cookieStore = await cookies();
           try {
             cookieStore.set({ name, value, ...options });
           } catch (error) {}
         },
-        remove(name: string, options: CookieOptions) {
+        async remove(name: string, options: CookieOptions) {
+          const cookieStore = await cookies();
           try {
             cookieStore.set({ name, value: "", ...options });
           } catch (error) {}
@@ -62,13 +63,13 @@ export function createServerActionClient() {
  * Route Handlers, and Server Actions.
  */
 export const createSupabaseServerClient = () => {
-  const cookieStore = cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
+        async get(name: string) {
+          const cookieStore = await cookies();
           return cookieStore.get(name)?.value;
         },
       },

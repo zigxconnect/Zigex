@@ -1,0 +1,9 @@
+{
+  "name": "FutureProspect",
+  "short_name": "FutureProspect",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "description": "Your app description here",
+  "icons": []
+}

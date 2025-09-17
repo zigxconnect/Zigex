@@ -160,20 +160,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <p className="text-xs lg:text-sm text-gray-600">
                 {user?.role || "Student"}
               </p>
-              <div className="flex items-center gap-1 mt-1">
-                <div
-                  className={`w-2 h-2 rounded-full ${
-                    user?.isOnline ? "bg-green-500" : "bg-gray-400"
-                  }`}
-                ></div>
-                <span
-                  className={`text-xs font-medium ${
-                    user?.isOnline ? "text-green-600" : "text-gray-600"
-                  }`}
-                >
-                  {user?.isOnline ? "Online" : "Offline"}
-                </span>
-              </div>
+              {/* Online status removed: user?.isOnline does not exist on User type */}
             </div>
             {/* Mobile Close Button */}
             <button
