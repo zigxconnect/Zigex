@@ -3,7 +3,8 @@
 import { DashboardHeader } from "@/components/layout/dashboard/DashboardHeader";
 import { DashboardFooter } from "@/components/layout/dashboard/Footer";
 import { Sidebar } from "@/components/layout/dashboard/Sidebar";
-import AIChatButton from "@/components/uiComponenet/AIChatButton";
+import AIChatButton from "@/components/uiComponent/AIChatButton";
+// import AIChatButton from "@/components/uiComponenet/AIChatButton";
 import { useState, useEffect } from "react";
 
 export default function DashboardLayout({
