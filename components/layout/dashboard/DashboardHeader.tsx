@@ -3,6 +3,7 @@
 
 import { Menu } from "lucide-react"; // Bell is now in NotificationDropdown
 import Image from "next/image";
+import Link from "next/link"
 // import { useState } from "react"; // No longer needed for notification state
 
 import { NotificationDropdown } from "./NotificationDropdown"; // Import the new component
@@ -50,6 +51,7 @@ export const DashboardHeader = ({ onMenuClick }: DashboardHeaderProps) => {
 
           {/* User Avatar - Desktop Only */}
           <div className="hidden lg:flex items-center gap-3 pl-3 border-l border-gray-200">
+            <Link href="/dashboard/edit-profile">
             <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-gray-200 shadow-sm">
               <Image
                 src="/gita.png" // Make sure this path is correct or dynamic
@@ -60,10 +62,14 @@ export const DashboardHeader = ({ onMenuClick }: DashboardHeaderProps) => {
                 priority
               />
             </div>
+            </Link>
+
+            <Link href="/dashboard/edit-profile">
             <div className="hidden xl:block">
               <p className="text-sm font-medium text-gray-900">Fonyuy Gita</p>
               <p className="text-xs text-gray-500">Student</p>
             </div>
+            </Link>
           </div>
         </div>
       </div>
