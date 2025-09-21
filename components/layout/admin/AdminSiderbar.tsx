@@ -6,7 +6,7 @@ export interface CompanyProfile {
   company_name: string;
   industry?: string;
   description?: string;
-  logoUrl?: string;
+  logo_url?: string;
   website?: string;
   email?: string;
   phone?: string;
@@ -223,7 +223,12 @@ export const AdminSidebarProvider = ({
           <div className="flex flex-col items-center p-6 text-center bg-gradient-to-b from-slate-50 to-white border-b border-gray-100">
             <div className="relative">
               <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center text-blue-800 text-2xl font-bold shadow-sm ring-4 ring-white">
-                {getInitials(companyProfile.company_name)}
+                {companyProfile.logo_url? 
+                <img 
+                  src={companyProfile.logo_url}
+                  className="w-full h-full rounded-full object-cover"
+                />: 
+                getInitials(companyProfile.company_name)}
               </div>
               <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white"></div>
             </div>
