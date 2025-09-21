@@ -15,39 +15,58 @@ import {
 } from "lucide-react";
 import { UserProfile } from "@/app/types/type";
 import { useState } from "react";
+import { EditProfileModal } from "./EditProfileModal";
 
 interface WelcomeCardProps {
   user: UserProfile;
+  onProfileUpdated: () => void;
 }
 
-export const WelcomeCard = ({ user }: WelcomeCardProps) => {
+export const WelcomeCard = ({ user, onProfileUpdated }: WelcomeCardProps) => {
   const [isAboutExpanded, setIsAboutExpanded] = useState(false);
   const [isSkillsExpanded, setIsSkillsExpanded] = useState(false);
   const [isAvatarHovered, setIsAvatarHovered] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const truncateText = (text: string, maxLength: number) => {
+    if (!text) return "";
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + "...";
   };
 
   const truncateSkills = (skills: string[], maxLength: number) => {
+    if (!skills || skills.length === 0) return "";
     const skillsText = skills.join(", ");
     if (skillsText.length <= maxLength) return skillsText;
     return skillsText.substring(0, maxLength) + "...";
   };
+
+  // Use the correct properties from your API response
+  const avatarUrl = user.profile.avatar_url || "/gita.png";
+  const coverImageUrl = user.profile.cover_image || "/ar.png"; // Changed from user.coverImageUrl to user.profile.cover_image
 
   return (
     <div className="relative bg-white md:rounded-2xl md:w-full mx-auto shadow-lg md:border md:border-gray-200 overflow-hidden">
       {/* Cover Image - Reduced Height */}
       <div className="relative h-32 md:h-36 lg:h-40 w-full">
         <Image
-          src="/ar.png"
+          src={coverImageUrl} // Use the correct property
           alt="Cover image"
           fill
           className="object-cover"
           priority
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40" />
+
+        {/* Edit Cover Image Button */}
+        <button
+          onClick={() => setIsEditModalOpen(true)}
+          className="absolute top-3 right-3 p-2 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors duration-200 z-10"
+          aria-label="Edit Cover Image"
+        >
+          <Edit size={16} />
+        </button>
+
 
         {/* Skills and About Cards positioned over background - Flex Layout */}
         <div className="absolute top-2 right-2 lg:top-4 lg:right-4 flex flex-col lg:flex-row gap-2 lg:gap-3 max-w-[320px] lg:max-w-none">
@@ -117,7 +136,6 @@ export const WelcomeCard = ({ user }: WelcomeCardProps) => {
                     <p className="break-words leading-relaxed">
                       {user.profile.about}
                     </p>
-
                     <button
                       onClick={() => setIsAboutExpanded(false)}
                       className="flex items-center gap-1 text-blue-600 hover:text-blue-800 mt-1 transition-colors"
@@ -158,9 +176,11 @@ export const WelcomeCard = ({ user }: WelcomeCardProps) => {
           className="relative group cursor-pointer"
           onMouseEnter={() => setIsAvatarHovered(true)}
           onMouseLeave={() => setIsAvatarHovered(false)}
+          onClick={() => setIsEditModalOpen(true)}
         >
           <div className="w-20 h-20 md:w-24 md:h-24 lg:w-20 lg:h-20 rounded-full border-[3px] lg:border-4 border-white shadow-lg overflow-hidden bg-white transition-all duration-300 group-hover:shadow-2xl group-hover:scale-105">
             <Image
+              src={avatarUrl}
               src={user.profile.avatar_url || "/gita.png"}
               alt={`${user.name}'s profile picture`}
               width={112}
@@ -171,11 +191,21 @@ export const WelcomeCard = ({ user }: WelcomeCardProps) => {
           </div>
 
           {/* Edit Overlay */}
+          <div
+            className={`
           <Link href="/dashboard/edit-profile">
             <div
               className={`
               absolute inset-0 rounded-full bg-black/60 flex items-center justify-center
               transition-all duration-300 ease-in-out backdrop-blur-sm
+              ${
+                isAvatarHovered ? "opacity-100 scale-100" : "opacity-0 scale-95"
+              }
+            `}
+          >
+            <div className="flex flex-col items-center gap-1 text-white">
+              <div className="w-6 h-6 lg:w-8 lg:h-8 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30">
+                <Edit size={12} className="lg:w-4 lg:h-4" />
               ${
                 isAvatarHovered ? "opacity-100 scale-100" : "opacity-0 scale-95"
               }
@@ -189,7 +219,12 @@ export const WelcomeCard = ({ user }: WelcomeCardProps) => {
                   Edit
                 </span>
               </div>
+              <span className="text-[10px] lg:text-xs font-medium tracking-wide">
+                Edit
+              </span>
             </div>
+          </div>
+
           </Link>
 
           {/* Animated Ring */}
@@ -257,6 +292,16 @@ export const WelcomeCard = ({ user }: WelcomeCardProps) => {
           </div>
         </div>
       </div>
+
+      {/* Edit Profile Modal */}
+      <EditProfileModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        userId={user.profile.user_id}
+        currentAvatarUrl={avatarUrl}
+        currentCoverImageUrl={coverImageUrl} // Use the correct property
+        onProfileUpdated={onProfileUpdated}
+      />
     </div>
   );
 };
