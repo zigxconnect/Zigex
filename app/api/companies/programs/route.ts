@@ -5,39 +5,13 @@ import { authMiddleware } from "@/lib/middleware/auth";
 import { programSchema } from "@/lib/validation/program";
 import { v4 as uuidv4 } from "uuid"; // For unique file names
 
-/**
- * @swagger
- * /api/companies/programs:
- *   post:
- *     summary: Add a new program posting for a company with image upload
- *     description: Create a new program (bootcamp, hackathon, volunteer, mentorship, apprenticeship) including an optional program picture.
- *     tags:
- *          - Company Programs
- *     requestBody:
- *             required:
- *               - title
- *               - description
- *               - program_category
- *               - start_date
- *               - end_date
- *     responses:
- *       201:
- *         description: Program created successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Program'
- *       400:
- *         description: Bad request (validation error)
- *       403:
- *         description: Unauthorized access
- *       404:
- *         description: Company profile not found
- *       500:
- *         description: Internal server error
- 
-
- */
+/*
+* Function to handle CRUD operations for company programs
+* GET /api/companies/programs (Authenticated: returns programs for the authenticated company)
+* POST /api/companies/programs (Authenticated: create a new program)
+* PATCH /api/companies/programs (Authenticated: update an existing program)
+* DELETE /api/companies/programs (Authenticated: delete a program)
+*/
 
 export async function GET(request: Request) {
   const auth = await authMiddleware(request);
