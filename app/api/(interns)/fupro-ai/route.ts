@@ -16,7 +16,7 @@ const prioritySources = {
         "linkedin.com/company/seed-cmr",
     ],
     other: [
-        "cameroondesk.com/category/internship", "akwajobs.com", "skyborn.cm",
+        "cameroondesk.com/category/internship", "akwajobs.com", "sky8.cm",
         "tratz.tech", "civilsalt.com", "techchantier.com", "oppnergy.com",
         "nasiatech.com", "zixtechcorporation.com", "activspaces.com",
         "skademy.org", "waspito.com", "agrixtech.com", "clonesystems.org",
@@ -62,7 +62,7 @@ Core Directives:
     *   Only perform a web search if the user's query clearly indicates a need for information retrieval (e.g., "find internships", "jobs in tech").
 
 6.  **Output Structure (for search results):**
-    *   **🌟 Seed Hub:** Start with opportunities, events, or blog posts from Seed.
+    *   **🌟 Seed Inc:** Start with opportunities, events, or blog posts from Seed.
     *   **🎯 Your Perfect Matches:** Provide a detailed list of roles that fit their skills, each with a direct link.
     *   **💡 Proactive Suggestions:** Always end by offering further assistance.
 
