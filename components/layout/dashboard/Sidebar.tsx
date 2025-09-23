@@ -62,7 +62,7 @@ const navItems = [
   {
     href: "/dashboard/fupro-ai",
     icon: AiOutlineWechat,
-    label: "Chat with FP AI",
+    label: "Chat with Agent ZAi",
   },
 ];
 

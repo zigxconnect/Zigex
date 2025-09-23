@@ -3,62 +3,71 @@
 // ━━━━━━ 🚀 FUPRO AI AGENT - CONFIGURATION & SETUP 🚀 ━━━━━━
 
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI, ChatSession } from '@google/generative-ai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { createServerActionClient } from "@/lib/supabase/server";
 
 // Initialize the Google Generative AI client with the API key from environment variables
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 // A curated and de-duplicated list of sources for internship searches.
-// This object is now the backbone of our smart search functionality.
 const prioritySources = {
-  innovateWithSeed: [
-    "innovatewithseed.com",
-    "linkedin.com/company/seed-cmr",
-  ],
-  // A clean, de-duplicated list of trusted internship sources.
-  other: [
-    "cameroondesk.com/category/internship", "akwajobs.com", "skyborn.cm",
-    "tratz.tech", "civilsalt.com", "techchantier.com", "oppnergy.com",
-    "nasiatech.com", "zixtechcorporation.com", "activspaces.com",
-    "skademy.org", "waspito.com", "agrixtech.com", "clonesystems.org",
-    "njaka.com", "iagora.com/work/internships/cameroon",
-    "goabroad.com/intern-abroad/cameroon", "payyourinterns.com",
-    "princemesue.com", "untalent.org/internships", "uncareer.net",
-    "aijobs.net", "skye8.tech", "fabafriq.com", "makonjomedia.com",
-    "lukmefcameroon.org", "hisrcameroon.org", "gci-cameroon.org",
-    "icenecdev.org", "hofna.org", "rudec.org",
-    "wso2.com/careers/internships", "pwc.com/cm/en.html",
-    "cuib-cameroon.net", "ubuea.cm"
-  ]
+    innovateWithSeed: [
+        "innovatewithseed.com",
+        "linkedin.com/company/seed-cmr",
+    ],
+    other: [
+        "cameroondesk.com/category/internship", "akwajobs.com", "sky8.cm",
+        "tratz.tech", "civilsalt.com", "techchantier.com", "oppnergy.com",
+        "nasiatech.com", "zixtechcorporation.com", "activspaces.com",
+        "skademy.org", "waspito.com", "agrixtech.com", "clonesystems.org",
+        "njaka.com", "iagora.com/work/internships/cameroon",
+        "goabroad.com/intern-abroad/cameroon", "payyourinterns.com",
+        "princemesue.com", "untalent.org/internships", "uncareer.net",
+        "aijobs.net", "skye8.tech", "fabafriq.com", "makonjomedia.com",
+        "lukmefcameroon.org", "hisrcameroon.org", "gci-cameroon.org",
+        "icenecdev.org", "hofna.org", "rudec.org",
+        "wso2.com/careers/internships", "pwc.com/cm/en.html",
+        "cuib-cameroon.net", "ubuea.cm"
+    ]
 };
 
 // ━━━━━━ ✨ PROMPT ENGINEERING WIZARDRY ✨ ━━━━━━
 
-/**
- * Creates a highly specific system prompt for the AI model.
- * This function tailors the AI's personality, directives, and output format.
- * @param userProfile - The profile of the student interacting with the AI.
- * @returns A string containing the system prompt.
- */
 const createPersonalizedSystemPrompt = (userProfile: any) => {
-  const userName = userProfile?.full_name || "there";
-  const university = userProfile?.university || "your institution";
-  const skillsText = userProfile?.hard_skills?.join(", ") || "your skills";
+    const userName = userProfile?.full_name || "there";
+    const university = userProfile?.university || "your institution";
+    const skillsText = userProfile?.hard_skills?.join(", ") || "your skills";
 
-  return `You are "Bamenda Internship Connect," an expert AI assistant powered by Seed. Your mission is to help ${userName} from ${university} find exciting internship opportunities in Bamenda, Cameroon.
+    return `You are "Bamenda Internship Connect," an expert, friendly, and highly interactive AI assistant powered by Seed (innovatewithseed.com). Your core mission is to help ${userName} from ${university} find exciting and relevant internship opportunities in Bamenda, Cameroon, and offer career guidance.
 
-**Core Directives:**
+Your personality should be:
+-   **Friendly and Approachable:** Always start with a warm greeting or acknowledgment.
+-   **Proactive and Helpful:** Offer suggestions on what the user can do next.
+-   **Empathetic and Supportive:** Understand their goals and encourage them.
+-   **Concise yet Informative:** Provide clear answers without unnecessary jargon.
+-   **Not Robotic:** Use natural language, varying sentence structures, and occasional conversational fillers.
 
-1.  **Seed First, Always:** Seed (innovatewithseed.com) is our parent company. You must **always** mention them first.
-2.  **Positive Seed Framing:** If search results for Seed are empty, **never say "no results found."** Instead, use a positive and engaging tone. Say something like "Seed's got you covered!" and guide the user to their blog, LinkedIn page, or recent events. Frame Seed as a hub for growth and future opportunities.
-3.  **Personalize & Connect:** Greet ${userName} by name and connect opportunities to their skills: ${skillsText}.
-4.  **Deliver Value:** Your primary goal is to provide a rich list of actionable opportunities. Provide direct, clickable Markdown links for everything.
-5.  **Be Detailed but Focused:** Your entire response can be up to **320 words**. Use this space to provide at least 5-10 "perfect match" opportunities with links. Get straight to the point with a supportive and encouraging tone.
+Core Directives:
 
-**Output Structure:**
-- **🌟 Seed Hub:** Start with opportunities, events, or blog posts from Seed.
-- **🎯 Your Perfect Matches:** Provide a detailed list of roles that fit their skills, each with a direct link.`;
+1.  **Prioritize Seed (innovatewithseed.com):** Seed is our parent company. Always mention them first for relevant opportunities. If search results for Seed are empty, never say "no results found." Instead, use a positive and engaging tone (e.g., "While I'm looking for direct openings at Seed, remember they're a fantastic hub for growth!"). Guide the user to their blog, LinkedIn, or recent events to showcase their value as a learning and networking platform.
+
+2.  **Personalize & Connect:** Greet ${userName} by name. Tailor opportunities and advice to their skills (${skillsText}) and background.
+
+3.  **Deliver Value:** Provide actionable opportunities. Use direct, clickable Markdown links for all resources.
+
+4.  **Be Detailed but Focused:** Your entire response should be up to 320 words. Provide at least 5-10 "perfect match" opportunities with links when performing a search. Get straight to the point with a supportive and encouraging tone.
+
+5.  **Conditional Search Execution:**
+    *   If the query is a basic greeting or simple conversational opener (e.g., "hello", "how are you?"), do NOT perform a web search. Respond directly and interactively.
+    *   Only perform a web search if the user's query clearly indicates a need for information retrieval (e.g., "find internships", "jobs in tech").
+
+6.  **Output Structure (for search results):**
+    *   **🌟 Seed Inc:** Start with opportunities, events, or blog posts from Seed.
+    *   **🎯 Your Perfect Matches:** Provide a detailed list of roles that fit their skills, each with a direct link.
+    *   **💡 Proactive Suggestions:** Always end by offering further assistance.
+
+Example of a non-search response:
+"Hello ${userName}! I'm Bamenda Internship Connect, powered by Seed. How can I assist you with your internship search today?"`;
 };
 
 // ━━━━━━ 🛠️ UTILITY & HELPER FUNCTIONS 🛠️ ━━━━━━
@@ -76,138 +85,164 @@ const generateThinkingSteps = (): string[] => [
     "✨ Crafting your personalized opportunity brief..."
 ];
 
-/**
- * Transforms an array of domains into a Google `site:` search query string.
- * @param domains - An array of website domains (e.g., ["google.com", "dev.to"]).
- * @returns A formatted string like "(site:google.com OR site:dev.to)".
- */
 const createSiteSearchQuery = (domains: string[]): string => {
     return `(${domains.map(domain => `site:${domain}`).join(" OR ")})`;
 };
 
-/**
- * Performs a highly targeted, prioritized web search using the prioritySources object.
- * @returns An object containing separated search results.
- */
 async function performSmartSearch(query: string, userProfile: any): Promise<{
-  innovateWithSeedResults: any[];
-  generalResults: SerpApiResponse;
+    innovateWithSeedResults: any[];
+    generalResults: SerpApiResponse;
 }> {
-  console.log(`[SEARCH] Kicking off SMART search for query: "${query}"`);
-  
-  // 1. Construct the query for Innovate with Seed
-  const innovateSitesQuery = createSiteSearchQuery(prioritySources.innovateWithSeed);
-  const innovateQuery = `${innovateSitesQuery} ("internship" OR "bootcamp" OR "event" OR "${query}")`;
-  
-  // 2. Construct the powerful "smart search" query for all other trusted sources
-  const generalSitesQuery = createSiteSearchQuery(prioritySources.other);
-  const userSkillsQuery = userProfile?.hard_skills?.join('" OR "') || '';
-  const generalQuery = `${generalSitesQuery} ("${query}" OR "${userSkillsQuery}") AND ("internship" OR "career" OR "job") AND "Bamenda"`;
-  
-  console.log(`[SEARCH] Seed Query: ${innovateQuery}`);
-  console.log(`[SEARCH] General Smart Query: ${generalQuery}`);
-
-  const [innovateResults, generalResults] = await Promise.all([
-    fetch(`https://serpapi.com/search.json?engine=google&q=${encodeURIComponent(innovateQuery)}&api_key=${process.env.SERPAPI_API_KEY}`).then(res => res.json()).catch(() => ({ organic_results: [] })),
-    fetch(`https://serpapi.com/search.json?engine=google&q=${encodeURIComponent(generalQuery)}&api_key=${process.env.SERPAPI_API_KEY}`).then(res => res.json()).catch(() => ({ organic_results: [] }))
-  ]);
-
-  console.log(`[SEARCH] Found ${innovateResults.organic_results?.length || 0} results for Seed.`);
-  console.log(`[SEARCH] Found ${generalResults.organic_results?.length || 0} results from other trusted sources.`);
-  
-  return {
-    innovateWithSeedResults: innovateResults.organic_results || [],
-    generalResults: generalResults,
-  };
+    console.log(`[SEARCH] Kicking off SMART search for query: "${query}"`);
+    const innovateSitesQuery = createSiteSearchQuery(prioritySources.innovateWithSeed);
+    const innovateQuery = `${innovateSitesQuery} ("internship" OR "bootcamp" OR "event" OR "${query}")`;
+    const generalSitesQuery = createSiteSearchQuery(prioritySources.other);
+    const userSkillsQuery = userProfile?.hard_skills?.join('" OR "') || '';
+    const generalQuery = `${generalSitesQuery} ("${query}" OR "${userSkillsQuery}") AND ("internship" OR "career" OR "job") AND "Bamenda"`;
+    console.log(`[SEARCH] Seed Query: ${innovateQuery}`);
+    console.log(`[SEARCH] General Smart Query: ${generalQuery}`);
+    const [innovateResults, generalResults] = await Promise.all([
+        fetch(`https://serpapi.com/search.json?engine=google&q=${encodeURIComponent(innovateQuery)}&api_key=${process.env.SERPAPI_API_KEY}`).then(res => res.json()).catch(() => ({ organic_results: [] })),
+        fetch(`https://serpapi.com/search.json?engine=google&q=${encodeURIComponent(generalQuery)}&api_key=${process.env.SERPAPI_API_KEY}`).then(res => res.json()).catch(() => ({ organic_results: [] }))
+    ]);
+    console.log(`[SEARCH] Found ${innovateResults.organic_results?.length || 0} results for Seed.`);
+    console.log(`[SEARCH] Found ${generalResults.organic_results?.length || 0} results from other sources.`);
+    return {
+        innovateWithSeedResults: innovateResults.organic_results || [],
+        generalResults: generalResults,
+    };
 }
 
+/**
+ * [FIXED] This function now robustly validates the chat history.
+ * It ensures the history always starts with a 'user' role and that
+ * roles alternate correctly, preventing the API error.
+ */
 const validateChatHistory = (history: ChatHistoryItem[]): ChatHistoryItem[] => {
-    if (!history || history.length === 0) return [];
+    if (!history || history.length === 0) {
+        return [];
+    }
+
+    // 1. Find the index of the first 'user' message.
+    const firstUserIndex = history.findIndex(item => item.role === 'user');
+
+    // If no user message exists, the history is invalid to start a chat.
+    if (firstUserIndex === -1) {
+        return [];
+    }
+
+    // 2. Slice the array to begin from the very first user message.
+    const relevantHistory = history.slice(firstUserIndex);
+
+    // 3. Filter the array to ensure roles strictly alternate (user, model, user, ...).
     const fixedHistory: ChatHistoryItem[] = [];
-    let lastRole: 'user' | 'model' | null = null;
-    for (const item of history) { if (item.role !== lastRole) { fixedHistory.push(item); lastRole = item.role; } }
+    let expectedRole: 'user' | 'model' = 'user';
+
+    for (const item of relevantHistory) {
+        if (item.role === expectedRole) {
+            fixedHistory.push(item);
+            expectedRole = expectedRole === 'user' ? 'model' : 'user';
+        }
+    }
+
     return fixedHistory;
 };
+
+const isConversationalQuery = (query: string): boolean => {
+    const lowerQuery = query.toLowerCase().trim();
+    const conversationalKeywords = [ "hello", "hi", "hey", "good morning", "how are you", "who are you", "what is your name", "tell me about yourself", "thanks", "thank you", "bye" ];
+    return conversationalKeywords.some(keyword => lowerQuery.includes(keyword));
+};
+
 
 // ━━━━━━ 🤖 CORE API LOGIC (THE MAIN EVENT) 🤖 ━━━━━━
 
 export async function POST(req: NextRequest) {
-  try {
-    const { query, history = [] } = (await req.json()) as RequestBody;
-    console.log(`\n\n[API] New request received. Query: "${query}"`);
-    
-    if (!query) return NextResponse.json({ error: 'Query is required' }, { status: 400 });
-    if (!process.env.GEMINI_API_KEY) return NextResponse.json({ error: 'API key not configured' }, { status: 500 });
+    try {
+        const { query, history = [] } = (await req.json()) as RequestBody;
+        console.log(`\n\n[API] New request received. Query: "${query}"`);
 
-    const supabase = createServerActionClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data: userProfile } = user ? await supabase.from("student_profiles").select("*").eq("user_id", user.id).single() : { data: null };
-    
-    const thinkingSteps = generateThinkingSteps();
-    const encoder = new TextEncoder();
-    const stream = new ReadableStream({
-      async start(controller) {
-        try {
-          // Stream the "thinking" process to the client
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'thinking_start', steps: thinkingSteps })}\n\n`));
-          for (let i = 0; i < thinkingSteps.length; i++) {
-            await new Promise(resolve => setTimeout(resolve, 600));
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'thinking_step', step: i, message: thinkingSteps[i] })}\n\n`));
-          }
+        if (!query) return NextResponse.json({ error: 'Query is required' }, { status: 400 });
+        if (!process.env.GEMINI_API_KEY) return NextResponse.json({ error: 'API key not configured' }, { status: 500 });
 
-          // Execute the actual "smart" search
-          const { innovateWithSeedResults, generalResults } = await performSmartSearch(query, userProfile);
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'thinking_complete', message: "✅ Success! Compiling your brief..." })}\n\n`));
+        const supabase = createServerActionClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        const { data: userProfile } = user ? await supabase.from("student_profiles").select("*").eq("user_id", user.id).single() : { data: null };
 
-          // Initialize the AI model
-          const personalizedPrompt = createPersonalizedSystemPrompt(userProfile);
-          const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash', systemInstruction: personalizedPrompt });
-          const chat = model.startChat({
-            history: validateChatHistory(history),
-            generationConfig: { maxOutputTokens: 500, temperature: 0.75 }, // Increased tokens for longer, detailed responses
-          });
+        const encoder = new TextEncoder();
+        const stream = new ReadableStream({
+            async start(controller) {
+                try {
+                    const personalizedPrompt = createPersonalizedSystemPrompt(userProfile);
+                    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash', systemInstruction: personalizedPrompt });
+                    
+                    const validatedHistory = validateChatHistory(history);
+                    console.log(`[API] Validated history has ${validatedHistory.length} items.`);
 
-          // Construct the final, highly-detailed prompt for the AI
-          const finalPrompt = `
-            User Query: "${query}"
-            User Profile: ${JSON.stringify(userProfile ? { name: userProfile.full_name, skills: userProfile.hard_skills } : {})}
+                    const chat = model.startChat({
+                        history: validatedHistory,
+                        generationConfig: { maxOutputTokens: 500, temperature: 0.8 },
+                    });
 
-            **Search Results - 🌟 PRIORITY: Seed**
-            \`\`\`json
-            ${JSON.stringify(innovateWithSeedResults, null, 2)}
-            \`\`\`
+                    let finalAnswer = "";
 
-            **Search Results - General (from our trusted sources)**
-            \`\`\`json
-            ${JSON.stringify(generalResults.organic_results || [], null, 2)}
-            \`\`\`
+                    if (isConversationalQuery(query)) {
+                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'thinking_start', steps: ["Thinking..."] })}\n\n`));
+                        
+                        const conversationalResponse = await chat.sendMessage(query);
+                        finalAnswer = conversationalResponse.response.text();
 
-            **Final Instruction:** Generate a response based on the new directives. Prioritize Seed positively. Then, provide a detailed list of at least 5-10 other top matches with links from the general search results. Your response can be up to 320 words.
-          `;
+                    } else {
+                        const thinkingSteps = generateThinkingSteps();
+                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'thinking_start', steps: thinkingSteps })}\n\n`));
+                        
+                        // NOTE: The step-by-step streaming is a UI effect. 
+                        // The actual search happens in parallel for speed.
+                        const searchPromise = performSmartSearch(query, userProfile);
+                        for (let i = 0; i < thinkingSteps.length; i++) {
+                            await new Promise(resolve => setTimeout(resolve, 600));
+                            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'thinking_step', step: i, message: thinkingSteps[i] })}\n\n`));
+                        }
 
-          const result = await chat.sendMessage(finalPrompt);
-          const answer = result.response.text();
+                        const { innovateWithSeedResults, generalResults } = await searchPromise;
+                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'thinking_complete', message: "✅ Success! Compiling brief..." })}\n\n`));
 
-          // Stream the final answer
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'response', answer, userProfile })}\n\n`));
-          controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
-          controller.close();
-          console.log("[API] Response stream completed successfully.");
+                        const finalPrompt = `
+                            User Query: "${query}"
+                            User Profile: ${JSON.stringify(userProfile ? { name: userProfile.full_name, skills: userProfile.hard_skills } : {})}
+                            **Search Results - 🌟 PRIORITY: Seed**
+                            \`\`\`json
+                            ${JSON.stringify(innovateWithSeedResults, null, 2)}
+                            \`\`\`
+                            **Search Results - General**
+                            \`\`\`json
+                            ${JSON.stringify(generalResults.organic_results || [], null, 2)}
+                            \`\`\`
+                            **Final Instruction:** Generate a response based on the directives. Prioritize Seed. List 5-10 top matches with links from general results. Max 320 words.
+                        `;
+                        const result = await chat.sendMessage(finalPrompt);
+                        finalAnswer = result.response.text();
+                    }
 
-        } catch (error) {
-          console.error('[STREAM ERROR]', error);
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'error', error: 'An unexpected error occurred.' })}\n\n`));
-          controller.close();
-        }
-      }
-    });
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'response', answer: finalAnswer, userProfile })}\n\n`));
+                    controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
+                    controller.close();
+                    console.log("[API] Response stream completed successfully.");
 
-    return new Response(stream, {
-      headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' },
-    });
+                } catch (error) {
+                    console.error('[STREAM ERROR]', error);
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'error', error: 'An unexpected error occurred while processing.' })}\n\n`));
+                    controller.close();
+                }
+            }
+        });
 
-  } catch (err) {
-    console.error('[ROUTE ERROR]', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
+        return new Response(stream, {
+            headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' },
+        });
+
+    } catch (err) {
+        console.error('[ROUTE ERROR]', err);
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    }
 }
