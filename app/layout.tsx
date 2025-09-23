@@ -10,14 +10,13 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://innovatewithseed.com"),
+  metadataBase: new URL("https://zigex.vercel.app"),
   title: {
     default: "ZIGEX",
-    template: "%s  SeedTechCmr| SEED | innovatewithseed | skills enhancement and empowerment throgh digitalization, seed bamenda "
+    template: "%s  ZiGex| SEED | ZiGex | skills enhancement and empowerment throgh digitalization, seed bamenda "
   },
 
-  description: "SEED (Skill Enhancement and Empowerment through Digitalisation) is a private tech startup in Bamenda, Cameroon. Legally recognized, SEED focuses on fostering tech innovation and offering hands-on training in diverse tech fields.",
-  manifest: '/manifest.json',
+  description: "Zone For Internship,Growth and Experience ",
   // themeColor: '#FF6F00',
   keywords: [
     "fonyuygita",
@@ -39,14 +38,14 @@ export const metadata: Metadata = {
     "cameroon"
   ],
   openGraph: {
-    url: "https://innovatewithseed.com/",
+    url: "https://zigex.vercel.app",
     type: "website",
     title: "ShowRoad |  Find any program - internship, hackertons in and around the country",
     description:
       "SEED (Skill Enhancement and Empowerment through Digitalisation) is a private tech startup based in Bamenda, Cameroon. Legally recognized under Cameroonian business regulations, SEED operates independently with a mission to foster technological innovation and provide hands-on training in various tech disciplines. Through its coding bootcamps, internships, and tech programs, SEED plays a pivotal role in equipping individuals with digital skills, empowering them to solve real-world problems..",
     images: [
       {
-        url: "https://i.ibb.co/PDw0Wg2/cover2.jpg",
+        url: "https://i.ibb.co/5WXQhq78/Whats-App-Image-2025-09-23-at-8-22-42-AM.jpg",
         width: 1200,
         height: 630,
         alt: "SEED"
@@ -62,7 +61,7 @@ export const metadata: Metadata = {
     site: "@innovatewithseed",
     images: [
       { 
-        url: "https://i.ibb.co/PDw0Wg2/cover2.jpg",
+        url: "https://i.ibb.co/5WXQhq78/Whats-App-Image-2025-09-23-at-8-22-42-AM.jpg",
         width: 1200,
         height: 630,
         alt: "SEED"
@@ -70,7 +69,7 @@ export const metadata: Metadata = {
     ]
   },
   alternates: {
-    canonical: "https://innovatewithseed.com/"
+    canonical: "https://zigex.vercel.app"
   }
 
 };
