@@ -613,4 +613,4 @@ const JobCard = ({ job }: { job: Job }) => {
       </div>
     );
   }
-};
+
