@@ -82,16 +82,15 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Student Routes
-    "/dashboard/:path*", // Protects /dashboard AND /dashboard/student-directory
-    "/create-profile", // Protects the onboarding form
-    "/profile-settings", // Protects the settings page
-    "/upload-resume", // Protects the resume page
-    "/applied-internships", // Protects the applications page
-    "/track-progress", // Protects the progress tracking page
-    "/chat", // Protects the FuproAI chat page
+    "/dashboard/:path*",
+    "/create-profile",
+    "/profile-settings",
+    "/upload-resume",
+    "/applied-internships",
+    "/track-progress",
+    "/chat",
 
     // Admin (Company) Routes from your sidebar
-    "/admin/:path*", // This single line protects all admin routes like:
+    "/admin/:path*",
   ],
 };

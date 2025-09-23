@@ -1,50 +1,47 @@
-// single internship operation
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 
-// File: app/api/internships/[id]/route.ts
-
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
-import { cookies } from 'next/headers'
-import { NextResponse } from 'next/server'
-
-// The GET function now accepts a 'params' object to access the dynamic [id]
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  paramsPromise: Promise<{ params: { id: string } }>
 ) {
-  // 1. Get the specific internship ID from the URL
-  const { id } = params
+  const { params } = await paramsPromise;
+  const { id } = params;
 
   if (!id) {
-    return NextResponse.json({ error: 'Internship ID is required' }, { status: 400 })
+    return NextResponse.json(
+      { error: "Internship ID is required" },
+      { status: 400 }
+    );
   }
-  
-  const cookieStore = await cookies()
 
-  // 2. Create the Supabase client
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
+        get: async (name: string) => {
+          const cookieStore = await cookies();
+          return cookieStore.get(name)?.value;
         },
-        set(name: string, value: string, options: CookieOptions) {
-          cookieStore.set({ name, value, ...options })
+        set: async (name: string, value: string, options: CookieOptions) => {
+          const cookieStore = await cookies();
+          cookieStore.set({ name, value, ...options });
         },
-        remove(name: string, options: CookieOptions) {
-          cookieStore.set({ name, value: '', ...options })
+        remove: async (name: string, options: CookieOptions) => {
+          const cookieStore = await cookies();
+          cookieStore.set({ name, value: "", ...options });
         },
       },
     }
-  )
+  );
 
   try {
-    // 3. Fetch the single internship that matches the ID.
-    // We are also joining with 'company_profiles' to get extended company details.
     const { data: internship, error } = await supabase
-      .from('internships')
-      .select(`
+      .from("internships")
+      .select(
+        `
         *,
         company_profiles (
           company_name,
@@ -53,32 +50,32 @@ export async function GET(
           cover_image_url,
           website_url
         )
-      `)
-      .eq('id', id)  // Filter by the ID from the URL
-      .single()     // Expect only one result
+      `
+      )
+      .eq("id", id)
+      .single();
 
-    // 4. Handle cases where the internship is not found
     if (error) {
-      console.error('Supabase query error:', error)
-      // The .single() method throws an error if no rows are found, 
-      // which is perfect for a 404 response.
+      console.error("Supabase query error:", error);
+
       return NextResponse.json(
         { error: `Internship with ID ${id} not found.` },
         { status: 404 }
-      )
+      );
     }
 
-    // 5. Return the detailed internship object
-    return NextResponse.json(internship, { status: 200 })
-
+    return NextResponse.json(internship, { status: 200 });
   } catch (error: any) {
-    console.error('API Endpoint Error:', error)
+    console.error("API Endpoint Error:", error);
+    const isProd = process.env.NODE_ENV === "production";
     return NextResponse.json(
-      {
-        error: 'Failed to fetch internship details',
-        details: error.message,
-      },
+      isProd
+        ? { error: "Failed to fetch internship details" }
+        : {
+            error: "Failed to fetch internship details",
+            details: error instanceof Error ? error.message : String(error),
+          },
       { status: 500 }
-    )
+    );
   }
 }

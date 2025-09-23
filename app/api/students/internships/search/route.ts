@@ -1,13 +1,11 @@
-// File: app/api/internships/route.ts
-
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
-import { cookies } from 'next/headers'
-import { NextResponse } from 'next/server'
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
-  const cookieStore = await cookies()
-  const { searchParams } = new URL(request.url)
-  const searchQuery = searchParams.get('q')
+  const cookieStore = cookies();
+  const { searchParams } = new URL(request.url);
+  const searchQuery = searchParams.get("q");
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -15,67 +13,61 @@ export async function GET(request: Request) {
     {
       cookies: {
         get(name: string) {
-          return cookieStore.get(name)?.value
+          return cookieStore.get(name)?.value;
         },
         set(name: string, value: string, options: CookieOptions) {
-          cookieStore.set({ name, value, ...options })
+          cookieStore.set({ name, value, ...options });
         },
         remove(name: string, options: CookieOptions) {
-          cookieStore.set({ name, value: '', ...options })
+          cookieStore.set({ name, value: "", ...options });
         },
       },
     }
-  )
+  );
 
   try {
-    let internships;
-    let error;
-
-    if (searchQuery) {
-      // If there IS a search query, call our new database function
-      const { data, error: rpcError } = await supabase.rpc('search_internships', {
-        search_term: searchQuery,
-      });
-      internships = data;
-      error = rpcError;
-
-    } else {
-      // If there is NO search query, get all internships (original logic)
-      const { data, error: fetchError } = await supabase
-        .from('internships')
-        .select(`
+    // Start building the query
+    let query = supabase.from("internships").select(`
           id,
           title,
-          description,
-          required_skills,
           location,
-          is_paid,
-          created_at,
+          type,
+          category,
           company_profiles (
+            company_name,
             logo_url,
-            company_name
+            headQuarterImage
           )
-        `)
-        .order('created_at', { ascending: false });
-      internships = data;
-      error = fetchError;
+        `);
+
+    // THE FIX IS HERE: If there is a search query, add filters.
+    if (searchQuery) {
+      // Use `or` to search in multiple columns.
+      // `ilike` is a case-insensitive "contains" search.
+      query = query.or(
+        `title.ilike.%${searchQuery}%,` +
+          `description.ilike.%${searchQuery}%,` +
+          `required_skills.ilike.%${searchQuery}%,` +
+          `company_profiles.company_name.ilike.%${searchQuery}%`
+      );
     }
+
+    // Always order the results
+    query = query.order("created_at", { ascending: false });
+
+    // Execute the final query
+    const { data: internships, error } = await query;
 
     if (error) {
-      console.error('Supabase query error:', error);
+      console.error("Supabase query error:", error);
       throw error;
     }
-    
-    // This now correctly returns an empty array [] if no results are found
-    return NextResponse.json(internships, { status: 200 });
 
+    return NextResponse.json(internships || [], { status: 200 });
   } catch (error: any) {
-    console.error('API Endpoint Error:', error);
+    console.error("API Endpoint Error:", error);
     return NextResponse.json(
-      {
-        error: 'Failed to fetch internships',
-        details: error.message,
-      },
+      { error: "Failed to fetch internships", details: error.message },
       { status: 500 }
     );
   }

@@ -1,5 +1,3 @@
-// File: app/(main)/page.tsx
-
 import { redirect } from "next/navigation";
 import {
   getProfileInfo,

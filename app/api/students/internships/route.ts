@@ -1,11 +1,11 @@
-// public internship listing
-
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
-  const cookieStore = await cookies();
+  const cookieStore = cookies();
+  const { searchParams } = new URL(request.url);
+  const searchQuery = searchParams.get("q");
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -15,52 +15,65 @@ export async function GET(request: Request) {
         get(name: string) {
           return cookieStore.get(name)?.value;
         },
-
         set(name: string, value: string, options: CookieOptions) {
-          cookieStore.set({ name, value, ...options });
+          try {
+            cookieStore.set({ name, value, ...options });
+          } catch (error) {}
         },
         remove(name: string, options: CookieOptions) {
-          cookieStore.set({ name, value: "", ...options });
+          try {
+            cookieStore.set({ name, value: "", ...options });
+          } catch (error) {}
         },
       },
     }
   );
 
   try {
-    const { data: internships, error } = await supabase
-      .from("internships")
-      .select(
-        `
+    let internships;
+    let error;
+
+    if (searchQuery) {
+      const { data, error: rpcError } = await supabase.rpc(
+        "search_internships",
+        {
+          search_term: searchQuery,
+        }
+      );
+      internships = data;
+      error = rpcError;
+    } else {
+      const { data, error: fetchError } = await supabase
+        .from("internships")
+        .select(
+          `
         id,
         title,
-        description,
-        required_skills,
         location,
-        is_paid,
-        created_at,
+        type,
+        category,
         company_profiles (
           company_name,
-          logo_url 
+          logo_url,
+          cover_image_url 
         )
       `
-      )
-      // Optional: Order by the newest internships first
-      .order("created_at", { ascending: false });
+        )
+        .order("created_at", { ascending: false });
+      internships = data;
+      error = fetchError;
+    }
 
     if (error) {
       console.error("Supabase query error:", error);
-
       throw error;
     }
 
-    return NextResponse.json(internships, { status: 200 });
+    return NextResponse.json(internships || [], { status: 200 });
   } catch (error: any) {
     console.error("API Endpoint Error:", error);
     return NextResponse.json(
-      {
-        error: "Failed to fetch internships",
-        details: error.message,
-      },
+      { error: "Failed to fetch internships", details: error.message },
       { status: 500 }
     );
   }

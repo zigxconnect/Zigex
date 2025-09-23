@@ -1,10 +1,8 @@
-// File Path: /app/_components/sections/create-profile/Step3Skills.tsx
 import { useFormContext, Controller } from "react-hook-form";
-
 import { ProfileFormData } from "@/app/types/profile";
-import { FormField } from "@/components/uiComponenet/FormField";
-import { ToggleChip } from "@/components/uiComponenet/ToggleChip";
-import { Input } from "@/components/uiComponenet/input";
+import { FormField } from "@/components/uiComponent/FormField";
+import { ToggleChip } from "@/components/uiComponent/ToggleChip";
+import { Input } from "@/components/uiComponent/input";
 
 const hardSkillsOptions = [
   "JavaScript",

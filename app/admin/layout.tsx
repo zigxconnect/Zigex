@@ -1,27 +1,33 @@
-// import { AdminHeader } from "@/app/_components/layout/admin/AdminHeader";
-// import { AdminHeader } from "../_components/layout/admin/AdminHeader";
-// import { AdminSidebar } from "../_components/layout/admin/AdminSiderbar";
+// FILE: app/admin/layout.tsx
 
+import { redirect } from "next/navigation";
 import { AdminHeader } from "@/components/layout/admin/AdminHeader";
 import { AdminSidebar } from "@/components/layout/admin/AdminSiderbar";
+import { ReactNode } from "react";
+import {
+  getAuthenticatedCompanyProfile,
+  getHeaderStats,
+} from "@/lib/data/postings";
 
-// In a real app, this data would be fetched from your database
-const headerStats = {
-  total: 6,
-  active: 4,
-  applications: 110,
-};
-
-export default function AdminDashboardLayout({
+export default async function AdminDashboardLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
+  const companyProfile = await getAuthenticatedCompanyProfile();
+
+  if (!companyProfile) {
+    // This could happen if auth succeeds but profile doesn't exist.
+    // Or if getAuthenticatedCompanyProfile returns null because there's no user.
+    return redirect("/sign-in");
+  }
+
+  const headerStats = await getHeaderStats(companyProfile.id);
+
   return (
     <div className="flex h-screen bg-slate-50 text-gray-800">
-      <AdminSidebar />
+      <AdminSidebar companyProfile={companyProfile} />
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Pass the stats object as a prop to the header */}
         <AdminHeader stats={headerStats} />
         <main className="flex-1 overflow-x-hidden overflow-y-auto p-6 lg:p-8">
           {children}

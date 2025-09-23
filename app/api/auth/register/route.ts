@@ -1,3 +1,5 @@
+// app/api/auth/register/route.ts
+
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
@@ -12,35 +14,35 @@ export async function POST(request: Request) {
     );
   }
 
+  // 1. Create the user and pass metadata for the trigger.
   const { data: authData, error: authError } = await supabaseAdmin.auth.signUp({
     email,
     password,
+    options: {
+      data: {
+        full_name: fullName,
+        user_role: "student", // This metadata tells our trigger to create a student profile.
+      },
+    },
   });
+
   if (authError || !authData.user) {
+    if (authError?.message.includes("User already registered")) {
+      return NextResponse.json(
+        { error: "A user with this email already exists." },
+        { status: 400 }
+      );
+    }
+    console.error("Supabase SignUp Error:", authError?.message);
     return NextResponse.json(
-      { error: authError?.message || "Could not sign up user." },
+      { error: "There was an error creating the user." },
       { status: 400 }
     );
   }
 
-  const { error: profileError } = await supabaseAdmin
-    .from("student_profiles")
-    .insert({
-      user_id: authData.user.id,
-      full_name: fullName,
-      email: email,
-      profile_status: "incomplete",
-      role: "student",
-    });
+  // The manual profile creation is correctly removed, as the trigger handles it.
 
-  if (profileError) {
-    await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
-    return NextResponse.json(
-      { error: "Failed to create student profile." },
-      { status: 500 }
-    );
-  }
-
+  // 2. Sign in the new user to create a session.
   const cookieStore = cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -59,6 +61,7 @@ export async function POST(request: Request) {
       },
     }
   );
+
   const { error: signInError } = await supabase.auth.signInWithPassword({
     email,
     password,

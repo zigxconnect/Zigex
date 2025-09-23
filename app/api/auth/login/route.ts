@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   const { email, password } = await request.json();
+  console.log("Login attempt for email:", email);
 
   if (!email || !password) {
     return NextResponse.json(
@@ -12,29 +13,29 @@ export async function POST(request: Request) {
     );
   }
 
-  const cookieStore = cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
+        get: async (name: string) => {
+          const cookieStore = await cookies();
           return cookieStore.get(name)?.value;
         },
-        set(name: string, value: string, options: CookieOptions) {
+        set: async (name: string, value: string, options: CookieOptions) => {
+          const cookieStore = await cookies();
           cookieStore.set({ name, value, ...options });
         },
-        remove(name: string, options: CookieOptions) {
+        remove: async (name: string, options: CookieOptions) => {
+          const cookieStore = await cookies();
           cookieStore.set({ name, value: "", ...options });
         },
       },
     }
   );
 
-  // --- THE TWO-STEP LOOKUP LOGIC ---
 
-  // 1. First, check the company_profiles table to see if the user is a company.
-  //    This query is fast because we only select one column.
+  // 1. Check if user is a company
   const { data: companyProfile } = await supabase
     .from("company_profiles")
     .select("role")
@@ -42,11 +43,13 @@ export async function POST(request: Request) {
     .single();
 
   if (companyProfile) {
-    // If a profile is found, we know it's a company. Initiate the OTP flow.
+    console.log("Company profile found:");
+    console.table(companyProfile);
+    // Company flow: Send OTP.
     const { error: otpError } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        shouldCreateUser: false, // Don't create a new user if they don't exist
+        shouldCreateUser: false,
       },
     });
 
@@ -61,14 +64,14 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         message: "OTP sent to your email.",
-        otpSent: true, // This flag tells the frontend to redirect to the OTP page
+        otpSent: true,
         email: email,
       },
       { status: 200 }
     );
   }
 
-  // 2. If not a company, check the student_profiles table.
+  // 2. If not a company, check if it's a student and attempt password login
   const { data: studentProfile } = await supabase
     .from("student_profiles")
     .select("profile_status")
@@ -76,11 +79,12 @@ export async function POST(request: Request) {
     .single();
 
   if (studentProfile) {
-    // If a profile is found, it's a student. Proceed with the standard password login.
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { data, error: signInError } = await supabase.auth.signInWithPassword(
+      {
+        email,
+        password,
+      }
+    );
 
     if (signInError) {
       return NextResponse.json(
@@ -93,12 +97,12 @@ export async function POST(request: Request) {
       {
         message: "Login successful",
         profileComplete: studentProfile.profile_status === "complete",
+        session: data.session,
       },
       { status: 200 }
     );
   }
 
-  // 3. If the email is in NEITHER table, it's an invalid user.
   return NextResponse.json(
     { error: "Invalid email or password." },
     { status: 401 }

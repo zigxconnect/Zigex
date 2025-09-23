@@ -4,7 +4,7 @@ import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Upload, File, X } from "lucide-react";
 
-// A helper function to format file sizes nicely
+
 function formatBytes(bytes: number, decimals = 2) {
   if (bytes === 0) return "0 Bytes";
   const k = 1024;
@@ -47,7 +47,7 @@ export const FileUploadButton = ({
         ref={fileInputRef}
         onChange={handleFileChange}
         className="hidden"
-        accept="application/pdf" // Only allow PDF files
+        accept="application/pdf" 
       />
 
       {file ? (
@@ -71,7 +71,6 @@ export const FileUploadButton = ({
       ) : (
         <Button
           type="button"
-          //   variant="outline"
           onClick={() => fileInputRef.current?.click()}
           className="w-full"
         >

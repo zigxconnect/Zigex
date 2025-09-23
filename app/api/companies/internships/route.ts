@@ -4,11 +4,6 @@ import { supabaseAdmin } from '../../../../lib/supabase/server';
 import { authMiddleware } from '@/lib/middleware/auth';
 import { internshipSchema } from '@/lib/validation/internship';
 
-// company internship manager
-// const supabase = createClient(
-//     process.env.SUPABASE_URL || '',
-//     process.env.SUPABASE_ANON_KEY || ''
-// );
 
 /**
  * @swagger
