@@ -245,31 +245,33 @@ export const InternshipListings = () => {
         <div className="flex lg:flex-row flex-col flex-col-reverse items-center justify-between w-full">
           <DashboardSearch onSearch={setSearchQuery} />
           <div className="mb-10">
-            <div className="inline-flex bg-gray-100 rounded-2xl p-2 shadow-sm">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`relative flex items-center gap-3 px-3 py-1 rounded-lg font-medium text-sm transition-all duration-300 ${getTabColorClasses(
-                    tab.color,
-                    activeTab === tab.id
-                  )} ${activeTab === tab.id ? "scale-105" : "hover:scale-102"}`}
-                >
-                  <tab.icon size={18} />
-                  <span>{tab.label}</span>
-                  {!isLoading && tab.count > 0 && (
-                    <span
-                      className={`px-2 py-1 text-xs rounded-full font-semibold ${
-                        activeTab === tab.id
-                          ? "bg-white/20 text-white"
-                          : "bg-gray-200 text-gray-600"
-                      }`}
-                    >
-                      {tab.count}
-                    </span>
-                  )}
-                </button>
-              ))}
+            <div className="overflow-x-auto scrollbar-hide">
+              <div className="inline-flex bg-gray-100 rounded-2xl p-2 shadow-sm min-w-max">
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`relative flex items-center gap-3 px-3 py-1 rounded-lg font-medium text-sm transition-all duration-300 whitespace-nowrap ${getTabColorClasses(
+                      tab.color,
+                      activeTab === tab.id
+                    )} ${activeTab === tab.id ? "scale-105" : "hover:scale-102"}`}
+                  >
+                    <tab.icon size={18} />
+                    <span>{tab.label}</span>
+                    {!isLoading && tab.count > 0 && (
+                      <span
+                        className={`px-2 py-1 text-xs rounded-full font-semibold ${
+                          activeTab === tab.id
+                            ? "bg-white/20 text-white"
+                            : "bg-gray-200 text-gray-600"
+                        }`}
+                      >
+                        {tab.count}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -292,6 +294,13 @@ export const InternshipListings = () => {
         .animate-fadeIn {
           animation: fadeIn 0.5s ease-out forwards;
           opacity: 0;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
         }
       `}</style>
     </div>
