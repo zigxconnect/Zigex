@@ -2,8 +2,8 @@
 
 import { useState, FormEvent, ChangeEvent, useEffect } from "react";
 import { X, User, Image as ImageIcon, Loader2 } from "lucide-react";
-import Image from "next/image"; 
-import { toast } from "sonner"; 
+import Image from "next/image";
+import { toast } from "sonner";
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -24,11 +24,17 @@ export const EditProfileModal = ({
 }: EditProfileModalProps) => {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(currentAvatarUrl);
-  const [coverImagePreview, setCoverImagePreview] = useState<string | null>(currentCoverImageUrl);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(
+    currentAvatarUrl
+  );
+  const [coverImagePreview, setCoverImagePreview] = useState<string | null>(
+    currentCoverImageUrl
+  );
+  // Removed prevCoverImagePreviewRef, not needed
+  // Removed unused prevAvatarPreviewRef
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB in bytes
 
   useEffect(() => {
@@ -43,35 +49,59 @@ export const EditProfileModal = ({
   const handleAvatarChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      
       if (file.size > MAX_FILE_SIZE) {
         toast.error("Avatar image must be less than 2MB");
         return;
       }
-      
+      // Revoke previous object URL if it was an object URL
+      if (avatarPreview && avatarPreview !== currentAvatarUrl) {
+        URL.revokeObjectURL(avatarPreview);
+      }
       setAvatarFile(file);
       setAvatarPreview(URL.createObjectURL(file));
     } else {
+      // Revoke previous object URL if it was an object URL
+      if (avatarPreview && avatarPreview !== currentAvatarUrl) {
+        URL.revokeObjectURL(avatarPreview);
+      }
       setAvatarFile(null);
       setAvatarPreview(currentAvatarUrl);
     }
+    // No useEffect inside handler
   };
 
   const handleCoverImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      
       if (file.size > MAX_FILE_SIZE) {
         toast.error("Cover image must be less than 2MB");
         return;
       }
-      
+      // Revoke previous object URL if it was an object URL
+      if (coverImagePreview && coverImagePreview !== currentCoverImageUrl) {
+        URL.revokeObjectURL(coverImagePreview);
+      }
       setCoverImageFile(file);
       setCoverImagePreview(URL.createObjectURL(file));
     } else {
+      // Revoke previous object URL if it was an object URL
+      if (coverImagePreview && coverImagePreview !== currentCoverImageUrl) {
+        URL.revokeObjectURL(coverImagePreview);
+      }
       setCoverImageFile(null);
       setCoverImagePreview(currentCoverImageUrl);
     }
+    // Cleanup avatar and cover image preview object URLs on unmount
+    useEffect(() => {
+      return () => {
+        if (avatarPreview && avatarPreview !== currentAvatarUrl) {
+          URL.revokeObjectURL(avatarPreview);
+        }
+        if (coverImagePreview && coverImagePreview !== currentCoverImageUrl) {
+          URL.revokeObjectURL(coverImagePreview);
+        }
+      };
+    }, []);
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -106,9 +136,13 @@ export const EditProfileModal = ({
       });
 
       const responseData = await response.json();
-      
+
       if (!response.ok) {
-        throw new Error(responseData.details || responseData.error || "Failed to update profile.");
+        throw new Error(
+          responseData.details ||
+            responseData.error ||
+            "Failed to update profile."
+        );
       }
 
       // Show success toast notification
@@ -118,7 +152,7 @@ export const EditProfileModal = ({
       });
 
       // Only call onProfileUpdated if it's provided
-      if (onProfileUpdated && typeof onProfileUpdated === 'function') {
+      if (onProfileUpdated && typeof onProfileUpdated === "function") {
         onProfileUpdated();
       }
 
@@ -139,11 +173,23 @@ export const EditProfileModal = ({
   };
 
   const resetForm = () => {
+    // Revoke avatar preview if it was an object URL
+    if (avatarPreview && avatarPreview !== currentAvatarUrl) {
+      URL.revokeObjectURL(avatarPreview);
+    }
+    // Revoke cover image preview if it was an object URL
+    if (coverImagePreview && coverImagePreview !== currentCoverImageUrl) {
+      URL.revokeObjectURL(coverImagePreview);
+    }
     setAvatarFile(null);
     setCoverImageFile(null);
     setAvatarPreview(currentAvatarUrl);
     setCoverImagePreview(currentCoverImageUrl);
+    // Removed assignments to preview refs
+    // Cleanup avatar and cover image preview object URLs on unmount
+    // Removed invalid useEffect from resetForm
     setError(null);
+    // Removed invalid useEffect from resetForm
   };
 
   return (
@@ -159,10 +205,15 @@ export const EditProfileModal = ({
         >
           <X size={24} />
         </button>
-        <h2 className="text-2xl font-bold mb-6 text-gray-800">Edit Profile Pictures</h2>
+        <h2 className="text-2xl font-bold mb-6 text-gray-800">
+          Edit Profile Pictures
+        </h2>
 
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+          <div
+            className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
+            role="alert"
+          >
             <span className="block sm:inline">{error}</span>
           </div>
         )}
@@ -170,13 +221,21 @@ export const EditProfileModal = ({
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Avatar Upload */}
           <div>
-            <label htmlFor="avatar-upload" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="avatar-upload"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Profile Picture
             </label>
             <div className="mt-1 flex items-center space-x-4">
               <div className="relative w-24 h-24 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border border-gray-200 shadow-sm">
                 {avatarPreview ? (
-                  <Image src={avatarPreview} alt="Avatar Preview" layout="fill" objectFit="cover" />
+                  <Image
+                    src={avatarPreview}
+                    alt="Avatar Preview"
+                    layout="fill"
+                    objectFit="cover"
+                  />
                 ) : (
                   <User className="text-gray-400 w-12 h-12" />
                 )}
@@ -196,18 +255,28 @@ export const EditProfileModal = ({
                 />
               </label>
             </div>
-            {avatarFile && <p className="text-xs text-gray-500 mt-2">{avatarFile.name}</p>}
+            {avatarFile && (
+              <p className="text-xs text-gray-500 mt-2">{avatarFile.name}</p>
+            )}
           </div>
 
           {/* Cover Image Upload */}
           <div>
-            <label htmlFor="cover-image-upload" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="cover-image-upload"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Cover Image
             </label>
             <div className="mt-1 flex items-center space-x-4">
               <div className="relative w-full h-32 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center border border-gray-200 shadow-sm">
                 {coverImagePreview ? (
-                  <Image src={coverImagePreview} alt="Cover Image Preview" layout="fill" objectFit="cover" />
+                  <Image
+                    src={coverImagePreview}
+                    alt="Cover Image Preview"
+                    layout="fill"
+                    objectFit="cover"
+                  />
                 ) : (
                   <ImageIcon className="text-gray-400 w-12 h-12" />
                 )}
@@ -227,7 +296,11 @@ export const EditProfileModal = ({
                 />
               </label>
             </div>
-            {coverImageFile && <p className="text-xs text-gray-500 mt-2">{coverImageFile.name}</p>}
+            {coverImageFile && (
+              <p className="text-xs text-gray-500 mt-2">
+                {coverImageFile.name}
+              </p>
+            )}
           </div>
 
           <div className="pt-4">

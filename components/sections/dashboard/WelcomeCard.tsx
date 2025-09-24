@@ -170,14 +170,15 @@ export const WelcomeCard = ({ user, onProfileUpdated }: WelcomeCardProps) => {
       </div>
 
       {/* Avatar with Edit Hover Effect - Adjusted Position */}
-      <div className="absolute top-20 md:top-24 lg:top-30 left-4 lg:left-6">
+      <div className="absolute top-20 md:top-24 lg:top-28 left-4 lg:left-6">
         <div
           className="relative group cursor-pointer"
           onMouseEnter={() => setIsAvatarHovered(true)}
           onMouseLeave={() => setIsAvatarHovered(false)}
           onClick={() => setIsEditModalOpen(true)}
         >
-          <div className="w-20 h-20 md:w-24 md:h-24 lg:w-18 lg:h-18 rounded-full border-3 lg:border-4 border-white shadow-lg overflow-hidden bg-white transition-all duration-300 group-hover:shadow-2xl group-hover:scale-105">
+          <div className="w-20 h-20 md:w-24 md:h-24 lg:w-20 lg:h-20 rounded-full border-3 lg:border-4 border-white shadow-lg overflow-hidden bg-white transition-all duration-300 group-hover:shadow-2xl group-hover:scale-105">
+            {" "}
             <Image
               src={avatarUrl}
               alt={`${user.name}'s profile picture`}
@@ -224,7 +225,7 @@ export const WelcomeCard = ({ user, onProfileUpdated }: WelcomeCardProps) => {
         {/* User Info and Social Links */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 lg:gap-4">
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-2 shadow-md p-2 lg:p- hover:shadow-lg rounded-lg lg:rounded-lg px-2 transition-all duration-200 border border-blue-200">
+            <div className="flex items-center gap-2 shadow-md p-2 lg:p-2 hover:shadow-lg rounded-lg lg:rounded-lg px-2 transition-all duration-200 border border-blue-200">
               <div className="flex items-center justify-center bg-blue-700 text-white p-1.5 lg:p-2 rounded-full shadow-sm">
                 <UserCheck2 size={9} className="lg:w-2 lg:h-2" />
               </div>
@@ -232,7 +233,7 @@ export const WelcomeCard = ({ user, onProfileUpdated }: WelcomeCardProps) => {
                 {user.name}
               </p>
             </div>
-            <div className="flex items-center gap-2 shadow-md p-2 lg:p- hover:shadow-lg rounded-lg lg:rounded-lg px-2 transition-all duration-200 border border-blue-200">
+            <div className="flex items-center gap-2 shadow-md p-2 lg:p-2 hover:shadow-lg rounded-lg lg:rounded-lg px-2 transition-all duration-200 border border-blue-200">
               <div className="flex items-center justify-center bg-gray-700 text-white p-1.5 lg:p-2 rounded-full shadow-sm">
                 <LocationEdit size={8} className="lg:w-2 lg:h-2" />
               </div>
@@ -252,11 +253,13 @@ export const WelcomeCard = ({ user, onProfileUpdated }: WelcomeCardProps) => {
                 <Link2 size={8} className="lg:w-2 lg:h-2" />
               </div>
               <p className="text-xs lg:text-[12px] font-medium text-blue-800 group-hover:text-blue-900">
-                Portfolio
+                LinkedIn
               </p>
             </Link>
             <Link
-              href={user.profile.github_url || ""}
+              href={user.profile.github_url || "#"}
+              target={user.profile.github_url ? "_blank" : undefined}
+              rel={user.profile.github_url ? "noopener noreferrer" : undefined}
               className="flex items-center gap-1.5 lg:gap-2 bg-gradient-to-r from-gray-800 to-gray-900 shadow-md p-2 lg:p-2 hover:shadow-lg hover:scale-105 rounded-lg lg:rounded-md transition-all duration-200 border border-gray-700 group"
             >
               <div className="flex items-center justify-center bg-white text-gray-900 p-1.5 lg:p-2 rounded-full shadow-sm group-hover:bg-gray-100">

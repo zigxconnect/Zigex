@@ -39,10 +39,7 @@ export async function GET() {
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Get unread count
@@ -63,7 +60,7 @@ export async function GET() {
   } catch (error: any) {
     console.error("API Endpoint Error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch unread count", details: error.message },
+      { error: "Failed to fetch unread count" },
       { status: 500 }
     );
   }
