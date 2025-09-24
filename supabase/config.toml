@@ -1,0 +1,5 @@
+# File: supabase/config.toml
+
+# This is the final, simplified configuration.
+[functions.send-new-post-notification]
+verify_jwt = false

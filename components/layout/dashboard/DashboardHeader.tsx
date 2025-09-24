@@ -37,7 +37,7 @@ export const DashboardHeader = ({ onMenuClick }: DashboardHeaderProps) => {
             </div> */}
             <div className="text-white font-bold text-sm w-6 h-6 bg-blue-600 rounded-sm flex items-center justify-center shadow-md mr-1">Z</div>
 
-            <div className=" hidden sm:block font-bold text-blue-700 text-lg rounded flex items-center justify-center">IGEX</div>
+            <div className="  sm:block font-bold text-blue-700 text-lg rounded flex items-center justify-center">IGEX</div>
 
           </div>
         </div>
