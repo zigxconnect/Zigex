@@ -111,13 +111,11 @@ export const EditProfileModal = ({
         throw new Error(responseData.details || responseData.error || "Failed to update profile.");
       }
 
-      // Show success toast notification
       toast.success("Profile updated successfully!", {
         description: "Your profile pictures have been updated.",
         duration: 3000,
       });
 
-      // Only call onProfileUpdated if it's provided
       if (onProfileUpdated && typeof onProfileUpdated === 'function') {
         onProfileUpdated();
       }
@@ -147,8 +145,24 @@ export const EditProfileModal = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md relative animate-fade-in-up">
+    <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+      {/* Cool transparent overlay with backdrop blur and gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-purple-50/20 to-pink-50/30 backdrop-blur-sm"></div>
+      
+      {/* Alternative overlays - uncomment any of these to try different effects */}
+      {/* Glass morphism overlay */}
+      {/* <div className="absolute inset-0 bg-white/10 backdrop-blur-md"></div> */}
+      
+      {/* Frosted glass with subtle color */}
+      {/* <div className="absolute inset-0 bg-gradient-to-br from-slate-100/20 to-slate-200/30 backdrop-blur-lg"></div> */}
+      
+      {/* Cool blue gradient overlay */}
+      {/* <div className="absolute inset-0 bg-gradient-to-br from-cyan-100/20 via-blue-100/10 to-indigo-100/20 backdrop-blur-sm"></div> */}
+      
+      {/* Warm gradient overlay */}
+      {/* <div className="absolute inset-0 bg-gradient-to-br from-orange-50/20 via-rose-50/10 to-pink-50/20 backdrop-blur-sm"></div> */}
+
+      <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-2xl p-6 w-full max-w-md relative animate-fade-in-up border border-white/20">
         <button
           onClick={() => {
             onClose();
