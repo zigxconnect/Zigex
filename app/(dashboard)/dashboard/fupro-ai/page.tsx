@@ -3,7 +3,9 @@
 import React, { useState, useEffect, useRef, KeyboardEvent, useLayoutEffect, useCallback } from "react";
 import {
   History, Wrench, Send, Sparkles, User, Loader2, Phone,
-  Square, Trash2, FileText, Eye, X, Target
+  Square, Trash2, FileText, Eye, X, Target,
+  ArrowUp,
+  LoaderPinwheel
 } from "lucide-react";
 import Image from "next/image";
 import SmartApplyArtifact from "@/components/SmartApplyArtifacts"; // Assumes the component is in this path
@@ -239,7 +241,7 @@ export default function FuproAiPage() {
             </div>
           ) : (
             <div className="space-y-5 max-w-4xl mx-auto">
-              {messages.map((msg) => msg.artifact ? <ArtifactStubCard key={msg.id} artifact={msg.artifact} /> : ( <div key={msg.id} className={`flex gap-3 items-end ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}> {msg.role === 'assistant' && (<div className="w-8 h-8 flex-shrink-0"><Image src="/ai.png" alt="Assistant" className="rounded-full" width={32} height={32} /></div>)} <div className={`max-w-[80%] rounded-2xl px-4 py-3 shadow-sm ${msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'}`}> {msg.content ? <p className="text-sm" dangerouslySetInnerHTML={{ __html: msg.content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br/>') }} /> : <Loader2 className="w-5 h-5 animate-spin" />} <p className="text-xs opacity-70 mt-2 text-right">{msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p> </div> {msg.role === 'user' && (<div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0"><User className="w-4 h-4 text-white" /></div>)} </div> ))}
+              {messages.map((msg) => msg.artifact ? <ArtifactStubCard key={msg.id} artifact={msg.artifact} /> : ( <div key={msg.id} className={`flex gap-3 items-end ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}> {msg.role === 'assistant' && (<div className="w-8 h-8 flex-shrink-0"><Image src="/ai.png" alt="Assistant" className="rounded-full" width={32} height={32} /></div>)} <div className={`max-w-[80%] rounded-2xl px-4 py-3 shadow-sm ${msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'}`}> {msg.content ? <p className="text-sm" dangerouslySetInnerHTML={{ __html: msg.content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br/>') }} /> : <LoaderPinwheel className="w-5 h-5 animate-spin" />} <p className="text-xs opacity-70 mt-2 text-right">{msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p> </div> {msg.role === 'user' && (<div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0"><User className="w-4 h-4 text-white" /></div>)} </div> ))}
               {isThinking && messages.length > 0 && messages[messages.length - 1].role === 'user' && <SkeletonLoader />}
               <div ref={messagesEndRef} />
             </div>
@@ -248,11 +250,42 @@ export default function FuproAiPage() {
         <div className="p-4 border-t bg-white">
           <div className="max-w-4xl mx-auto">
             {activeTool === 'smartapply' && ( <div className="flex justify-between items-center bg-blue-50 border-blue-200 text-blue-800 text-sm font-medium px-4 py-2 mb-3 rounded-lg animate-fade-in"> <span>🎯 SmartApply Mode: Enter a company name.</span> <button onClick={handleCloseArtifact} className="p-1 rounded-full hover:bg-blue-200"><X className="w-4 h-4" /></button> </div> )}
-            <div className="relative flex items-end gap-2 bg-gray-50 rounded-2xl p-2 border focus-within:border-blue-400">
-              <button onClick={openSmartApplyArtifact} className="p-2 rounded-lg text-gray-400 hover:text-blue-600"><Target className="w-5 h-5" /></button>
-              <button onClick={() => setShowArtifactHistory(true)} className="p-2 rounded-lg text-gray-400 hover:text-blue-600"><FileText className="w-5 h-5" /></button>
-              <textarea ref={textareaRef} value={message} onChange={handleTextareaChange} onKeyDown={handleKeyPress} placeholder={activeTool === 'smartapply' ? "Enter company name..." : "Ask me anything..."} className={`flex-1 bg-transparent border-none outline-none resize-none transition-all placeholder:text-gray-400 ${!message ? 'text-center' : 'text-left'}`} rows={1}/>
-              <button onClick={handleSend} disabled={!message.trim() || isProcessing} className="p-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300"><Send className="w-5 h-5" /></button>
+            <div className="relative flex items-center gap-2 bg-gray-50 rounded-2xl p-2 border focus-within:border-blue-400 ">
+              <div className="flex md:flex-row flex-col item-center md:p-2  p-1 rounded-md  bg-blue-700 color-white">
+<button 
+  onClick={openSmartApplyArtifact} 
+  className="p-2 rounded-lg text-gray-400 hover:text-blue-600 cursor-pointer
+             transition-all duration-300 ease-in-out
+             hover:bg-blue-400 hover:shadow-lg hover:scale-105
+             transform active:scale-95"
+>
+  <Target className="w-5 h-5 transition-colors duration-300 " color="#fff"/>
+</button>
+              <button 
+  onClick={() => setShowArtifactHistory(true)} 
+  className="p-2 rounded-lg text-gray-400 hover:text-blue-600 cursor-pointer
+             transition-all duration-300 ease-in-out
+             hover:bg-blue-300 hover:shadow-lg hover:scale-105
+             transform active:scale-95 group"
+>
+  <FileText 
+    className="w-5 h-5 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6" 
+    color="#fff" 
+  />
+</button>
+              </div>
+              
+              <textarea ref={textareaRef} value={message} onChange={handleTextareaChange} onKeyDown={handleKeyPress} placeholder={activeTool === 'smartapply' ? "Enter company name..." : "Ask me anything..."} className={`flex-1  bg-transparent border-none outline-none resize-none transition-all placeholder:text-gray-400  ${!message ? 'text-center' : 'text-center'}`} rows={1}/>
+               <button 
+                onClick={handleSend} 
+                disabled={!message.trim() || isProcessing} 
+                className="group relative p-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 transition-colors"
+              >
+                <ArrowUp className="w-5 h-5" />
+                <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-auto px-2 py-1 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+                  Ask AM
+                </span>
+              </button>
             </div>
           </div>
         </div>
