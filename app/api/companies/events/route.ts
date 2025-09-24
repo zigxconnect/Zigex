@@ -1,24 +1,12 @@
-// api/companies/events/route.ts
-import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '../../../../lib/supabase/server';
-import { authMiddleware } from '@/lib/middleware/auth';
-import { eventSchema } from '@/lib/validation/event';
-import { v4 as uuidv4 } from 'uuid';
-import { GoogleSpreadsheet } from 'google-spreadsheet';
-import { JWT } from 'google-auth-library';
+import { NextResponse } from "next/server";
+import { supabaseAdmin } from "../../../../lib/supabase/server";
+import { authMiddleware } from "@/lib/middleware/auth";
+import { eventSchema } from "@/lib/validation/event";
+// import { v4 as uuidv4 } from 'uuid';
+// import { GoogleSpreadsheet } from 'google-spreadsheet';
+// import { JWT } from 'google-auth-library';
 
 // Initialize Google Sheets connection
-const getSpreadsheet = async () => {
-  const serviceAccountAuth = new JWT({
-    email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-    key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-  });
-
-  const doc = new GoogleSpreadsheet(process.env.EVENTS_SPREADSHEET_ID, serviceAccountAuth);
-  await doc.loadInfo();
-  return doc;
-};
 
 /**
  * @swagger
@@ -60,57 +48,69 @@ export async function GET(request: Request) {
   }
 
   const { user, type } = auth;
-  if (type !== 'company') {
-    return NextResponse.json(
-      { error: 'Unauthorized access' },
-      { status: 403 }
-    );
+  if (type !== "company") {
+    return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
   }
 
   const { company } = auth;
   if (!company) {
     return NextResponse.json(
-      { error: 'Company profile not found' },
+      { error: "Company profile not found" },
       { status: 404 }
     );
   }
 
-  try {
-    // Read from spreadsheet instead of database
-    const doc = await getSpreadsheet();
-    const sheet = doc.sheetsByTitle['Events'];
-    const rows = await sheet.getRows();
-    
-    // Filter events by company_id
-    const companyEvents = rows.filter(row => row.get('company_id') === company.id)
-      .map(row => ({
-        id: row.get('id'),
-        title: row.get('title'),
-        description: row.get('description'),
-        event_type: row.get('event_type'),
-        start_date: row.get('start_date'),
-        end_date: row.get('end_date'),
-        location: row.get('location'),
-        registration_link: row.get('registration_link'),
-        company_id: row.get('company_id'),
-        event_picture_url: row.get('event_picture_url'),
-        tags: row.get('tags') ? JSON.parse(row.get('tags')) : [],
-        capacity: parseInt(row.get('capacity')) || null,
-        is_virtual: row.get('is_virtual') === 'true',
-        price: parseFloat(row.get('price')) || 0,
-        created_at: row.get('created_at'),
-        updated_at: row.get('updated_at')
-      }));
+  // Fetch events from Supabase
+  const { data, error } = await supabaseAdmin
+    .from("event")
+    .select("*")
+    .eq("company_id", company.id)
+    .order("created_at", { ascending: false });
 
-    return NextResponse.json(companyEvents);
-  } catch (error) {
-    console.error('Error fetching events from spreadsheet:', error);
+  if (error) {
+    console.error("Supabase fetch error:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch events' },
+      { error: "Failed to fetch events" },
       { status: 500 }
     );
   }
+  return NextResponse.json(data);
 }
+
+/*
+Handles the creation of a new company event with image upload.
+
+Usage:
+Send a POST request to /api/companies/events with multipart/form-data encoding.
+
+Required Form Fields:
+- title: The title of the event (string)
+- description: A description of the event (string)
+- event_type: The type of event (e.g., conference, workshop, webinar, networking, hackathon) (string)
+- start_date: The start date of the event (ISO 8601 string)
+- end_date: The end date of the event (ISO 8601 string)
+- location: The location of the event (string)
+- event_image: The image file for the event (File)
+
+Authentication:
+- The request must be authenticated as a company user. Unauthorized or non-company users will receive a 403 error.
+
+Behavior:
+- Validates the form data using the eventSchema.
+- Uploads the provided image to Supabase Storage under the company's assets.
+- Stores the event data, including the public URL of the uploaded image, in the Supabase event table.
+- Returns the created event object on success.
+
+Responses:
+- 201: Event created successfully. Returns the event object.
+- 400: Validation error or missing required fields.
+- 403: Unauthorized access (not a company user).
+- 404: Company profile not found.
+- 500: Internal server error (e.g., failed image upload or database error).
+
+@param request - The incoming HTTP request containing form data for the new event.
+@returns A JSON response with the created event or an error message.
+*/
 
 export async function POST(request: Request) {
   const auth = await authMiddleware(request);
@@ -119,362 +119,89 @@ export async function POST(request: Request) {
   }
 
   const { user, type } = auth;
-  if (type !== 'company') {
-    return NextResponse.json(
-      { error: 'Unauthorized access' },
-      { status: 403 }
-    );
+  if (type !== "company") {
+    return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
   }
 
   const { company } = auth;
   if (!company) {
     return NextResponse.json(
-      { error: 'Company profile not found' },
+      { error: "Company profile not found" },
       { status: 404 }
     );
   }
 
-  try {
-    const formData = await request.formData();
-    const eventPicture = formData.get('event_picture') as File | null;
+  const formData = await request.formData();
 
-    // Extract other fields
-    const rawData: { [key: string]: any } = {};
-    for (const [key, value] of formData.entries()) {
-      if (key === 'tags' && typeof value === 'string') {
-        rawData[key] = value.split(',').map(s => s.trim()).filter(s => s);
-      } else if (key === 'capacity' && typeof value === 'string') {
-        rawData[key] = parseInt(value) || null;
-      } else if (key === 'price' && typeof value === 'string') {
-        rawData[key] = parseFloat(value) || 0;
-      } else if (key === 'is_virtual' && typeof value === 'string') {
-        rawData[key] = value === 'true';
-      } else if (key !== 'event_picture') {
-        rawData[key] = value;
-      }
-    }
+  //Extract image file
+  const eventImage = formData.get("event_image") as File | null;
 
-    // Add company_id before validation
-    const validatedData = eventSchema.parse({
-      ...rawData,
-      company_id: company.id
+  // Validate other form fields by converting FormData to an object then use the eventSchema to validate
+  const dataobject = Object.fromEntries(formData.entries());
+
+  //Ensure image is present
+  if (!eventImage) {
+    return NextResponse.json(
+      { error: "Event image is required" },
+      { status: 400 }
+    );
+  }
+
+  //uplaod image to supabase storage and get the public URL
+  //Set the image name and filepath. file path is company_name/events/event_title-timestamp.ext
+  const imageExt = eventImage.name.split(".").pop();
+  const imageName = `${dataobject.title}-${Date.now()}.${imageExt}`;
+  const imagePath = `${company.company_name}/events/${imageName}`;
+
+  //Upload the image to company-assets bucket in supabase storage
+  const { error: uploadError } = await supabaseAdmin.storage
+    .from("company-assets")
+    .upload(imagePath, eventImage, {
+      cacheControl: "3600",
+      upsert: false,
     });
 
-    let event_picture_url: string | undefined;
+  if (uploadError) {
+    console.error("Supabase storage upload error:", uploadError);
+    return NextResponse.json(
+      { error: "Failed to upload event image" },
+      { status: 500 }
+    );
+  }
 
-    // Handle image upload to Supabase Storage (if needed)
-    if (eventPicture) {
-      const fileExtension = eventPicture.name.split('.').pop();
-      const fileName = `${uuidv4()}.${fileExtension}`;
-      const filePath = `${company.id}/${fileName}`;
+  //Get the public URL of the uploaded image
+  const { data: imageData } = supabaseAdmin.storage
+    .from("company-assets")
+    .getPublicUrl(imagePath);
+  const eventImageUrl = imageData.publicUrl;
 
-      const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
-        .from('event_pictures')
-        .upload(filePath, eventPicture, {
-          cacheControl: '3600',
-          upsert: true,
-          contentType: eventPicture.type
-        });
+  // Validate other form fields
+  try {
+    const validatedData = eventSchema.parse({
+      ...dataobject,
+      event_picture_url: eventImageUrl,
+      company_id: company.id,
+    });
 
-      if (uploadError) {
-        console.error('Supabase Storage upload error:', uploadError);
-        return NextResponse.json(
-          { error: `Failed to upload image: ${uploadError.message}` },
-          { status: 500 }
-        );
-      }
+    // Insert the new event into Supabase
+    const { data, error } = await supabaseAdmin
+      .from("event")
+      .insert([validatedData])
+      .select()
+      .single();
 
-      const { data: publicUrlData } = supabaseAdmin.storage
-        .from('event_pictures')
-        .getPublicUrl(filePath);
-
-      event_picture_url = publicUrlData.publicUrl;
-    }
-
-    // Prepare data for spreadsheet
-    const eventId = uuidv4();
-    const now = new Date().toISOString();
-    
-    const eventData = {
-      id: eventId,
-      title: validatedData.title,
-      description: validatedData.description,
-      event_type: validatedData.event_type,
-      start_date: validatedData.start_date,
-      end_date: validatedData.end_date,
-      location: validatedData.location,
-      registration_link: validatedData.registration_link || '',
-      company_id: validatedData.company_id,
-      event_picture_url: event_picture_url || '',
-      tags: JSON.stringify(validatedData.tags || []),
-      capacity: validatedData.capacity || '',
-      is_virtual: validatedData.is_virtual,
-      price: validatedData.price,
-      created_at: now,
-      updated_at: now
-    };
-
-    // Insert event data into spreadsheet
-    try {
-      const doc = await getSpreadsheet();
-      const sheet = doc.sheetsByTitle['Events'];
-      await sheet.addRow(eventData);
-      
-      return NextResponse.json({
-        ...validatedData,
-        id: eventId,
-        event_picture_url,
-        created_at: now,
-        updated_at: now
-      }, { status: 201 });
-    } catch (error) {
-      console.error('Error writing to spreadsheet:', error);
-      // Optionally, delete the uploaded image if spreadsheet insertion fails
-      if (event_picture_url) {
-        await supabaseAdmin.storage.from('event_pictures').remove([`${company.id}/${event_picture_url.split('/').pop()}`]);
-      }
+    if (error) {
+      console.error("Supabase insert error:", error);
       return NextResponse.json(
-        { error: 'Failed to save event to spreadsheet' },
+        { error: "Failed to create event" },
         { status: 500 }
       );
     }
-  } catch (err) {
-    console.error('Validation or processing error:', err);
+    return NextResponse.json(data, { status: 201 });
+  } catch (validationError) {
+    console.error("Validation error:", validationError);
     return NextResponse.json(
-      { error: (err as Error).message },
-      { status: 400 }
-    );
-  }
-}
-
-export async function PATCH(request: Request) {
-  const auth = await authMiddleware(request);
-  if (auth instanceof NextResponse) {
-    return auth;
-  }
-
-  const { user, type } = auth;
-  if (type !== 'company') {
-    return NextResponse.json(
-      { error: 'Unauthorized access' },
-      { status: 403 }
-    );
-  }
-
-  const { company } = auth;
-  if (!company) {
-    return NextResponse.json(
-      { error: 'Company profile not found' },
-      { status: 404 }
-    );
-  }
-
-  try {
-    const formData = await request.formData();
-    const eventPicture = formData.get('event_picture') as File | null;
-    const eventId = formData.get('id') as string | null;
-
-    if (!eventId) {
-      return NextResponse.json(
-        { error: 'Event ID is required for updates' },
-        { status: 400 }
-      );
-    }
-
-    // Extract other fields
-    const rawUpdates: { [key: string]: any } = {};
-    for (const [key, value] of formData.entries()) {
-      if (key === 'tags' && typeof value === 'string') {
-        rawUpdates[key] = value.split(',').map(s => s.trim()).filter(s => s);
-      } else if (key === 'capacity' && typeof value === 'string') {
-        rawUpdates[key] = parseInt(value) || null;
-      } else if (key === 'price' && typeof value === 'string') {
-        rawUpdates[key] = parseFloat(value) || 0;
-      } else if (key === 'is_virtual' && typeof value === 'string') {
-        rawUpdates[key] = value === 'true';
-      } else if (key !== 'event_picture' && key !== 'id') {
-        rawUpdates[key] = value;
-      }
-    }
-
-    // Validate partial updates
-    const updates = eventSchema.partial().parse(rawUpdates);
-
-    // Check if event exists and belongs to company
-    const doc = await getSpreadsheet();
-    const sheet = doc.sheetsByTitle['Events'];
-    const rows = await sheet.getRows();
-    
-    const eventRow = rows.find(row => 
-      row.get('id') === eventId && row.get('company_id') === company.id
-    );
-
-    if (!eventRow) {
-      return NextResponse.json(
-        { error: 'Event not found or does not belong to this company' },
-        { status: 404 }
-      );
-    }
-
-    let event_picture_url: string | undefined = eventRow.get('event_picture_url') || undefined;
-
-    // Handle new image upload
-    if (eventPicture) {
-      // Optional: Delete old image from storage if it exists
-      const oldImageUrl = eventRow.get('event_picture_url');
-      if (oldImageUrl) {
-        const oldFileName = oldImageUrl.split('/').pop();
-        if (oldFileName) {
-          await supabaseAdmin.storage.from('event_pictures').remove([`${company.id}/${oldFileName}`]);
-        }
-      }
-
-      const fileExtension = eventPicture.name.split('.').pop();
-      const fileName = `${uuidv4()}.${fileExtension}`;
-      const filePath = `${company.id}/${fileName}`;
-
-      const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
-        .from('event_pictures')
-        .upload(filePath, eventPicture, {
-          cacheControl: '3600',
-          upsert: true,
-          contentType: eventPicture.type
-        });
-
-      if (uploadError) {
-        console.error('Supabase Storage upload error:', uploadError);
-        return NextResponse.json(
-          { error: `Failed to upload new image: ${uploadError.message}` },
-          { status: 500 }
-        );
-      }
-
-      const { data: publicUrlData } = supabaseAdmin.storage
-        .from('event_pictures')
-        .getPublicUrl(filePath);
-
-      event_picture_url = publicUrlData.publicUrl;
-    }
-
-    // Prepare updated data
-    const updatedData: { [key: string]: any } = {
-      ...updates,
-      event_picture_url: event_picture_url || eventRow.get('event_picture_url'),
-      updated_at: new Date().toISOString()
-    };
-
-    // Update event in spreadsheet
-    Object.keys(updatedData).forEach(key => {
-      if (key === 'tags') {
-        eventRow.set(key, JSON.stringify(updatedData[key] || []));
-      } else {
-        eventRow.set(key, updatedData[key]);
-      }
-    });
-
-    await eventRow.save();
-
-    // Return the updated event
-    const updatedEvent = {
-      id: eventRow.get('id'),
-      title: eventRow.get('title'),
-      description: eventRow.get('description'),
-      event_type: eventRow.get('event_type'),
-      start_date: eventRow.get('start_date'),
-      end_date: eventRow.get('end_date'),
-      location: eventRow.get('location'),
-      registration_link: eventRow.get('registration_link'),
-      company_id: eventRow.get('company_id'),
-      event_picture_url: eventRow.get('event_picture_url'),
-      tags: eventRow.get('tags') ? JSON.parse(eventRow.get('tags')) : [],
-      capacity: parseInt(eventRow.get('capacity')) || null,
-      is_virtual: eventRow.get('is_virtual') === 'true',
-      price: parseFloat(eventRow.get('price')) || 0,
-      created_at: eventRow.get('created_at'),
-      updated_at: eventRow.get('updated_at')
-    };
-
-    return NextResponse.json(updatedEvent);
-  } catch (err) {
-    console.error('Validation or processing error:', err);
-    return NextResponse.json(
-      { error: (err as Error).message },
-      { status: 400 }
-    );
-  }
-}
-
-export async function DELETE(request: Request) {
-  const auth = await authMiddleware(request);
-  if (auth instanceof NextResponse) {
-    return auth;
-  }
-
-  const { user, type } = auth;
-  if (type !== 'company') {
-    return NextResponse.json(
-      { error: 'Unauthorized access' },
-      { status: 403 }
-    );
-  }
-
-  const { company } = auth;
-  if (!company) {
-    return NextResponse.json(
-      { error: 'Company profile not found' },
-      { status: 404 }
-    );
-  }
-
-  try {
-    const body = await request.json();
-    const { id } = body;
-
-    if (!id) {
-      return NextResponse.json(
-        { error: 'Event ID is required for deletion' },
-        { status: 400 }
-      );
-    }
-
-    // Find and verify event belongs to company
-    const doc = await getSpreadsheet();
-    const sheet = doc.sheetsByTitle['Events'];
-    const rows = await sheet.getRows();
-    
-    const eventRow = rows.find(row => 
-      row.get('id') === id && row.get('company_id') === company.id
-    );
-
-    if (!eventRow) {
-      return NextResponse.json(
-        { error: 'Event not found or does not belong to this company' },
-        { status: 404 }
-      );
-    }
-
-    // Delete associated image from storage if it exists
-    const eventImageUrl = eventRow.get('event_picture_url');
-    if (eventImageUrl) {
-      const fileName = eventImageUrl.split('/').pop();
-      if (fileName) {
-        await supabaseAdmin.storage
-          .from('event_pictures')
-          .remove([`${company.id}/${fileName}`])
-          .catch(error => {
-            console.warn('Failed to delete event image from storage:', error);
-          });
-      }
-    }
-
-    // Delete event from spreadsheet
-    await eventRow.delete();
-
-    return NextResponse.json({ message: 'Event deleted successfully' });
-  } catch (err) {
-    console.error('Processing error:', err);
-    return NextResponse.json(
-      { error: (err as Error).message },
+      { error: "Validation error", details: validationError },
       { status: 400 }
     );
   }

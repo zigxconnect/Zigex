@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Alert } from "@/components/uiComponenet/Alert";
-import { Tag } from "@/components/uiComponenet/Tag";
+import { Alert } from "@/components/uiComponent/Alert";
+import { Tag } from "@/components/uiComponent/Tag";
 
 import { Sparkles, TriangleAlert } from "lucide-react";
 

@@ -1,12 +1,9 @@
+// app/api/company/register/route.ts
+
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
-/**
- * Handles new COMPANY registration.
- * This API route now accepts all fields from the sign-up form and saves them.
- */
 export async function POST(request: Request) {
-  // 1. Get ALL the fields from the request body.
   const {
     company_name,
     email,
@@ -17,7 +14,6 @@ export async function POST(request: Request) {
     website,
   } = await request.json();
 
-  // Basic validation for the required fields
   if (!email || !password || !company_name || !description) {
     return NextResponse.json(
       { error: "Company name, email, password, and description are required." },
@@ -25,10 +21,15 @@ export async function POST(request: Request) {
     );
   }
 
-  // 2. Create the user in Supabase Auth.
+  // 1. Create the user and pass metadata to explicitly identify them as a company.
   const { data: authData, error: authError } = await supabaseAdmin.auth.signUp({
     email,
     password,
+    options: {
+      data: {
+        user_role: "company", // This ensures our student-specific trigger will ignore this user.
+      },
+    },
   });
 
   if (authError || !authData.user) {
@@ -41,8 +42,7 @@ export async function POST(request: Request) {
 
   const userId = authData.user.id;
 
-  // 3. THE FIX IS HERE:
-  //    Create the corresponding profile, now including ALL the extra fields.
+  // 2. Manually create the company profile. This is now safe and will not conflict with the trigger.
   const { error: profileError } = await supabaseAdmin
     .from("company_profiles")
     .insert({
@@ -56,7 +56,7 @@ export async function POST(request: Request) {
       role: "company",
     });
 
-  // 4. Critical error handling remains the same.
+  // 3. If profile creation fails, we must delete the auth user to prevent orphaned users.
   if (profileError) {
     console.error("Supabase Profile Creation Error:", profileError);
     await supabaseAdmin.auth.admin.deleteUser(userId);
@@ -66,7 +66,6 @@ export async function POST(request: Request) {
     );
   }
 
-  // 5. Return success.
   return NextResponse.json(
     { message: "Company registered successfully. Please proceed to sign in." },
     { status: 201 }

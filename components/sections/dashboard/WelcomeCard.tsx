@@ -76,17 +76,23 @@ export const WelcomeCard = ({ user, onProfileUpdated }: WelcomeCardProps) => {
                 <div className="w-4 h-4 lg:w-6 lg:h-6 bg-blue-600 rounded-full flex items-center justify-center">
                   <User2 size={10} className="lg:w-3 lg:h-3 text-white" />
                 </div>
-                <h3 className="text-[9px] lg:text-xs font-semibold text-blue-900 uppercase tracking-wide">Skills</h3>
+                <h3 className="text-[9px] lg:text-xs font-semibold text-blue-900 uppercase tracking-wide">
+                  Skills
+                </h3>
               </div>
               <div className="text-[9px] lg:text-xs text-blue-800">
                 {isSkillsExpanded ? (
                   <div>
-                    <p className="break-words leading-relaxed">{user.skills.join(", ")}</p>
+                    <p className="break-words leading-relaxed">
+                      {user.skills.join(", ")}
+                    </p>
                     <button
                       onClick={() => setIsSkillsExpanded(false)}
                       className="flex items-center gap-1 text-blue-600 hover:text-blue-800 mt-1 transition-colors"
                     >
-                      <span className="text-[8px] lg:text-[10px] font-medium">Show less</span>
+                      <span className="text-[8px] lg:text-[10px] font-medium">
+                        Show less
+                      </span>
                       <ChevronUp size={8} className="lg:w-2.5 lg:h-2.5" />
                     </button>
                   </div>
@@ -100,7 +106,9 @@ export const WelcomeCard = ({ user, onProfileUpdated }: WelcomeCardProps) => {
                         onClick={() => setIsSkillsExpanded(true)}
                         className="flex items-center gap-1 text-blue-600 hover:text-blue-800 mt-1 transition-colors"
                       >
-                        <span className="text-[8px] lg:text-[10px] font-medium">Read more</span>
+                        <span className="text-[8px] lg:text-[10px] font-medium">
+                          Read more
+                        </span>
                         <ChevronDown size={8} className="lg:w-2.5 lg:h-2.5" />
                       </button>
                     )}
@@ -117,7 +125,9 @@ export const WelcomeCard = ({ user, onProfileUpdated }: WelcomeCardProps) => {
                 <div className="w-4 h-4 lg:w-6 lg:h-6 bg-gray-600 rounded-full flex items-center justify-center">
                   <User size={10} className="lg:w-3 lg:h-3 text-white" />
                 </div>
-                <h3 className="text-[9px] lg:text-xs font-semibold text-gray-900 uppercase tracking-wide">About Me</h3>
+                <h3 className="text-[9px] lg:text-xs font-semibold text-gray-900 uppercase tracking-wide">
+                  About Me
+                </h3>
               </div>
               <div className="text-[9px] lg:text-xs text-gray-700">
                 {isAboutExpanded ? (
@@ -129,7 +139,9 @@ export const WelcomeCard = ({ user, onProfileUpdated }: WelcomeCardProps) => {
                       onClick={() => setIsAboutExpanded(false)}
                       className="flex items-center gap-1 text-blue-600 hover:text-blue-800 mt-1 transition-colors"
                     >
-                      <span className="text-[8px] lg:text-[10px] font-medium">Show less</span>
+                      <span className="text-[8px] lg:text-[10px] font-medium">
+                        Show less
+                      </span>
                       <ChevronUp size={8} className="lg:w-2.5 lg:h-2.5" />
                     </button>
                   </div>
@@ -143,7 +155,9 @@ export const WelcomeCard = ({ user, onProfileUpdated }: WelcomeCardProps) => {
                         onClick={() => setIsAboutExpanded(true)}
                         className="flex items-center gap-1 text-blue-600 hover:text-blue-800 mt-1 transition-colors"
                       >
-                        <span className="text-[8px] lg:text-[10px] font-medium">Read more</span>
+                        <span className="text-[8px] lg:text-[10px] font-medium">
+                          Read more
+                        </span>
                         <ChevronDown size={8} className="lg:w-2.5 lg:h-2.5" />
                       </button>
                     )}
@@ -157,7 +171,7 @@ export const WelcomeCard = ({ user, onProfileUpdated }: WelcomeCardProps) => {
 
       {/* Avatar with Edit Hover Effect - Adjusted Position */}
       <div className="absolute top-20 md:top-24 lg:top-30 left-4 lg:left-6">
-        <div 
+        <div
           className="relative group cursor-pointer"
           onMouseEnter={() => setIsAvatarHovered(true)}
           onMouseLeave={() => setIsAvatarHovered(false)}
@@ -173,7 +187,7 @@ export const WelcomeCard = ({ user, onProfileUpdated }: WelcomeCardProps) => {
               priority
             />
           </div>
-          
+
           {/* Edit Overlay */}
           <div
             className={`
@@ -195,11 +209,13 @@ export const WelcomeCard = ({ user, onProfileUpdated }: WelcomeCardProps) => {
           </div>
 
           {/* Animated Ring */}
-          <div className={`
+          <div
+            className={`
             absolute inset-0 rounded-full border-2 border-blue-500
             transition-all duration-300 ease-in-out
-            ${isAvatarHovered ? 'scale-110 opacity-100' : 'scale-100 opacity-0'}
-          `} />
+            ${isAvatarHovered ? "scale-110 opacity-100" : "scale-100 opacity-0"}
+          `}
+          />
         </div>
       </div>
 
@@ -207,7 +223,6 @@ export const WelcomeCard = ({ user, onProfileUpdated }: WelcomeCardProps) => {
       <div className="pt-12 md:pt-14 lg:pt-8 px-4 lg:px-6 pb-4 lg:pb-6">
         {/* User Info and Social Links */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 lg:gap-4">
-        
           <div className="flex items-center gap-2 flex-wrap">
             <div className="flex items-center gap-2 shadow-md p-2 lg:p- hover:shadow-lg rounded-lg lg:rounded-lg px-2 transition-all duration-200 border border-blue-200">
               <div className="flex items-center justify-center bg-blue-700 text-white p-1.5 lg:p-2 rounded-full shadow-sm">
@@ -229,23 +244,27 @@ export const WelcomeCard = ({ user, onProfileUpdated }: WelcomeCardProps) => {
 
           {/* Social Links */}
           <div className="flex items-center gap-2 lg:gap-3">
-            <Link 
-              href={user.profile.linkedin_url || ""} 
+            <Link
+              href={user.profile.linkedin_url || ""}
               className="flex items-center gap-1.5 lg:gap-2  shadow-md p-2 lg:p-2 hover:shadow-lg hover:scale-105 rounded-lg lg:rounded-md transition-all duration-200 border border-blue-200 group"
             >
               <div className="flex items-center justify-center bg-blue-700 text-white p-1.5 lg:p-2 rounded-full shadow-sm group-hover:bg-blue-600">
                 <Link2 size={8} className="lg:w-2 lg:h-2" />
               </div>
-              <p className="text-xs lg:text-[12px] font-medium text-blue-800 group-hover:text-blue-900">Portfolio</p>
+              <p className="text-xs lg:text-[12px] font-medium text-blue-800 group-hover:text-blue-900">
+                Portfolio
+              </p>
             </Link>
-            <Link 
-              href={user.profile.github_url || ""} 
+            <Link
+              href={user.profile.github_url || ""}
               className="flex items-center gap-1.5 lg:gap-2 bg-gradient-to-r from-gray-800 to-gray-900 shadow-md p-2 lg:p-2 hover:shadow-lg hover:scale-105 rounded-lg lg:rounded-md transition-all duration-200 border border-gray-700 group"
             >
               <div className="flex items-center justify-center bg-white text-gray-900 p-1.5 lg:p-2 rounded-full shadow-sm group-hover:bg-gray-100">
                 <Github size={12} className="lg:w-2 lg:h-2" />
               </div>
-              <p className="text-xs lg:text-[12px] font-medium text-white group-hover:text-gray-100">Github</p>
+              <p className="text-xs lg:text-[12px] font-medium text-white group-hover:text-gray-100">
+                Github
+              </p>
             </Link>
           </div>
         </div>

@@ -18,9 +18,9 @@ import {
 } from "@/components/ui/form";
 import { X, ArrowRight, ArrowLeft, AlertTriangle } from "lucide-react";
 import { FileUploadButton } from "@/components/ui/FileUploadButton";
-import { Spinner } from "@/components/uiComponenet/Spinner";
-import { ApplicationPreview } from "../../intenships/ApllicationPreview";
+import { Spinner } from "@/components/uiComponent/Spinner";
 import { getRawProfileInfo, UserProfile } from "@/lib/actions/profile.actions";
+import { ApplicationPreview } from "../../internships/ApllicationPreview";
 
 // --- Validation Schema ---
 const MAX_FILE_SIZE_MB = 2;
@@ -127,14 +127,19 @@ export const ApplicationModal = ({
     setSubmissionError(null);
 
     if (!finalInternshipId) {
-      setSubmissionError("Internship ID is missing. Please refresh and try again.");
+      setSubmissionError(
+        "Internship ID is missing. Please refresh and try again."
+      );
       return;
     }
 
     const data = getValues();
     const formData = new FormData();
 
-    console.log("Submitting Application with Internship ID:", finalInternshipId);
+    console.log(
+      "Submitting Application with Internship ID:",
+      finalInternshipId
+    );
 
     formData.append("internship_id", finalInternshipId);
     formData.append("cover_letter_file", data.cover_letter_file);
@@ -169,7 +174,10 @@ export const ApplicationModal = ({
         responseData = { message: "Application submitted successfully!" };
       }
 
-      alert(responseData.message || `Application for ${internshipTitle} submitted successfully!`);
+      alert(
+        responseData.message ||
+          `Application for ${internshipTitle} submitted successfully!`
+      );
       onClose();
     } catch (error) {
       console.error("Submission error:", error);
@@ -192,7 +200,10 @@ export const ApplicationModal = ({
               {currentStep === 1 ? "Upload Documents" : "Review & Submit"}
             </p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100">
+          <button
+            onClick={onClose}
+            className="p-2 rounded-full hover:bg-gray-100"
+          >
             <X size={20} />
           </button>
         </div>
@@ -243,7 +254,9 @@ export const ApplicationModal = ({
                   name="support_letter_file"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Support Letter (Optional PDF, Max 2MB)</FormLabel>
+                      <FormLabel>
+                        Support Letter (Optional PDF, Max 2MB)
+                      </FormLabel>
                       <FormControl>
                         <FileUploadButton
                           value={field.value}

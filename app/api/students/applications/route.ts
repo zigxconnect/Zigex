@@ -62,11 +62,13 @@ export async function GET() {
   // Fetch all applications with all internship and form data
   const { data: applications, error } = await supabase
     .from("applications")
-    .select(`
+    .select(
+      `
       *,
       internship:internships(*),
       form:application_forms(*)
-    `)
+    `
+    )
     .eq("student_id", studentData.id)
     .order("created_at", { ascending: false });
 

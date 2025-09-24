@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { StatusBadge } from "@/components/uiComponenet/StatusBadge";
+import { StatusBadge } from "@/components/uiComponent/StatusBadge";
 import { FilePenLine, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";

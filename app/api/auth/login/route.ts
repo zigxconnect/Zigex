@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   const { email, password } = await request.json();
+  console.log("Login attempt for email:", email);
 
   if (!email || !password) {
     return NextResponse.json(
@@ -33,6 +34,7 @@ export async function POST(request: Request) {
     }
   );
 
+
   // 1. Check if user is a company
   const { data: companyProfile } = await supabase
     .from("company_profiles")
@@ -41,6 +43,8 @@ export async function POST(request: Request) {
     .single();
 
   if (companyProfile) {
+    console.log("Company profile found:");
+    console.table(companyProfile);
     // Company flow: Send OTP.
     const { error: otpError } = await supabase.auth.signInWithOtp({
       email,

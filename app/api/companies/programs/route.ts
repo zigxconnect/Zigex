@@ -116,7 +116,45 @@ export async function POST(request: Request) {
 
     // Handle image upload to Supabase Storage
     if (programPicture) {
-      const fileExtension = programPicture.name.split(".").pop();
+      // Validate file extension and MIME type
+      const allowedExtensions = ["jpg", "jpeg", "png", "gif", "webp"];
+      const allowedMimeTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+      ];
+      let fileExtension = programPicture.name.split(".").pop();
+      if (!fileExtension) {
+        return NextResponse.json(
+          { error: "Uploaded file must have an extension." },
+          { status: 400 }
+        );
+      }
+      fileExtension = fileExtension.toLowerCase().trim();
+      if (!allowedExtensions.includes(fileExtension)) {
+        return NextResponse.json(
+          {
+            error: `File type .${fileExtension} is not allowed. Allowed types: ${allowedExtensions.join(
+              ", "
+            )}`,
+          },
+          { status: 400 }
+        );
+      }
+      if (
+        programPicture.type &&
+        !allowedMimeTypes.includes(programPicture.type)
+      ) {
+        return NextResponse.json(
+          {
+            error: `MIME type ${
+              programPicture.type
+            } is not allowed. Allowed types: ${allowedMimeTypes.join(", ")}`,
+          },
+          { status: 400 }
+        );
+      }
       const fileName = `${uuidv4()}.${fileExtension}`; // Use UUID for unique filename
       const filePath = `${company.id}/${fileName}`; // Store images per company ID
 
@@ -393,3 +431,39 @@ export async function DELETE(request: Request) {
     );
   }
 }
+/*
+* Function to get programs posted by the authenticated company
+*/
+// GET /api/companies/programs (Authenticated: returns programs for the authenticated company)
+export async function getAuthenticatedCompanyPrograms(request: Request) {
+  const auth = await authMiddleware(request);
+  if (auth instanceof NextResponse) {
+    return auth;
+  }
+
+  const { type, company } = auth;
+  if (type !== "company") {
+    return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
+  }
+
+  if (!company) {
+    return NextResponse.json(
+      { error: "Company profile not found" },
+      { status: 404 }
+    );
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from("programs")
+    .select("*")
+    .eq("company_id", company.id);
+
+  if (error) {
+    console.error("Error fetching programs:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json(data);
+}
+
+
