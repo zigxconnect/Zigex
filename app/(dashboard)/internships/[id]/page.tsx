@@ -51,45 +51,69 @@ export default function InternshipDetailsPage({
     };
 
     fetchDetails();
-  }, [params.id, resolvedParams.id]);
+  }, [params.id, resolvedParams[0].id]);
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-[60vh]">
-        <Spinner />{" "}
-        <span className="ml-4 text-gray-500">Loading Details...</span>
+      <div className="flex items-center justify-center min-h-screen bg-[#F8FAFC]">
+        <div className="flex items-center">
+          <Spinner />
+          <span className="ml-4 text-gray-500 text-lg">Loading Details...</span>
+        </div>
       </div>
     );
   }
 
   if (error) {
-    return <div className="text-center p-12 text-red-500">{error}</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#F8FAFC]">
+        <div className="text-center p-6 text-red-500 text-lg">{error}</div>
+      </div>
+    );
   }
 
   if (!internship) {
     return (
-      <div className="text-center p-12 text-gray-500">
-        Internship not found.
+      <div className="flex items-center justify-center min-h-screen bg-[#F8FAFC]">
+        <div className="text-center p-6 text-gray-500 text-lg">
+          Internship not found.
+        </div>
       </div>
     );
   }
 
   return (
     <>
-      <div className="bg-[#F8FAFC] p-6 lg:p-8 pb-20 lg:pb-8">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            <InternshipBody internship={internship} />
-          </div>
-          <div>
-            <InternshipInfoPanel
-              internship={internship}
-              onApplyClick={() => setIsModalOpen(true)}
-            />
+      {/* Main Content Container */}
+      <div className="min-h-screen bg-[#F8FAFC]">
+        {/* Mobile: No padding, Desktop: Padding */}
+        <div className="lg:p-8 pb-20 lg:pb-8">
+          <div className="lg:max-w-7xl lg:mx-auto">
+            
+            {/* Mobile: Stack layout, Desktop: Grid layout */}
+            <div className="flex flex-col lg:grid lg:grid-cols-3 lg:gap-8">
+              
+              {/* Main Content */}
+              <div className="lg:col-span-2">
+                {/* Mobile: Full width with no border radius, Desktop: Normal styling */}
+                <div className="lg:rounded-2xl overflow-hidden">
+                  <InternshipBody internship={internship} />
+                </div>
+              </div>
+              
+              {/* Desktop Sidebar - Hidden on mobile since info is moved to InternshipBody or fixed button */}
+              <div className="hidden lg:block">
+                <InternshipInfoPanel
+                  internship={internship}
+                  onApplyClick={() => setIsModalOpen(true)}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
+      {/* Fixed Bottom Apply Button - Mobile Only */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg lg:hidden z-30">
         <Button
           className="w-full text-base py-3 font-semibold"
@@ -99,6 +123,7 @@ export default function InternshipDetailsPage({
         </Button>
       </div>
 
+      {/* Application Modal */}
       {isModalOpen && (
         <ApplicationModal
           internshipTitle={internship.title}

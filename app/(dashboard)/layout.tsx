@@ -3,6 +3,8 @@
 import { DashboardHeader } from "@/components/layout/dashboard/DashboardHeader";
 import { DashboardFooter } from "@/components/layout/dashboard/Footer";
 import { Sidebar } from "@/components/layout/dashboard/Sidebar";
+import AIChatButton from "@/components/uiComponent/AIChatButton";
+// import AIChatButton from "@/components/uiComponenet/AIChatButton";
 import { useState, useEffect } from "react";
 
 export default function DashboardLayout({
@@ -47,7 +49,6 @@ export default function DashboardLayout({
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <DashboardHeader onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
-      
       {/* Main Container */}
       <div className="flex relative">
         {/* Sidebar */}
@@ -79,16 +80,17 @@ export default function DashboardLayout({
               </div>
             </div>
           </div>
+          {/* Fixed AI Chat Button */}
+          <AIChatButton />
         </main>
       </div>
-      
       {/* Footer - Hidden on mobile when sidebar is open */}
       <div className={`
         ${isMobile && isSidebarOpen ? 'hidden' : 'block'}
         ${!isMobile && isSidebarOpen ? 'lg:ml-72' : 'ml-0'}
         transition-all duration-300
       `}>
-        <DashboardFooter />
+        {/* <DashboardFooter /> */}
       </div>
     </div>
   );

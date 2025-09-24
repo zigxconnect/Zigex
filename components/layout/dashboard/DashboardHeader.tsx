@@ -31,11 +31,14 @@ export const DashboardHeader = ({ onMenuClick }: DashboardHeaderProps) => {
           </button>
 
           {/* Logo/Brand */}
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-md">
-              <span className="text-white font-bold text-sm">Z</span>
-            </div>
-            <span className="hidden sm:block font-bold text-gray-900 text-lg">ZIGEX</span>
+          <div className="flex items-center  shadow-md p-2 rounded-lg">
+            {/* <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-md">
+              <span className="">Z</span>
+            </div> */}
+            <div className="text-white font-bold text-sm w-6 h-6 bg-blue-600 rounded-sm flex items-center justify-center shadow-md mr-1">Z</div>
+
+            <div className="  sm:block font-bold text-blue-700 text-lg rounded flex items-center justify-center">IGEX</div>
+
           </div>
         </div>
 

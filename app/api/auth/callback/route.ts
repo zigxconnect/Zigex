@@ -10,26 +10,25 @@ export async function GET(request: Request) {
   const next = searchParams.get("next") ?? "/dashboard";
 
   if (code) {
-    // 1. Call cookies() SYNCHRONOUSLY. Do NOT use await.
-    const cookieStore = cookies();
+  // 1. Await cookies() as required by Next.js 14+
+  const cookieStore = await cookies();
 
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
-          // The 'get' method can remain synchronous
-          get(name: string) {
-            return cookieStore.get(name)?.value;
+          // The 'get' method must now be async
+          async get(name: string) {
+            const cookie = await cookieStore.get(name);
+            return cookie?.value;
           },
-          // 2. Make the 'set' and 'remove' methods ASYNC
+          // 'set' and 'remove' methods must be async and awaited
           async set(name: string, value: string, options: CookieOptions) {
-            // This is an async context, so Next.js is happy.
-            cookieStore.set({ name, value, ...options });
+            await cookieStore.set({ name, value, ...options });
           },
           async remove(name: string, options: CookieOptions) {
-            // This is also an async context.
-            cookieStore.set({ name, value: "", ...options });
+            await cookieStore.set({ name, value: "", ...options });
           },
         },
       }
