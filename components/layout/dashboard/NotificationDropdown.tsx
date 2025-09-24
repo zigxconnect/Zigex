@@ -90,7 +90,8 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
     // await fetch(`/api/notifications/${notificationId}/read`, { method: 'POST' });
 
     setIsOpen(false); // Close dropdown after clicking
-    router.push(`/programs/${programId}/details`); // Navigate to the details page
+    // Navigate to the program details page, passing a query param to indicate notification
+    router.push(`/programs/${programId}?from=notification`);
   };
 
   const toggleDropdown = () => {
@@ -153,7 +154,7 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
                   >
                     {/* Using Link for better accessibility and pre-fetching */}
                     <Link
-                      href={`/programs/${notification.programId}/details`}
+                      href={`/programs/${notification.programId}?from=notification`}
                       onClick={(e) => {
                         e.preventDefault(); // Prevent default Link navigation for custom handling
                         handleNotificationClick(notification.id, notification.programId);
