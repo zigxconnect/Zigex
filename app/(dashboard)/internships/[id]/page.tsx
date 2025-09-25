@@ -7,6 +7,7 @@ import { ApplicationModal } from "@/components/sections/dashboard/details/Applic
 import { InternshipInfoPanel } from "@/components/sections/dashboard/details/InternshipInfoPanel";
 import { InternshipBody } from "@/components/sections/dashboard/details/InternshipBody";
 import { Spinner } from "@/components/uiComponent/Spinner";
+import { LoaderPinwheel } from "lucide-react";
 
 export default function InternshipDetailsPage({
   params,
@@ -57,7 +58,8 @@ export default function InternshipDetailsPage({
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#F8FAFC]">
         <div className="flex items-center">
-          <Spinner />
+          <LoaderPinwheel/>
+          
           <span className="ml-4 text-gray-500 text-lg">Loading Details...</span>
         </div>
       </div>

@@ -12,6 +12,7 @@ import {
   Users,
   TrendingUp,
   User,
+  NewspaperIcon,
 } from "lucide-react";
 import { AiOutlineWechat } from "react-icons/ai";
 import { Button } from "@/components/ui/button";
@@ -41,6 +42,12 @@ const navItems = [
   {
     href: "/dashboard/track-progress",
     icon: TrendingUp,
+    label: "Track Progress",
+  },
+
+  {
+    href: "/dashboard/news",
+    icon: NewspaperIcon,
     label: "Track Progress",
   },
 ];

@@ -6,7 +6,7 @@ import { Spinner } from "@/components/uiComponent/Spinner";
 import { Button } from "@/components/ui/button";
 
 import Image from "next/image";
-import { MapPin, BookOpen, TriangleAlert } from "lucide-react";
+import { MapPin, BookOpen, TriangleAlert, LoaderPinwheel } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Alert } from "@/components/uiComponent/Alert";
 import { ListItem } from "@/components/uiComponent/ListItem";
@@ -44,7 +44,8 @@ export default function ProgramDetailsPage({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Spinner />
+          <LoaderPinwheel/>
+     
       </div>
     );
   }
