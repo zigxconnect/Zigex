@@ -14,7 +14,7 @@ export default function AIChatButton() {
       style={{ boxShadow: "0 4px 24px rgba(30, 64, 175, 0.15)" }}
     >
       {/* <Sparkles className="w-6 h-6" /> */}
-      <span className="font-semibold text-base hidden sm:inline">AI</span>
+      <span className="font-semibold text-base  sm:inline">AI</span>
     </button>
   );
 }

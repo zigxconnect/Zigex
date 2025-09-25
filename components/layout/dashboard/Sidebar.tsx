@@ -17,26 +17,10 @@ import { AiOutlineWechat } from "react-icons/ai";
 import { Button } from "@/components/ui/button";
 
 interface SidebarProps {
-  user: User;
+  user: any; // Use your UserProfile type here
   isOpen?: boolean;
   onClose?: () => void;
   onToggle?: () => void;
-}
-
-interface User {
-  id?: string;
-  name?: string;
-  email?: string;
-  avatar?: string;
-  avatarUrl?: string;
-  role?: string;
-  isOnline?: boolean;
-  stats?: {
-    applications?: number;
-    profileViews?: number;
-  };
-  applicationsCount?: number;
-  profileViews?: number;
 }
 
 // Regular navigation items
@@ -74,6 +58,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
   user,
 }) => {
   const pathname = usePathname();
+
+  // Extract user data with fallbacks
+  const userName = user?.name || user?.profile?.name || "Guest User";
+  const userRole = user?.role || user?.profile?.role || "Student";
+  const userAvatar =
+    user?.avatar ||
+    user?.profile?.avatar_url ||
+    user?.avatarUrl ||
+    "/default-avatar.png";
+  const userEmail = user?.email || user?.profile?.email || "";
+  const isOnline = user?.isOnline ?? true; // Default to online if not specified
+  const applicationsCount =
+    user?.applicationsCount || user?.stats?.applications || 0;
+  const profileViews = user?.profileViews || user?.stats?.profileViews || 0;
 
   const handleSignOut = async () => {
     try {
@@ -118,8 +116,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 : "bg-white text-blue-600 hover:bg-blue-50 border border-blue-200 hover:border-blue-300 shadow-sm"
               : // Regular styling for other items
                 isActive
-              ? "bg-blue-600 text-white shadow-lg hover:bg-blue-700"
-              : "text-gray-700 hover:bg-gray-50 hover:text-blue-600"
+                ? "bg-blue-600 text-white shadow-lg hover:bg-blue-700"
+                : "text-gray-700 hover:bg-gray-50 hover:text-blue-600"
           }
         `}
       >
@@ -132,8 +130,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   ? "bg-white/20"
                   : "bg-blue-50 group-hover:bg-blue-100"
                 : isActive
-                ? "bg-blue-700"
-                : "bg-gray-100 group-hover:bg-blue-50"
+                  ? "bg-blue-700"
+                  : "bg-gray-100 group-hover:bg-blue-50"
             }
           `}
         >
@@ -146,15 +144,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     ? "text-white"
                     : "text-blue-600 group-hover:text-blue-700"
                   : isActive
-                  ? "text-white"
-                  : "text-gray-600 group-hover:text-blue-600"
+                    ? "text-white"
+                    : "text-gray-600 group-hover:text-blue-600"
               }
             `}
           />
         </div>
-        <span className="flex-1 truncate font-medium">
-          {item.label}
-        </span>
+        <span className="flex-1 truncate font-medium">{item.label}</span>
         {item.badge && (
           <span
             className={`
@@ -213,35 +209,33 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Header with User Profile - Fixed at top */}
         <div className="flex-shrink-0 p-4 lg:p-6 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-purple-50">
           <div className="flex items-center gap-4">
-            <div className="relative w-14 h-14 rounded-full overflow-hidden border-3 border-white shadow-lg flex-shrink-0">
+            <div className="relative w-16 h-16 rounded-full overflow-hidden border-3 border-white shadow-lg flex-shrink-0 fill">
               <Image
-                src={user?.avatar || "/default-avatar.png"}
-                alt="User Avatar"
-                width={56}
-                height={56}
-                className="object-cover"
+                src={userAvatar}
+                alt={`${userName}'s Avatar`}
+                width={64}
+                height={64}
+                className="w-full h-full object-cover"
                 priority
               />
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-bold text-gray-900 truncate text-base">
-                {user?.name || "Guest User"}
+                {userName}
               </h3>
-              <p className="text-sm text-gray-600">
-                {user?.role || "Student"}
-              </p>
+              <p className="text-sm text-gray-600">{userRole}</p>
               <div className="flex items-center gap-2 mt-1">
                 <div
                   className={`w-2 h-2 rounded-full ${
-                    user?.isOnline ? "bg-green-500" : "bg-gray-400"
+                    isOnline ? "bg-green-500" : "bg-gray-400"
                   }`}
                 />
                 <span
                   className={`text-xs font-medium ${
-                    user?.isOnline ? "text-green-600" : "text-gray-600"
+                    isOnline ? "text-green-600" : "text-gray-600"
                   }`}
                 >
-                  {user?.isOnline ? "Online" : "Offline"}
+                  {isOnline ? "Online" : "Offline"}
                 </span>
               </div>
             </div>
@@ -293,13 +287,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <div className="flex justify-between items-center">
                     <span className="text-blue-700">Applications</span>
                     <span className="font-bold text-blue-900 bg-blue-200 px-2 py-1 rounded-full text-xs">
-                      {user?.applicationsCount || 12}
+                      {applicationsCount}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-blue-700">Profile Views</span>
                     <span className="font-bold text-blue-900 bg-blue-200 px-2 py-1 rounded-full text-xs">
-                      {user?.profileViews || 48}
+                      {profileViews}
                     </span>
                   </div>
                 </div>
@@ -315,7 +309,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onClick={handleSignOut}
             >
               <div className="p-1.5 rounded-lg bg-gray-100 hover:bg-red-100 transition-colors flex-shrink-0">
-                <LogOut size={16} className="text-gray-600 hover:text-red-600" />
+                <LogOut
+                  size={16}
+                  className="text-gray-600 hover:text-red-600"
+                />
               </div>
               <span>Sign Out</span>
             </Button>
@@ -327,14 +324,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="flex justify-around text-center">
             <div>
               <div className="font-bold text-blue-600 text-lg">
-                {user?.applicationsCount || 12}
+                {applicationsCount}
               </div>
               <div className="text-xs text-gray-600">Applications</div>
             </div>
             <div className="w-px bg-gray-300"></div>
             <div>
               <div className="font-bold text-purple-600 text-lg">
-                {user?.profileViews || 48}
+                {profileViews}
               </div>
               <div className="text-xs text-gray-600">Profile Views</div>
             </div>
