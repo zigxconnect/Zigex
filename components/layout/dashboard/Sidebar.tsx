@@ -48,7 +48,7 @@ const navItems = [
   {
     href: "/dashboard/news",
     icon: NewspaperIcon,
-    label: "Track Progress",
+    label: "Lates News",
   },
 ];
 
