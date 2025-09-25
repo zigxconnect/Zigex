@@ -17,26 +17,10 @@ import { AiOutlineWechat } from "react-icons/ai";
 import { Button } from "@/components/ui/button";
 
 interface SidebarProps {
-  user: User;
+  user: any; // Use your UserProfile type here
   isOpen?: boolean;
   onClose?: () => void;
   onToggle?: () => void;
-}
-
-interface User {
-  id?: string;
-  name?: string;
-  email?: string;
-  avatar?: string;
-  avatarUrl?: string;
-  role?: string;
-  isOnline?: boolean;
-  stats?: {
-    applications?: number;
-    profileViews?: number;
-  };
-  applicationsCount?: number;
-  profileViews?: number;
 }
 
 // Regular navigation items
@@ -74,6 +58,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
   user,
 }) => {
   const pathname = usePathname();
+
+  // Extract user data with fallbacks
+  const userName = user?.name || user?.profile?.name || "Guest User";
+  const userRole = user?.role || user?.profile?.role || "Student";
+  const userAvatar = user?.avatar || user?.profile?.avatar_url || user?.avatarUrl || "/default-avatar.png";
+  const userEmail = user?.email || user?.profile?.email || "";
+  const isOnline = user?.isOnline ?? true; // Default to online if not specified
+  const applicationsCount = user?.applicationsCount || user?.stats?.applications || 0;
+  const profileViews = user?.profileViews || user?.stats?.profileViews || 0;
 
   const handleSignOut = async () => {
     try {
@@ -215,8 +208,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="flex items-center gap-4">
             <div className="relative w-14 h-14 rounded-full overflow-hidden border-3 border-white shadow-lg flex-shrink-0">
               <Image
-                src={user?.avatar || "/default-avatar.png"}
-                alt="User Avatar"
+                src={userAvatar}
+                alt={`${userName}'s Avatar`}
                 width={56}
                 height={56}
                 className="object-cover"
@@ -225,23 +218,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-bold text-gray-900 truncate text-base">
-                {user?.name || "Guest User"}
+                {userName}
               </h3>
               <p className="text-sm text-gray-600">
-                {user?.role || "Student"}
+                {userRole}
               </p>
               <div className="flex items-center gap-2 mt-1">
                 <div
                   className={`w-2 h-2 rounded-full ${
-                    user?.isOnline ? "bg-green-500" : "bg-gray-400"
+                    isOnline ? "bg-green-500" : "bg-gray-400"
                   }`}
                 />
                 <span
                   className={`text-xs font-medium ${
-                    user?.isOnline ? "text-green-600" : "text-gray-600"
+                    isOnline ? "text-green-600" : "text-gray-600"
                   }`}
                 >
-                  {user?.isOnline ? "Online" : "Offline"}
+                  {isOnline ? "Online" : "Offline"}
                 </span>
               </div>
             </div>
@@ -293,13 +286,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <div className="flex justify-between items-center">
                     <span className="text-blue-700">Applications</span>
                     <span className="font-bold text-blue-900 bg-blue-200 px-2 py-1 rounded-full text-xs">
-                      {user?.applicationsCount || 12}
+                      {applicationsCount}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-blue-700">Profile Views</span>
                     <span className="font-bold text-blue-900 bg-blue-200 px-2 py-1 rounded-full text-xs">
-                      {user?.profileViews || 48}
+                      {profileViews}
                     </span>
                   </div>
                 </div>
@@ -327,14 +320,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="flex justify-around text-center">
             <div>
               <div className="font-bold text-blue-600 text-lg">
-                {user?.applicationsCount || 12}
+                {applicationsCount}
               </div>
               <div className="text-xs text-gray-600">Applications</div>
             </div>
             <div className="w-px bg-gray-300"></div>
             <div>
               <div className="font-bold text-purple-600 text-lg">
-                {user?.profileViews || 48}
+                {profileViews}
               </div>
               <div className="text-xs text-gray-600">Profile Views</div>
             </div>
