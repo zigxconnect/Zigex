@@ -1,17 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import { useFetchDetails } from "@/hooks/useFetchDetails";
 import { Program } from "@/lib/types/dashoard/index";
 import { Spinner } from "@/components/uiComponent/Spinner";
 import { Button } from "@/components/ui/button";
-
 import Image from "next/image";
-import { MapPin, BookOpen, TriangleAlert } from "lucide-react";
+import { MapPin, Building2, ExternalLink } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Alert } from "@/components/uiComponent/Alert";
-import { ListItem } from "@/components/uiComponent/ListItem";
+import DynamicForm from "@/components/sections/dashboard/Application/application";
 
-// Reusing the DetailItem helper component
 const DetailItem = ({
   label,
   value,
@@ -41,6 +39,8 @@ export default function ProgramDetailsPage({
     error,
   } = useFetchDetails<Program>("/api/students/programs", params.id);
 
+  const [showForm, setShowForm] = useState(false);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
@@ -58,21 +58,32 @@ export default function ProgramDetailsPage({
   }
 
   const company = program.company;
-  const deadline = program.application_deadline
-    ? new Date(program.application_deadline).toLocaleDateString("en-US", {
-        month: "long",
-        day: "numeric",
-      })
-    : "Not specified";
+
+ if (showForm) {
+   return (
+      <div className="w-full max-w-4xl p-4 md:p-5 rounded-2xl flex ">
+        
+        <Button
+          className="hidden md:block text-white rounded-full w-12 h-12 flex-shrink-0 p-1"
+          onClick={() => setShowForm(false)}
+          variant="primary"
+        >
+          ←
+        </Button>
+
+        <div className="flex-1 w-full">
+          <DynamicForm type="program" />
+        </div>
+      </div>
+   );
+ }
+
 
   return (
     <div className="bg-[#F8FAFC] p-6 lg:p-8">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Content */}
         <div className="lg:col-span-2 bg-white p-8 rounded-2xl shadow-lg border border-gray-200">
-          <h1 className="text-4xl font-bold text-purple-700">
-            {program.title}
-          </h1>
+          <h1 className="text-4xl font-bold text-green-700">{program.title}</h1>
           <div className="mt-6 h-56 bg-gray-200 rounded-xl overflow-hidden relative">
             <Image
               src={program.program_picture_url}
@@ -82,63 +93,44 @@ export default function ProgramDetailsPage({
             />
           </div>
           <div className="mt-8 flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
-            <div className="w-16 h-16 rounded-lg flex items-center justify-center bg-purple-500 text-white font-bold text-2xl shadow-md">
-              <BookOpen size={32} />
+            <div className="w-16 h-16 rounded-lg flex items-center justify-center bg-green-500 text-white font-bold text-2xl shadow-md">
+              <Building2 size={32} />
             </div>
             <div>
               <h2 className="text-xl font-bold text-gray-900">
-                {company?.company_name || "Community Program"}
+                {company?.company_name}
               </h2>
-              <div className="flex items-center gap-1 text-sm text-gray-500 mt-1 capitalize">
-                <MapPin size={14} /> {program.location || program.type}
+              <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
+                <MapPin size={14} /> {program.location}
               </div>
             </div>
           </div>
-          <div className="mt-8 prose max-w-none space-y-8">
-            <section>
-              <h3 className="text-xl font-bold text-gray-800 mb-3">
-                Program Description
-              </h3>
-              <p>{program.description}</p>
-            </section>
-            {program.required_skills && program.required_skills.length > 0 && (
-              <section>
-                <h3 className="text-xl font-bold text-gray-800 mb-3">
-                  Required Skills
-                </h3>
-                <ul className="space-y-2">
-                  {program.required_skills.map((skill, i) => (
-                    <li key={i}>
-                      <ListItem>{skill}</ListItem>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
+          <div className="mt-8 prose max-w-none">
+            <h3 className="text-xl font-bold text-gray-800 mb-3">
+              About this Program
+            </h3>
+            <p>{program.description || "No description provided."}</p>
           </div>
         </div>
 
-        {/* Sidebar */}
         <div className="space-y-6 sticky top-8">
           <Card>
             <div className="p-6">
-              <h3 className="font-bold text-lg mb-4 text-purple-700">
+              <h3 className="font-bold text-lg mb-4 text-green-700">
                 Program Details
               </h3>
-              <DetailItem label="Category" value={program.program_category} />
-              <DetailItem label="Type" value={program.type} />
               <DetailItem label="Location" value={program.location} />
+              <DetailItem label="Start Date" value={program.start_date} />
+              <DetailItem label="End Date" value={program.end_date} />
             </div>
           </Card>
-          <Button className="w-full text-base py-3 font-semibold">
-            Apply or Learn More
+
+          <Button
+            className="w-full text-base py-3 font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            onClick={() => setShowForm(true)}
+          >
+            Register Now <ExternalLink size={16} className="ml-2" />
           </Button>
-          <Alert icon={TriangleAlert} variant="warning">
-            <h4 className="font-bold">Application Deadline</h4>
-            <p className="mt-1">
-              Applications close on {deadline}. Apply soon!
-            </p>
-          </Alert>
         </div>
       </div>
     </div>

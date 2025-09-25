@@ -1,16 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import { useFetchDetails } from "@/hooks/useFetchDetails";
 import { Event } from "@/lib/types/dashoard/index";
 import { Spinner } from "@/components/uiComponent/Spinner";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import Image from "next/image";
 import { MapPin, Building2, ExternalLink, TriangleAlert } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Alert } from "@/components/uiComponent/Alert";
+import DynamicForm from "@/components/sections/dashboard/Application/application"; 
 
-// A helper component for displaying detail items in the sidebar
 const DetailItem = ({
   label,
   value,
@@ -29,7 +29,6 @@ const DetailItem = ({
   );
 };
 
-// Main Page Component
 export default function EventDetailsPage({
   params,
 }: {
@@ -40,6 +39,8 @@ export default function EventDetailsPage({
     isLoading,
     error,
   } = useFetchDetails<Event>("/api/students/events", params.id);
+
+  const [showForm, setShowForm] = useState(false); 
 
   if (isLoading) {
     return (
@@ -69,6 +70,26 @@ export default function EventDetailsPage({
     year: "numeric",
   });
 
+ if (showForm) {
+   return (
+      <div className="w-full max-w-4xl p-4 md:p-5 rounded-2xl flex">
+        
+        <Button
+          className="hidden md:block text-white rounded-full w-12 h-12 flex-shrink-0 p-1"
+          onClick={() => setShowForm(false)}
+          variant="primary"
+        >
+          ←
+        </Button>
+
+        <div className="flex-1 w-full">
+          <DynamicForm type="event" />
+        </div>
+      </div>
+   );
+ }
+
+  
   return (
     <div className="bg-[#F8FAFC] p-6 lg:p-8">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -104,7 +125,7 @@ export default function EventDetailsPage({
           </div>
         </div>
 
-        {/* Sidebar */}
+        
         <div className="space-y-6 sticky top-8">
           <Card>
             <div className="p-6">
@@ -120,17 +141,14 @@ export default function EventDetailsPage({
               />
             </div>
           </Card>
-          {event.registration_link && (
-            <Button asChild className="w-full text-base py-3 font-semibold">
-              <Link
-                href={event.registration_link}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Register Now <ExternalLink size={16} className="ml-2" />
-              </Link>
-            </Button>
-          )}
+
+          <Button
+            className="w-full text-base py-3 font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            onClick={() => setShowForm(true)}
+          >
+            Register Now <ExternalLink size={16} className="ml-2" />
+          </Button>
+
           <Alert icon={TriangleAlert} variant="info">
             <h4 className="font-bold">Event Timing</h4>
             <p className="mt-1">
