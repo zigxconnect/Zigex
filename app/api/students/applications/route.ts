@@ -1,11 +1,11 @@
-// app/api/students/applications/route.ts
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { v4 as uuidv4, validate as isUUID } from "uuid"; // Import validate
 
-async function getSupabase() {
+export async function POST(request: Request) {
   const cookieStore = await cookies();
-  return createServerClient(
+  const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -17,174 +17,172 @@ async function getSupabase() {
           cookieStore.set({ name, value, ...options });
         },
         remove(name: string, options: { path?: string }) {
-          cookieStore.set({
-            name,
-            value: "",
-            ...options,
-            expires: new Date(0),
-          });
+          cookieStore.set({ name, value: "", ...options, expires: new Date(0) });
         },
       },
     }
   );
-}
 
-// ✅ GET: Fetch student applications
-export async function GET() {
-  const supabase = await getSupabase();
+  try {
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+    if (authError || !user) {
+      console.error("Authentication error:", authError?.message || "No user found");
+      return NextResponse.json({ error: "Unauthorized. Please log in." }, { status: 401 });
+    }
 
-  if (authError || !user) {
+    const formData = await request.formData();
+    const internship_id_raw = formData.get("internship_id");
+    const cover_letter_file = formData.get("cover_letter_file") as File | null;
+    const support_letter_file = formData.get("support_letter_file") as File | null;
+
+    // ✅ Validate internship_id
+    if (typeof internship_id_raw !== "string" || !isUUID(internship_id_raw)) {
+      console.error("Invalid or missing internship_id:", internship_id_raw);
+      return NextResponse.json({ error: "Internship ID is required and must be a valid UUID." }, { status: 400 });
+    }
+    const internship_id = internship_id_raw;
+
+    if (!cover_letter_file || cover_letter_file.size === 0) {
+      return NextResponse.json({ error: "Cover letter file is required." }, { status: 400 });
+    }
+
+    // ✅ Get student profile
+    const { data: studentData, error: studentError } = await supabase
+      .from("student_profiles")
+      .select("id")
+      .eq("user_id", user.id)
+      .single();
+
+    if (studentError || !studentData?.id) {
+      console.error("Student profile not found:", studentError?.message);
+      return NextResponse.json(
+        { error: "Student profile not found. Please complete your profile." },
+        { status: 404 }
+      );
+    }
+
+    const student_id = studentData.id;
+    let coverLetterUrl: string | null = null;
+    let supportLetterUrl: string | null = null;
+
+    // ✅ Upload Cover Letter
+    const coverFileExt = cover_letter_file.name.split(".").pop();
+    const coverFilePath = `students/${user.id}/applications/${internship_id}/cover_letter_${uuidv4()}.${coverFileExt}`;
+
+    const { error: coverUploadError } = await supabase.storage
+      .from("student-assets")
+      .upload(coverFilePath, cover_letter_file, {
+        cacheControl: "3600",
+        upsert: false,
+      });
+
+    if (coverUploadError) {
+      console.error("Cover letter upload failed:", coverUploadError.message);
+      throw new Error("Failed to upload cover letter.");
+    }
+
+    const { data: coverPublicUrl } = supabase.storage
+      .from("student-assets")
+      .getPublicUrl(coverFilePath);
+    coverLetterUrl = coverPublicUrl.publicUrl;
+
+    // ✅ Upload Support Letter (if provided)
+    if (support_letter_file && support_letter_file.size > 0) {
+      const supportFileExt = support_letter_file.name.split(".").pop();
+      const supportFilePath = `students/${user.id}/applications/${internship_id}/support_letter_${uuidv4()}.${supportFileExt}`;
+
+      const { error: supportUploadError } = await supabase.storage
+        .from("student-assets")
+        .upload(supportFilePath, support_letter_file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+
+      if (supportUploadError) {
+        console.error("Support letter upload failed:", supportUploadError.message);
+        throw new Error("Failed to upload support letter.");
+      }
+
+      const { data: supportPublicUrl } = supabase.storage
+        .from("student-assets")
+        .getPublicUrl(supportFilePath);
+      supportLetterUrl = supportPublicUrl.publicUrl;
+    }
+
+    // ✅ Create application record (force new row every time)
+    let { data: appData, error: appError } = await supabase
+      .from("applications")
+      .insert([
+        {
+          student_id,
+          internship_id,
+          application_type: "manual",
+        },
+      ])
+      .select("id")
+      .single();
+
+    if (appError || !appData) {
+      // 🚨 Special case: unique constraint violation
+      if (appError?.code === "23505") {
+        console.warn("Duplicate application detected. Creating a new unique record...");
+
+        const { data: newAppData, error: newAppError } = await supabase
+          .from("applications")
+          .insert([
+            {
+              student_id,
+              internship_id,
+              application_type: "manual",
+              created_at: new Date().toISOString(), // helps differentiate rows
+            },
+          ])
+          .select("id")
+          .single();
+
+        if (newAppError || !newAppData) {
+          console.error("Retry insert failed:", newAppError?.message);
+          throw new Error("Failed to create application entry after retry.");
+        }
+
+        appData = newAppData; // reassign after retry
+      } else {
+        console.error("Application insert failed:", appError?.message);
+        throw new Error("Failed to create application entry.");
+      }
+    }
+
+    const application_id = appData.id;
+
+    // ✅ Insert application form details
+    const { error: formError } = await supabase
+      .from("application_forms")
+      .insert([
+        {
+          application_id,
+          cover_letter_url: coverLetterUrl,
+          support_letter_url: supportLetterUrl,
+        },
+      ]);
+
+    if (formError) {
+      console.error("Form insert failed:", formError.message);
+      throw new Error("Failed to submit application form details.");
+    }
+
     return NextResponse.json(
-      { error: "Unauthorized. Please log in." },
-      { status: 401 }
+      { message: "Application submitted successfully.", applicationId: application_id },
+      { status: 201 }
     );
-  }
-
-  // Get student profile
-  const { data: studentData, error: studentError } = await supabase
-    .from("student_profiles")
-    .select("id")
-    .eq("user_id", user.id)
-    .single();
-
-  if (studentError || !studentData) {
+  } catch (error: any) {
+    console.error("Application submission failed:", error.message);
     return NextResponse.json(
-      { error: "Student profile not found." },
-      { status: 404 }
-    );
-  }
-
-  // Fetch all applications with all internship and form data
-  const { data: applications, error } = await supabase
-    .from("applications")
-    .select(
-      `
-      *,
-      internship:internships(*),
-      form:application_forms(*)
-    `
-    )
-    .eq("student_id", studentData.id)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error("Fetch error:", error.message);
-    return NextResponse.json(
-      { error: "Failed to fetch applications." },
+      { error: error.message || "Unexpected error during submission." },
       { status: 500 }
     );
   }
-
-  return NextResponse.json(applications);
-}
-
-// ✅ PUT: Update application (status, cover letter URL, etc.)
-export async function PUT(request: Request) {
-  const supabase = await getSupabase();
-  const { application_id, status, cover_letter_url, support_letter_url } =
-    await request.json();
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    return NextResponse.json(
-      { error: "Unauthorized. Please log in." },
-      { status: 401 }
-    );
-  }
-
-  const { data: studentData } = await supabase
-    .from("student_profiles")
-    .select("id")
-    .eq("user_id", user.id)
-    .single();
-
-  // ✅ Update applications table
-  const { error: appError } = await supabase
-    .from("applications")
-    .update({ status })
-    .eq("id", application_id)
-    .eq("student_id", studentData?.id);
-
-  if (appError) {
-    console.error("Update error:", appError.message);
-    return NextResponse.json(
-      { error: "Failed to update application." },
-      { status: 500 }
-    );
-  }
-
-  // ✅ Update application_forms
-  const { error: formError } = await supabase
-    .from("application_forms")
-    .update({
-      cover_letter_url,
-      support_letter_url,
-    })
-    .eq("application_id", application_id);
-
-  if (formError) {
-    console.error("Form update error:", formError.message);
-    return NextResponse.json(
-      { error: "Failed to update form details." },
-      { status: 500 }
-    );
-  }
-
-  return NextResponse.json({ success: true });
-}
-
-// ✅ DELETE: Remove application
-export async function DELETE(request: Request) {
-  const supabase = await getSupabase();
-  const { application_id } = await request.json();
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    return NextResponse.json(
-      { error: "Unauthorized. Please log in." },
-      { status: 401 }
-    );
-  }
-
-  const { data: studentData } = await supabase
-    .from("student_profiles")
-    .select("id")
-    .eq("user_id", user.id)
-    .single();
-
-  // First delete forms
-  await supabase
-    .from("application_forms")
-    .delete()
-    .eq("application_id", application_id);
-
-  // Then delete application
-  const { error: appError } = await supabase
-    .from("applications")
-    .delete()
-    .eq("id", application_id)
-    .eq("student_id", studentData?.id);
-
-  if (appError) {
-    console.error("Delete error:", appError.message);
-    return NextResponse.json(
-      { error: "Failed to delete application." },
-      { status: 500 }
-    );
-  }
-
-  return NextResponse.json({ success: true });
 }
