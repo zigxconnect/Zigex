@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { MapPin, Clock, ExternalLink, GraduationCap } from "lucide-react";
 import { Program } from "@/lib/types/dashoard";
+import { SharePopover } from "@/components/SharePopover";
 
 const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString("en-US", {
@@ -67,8 +68,8 @@ export const ProgramCard = ({ program }: { program: Program }) => {
           </div>
         </div>
 
-        <div className="mt-auto pt-4 border-t border-gray-100">
-          <Link href={`/programs/${program.id}`} className="block">
+        <div className="mt-auto pt-4 border-t border-gray-100 flex items-center gap-3">
+          <Link href={`/programs/${program.id}`} className="block flex-grow">
             <Button className="w-full bg-purple-700 hover:bg-purple-600 text-white rounded-lg py-3 flex items-center justify-center gap-2 group/btn">
               <span>View Program</span>
               <ExternalLink
@@ -77,6 +78,10 @@ export const ProgramCard = ({ program }: { program: Program }) => {
               />
             </Button>
           </Link>
+          <SharePopover
+            title={program.title}
+            urlPath={`/programs/${program.id}`}
+          />
         </div>
       </div>
     </div>

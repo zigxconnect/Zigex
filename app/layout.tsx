@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "@/components/ui/sonner";
 
 // import { Inter } from 'next/font/google'
 
@@ -13,7 +14,8 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://zigex.vercel.app"),
   title: {
     default: "ZIGEX",
-    template: "%s  ZiGex| SEED | ZiGex | skills enhancement and empowerment throgh digitalization, seed bamenda "
+    template:
+      "%s  ZiGex| SEED | ZiGex | skills enhancement and empowerment throgh digitalization, seed bamenda ",
   },
 
   description: "Zone For Internship,Growth and Experience ",
@@ -24,7 +26,7 @@ export const metadata: Metadata = {
     "cheko yohane",
     "Fien dora",
     "ShowRoad",
-    'search internship',
+    "search internship",
     "hackertons",
     "innovatewithseed.com",
     "bamenda",
@@ -35,12 +37,12 @@ export const metadata: Metadata = {
     "tech event ",
     "tech program",
     "tech tutor seed",
-    "cameroon"
   ],
   openGraph: {
     url: "https://zigex.vercel.app",
     type: "website",
-    title: "ShowRoad |  Find any program - internship, hackertons in and around the country",
+    title:
+      "ShowRoad |  Find any program - internship, hackertons in and around the country",
     description:
       "SEED (Skill Enhancement and Empowerment through Digitalisation) is a private tech startup based in Bamenda, Cameroon. Legally recognized under Cameroonian business regulations, SEED operates independently with a mission to foster technological innovation and provide hands-on training in various tech disciplines. Through its coding bootcamps, internships, and tech programs, SEED plays a pivotal role in equipping individuals with digital skills, empowering them to solve real-world problems..",
     images: [
@@ -48,9 +50,9 @@ export const metadata: Metadata = {
         url: "https://i.ibb.co/5WXQhq78/Whats-App-Image-2025-09-23-at-8-22-42-AM.jpg",
         width: 1200,
         height: 630,
-        alt: "SEED"
-      }
-    ]
+        alt: "SEED",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
@@ -60,22 +62,18 @@ export const metadata: Metadata = {
     creator: "@fonyuygita",
     site: "@innovatewithseed",
     images: [
-      { 
+      {
         url: "https://i.ibb.co/5WXQhq78/Whats-App-Image-2025-09-23-at-8-22-42-AM.jpg",
         width: 1200,
         height: 630,
-        alt: "SEED"
-      }
-    ]
+        alt: "SEED",
+      },
+    ],
   },
   alternates: {
-    canonical: "https://zigex.vercel.app"
-  }
-
+    canonical: "https://zigex.vercel.app",
+  },
 };
-
-
-
 
 export default function RootLayout({
   children,
@@ -84,7 +82,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        {children}
+        return (
+        <html lang="en">
+          <body className={inter.className}>
+            {children}
+            <Toaster />
+          </body>
+        </html>
+        );{" "}
+      </body>
     </html>
   );
 }
