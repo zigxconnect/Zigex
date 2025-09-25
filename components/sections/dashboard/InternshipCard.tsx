@@ -55,8 +55,8 @@ export const InternshipCard = ({
     setShowShareMenu(!showShareMenu);
   };
 
-  const internshipUrl = `${window.location.origin}/internships/${id}`;
-  const shareText = `Check out this ${type} internship at ${company}: ${title}`;
+  const internshipUrl = `https://zigex.vercel.app/internships/${id}`;
+  const shareText = `Check out this ${type} internship at ${company}: ${title} on ZIGEX`;
 
   const handleCopyLink = async (e: React.MouseEvent) => {
     e.preventDefault();
