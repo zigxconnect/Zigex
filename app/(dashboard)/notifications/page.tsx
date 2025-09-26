@@ -1,114 +1,71 @@
 "use client";
 
-import { BookOpen, MapPin, TriangleAlert, Bell } from "lucide-react";
-import Image from "next/image";
-import { Button } from "@/components/ui/button";
 
-export default function NotificationProgramPage() {
-  // Static mock data for a notification's program
-  const displayProgram = {
-    id: "ai-fundamentals",
-    title: "AI Fundamentals Bootcamp",
-    description: "Kickstart your career in AI with hands-on projects and expert mentors. Learn Python, machine learning, and more!",
-    company_id: "company-1",
-    program_category: "Technology",
-    start_date: "2025-10-01",
-    end_date: "2025-12-15",
-    application_deadline: "2025-09-30",
-    location: "Online",
-    type: "Bootcamp",
-    program_picture_url: "/ccc.png",
-    required_skills: ["Python", "Machine Learning", "Data Analysis"],
-    company: {
-      company_name: "FutureProspect Academy",
-      logo_url: "/ccc.png",
-      cover_image_url: "/ccc.png"
-    }
-  };
-  const company = displayProgram.company;
-  const deadline = displayProgram.application_deadline
-    ? new Date(displayProgram.application_deadline).toLocaleDateString("en-US", {
-        month: "long",
-        day: "numeric",
+import { useEffect, useState } from "react";
+import Link from "next/link";
+
+interface Notification {
+  id: string;
+  title: string;
+  content: string;
+  programId: string;
+  read: boolean;
+  timestamp: string;
+}
+
+export default function NotificationsPage() {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/students/notifications")
+      .then((res) => res.json())
+      .then((data) => {
+        // Map backend fields to frontend expected fields
+        const mapped = (data.notifications || []).map((n: any) => ({
+          id: n.id,
+          title: n.title,
+          content: n.message, // backend: message
+          programId: n.reference_id, // backend: reference_id
+          read: n.is_read, // backend: is_read
+          timestamp: n.created_at, // backend: created_at
+        }));
+        setNotifications(mapped);
+        setLoading(false);
       })
-    : "Not specified";
+      .catch(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return <div className="text-center p-8 text-gray-500">Loading notifications...</div>;
+  }
 
   return (
-    <div className="bg-[#F8FAFC] p-6 lg:p-8">
-      <div className="max-w-2xl mx-auto mb-6">
-        <div className="flex items-center gap-2 bg-blue-100 border border-blue-300 rounded-lg px-4 py-3 shadow">
-          <Bell size={20} className="text-blue-600" />
-          <span className="text-blue-900 font-medium">You opened this program from a notification.</span>
-        </div>
-      </div>
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Content */}
-        <div className="lg:col-span-2 bg-white p-8 rounded-2xl shadow-lg border border-gray-200">
-          <h1 className="text-4xl font-bold text-purple-700">
-            {displayProgram.title}
-          </h1>
-          <div className="mt-6 h-56 bg-gray-200 rounded-xl overflow-hidden relative">
-            <Image
-              src={displayProgram.program_picture_url}
-              alt={displayProgram.title}
-              fill
-              className="object-cover"
-            />
-          </div>
-          <div className="mt-8 flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
-            <div className="w-16 h-16 rounded-lg flex items-center justify-center bg-purple-500 text-white font-bold text-2xl shadow-md">
-              <BookOpen size={32} />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">
-                {company?.company_name || "Community Program"}
-              </h2>
-              <div className="flex items-center gap-1 text-sm text-gray-500 mt-1 capitalize">
-                <MapPin size={14} /> {displayProgram.location || displayProgram.type}
+    <div className="max-w-2xl mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-6 text-blue-900">Notifications</h1>
+      {notifications.length === 0 ? (
+        <div className="text-gray-500 text-center">No notifications found.</div>
+      ) : (
+        <div className="space-y-4">
+          {notifications.map((n) => (
+            <div key={n.id} className={`p-4 flex flex-col gap-2 border-l-4 ${n.read ? 'border-gray-200' : 'border-blue-500 bg-blue-50'}`}>
+              <div className="flex items-center justify-between">
+                <h2 className={`font-semibold text-lg ${n.read ? 'text-gray-800' : 'text-blue-900'}`}>{n.title}</h2>
+                <span className="text-xs text-gray-400">{new Date(n.timestamp).toLocaleString()}</span>
+              </div>
+              <p className="text-gray-700 text-sm">{n.content}</p>
+              <div className="flex gap-2 mt-2">
+                <Link
+                  href={`/programs/${n.programId}?from=notification`}
+                  className="text-blue-600 hover:underline text-sm font-medium"
+                >
+                  View Program
+                </Link>
               </div>
             </div>
-          </div>
-          <div className="mt-8 prose max-w-none space-y-8">
-            <section>
-              <h3 className="text-xl font-bold text-gray-800 mb-3">
-                Program Description
-              </h3>
-              <p className="text-gray-700 text-base">
-                {displayProgram.description}
-              </p>
-            </section>
-            {/* Add more sections as needed */}
-          </div>
+          ))}
         </div>
-        {/* Sidebar */}
-        <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-200 flex flex-col gap-6">
-          <h3 className="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
-            <TriangleAlert size={18} className="text-yellow-500" />
-            Program Details
-          </h3>
-          <div className="flex flex-col gap-2">
-            <div className="flex justify-between items-start py-3 border-b border-gray-100 last:border-b-0">
-              <span className="text-sm text-gray-500 font-medium">Location</span>
-              <span className="text-sm font-semibold text-gray-800 text-right">{displayProgram.location}</span>
-            </div>
-            <div className="flex justify-between items-start py-3 border-b border-gray-100 last:border-b-0">
-              <span className="text-sm text-gray-500 font-medium">Type</span>
-              <span className="text-sm font-semibold text-gray-800 text-right">{displayProgram.type}</span>
-            </div>
-            <div className="flex justify-between items-start py-3 border-b border-gray-100 last:border-b-0">
-              <span className="text-sm text-gray-500 font-medium">Application Deadline</span>
-              <span className="text-sm font-semibold text-gray-800 text-right">{deadline}</span>
-            </div>
-            <div className="flex justify-between items-start py-3 border-b border-gray-100 last:border-b-0">
-              <span className="text-sm text-gray-500 font-medium">Company</span>
-              <span className="text-sm font-semibold text-gray-800 text-right">{company?.company_name ?? null}</span>
-            </div>
-          </div>
-          <Button className="mt-6 w-full" variant="primary">
-            Apply Now
-          </Button>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

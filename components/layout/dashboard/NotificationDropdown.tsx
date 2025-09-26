@@ -5,7 +5,6 @@ import { Bell, X } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation"; // For navigation
 import Link from "next/link"; // For accessible navigation
-import ProgramDetailsPage from "@/app/(dashboard)/programs/[id]/page";
 
 // Define a type for your notification structure
 interface Notification {
@@ -24,49 +23,44 @@ interface NotificationDropdownProps {
 export const NotificationDropdown = ({ initialNotifications = [] }: NotificationDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
+  const [unreadCount, setUnreadCount] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const router = useRouter(); // Initialize useRouter
+  const router = useRouter();
 
-  // Function to fetch notifications (simulate an API call)
+  // Fetch notifications from backend
   const fetchNotifications = async () => {
-    // In a real application, you'd make an API call here:
-    // const response = await fetch('/api/notifications');
-    // const data: Notification[] = await response.json();
-    // setNotifications(data);
+    try {
+      const res = await fetch("/api/students/notifications");
+      const data = await res.json();
+      // Map backend fields to frontend expected fields
+      const mapped = (data.notifications || []).map((n: any) => ({
+        id: n.id,
+        title: n.title,
+        content: n.message, // backend: message
+        programId: n.reference_id, // backend: reference_id
+        read: n.is_read, // backend: is_read
+        timestamp: n.created_at, // backend: created_at
+      }));
+      setNotifications(mapped);
+    } catch (e) {
+      setNotifications([]);
+    }
+  };
 
-    // Mock data for demonstration
-    const mockData: Notification[] = [
-      {
-        id: "1",
-        title: "New Program Available",
-        content: "Exciting new AI program just launched! Check it out.",
-        programId: "ai-fundamentals",
-        read: false,
-        timestamp: new Date(Date.now() - 3600 * 1000).toISOString(), // 1 hour ago
-      },
-      {
-        id: "2",
-        title: "Your Application Status",
-        content: "Your application for the Web Dev bootcamp has been reviewed.",
-        programId: "web-dev-bootcamp",
-        read: false,
-        timestamp: new Date(Date.now() - 2 * 3600 * 1000).toISOString(), // 2 hours ago
-      },
-      {
-        id: "3",
-        title: "Upcoming Deadline",
-        content: "Reminder: Machine Learning program application closes soon.",
-        programId: "ml-specialization",
-        read: true,
-        timestamp: new Date(Date.now() - 24 * 3600 * 1000).toISOString(), // 1 day ago
-      },
-    ];
-    setNotifications(mockData);
+  // Fetch unread count from backend
+  const fetchUnreadCount = async () => {
+    try {
+      const res = await fetch("/api/students/notifications/unread-count");
+      const data = await res.json();
+      setUnreadCount(data.unreadCount || 0);
+    } catch (e) {
+      setUnreadCount(0);
+    }
   };
 
   useEffect(() => {
-    fetchNotifications(); // Fetch notifications on component mount
-
+    fetchNotifications();
+    fetchUnreadCount();
     // Add event listener for clicks outside the dropdown to close it
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -77,20 +71,21 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []); // Empty dependency array means this runs once on mount
+  }, []);
 
-  const unreadCount = notifications.filter(n => !n.read).length;
 
-  const handleNotificationClick = (notificationId: string, programId: string) => {
-    // Mark as read (optimistically update UI, then send to backend)
-    setNotifications(prev =>
-      prev.map(n => (n.id === notificationId ? { ...n, read: true } : n))
-    );
-    // In a real app, you'd also send an API call to mark as read on the server.
-    // await fetch(`/api/notifications/${notificationId}/read`, { method: 'POST' });
 
-    setIsOpen(false); // Close dropdown after clicking
-    // Navigate to the program details page, passing a query param to indicate notification
+  const handleNotificationClick = async (notificationId: string, programId: string) => {
+    // Optimistically update UI
+    setNotifications(prev => prev.map(n => (n.id === notificationId ? { ...n, read: true } : n)));
+    setUnreadCount((prev) => Math.max(0, prev - 1));
+    // Mark as read in backend
+    await fetch("/api/students/notifications", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notificationIds: [notificationId] })
+    });
+    setIsOpen(false);
     router.push(`/programs/${programId}?from=notification`);
   };
 
@@ -98,9 +93,14 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
     setIsOpen(prev => !prev);
   };
 
-  const markAllAsRead = () => {
+  const markAllAsRead = async () => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-    // In a real app, send API call to mark all as read.
+    setUnreadCount(0);
+    await fetch("/api/students/notifications", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ markAll: true })
+    });
   };
 
   return (

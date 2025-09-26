@@ -1,14 +1,7 @@
-<<<<<<< HEAD
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { v4 as uuidv4 } from 'uuid'; // To generate unique file names
-=======
-<<<<<<< HEAD
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
-import { v4 as uuidv4 } from 'uuid'; // To generate unique file names
+import { v4 as uuidv4 } from "uuid";
 
 function createSupabaseServerClient() {
   const cookieStore = cookies();
@@ -37,164 +30,22 @@ function createSupabaseServerClient() {
 }
 
 /**
- * Handles updating a student's profile including file uploads.
- */
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  const supabase = createSupabaseServerClient();
-
-  try {
-    // 1. Get the authenticated user securely.
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    // 2. Verify that the user is updating their own profile.
-    const { id } = params;
-    if (id !== user.id) {
-      return NextResponse.json(
-        { error: "Unauthorized: You can only update your own profile" },
-        { status: 403 }
-      );
-    }
-
-    // 3. Get the update data from the request body.
-    const formData = await request.formData();
-
-    // Extract fields from form data
-    const updates: any = {
-      full_name: formData.get('full_name'),
-      first_name: formData.get('first_name'),
-      last_name: formData.get('last_name'),
-      university: formData.get('university'),
-      email: formData.get('email'),
-      phone: formData.get('phone'),
-      about: formData.get('about'),
-      linkedin_url: formData.get('linkedin_url'),
-      github_url: formData.get('github_url'),
-      portfolio_url: formData.get('portfolio_url'),
-      hard_skills: typeof formData.get('hard_skills') === 'string'
-        ? (formData.get('hard_skills') as string).split(',')
-        : null,
-    };
-
-    // Handle file uploads for avatar and cover image
-    const avatarFile = formData.get('avatar') as File | null;
-    const coverImageFile = formData.get('cover_image') as File | null;
-
-    if (avatarFile) {
-      const avatarFileName = `${uuidv4()}.${avatarFile.name.split('.').pop()}`;
-      const { error: avatarUploadError } = await supabase
-        .storage
-        .from('student-assets') // Use the correct bucket name
-        .upload(`avatars/${avatarFileName}`, avatarFile);
-
-      if (avatarUploadError) {
-        throw avatarUploadError;
-      }
-
-      updates.avatar_url = supabase.storage.from('student-assets').getPublicUrl(`avatars/${avatarFileName}`).data.publicUrl;
-    }
-
-    if (coverImageFile) {
-      const coverImageFileName = `${uuidv4()}.${coverImageFile.name.split('.').pop()}`;
-      const { error: coverImageUploadError } = await supabase
-        .storage
-        .from('student-assets') // Use the correct bucket name
-        .upload(`covers/${coverImageFileName}`, coverImageFile);
-
-      if (coverImageUploadError) {
-        throw coverImageUploadError;
-      }
-
-      updates.cover_image = supabase.storage.from('student-assets').getPublicUrl(`covers/${coverImageFileName}`).data.publicUrl;
-    }
-
-    // 4. Perform the update in the database.
-    const { data, error: updateError } = await supabase
-      .from("student_profiles")
-      .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq("user_id", id)
-      .select()
-      .single();
-
-    if (updateError) {
-      throw updateError;
-    }
-
-    return NextResponse.json(
-      { success: true, message: "Profile updated successfully", data },
-      { status: 200 }
-    );
-  } catch (error: any) {
-    console.error("API Route Error (PUT):", error);
-    return NextResponse.json(
-      {
-        error: "Update failed",
-        details: error.message,
-        code: error.code,
-      },
-      { status: 500 }
-    );
-  }
-=======
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
-import { v4 as uuidv4 } from 'uuid';
->>>>>>> backend
-
-function createSupabaseServerClient() {
-  const cookieStore = cookies();
-
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get: async (name: string) => {
-          return (await cookieStore).get(name)?.value;
-        },
-        set: async (name: string, value: string, options: CookieOptions) => {
-          try {
-            (await cookieStore).set({ name, value, ...options });
-          } catch (error) {}
-        },
-        remove: async (name: string, options: CookieOptions) => {
-          try {
-            (await cookieStore).set({ name, value: "", ...options });
-          } catch (error) {}
-        },
-      },
-    }
-  );
-}
-
-/**
-<<<<<<< HEAD
-=======
  * Extracts the file path from a Supabase storage URL
  */
 function extractFilePathFromUrl(url: string | null): string | null {
   if (!url) return null;
-  
+
   try {
     // For URLs like: https://project.supabase.co/storage/v1/object/public/student-assets/avatars/filename.jpg
     const urlObj = new URL(url);
-    const pathParts = urlObj.pathname.split('/');
-    
+    const pathParts = urlObj.pathname.split("/");
+
     // Find the index after 'object' and get the remaining path
-    const objectIndex = pathParts.indexOf('object');
+    const objectIndex = pathParts.indexOf("object");
     if (objectIndex !== -1 && objectIndex + 2 < pathParts.length) {
-      return pathParts.slice(objectIndex + 2).join('/');
+      return pathParts.slice(objectIndex + 2).join("/");
     }
-    
+
     return null;
   } catch (error) {
     console.error("Error parsing URL:", error);
@@ -207,163 +58,94 @@ function extractFilePathFromUrl(url: string | null): string | null {
  */
 function isSupabaseStorageUrl(url: string | null): boolean {
   if (!url) return false;
-  
+
   // Check if it's a default placeholder image
-  if (url.includes('/ar.png') || url.includes('/gita.png') || url.startsWith('data:')) {
+  if (
+    url.includes("/ar.png") ||
+    url.includes("/gita.png") ||
+    url.startsWith("data:")
+  ) {
     return false;
   }
-  
+
   // Check if it's a Supabase storage URL
   try {
     const urlObj = new URL(url);
-    return urlObj.hostname.includes('supabase') || urlObj.pathname.includes('/object/');
+    return (
+      urlObj.hostname.includes("supabase") ||
+      urlObj.pathname.includes("/object/")
+    );
   } catch (error) {
     return false;
   }
 }
 
 /**
->>>>>>> backend
  * Handles updating a student's profile including file uploads.
  */
 export async function PUT(
   request: Request,
-<<<<<<< HEAD
-  { params }: { params: { id: string } }
-=======
   { params }: { params: Promise<{ id: string }> }
->>>>>>> backend
 ) {
   const supabase = createSupabaseServerClient();
 
   try {
-<<<<<<< HEAD
-    // 1. Get the authenticated user securely.
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-=======
     // Await the params object first
     const { id } = await params;
 
     // Get the authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
     if (authError) {
       console.error("Auth error:", authError);
-      return NextResponse.json({ error: "Authentication error" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Authentication error" },
+        { status: 401 }
+      );
     }
->>>>>>> backend
 
     if (!user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-<<<<<<< HEAD
-    // 2. Verify that the user is updating their own profile.
-    const { id } = params;
-    if (id !== user.id) {
-=======
     // Check if the profile exists
     const { data: profile, error: profileError } = await supabase
-      .from('student_profiles')
-      .select('*')
+      .from("student_profiles")
+      .select("*")
       .or(`id.eq.${id},user_id.eq.${id}`)
       .single();
 
     if (profileError || !profile) {
-      return NextResponse.json({ 
-        error: "Profile not found",
-        details: profileError?.message 
-      }, { status: 404 });
+      return NextResponse.json(
+        {
+          error: "Profile not found",
+          details: profileError?.message,
+        },
+        { status: 404 }
+      );
     }
 
     // Verify that the profile belongs to the authenticated user
     if (profile.user_id !== user.id) {
->>>>>>> backend
       return NextResponse.json(
         { error: "Unauthorized: You can only update your own profile" },
         { status: 403 }
       );
     }
 
-<<<<<<< HEAD
-    // 3. Get the update data from the request body.
-    const formData = await request.formData();
-
-    // Extract fields from form data
-    const updates: any = {
-      full_name: formData.get('full_name'),
-      first_name: formData.get('first_name'),
-      last_name: formData.get('last_name'),
-      university: formData.get('university'),
-      email: formData.get('email'),
-      phone: formData.get('phone'),
-      about: formData.get('about'),
-      linkedin_url: formData.get('linkedin_url'),
-      github_url: formData.get('github_url'),
-      portfolio_url: formData.get('portfolio_url'),
-      hard_skills: typeof formData.get('hard_skills') === 'string'
-        ? (formData.get('hard_skills') as string).split(',')
-        : null,
-    };
-
-    // Handle file uploads for avatar and cover image
-    const avatarFile = formData.get('avatar') as File | null;
-    const coverImageFile = formData.get('cover_image') as File | null;
-
-    if (avatarFile) {
-      const avatarFileName = `${uuidv4()}.${avatarFile.name.split('.').pop()}`;
-      const { error: avatarUploadError } = await supabase
-        .storage
-        .from('student-assets') // Use the correct bucket name
-        .upload(`avatars/${avatarFileName}`, avatarFile);
-
-      if (avatarUploadError) {
-        throw avatarUploadError;
-      }
-
-      updates.avatar_url = supabase.storage.from('student-assets').getPublicUrl(`avatars/${avatarFileName}`).data.publicUrl;
-    }
-
-    if (coverImageFile) {
-      const coverImageFileName = `${uuidv4()}.${coverImageFile.name.split('.').pop()}`;
-      const { error: coverImageUploadError } = await supabase
-        .storage
-        .from('student-assets') // Use the correct bucket name
-        .upload(`covers/${coverImageFileName}`, coverImageFile);
-
-      if (coverImageUploadError) {
-        throw coverImageUploadError;
-      }
-
-      updates.cover_image = supabase.storage.from('student-assets').getPublicUrl(`covers/${coverImageFileName}`).data.publicUrl;
-    }
-
-    // 4. Perform the update in the database.
-    const { data, error: updateError } = await supabase
-      .from("student_profiles")
-      .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq("user_id", id)
-      .select()
-      .single();
-
-    if (updateError) {
-      throw updateError;
-    }
-
-    return NextResponse.json(
-      { success: true, message: "Profile updated successfully", data },
-      { status: 200 }
-    );
-=======
     // Parse the form data
     const formData = await request.formData();
-    const avatarFile = formData.get('avatar') as File | null;
-    const coverImageFile = formData.get('cover_image') as File | null;
+    const avatarFile = formData.get("avatar") as File | null;
+    const coverImageFile = formData.get("cover_image") as File | null;
 
     // If no files were provided, return an error
-    if ((!avatarFile || avatarFile.size === 0) && (!coverImageFile || coverImageFile.size === 0)) {
+    if (
+      (!avatarFile || avatarFile.size === 0) &&
+      (!coverImageFile || coverImageFile.size === 0)
+    ) {
       return NextResponse.json(
         { error: "No valid files provided for update" },
         { status: 400 }
@@ -372,7 +154,7 @@ export async function PUT(
 
     // Check file sizes (2MB max)
     const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB in bytes
-    
+
     if (avatarFile && avatarFile.size > MAX_FILE_SIZE) {
       return NextResponse.json(
         { error: "Avatar image must be less than 2MB" },
@@ -391,14 +173,19 @@ export async function PUT(
     let coverImageUrl = profile.cover_image;
 
     // Delete old avatar if a new one is being uploaded AND the user already has a Supabase-stored avatar
-    if (avatarFile && avatarFile.size > 0 && profile.avatar_url && isSupabaseStorageUrl(profile.avatar_url)) {
+    if (
+      avatarFile &&
+      avatarFile.size > 0 &&
+      profile.avatar_url &&
+      isSupabaseStorageUrl(profile.avatar_url)
+    ) {
       const oldAvatarPath = extractFilePathFromUrl(profile.avatar_url);
       if (oldAvatarPath) {
         try {
           const { error: deleteError } = await supabase.storage
-            .from('student-assets')
+            .from("student-assets")
             .remove([oldAvatarPath]);
-          
+
           if (deleteError) {
             console.warn("Failed to delete old avatar:", deleteError);
             // Continue with upload even if deletion fails
@@ -413,19 +200,27 @@ export async function PUT(
     }
 
     // Delete old cover image if a new one is being uploaded AND the user already has a Supabase-stored cover image
-    if (coverImageFile && coverImageFile.size > 0 && profile.cover_image && isSupabaseStorageUrl(profile.cover_image)) {
+    if (
+      coverImageFile &&
+      coverImageFile.size > 0 &&
+      profile.cover_image &&
+      isSupabaseStorageUrl(profile.cover_image)
+    ) {
       const oldCoverImagePath = extractFilePathFromUrl(profile.cover_image);
       if (oldCoverImagePath) {
         try {
           const { error: deleteError } = await supabase.storage
-            .from('student-assets')
+            .from("student-assets")
             .remove([oldCoverImagePath]);
-          
+
           if (deleteError) {
             console.warn("Failed to delete old cover image:", deleteError);
             // Continue with upload even if deletion fails
           } else {
-            console.log("Successfully deleted old cover image:", oldCoverImagePath);
+            console.log(
+              "Successfully deleted old cover image:",
+              oldCoverImagePath
+            );
           }
         } catch (deleteError) {
           console.warn("Error deleting old cover image:", deleteError);
@@ -436,15 +231,15 @@ export async function PUT(
 
     // Upload avatar if provided and valid
     if (avatarFile && avatarFile.size > 0) {
-      const avatarExt = avatarFile.name.split('.').pop();
+      const avatarExt = avatarFile.name.split(".").pop();
       const avatarFileName = `${uuidv4()}.${avatarExt}`;
       const avatarPath = `avatars/${avatarFileName}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('student-assets')
+        .from("student-assets")
         .upload(avatarPath, avatarFile, {
-          cacheControl: '3600',
-          upsert: true
+          cacheControl: "3600",
+          upsert: true,
         });
 
       if (uploadError) {
@@ -457,7 +252,7 @@ export async function PUT(
 
       // Get public URL for the uploaded avatar
       const { data: avatarData } = supabase.storage
-        .from('student-assets')
+        .from("student-assets")
         .getPublicUrl(avatarPath);
 
       avatarUrl = avatarData.publicUrl;
@@ -465,15 +260,15 @@ export async function PUT(
 
     // Upload cover image if provided and valid
     if (coverImageFile && coverImageFile.size > 0) {
-      const coverImageExt = coverImageFile.name.split('.').pop();
+      const coverImageExt = coverImageFile.name.split(".").pop();
       const coverImageFileName = `${uuidv4()}.${coverImageExt}`;
       const coverImagePath = `cover-images/${coverImageFileName}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('student-assets')
+        .from("student-assets")
         .upload(coverImagePath, coverImageFile, {
-          cacheControl: '3600',
-          upsert: true
+          cacheControl: "3600",
+          upsert: true,
         });
 
       if (uploadError) {
@@ -486,7 +281,7 @@ export async function PUT(
 
       // Get public URL for the uploaded cover image
       const { data: coverImageData } = supabase.storage
-        .from('student-assets')
+        .from("student-assets")
         .getPublicUrl(coverImagePath);
 
       coverImageUrl = coverImageData.publicUrl;
@@ -494,7 +289,7 @@ export async function PUT(
 
     // Update the profile in the database
     const updateData: any = {
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     };
 
     if (avatarFile && avatarFile.size > 0) {
@@ -506,9 +301,9 @@ export async function PUT(
     }
 
     const { error: updateError } = await supabase
-      .from('student_profiles')
+      .from("student_profiles")
       .update(updateData)
-      .eq('id', profile.id);
+      .eq("id", profile.id);
 
     if (updateError) {
       console.error("Profile update error:", updateError);
@@ -521,26 +316,16 @@ export async function PUT(
     return NextResponse.json({
       message: "Profile updated successfully",
       avatar_url: avatarUrl,
-      cover_image: coverImageUrl
+      cover_image: coverImageUrl,
     });
-
->>>>>>> backend
   } catch (error: any) {
     console.error("API Route Error (PUT):", error);
     return NextResponse.json(
       {
         error: "Update failed",
         details: error.message,
-<<<<<<< HEAD
-        code: error.code,
-=======
->>>>>>> backend
       },
       { status: 500 }
     );
   }
-<<<<<<< HEAD
-=======
->>>>>>> 36e0b87 (adjusted student profile edit(image upload) in the front end)
->>>>>>> backend
 }

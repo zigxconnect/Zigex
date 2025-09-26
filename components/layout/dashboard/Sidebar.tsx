@@ -30,7 +30,7 @@ const navItems = [
   { href: "/dashboard", icon: User, label: "Profile" },
   { href: "/dashboard/upload-resume", icon: Upload, label: "Upload Resume" },
   {
-    href: "/dashboard/applied-internships",
+    href: "/dashboard/applied-intenships",
     icon: Briefcase,
     label: "Applied Internships",
     badge: 5,
