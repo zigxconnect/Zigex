@@ -32,7 +32,7 @@ export async function GET() {
   );
 
   try {
-    // Get current user
+    // Get current user (for authentication only)
     const {
       data: { user },
       error: userError,
@@ -45,12 +45,11 @@ export async function GET() {
       );
     }
 
-    // Get unread count
+    // Get unread count - NO USER_ID FILTER!
     const { count, error } = await supabase
       .from("notifications")
       .select("*", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .eq("is_read", false);
+      .eq("is_read", false);  // Removed .eq("user_id", user.id)
 
     if (error) {
       console.error("Supabase query error:", error);
