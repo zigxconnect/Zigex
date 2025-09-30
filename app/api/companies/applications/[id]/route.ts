@@ -1,6 +1,7 @@
 import { authMiddleware } from "@/lib/middleware/auth";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { computeNode } from "recharts/types/chart/Treemap";
 
 //Get a unique application
 /**
@@ -38,10 +39,9 @@ export async function GET(request: Request, { params }: { params: { id: string }
     const id = params?.id;
 
     const { data: application, error: applicationError } = await supabaseAdmin
-        .from('applications')
+        .from('Applications')
         .select('*')
         .eq('id', id)
-        // .eq('internship.company_id', company.id)
         .single();
 
     if (applicationError || !application) {
@@ -51,17 +51,57 @@ export async function GET(request: Request, { params }: { params: { id: string }
         );
     }
 
-    const { data:internship, error: internshipError } = await supabaseAdmin
-        .from('internships')
-        .select('*')
-        .eq('id', application.internship_id)
-        .eq('company_id', company.id)
-        .single();
-    if (internshipError || !internship) {
-        return NextResponse.json(
-            { error: 'Application does not belong to this company' },
-            { status: 403 }
-        );
+
+    // Verify application belongs to company by checking the associated internship's company_id
+     //  If the opportunity is an event
+    if(application.application_type == 'event'){
+        console.log('is an event')
+        const {data: opportunity, error: opportunityError} = await supabaseAdmin
+            .from('events')
+            .select('*')
+            .eq('id', application.event_id)
+            .eq('company_id', company.id)
+            .single()
+        if (opportunityError || !opportunity|| opportunity.company_id != company.id) {
+            return NextResponse.json(
+                { error: 'Internship not found or does not belong to this company' },
+                { status: 404 }
+            );
+        }
+    }
+
+    //  If the opportunity is a program
+    if(application.application_type == 'program'){
+        console.log('is a program')
+        const {data: opportunity, error: opportunityError} = await supabaseAdmin
+            .from('programs')
+            .select('*')
+            .eq('id', application.program_id)
+            .eq('company_id', company.id)
+            .single()
+        if (opportunityError || !opportunity || opportunity.company_id != company.id) {
+            return NextResponse.json(
+                { error: 'Internship not found or does not belong to this company' },
+                { status: 404 }
+            );
+        }
+    }
+
+    //  If the opportunity is an internship
+    if(application.application_type == 'internship'){
+        console.log('is an internship')
+        const {data: opportunity, error: opportunityError} = await supabaseAdmin
+            .from('internships')
+            .select('*')
+            .eq('id', application.internship_id)
+            .eq('company_id', company.id)
+            .single()
+        if (opportunityError || !opportunity || opportunity.company_id != company.id) {
+            return NextResponse.json(
+                { error: 'Internship not found or does not belong to this company' },
+                { status: 404 }
+            );
+        }
     }
     
     return NextResponse.json(application);
@@ -105,17 +145,84 @@ export async function PATCH(
     }
 
     const id = params?.id;
-    const updates = await request.json();
+    const {status } = await request.json();
 
-    const { data, error } = await supabaseAdmin
-        .from('applications')
-        .update(updates)
+    // const appliaction = await GET(request, id)
+    // Verify if the opportunity belongs to the company
+    // Get the appliaction and check the application type
+        const { data: application, error: applicationError } = await supabaseAdmin
+        .from('Applications')
+        .select('*')
         .eq('id', id)
-        // .eq('internship.company_id', company.id)
+        .single();
+
+    if (applicationError || !application) {
+        return NextResponse.json(
+            { error: 'Application not found' },
+            { status: 404 }
+        );
+    }
+
+
+    // Verify application belongs to company by checking the associated internship's company_id
+    //  If the opportunity is an event
+    if(application.application_type == 'event'){
+        console.log('is an event')
+        const {data: opportunity, error: opportunityError} = await supabaseAdmin
+            .from('events')
+            .select('*')
+            .eq('id', application.event_id)
+            .eq('company_id', company.id)
+            .single()
+        if (opportunityError || !opportunity|| opportunity.company_id != company.id) {
+            return NextResponse.json(
+                { error: 'Internship not found or does not belong to this company' },
+                { status: 404 }
+            );
+        }
+    }
+
+    //  If the opportunity is a program
+    if(application.application_type == 'program'){
+        console.log('is a program')
+        const {data: opportunity, error: opportunityError} = await supabaseAdmin
+            .from('programs')
+            .select('*')
+            .eq('id', application.program_id)
+            .eq('company_id', company.id)
+            .single()
+        if (opportunityError || !opportunity || opportunity.company_id != company.id) {
+            return NextResponse.json(
+                { error: 'Internship not found or does not belong to this company' },
+                { status: 404 }
+            );
+        }
+    }
+
+    //  If the opportunity is an internship
+    if(application.application_type == 'internship'){
+        console.log('is an internship')
+        const {data: opportunity, error: opportunityError} = await supabaseAdmin
+            .from('internships')
+            .select('*')
+            .eq('id', application.internship_id)
+            .eq('company_id', company.id)
+            .single()
+        if (opportunityError || !opportunity || opportunity.company_id != company.id) {
+            return NextResponse.json(
+                { error: 'Internship not found or does not belong to this company' },
+                { status: 404 }
+            );
+        }
+    }
+    
+    const { data, error } = await supabaseAdmin
+        .from('Applications')
+        .update({status})
+        .eq('id', id)
         .single();
 
     if (error) {
-        console.log('hello')
         console.log(error)
         return NextResponse.json(
             { error: 'Application not found or does not belong to this company' },
