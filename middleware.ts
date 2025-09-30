@@ -14,11 +14,11 @@ export async function middleware(request: NextRequest) {
         get(name: string) {
           return request.cookies.get(name)?.value;
         },
-        set(name: string, value: string, options: CookieOptions) {
+        set(name, value, options) {
           request.cookies.set({ name, value, ...options });
           response.cookies.set({ name, value, ...options });
         },
-        remove(name: string, options: CookieOptions) {
+        remove(name, options) {
           request.cookies.set({ name, value: "", ...options });
           response.cookies.set({ name, value: "", ...options });
         },
@@ -29,17 +29,32 @@ export async function middleware(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const pathname = request.nextUrl.pathname;
+  const { pathname } = request.nextUrl;
 
+  const publicPaths = [
+    "/",
+    "/sign-in",
+    "/sign-up",
+    "/auth/callback",
+    "/verify-otp",
+  ];
+
+  // --- 1. Handle Unauthenticated Users ---
   if (!user) {
+    if (publicPaths.includes(pathname)) {
+      return response; // Allow access to public pages, including the OTP page
+    }
+    // For any other protected path, redirect to sign-in
     return NextResponse.redirect(new URL("/sign-in", request.url));
   }
 
+  // --- 2. Handle Authenticated Users ---
   const { data: studentProfile } = await supabase
     .from("student_profiles")
     .select("role, profile_status")
     .eq("user_id", user.id)
     .single();
+
   const { data: companyProfile } = await supabase
     .from("company_profiles")
     .select("role")
@@ -47,50 +62,48 @@ export async function middleware(request: NextRequest) {
     .single();
 
   const userRole = studentProfile?.role || companyProfile?.role;
+  const isStudentProfileComplete =
+    studentProfile?.profile_status === "complete";
 
-  // A. Protect Admin Routes
-  if (pathname.startsWith("/admin")) {
-    if (userRole !== "company") {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+  // --- A. Force Profile Creation for New Students ---
+  if (userRole === "student" && !isStudentProfileComplete) {
+    if (pathname !== "/create-profile") {
+      return NextResponse.redirect(new URL("/create-profile", request.url));
     }
+    return response;
   }
 
-  const studentProtectedPaths = [
+  // --- B. Redirect Logged-in Users from Public Pages ---
+  if (publicPaths.includes(pathname)) {
+    if (userRole === "company") {
+      return NextResponse.redirect(new URL("/admin/postings", request.url));
+    }
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  // --- C. Role-Based Route Protection ---
+  if (pathname.startsWith("/admin") && userRole !== "company") {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  const studentPaths = [
     "/dashboard",
-    "/create-profile",
     "/profile-settings",
     "/upload-resume",
     "/applied-internships",
     "/track-progress",
     "/chat",
   ];
-  if (studentProtectedPaths.some((p) => pathname.startsWith(p))) {
-    if (userRole !== "student") {
-      return NextResponse.redirect(new URL("/admin/postings", request.url));
-    }
-
-    if (
-      studentProfile?.profile_status !== "complete" &&
-      pathname.startsWith("/dashboard")
-    ) {
-      return NextResponse.redirect(new URL("/create-profile", request.url));
-    }
+  if (
+    studentPaths.some((p) => pathname.startsWith(p)) &&
+    userRole !== "student"
+  ) {
+    return NextResponse.redirect(new URL("/admin/postings", request.url));
   }
 
   return response;
 }
 
 export const config = {
-  matcher: [
-    "/dashboard/:path*",
-    "/create-profile",
-    "/profile-settings",
-    "/upload-resume",
-    "/applied-internships",
-    "/track-progress",
-    "/chat",
-
-    // Admin (Company) Routes from your sidebar
-    "/admin/:path*",
-  ],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 };

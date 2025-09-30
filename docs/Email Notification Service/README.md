@@ -57,14 +57,17 @@ You can do this in two ways: via the Supabase Dashboard or the CLI in your VSCod
       - **Value:** Find this in your Supabase Dashboard under **Project Settings > API > Project URL**.
     - **Name:** `SUPABASE_SERVICE_ROLE_KEY`
       - **Value:** Find this in your Supabase Dashboard under **Project Settings > API > Project API Keys** (use the `service_role` key).
+      - ⚠️ **Security Note:** This is a highly privileged key with full database access. **Never commit it to version control, share it publicly, or expose it in client-side code.** Restrict and rotate this key according to best practices. Use environment variable managers or secrets stores for safer handling.
 
 #### B) Alternative Method: Using the CLI (in VSCode)
 
 Open your terminal in the root of the project directory and run the following commands, replacing the placeholder values:
 
+```bash
 npx supabase secrets set RESEND_API_KEY your_resend_api_key_here
 npx supabase secrets set SUPABASE_URL your_supabase_project_url_here
-npx supabase secrets set SUPABASE_SERVICE_ROLE_KEY your_supabase_service_role_key_here```
+npx supabase secrets set SUPABASE_SERVICE_ROLE_KEY your_supabase_service_role_key_here
+```
 
 ### Step 3: Set Up the Database Function (RPC)
 
@@ -142,7 +145,9 @@ In the file `supabase/functions/send-new-post-notification/index.ts`, update the
 
 After updating the code, deploy the final version from your terminal:
 
-npx supabase functions deploy send-new-post-notification --no-verify-jwt```
+```bash
+npx supabase functions deploy send-new-post-notification --no-verify-jwt
+```
 
 ## 6. Troubleshooting
 
