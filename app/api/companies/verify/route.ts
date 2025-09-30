@@ -36,9 +36,9 @@ export async function POST(request: Request) {
 
 
     
-    let proof_of_address_url: string| null = null
-    let certificate_url: string | null = null
-    let representative_id_url: string | null = null
+    let proof_of_address_url: string = ''
+    let certificate_url: string  = ''
+    let representative_id_url: string = ''
 
 
 
@@ -50,14 +50,14 @@ export async function POST(request: Request) {
     // Upload to supabase storage and set the url
 
     if (certificate && (certificate instanceof File)) {
-      certificate_url = await uploadToSupabaseStorage(certificate, "certificate", ["pdf"], ["application/pdf"], "certificate", company.id)
+      certificate_url = await uploadToSupabaseStorage(certificate, "certificate", ["pdf"], ["application/pdf"], "certificate", company.id, company.name);
     }
     
     if (proof_of_address && (proof_of_address instanceof File)) {
-      proof_of_address_url = await uploadToSupabaseStorage(proof_of_address, "proof_of_address", ["pdf","jpg","jpeg","png"], ["application/pdf","image/jpeg","image/png"], "proof_of_address", company.id)
+      proof_of_address_url = await uploadToSupabaseStorage(proof_of_address, "proof_of_address", ["pdf","jpg","jpeg","png"], ["application/pdf","image/jpeg","image/png"], "proof_of_address", company.id, company.name)
     }
     if (representative_id && (representative_id instanceof File)) {
-      representative_id_url = await uploadToSupabaseStorage(representative_id, "representative_id", ["pdf","jpg","jpeg","png"], ["application/pdf","image/jpeg","image/png"], "representative_id", company.id)
+      representative_id_url = await uploadToSupabaseStorage(representative_id, "representative_id", ["pdf","jpg","jpeg","png"], ["application/pdf","image/jpeg","image/png"], "representative_id", company.id,  company.name)
     }
 
     const bodyObject: any = Object.fromEntries(body.entries());
@@ -196,7 +196,8 @@ export async function PATCH(request: Request) {
             ["pdf"],
             ["application/pdf"],
             "certificate",
-            company.id
+            company.id,
+            company.name,
         );
     }
 
@@ -207,7 +208,8 @@ export async function PATCH(request: Request) {
             ["pdf", "jpg", "jpeg", "png"],
             ["application/pdf", "image/jpeg", "image/png"],
             "proof_of_address",
-            company.id
+            company.id,
+            company.name,
         );
     }
 
@@ -218,7 +220,8 @@ export async function PATCH(request: Request) {
             ["pdf", "jpg", "jpeg", "png"],
             ["application/pdf", "image/jpeg", "image/png"],
             "representative_id",
-            company.id
+            company.id,
+            company.name
         );
     }
 
@@ -289,64 +292,56 @@ catch(error){
 
 
 
+async function uploadToSupabaseStorage(
+  file: File,
+  path: string,
+  allowedExtensions: string[],
+  allowedMimeTypes: string[],
+  fileType: string,
+  id: string,
+  companyName: string
+): Promise<string> {
+  // Validate file extension
+  let fileExtension = file.name.split(".").pop();
+  if (!fileExtension) {
+    throw new Error("File must have an extension.");
+  }
 
-async function uploadToSupabaseStorage(file: File, path: string, allowedExtensions: string[], allowedMimeTypes: string[], fileType: string, id:string): Promise<string | any> {
-      
-      // Validate file extension and MIME type
-      let fileExtension = file.name.split(".").pop();
-      if (!fileExtension) {
-        return NextResponse.json(
-          { error: "file file must have an extension." },
-          { status: 400 }
-        );
-      }
-      fileExtension = fileExtension.toLowerCase().trim();
-      if (!allowedExtensions.includes(fileExtension)) {
-        return NextResponse.json(
-          {
-            error: `File type .${fileExtension} is not allowed. Allowed types: ${allowedExtensions.join(
-              ", "
-            )}`,
-          },
-          { status: 400 }
-        );
-      }
-      if (
-        file.type &&
-        !allowedMimeTypes.includes(file.type)
-      ) {
-        return NextResponse.json(
-          {
-            error: `MIME type ${
-              file.type
-            } is not allowed. Allowed types: ${allowedMimeTypes.join(", ")}`,
-          },
-          { status: 400 }
-        );
-      }
-      const fileName = `${uuidv4()}.${fileExtension}`; // Use UUID for unique filename
-      const filePath = `${id}/verification/${fileType}s/${fileName}`; // Store images per company ID
+  fileExtension = fileExtension.toLowerCase().trim();
+  if (!allowedExtensions.includes(fileExtension)) {
+    throw new Error(
+      `File type .${fileExtension} is not allowed. Allowed types: ${allowedExtensions.join(", ")}`
+    );
+  }
 
-      const { data: uploadData, error: uploadError } =
-        await supabaseAdmin.storage
-          .from("company_assets") // Your bucket name
-          .upload(filePath, file, {
-            cacheControl: "3600",
-            upsert: true, // Allow overwriting if a file with same path exists
-            contentType: file.type,
-          });
+  if (file.type && !allowedMimeTypes.includes(file.type)) {
+    throw new Error(
+      `MIME type ${file.type} is not allowed. Allowed types: ${allowedMimeTypes.join(", ")}`
+    );
+  }
 
-      if (uploadError) {
-        console.error("Supabase Storage upload error:", uploadError);
-        return NextResponse.json(
-          { error: `Failed to upload image: ${uploadError.message}` },
-          { status: 500 }
-        );
-      }
+  // Generate path
+  const fileName = `${uuidv4()}.${fileExtension}`;
+  const filePath = `${companyName}/verification/${fileType}s/${fileName}`;
 
-      const { data: publicUrlData } = supabaseAdmin.storage
-        .from("company_assets")
-        .getPublicUrl(filePath);
+  // Upload to Supabase
+  const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
+    .from("company-assets") // bucket name must exist
+    .upload(filePath, file, {
+      cacheControl: "3600",
+      upsert: true,
+      contentType: file.type,
+    });
 
-      return publicUrlData.publicUrl;
+  if (uploadError) {
+    console.error("Supabase Storage upload error:", uploadError);
+    throw new Error(`Failed to upload file: ${uploadError.message}`);
+  }
+
+  // Get public URL
+  const { data: publicUrlData } = supabaseAdmin.storage
+    .from("company-assets")
+    .getPublicUrl(filePath);
+
+  return publicUrlData.publicUrl;
 }

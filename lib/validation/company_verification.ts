@@ -14,7 +14,7 @@ export const companyVerificationSchema = z.object({
   phone: z.string(),
   tax_id: z.string(),
   proof_of_address: z.string().optional(), // could be file URL or base64 reference
-  representative_id: z.string(),
+  representative_id: z.string().optional(),
 })
 
 
