@@ -48,9 +48,10 @@ export async function GET(
     }
     // Fetch applications for the internship
     const { data, error } = await supabaseAdmin
-        .from('applications')
-        .select('*, internship:internships(title, company_id)')
-        .eq('internship_id', id)
+        .from('Applications')
+        .select('*')
+        .or(`internship_id.eq.${id},program_id.eq.${id},event_id.eq.${id}`)
+
         // .eq('internship_id:company_id', company.id); // Ensure the internship belongs to the authenticated company
 
     console.log(company.id);
