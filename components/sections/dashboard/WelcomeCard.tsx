@@ -43,14 +43,14 @@ export const WelcomeCard = ({ user, onProfileUpdated }: WelcomeCardProps) => {
 
   // Use the correct properties from your API response
   const avatarUrl = user.profile.avatar_url || "/gita.png";
-  const coverImageUrl = user.profile.cover_image || "/ar.png"; // Changed from user.coverImageUrl to user.profile.cover_image
+  const coverImageUrl = user.profile.cover_image || "/ar.png";
 
   return (
     <div className="relative bg-white md:rounded-2xl md:w-full mx-auto shadow-lg md:border md:border-gray-200 overflow-hidden">
       {/* Cover Image - Reduced Height */}
       <div className="relative h-32 md:h-36 lg:h-40 w-full">
         <Image
-          src={coverImageUrl} // Use the correct property
+          src={coverImageUrl}
           alt="Cover image"
           fill
           className="object-cover"
@@ -157,7 +157,7 @@ export const WelcomeCard = ({ user, onProfileUpdated }: WelcomeCardProps) => {
 
       {/* Avatar with Edit Hover Effect - Adjusted Position */}
       <div className="absolute top-20 md:top-24 lg:top-30 left-4 lg:left-6">
-        <div 
+        <div
           className="relative group cursor-pointer"
           onMouseEnter={() => setIsAvatarHovered(true)}
           onMouseLeave={() => setIsAvatarHovered(false)}
@@ -229,23 +229,27 @@ export const WelcomeCard = ({ user, onProfileUpdated }: WelcomeCardProps) => {
 
           {/* Social Links */}
           <div className="flex items-center gap-2 lg:gap-3">
-            <Link 
-              href={user.profile.linkedin_url || ""} 
+            <Link
+              href={user.profile.linkedin_url || ""}
               className="flex items-center gap-1.5 lg:gap-2  shadow-md p-2 lg:p-2 hover:shadow-lg hover:scale-105 rounded-lg lg:rounded-md transition-all duration-200 border border-blue-200 group"
             >
               <div className="flex items-center justify-center bg-blue-700 text-white p-1.5 lg:p-2 rounded-full shadow-sm group-hover:bg-blue-600">
                 <Link2 size={8} className="lg:w-2 lg:h-2" />
               </div>
-              <p className="text-xs lg:text-[12px] font-medium text-blue-800 group-hover:text-blue-900">Portfolio</p>
+              <p className="text-xs lg:text-[12px] font-medium text-blue-800 group-hover:text-blue-900">
+                Portfolio
+              </p>
             </Link>
-            <Link 
-              href={user.profile.github_url || ""} 
+            <Link
+              href={user.profile.github_url || ""}
               className="flex items-center gap-1.5 lg:gap-2 bg-gradient-to-r from-gray-800 to-gray-900 shadow-md p-2 lg:p-2 hover:shadow-lg hover:scale-105 rounded-lg lg:rounded-md transition-all duration-200 border border-gray-700 group"
             >
               <div className="flex items-center justify-center bg-white text-gray-900 p-1.5 lg:p-2 rounded-full shadow-sm group-hover:bg-gray-100">
                 <Github size={12} className="lg:w-2 lg:h-2" />
               </div>
-              <p className="text-xs lg:text-[12px] font-medium text-white group-hover:text-gray-100">Github</p>
+              <p className="text-xs lg:text-[12px] font-medium text-white group-hover:text-gray-100">
+                Github
+              </p>
             </Link>
           </div>
         </div>
@@ -257,7 +261,7 @@ export const WelcomeCard = ({ user, onProfileUpdated }: WelcomeCardProps) => {
         onClose={() => setIsEditModalOpen(false)}
         userId={user.profile.user_id}
         currentAvatarUrl={avatarUrl}
-        currentCoverImageUrl={coverImageUrl} // Use the correct property
+        currentCoverImageUrl={coverImageUrl}
         onProfileUpdated={onProfileUpdated}
       />
     </div>
