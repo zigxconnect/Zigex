@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { v4 as uuidv4, validate as isUUID } from "uuid"; // Import validate
+import { v4 as uuidv4, validate as isUUID } from "uuid";
 
 export async function POST(request: Request) {
   const cookieStore = await cookies();
@@ -35,10 +35,23 @@ export async function POST(request: Request) {
     }
 
     const formData = await request.formData();
+    
+    // ✅ Debug: Log all form data keys and values
+    console.log("=== FORM DATA RECEIVED ===");
+    for (const [key, value] of formData.entries()) {
+      console.log(`"${key}":`, value); // Show exact key with quotes to see spaces
+    }
+    
     const internship_id_raw = formData.get("internship_id");
     const cover_letter_file = formData.get("cover_letter_file") as File | null;
     const support_letter_file = formData.get("support_letter_file") as File | null;
-
+    
+    // ✅ Get text fields - handle both with and without spaces
+    const duration_months = formData.get("duration_months") as string || formData.get(" duration_months") as string;
+    const department = formData.get("department") as string || formData.get(" department") as string;
+    const location = formData.get("location") as string || formData.get(" location") as string;
+    const work_mode = formData.get("work_mode") as string || formData.get(" work_mode") as string;
+    
     // ✅ Validate internship_id
     if (typeof internship_id_raw !== "string" || !isUUID(internship_id_raw)) {
       console.error("Invalid or missing internship_id:", internship_id_raw);
@@ -46,6 +59,7 @@ export async function POST(request: Request) {
     }
     const internship_id = internship_id_raw;
 
+    // ✅ Only cover letter is required
     if (!cover_letter_file || cover_letter_file.size === 0) {
       return NextResponse.json({ error: "Cover letter file is required." }, { status: 400 });
     }
@@ -69,7 +83,7 @@ export async function POST(request: Request) {
     let coverLetterUrl: string | null = null;
     let supportLetterUrl: string | null = null;
 
-    // ✅ Upload Cover Letter
+    // ✅ Upload Cover Letter (required)
     const coverFileExt = cover_letter_file.name.split(".").pop();
     const coverFilePath = `students/${user.id}/applications/${internship_id}/cover_letter_${uuidv4()}.${coverFileExt}`;
 
@@ -90,7 +104,7 @@ export async function POST(request: Request) {
       .getPublicUrl(coverFilePath);
     coverLetterUrl = coverPublicUrl.publicUrl;
 
-    // ✅ Upload Support Letter (if provided)
+    // ✅ Upload Support Letter (optional)
     if (support_letter_file && support_letter_file.size > 0) {
       const supportFileExt = support_letter_file.name.split(".").pop();
       const supportFilePath = `students/${user.id}/applications/${internship_id}/support_letter_${uuidv4()}.${supportFileExt}`;
@@ -104,78 +118,47 @@ export async function POST(request: Request) {
 
       if (supportUploadError) {
         console.error("Support letter upload failed:", supportUploadError.message);
-        throw new Error("Failed to upload support letter.");
+        // Don't throw error - support letter is optional
+        console.warn("Support letter upload failed, but continuing without it...");
+      } else {
+        const { data: supportPublicUrl } = supabase.storage
+          .from("student-assets")
+          .getPublicUrl(supportFilePath);
+        supportLetterUrl = supportPublicUrl.publicUrl;
       }
-
-      const { data: supportPublicUrl } = supabase.storage
-        .from("student-assets")
-        .getPublicUrl(supportFilePath);
-      supportLetterUrl = supportPublicUrl.publicUrl;
     }
 
-    // ✅ Create application record (force new row every time)
-    let { data: appData, error: appError } = await supabase
-      .from("applications")
-      .insert([
-        {
-          student_id,
-          internship_id,
-          application_type: "manual",
-        },
-      ])
+    // ✅ Create application record (ONLY internship fields)
+    const applicationData = {
+      student_id,
+      internship_id,
+      application_type: "internship",
+      cover_letter_url: coverLetterUrl,
+      support_letter_url: supportLetterUrl,
+      duration_months: duration_months ? parseInt(duration_months) : null,
+      department: department || null,
+      location: location || null,
+      work_mode: work_mode || null,
+      // ❌ REMOVE expectations and comments (only for programs)
+      status: "pending"
+    };
+
+    console.log("=== FINAL APPLICATION DATA ===");
+    console.log(applicationData);
+
+    const { data: appData, error: appError } = await supabase
+      .from("Applications")
+      .insert([applicationData])
       .select("id")
       .single();
 
-    if (appError || !appData) {
-      // 🚨 Special case: unique constraint violation
-      if (appError?.code === "23505") {
-        console.warn("Duplicate application detected. Creating a new unique record...");
-
-        const { data: newAppData, error: newAppError } = await supabase
-          .from("applications")
-          .insert([
-            {
-              student_id,
-              internship_id,
-              application_type: "manual",
-              created_at: new Date().toISOString(), // helps differentiate rows
-            },
-          ])
-          .select("id")
-          .single();
-
-        if (newAppError || !newAppData) {
-          console.error("Retry insert failed:", newAppError?.message);
-          throw new Error("Failed to create application entry after retry.");
-        }
-
-        appData = newAppData; // reassign after retry
-      } else {
-        console.error("Application insert failed:", appError?.message);
-        throw new Error("Failed to create application entry.");
-      }
-    }
-
-    const application_id = appData.id;
-
-    // ✅ Insert application form details
-    const { error: formError } = await supabase
-      .from("application_forms")
-      .insert([
-        {
-          application_id,
-          cover_letter_url: coverLetterUrl,
-          support_letter_url: supportLetterUrl,
-        },
-      ]);
-
-    if (formError) {
-      console.error("Form insert failed:", formError.message);
-      throw new Error("Failed to submit application form details.");
+    if (appError) {
+      console.error("Application insert failed:", appError.message);
+      throw new Error("Failed to create application entry.");
     }
 
     return NextResponse.json(
-      { message: "Application submitted successfully.", applicationId: application_id },
+      { message: "Internship application submitted successfully.", applicationId: appData.id },
       { status: 201 }
     );
   } catch (error: any) {

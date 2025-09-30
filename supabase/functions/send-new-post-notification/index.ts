@@ -1,0 +1,109 @@
+import { createClient } from "npm:@supabase/supabase-js@2.44.4";
+import { Resend } from "npm:resend@3.4.0";
+import { renderAsync } from "npm:@react-email/render@0.0.15";
+import React from "npm:react@18.3.1";
+import { NewPostEmail } from "./email-template.tsx";
+
+const resend = new Resend(Deno.env.get("RESEND_API_KEY")!);
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "content-type",
+      },
+    });
+  }
+
+  try {
+    const payload = await req.json();
+    const { record: newPost, table: tableName } = payload;
+
+    let postType: "Internship" | "Event" | "Program" = "Internship";
+    let postTitle = newPost.title;
+    let postId = newPost.id;
+    let postLocation = newPost.location;
+
+    switch (tableName) {
+      case "internships":
+        postType = "Internship";
+        break;
+      case "events":
+        postType = "Event";
+        break;
+      case "programs":
+        postType = "Program";
+        break;
+      default:
+        return new Response(
+          JSON.stringify({ message: `Unhandled table: ${tableName}` }),
+          { status: 200 }
+        );
+    }
+
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    const { data: users, error: userError } = await supabaseAdmin.rpc(
+      "get_subscribed_emails"
+    );
+    if (userError) throw userError;
+    if (!users || users.length === 0) {
+      return new Response(
+        JSON.stringify({ message: "No subscribed users found." }),
+        { status: 200 }
+      );
+    }
+    const recipientEmails = users.map((u) => u.email).filter(Boolean);
+
+    // Define URLs for the template
+    const postUrl = `https://futureprospect.online/${tableName}/${postId}`;
+    const managePreferencesUrl = `https://futureprospect.online/profile/notifications`;
+
+    // Format the posted date (e.g., 'Sep 22, 2025')
+    const postedDate = new Date().toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+
+    // Render the React component to an HTML string
+    const emailHtml = await renderAsync(
+      React.createElement(NewPostEmail, {
+        postTitle: postTitle,
+        postType: postType,
+        postLocation: postLocation,
+        viewPostUrl: postUrl,
+        managePreferencesUrl: managePreferencesUrl,
+        companyLogoUrl:
+          "https://tmvipinvvhgklmqwvows.supabase.co/storage/v1/object/public/company-assets/Seed%20Company/events/SEED%20community%20Challenge-1757769838240.jpg",
+        postedDate: postedDate,
+      })
+    );
+
+    // Send the email
+    await resend.emails.send({
+      from: "FutureProspect <notifications@futureprospect.online>",
+      to: "delivered@resend.dev",
+      bcc: recipientEmails,
+      subject: `New ${postType} Posted: ${postTitle}`,
+      html: emailHtml,
+    });
+
+    console.log("Email dispatch successful.");
+    return new Response(
+      JSON.stringify({
+        message: `Email dispatch initiated for ${recipientEmails.length} users.`,
+      }),
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Caught Function Error:", error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+    });
+  }
+});
