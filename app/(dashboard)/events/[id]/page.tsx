@@ -6,9 +6,12 @@ import { Spinner } from "@/components/uiComponent/Spinner";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
-import { MapPin, Building2, ExternalLink, TriangleAlert } from "lucide-react";
+import { MapPin, Building2, ExternalLink, TriangleAlert, Calendar, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Alert } from "@/components/uiComponent/Alert";
+import { useState } from "react";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 // A helper component for displaying detail items in the sidebar
 const DetailItem = ({
@@ -29,6 +32,148 @@ const DetailItem = ({
   );
 };
 
+// RSVP Form Modal Component
+const RSVPModal = ({ 
+  event, 
+  isOpen, 
+  onClose 
+}: { 
+  event: Event; 
+  isOpen: boolean; 
+  onClose: () => void;
+}) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    expectations: "",
+    comments: ""
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append("event_id", event.id);
+      formDataToSend.append("expectations", formData.expectations);
+      formDataToSend.append("comments", formData.comments);
+      formDataToSend.append("rsvp_status", "true");
+
+      // Use the correct endpoint
+      const response = await fetch("/api/students/applications/events/rsvp", {
+        method: "POST",
+        body: formDataToSend,
+      });
+
+      // Handle non-JSON responses
+      const responseText = await response.text();
+      let result;
+      
+      try {
+        result = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error("JSON parse error:", parseError);
+        throw new Error("Server returned invalid response");
+      }
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to submit RSVP");
+      }
+
+      alert("RSVP submitted successfully!");
+      onClose();
+      setFormData({ expectations: "", comments: "" });
+    } catch (error: any) {
+      console.error("RSVP submission error:", error);
+      alert(error.message || "Failed to submit RSVP. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-2xl w-full max-w-md mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <div>
+            <h2 className="text-xl font-bold text-green-700">RSVP for Event</h2>
+            <p className="text-sm text-gray-600 mt-1">{event.title}</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div>
+            <Label htmlFor="expectations" className="text-sm font-medium text-gray-700">
+              What are your expectations for this event? *
+            </Label>
+            <Textarea
+              id="expectations"
+              value={formData.expectations}
+              onChange={(e) => setFormData(prev => ({ ...prev, expectations: e.target.value }))}
+              placeholder="I want to network with professionals, learn about new technologies..."
+              required
+              className="mt-1 min-h-[100px] resize-none"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="comments" className="text-sm font-medium text-gray-700">
+              Additional Comments (Optional)
+            </Label>
+            <Textarea
+              id="comments"
+              value={formData.comments}
+              onChange={(e) => setFormData(prev => ({ ...prev, comments: e.target.value }))}
+              placeholder="Any additional information you'd like to share..."
+              className="mt-1 min-h-[80px] resize-none"
+            />
+          </div>
+
+          {/* Footer */}
+          <div className="flex gap-3 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="flex-1"
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              className="flex-1 bg-green-600 hover:bg-green-700"
+              disabled={isSubmitting || !formData.expectations.trim()}
+            >
+              {isSubmitting ? (
+                <>
+                  <Spinner size="sm" className="mr-2" />
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  <Calendar size={16} className="mr-2" />
+                  Confirm RSVP
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 // Main Page Component
 export default function EventDetailsPage({
   params,
@@ -40,6 +185,7 @@ export default function EventDetailsPage({
     isLoading,
     error,
   } = useFetchDetails<Event>("/api/students/events", params.id);
+  const [showRSVPModal, setShowRSVPModal] = useState(false);
 
   if (isLoading) {
     return (
@@ -77,6 +223,13 @@ export default function EventDetailsPage({
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
+      {/* RSVP Modal */}
+      <RSVPModal 
+        event={event} 
+        isOpen={showRSVPModal} 
+        onClose={() => setShowRSVPModal(false)} 
+      />
+      
       {/* Mobile-first layout - No padding on mobile, padding on larger screens */}
       <div className="lg:px-8 lg:py-8">
         <div className="lg:max-w-7xl lg:mx-auto">
@@ -152,18 +305,30 @@ export default function EventDetailsPage({
                       </div>
                     </Card>
                     
-                    {/* Mobile Register Button */}
-                    {event.registration_link && (
-                      <Button asChild className="w-full text-base py-4 font-semibold mt-6">
-                        <Link
-                          href={event.registration_link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          Register Now <ExternalLink size={16} className="ml-2" />
-                        </Link>
+                    {/* Mobile Action Buttons */}
+                    <div className="space-y-4 mt-6">
+                      {/* RSVP Button */}
+                      <Button 
+                        onClick={() => setShowRSVPModal(true)}
+                        className="w-full text-base py-4 font-semibold bg-green-600 hover:bg-green-700"
+                      >
+                        <Calendar size={20} className="mr-2" />
+                        RSVP for Event
                       </Button>
-                    )}
+                      
+                      {/* Register Button */}
+                      {event.registration_link && (
+                        <Button asChild variant="outline" className="w-full text-base py-4 font-semibold">
+                          <Link
+                            href={event.registration_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            Register Now <ExternalLink size={16} className="ml-2" />
+                          </Link>
+                        </Button>
+                      )}
+                    </div>
 
                     {/* Mobile Alert */}
                     <div className="mt-6 mb-8">
@@ -196,17 +361,30 @@ export default function EventDetailsPage({
                 </div>
               </Card>
               
-              {event.registration_link && (
-                <Button asChild className="w-full text-base py-3 font-semibold">
-                  <Link
-                    href={event.registration_link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Register Now <ExternalLink size={16} className="ml-2" />
-                  </Link>
+              {/* Desktop Action Buttons */}
+              <div className="space-y-4">
+                {/* RSVP Button */}
+                <Button 
+                  onClick={() => setShowRSVPModal(true)}
+                  className="w-full text-base py-3 font-semibold bg-green-600 hover:bg-green-700"
+                >
+                  <Calendar size={18} className="mr-2" />
+                  RSVP for Event
                 </Button>
-              )}
+                
+                {/* Register Button */}
+                {event.registration_link && (
+                  <Button asChild variant="outline" className="w-full text-base py-3 font-semibold">
+                    <Link
+                      href={event.registration_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Register Now <ExternalLink size={16} className="ml-2" />
+                    </Link>
+                  </Button>
+                )}
+              </div>
               
               <Alert icon={TriangleAlert} variant="info">
                 <h4 className="font-bold">Event Timing</h4>
