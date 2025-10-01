@@ -1,15 +1,18 @@
 "use client";
 
+import { use } from "react"; // Import the use hook from React
 import { useFetchDetails } from "@/hooks/useFetchDetails";
 import { Program } from "@/lib/types/dashoard/index";
 import { Spinner } from "@/components/uiComponent/Spinner";
 import { Button } from "@/components/ui/button";
-
 import Image from "next/image";
-import { MapPin, BookOpen, TriangleAlert, LoaderPinwheel } from "lucide-react";
+
+import { MapPin, BookOpen, TriangleAlert, Bell, LoaderPinwheel } from "lucide-react";
+
 import { Card } from "@/components/ui/card";
 import { Alert } from "@/components/uiComponent/Alert";
 import { ListItem } from "@/components/uiComponent/ListItem";
+import { useSearchParams } from "next/navigation";
 
 // Reusing the DetailItem helper component
 const DetailItem = ({
@@ -33,13 +36,18 @@ const DetailItem = ({
 export default function ProgramDetailsPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>; // Update the type to reflect that params is a Promise
 }) {
+  // Unwrap the params Promise using React.use()
+  // This extracts the actual params object from the Promise
+  const resolvedParams = use(params);
+  
+  // Now we can safely access the id property
   const {
     data: program,
     isLoading,
     error,
-  } = useFetchDetails<Program>("/api/students/programs", params.id);
+  } = useFetchDetails<Program>("/api/students/programs", resolvedParams.id);
 
   if (isLoading) {
     return (
