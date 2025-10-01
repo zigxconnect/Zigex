@@ -42,14 +42,14 @@ export const WelcomeCard = ({ user, onProfileUpdated }: WelcomeCardProps) => {
 
   // Use the correct properties from your API response
   const avatarUrl = user.profile.avatar_url || "/gita.png";
-  const coverImageUrl = user.profile.cover_image || "/ar.png"; // Changed from user.coverImageUrl to user.profile.cover_image
+  const coverImageUrl = user.profile.cover_image || "/ar.png";
 
   return (
     <div className="relative bg-white md:rounded-2xl md:w-full mx-auto shadow-lg md:border md:border-gray-200 overflow-hidden">
       {/* Cover Image - Reduced Height */}
       <div className="relative h-32 md:h-36 lg:h-40 w-full">
         <Image
-          src={coverImageUrl} // Use the correct property
+          src={coverImageUrl}
           alt="Cover image"
           fill
           className="object-cover"
@@ -75,23 +75,17 @@ export const WelcomeCard = ({ user, onProfileUpdated }: WelcomeCardProps) => {
                 <div className="w-4 h-4 lg:w-6 lg:h-6 bg-blue-600 rounded-full flex items-center justify-center">
                   <User2 size={10} className="lg:w-3 lg:h-3 text-white" />
                 </div>
-                <h3 className="text-[9px] lg:text-xs font-semibold text-blue-900 uppercase tracking-wide">
-                  Skills
-                </h3>
+                <h3 className="text-[9px] lg:text-xs font-semibold text-blue-900 uppercase tracking-wide">Skills</h3>
               </div>
               <div className="text-[9px] lg:text-xs text-blue-800">
                 {isSkillsExpanded ? (
                   <div>
-                    <p className="break-words leading-relaxed">
-                      {user.skills.join(", ")}
-                    </p>
+                    <p className="break-words leading-relaxed">{user.skills.join(", ")}</p>
                     <button
                       onClick={() => setIsSkillsExpanded(false)}
                       className="flex items-center gap-1 text-blue-600 hover:text-blue-800 mt-1 transition-colors"
                     >
-                      <span className="text-[8px] lg:text-[10px] font-medium">
-                        Show less
-                      </span>
+                      <span className="text-[8px] lg:text-[10px] font-medium">Show less</span>
                       <ChevronUp size={8} className="lg:w-2.5 lg:h-2.5" />
                     </button>
                   </div>
@@ -105,9 +99,7 @@ export const WelcomeCard = ({ user, onProfileUpdated }: WelcomeCardProps) => {
                         onClick={() => setIsSkillsExpanded(true)}
                         className="flex items-center gap-1 text-blue-600 hover:text-blue-800 mt-1 transition-colors"
                       >
-                        <span className="text-[8px] lg:text-[10px] font-medium">
-                          Read more
-                        </span>
+                        <span className="text-[8px] lg:text-[10px] font-medium">Read more</span>
                         <ChevronDown size={8} className="lg:w-2.5 lg:h-2.5" />
                       </button>
                     )}
@@ -124,9 +116,7 @@ export const WelcomeCard = ({ user, onProfileUpdated }: WelcomeCardProps) => {
                 <div className="w-4 h-4 lg:w-6 lg:h-6 bg-gray-600 rounded-full flex items-center justify-center">
                   <User size={10} className="lg:w-3 lg:h-3 text-white" />
                 </div>
-                <h3 className="text-[9px] lg:text-xs font-semibold text-gray-900 uppercase tracking-wide">
-                  About Me
-                </h3>
+                <h3 className="text-[9px] lg:text-xs font-semibold text-gray-900 uppercase tracking-wide">About Me</h3>
               </div>
               <div className="text-[9px] lg:text-xs text-gray-700">
                 {isAboutExpanded ? (
@@ -138,9 +128,7 @@ export const WelcomeCard = ({ user, onProfileUpdated }: WelcomeCardProps) => {
                       onClick={() => setIsAboutExpanded(false)}
                       className="flex items-center gap-1 text-blue-600 hover:text-blue-800 mt-1 transition-colors"
                     >
-                      <span className="text-[8px] lg:text-[10px] font-medium">
-                        Show less
-                      </span>
+                      <span className="text-[8px] lg:text-[10px] font-medium">Show less</span>
                       <ChevronUp size={8} className="lg:w-2.5 lg:h-2.5" />
                     </button>
                   </div>
@@ -154,9 +142,7 @@ export const WelcomeCard = ({ user, onProfileUpdated }: WelcomeCardProps) => {
                         onClick={() => setIsAboutExpanded(true)}
                         className="flex items-center gap-1 text-blue-600 hover:text-blue-800 mt-1 transition-colors"
                       >
-                        <span className="text-[8px] lg:text-[10px] font-medium">
-                          Read more
-                        </span>
+                        <span className="text-[8px] lg:text-[10px] font-medium">Read more</span>
                         <ChevronDown size={8} className="lg:w-2.5 lg:h-2.5" />
                       </button>
                     )}
@@ -187,7 +173,7 @@ export const WelcomeCard = ({ user, onProfileUpdated }: WelcomeCardProps) => {
               priority
             />
           </div>
-
+          
           {/* Edit Overlay */}
           <div
             className={`
@@ -209,13 +195,11 @@ export const WelcomeCard = ({ user, onProfileUpdated }: WelcomeCardProps) => {
           </div>
 
           {/* Animated Ring */}
-          <div
-            className={`
+          <div className={`
             absolute inset-0 rounded-full border-2 border-blue-500
             transition-all duration-300 ease-in-out
-            ${isAvatarHovered ? "scale-110 opacity-100" : "scale-100 opacity-0"}
-          `}
-          />
+            ${isAvatarHovered ? 'scale-110 opacity-100' : 'scale-100 opacity-0'}
+          `} />
         </div>
       </div>
 
@@ -223,6 +207,7 @@ export const WelcomeCard = ({ user, onProfileUpdated }: WelcomeCardProps) => {
       <div className="pt-12 md:pt-14 lg:pt-8 px-4 lg:px-6 pb-4 lg:pb-6">
         {/* User Info and Social Links */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 lg:gap-4">
+        
           <div className="flex items-center gap-2 flex-wrap">
             <div className="flex items-center gap-2 shadow-md p-2 lg:p-2 hover:shadow-lg rounded-lg lg:rounded-lg px-2 transition-all duration-200 border border-blue-200">
               <div className="flex items-center justify-center bg-blue-700 text-white p-1.5 lg:p-2 rounded-full shadow-sm">
@@ -278,7 +263,7 @@ export const WelcomeCard = ({ user, onProfileUpdated }: WelcomeCardProps) => {
         onClose={() => setIsEditModalOpen(false)}
         userId={user.profile.user_id}
         currentAvatarUrl={avatarUrl}
-        currentCoverImageUrl={coverImageUrl} // Use the correct property
+        currentCoverImageUrl={coverImageUrl}
         onProfileUpdated={onProfileUpdated}
       />
     </div>

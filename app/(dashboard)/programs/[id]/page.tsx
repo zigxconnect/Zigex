@@ -4,12 +4,14 @@ import { useFetchDetails } from "@/hooks/useFetchDetails";
 import { Program } from "@/lib/types/dashoard/index";
 import { Spinner } from "@/components/uiComponent/Spinner";
 import { Button } from "@/components/ui/button";
-
 import Image from "next/image";
-import { MapPin, BookOpen, TriangleAlert, LoaderPinwheel } from "lucide-react";
+
+import { MapPin, BookOpen, TriangleAlert, Bell } from "lucide-react";
+
 import { Card } from "@/components/ui/card";
 import { Alert } from "@/components/uiComponent/Alert";
 import { ListItem } from "@/components/uiComponent/ListItem";
+import { useSearchParams } from "next/navigation";
 
 // Reusing the DetailItem helper component
 const DetailItem = ({

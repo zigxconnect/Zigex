@@ -40,7 +40,7 @@ export async function GET(request: Request) {
   const supabase = createSupabaseClient();
 
   try {
-    // Get current user
+    // Get current user (just for authentication)
     const {
       data: { user },
       error: userError,
@@ -54,14 +54,14 @@ export async function GET(request: Request) {
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
-    // Build query
+    // Build query - NO USER_ID FILTER!
     let query = supabase
       .from("notifications")
       .select("*", { count: "exact" })
-      .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .range(from, to);
 
+    // Only filter by read status if requested
     if (unreadOnly) {
       query = query.eq("is_read", false);
     }
@@ -106,11 +106,10 @@ export async function POST(request: Request) {
     const { notificationIds, markAll } = body;
 
     if (markAll) {
-      // Mark all notifications as read
+      // Mark all notifications as read (no user_id filter for global notifications)
       const { error } = await supabase
         .from("notifications")
         .update({ is_read: true })
-        .eq("user_id", user.id)
         .eq("is_read", false);
 
       if (error) {
@@ -130,12 +129,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // Mark specific notifications as read
+    // Mark specific notifications as read (no user_id filter)
     const { error } = await supabase
       .from("notifications")
       .update({ is_read: true })
-      .in("id", notificationIds)
-      .eq("user_id", user.id);
+      .in("id", notificationIds);
 
     if (error) {
       console.error("Supabase update error:", error);
