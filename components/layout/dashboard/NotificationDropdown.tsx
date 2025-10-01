@@ -159,10 +159,10 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
                     <Link
                       href={
                         notification.type === "internship"
-                          ? `/internships/${notification.referenceId}?from=notification`
+                          ? `/internships/${notification.referenceId}`
                           : notification.type === "event"
-                          ? `/events/${notification.referenceId}?from=notification`
-                          : `/programs/${notification.referenceId}?from=notification`
+                          ? `/events/${notification.referenceId}`
+                          : `/programs/${notification.referenceId}`
                       }
                       onClick={(e) => {
                         e.preventDefault();
