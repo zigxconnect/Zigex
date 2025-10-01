@@ -49,7 +49,7 @@ const navItems = [
   {
     href: "/dashboard/blog",
     icon: NewspaperIcon,
-    label: "Lates News",
+    label: "News",
   },
 ];
 
