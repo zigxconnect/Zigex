@@ -11,7 +11,8 @@ interface Notification {
   id: string;
   title: string;
   content: string; // A short snippet for the dropdown
-  programId: string; // The ID of the program to navigate to
+  referenceId: string; // The ID of the related entity
+  type: 'program' | 'event' | 'internship';
   read: boolean;
   timestamp: string; // Or a Date object
 }
@@ -37,7 +38,8 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
         id: n.id,
         title: n.title,
         content: n.message, // backend: message
-        programId: n.reference_id, // backend: reference_id
+        referenceId: n.reference_id, // backend: reference_id
+        type: n.type || 'program', // backend: type (default to program if missing)
         read: n.is_read, // backend: is_read
         timestamp: n.created_at, // backend: created_at
       }));
@@ -75,18 +77,20 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
 
 
 
-  const handleNotificationClick = async (notificationId: string, programId: string) => {
-    // Optimistically update UI
+  const handleNotificationClick = async (notificationId: string, referenceId: string, type: string) => {
     setNotifications(prev => prev.map(n => (n.id === notificationId ? { ...n, read: true } : n)));
     setUnreadCount((prev) => Math.max(0, prev - 1));
-    // Mark as read in backend
     await fetch("/api/students/notifications", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ notificationIds: [notificationId] })
     });
     setIsOpen(false);
-    router.push(`/programs/${programId}?from=notification`);
+    let route = "/";
+    if (type === "internship") route = `/internships/${referenceId}?from=notification`;
+    else if (type === "event") route = `/events/${referenceId}?from=notification`;
+    else route = `/programs/${referenceId}?from=notification`;
+    router.push(route);
   };
 
   const toggleDropdown = () => {
@@ -152,12 +156,17 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
                       !notification.read ? "bg-blue-50 hover:bg-blue-100" : "bg-white hover:bg-gray-50"
                     }`}
                   >
-                    {/* Using Link for better accessibility and pre-fetching */}
                     <Link
-                      href={`/programs/${notification.programId}?from=notification`}
+                      href={
+                        notification.type === "internship"
+                          ? `/internships/${notification.referenceId}?from=notification`
+                          : notification.type === "event"
+                          ? `/events/${notification.referenceId}?from=notification`
+                          : `/programs/${notification.referenceId}?from=notification`
+                      }
                       onClick={(e) => {
-                        e.preventDefault(); // Prevent default Link navigation for custom handling
-                        handleNotificationClick(notification.id, notification.programId);
+                        e.preventDefault();
+                        handleNotificationClick(notification.id, notification.referenceId, notification.type);
                       }}
                       className="block p-4"
                     >

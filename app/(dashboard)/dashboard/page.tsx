@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { getProfileInfo } from "@/lib/actions/profile.actions";
 import { WelcomeCard } from "@/components/sections/dashboard/WelcomeCard";
 import { InternshipListings } from "@/components/sections/dashboard/InternshipListings";
-// import { InternshipListings } from "@/components/sections/dashboard/InternshipListings";
 
 /**
  * The main dashboard page, a Server Component that fetches initial user data
