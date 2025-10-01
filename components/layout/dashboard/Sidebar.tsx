@@ -45,7 +45,7 @@ const navItems = [
     icon: TrendingUp,
     label: "Track Progress",
   },
-
+// blog
   {
     href: "/dashboard/blog",
     icon: NewspaperIcon,
