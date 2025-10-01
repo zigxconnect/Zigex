@@ -22,7 +22,7 @@ export default function BlogCard({ post }: BlogCardProps) {
     : '/placeholder.jpg'
 
   return (
-    <Link href={`/blog/${post.slug.current}`}>
+    <Link href={`/dashboard/blog/${post.slug.current}`}>
       <article className="group cursor-pointer overflow-hidden rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300">
         <div className="relative h-64 overflow-hidden">
           <Image
