@@ -99,7 +99,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     return pathname === href;
   };
 
-  // Handle nav item click on mobile
+  // Handle nav item click
   const handleNavClick = () => {
     if (window.innerWidth < 1024 && onClose) {
       onClose();

@@ -65,7 +65,7 @@ export default async function Home() {
 
       <footer className="bg-white mt-20 py-8 border-t">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-600">
-          <p>&copy; 2024 My Blog. Built with Next.js & Sanity.</p>
+          <p>&copy; 2025 My Blog. Built with Next.js & Sanity.</p>
         </div>
       </footer>
     </div>
