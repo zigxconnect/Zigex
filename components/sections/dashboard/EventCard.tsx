@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { MapPin, Building2, ExternalLink, Calendar } from "lucide-react";
 import { Event } from "@/lib/types/dashoard";
+import { SharePopover } from "@/components/SharePopover";
 
 const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString("en-US", {
@@ -63,9 +64,9 @@ export const EventCard = ({ event }: { event: Event }) => {
           </div>
         </div>
 
-        <div className="mt-auto pt-4 border-t border-gray-100">
-          <Link href={`/events/${event.id}`} className="block">
-            <Button className="w-full bg-green-700 hover:bg-green-600 text-white rounded-lg py-3 flex items-center justify-center gap-2 group/btn">
+        <div className="mt-auto pt-4 border-t border-gray-100 flex items-center gap-3">
+          <Link href={`/events/${event.id}`} className="block flex-grow">
+            <Button className="bg-green-700 hover:bg-green-600 text-white rounded-lg py-3 flex items-center justify-center gap-2 group/btn">
               <span>View Event</span>
               <ExternalLink
                 size={14}
@@ -73,6 +74,7 @@ export const EventCard = ({ event }: { event: Event }) => {
               />
             </Button>
           </Link>
+          <SharePopover title={event.title} urlPath={`/events/${event.id}`} />
         </div>
       </div>
     </div>
