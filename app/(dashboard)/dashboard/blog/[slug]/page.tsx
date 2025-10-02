@@ -60,14 +60,14 @@ export default async function BlogPost({
             href="/"
             className="text-blue-600 hover:text-blue-700 font-medium"
           >
-            ← Back to Blog
+            ← Back to News
           </Link>
         </div>
       </header>
 
       <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <header className="mb-8">
-          <h1 className="text-5xl font-bold mb-4 text-gray-900">
+          <h1 className="md:text-3xl text-2xl font-bold mb-4 text-gray-900">
             {post.title}
           </h1>
 

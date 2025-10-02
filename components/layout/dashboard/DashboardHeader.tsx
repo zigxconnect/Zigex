@@ -2,10 +2,12 @@
 
 import { Menu } from "lucide-react";
 // ...existing code...
-import { NotificationDropdown } from "./NotificationDropdown";
+// import { NotificationDropdown } from "./NotificationDropdown";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { NotificationDropdown } from "./NotificationDropdown";
+// import NotificationDropdown from "./NotificationDropdown";
 
 interface DashboardHeaderProps {
   user?: any; // Use your UserProfile type here

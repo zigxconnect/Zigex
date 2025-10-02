@@ -33,7 +33,7 @@ export default function BlogCard({ post }: BlogCardProps) {
           />
         </div>
         <div className="p-6 bg-white">
-          <h2 className="text-2xl font-bold mb-2 group-hover:text-blue-600 transition-colors">
+          <h2 className="md:text-xl text-lg font-bold mb-2 group-hover:text-blue-600 transition-colors">
             {post.title}
           </h2>
           {post.excerpt && (

@@ -10,6 +10,7 @@ import { InternshipListings } from "@/components/sections/dashboard/InternshipLi
  */
 export default async function DashboardPage() {
   const userData = await getProfileInfo();
+  console.log("User Data:", userData);
 
   if (!userData) {
     redirect("/sign-in");
