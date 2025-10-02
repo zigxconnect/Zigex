@@ -3,8 +3,6 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 
-// import { Inter } from 'next/font/google'
-
 const inter = Inter({
   subsets: ["latin"],
   display: "swap",
@@ -17,9 +15,7 @@ export const metadata: Metadata = {
     template:
       "%s  ZiGex| SEED | ZiGex | skills enhancement and empowerment throgh digitalization, seed bamenda ",
   },
-
   description: "Zone For Internship,Growth and Experience ",
-  // themeColor: '#FF6F00',
   keywords: [
     "fonyuygita",
     "seed Inc",
@@ -84,14 +80,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         {children}
-        return (
-        <html lang="en">
-          <body className={inter.className}>
-            {children}
-            <Toaster />
-          </body>
-        </html>
-        );{" "}
+        <Toaster />
       </body>
     </html>
   );
