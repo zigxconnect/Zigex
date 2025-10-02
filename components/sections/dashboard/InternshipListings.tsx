@@ -6,7 +6,7 @@ import { EventCard } from "./EventCard";
 import { ProgramCard } from "./ProgramCard";
 import { Spinner } from "@/components/uiComponent/Spinner";
 
-import { Briefcase, GraduationCap, Calendar, Sparkles } from "lucide-react";
+import { Briefcase, GraduationCap, Calendar, Sparkles, LoaderPinwheel } from "lucide-react";
 import { Internship, Event, Program } from "@/lib/types/dashoard/index";
 import { DashboardSearch } from "./InternshipSearch";
 
@@ -182,7 +182,7 @@ export const InternshipListings = () => {
     if (isLoading)
       return (
         <div className="flex justify-center py-20">
-          <Spinner />
+          <LoaderPinwheel />
         </div>
       );
     if (error)

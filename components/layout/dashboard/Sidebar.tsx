@@ -13,8 +13,8 @@ import {
   Users,
   TrendingUp,
   User,
-  Menu,
-} from "lucide-react";
+  NewspaperIcon
+  } from "lucide-react";
 import { AiOutlineWechat } from "react-icons/ai";
 import { Button } from "@/components/ui/button";
 
@@ -44,6 +44,12 @@ const navItems = [
     href: "/dashboard/track-progress",
     icon: TrendingUp,
     label: "Track Progress",
+  },
+// blog
+  {
+    href: "/dashboard/blog",
+    icon: NewspaperIcon,
+    label: "News",
   },
 ];
 
@@ -93,7 +99,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     return pathname === href;
   };
 
-  // Handle nav item click on mobile
+  // Handle nav item click
   const handleNavClick = () => {
     if (window.innerWidth < 1024 && onClose) {
       onClose();

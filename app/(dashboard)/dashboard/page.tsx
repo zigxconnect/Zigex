@@ -6,9 +6,11 @@ import { InternshipListings } from "@/components/sections/dashboard/InternshipLi
 /**
  * The main dashboard page, a Server Component that fetches initial user data
  * and renders the main interactive listings component.
+//  * fixed
  */
 export default async function DashboardPage() {
   const userData = await getProfileInfo();
+  console.log("User Data:", userData);
 
   if (!userData) {
     redirect("/sign-in");
