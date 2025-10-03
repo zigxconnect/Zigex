@@ -1,6 +1,8 @@
 "use client";
 
-import { Bell, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
+// ...existing code...
+import { NotificationDropdown } from "./NotificationDropdown";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
@@ -14,11 +16,7 @@ export const DashboardHeader = ({
   user,
   onMenuClick,
 }: DashboardHeaderProps) => {
-  const [notificationCount, setNotificationCount] = useState(3);
-
-  const handleNotificationClick = () => {
-    console.log("Notifications clicked");
-  };
+  // NotificationDropdown handles its own state and fetching
 
   // Extract user data with fallbacks
   const userName = user?.name || user?.profile?.name || "Guest User";
@@ -60,18 +58,8 @@ export const DashboardHeader = ({
 
         {/* Right Side - Notifications & User */}
         <div className="flex items-center gap-3">
-          {/* Notifications */}
-          <button
-            onClick={handleNotificationClick}
-            className="relative p-2.5 text-gray-600 rounded-xl hover:bg-gray-100 hover:text-gray-900 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            <Bell size={20} />
-            {notificationCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-semibold shadow-md">
-                {notificationCount > 9 ? "9+" : notificationCount}
-              </span>
-            )}
-          </button>
+          {/* Notifications Dropdown */}
+          <NotificationDropdown />
 
           {/* User Avatar - Desktop Only */}
           <div className="hidden lg:flex items-center gap-3 pl-3 border-l border-gray-200">

@@ -1,8 +1,9 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import {
   Upload,
@@ -12,6 +13,7 @@ import {
   Users,
   TrendingUp,
   User,
+  Menu,
 } from "lucide-react";
 import { AiOutlineWechat } from "react-icons/ai";
 import { Button } from "@/components/ui/button";
@@ -28,7 +30,7 @@ const navItems = [
   { href: "/dashboard", icon: User, label: "Profile" },
   { href: "/dashboard/upload-resume", icon: Upload, label: "Upload Resume" },
   {
-    href: "/dashboard/applied-internships",
+    href: "/dashboard/applied-intenships",
     icon: Briefcase,
     label: "Applied Internships",
     badge: 5,
@@ -55,7 +57,8 @@ const aiChatItem = {
 export const Sidebar: React.FC<SidebarProps> = ({
   isOpen = false,
   onClose,
-  user,
+  onToggle,
+  user
 }) => {
   const pathname = usePathname();
 
@@ -177,21 +180,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
           scrollbar-width: thin;
           scrollbar-color: #3b82f6 #dbeafe;
         }
-
+        
         .custom-scrollbar::-webkit-scrollbar {
           width: 6px;
         }
-
+        
         .custom-scrollbar::-webkit-scrollbar-track {
           background: #f1f5f9;
           border-radius: 10px;
         }
-
+        
         .custom-scrollbar::-webkit-scrollbar-thumb {
           background: #3b82f6;
           border-radius: 10px;
         }
-
+        
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: #1d4ed8;
         }
