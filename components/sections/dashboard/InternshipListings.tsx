@@ -4,12 +4,12 @@ import { useState, useEffect, useMemo } from "react";
 import { InternshipCard } from "./InternshipCard";
 import { EventCard } from "./EventCard";
 import { ProgramCard } from "./ProgramCard";
-import { Spinner } from "@/components/uiComponent/Spinner";
+// import { LoadingSkeleton } from "./LoadingSkeleton";
 
-import { Briefcase, GraduationCap, Calendar, Sparkles, LoaderPinwheel } from "lucide-react";
+import { Briefcase, GraduationCap, Calendar, Sparkles } from "lucide-react";
 import { Internship, Event, Program } from "@/lib/types/dashoard/index";
 import { DashboardSearch } from "./InternshipSearch";
-
+import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 type TabType = "internships" | "programs" | "events";
 type TabId = "all" | TabType;
 
@@ -40,15 +40,12 @@ export const InternshipListings = () => {
     programs: Program[];
   }>({ internships: [], events: [], programs: [] });
 
-  // REFACTORED: Single loading and error state for the initial fetch
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
-  // REFACTORED: Active tab now defaults to 'all'
   const [activeTab, setActiveTab] = useState<TabId>("all");
 
-  // REFACTORED: useEffect now fetches ALL data at once
   useEffect(() => {
     const fetchAllData = async () => {
       try {
@@ -123,7 +120,6 @@ export const InternshipListings = () => {
     );
   }, [activeTab, searchQuery, data, allContentSorted]);
 
-  // NEW: Tab configuration updated with the 'All' tab
   const tabs = [
     {
       id: "all" as TabId,
@@ -177,29 +173,28 @@ export const InternshipListings = () => {
     return isActive ? colorMap[color].active : colorMap[color].inactive;
   };
 
-  // REFACTORED: The main render function is now simpler
   const renderContent = () => {
-    if (isLoading)
-      return (
-        <div className="flex justify-center py-20">
-          <LoaderPinwheel />
-        </div>
-      );
-    if (error)
+    if (isLoading) {
+      return <LoadingSkeleton/>;
+    }
+    
+    if (error) {
       return (
         <div className="text-center py-20 text-red-500">Error: {error}</div>
       );
-    if (filteredData.length === 0)
+    }
+    
+    if (filteredData.length === 0) {
       return (
         <div className="text-center py-20">
           <h3>No {searchQuery ? "matching" : ""} opportunities found.</h3>
         </div>
       );
+    }
 
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {filteredData.map((item, index) => {
-          // NEW: Use the _type property to decide which card to render
           switch ((item as AllContentItem)._type) {
             case "internships":
               return (

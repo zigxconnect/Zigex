@@ -9,6 +9,7 @@ import Image from "next/image";
 import { MapPin, Building2, ExternalLink, TriangleAlert } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Alert } from "@/components/uiComponent/Alert";
+import { InternshipDetailsLoadingSkeleton } from "@/components/SinglePageLoadingSkeleton";
 
 // A helper component for displaying detail items in the sidebar
 const DetailItem = ({
@@ -43,9 +44,7 @@ export default function EventDetailsPage({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Spinner />
-      </div>
+       <InternshipDetailsLoadingSkeleton/>
     );
   }
   if (error) {

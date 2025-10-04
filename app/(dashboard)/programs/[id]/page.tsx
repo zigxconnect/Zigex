@@ -13,6 +13,7 @@ import { Card } from "@/components/ui/card";
 import { Alert } from "@/components/uiComponent/Alert";
 import { ListItem } from "@/components/uiComponent/ListItem";
 import { useSearchParams } from "next/navigation";
+import { InternshipDetailsLoadingSkeleton } from "@/components/SinglePageLoadingSkeleton";
 
 // Reusing the DetailItem helper component
 const DetailItem = ({
@@ -51,10 +52,7 @@ export default function ProgramDetailsPage({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-          <LoaderPinwheel/>
-     
-      </div>
+       <InternshipDetailsLoadingSkeleton/>
     );
   }
   if (error) {

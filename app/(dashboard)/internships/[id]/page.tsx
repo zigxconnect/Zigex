@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { ApplicationModal } from "@/components/sections/dashboard/details/ApplicationModal";
 import { InternshipInfoPanel } from "@/components/sections/dashboard/details/InternshipInfoPanel";
 import { InternshipBody } from "@/components/sections/dashboard/details/InternshipBody";
-import { Spinner } from "@/components/uiComponent/Spinner";
-import { LoaderPinwheel } from "lucide-react";
+import { InternshipDetailsLoadingSkeleton } from "@/components/SinglePageLoadingSkeleton";
+// import { InternshipDetailsLoadingSkeleton } from "@/components/sections/dashboard/details/InternshipDetailsLoadingSkeleton";
 
 export default function InternshipDetailsPage({
   params,
@@ -55,15 +55,7 @@ export default function InternshipDetailsPage({
   }, [params.id, resolvedParams[0].id]);
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-[#F8FAFC]">
-        <div className="flex items-center">
-          <LoaderPinwheel/>
-          
-          <span className="ml-4 text-gray-500 text-lg">Loading Details...</span>
-        </div>
-      </div>
-    );
+    return <InternshipDetailsLoadingSkeleton />;
   }
 
   if (error) {
