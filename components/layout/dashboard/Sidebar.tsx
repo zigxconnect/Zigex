@@ -13,8 +13,9 @@ import {
   Users,
   TrendingUp,
   User,
-  NewspaperIcon
-  } from "lucide-react";
+  Bell,
+  NewspaperIcon,
+} from "lucide-react";
 import { AiOutlineWechat } from "react-icons/ai";
 import { Button } from "@/components/ui/button";
 
@@ -24,6 +25,14 @@ interface SidebarProps {
   onClose?: () => void;
   onToggle?: () => void;
 }
+
+// Notifications nav item (we render it dynamically because its badge updates)
+const notificationsItem = {
+  href: "/notifications",
+  icon: Bell,
+  label: "Notifications",
+  matchPaths: ["/notifications", "/notifications"],
+};
 
 // Regular navigation items
 const navItems = [
@@ -39,6 +48,8 @@ const navItems = [
     href: "/dashboard/student-directory",
     icon: Users,
     label: "Student Directory",
+    // also match dynamic student detail pages like /dashboard/student/:id
+    matchPaths: ["/dashboard/student"],
   },
   {
     href: "/dashboard/track-progress",
@@ -52,6 +63,8 @@ const navItems = [
     label: "News",
   },
 ];
+
+
 
 // Special navigation item for AI chat
 const aiChatItem = {
@@ -67,6 +80,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   user
 }) => {
   const pathname = usePathname();
+  const [unreadCount, setUnreadCount] = useState<number>(0);
 
   // Extract user data with fallbacks
   const userName = user?.name || user?.profile?.name || "Guest User";
@@ -93,10 +107,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const isRouteActive = (href: string) => {
-    if (href === "/dashboard") {
-      return pathname === "/dashboard" || pathname === "/dashboard/";
+    // Normalize to avoid trailing slash mismatches
+    const normalize = (p: string | undefined) => (p ? p.replace(/\/+$|^\s+|\s+$/g, "") : "");
+    const path = normalize(pathname);
+    const target = normalize(href);
+
+    if (!target) return false;
+
+    // Special-case root dashboard exact match
+    if (target === "/dashboard") {
+      return path === "/dashboard";
     }
-    return pathname === href;
+
+    // exact match or prefix match for nested/dynamic routes
+    return path === target || path.startsWith(target + "/") || path.startsWith(target);
   };
 
   // Handle nav item click
@@ -108,7 +132,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const renderNavItem = (item: any, isSpecial = false) => {
     const Icon = item.icon;
-    const isActive = isRouteActive(item.href);
+    // support explicit matchPaths override
+    const isActive = item.matchPaths
+      ? item.matchPaths.some((p: string) => pathname === p || pathname.startsWith(p))
+      : isRouteActive(item.href);
 
     return (
       <Link
@@ -160,7 +187,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           />
         </div>
         <span className="flex-1 truncate font-medium">{item.label}</span>
-        {item.badge && (
+        {/* show dynamic badge for notifications */}
+        {(item.href === notificationsItem.href ? unreadCount : item.badge) && (
           <span
             className={`
               px-2 py-1 text-xs font-semibold rounded-full flex-shrink-0
@@ -171,12 +199,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
               }
             `}
           >
-            {item.badge}
+            {item.href === notificationsItem.href ? (unreadCount > 99 ? "99+" : unreadCount) : item.badge}
           </span>
         )}
       </Link>
     );
   };
+
+  // Fetch unread notifications count and poll every 30s
+  useEffect(() => {
+    let mounted = true;
+    const fetchCount = async () => {
+      try {
+        const res = await fetch('/api/students/notifications/unread-count');
+        const data = await res.json();
+        if (mounted) setUnreadCount(data.unreadCount || 0);
+      } catch (e) {
+        console.error('Failed to fetch unread count', e);
+      }
+    };
+    fetchCount();
+    const iv = setInterval(fetchCount, 30000);
+    return () => { mounted = false; clearInterval(iv); };
+  }, []);
 
   return (
     <>
@@ -269,6 +314,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </h4>
                 <div className="space-y-1">
                   {navItems.map((item) => renderNavItem(item))}
+                  {/* Notifications entry in the main nav so it can show the badge and be highlighted */}
+                  {renderNavItem(notificationsItem)}
                 </div>
               </div>
 

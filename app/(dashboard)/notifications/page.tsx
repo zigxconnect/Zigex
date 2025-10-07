@@ -106,11 +106,11 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto w-full" style={{ width: '90%', maxWidth: '1000px' }}>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-6 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto w-full px-2 sm:px-4">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 gap-4">
             <div className="flex items-center gap-3">
               <div className="relative">
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -130,14 +130,15 @@ export default function NotificationsPage() {
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg text-sm font-medium"
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg text-sm font-medium w-full sm:w-auto justify-center"
+                aria-label="Mark all notifications as read"
               >
                 <CheckCheck className="w-4 h-4" />
                 Mark all read
               </button>
             )}
           </div>
-          <p className="text-slate-600 ml-13">
+          <p className="text-slate-600 ml-0 sm:ml-13">
             {unreadCount > 0 
               ? `You have ${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}`
               : "You're all caught up!"}
@@ -156,19 +157,9 @@ export default function NotificationsPage() {
         ) : (
           <div className="space-y-4">
             {notifications.map((n) => (
-              <div
-                key={n.id}
-                className="block group"
-              >
+              <div key={n.id} className="block group">
                 <div
-                  className={`
-                    relative bg-white rounded-2xl shadow-sm border-2 md:p-5 p-6 
-                    transition-all duration-300 ease-out
-                    ${n.read 
-                      ? 'border-slate-200' 
-                      : 'border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50'
-                    }
-                  `}
+                  className={`relative bg-white rounded-2xl shadow-sm border-2 p-4 md:p-5 transition-all duration-300 ease-out ${n.read ? 'border-slate-200' : 'border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50'}`}
                 >
                   {/* Unread indicator */}
                   {!n.read && (
@@ -195,29 +186,31 @@ export default function NotificationsPage() {
                     </p>
 
                     {/* Footer */}
-                    <div className="flex items-center justify-between pt-3 border-t border-slate-100 flex-wrap gap-3">
+                    <div className="flex flex-col sm:flex-row items-center sm:justify-between pt-3 border-t border-slate-100 flex-wrap gap-3">
                       <div className="flex items-center gap-2 text-slate-500 text-xs sm:text-sm">
                         <Clock className="w-4 h-4" />
                         <span>{formatTime(n.timestamp)}</span>
                       </div>
                       
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 w-full sm:w-auto">
                         {!n.read && (
                           <button
                             onClick={(e) => {
                               e.preventDefault();
                               markAsRead(n.id);
                             }}
-                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-100 hover:bg-blue-200 rounded-lg transition-colors"
+                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-100 hover:bg-blue-200 rounded-lg transition-colors w-full sm:w-auto justify-center"
+                            aria-label={`Mark notification ${n.id} as read`}
                           >
                             <CheckCheck className="w-3 h-3" />
                             Mark read
                           </button>
                         )}
+
                         <Link
                           href={`/programs/${n.programId}?from=notification`}
                           onClick={() => !n.read && markAsRead(n.id)}
-                          className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all hover:gap-3 hover:shadow-lg"
+                          className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all hover:gap-3 hover:shadow-lg w-full sm:w-auto justify-center"
                         >
                           <span>View Program</span>
                           <ExternalLink className="w-4 h-4" />

@@ -55,7 +55,7 @@ type RecentApplication = {
 
 /** Fetches the company profile for the currently authenticated user. */
 export async function getAuthenticatedCompanyProfile() {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -75,7 +75,7 @@ export async function getAuthenticatedCompanyProfile() {
  * while preserving the original 'type' field from the database.
  */
 export async function getPostingById(id: string): Promise<Posting | null> {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const tables: Array<{
     name: "internships" | "programs" | "event";
     type: Posting["postingType"];
@@ -99,7 +99,7 @@ export async function getPostingById(id: string): Promise<Posting | null> {
 
 /** Fetches and formats all postings for a given company. */
 export async function getAllCompanyPostings(companyId: string) {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { internships, programs, events } = await _fetchAllPostings(
     supabase,
     companyId
@@ -126,7 +126,7 @@ export async function getAllCompanyPostings(companyId: string) {
 
 /** Fetches and calculates the header stats for a company. */
 export async function getHeaderStats(companyId: string) {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { internships, programs, events } = await _fetchAllPostings(
     supabase,
     companyId,
@@ -159,7 +159,7 @@ export async function getHeaderStats(companyId: string) {
 
 /** Fetches and processes all analytical data for the main admin dashboard. */
 export async function getDashboardAnalytics(companyId: string) {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { internships, programs, events, applications } =
     await _fetchAllAnalyticsData(supabase, companyId);
   const allPostings: (Internship | Program | Event)[] = [
@@ -270,7 +270,7 @@ async function _fetchApplicationCounts(
     .or(orConditions.join(","));
   if (!apps) return {};
 
-  return apps.reduce((acc, app) => {
+  return (apps as any[]).reduce((acc: Record<string, number>, app: any) => {
     const id = app.internship_id || app.program_id;
     if (id) acc[id] = (acc[id] || 0) + 1;
     return acc;

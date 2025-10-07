@@ -11,7 +11,7 @@ import { redirect } from "next/navigation";
 export async function checkAuthStatus(
   redirectTo: string = "/dashboard"
 ): Promise<void> {
-  const supabase = createServerActionClient();
+  const supabase = await createServerActionClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -41,7 +41,7 @@ const signInSchema = z.object({
  * Relies on a database trigger to create the user's profile.
  */
 export async function signUpAction(formData: z.infer<typeof signUpSchema>) {
-  const supabase = createServerActionClient();
+  const supabase = await createServerActionClient();
 
   const result = signUpSchema.safeParse(formData);
   if (!result.success) {
@@ -87,7 +87,7 @@ export async function signUpAction(formData: z.infer<typeof signUpSchema>) {
  * Handles login and redirects the user based on their profile completion status.
  */
 export async function signInAction(formData: z.infer<typeof signInSchema>) {
-  const supabase = createServerActionClient();
+  const supabase = await createServerActionClient();
 
   const result = signInSchema.safeParse(formData);
   if (!result.success) {

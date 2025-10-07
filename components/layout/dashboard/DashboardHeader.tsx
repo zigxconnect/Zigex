@@ -4,6 +4,7 @@ import { Menu, Search, Bell } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { NotificationDropdown } from "./NotificationDropdown";
+import Link from "next/link";
 
 interface DashboardHeaderProps {
   user?: any;
@@ -38,14 +39,16 @@ export const DashboardHeader = ({
             <Menu size={24} className="text-gray-700" />
           </button>
 
-          {/* Logo/Brand */}
+          {/* Logo/Brand - Link to home and aligned with sidebar */}
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">Z</span>
-            </div>
-            <div className="hidden sm:block">
-              <h1 className="text-xl font-bold text-gray-900">IGEX</h1>
-            </div>
+            <Link href="/" className="flex items-center gap-2 group">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center transition-transform group-hover:scale-105">
+                <span className="text-white font-bold text-lg">Z</span>
+              </div>
+              <div className="hidden sm:block">
+                <h1 className="text-xl font-bold text-gray-900">IGEX</h1>
+              </div>
+            </Link>
           </div>
         </div>
 
