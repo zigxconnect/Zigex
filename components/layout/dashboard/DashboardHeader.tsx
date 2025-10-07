@@ -42,7 +42,7 @@ export const DashboardHeader = ({
           {/* Logo/Brand - Link to home and aligned with sidebar */}
           <div className="flex items-center gap-2">
             <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center transition-transform group-hover:scale-105">
+              <div className="w-8 h-8  bg-blue-600 rounded-lg flex items-center justify-center transition-transform group-hover:scale-105">
                 <span className="text-white font-bold text-lg">Z</span>
               </div>
               <div className="hidden sm:block">

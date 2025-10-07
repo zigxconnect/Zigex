@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Bell, Clock, ExternalLink, CheckCheck } from "lucide-react";
+import { LoadingSkeleton, NotificationSkeleton } from "@/components/LoadingSkeleton";
 
 interface Notification {
   id: string;
@@ -93,13 +94,9 @@ export default function NotificationsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center justify-center h-64">
-            <div className="flex flex-col items-center gap-4">
-              <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-              <p className="text-slate-600 font-medium">Loading notifications...</p>
-            </div>
-          </div>
+        <div className="max-w-4xl mx-auto w-full px-2 sm:px-4">
+          {/* Use a notification-specific skeleton for loading state */}
+          <NotificationSkeleton count={4} />
         </div>
       </div>
     );

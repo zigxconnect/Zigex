@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { useRouter } from 'next/navigation';
 
 interface StudentProps {
   id: string;
@@ -29,9 +30,20 @@ export const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats
 
   const primarySkills = (student.hard_skills || []).slice(0, 3);
 
+  const router = useRouter();
+
+  const goToProfile = () => router.push(`/dashboard/student/${student.id}`);
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      goToProfile();
+    }
+  };
+
   return (
-    <Link href={`/dashboard/student/${student.id}`} className="block">
-      <div className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer">
+    <div tabIndex={0} role="button" onKeyDown={onKeyDown} onClick={goToProfile} className="block">
+      <div className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-300">
         <div className="flex items-start gap-4">
           <div className="flex-shrink-0">
             {student.avatar_url ? (
@@ -61,14 +73,29 @@ export const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats
               )}
             </div>
 
-            <div className="mt-4 flex items-center gap-3">
-              {student.linkedin_url && (
-                <a href={student.linkedin_url} target="_blank" rel="noreferrer" className="text-blue-600 text-sm">LinkedIn</a>
-              )}
-              {student.full_name && (
-                <span className="text-xs text-gray-400">•</span>
-              )}
-              <span className="text-xs text-gray-500">Connect</span>
+            <div className="mt-4 flex items-center gap-3 justify-between">
+              <div className="flex items-center gap-3">
+                {student.linkedin_url && (
+                  <a href={student.linkedin_url} target="_blank" rel="noreferrer" className="text-blue-600 text-sm">LinkedIn</a>
+                )}
+                {student.full_name && (
+                  <span className="text-xs text-gray-400">•</span>
+                )}
+                <span className="text-xs text-gray-500">Connect</span>
+              </div>
+
+              <div className="flex-shrink-0">
+                {/* Follow button: stops propagation so clicking it doesn't trigger outer navigation immediately */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    goToProfile();
+                  }}
+                  className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Follow
+                </button>
+              </div>
             </div>
 
             {/* Dummy statistics area */}
@@ -93,7 +120,7 @@ export const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats
           </div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 };
 

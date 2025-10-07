@@ -31,6 +31,10 @@ export const StudentDirectoryClient: React.FC<{ profiles: RawUserProfile[] }> = 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
+        <header className="mb-6">
+          <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">Meet Our Bright ZigX</h1>
+          <p className="text-slate-600 mt-1">Discover and connect with fellow students — follow profiles you want to keep an eye on.</p>
+        </header>
         <div className="mb-6">
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
