@@ -9,6 +9,10 @@ import Image from "next/image";
 import { MapPin, Building2, ExternalLink } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import DynamicForm from "@/components/sections/dashboard/Application/application";
+import { Alert } from "@/components/uiComponent/Alert";
+import { ListItem } from "@/components/uiComponent/ListItem";
+import { useSearchParams } from "next/navigation";
+import { InternshipDetailsLoadingSkeleton } from "@/components/SinglePageLoadingSkeleton";
 
 const DetailItem = ({
   label,
@@ -51,6 +55,7 @@ export default function ProgramDetailsPage({
       <div className="flex items-center justify-center min-h-screen">
         <LoaderPinwheel />
       </div>
+       <InternshipDetailsLoadingSkeleton/>
     );
   }
   if (error) {

@@ -28,6 +28,9 @@ const DetailItem = ({
   );
 };
 
+import { InternshipDetailsLoadingSkeleton } from "@/components/SinglePageLoadingSkeleton";
+// import { InternshipDetailsLoadingSkeleton } from "@/components/sections/dashboard/details/InternshipDetailsLoadingSkeleton";
+
 export default function InternshipDetailsPage({
   params,
 }: {
@@ -47,6 +50,7 @@ export default function InternshipDetailsPage({
         <Spinner />
       </div>
     );
+    return <InternshipDetailsLoadingSkeleton />;
   }
   if (error) {
     return (

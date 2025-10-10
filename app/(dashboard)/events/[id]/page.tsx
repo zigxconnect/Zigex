@@ -10,6 +10,7 @@ import { MapPin, Building2, ExternalLink, TriangleAlert } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Alert } from "@/components/uiComponent/Alert";
 import DynamicForm from "@/components/sections/dashboard/Application/application";
+import { InternshipDetailsLoadingSkeleton } from "@/components/SinglePageLoadingSkeleton";
 
 const DetailItem = ({
   label,
@@ -47,6 +48,7 @@ export default function EventDetailsPage({
       <div className="flex items-center justify-center h-[60vh]">
         <Spinner />
       </div>
+       <InternshipDetailsLoadingSkeleton/>
     );
   }
   if (error) {

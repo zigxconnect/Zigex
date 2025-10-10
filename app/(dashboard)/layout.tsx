@@ -27,7 +27,7 @@ export default async function DashboardLayout({
       </DashboardClientLayout>
 
       {/* Fixed AI Chat Button */}
-      <AIChatButton />
+      {/* <AIChatButton /> */}
     </div>
   );
 }
