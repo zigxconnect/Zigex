@@ -144,21 +144,22 @@ export const SharePopover = ({ title, urlPath }: SharePopoverProps) => {
       }, 2500);
     });
   };
-
+ 
+                      // <Share2 size={18} className="text-red-700 " />
   return (
     <>
       <Button
         variant="outline"
         size="icon"
-        className="rounded-lg flex-shrink-0 transition-all duration-150 active:scale-90 hover:bg-gray-50"
+        className="w-11 h-11 bg-white backdrop-blur-xl hover:bg-white shadow-2xl rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95"
         onClick={() => setIsOpen(true)}
       >
-        <Share2 size={16} />
-        <span className="sr-only">Share</span>
+        <Share2 size={16} className="text-gray-700"/>
+        {/* <span className="sr-only">Share</span> */}
       </Button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-[9999] overflow-hidden">
+        <div className="fixed inset-0 z-[999999] overflow-hidden">
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/50 backdrop-blur-[2px] animate-[fadeIn_0.25s_ease-out]"
@@ -272,6 +273,30 @@ export const SharePopover = ({ title, urlPath }: SharePopoverProps) => {
                 </div>
               </div>
 
+              <div className="px-6 py-6">
+                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-4 flex items-center gap-3 border border-gray-200">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Link</p>
+                    <p className="text-sm text-gray-900 truncate font-mono">{fullUrl}</p>
+                  </div>
+                  <button
+                    onClick={handleCopyLink}
+                    className={`flex-shrink-0 px-5 py-3 rounded-xl font-bold text-sm shadow-md active:scale-95 transition-all ${
+                      copied
+                        ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white"
+                        : "bg-gradient-to-r from-gray-900 to-gray-800 text-white hover:shadow-lg"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {copied ? <Check size={18} strokeWidth={3} /> : <Link2 size={18} />}
+                      <span>{copied ? "Copied!" : "Copy"}</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+              <div className="mx-6 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
+
+
               {/* Social Links */}
               <div className="px-6 pb-5">
                 <div className="grid grid-cols-4 gap-4">
@@ -297,30 +322,9 @@ export const SharePopover = ({ title, urlPath }: SharePopoverProps) => {
               </div>
 
               {/* Divider */}
-              <div className="mx-6 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
 
               {/* Copy Link */}
-              <div className="px-6 py-6">
-                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-4 flex items-center gap-3 border border-gray-200">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Link</p>
-                    <p className="text-sm text-gray-900 truncate font-mono">{fullUrl}</p>
-                  </div>
-                  <button
-                    onClick={handleCopyLink}
-                    className={`flex-shrink-0 px-5 py-3 rounded-xl font-bold text-sm shadow-md active:scale-95 transition-all ${
-                      copied
-                        ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white"
-                        : "bg-gradient-to-r from-gray-900 to-gray-800 text-white hover:shadow-lg"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      {copied ? <Check size={18} strokeWidth={3} /> : <Link2 size={18} />}
-                      <span>{copied ? "Copied!" : "Copy"}</span>
-                    </div>
-                  </button>
-                </div>
-              </div>
+              
             </div>
           </div>
 
@@ -350,7 +354,7 @@ export const SharePopover = ({ title, urlPath }: SharePopoverProps) => {
             opacity: 0;
           }
           to { 
-            transform: translateY(0);
+            transform: translateY(-30%);
             opacity: 1;
           }
         }

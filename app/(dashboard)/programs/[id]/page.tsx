@@ -1,21 +1,21 @@
 "use client";
 
-import { use } from "react"; // Import the use hook from React
+import { use, useState, Fragment } from "react";
 import { useFetchDetails } from "@/hooks/useFetchDetails";
 import { Program } from "@/lib/types/dashoard/index";
-import { Spinner } from "@/components/uiComponent/Spinner";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-
-import { MapPin, BookOpen, TriangleAlert, Bell, LoaderPinwheel } from "lucide-react";
-
+import { MapPin, BookOpen, TriangleAlert, Play } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Alert } from "@/components/uiComponent/Alert";
 import { ListItem } from "@/components/uiComponent/ListItem";
-import { useSearchParams } from "next/navigation";
 import { InternshipDetailsLoadingSkeleton } from "@/components/SinglePageLoadingSkeleton";
+import { Badge } from "@/components/uiComponent/Badge";
+import { LiveVideoModal } from "@/components/sections/dashboard/Video/LiveVideoModal";
+// import { LiveVideoModal } from "@/components/LiveVideoModal";
+// import { Badge } from "@/components/ui/badge";
 
-// Reusing the DetailItem helper component
+// DetailItem helper component
 const DetailItem = ({
   label,
   value,
@@ -37,13 +37,12 @@ const DetailItem = ({
 export default function ProgramDetailsPage({
   params,
 }: {
-  params: Promise<{ id: string }>; // Update the type to reflect that params is a Promise
+  params: Promise<{ id: string }>;
 }) {
-  // Unwrap the params Promise using React.use()
-  // This extracts the actual params object from the Promise
   const resolvedParams = use(params);
-  
-  // Now we can safely access the id property
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [showMobileDetails, setShowMobileDetails] = useState(false);
+
   const {
     data: program,
     isLoading,
@@ -51,10 +50,9 @@ export default function ProgramDetailsPage({
   } = useFetchDetails<Program>("/api/students/programs", resolvedParams.id);
 
   if (isLoading) {
-    return (
-       <InternshipDetailsLoadingSkeleton/>
-    );
+    return <InternshipDetailsLoadingSkeleton />;
   }
+
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -62,15 +60,25 @@ export default function ProgramDetailsPage({
       </div>
     );
   }
+
   if (!program) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center p-6 text-gray-500 text-lg">Program not found.</div>
+        <div className="text-center p-6 text-gray-500 text-lg">
+          Program not found.
+        </div>
       </div>
     );
   }
 
   const company = program.company;
+  const MOCK_LIVE_IDS = ["p1", "e1", "i1"];
+  const programId = resolvedParams.id;
+  const isLive =
+    (program as any).is_live ||
+    MOCK_LIVE_IDS.includes(programId) ||
+    /live/i.test(program.title || "");
+
   const deadline = program.application_deadline
     ? new Date(program.application_deadline).toLocaleDateString("en-US", {
         month: "long",
@@ -79,141 +87,182 @@ export default function ProgramDetailsPage({
     : "Not specified";
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
-      {/* Mobile: No padding, Desktop: Padding */}
-      <div className="lg:px-8 lg:py-8">
-        <div className="lg:max-w-7xl lg:mx-auto">
-          
-          {/* Mobile: Stack layout, Desktop: Grid layout */}
-          <div className="flex flex-col lg:grid lg:grid-cols-3 lg:gap-8">
-            
-            {/* Main Content */}
-            <div className="lg:col-span-2">
-              {/* Mobile: Full width card with no border radius, Desktop: Rounded card */}
-              <div className="bg-white lg:rounded-2xl lg:shadow-lg lg:border lg:border-gray-200 overflow-hidden min-h-screen lg:min-h-0">
-                
-                {/* Hero Image - Much larger on mobile */}
-                <div className="relative h-64 sm:h-80 lg:h-96 w-full">
-                  <Image
-                    src={program.program_picture_url}
-                    alt={program.title}
-                    fill
-                    className="object-cover"
-                    priority
-                  />
-                  {/* Gradient overlay for better text readability */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-                </div>
+    <>
+      <div className="min-h-screen bg-[#F8FAFC]">
+        <div className="lg:px-8 lg:py-8">
+          <div className="lg:max-w-7xl lg:mx-auto">
+            <div className="flex flex-col lg:grid lg:grid-cols-3 lg:gap-8">
+              {/* Main Content */}
+              <div className="lg:col-span-2">
+                <div className="bg-white lg:rounded-2xl lg:shadow-lg lg:border lg:border-gray-200 overflow-hidden min-h-screen lg:min-h-0">
+                  {/* Hero Image Section */}
+                  <div className="relative h-64 sm:h-80 lg:h-96 w-full group">
+                    <Image
+                      src={program.program_picture_url}
+                      alt={program.title}
+                      fill
+                      className="object-cover"
+                      priority
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
 
-                {/* Content Section */}
-                <div className="p-4 sm:p-6 lg:p-8">
-                  {/* Title - Larger and more prominent */}
-                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-purple-700 leading-tight">
-                    {program.title}
-                  </h1>
-
-                  {/* Company Info - Better mobile layout */}
-                  <div className="mt-6 flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
-                    <div className="flex-shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded-lg flex items-center justify-center bg-purple-500 text-white font-bold shadow-md">
-                      <BookOpen size={24} className="sm:w-8 sm:h-8" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h2 className="text-lg sm:text-xl font-bold text-gray-900 truncate">
-                        {company?.company_name || "Community Program"}
-                      </h2>
-                      <div className="flex items-center gap-1 text-sm text-gray-500 mt-1 capitalize">
-                        <MapPin size={14} className="flex-shrink-0" />
-                        <span className="truncate">{program.location || program.type}</span>
+                    {/* Live Badge Overlay */}
+                    {isLive && (
+                      <div className="absolute top-4 left-4 z-10">
+                        <Badge className="bg-red-600 hover:bg-red-600 text-white animate-pulse flex items-center gap-2 px-3 py-1.5 text-sm font-semibold">
+                          <span className="w-2 h-2 bg-white rounded-full animate-ping" />
+                          LIVE NOW
+                        </Badge>
                       </div>
-                    </div>
-                  </div>
+                    )}
 
-                  {/* Content Sections - Better typography */}
-                  <div className="mt-8 space-y-8">
-                    <section>
-                      <h3 className="text-xl font-bold text-gray-800 mb-4">
-                        Program Description
-                      </h3>
-                      <div className="prose prose-gray max-w-none text-base leading-relaxed">
-                        <p>{program.description}</p>
+                    {/* Play Button Overlay for Live */}
+                    {isLive && (
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <Button
+                          onClick={() => setIsVideoModalOpen(true)}
+                          size="lg"
+                          className="bg-red-600 hover:bg-red-700 text-white rounded-full w-20 h-20 flex items-center justify-center shadow-2xl hover:scale-110 transition-transform"
+                        >
+                          <Play size={32} className="ml-1" fill="white" />
+                        </Button>
                       </div>
-                    </section>
-                    
-                    {program.required_skills && program.required_skills.length > 0 && (
-                      <section>
-                        <h3 className="text-xl font-bold text-gray-800 mb-4">
-                          Required Skills
-                        </h3>
-                        <ul className="space-y-2">
-                          {program.required_skills.map((skill, i) => (
-                            <li key={i}>
-                              <ListItem>{skill}</ListItem>
-                            </li>
-                          ))}
-                        </ul>
-                      </section>
                     )}
                   </div>
 
-                  {/* Mobile Program Details - Show here on small screens */}
-                  <div className="mt-8 lg:hidden">
-                    <Card>
-                      <div className="p-6">
-                        <h3 className="font-bold text-lg mb-4 text-purple-700">
-                          Program Details
-                        </h3>
-                        <DetailItem label="Category" value={program.program_category} />
-                        <DetailItem label="Type" value={program.type} />
-                        <DetailItem label="Location" value={program.location} />
-                      </div>
-                    </Card>
-                    
-                    {/* Mobile Apply Button */}
-                    <Button className="w-full text-base py-4 font-semibold mt-6">
-                      Apply or Learn More
-                    </Button>
+                  {/* Content Section */}
+                  <div className="p-4 sm:p-6 lg:p-8">
+                    <div className="flex items-start justify-between gap-4 mb-6">
+                      <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-purple-700 leading-tight flex-1">
+                        {program.title}
+                      </h1>
+                      {isLive && (
+                        <Button
+                          onClick={() => setIsVideoModalOpen(true)}
+                          className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2 animate-pulse"
+                        >
+                          <Play size={16} fill="white" />
+                          Watch Live
+                        </Button>
+                      )}
+                    </div>
 
-                    {/* Mobile Alert */}
-                    <div className="mt-6 mb-8">
-                      <Alert icon={TriangleAlert} variant="warning">
-                        <h4 className="font-bold">Application Deadline</h4>
-                        <p className="mt-1">
-                          Applications close on {deadline}. Apply soon!
-                        </p>
-                      </Alert>
+                    {/* Company Info */}
+                    <div className="mt-6 flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
+                      <div className="flex-shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded-lg flex items-center justify-center bg-purple-500 text-white font-bold shadow-md">
+                        <BookOpen size={24} className="sm:w-8 sm:h-8" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h2 className="text-lg sm:text-xl font-bold text-gray-900 truncate">
+                          {company?.company_name || "Community Program"}
+                        </h2>
+                        <div className="flex items-center gap-1 text-sm text-gray-500 mt-1 capitalize">
+                          <MapPin size={14} className="flex-shrink-0" />
+                          <span className="truncate">
+                            {program.location || program.type}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Description */}
+                    <div className="mt-8 space-y-8">
+                      <section>
+                        <h3 className="text-xl font-bold text-gray-800 mb-4">
+                          Program Description
+                        </h3>
+                        <div className="prose prose-gray max-w-none text-base leading-relaxed">
+                          <p>{program.description}</p>
+                        </div>
+                      </section>
+
+                      {/* Required Skills */}
+                      {program.required_skills &&
+                        program.required_skills.length > 0 && (
+                          <section>
+                            <h3 className="text-xl font-bold text-gray-800 mb-4">
+                              Required Skills
+                            </h3>
+                            <ul className="space-y-2">
+                              {program.required_skills.map((skill, i) => (
+                                <li key={i}>
+                                  <ListItem>{skill}</ListItem>
+                                </li>
+                              ))}
+                            </ul>
+                          </section>
+                        )}
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Desktop Sidebar - Hidden on mobile since content is moved above */}
-            <div className="hidden lg:block space-y-6 lg:sticky lg:top-8">
-              <Card>
-                <div className="p-6">
-                  <h3 className="font-bold text-lg mb-4 text-purple-700">
-                    Program Details
-                  </h3>
-                  <DetailItem label="Category" value={program.program_category} />
-                  <DetailItem label="Type" value={program.type} />
-                  <DetailItem label="Location" value={program.location} />
-                </div>
-              </Card>
-              
-              <Button className="w-full text-base py-3 font-semibold">
-                Apply or Learn More
-              </Button>
-              
-              <Alert icon={TriangleAlert} variant="warning">
-                <h4 className="font-bold">Application Deadline</h4>
-                <p className="mt-1">
-                  Applications close on {deadline}. Apply soon!
-                </p>
-              </Alert>
+              {/* Desktop Sidebar */}
+              <div className="hidden lg:block space-y-6 lg:sticky lg:top-8">
+                <Card>
+                  <div className="p-6">
+                    <h3 className="font-bold text-lg mb-4 text-purple-700">
+                      Program Details
+                    </h3>
+                    <DetailItem
+                      label="Category"
+                      value={program.program_category}
+                    />
+                    <DetailItem label="Type" value={program.type} />
+                    <DetailItem label="Location" value={program.location} />
+                  </div>
+                </Card>
+
+                <Button className="w-full text-base py-3 font-semibold">
+                  Apply or Learn More
+                </Button>
+
+                <Alert icon={TriangleAlert} variant="warning">
+                  <h4 className="font-bold">Application Deadline</h4>
+                  <p className="mt-1">
+                    Applications close on {deadline}. Apply soon!
+                  </p>
+                </Alert>
+              </div>
             </div>
           </div>
         </div>
+
+        {/* Mobile bottom sheet */}
+        {showMobileDetails && (
+          <div className="fixed inset-0 z-50 flex items-end md:hidden">
+            <div
+              className="absolute inset-0 bg-black/40"
+              onClick={() => setShowMobileDetails(false)}
+            />
+            <div className="relative w-full bg-white rounded-t-xl p-4 max-h-[80vh] overflow-auto animate-slide-up">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold">{program.title}</h3>
+                <button
+                  onClick={() => setShowMobileDetails(false)}
+                  className="text-gray-600"
+                >
+                  Close
+                </button>
+              </div>
+              <div className="prose prose-gray max-w-none">
+                {program.description}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-    </div>
+
+      {/* Live Video Modal */}
+      <LiveVideoModal
+        isOpen={isVideoModalOpen}
+        onClose={() => setIsVideoModalOpen(false)}
+        videoUrl={(program as any).live_stream_url}
+        title={program.title}
+        company={company?.company_name || "Community Program"}
+        description={program.description}
+        thumbnail={program.program_picture_url}
+      />
+    </>
   );
 }
