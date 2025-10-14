@@ -15,6 +15,7 @@ import { HappeningNowGrid } from "@/components/layout/dashboard/HappeningNow";
 
 type TabType = "internships" | "programs" | "events";
 type TabId = "all" | TabType | "live";
+
 type AllContentItem = (Internship | Event | Program) & { _type: TabType };
 
 const normalizeData = (data: any[], tab: TabType): any[] => {

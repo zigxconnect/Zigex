@@ -8,6 +8,7 @@ import {
   Briefcase,
   Users,
   Bell,
+  Home,
 } from "lucide-react";
 import { AiOutlineWechat } from "react-icons/ai";
 import { useState, useEffect } from "react";
@@ -17,8 +18,7 @@ interface MobileTabBarProps {
 }
 
 const tabItems = [
-  { href: "/dashboard", icon: User, label: "Profile" },
-  { href: "/dashboard/applied-intenships", icon: Briefcase, label: "Applied" },
+  { href: "/dashboard", icon: Home, label: "Profile" },
   { href: "/dashboard/fupro-ai", icon: AiOutlineWechat, label: "AI Chat", isSpecial: true },
   { href: "/dashboard/student-directory", icon: Users, label: "Students" },
   { href: "/notifications", icon: Bell, label: "Alerts" },

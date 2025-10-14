@@ -36,14 +36,7 @@ const notificationsItem = {
 
 // Regular navigation items
 const navItems = [
-  { href: "/dashboard", icon: User, label: "Profile" },
-  { href: "/dashboard/upload-resume", icon: Upload, label: "Upload Resume" },
-  {
-    href: "/dashboard/applied-intenships",
-    icon: Briefcase,
-    label: "Applied Internships",
-    badge: 5,
-  },
+  { href: "/dashboard", icon: User, label: "Home" },
   {
     href: "/dashboard/student-directory",
     icon: Users,

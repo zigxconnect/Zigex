@@ -11,6 +11,7 @@ import {
   Star,
   Play,
 } from "lucide-react";
+import Link from "next/link";
 
 interface Feature {
   icon: React.ElementType;
@@ -151,29 +152,7 @@ const BamendaHeroSection: React.FC = () => {
       {/* Main Container */}
       <div className="relative z-10 container mx-auto px-4 py-8 sm:py-12 lg:py-16">
         {/* Top Stats Bar */}
-        <div
-          className={`transform transition-all duration-1000 ${
-            isVisible ? "translate-y-0 opacity-100" : "translate-y-5 opacity-0"
-          }`}
-        >
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12 max-w-4xl mx-auto">
-            {stats.map((stat, index) => {
-              const Icon = stat.icon;
-              return (
-                <div
-                  key={index}
-                  className="bg-white/80 backdrop-blur-sm rounded-xl p-4 text-center border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300"
-                >
-                  <Icon className={`w-6 h-6 mx-auto mb-2 ${stat.color}`} />
-                  <div className="text-2xl font-bold text-gray-800">
-                    {stat.value}
-                  </div>
-                  <div className="text-sm text-gray-600">{stat.label}</div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        
 
         {/* Main Hero Content */}
         <div className="grid lg:grid-cols-2 gap-12 items-center max-w-7xl mx-auto">
@@ -205,7 +184,7 @@ const BamendaHeroSection: React.FC = () => {
             >
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
                 Launch Your
-                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">
+                <span className="block  bg-clip-text bg-gradient-to-r text-blue-600">
                   Dream Career
                 </span>
                 Here
@@ -236,19 +215,21 @@ const BamendaHeroSection: React.FC = () => {
               }`}
             >
               <div className="flex flex-col sm:flex-row gap-4">
-                <button className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-800 text-white font-semibold rounded-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-orange-500/25">
+                <Link href="sign-in">
+                <button className="group cursor-pointer relative px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-800 text-white font-semibold rounded-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-orange-500/25">
                   <span className="relative z-10 flex items-center justify-center gap-2">
                     <Users className="w-5 h-5" />
-                    Find Your Internship
+                    Get Started Now
                     <ArrowRight className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" />
                   </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-orange-600 to-red-700 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-700 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
                 </button>
+                </Link>
 
-                <button className="group flex items-center justify-center gap-2 px-8 py-4 bg-white/80 backdrop-blur-sm border-2 border-gray-200 text-gray-700 font-semibold rounded-xl transition-all duration-300 hover:bg-white hover:border-gray-300 hover:shadow-lg hover:scale-105">
+                {/* <button className="group  cursor-pointer flex items-center justify-center gap-2 px-8 py-4 bg-white/80 backdrop-blur-sm border-2 border-gray-200 text-gray-700 font-semibold rounded-xl transition-all duration-300 hover:bg-white hover:border-gray-300 hover:shadow-lg hover:scale-105">
                   <Play className="w-5 h-5" />
                   Watch Demo
-                </button>
+                </button> */}
               </div>
             </div>
 
@@ -378,6 +359,30 @@ const BamendaHeroSection: React.FC = () => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        <div
+          className={`transform transition-all duration-1000 ${
+            isVisible ? "translate-y-0 opacity-100" : "translate-y-5 opacity-0"
+          }`}
+        >
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12 max-w-4xl mx-auto">
+            {stats.map((stat, index) => {
+              const Icon = stat.icon;
+              return (
+                <div
+                  key={index}
+                  className="bg-white/80 backdrop-blur-sm rounded-xl p-4 text-center border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300"
+                >
+                  <Icon className={`w-6 h-6 mx-auto mb-2 ${stat.color}`} />
+                  <div className="text-2xl font-bold text-gray-800">
+                    {stat.value}
+                  </div>
+                  <div className="text-sm text-gray-600">{stat.label}</div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
