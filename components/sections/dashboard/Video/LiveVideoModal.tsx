@@ -145,7 +145,7 @@ export const LiveVideoModal = ({
                   <span className="w-2 h-2 bg-white rounded-full animate-ping" />
                   LIVE
                 </Badge>
-                <div className="hidden sm:flex items-center gap-2 text-white/90 text-sm bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                <div className="hidden sm:flex items-center gap-2 text-white/90 text-sm bg-black/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
                   <Eye size={16} />
                   <span className="font-semibold">{viewerCount.toLocaleString()}</span>
                   <span className="hidden md:inline">watching</span>

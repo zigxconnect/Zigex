@@ -18,7 +18,7 @@ const mockData: HappeningNowItem[] = [
   {
     id: "1",
     type: "video",
-    src: "https://www.youtube.com/embed/CEITpcIttl4",
+    src: "https://player.vimeo.com/video/1127249560",
     thumbnail: "/n7.png",
     caption: "Live Q&A: Software Engineering Internship",
     company: "NervTech",
@@ -190,7 +190,7 @@ export const HappeningNowGrid = () => {
                   )}
 
                   {/* View Count */}
-                  <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-full">
+                  <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 bg-blue-600 backdrop-blur-sm rounded-full">
                     <Eye className="w-3.5 h-3.5 text-white" />
                     <span className="text-white text-xs font-semibold">
                       {formatViewCount(item.viewCount)}
@@ -254,42 +254,120 @@ export const HappeningNowGrid = () => {
       </div>
 
       {/* Modal for expanded view (optional) */}
+     {/* Modal for expanded view with slideshow */}
       {selectedItem && (
         <div
-          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           onClick={() => setSelectedItem(null)}
         >
           <div
-            className="relative max-w-4xl w-full bg-gray-900 rounded-2xl overflow-hidden"
+            className="relative max-w-5xl w-full"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Close Button */}
             <button
               onClick={() => setSelectedItem(null)}
-              className="absolute top-4 right-4 z-10 w-10 h-10 bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-black/70 transition-colors"
+              className="absolute -top-12 right-0 z-10 w-12 h-12 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all duration-300 hover:rotate-90 border border-white/20"
             >
               ✕
             </button>
-            {selectedItem.type === "video" ? (
-              <div className="aspect-video">
-                <iframe
-                  src={selectedItem.src}
-                  className="w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
+
+            {/* Content Container */}
+            <div className="relative bg-gradient-to-br from-blue-600/40 to-blue-800/40 backdrop-blur-xl rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
+              {selectedItem.type === "video" ? (
+                <div className="aspect-video">
+                  <iframe
+                    src={selectedItem.src}
+                    className="w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+              ) : (
+                <div className="relative">
+                  <img
+                    src={selectedItem.src}
+                    alt={selectedItem.caption}
+                    className="w-full max-h-[70vh] object-contain"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                </div>
+              )}
+
+              {/* Info Overlay */}
+              <div className="relative bg-gradient-to-t from-black/80 to-transparent p-8">
+                <div className="max-w-3xl">
+                  {selectedItem.isLive && (
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="flex items-center gap-2 px-3 py-1.5 bg-red-600 rounded-full">
+                        <div className="w-2 h-2 bg-white rounded-full animate-ping" />
+                        <span className="text-white text-xs font-bold uppercase tracking-wide">
+                          Live
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 px-3 py-1.5 bg-white/10 backdrop-blur-sm rounded-full">
+                        <Eye className="w-4 h-4 text-white" />
+                        <span className="text-white text-sm font-semibold">
+                          {formatViewCount(selectedItem.viewCount)} watching
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  <h3 className="text-3xl font-bold text-white mb-3 drop-shadow-lg">
+                    {selectedItem.caption}
+                  </h3>
+                  <div className="flex items-center gap-3 text-gray-300">
+                    <span className="text-lg font-medium">{selectedItem.company}</span>
+                    <span className="text-gray-500">•</span>
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      <span>Happening Now</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-            ) : (
-              <img
-                src={selectedItem.src}
-                alt={selectedItem.caption}
-                className="w-full"
-              />
-            )}
-            <div className="p-6">
-              <h3 className="text-2xl font-bold text-white mb-2">
-                {selectedItem.caption}
-              </h3>
-              <p className="text-gray-400">{selectedItem.company}</p>
+
+              {/* Navigation Arrows for Slideshow */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const currentIndex = mockData.findIndex(item => item.id === selectedItem.id);
+                  const prevIndex = currentIndex === 0 ? mockData.length - 1 : currentIndex - 1;
+                  setSelectedItem(mockData[prevIndex]);
+                }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all duration-300 border border-white/20 hover:scale-110"
+              >
+                ‹
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const currentIndex = mockData.findIndex(item => item.id === selectedItem.id);
+                  const nextIndex = currentIndex === mockData.length - 1 ? 0 : currentIndex + 1;
+                  setSelectedItem(mockData[nextIndex]);
+                }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all duration-300 border border-white/20 hover:scale-110"
+              >
+                ›
+              </button>
+
+              {/* Slideshow Indicators */}
+              <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex items-center gap-2">
+                {mockData.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedItem(item);
+                    }}
+                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                      item.id === selectedItem.id
+                        ? 'w-8 bg-white'
+                        : 'w-1.5 bg-white/30 hover:bg-white/50'
+                    }`}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </div>

@@ -138,15 +138,15 @@ export const InternshipListings = ({
           ids.add("e1");
           ids.add("p1");
           meta["i1"] = {
-            youtube: "https://youtu.be/CEITpcIttl4?si=KNqazGJ1YRdl4rmq",
+            youtube: "https://player.vimeo.com/video/1127249560",
             description: "<p>Join the live Q&A with the hiring team and learn about the role.</p>",
           };
           meta["e1"] = {
-            youtube: "https://youtu.be/CEITpcIttl4?si=KNqazGJ1YRdl4rmq",
+            youtube: "https://player.vimeo.com/video/1127249560",
             description: "<p>Networking hour with industry leaders. Watch live talks and ask questions during the stream.</p>",
           };
           meta["p1"] = {
-            youtube: "https://youtu.be/CEITpcIttl4?si=KNqazGJ1YRdl4rmq",
+            youtube: "https://player.vimeo.com/video/1127249560",
             description: "<p>Join our intensive design sprint where you'll build a prototype in one week. Expect live demos, critiques, and Q&amp;A.</p>",
           };
         } else {
@@ -162,7 +162,7 @@ export const InternshipListings = ({
             const first = eventsData[0];
             ids.add(first.id);
             meta[first.id] = {
-              youtube: "https://youtu.be/CEITpcIttl4?si=KNqazGJ1YRdl4rmq",
+              youtube: "https://player.vimeo.com/video/1127249560",
               description: first.description || `<p>${first.title || 'Event'} — Live stream and networking.</p>`,
             };
           }
