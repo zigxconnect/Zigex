@@ -40,7 +40,7 @@ const navItems = [
   {
     href: "/dashboard/student-directory",
     icon: Users,
-    label: "Student Directory",
+    label: "Connection",
     // also match dynamic student detail pages like /dashboard/student/:id
     matchPaths: ["/dashboard/student"],
   },
