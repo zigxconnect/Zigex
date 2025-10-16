@@ -3,15 +3,11 @@
 import { useState } from "react";
 import { useFetchDetails } from "@/hooks/useFetchDetails";
 import { Program } from "@/lib/types/dashoard/index";
-import { Spinner } from "@/components/uiComponent/Spinner";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { MapPin, Building2, ExternalLink } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import DynamicForm from "@/components/sections/dashboard/Application/application";
-import { Alert } from "@/components/uiComponent/Alert";
-import { ListItem } from "@/components/uiComponent/ListItem";
-import { useSearchParams } from "next/navigation";
 import { InternshipDetailsLoadingSkeleton } from "@/components/SinglePageLoadingSkeleton";
 
 const DetailItem = ({
@@ -35,28 +31,17 @@ const DetailItem = ({
 export default function ProgramDetailsPage({
   params,
 }: {
-  params: Promise<{ id: string }>; // Update the type to reflect that params is a Promise
+  params: { id: string };
 }) {
-  // Unwrap the params Promise using React.use()
-  // This extracts the actual params object from the Promise
-  const resolvedParams = use(params);
-
-  // Now we can safely access the id property
   const {
     data: program,
     isLoading,
     error,
-  } = useFetchDetails<Program>("/api/students/programs", resolvedParams.id);
-
+  } = useFetchDetails<Program>("/api/students/programs", params.id);
   const [showForm, setShowForm] = useState(false);
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <LoaderPinwheel />
-      </div>
-       <InternshipDetailsLoadingSkeleton/>
-    );
+    return <InternshipDetailsLoadingSkeleton />;
   }
   if (error) {
     return (
@@ -79,17 +64,17 @@ export default function ProgramDetailsPage({
 
   if (showForm) {
     return (
-      <div className="w-full max-w-4xl p-4 md:p-5 rounded-2xl flex ">
+      <div className="w-full max-w-4xl mx-auto p-4 md:p-5 flex items-start">
         <Button
-          className="hidden md:block text-white rounded-full w-12 h-12 flex-shrink-0 p-1"
+          className="hidden md:block rounded-full w-12 h-12 flex-shrink-0 mr-4 p-1"
           onClick={() => setShowForm(false)}
           variant="primary"
         >
           ←
         </Button>
-
         <div className="flex-1 w-full">
-          <DynamicForm type="program" />
+          {/* ✨ FIX: Pass the program's ID to the form */}
+          <DynamicForm type="program" id={program.id} />
         </div>
       </div>
     );
@@ -128,8 +113,7 @@ export default function ProgramDetailsPage({
             <p>{program.description || "No description provided."}</p>
           </div>
         </div>
-
-        <div className="space-y-6 sticky top-8">
+        <aside className="space-y-6 lg:sticky top-8">
           <Card>
             <div className="p-6">
               <h3 className="font-bold text-lg mb-4 text-green-700">
@@ -140,14 +124,14 @@ export default function ProgramDetailsPage({
               <DetailItem label="End Date" value={program.end_date} />
             </div>
           </Card>
-
           <Button
-            className="w-full text-base py-3 font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="w-full text-base py-3 font-semibold"
             onClick={() => setShowForm(true)}
+            variant="primary"
           >
             Register Now <ExternalLink size={16} className="ml-2" />
           </Button>
-        </div>
+        </aside>
       </div>
     </div>
   );

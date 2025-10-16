@@ -3,12 +3,12 @@
 import { useState } from "react";
 import { useFetchDetails } from "@/hooks/useFetchDetails";
 import { Internship } from "@/lib/types/dashoard/index";
-import { Spinner } from "@/components/uiComponent/Spinner";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { MapPin, Building2, ExternalLink } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import DynamicForm from "@/components/sections/dashboard/Application/application";
+import { InternshipDetailsLoadingSkeleton } from "@/components/SinglePageLoadingSkeleton";
 
 const DetailItem = ({
   label,
@@ -28,9 +28,6 @@ const DetailItem = ({
   );
 };
 
-import { InternshipDetailsLoadingSkeleton } from "@/components/SinglePageLoadingSkeleton";
-// import { InternshipDetailsLoadingSkeleton } from "@/components/sections/dashboard/details/InternshipDetailsLoadingSkeleton";
-
 export default function InternshipDetailsPage({
   params,
 }: {
@@ -41,15 +38,9 @@ export default function InternshipDetailsPage({
     isLoading,
     error,
   } = useFetchDetails<Internship>("/api/students/internships", params.id);
-
   const [showForm, setShowForm] = useState(false);
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-[60vh]">
-        <Spinner />
-      </div>
-    );
     return <InternshipDetailsLoadingSkeleton />;
   }
   if (error) {
@@ -71,17 +62,17 @@ export default function InternshipDetailsPage({
 
   if (showForm) {
     return (
-      <div className="w-full max-w-4xl p-4 md:p-5 rounded-2xl flex ">
+      <div className="w-full max-w-4xl mx-auto p-4 md:p-5 flex items-start">
         <Button
-          className="hidden md:block text-white rounded-full w-12 h-12 flex-shrink-0 p-1"
+          className="hidden md:block rounded-full w-12 h-12 flex-shrink-0 mr-4 p-1"
           onClick={() => setShowForm(false)}
           variant="primary"
         >
           ←
         </Button>
-
         <div className="flex-1 w-full">
-          <DynamicForm type="internship" />
+          {/* ✨ FIX: Pass the internship's ID to the form */}
+          <DynamicForm type="internship" id={internship.id} />
         </div>
       </div>
     );
@@ -122,8 +113,7 @@ export default function InternshipDetailsPage({
             <p>{internship.description || "No description provided."}</p>
           </div>
         </div>
-
-        <div className="space-y-6 sticky top-8">
+        <aside className="space-y-6 lg:sticky top-8">
           <Card>
             <div className="p-6">
               <h3 className="font-bold text-lg mb-4 text-green-700">
@@ -134,14 +124,14 @@ export default function InternshipDetailsPage({
               <DetailItem label="End Date" value={internship.end_date} />
             </div>
           </Card>
-
           <Button
-            className="w-full text-base py-3 font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="w-full text-base py-3 font-semibold"
             onClick={() => setShowForm(true)}
+            variant="primary"
           >
             Apply Now <ExternalLink size={16} className="ml-2" />
           </Button>
-        </div>
+        </aside>
       </div>
     </div>
   );

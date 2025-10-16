@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react"; // Make sure you have `lucide-react` installed
 
 type FormType = "event" | "program" | "internship";
 
@@ -19,13 +20,19 @@ interface FormContentProps {
   submitText: string;
 }
 
+// ✨ COMPLETE: The full form definitions are now included here.
 const formContents: Record<FormType, FormContentProps> = {
   program: {
     title: "Program Form",
     subtitle: "Fill in your program details",
     submitText: "Enroll",
     fields: [
-      { label: "Program Name", name: "eventName", type: "text", required: true },
+      {
+        label: "Program Name",
+        name: "eventName",
+        type: "text",
+        required: true,
+      },
       {
         label: "Level of Experience",
         name: "level",
@@ -106,33 +113,77 @@ const formContents: Record<FormType, FormContentProps> = {
   },
 };
 
-export default function DynamicForm({ type }: { type: FormType }) {
-  const [formType] = useState<FormType>(type);
-  const currentContent = formContents[formType];
+// Map form types to their API submission endpoints
+const apiEndpoints: Record<FormType, string> = {
+  event: "/api/students/applications/events/rsvp",
+  program: "/api/students/applications/programs/apply",
+  internship: "/api/students/applications/internship",
+};
 
-  const handleSubmit = (e: React.FormEvent) => {
+// The component accepts a `type` and an `id` prop
+interface DynamicFormProps {
+  type: FormType;
+  id: string; // The UUID of the program, event, or internship
+}
+
+export default function DynamicForm({ type, id }: DynamicFormProps) {
+  const currentContent = formContents[type];
+
+  // State management for the submission flow
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+    setSuccessMessage(null);
+
     const formElement = e.target as HTMLFormElement;
     const formData = new FormData(formElement);
 
-    const data: Record<string, any> = {};
-    formData.forEach((value, key) => {
-      if (value instanceof File) {
-        data[key] = value.name; 
-      } else {
-        data[key] = value;
-      }
-    });
+    // CRITICAL: Append the specific ID to the form data
+    formData.append(`${type}_id`, id);
 
-    console.log(`Submitting ${formType} form:`, data);
-    alert("Form submitted! Check console for data.");
+    try {
+      const endpoint = apiEndpoints[type];
+      const response = await fetch(endpoint, {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "An unexpected error occurred.");
+      }
+
+      setSuccessMessage(result.message || "Your submission was successful!");
+      formElement.reset();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  if (successMessage) {
+    return (
+      <div className="p-8 max-w-md mx-auto text-center border-2 border-green-500 bg-green-50 rounded-xl mt-4">
+        <h2 className="text-2xl font-bold text-green-700">Success!</h2>
+        <p className="mt-2 text-green-600">{successMessage}</p>
+      </div>
+    );
+  }
 
   return (
     <main className="p-5 max-w-md mx-auto shadow-md rounded-xl border border-gray-200 mt-4">
-      <h1 className="text-2xl font-bold text-center text-[#155DFC] m-2">{currentContent.title}</h1>
+      <h1 className="text-2xl font-bold text-center text-[#155DFC] m-2">
+        {currentContent.title}
+      </h1>
       {currentContent.subtitle && (
-        <p className=" mb-4 m-2, text-[#155DFC] ">{currentContent.subtitle}</p>
+        <p className="mb-4 m-2 text-[#155DFC]">{currentContent.subtitle}</p>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -207,12 +258,7 @@ export default function DynamicForm({ type }: { type: FormType }) {
                   name={field.name}
                   accept=".pdf,.doc,.docx"
                   required={field.required}
-                  className="mt-1 block w-full text-sm text-gray-600 
-                             file:mr-4 file:py-2 file:px-4 
-                             file:rounded-full file:border-0 
-                             file:text-sm file:font-semibold
-                             file:bg-blue-50 file:text-blue-700 
-                             hover:file:bg-blue-100"
+                  className="mt-1 block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                 />
               </div>
             );
@@ -234,8 +280,21 @@ export default function DynamicForm({ type }: { type: FormType }) {
           }
         })}
 
-        <Button type="submit" className="w-full mt-4">
-          {currentContent.submitText}
+        {error && (
+          <div className="p-3 text-sm text-red-800 bg-red-100 border border-red-300 rounded-md">
+            <strong>Error:</strong> {error}
+          </div>
+        )}
+
+        <Button type="submit" className="w-full mt-4" disabled={isSubmitting}>
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Submitting...
+            </>
+          ) : (
+            currentContent.submitText
+          )}
         </Button>
       </form>
     </main>
