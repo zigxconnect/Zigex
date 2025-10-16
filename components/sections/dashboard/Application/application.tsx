@@ -29,7 +29,7 @@ const formContents: Record<FormType, FormContentProps> = {
     fields: [
       {
         label: "Program Name",
-        name: "eventName",
+        name: "programName",
         type: "text",
         required: true,
       },
@@ -153,7 +153,12 @@ export default function DynamicForm({ type, id }: DynamicFormProps) {
         body: formData,
       });
 
-      const result = await response.json();
+      let result;
+      try {
+        result = await response.json();
+      } catch {
+        throw new Error("Server returned an invalid response");
+      }
 
       if (!response.ok) {
         throw new Error(result.error || "An unexpected error occurred.");

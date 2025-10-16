@@ -52,7 +52,11 @@ export const Alert: React.FC<AlertProps> = ({
       {Icon && (
         <div className="flex-shrink-0">
           {/* Icon can be a lucide-react component or a raw svg component */}
-          <Icon size={20} aria-hidden="true" />
+          <Icon
+            className="w-5 h-5"
+            aria-hidden="true"
+            {...("size" in Icon ? { size: 20 } : {})}
+          />
         </div>
       )}
 

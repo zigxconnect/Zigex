@@ -71,6 +71,43 @@ export async function POST(request: Request) {
       );
     }
 
+    // Server-side upload limits and allowed types
+    const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
+    const allowedMimeTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+    const allowedExtensions = ["pdf", "doc", "docx"];
+
+    // Size check
+    if (resume_file.size > MAX_BYTES) {
+      return NextResponse.json(
+        {
+          error: `Resume file is too large. Maximum allowed size is ${Math.round(MAX_BYTES / 1024 / 1024)}MB.`,
+        },
+        { status: 400 }
+      );
+    }
+
+    // MIME type check (primary)
+    const fileType = resume_file.type || "";
+    const originalName = (resume_file.name || "").split("/").pop() || "upload";
+    const fileExt = originalName.split(".").pop()?.toLowerCase();
+
+    if (!allowedMimeTypes.includes(fileType)) {
+      // Fallback to extension check as secondary validation
+      if (!fileExt || !allowedExtensions.includes(fileExt)) {
+        return NextResponse.json(
+          {
+            error:
+              "Invalid file type. Only PDF and Word documents are allowed (PDF, DOC, DOCX).",
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     const { data: studentData, error: studentError } = await supabase
       .from("student_profiles")
       .select("id")
@@ -86,8 +123,11 @@ export async function POST(request: Request) {
     const student_id = studentData.id;
 
     // ✅ FIX: Use the 'resume_file' for uploading
-    const fileExt = resume_file.name.split(".").pop();
-    const filePath = `students/${user.id}/applications/${internship_id}/resume_${uuidv4()}.${fileExt}`;
+    // Generate a safe, server-side filename (we already validated extension/type above)
+    const safeExt =
+      fileExt && allowedExtensions.includes(fileExt) ? fileExt : "pdf";
+    const serverFileName = `resume_${uuidv4()}.${safeExt}`;
+    const filePath = `students/${user.id}/applications/${internship_id}/${serverFileName}`;
 
     const { error: uploadError } = await supabase.storage
       .from("student-assets") // Make sure this bucket exists and has correct policies

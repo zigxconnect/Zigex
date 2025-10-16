@@ -66,7 +66,7 @@ export default function ProgramDetailsPage({
     return (
       <div className="w-full max-w-4xl mx-auto p-4 md:p-5 flex items-start">
         <Button
-          className="hidden md:block rounded-full w-12 h-12 flex-shrink-0 mr-4 p-1"
+          className="rounded-full w-12 h-12 flex-shrink-0 mr-4 p-1"
           onClick={() => setShowForm(false)}
           variant="primary"
         >
@@ -79,7 +79,6 @@ export default function ProgramDetailsPage({
       </div>
     );
   }
-
   return (
     <div className="bg-[#F8FAFC] p-6 lg:p-8">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
