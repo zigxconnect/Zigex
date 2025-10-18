@@ -1,222 +1,256 @@
 "use client";
 
+import { useState } from "react";
+import Image from "next/image";
+import { MapPin, Building2, ExternalLink, TriangleAlert, Calendar, Clock, Users, X } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import DynamicForm from "@/components/sections/dashboard/Application/application";
 import { useFetchDetails } from "@/hooks/useFetchDetails";
 import { Event } from "@/lib/types/dashoard/index";
-import { Spinner } from "@/components/uiComponent/Spinner";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import Image from "next/image";
-import { MapPin, Building2, ExternalLink, TriangleAlert } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Alert } from "@/components/uiComponent/Alert";
 import { InternshipDetailsLoadingSkeleton } from "@/components/SinglePageLoadingSkeleton";
 
-// A helper component for displaying detail items in the sidebar
 const DetailItem = ({
   label,
   value,
+  icon: Icon,
 }: {
   label: string;
   value: string | null;
+  icon?: any;
 }) => {
   if (!value) return null;
   return (
-    <div className="flex justify-between items-start py-3 border-b border-gray-100 last:border-b-0">
-      <span className="text-sm text-gray-500 font-medium">{label}</span>
-      <span className="text-sm font-semibold text-gray-800 text-right max-w-[60%]">
-        {value}
-      </span>
+    <div className="flex items-center gap-3 py-3.5 border-b border-gray-100 last:border-b-0 group hover:bg-gray-50/50 px-2 -mx-2 rounded-lg transition-all duration-200">
+      {Icon && (
+        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+          <Icon size={16} className="text-blue-600" />
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <span className="text-xs text-gray-500 font-medium uppercase tracking-wide block">{label}</span>
+        <span className="text-sm font-semibold text-gray-900 mt-0.5 block">{value}</span>
+      </div>
     </div>
   );
 };
 
-// Main Page Component
 export default function EventDetailsPage({
   params,
 }: {
   params: { id: string };
 }) {
-  const {
-    data: event,
-    isLoading,
-    error,
-  } = useFetchDetails<Event>("/api/students/events", params.id);
+  const { data: event, isLoading, error } = useFetchDetails<Event>(
+    "/api/students/events",
+    params.id
+  );
+  const [showModal, setShowModal] = useState(false);
 
-  if (isLoading) {
-    return (
-       <InternshipDetailsLoadingSkeleton/>
-    );
-  }
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center p-6 text-red-500 text-lg">{error}</div>
-      </div>
-    );
-  }
-  if (!event) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center p-6 text-gray-500 text-lg">Event not found.</div>
-      </div>
-    );
-  }
+  if (isLoading) return <InternshipDetailsLoadingSkeleton />;
+  if (error) return <div className="text-center p-12 text-red-500">{error}</div>;
+  if (!event) return <div className="text-center p-12 text-gray-500">Event not found.</div>;
 
   const company = event.company;
-  const startDate = new Date(event.start_date).toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-  const endDate = new Date(event.end_date).toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+
+  const startDate = formatDate(event.start_date);
+  const endDate = formatDate(event.end_date);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
-      {/* Mobile-first layout - No padding on mobile, padding on larger screens */}
-      <div className="lg:px-8 lg:py-8">
-        <div className="lg:max-w-7xl lg:mx-auto">
-          
-          {/* Mobile: Stack layout, Desktop: Grid layout */}
-          <div className="flex flex-col lg:grid lg:grid-cols-3 lg:gap-8">
-            
+    <>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             {/* Main Content */}
-            <div className="lg:col-span-2">
-              {/* Mobile: Full width card with no border radius, Desktop: Rounded card */}
-              <div className="bg-white lg:rounded-2xl lg:shadow-lg lg:border lg:border-gray-200 overflow-hidden min-h-screen lg:min-h-0">
-                
-                {/* Hero Image - Much larger on mobile */}
-                <div className="relative h-64 sm:h-80 lg:h-96 w-full">
+            <div className="lg:col-span-2 space-y-6">
+              {/* Header Card */}
+              <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div className="relative h-64 sm:h-80 lg:h-96 bg-gradient-to-br from-blue-100 to-indigo-100">
                   <Image
-                    src={event.event_picture_url}
+                    src={event.event_picture_url || "/placeholder.png"}
                     alt={event.title}
                     fill
                     className="object-cover"
-                    priority
                   />
-                  {/* Gradient overlay for better text readability if needed */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
+                    <div className="inline-block px-3 py-1 bg-blue-600 text-white text-xs font-semibold rounded-full mb-3">
+                      Event
+                    </div>
+                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-2 drop-shadow-lg">
+                      {event.title}
+                    </h1>
+                  </div>
                 </div>
+              </Card>
 
-                {/* Content Section */}
-                <div className="p-4 sm:p-6 lg:p-8">
-                  {/* Title - Larger and more prominent */}
-                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-green-700 leading-tight">
-                    {event.title}
-                  </h1>
-
-                  {/* Company Info - Better mobile layout */}
-                  <div className="mt-6 flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
-                    <div className="flex-shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded-lg flex items-center justify-center bg-green-500 text-white font-bold shadow-md">
-                      <Building2 size={24} className="sm:w-8 sm:h-8" />
+              {/* Company Info Card */}
+              <Card className="border-0 shadow-md hover:shadow-lg transition-shadow duration-300">
+                <div className="p-6 sm:p-8">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg flex-shrink-0">
+                      <Building2 size={32} className="sm:w-10 sm:h-10" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h2 className="text-lg sm:text-xl font-bold text-gray-900 truncate">
-                        {company?.company_name}
+                      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
+                        {company?.company_name || event.location}
                       </h2>
-                      <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
-                        <MapPin size={14} className="flex-shrink-0" />
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <MapPin size={16} className="text-blue-600 flex-shrink-0" />
                         <span className="truncate">{event.location}</span>
                       </div>
                     </div>
                   </div>
-
-                  {/* Description - Better typography */}
-                  <div className="mt-8">
-                    <h3 className="text-xl font-bold text-gray-800 mb-4">
-                      About this Event
-                    </h3>
-                    <div className="prose prose-gray max-w-none text-base leading-relaxed">
-                      <p>{event.description || "No description provided."}</p>
-                    </div>
-                  </div>
-
-                  {/* Mobile Event Details - Show here on small screens */}
-                  <div className="mt-8 lg:hidden">
-                    <Card>
-                      <div className="p-6">
-                        <h3 className="font-bold text-lg mb-4 text-green-700">
-                          Event Details
-                        </h3>
-                        <DetailItem label="Location" value={event.location} />
-                        <DetailItem label="Start Date" value={startDate} />
-                        <DetailItem label="End Date" value={endDate} />
-                        <DetailItem
-                          label="Time"
-                          value={event.start_time || "Not specified"}
-                        />
-                      </div>
-                    </Card>
-                    
-                    {/* Mobile Register Button */}
-                    {event.registration_link && (
-                      <Button asChild className="w-full text-base py-4 font-semibold mt-6">
-                        <Link
-                          href={event.registration_link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          Register Now <ExternalLink size={16} className="ml-2" />
-                        </Link>
-                      </Button>
-                    )}
-
-                    {/* Mobile Alert */}
-                    <div className="mt-6 mb-8">
-                      <Alert icon={TriangleAlert} variant="info">
-                        <h4 className="font-bold">Event Timing</h4>
-                        <p className="mt-1">
-                          This event runs from {startDate} to {endDate}.
-                        </p>
-                      </Alert>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Desktop Sidebar - Hidden on mobile since content is moved above */}
-            <div className="hidden lg:block space-y-6 lg:sticky lg:top-8">
-              <Card>
-                <div className="p-6">
-                  <h3 className="font-bold text-lg mb-4 text-green-700">
-                    Event Details
-                  </h3>
-                  <DetailItem label="Location" value={event.location} />
-                  <DetailItem label="Start Date" value={startDate} />
-                  <DetailItem label="End Date" value={endDate} />
-                  <DetailItem
-                    label="Time"
-                    value={event.start_time || "Not specified"}
-                  />
                 </div>
               </Card>
-              
-              {event.registration_link && (
-                <Button asChild className="w-full text-base py-3 font-semibold">
-                  <Link
-                    href={event.registration_link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Register Now <ExternalLink size={16} className="ml-2" />
-                  </Link>
-                </Button>
-              )}
-              
-              <Alert icon={TriangleAlert} variant="info">
-                <h4 className="font-bold">Event Timing</h4>
-                <p className="mt-1">
-                  This event runs from {startDate} to {endDate}.
-                </p>
-              </Alert>
+
+              {/* Description Card */}
+              <Card className="border-0 shadow-md hover:shadow-lg transition-shadow duration-300">
+                <div className="p-6 sm:p-8">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <div className="w-1 h-6 bg-gradient-to-b from-blue-600 to-indigo-600 rounded-full" />
+                    About this Event
+                  </h3>
+                  <div className="prose prose-gray max-w-none">
+                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                      {event.description || "No description provided."}
+                    </p>
+                  </div>
+                </div>
+              </Card>
             </div>
+
+            {/* Sidebar - Fixed on desktop */}
+            <aside className="lg:col-span-1">
+              <div className="lg:sticky lg:top-6 space-y-4">
+                {/* Event Details Card */}
+                <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden">
+                  <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-4">
+                    <h3 className="font-bold text-lg text-white flex items-center gap-2">
+                      <Calendar size={20} />
+                      Event Details
+                    </h3>
+                  </div>
+                  <div className="p-5">
+                    <DetailItem 
+                      label="Location" 
+                      value={event.location} 
+                      icon={MapPin}
+                    />
+                    <DetailItem 
+                      label="Start Date" 
+                      value={startDate} 
+                      icon={Calendar}
+                    />
+                    <DetailItem 
+                      label="End Date" 
+                      value={endDate} 
+                      icon={Calendar}
+                    />
+                    <DetailItem 
+                      label="Time" 
+                      value={event.start_time || "Not specified"} 
+                      icon={Clock}
+                    />
+                  </div>
+                </Card>
+
+                {/* CTA Button */}
+                <Button
+                  className="w-full text-base py-6 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-0"
+                  onClick={() => setShowModal(true)}
+                  variant="primary"
+                >
+                  Register Now 
+                  <ExternalLink size={18} className="ml-2" />
+                </Button>
+
+                {/* Alert */}
+                <Alert className="border-blue-200 bg-blue-50/50 shadow-md">
+                  <TriangleAlert className="h-4 w-4 text-blue-600" />
+                  <AlertTitle className="font-bold text-blue-900">Event Timing</AlertTitle>
+                  <AlertDescription className="text-blue-800 text-sm">
+                    This event runs from <strong>{startDate}</strong> to <strong>{endDate}</strong>.
+                  </AlertDescription>
+                </Alert>
+              </div>
+            </aside>
+          </div>
+        </div>
+
+        {/* Mobile Bottom Bar */}
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 px-4 pb-4 pt-3 bg-gradient-to-t from-white via-white to-transparent">
+          <div className="max-w-lg mx-auto">
+            <Button
+              className="w-full py-4 text-base font-semibold shadow-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-0 transform hover:scale-[1.02] transition-all duration-300"
+              onClick={() => setShowModal(true)}
+              variant="primary"
+            >
+              <Calendar size={20} className="mr-2" />
+              Register for Event
+              <ExternalLink size={18} className="ml-2" />
+            </Button>
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+            onClick={() => setShowModal(false)}
+          />
+          
+          {/* Modal Content */}
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div className="relative w-full max-w-2xl transform transition-all duration-300 animate-in fade-in zoom-in-95">
+              {/* Close Button */}
+              <button
+                onClick={() => setShowModal(false)}
+                className="absolute -top-4 -right-4 z-10 w-10 h-10 rounded-full bg-white shadow-lg hover:bg-gray-100 flex items-center justify-center transition-all duration-200 hover:scale-110 group border-2 border-gray-200"
+              >
+                <X size={20} className="text-gray-600 group-hover:text-gray-900" />
+              </button>
+              
+              {/* Form Container with Custom Scrollbar */}
+              <div className="bg-white rounded-2xl shadow-2xl max-h-[85vh] overflow-y-auto custom-scrollbar">
+                <style jsx global>{`
+                  .custom-scrollbar::-webkit-scrollbar {
+                    width: 8px;
+                  }
+                  .custom-scrollbar::-webkit-scrollbar-track {
+                    background: #f1f5f9;
+                    border-radius: 10px;
+                  }
+                  .custom-scrollbar::-webkit-scrollbar-thumb {
+                    background: linear-gradient(180deg, #2563eb 0%, #4f46e5 100%);
+                    border-radius: 10px;
+                  }
+                  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                    background: linear-gradient(180deg, #1d4ed8 0%, #4338ca 100%);
+                  }
+                  
+                  /* Firefox */
+                  .custom-scrollbar {
+                    scrollbar-width: thin;
+                    scrollbar-color: #2563eb #f1f5f9;
+                  }
+                `}</style>
+                
+                <DynamicForm type="event" id={event.id} />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

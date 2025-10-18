@@ -12,6 +12,8 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^5.2.1",
+    "@liveblocks/client": "^3.8.1",
+    "@liveblocks/react": "^3.8.1",
     "@portabletext/react": "^4.0.3",
     "@radix-ui/react-avatar": "^1.1.10",
     "@radix-ui/react-dialog": "^1.1.15",
