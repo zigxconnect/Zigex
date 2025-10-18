@@ -51,6 +51,8 @@ export default function InternshipDetailsPage({
   if (!internship) return <div className="text-center p-12 text-gray-500">Internship not found</div>;
 
   const company = internship.company;
+  console.log("hello. checking internship data");
+  console.log("Internship Data:", internship);
 
   return (
     <>

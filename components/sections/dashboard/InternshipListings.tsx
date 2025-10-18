@@ -502,7 +502,7 @@ export const InternshipListings = ({
                       </span>
                     )}
                   </button>
-                ))}*/
+                ))}
               </div>
             </div>
           </div>

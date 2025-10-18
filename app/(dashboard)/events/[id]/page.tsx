@@ -61,6 +61,7 @@ export default function EventDetailsPage({
 
   const startDate = formatDate(event.start_date);
   const endDate = formatDate(event.end_date);
+  console.log("Event Data:", event);
 
   return (
     <>
