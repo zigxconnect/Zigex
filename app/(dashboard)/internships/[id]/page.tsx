@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import DynamicForm from "@/components/sections/dashboard/Application/application";
 import { useFetchDetails } from "@/hooks/useFetchDetails";
 import { InternshipDetailsLoadingSkeleton } from "@/components/SinglePageLoadingSkeleton";
+import { normalizeImageSrc } from "@/lib/utils";
 
 const DetailItem = ({
   label,
@@ -62,7 +63,7 @@ export default function InternshipDetailsPage({
               <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
                 <div className="relative h-64 sm:h-80 lg:h-96 bg-gradient-to-br from-blue-100 to-indigo-100">
                   <Image
-                    src={internship.internship_picture_url || "/placeholder.png"}
+                    src={normalizeImageSrc(internship.internship_picture_url)}
                     alt={internship.title}
                     fill
                     className="object-cover"

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>New {{postType}} Posted</title>
+    <style>
+      /* Minimal inline styles to keep the template self-contained */
+      body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; background:#F6F9FC; color: #2A2A2A; margin:0; padding:0; }
+      .container { max-width:580px; margin:40px auto; background:#fff; border-radius:8px; padding:32px; border:1px solid #eaeaea; }
+      .header { text-align:center; margin-bottom:20px; }
+      .logo { width:80px; height:80px; border-radius:12px; object-fit:cover; }
+      .heading { font-size:22px; font-weight:700; margin:18px 0; }
+      .muted { color:#8898AA; font-size:13px; }
+      .card { background:#f8fafc; border:1.5px solid #0072F5; border-radius:12px; padding:24px; box-shadow:0 4px 24px rgba(0,0,0,0.04); }
+      .btn { display:inline-block; background:#0072F5; color:#fff; text-decoration:none; padding:10px 22px; border-radius:8px; font-weight:700; }
+      .footer { font-size:12px; color:#8898AA; margin-top:22px; }
+      a.break { word-break: break-all; color:#0072F5; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <img src="{{companyLogoUrl}}" alt="logo" class="logo" />
+      </div>
+
+      <div class="heading">A New {{postType}} is Available!</div>
+
+      <p>{{recipientGreeting}}</p>
+
+      <p>
+        We are excited to inform you that a new opportunity has just been posted on <strong>FutureProspect</strong> — the platform dedicated to connecting ambitious individuals with top programs, internships, and events.
+      </p>
+
+      <div class="card">
+        <h2 style="margin:0 0 8px 0;">{{postTitle}}</h2>
+        {{#if postLocation}}<p class="muted" style="margin:4px 0">Location: <strong>{{postLocation}}</strong></p>{{/if}}
+        {{#if postedDate}}<p class="muted" style="margin:4px 0">Posted on: <strong>{{postedDate}}</strong></p>{{/if}}
+        <hr style="border:none;border-top:1px solid #e6eef7;margin:18px 0" />
+        <div style="text-align:center;margin-top:8px">
+          <a class="btn" href="{{viewPostUrl}}">View Details</a>
+        </div>
+        <p class="muted" style="text-align:center;margin-top:12px;word-break:break-all;">If the button above does not work, copy and paste this link into your browser:<br/><a class="break" href="{{viewPostUrl}}">{{viewPostUrl}}</a></p>
+      </div>
+
+      <p style="margin-top:20px;">Best regards,<br/><strong>The FutureProspect Team</strong></p>
+
+      <div class="footer">
+        You are receiving this email because you opted in to notifications from FutureProspect.<br/>
+        <a class="break" href="{{managePreferencesUrl}}">Manage your notification preferences</a>.
+        <br/><br/>
+        FutureProspect, 123 Opportunity Lane, Innovation City, Country
+      </div>
+
+    </div>
+  </body>
+</html>
