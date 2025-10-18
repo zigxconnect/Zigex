@@ -7,6 +7,8 @@ import {
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { AnimatePresence, motion } from 'framer-motion';
+import dynamic from 'next/dynamic';
+const LiveReports = dynamic(() => import('@components/LiveReports/LiveReports'), { ssr: false });
 
 // --- INTERFACES & CONFIG (Unchanged) ---
 interface ProgressEntry {
@@ -198,6 +200,8 @@ const ProgressTreeTracker: React.FC = () => {
 
     const todayStr = new Date().toISOString().split('T')[0];
     const hasPostedToday = entries.some(e => e.date === todayStr);
+    // TODO: replace with actual authenticated user email from Supabase session
+    const currentUserEmail = typeof window !== 'undefined' ? (window as any).__USER_EMAIL__ || '' : '';
 
     const handleCreateReport = () => {
         const newEntry: ProgressEntry = { id: `day-${Date.now()}`, date: todayStr, whatILearned: "", lessonFeedback: "", skills: [], isSubmitted: true, pointsGained: PROGRESS_CONFIG.dailyPost, mentorComments: [] };
@@ -222,8 +226,9 @@ const ProgressTreeTracker: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gray-100">
-            <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
-                <ProgressTreeVisual points={progressPoints} />
+            <div className="max-w-6xl mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="md:col-span-2 space-y-6">
+                    <ProgressTreeVisual points={progressPoints} />
                 <h2 className="text-xl font-bold text-gray-800 border-b pb-2">Progress History</h2>
                 {!hasPostedToday && (
                     <div className="bg-white rounded-xl border-2 border-dashed border-blue-300 p-6 text-center">
@@ -232,7 +237,7 @@ const ProgressTreeTracker: React.FC = () => {
                         <button onClick={handleCreateReport} className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg"><Plus /><span>Create Today's Report</span></button>
                     </div>
                 )}
-                <div className="space-y-4">
+                    <div className="space-y-4">
                     {sortedEntries.map(entry => (
                         <AccordionItem
                             key={entry.id}
@@ -245,7 +250,24 @@ const ProgressTreeTracker: React.FC = () => {
                             onAddComment={handleAddComment}
                         />
                     ))}
+                    </div>
                 </div>
+                <aside className="md:col-span-1">
+                    {/* Live collaborative reports pane */}
+                    {process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY ? (
+                        <LiveReports programId={"program-1"} studentId={"student-1"} />
+                    ) : (
+                        <div className="bg-white rounded-xl border p-4 text-sm text-gray-500">Enable Liveblocks by setting <code>NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY</code> in your env to see live collaboration.</div>
+                    )}
+                    {/* Mentor quick actions (mock gating) */}
+                    {currentUserEmail === 'fonyuyjudegita@gmail.com' && (
+                        <div className="mt-4 bg-white rounded-xl border p-4">
+                            <h4 className="font-semibold">Mentor Actions</h4>
+                            <p className="text-sm text-gray-500">As the mentor you can add feedback and sign reports here.</p>
+                            {/* TODO: wire mentor actions to feedback endpoint */}
+                        </div>
+                    )}
+                </aside>
             </div>
         </div>
     );

@@ -2,7 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2.44.4";
 import { Resend } from "npm:resend@3.4.0";
 import { renderAsync } from "npm:@react-email/render@0.0.15";
 import React from "npm:react@18.3.1";
-import { NewPostEmail } from "./email-template.tsx";
+import { readTextFileStr } from "npm:std@0.177.0/fs/mod.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY")!);
 
@@ -70,19 +70,29 @@ Deno.serve(async (req) => {
       day: "numeric",
     });
 
-    // Render the React component to an HTML string
-    const emailHtml = await renderAsync(
-      React.createElement(NewPostEmail, {
-        postTitle: postTitle,
-        postType: postType,
-        postLocation: postLocation,
-        viewPostUrl: postUrl,
-        managePreferencesUrl: managePreferencesUrl,
-        companyLogoUrl:
-          "https://tmvipinvvhgklmqwvows.supabase.co/storage/v1/object/public/company-assets/Seed%20Company/events/SEED%20community%20Challenge-1757769838240.jpg",
-        postedDate: postedDate,
-      })
-    );
+    // Load the HTML template from disk and substitute placeholders.
+    const templatePath = new URL("./email-template.html", import.meta.url);
+    let template = await readTextFileStr(templatePath);
+
+    const recipientGreeting = `Dear ${"recipientName" in newPost ? newPost.recipientName : "FutureProspect Member"},`;
+
+    const replacements: { [k: string]: string } = {
+      "{{postType}}": postType,
+      "{{postTitle}}": postTitle,
+      "{{postLocation}}": postLocation || "",
+      "{{viewPostUrl}}": postUrl,
+      "{{managePreferencesUrl}}": managePreferencesUrl,
+      "{{companyLogoUrl}}":
+        "https://tmvipinvvhgklmqwvows.supabase.co/storage/v1/object/public/company-assets/Seed%20Company/events/SEED%20community%20Challenge-1757769838240.jpg",
+      "{{postedDate}}": postedDate,
+      "{{recipientGreeting}}": recipientName ? `Dear ${recipientName},` : "Dear FutureProspect Member,",
+    };
+
+    for (const key of Object.keys(replacements)) {
+      template = template.split(key).join(replacements[key]);
+    }
+
+    const emailHtml = template;
 
     // Send the email
     await resend.emails.send({
