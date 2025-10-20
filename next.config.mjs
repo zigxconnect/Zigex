@@ -25,6 +25,13 @@ const nextConfig = {
       pathname: '/**',
     },
 
+      {
+      protocol: 'https',
+      hostname: 'cdn.sanity.io',
+      port: '',
+      pathname: '/**',
+    },
+
       // THE FIX IS HERE:
       // We are adding a new object to the array for your Supabase Storage.
       {

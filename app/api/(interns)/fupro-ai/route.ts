@@ -165,8 +165,8 @@ export async function POST(req: NextRequest) {
         if (!query) return NextResponse.json({ error: 'Query is required' }, { status: 400 });
         if (!process.env.GEMINI_API_KEY) return NextResponse.json({ error: 'API key not configured' }, { status: 500 });
 
-        const supabase = createServerActionClient();
-        const { data: { user } } = await supabase.auth.getUser();
+    const supabase = await createServerActionClient();
+    const { data: { user } } = await supabase.auth.getUser();
         const { data: userProfile } = user ? await supabase.from("student_profiles").select("*").eq("user_id", user.id).single() : { data: null };
 
         const encoder = new TextEncoder();

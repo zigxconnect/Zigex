@@ -174,3 +174,22 @@ CREATE POLICY "Anyone can view company logos."
 -- For example, if you wanted to add a new column:
 -- ALTER TABLE public.student_profiles ADD COLUMN resume_url TEXT;
 -- Make sure to update RLS policies if the new column contains sensitive data.
+
+-- ========= Notifications mapping table (per-user reads) =========
+-- This table stores which user has read which notification so marking as read
+-- applies only to that user.
+CREATE TABLE IF NOT EXISTS public.notification_reads (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  notification_id uuid NOT NULL,
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  read_at timestamptz DEFAULT now() NOT NULL,
+  UNIQUE(notification_id, user_id)
+);
+
+COMMENT ON TABLE public.notification_reads IS 'Mapping table indicating which users have read which notifications.';
+
+-- Optional RLS policy: only the owning user can see their read rows
+ALTER TABLE public.notification_reads ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view their own notification read rows"
+  ON public.notification_reads FOR SELECT
+  USING (auth.uid() = user_id);
