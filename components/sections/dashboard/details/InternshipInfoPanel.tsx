@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Alert } from "@/components/uiComponent/Alert";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Tag } from "@/components/uiComponent/Tag";
 
 import { Sparkles, TriangleAlert } from "lucide-react";
@@ -98,10 +98,10 @@ export const InternshipInfoPanel = ({
         </div>
       </Card>
       <Alert icon={TriangleAlert} variant="danger">
-        <h4 className="font-bold">Application Deadline</h4>
-        <p className="mt-1">
+        <AlertTitle>Application Deadline</AlertTitle>
+        <AlertDescription>
           Applications close on {formattedDeadline}. Apply soon!
-        </p>
+        </AlertDescription>
       </Alert>
     </div>
   );

@@ -1,75 +1,84 @@
 "use client";
 
-import { Bell, Menu } from "lucide-react";
+import { Menu, Search, Bell } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
+import { NotificationDropdown } from "./NotificationDropdown";
+import Link from "next/link";
 
 interface DashboardHeaderProps {
   user?: any;
   onMenuClick: () => void;
+  onSearchOpen: () => void;
 }
 
-export const DashboardHeader = ({ onMenuClick }: DashboardHeaderProps) => {
-  const [notificationCount, setNotificationCount] = useState(3);
-
-  const handleNotificationClick = () => {
-    console.log("Notifications clicked");
-  };
+export const DashboardHeader = ({
+  user,
+  onMenuClick,
+  onSearchOpen,
+}: DashboardHeaderProps) => {
+  const userName = user?.name || user?.profile?.name || "Guest User";
+  const userRole = user?.role || user?.profile?.role || "Student";
+  const userAvatar =
+    user?.avatar ||
+    user?.profile?.avatar_url ||
+    user?.avatarUrl ||
+    "/default-avatar.png";
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm w-full">
-      <div className="flex items-center justify-between px-4 h-16">
-        
+    <header className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm">
+      <div className="flex items-center justify-between px-4 py-3 max-w-7xl mx-auto">
         {/* Left Side - Mobile Menu & Logo */}
         <div className="flex items-center gap-4">
           {/* Mobile Menu Button */}
           <button
             onClick={onMenuClick}
-            className="lg:hidden p-2.5 rounded-xl bg-blue-600 text-white shadow-md hover:bg-blue-700 hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors lg:hidden"
+            aria-label="Toggle menu"
           >
-            <Menu size={20} />
+            <Menu size={24} className="text-gray-700" />
           </button>
 
-          {/* Logo/Brand */}
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-md">
-              <span className="text-white font-bold text-sm">Z</span>
-            </div>
-            <span className="hidden sm:block font-bold text-gray-900 text-lg">ZIGEX</span>
+          {/* Logo/Brand - Link to home and aligned with sidebar */}
+          <div className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-2 group">
+              <div className="w-8 h-8  bg-blue-600 rounded-lg flex items-center justify-center transition-transform group-hover:scale-105">
+                <span className="text-white font-bold text-lg">Z</span>
+              </div>
+              <div className="hidden sm:block">
+                <h1 className="text-xl font-bold text-gray-900">IGEX</h1>
+              </div>
+            </Link>
           </div>
         </div>
 
-        {/* Right Side - Notifications & User */}
+        {/* Right Side - Search, Notifications & User */}
         <div className="flex items-center gap-3">
-          
-          {/* Notifications */}
+          {/* Search Icon */}
           <button
-            onClick={handleNotificationClick}
-            className="relative p-2.5 text-gray-600 rounded-xl hover:bg-gray-100 hover:text-gray-900 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            onClick={onSearchOpen}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            aria-label="Open search"
           >
-            <Bell size={20} />
-            {notificationCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-semibold shadow-md">
-                {notificationCount > 9 ? "9+" : notificationCount}
-              </span>
-            )}
+            <Search size={20} className="text-gray-600" />
           </button>
 
+          {/* Notifications Dropdown */}
+          <NotificationDropdown />
+
           {/* User Avatar - Desktop Only */}
-          <div className="hidden lg:flex items-center gap-3 pl-3 border-l border-gray-200">
-            <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-gray-200 shadow-sm">
+          <div className="hidden md:flex items-center gap-3">
+            <div className="relative w-10 h-10 rounded-full border-2 border-gray-200 overflow-hidden">
               <Image
-                src="/gita.png"
-                alt="User Avatar"
-                width={32}
-                height={32}
+                src={userAvatar}
+                alt={userName}
+                fill
                 className="object-cover"
-                priority
               />
             </div>
-            <div className="hidden xl:block">
-              <p className="text-sm font-medium text-gray-900">Fonyuy Gita</p>
-              <p className="text-xs text-gray-500">Student</p>
+            <div className="hidden lg:block">
+              <p className="text-sm font-semibold text-gray-900">{userName}</p>
+              <p className="text-xs text-gray-500">{userRole}</p>
             </div>
           </div>
         </div>

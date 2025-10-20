@@ -1,5 +1,7 @@
 {
   "deno.enable": true,
   "deno.lint": true,
-  "deno.unstable": []
+  "deno.unstable": [],
+  "postman.settings.dotenv-detection-notification-visibility": false,
+  "typescript.tsdk": "node_modules\\typescript\\lib"
 }

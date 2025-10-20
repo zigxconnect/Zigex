@@ -1,7 +1,6 @@
 "use server";
 
 import { createServerActionClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 
 export interface UserProfile {
   id: string;
@@ -34,18 +33,20 @@ export interface FormattedUserData {
 
 /**
  * Server action to get the current user's complete, formatted profile information.
- * Intended for use in Server Components. It will redirect the user if they are not
- * signed in or have not created a profile.
+ * Throws an error if the user or profile is not found, as the middleware should
+ * have already prevented unauthorized access.
  * @returns {Promise<FormattedUserData>}
  */
 export async function getProfileInfo(): Promise<FormattedUserData> {
-  const supabase = createServerActionClient();
+  const supabase = await createServerActionClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/sign-in");
+    throw new Error(
+      "Authentication error: User not found. Middleware should have prevented this."
+    );
   }
 
   const { data: profile, error } = await supabase
@@ -55,7 +56,9 @@ export async function getProfileInfo(): Promise<FormattedUserData> {
     .single();
 
   if (error || !profile) {
-    redirect("/create-profile");
+    throw new Error(
+      "Data fetching error: Profile not found for an authenticated user. Middleware should have prevented this."
+    );
   }
 
   const userData: FormattedUserData = {
@@ -76,21 +79,18 @@ export async function getProfileInfo(): Promise<FormattedUserData> {
 
 /**
  * Server action to get just the raw user profile data.
- * Intended for use in Client Components (e.g., inside useEffect).
- * It returns null if the user or profile is not found, allowing the client
- * to handle the UI state (e.g., show an error message) without a hard redirect.
+ * Returns null if the user or profile is not found, allowing client
+ * components to handle the UI state gracefully.
  * @returns {Promise<UserProfile | null>}
  */
 export async function getRawProfileInfo(): Promise<UserProfile | null> {
   try {
-    const supabase = createServerActionClient();
+    const supabase = await createServerActionClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) {
-      return null;
-    }
+    if (!user) return null;
 
     const { data: profile, error } = await supabase
       .from("student_profiles")
@@ -112,30 +112,27 @@ export async function getRawProfileInfo(): Promise<UserProfile | null> {
 
 /**
  * Server action to quickly check if a user has completed their profile.
+ * This is primarily for reference, as the middleware now contains this logic.
  * @returns {Promise<boolean>} True if a profile exists, false otherwise.
  */
 export async function hasCompletedProfile(): Promise<boolean> {
   try {
-    const supabase = createServerActionClient();
+    const supabase = await createServerActionClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) {
-      return false;
-    }
+    if (!user) return false;
 
     const { data: profile, error } = await supabase
       .from("student_profiles")
-      .select("id")
+      .select("id, profile_status")
       .eq("user_id", user.id)
       .maybeSingle();
 
-    if (error) {
-      return false;
-    }
+    if (error) return false;
 
-    return !!profile;
+    return profile?.profile_status === "complete";
   } catch (error) {
     console.error("Error checking profile completion:", error);
     return false;

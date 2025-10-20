@@ -1,10 +1,6 @@
-// File: supabase/functions/send-new-post-notification/email-template.tsx
-// **FINAL PROFESSIONAL VERSION**
-
 import {
   Body,
   Button,
-  Column,
   Container,
   Head,
   Heading,
@@ -13,23 +9,21 @@ import {
   Img,
   Link,
   Preview,
-  Row,
   Section,
   Text,
   Tailwind,
-} from "npm:@react-email/components@0.0.22";
+} from "npm:@react-email/components@0.5.3";
 import * as React from "npm:react@18.3.1";
 
-// New props for a richer email, including location and a preferences link.
 interface NewPostEmailProps {
   postTitle: string;
   postType: "Program" | "Internship" | "Event";
-  postLocation?: string; // Optional: Location of the opportunity
+  postLocation?: string;
   viewPostUrl: string;
   companyLogoUrl: string;
-  managePreferencesUrl: string; // Essential for a professional footer
-  recipientName?: string; // Optional: Personalized greeting
-  postedDate?: string; // Optional: Date string (e.g., 'Sep 22, 2025')
+  managePreferencesUrl: string;
+  recipientName?: string;
+  postedDate?: string;
 }
 
 export const NewPostEmail = ({
@@ -40,7 +34,9 @@ export const NewPostEmail = ({
   companyLogoUrl,
   managePreferencesUrl,
   recipientName,
+  postedDate,
 }: NewPostEmailProps) => {
+  const previewText = `A new ${postType} has been posted: ${postTitle}`;
   const previewText = `A new ${postType} has been posted: ${postTitle}`;
 
   return (

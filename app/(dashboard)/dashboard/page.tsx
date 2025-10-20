@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getProfileInfo } from "@/lib/actions/profile.actions";
 import { WelcomeCard } from "@/components/sections/dashboard/WelcomeCard";
-import { InternshipListings } from "@/components/sections/dashboard/InternshipListings";
+import { DashboardContent } from "@/components/sections/dashboard/DashboardContent";
 
 /**
  * The main dashboard page, a Server Component that fetches initial user data
@@ -9,6 +9,7 @@ import { InternshipListings } from "@/components/sections/dashboard/InternshipLi
  */
 export default async function DashboardPage() {
   const userData = await getProfileInfo();
+  console.log("User Data:", userData);
 
   if (!userData) {
     redirect("/sign-in");
@@ -19,7 +20,8 @@ export default async function DashboardPage() {
       {/* @ts-ignore */}
       <WelcomeCard user={userData} />
 
-      <InternshipListings />
+      {/* Client component that handles search state */}
+      <DashboardContent />
     </div>
   );
 }
