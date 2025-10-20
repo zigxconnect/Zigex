@@ -33,9 +33,9 @@ export async function PATCH(
     return auth;
   }
 
-  const id = params?.id;
+  const id = (await params)?.id;
 
-  const { user, type } = auth;
+  const { type } = auth;
   if (type !== "company") {
     return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
   }
@@ -99,7 +99,7 @@ export async function DELETE(
     return auth;
   }
 
-  const { user, type } = auth;
+  const { type } = auth;
   if (type !== "company") {
     return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
   }
@@ -116,7 +116,7 @@ export async function DELETE(
   const { data: existingInternship, error: fetchError } = await supabaseAdmin
     .from("internships")
     .select("*")
-    .eq("id", params?.id)
+    .eq("id", (await params)?.id)
     .eq("company_id", company.id)
     .single();
   if (fetchError || !existingInternship) {
@@ -129,7 +129,7 @@ export async function DELETE(
   const { data, error } = await supabaseAdmin
     .from("internships")
     .delete()
-    .eq("id", params?.id);
+    .eq("id", (await params)?.id);
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -155,7 +155,7 @@ export async function GET(
     return auth;
   }
 
-  const { user, type } = auth;
+  const { type } = auth;
   if (type !== "company") {
     return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
   }
@@ -168,7 +168,7 @@ export async function GET(
     );
   }
 
-  const id = params?.id;
+  const id = (await params)?.id;
 
   // Fetch the single internship that matches the ID.
   const { data: internship, error } = await supabaseAdmin

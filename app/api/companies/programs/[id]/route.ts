@@ -1,5 +1,3 @@
-
-
 import { NextResponse } from "next/server";
 import { authMiddleware } from "@/lib/middleware/auth";
 import { supabaseAdmin } from "@/lib/supabase/server";
@@ -7,7 +5,10 @@ import { supabaseAdmin } from "@/lib/supabase/server";
  * Function to get a unique program posted by the authenticated company
  * GET /api/companies/programs/:id (Authenticated: returns a single program for the authenticated company)
  */
-export async function getAuthenticatedCompanyProgramById(request: Request, { params }: { params: { id: string } }) {
+export async function getAuthenticatedCompanyProgramById(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
   const auth = await authMiddleware(request);
   if (auth instanceof NextResponse) {
     return auth;
@@ -24,7 +25,7 @@ export async function getAuthenticatedCompanyProgramById(request: Request, { par
       { status: 404 }
     );
   }
-  const id = params?.id;
+  const id = (await params)?.id;
   const { data, error } = await supabaseAdmin
     .from("programs")
     .select("*")
