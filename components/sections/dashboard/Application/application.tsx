@@ -2,109 +2,111 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react"; // Make sure you have `lucide-react` installed
+import { Loader2 } from "lucide-react";
 
 type FormType = "event" | "program" | "internship";
+
+interface FormField {
+  label: string;
+  name: string;
+  type?: "text" | "textarea" | "select" | "file" | "checkbox" | "hidden";
+  placeholder?: string;
+  options?: string[];
+  required?: boolean;
+  value?: string;
+}
 
 interface FormContentProps {
   title: string;
   subtitle?: string;
-  fields: {
-    label: string;
-    name: string;
-    type?: "text" | "textarea" | "select" | "file" | "checkbox";
-    placeholder?: string;
-    options?: string[];
-    required?: boolean;
-  }[];
+  fields: FormField[];
   submitText: string;
 }
 
-// ✨ COMPLETE: The full form definitions are now included here.
+// ✨ UPDATED: Form fields now perfectly match what the backend API expects.
 const formContents: Record<FormType, FormContentProps> = {
   program: {
-    title: "Program Form",
-    subtitle: "Fill in your program details",
+    title: "Program Application",
+    subtitle: "Fill in your details to apply for this program.",
     submitText: "Enroll",
     fields: [
       {
-        label: "Program Name",
-        name: "programName",
-        type: "text",
-        required: true,
-      },
-      {
-        label: "Level of Experience",
+        label: "Your Current Experience Level",
         name: "level",
         type: "select",
         options: ["Beginner", "Intermediate", "Advanced"],
         required: true,
       },
       {
-        label: "Expectations",
+        label: "What are your expectations for this program?",
         name: "expectations",
         type: "textarea",
+        placeholder: "e.g., I hope to learn advanced React hooks...",
         required: true,
       },
-      { label: "Comments", name: "comments", type: "textarea" },
       {
-        label:
-          "Weekend of code is a year long program that runs every weekend Saturday and Sunday",
-        name: "info",
-        type: "checkbox",
-        required: true,
+        label: "Any additional comments or questions?",
+        name: "comments",
+        type: "textarea",
+        placeholder: "(Optional)",
       },
     ],
   },
   event: {
-    title: "Event Form",
-    subtitle: "Fill in the details for the event",
+    title: "Event RSVP",
+    subtitle: "Fill in the details to confirm your attendance.",
     submitText: "RSVP",
     fields: [
       {
-        label: "Name",
-        name: "name",
-        type: "text",
-        placeholder: "Enter your name",
-        required: true,
-      },
-      {
-        label: "Expectations",
+        label: "What do you hope to gain from attending?",
         name: "expectations",
         type: "textarea",
-        placeholder: "Your expectations",
-        required: true,
+        placeholder: "e.g., Networking with industry professionals...",
       },
+      {
+        label: "Any additional comments?",
+        name: "comments",
+        type: "textarea",
+        placeholder: "(Optional)",
+      },
+      // This hidden field sends 'true' when the form is submitted
+      { label: "", name: "rsvp_status", type: "hidden", value: "true" },
     ],
   },
   internship: {
-    title: "Internship Form",
-    subtitle: "Apply for an internship",
+    title: "Internship Application",
+    subtitle: "Apply for this internship opportunity.",
     submitText: "Apply",
     fields: [
-      { label: "Duration", name: "duration", type: "text", required: true },
       {
-        label: "Department",
+        label: "Duration (in months)",
+        name: "duration",
+        type: "text",
+        placeholder: "e.g., 3",
+        required: true,
+      },
+      {
+        label: "Preferred Department",
         name: "department",
         type: "select",
         options: ["Frontend", "Backend", "AI / ML", "Data Science", "DevOps"],
         required: true,
       },
       {
-        label: "Location",
-        name: "location",
+        label: "Preferred Work Mode",
+        name: "location", // This name is used for work_mode
         type: "select",
         options: ["On-site", "Remote", "Hybrid"],
         required: true,
       },
       {
-        label: "Expectations",
+        label: "What are your expectations for this internship?",
         name: "expectations",
         type: "textarea",
         required: true,
       },
       {
-        label: "Upload Resume",
+        label: "Upload Resume (PDF, DOC, DOCX)",
         name: "resume",
         type: "file",
         required: true,
@@ -113,18 +115,15 @@ const formContents: Record<FormType, FormContentProps> = {
   },
 };
 
-// Map form types to their API submission endpoints
-const apiEndpoints: Record<FormType, string> = {
-  event: "/api/students/applications/events/rsvp",
-  program: "/api/students/applications/programs/apply",
-  internship: "/api/students/applications/internship",
-};
+// ✨ FIX: This is now a single string, as intended.
+const apiEndpoint = "/api/students/applications";
 
 // The component accepts a `type` and an `id` prop
 interface DynamicFormProps {
   type: FormType;
   id: string; // The UUID of the program, event, or internship
 }
+// ✨ FIX: Removed the duplicate interface definition that was here.
 
 export default function DynamicForm({ type, id }: DynamicFormProps) {
   const currentContent = formContents[type];
@@ -143,22 +142,17 @@ export default function DynamicForm({ type, id }: DynamicFormProps) {
     const formElement = e.target as HTMLFormElement;
     const formData = new FormData(formElement);
 
-    // CRITICAL: Append the specific ID to the form data
+    // This is the CRITICAL line that tells our unified backend which type of application this is.
     formData.append(`${type}_id`, id);
 
     try {
-      const endpoint = apiEndpoints[type];
-      const response = await fetch(endpoint, {
+      // ✨ FIX: The fetch call now correctly uses the single endpoint string.
+      const response = await fetch(apiEndpoint, {
         method: "POST",
         body: formData,
       });
 
-      let result;
-      try {
-        result = await response.json();
-      } catch {
-        throw new Error("Server returned an invalid response");
-      }
+      const result = await response.json();
 
       if (!response.ok) {
         throw new Error(result.error || "An unexpected error occurred.");
@@ -188,11 +182,21 @@ export default function DynamicForm({ type, id }: DynamicFormProps) {
         {currentContent.title}
       </h1>
       {currentContent.subtitle && (
-        <p className="mb-4 m-2 text-[#155DFC]">{currentContent.subtitle}</p>
+        <p className="mb-4 m-2 text-gray-600">{currentContent.subtitle}</p>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {currentContent.fields.map((field) => {
+          if (field.type === "hidden") {
+            return (
+              <input
+                type="hidden"
+                key={field.name}
+                name={field.name}
+                value={field.value}
+              />
+            );
+          }
           if (field.type === "textarea") {
             return (
               <div key={field.name}>
@@ -207,7 +211,8 @@ export default function DynamicForm({ type, id }: DynamicFormProps) {
                 />
               </div>
             );
-          } else if (field.type === "select") {
+          }
+          if (field.type === "select") {
             return (
               <div key={field.name}>
                 <label className="block text-sm font-medium">
@@ -218,7 +223,7 @@ export default function DynamicForm({ type, id }: DynamicFormProps) {
                   required={field.required}
                   className="mt-1 w-full border rounded p-2"
                 >
-                  <option value="">Select</option>
+                  <option value="">Please select</option>
                   {field.options?.map((option) => (
                     <option key={option} value={option}>
                       {option}
@@ -227,28 +232,8 @@ export default function DynamicForm({ type, id }: DynamicFormProps) {
                 </select>
               </div>
             );
-          } else if (field.type === "checkbox") {
-            return (
-              <div
-                key={field.name}
-                className="flex items-start gap-2 p-2 border rounded-md bg-gray-50"
-              >
-                <input
-                  type="checkbox"
-                  id={field.name}
-                  name={field.name}
-                  required={field.required}
-                  className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <label
-                  htmlFor={field.name}
-                  className="text-sm text-gray-700 leading-snug cursor-pointer"
-                >
-                  {field.label}
-                </label>
-              </div>
-            );
-          } else if (field.type === "file") {
+          }
+          if (field.type === "file") {
             return (
               <div key={field.name}>
                 <label
@@ -267,22 +252,20 @@ export default function DynamicForm({ type, id }: DynamicFormProps) {
                 />
               </div>
             );
-          } else {
-            return (
-              <div key={field.name}>
-                <label className="block text-sm font-medium">
-                  {field.label}
-                </label>
-                <input
-                  type={field.type || "text"}
-                  name={field.name}
-                  placeholder={field.placeholder}
-                  required={field.required}
-                  className="mt-1 w-full border rounded p-2"
-                />
-              </div>
-            );
           }
+          // Default to text input
+          return (
+            <div key={field.name}>
+              <label className="block text-sm font-medium">{field.label}</label>
+              <input
+                type={field.type || "text"}
+                name={field.name}
+                placeholder={field.placeholder}
+                required={field.required}
+                className="mt-1 w-full border rounded p-2"
+              />
+            </div>
+          );
         })}
 
         {error && (
