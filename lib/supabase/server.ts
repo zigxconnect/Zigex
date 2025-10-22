@@ -29,8 +29,8 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
 /**
  * EXPORT 2: The Server Action / User-Context Client Factory
  */
-export function createServerActionClient() {
-  const cookieStore = cookies();
+export async function createServerActionClient() {
+  const cookieStore = await cookies();
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL! ||
@@ -61,8 +61,8 @@ export function createServerActionClient() {
  * Creates a Supabase client for use in Server Components,
  * Route Handlers, and Server Actions.
  */
-export const createSupabaseServerClient = () => {
-  const cookieStore = cookies();
+export const createSupabaseServerClient = async () => {
+  const cookieStore = await cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

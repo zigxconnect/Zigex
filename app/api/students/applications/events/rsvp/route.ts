@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { validate as isUUID } from "uuid";
+import ComponentStyle from "styled-components/dist/models/ComponentStyle";
 
 export async function POST(request: Request) {
   const cookieStore = await cookies();
@@ -69,6 +70,31 @@ export async function POST(request: Request) {
     }
 
     const student_id = studentData.id;
+
+    // Check if student has already RSVP'd to this event
+    const { data: existingRSVP, error: rsvpError } = await supabase
+      .from("Applications")
+      .select("id")
+      .match({
+        student_id: student_id,
+        event_id: event_id,
+        application_type: "event"
+      })
+
+
+      console.log("Existing RSVP check result:");
+      console.log(existingRSVP);
+      console.log(rsvpError);
+
+    if (rsvpError && rsvpError.code !== "PGRST116") { // PGRST116: No rows found
+      console.error("Error checking existing RSVP:", rsvpError.message);
+      return NextResponse.json({ error: "Error checking existing RSVP." }, { status: 500 });
+    }
+
+    if (existingRSVP && existingRSVP.length > 0) {
+      console.warn("Student has already RSVP'd to this event:", existingRSVP.id);
+      return NextResponse.json({ error: "You have already RSVP'd to this event." }, { status: 409 });
+    }
 
     console.log("=== EVENT RSVP EXTRACTED VALUES ===");
     console.log("event_id:", event_id);
