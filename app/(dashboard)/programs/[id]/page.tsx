@@ -1,21 +1,34 @@
 "use client";
 
+<<<<<<< HEAD
 import { use, useState, Fragment } from "react";
+=======
+import { useState } from "react";
+>>>>>>> origin/development
 import { useFetchDetails } from "@/hooks/useFetchDetails";
 import { Program } from "@/lib/types/dashoard/index";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+<<<<<<< HEAD
 import { MapPin, BookOpen, TriangleAlert, Play } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Alert } from "@/components/uiComponent/Alert";
 import { ListItem } from "@/components/uiComponent/ListItem";
+=======
+import { MapPin, Building2, ExternalLink } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import DynamicForm from "@/components/sections/dashboard/Application/application";
+>>>>>>> origin/development
 import { InternshipDetailsLoadingSkeleton } from "@/components/SinglePageLoadingSkeleton";
 import { Badge } from "@/components/uiComponent/Badge";
 import { LiveVideoModal } from "@/components/sections/dashboard/Video/LiveVideoModal";
 // import { LiveVideoModal } from "@/components/LiveVideoModal";
 // import { Badge } from "@/components/ui/badge";
 
+<<<<<<< HEAD
 // DetailItem helper component
+=======
+>>>>>>> origin/development
 const DetailItem = ({
   label,
   value,
@@ -37,17 +50,23 @@ const DetailItem = ({
 export default function ProgramDetailsPage({
   params,
 }: {
+<<<<<<< HEAD
   params: Promise<{ id: string }>;
 }) {
   const resolvedParams = use(params);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [showMobileDetails, setShowMobileDetails] = useState(false);
 
+=======
+  params: { id: string };
+}) {
+>>>>>>> origin/development
   const {
     data: program,
     isLoading,
     error,
-  } = useFetchDetails<Program>("/api/students/programs", resolvedParams.id);
+  } = useFetchDetails<Program>("/api/students/programs", params.id);
+  const [showForm, setShowForm] = useState(false);
 
   if (isLoading) {
     return <InternshipDetailsLoadingSkeleton />;
@@ -72,6 +91,7 @@ export default function ProgramDetailsPage({
   }
 
   const company = program.company;
+<<<<<<< HEAD
   const MOCK_LIVE_IDS = ["p1", "e1", "i1"];
   const programId = resolvedParams.id;
   const isLive =
@@ -85,8 +105,28 @@ export default function ProgramDetailsPage({
         day: "numeric",
       })
     : "Not specified";
+=======
+>>>>>>> origin/development
 
+  if (showForm) {
+    return (
+      <div className="w-full max-w-4xl mx-auto p-4 md:p-5 flex items-start">
+        <Button
+          className="rounded-full w-12 h-12 flex-shrink-0 mr-4 p-1"
+          onClick={() => setShowForm(false)}
+          variant="primary"
+        >
+          ←
+        </Button>
+        <div className="flex-1 w-full">
+          {/* ✨ FIX: Pass the program's ID to the form */}
+          <DynamicForm type="program" id={program.id} />
+        </div>
+      </div>
+    );
+  }
   return (
+<<<<<<< HEAD
     <>
       <div className="min-h-screen bg-[#F8FAFC]">
         <div className="lg:px-8 lg:py-8">
@@ -251,6 +291,59 @@ export default function ProgramDetailsPage({
             </div>
           </div>
         )}
+=======
+    <div className="bg-[#F8FAFC] p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 bg-white p-8 rounded-2xl shadow-lg border border-gray-200">
+          <h1 className="text-4xl font-bold text-green-700">{program.title}</h1>
+          <div className="mt-6 h-56 bg-gray-200 rounded-xl overflow-hidden relative">
+            <Image
+              src={program.program_picture_url}
+              alt={program.title}
+              fill
+              className="object-cover"
+            />
+          </div>
+          <div className="mt-8 flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+            <div className="w-16 h-16 rounded-lg flex items-center justify-center bg-green-500 text-white font-bold text-2xl shadow-md">
+              <Building2 size={32} />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">
+                {company?.company_name}
+              </h2>
+              <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
+                <MapPin size={14} /> {program.location}
+              </div>
+            </div>
+          </div>
+          <div className="mt-8 prose max-w-none">
+            <h3 className="text-xl font-bold text-gray-800 mb-3">
+              About this Program
+            </h3>
+            <p>{program.description || "No description provided."}</p>
+          </div>
+        </div>
+        <aside className="space-y-6 lg:sticky top-8">
+          <Card>
+            <div className="p-6">
+              <h3 className="font-bold text-lg mb-4 text-green-700">
+                Program Details
+              </h3>
+              <DetailItem label="Location" value={program.location} />
+              <DetailItem label="Start Date" value={program.start_date} />
+              <DetailItem label="End Date" value={program.end_date} />
+            </div>
+          </Card>
+          <Button
+            className="w-full text-base py-3 font-semibold"
+            onClick={() => setShowForm(true)}
+            variant="primary"
+          >
+            Register Now <ExternalLink size={16} className="ml-2" />
+          </Button>
+        </aside>
+>>>>>>> origin/development
       </div>
 
       {/* Live Video Modal */}
