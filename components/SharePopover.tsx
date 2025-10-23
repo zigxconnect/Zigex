@@ -1,48 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Separator } from "@/components/ui/separator"; // <-- New import
-import { Share2, Linkedin, Link as LinkIcon, Check } from "lucide-react";
-import { toast } from "sonner";
+import { Share2, Linkedin, Link2, Check, X, MessageCircle, Facebook } from "lucide-react";
 
-// --- Custom SVG Icons for accurate branding ---
-
-const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    role="img"
-    viewBox="0 0 24 24"
-    xmlns="http://www.w3.org/2000/svg"
-    {...props}
-  >
-    <path d="M12.06 0C5.4 0 0 5.4 0 12.06c0 3.48 1.44 6.6 3.78 8.76L0 24l3.3-3.66c2.1 1.44 4.56 2.22 7.14 2.22 6.66 0 12.06-5.4 12.06-12.06S18.72 0 12.06 0zm0 0c0 0 0 0 0 0zm0 0c0 0 0 0 0 0zm5.22 16.32c-.3-.18-1.8- .9-2.1-1.02-.3-.12-.54-.18-.78.18s-.84 1.02-.96 1.2c-.18.18-.3.24-.6.12-.3-.12-1.2-.42-2.34-1.44-.84-.78-1.38-1.74-1.56-2.04-.18-.3-.06-.54.06-.66.12-.12.24-.3.36-.48.12-.12.18-.24.24-.42.12-.18.06-.36 0-.54s-.78-1.8-.96-2.52c-.18-.6-.36-.54-.54-.54-.12 0-.3-.06-.48-.06s-.42 0-.66.12c-.24.18-.9  .84-1.14 2.1-.24 1.2.12 2.4.18 2.58.06.18 1.8 2.82 4.32 3.78 2.52.96 2.52.66 2.94.6.42-.06 1.8-.78 2.04-.9.3-.18.3-.3.18-.48zm0 0" />
-  </svg>
-);
-
+// Custom X (Twitter) Icon
 const XIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
-    role="img"
-    viewBox="0 0 24 24"
     xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
     {...props}
   >
-    <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
-  </svg>
-);
-
-const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    role="img"
-    viewBox="0 0 24 24"
-    xmlns="http://www.w3.org/2000/svg"
-    {...props}
-  >
-    <path d="M22.675 0H1.325C.593 0 0 .593 0 1.325v21.351C0 23.407.593 24 1.325 24H12.82v-9.294H9.692v-3.622h3.128V8.413c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12V24h6.116c.732 0 1.325-.593 1.325-1.325V1.325C24 .593 23.407 0 22.675 0Z" />
+    <path d="M4 4l11.733 16h4.267l-11.733 -16z" />
+    <path d="M4 20l6.768 -6.768m2.46 -2.46l6.772 -6.772" />
   </svg>
 );
 
@@ -54,100 +29,372 @@ interface SharePopoverProps {
 export const SharePopover = ({ title, urlPath }: SharePopoverProps) => {
   const [fullUrl, setFullUrl] = useState("");
   const [copied, setCopied] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [dragY, setDragY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startY, setStartY] = useState(0);
+  const modalIdRef = useRef(`share-${Date.now()}-${Math.random()}`);
 
   useEffect(() => {
     setFullUrl(`${window.location.origin}${urlPath}`);
   }, [urlPath]);
 
-  // Don't render server-side
+  useEffect(() => {
+    if (isOpen) {
+      // Close other modals
+      window.dispatchEvent(new CustomEvent('close-share-modals', { 
+        detail: { exceptId: modalIdRef.current } 
+      }));
+      document.body.style.overflow = "hidden";
+      document.body.style.height = "100vh";
+    } else {
+      document.body.style.overflow = "";
+      document.body.style.height = "";
+      setDragY(0);
+      setIsDragging(false);
+    }
+    
+    return () => {
+      document.body.style.overflow = "";
+      document.body.style.height = "";
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    const handleClose = (e: CustomEvent) => {
+      if (e.detail?.exceptId !== modalIdRef.current && isOpen) {
+        setIsOpen(false);
+      }
+    };
+    
+    window.addEventListener('close-share-modals', handleClose as EventListener);
+    return () => window.removeEventListener('close-share-modals', handleClose as EventListener);
+  }, [isOpen]);
+
+  const handleClose = () => {
+    setIsOpen(false);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    setStartY(touch.clientY);
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    const touch = e.touches[0];
+    const diff = touch.clientY - startY;
+    if (diff > 0) {
+      setDragY(diff);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    if (dragY > 100) {
+      handleClose();
+    } else {
+      setDragY(0);
+    }
+  };
+
   if (!fullUrl) return null;
 
   const encodedUrl = encodeURIComponent(fullUrl);
   const encodedTitle = encodeURIComponent(`Check out this: ${title}`);
 
-  // --- Array for social links for easier mapping ---
   const socialLinks = [
     {
       name: "WhatsApp",
-      Icon: WhatsAppIcon,
+      Icon: MessageCircle,
       url: `https://api.whatsapp.com/send?text=${encodedTitle}%20${encodedUrl}`,
-      hoverClasses: "hover:bg-emerald-50 hover:text-emerald-600",
+      gradient: "from-emerald-400 via-emerald-500 to-green-600",
     },
     {
-      name: "X (Twitter)",
+      name: "X",
       Icon: XIcon,
       url: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`,
-      hoverClasses: "hover:bg-gray-100 hover:text-gray-900",
+      gradient: "from-gray-700 via-gray-800 to-black",
     },
     {
       name: "Facebook",
-      Icon: FacebookIcon,
+      Icon: Facebook,
       url: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
-      hoverClasses: "hover:bg-blue-50 hover:text-blue-700",
+      gradient: "from-blue-500 via-blue-600 to-blue-700",
     },
     {
       name: "LinkedIn",
       Icon: Linkedin,
       url: `https://www.linkedin.com/shareArticle?mini=true&url=${encodedUrl}&title=${encodedTitle}`,
-      hoverClasses: "hover:bg-sky-50 hover:text-sky-700",
+      gradient: "from-sky-500 via-blue-500 to-blue-600",
     },
   ];
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(fullUrl).then(() => {
       setCopied(true);
-      toast.success("Link copied to clipboard!");
-      const timeoutId = setTimeout(() => setCopied(false), 2500);
+      setShowToast(true);
+      setTimeout(() => {
+        setCopied(false);
+      }, 2000);
+      setTimeout(() => {
+        setShowToast(false);
+      }, 2500);
     });
   };
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          size="icon"
-          className="rounded-lg flex-shrink-0"
-        >
-          <Share2 size={16} />
-          <span className="sr-only">Share</span>
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent align="end" className="w-52 rounded-xl">
-        <div className="space-y-2">
-          <p className="font-semibold text-sm text-gray-900 px-2 pt-1">
-            Share this post
-          </p>
-          <div className="flex flex-col gap-1">
-            {socialLinks.map(({ name, Icon, url, hoverClasses }) => (
-              <Button
-                key={name}
-                variant="ghost"
-                className={`w-full justify-start font-medium text-gray-700 ${hoverClasses}`}
-                onClick={() =>
-                  window.open(url, "_blank", "noopener,noreferrer")
-                }
-              >
-                <Icon className="mr-2.5 h-4 w-4 fill-current" />
-                {name}
-              </Button>
-            ))}
-          </div>
-          <Separator />
-          <Button
-            variant="ghost"
-            className="w-full justify-start font-medium text-gray-700 hover:bg-gray-100"
-            onClick={handleCopyLink}
+    <>
+      <Button
+        variant="outline"
+        size="icon"
+        className="rounded-lg flex-shrink-0 transition-all duration-150 active:scale-90 hover:bg-gray-50"
+        onClick={() => setIsOpen(true)}
+      >
+        <Share2 size={16} />
+        <span className="sr-only">Share</span>
+      </Button>
+
+      {isOpen && (
+        <div className="fixed inset-0 z-[9999] overflow-hidden">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-[2px] animate-[fadeIn_0.25s_ease-out]"
+            onClick={handleClose}
+            style={{
+              touchAction: 'none',
+            }}
+          />
+
+          {/* Mobile Bottom Sheet */}
+          <div
+            className="md:hidden absolute inset-x-0 bottom-0 animate-[slideUpMobile_0.4s_cubic-bezier(0.32,0.72,0,1)]"
+            style={{
+              transform: isDragging ? `translateY(${dragY}px)` : 'translateY(0)',
+              transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)',
+            }}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
           >
-            {copied ? (
-              <Check className="mr-2.5 h-4 w-4 text-emerald-500" />
-            ) : (
-              <LinkIcon className="mr-2.5 h-4 w-4" />
-            )}
-            {copied ? "Copied!" : "Copy Link"}
-          </Button>
+            <div className="bg-white rounded-t-[32px] shadow-2xl max-w-lg mx-auto">
+              {/* Drag Handle */}
+              <div className="flex justify-center pt-3 pb-2">
+                <div className="w-10 h-1 bg-gray-300 rounded-full" />
+              </div>
+
+              {/* Header */}
+              <div className="px-6 pt-4 pb-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900">Share</h3>
+                    <p className="text-sm text-gray-500 mt-1">Spread the word</p>
+                  </div>
+                  <button
+                    onClick={handleClose}
+                    className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 active:scale-90 transition-all"
+                  >
+                    <X size={20} className="text-gray-600" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Social Links */}
+              <div className="px-6 pb-5">
+                <div className="grid grid-cols-4 gap-4">
+                  {socialLinks.map(({ name, Icon, url, gradient }, idx) => (
+                    <button
+                      key={name}
+                      className="flex flex-col items-center gap-2.5 group"
+                      style={{
+                        animation: `popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) ${0.05 + idx * 0.05}s backwards`
+                      }}
+                      onClick={() => {
+                        window.open(url, "_blank", "noopener,noreferrer");
+                        handleClose();
+                      }}
+                    >
+                      <div className={`w-16 h-16 bg-gradient-to-br ${gradient} rounded-[20px] flex items-center justify-center shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:shadow-xl group-active:scale-95`}>
+                        <Icon className="w-7 h-7 text-white" strokeWidth={2} />
+                      </div>
+                      <span className="text-xs font-semibold text-gray-700">{name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="mx-6 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
+
+              {/* Copy Link */}
+              <div className="px-6 py-6 pb-8">
+                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-4 flex items-center gap-3 border border-gray-200">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Link</p>
+                    <p className="text-sm text-gray-900 truncate font-mono">{fullUrl}</p>
+                  </div>
+                  <button
+                    onClick={handleCopyLink}
+                    className={`flex-shrink-0 px-5 py-3 rounded-xl font-bold text-sm shadow-md active:scale-95 transition-all ${
+                      copied
+                        ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white"
+                        : "bg-gradient-to-r from-gray-900 to-gray-800 text-white hover:shadow-lg"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {copied ? <Check size={18} strokeWidth={3} /> : <Link2 size={18} />}
+                      <span>{copied ? "Copied!" : "Copy"}</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop Modal */}
+          <div className="hidden md:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md animate-[scaleIn_0.3s_cubic-bezier(0.32,0.72,0,1)]">
+            <div className="bg-white rounded-3xl shadow-2xl">
+              {/* Header */}
+              <div className="px-6 pt-6 pb-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900">Share</h3>
+                    <p className="text-sm text-gray-500 mt-1">Spread the word</p>
+                  </div>
+                  <button
+                    onClick={handleClose}
+                    className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 active:scale-90 transition-all"
+                  >
+                    <X size={20} className="text-gray-600" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Social Links */}
+              <div className="px-6 pb-5">
+                <div className="grid grid-cols-4 gap-4">
+                  {socialLinks.map(({ name, Icon, url, gradient }, idx) => (
+                    <button
+                      key={name}
+                      className="flex flex-col items-center gap-2.5 group"
+                      style={{
+                        animation: `popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) ${0.05 + idx * 0.05}s backwards`
+                      }}
+                      onClick={() => {
+                        window.open(url, "_blank", "noopener,noreferrer");
+                        handleClose();
+                      }}
+                    >
+                      <div className={`w-16 h-16 bg-gradient-to-br ${gradient} rounded-[20px] flex items-center justify-center shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:shadow-xl group-active:scale-95`}>
+                        <Icon className="w-7 h-7 text-white" strokeWidth={2} />
+                      </div>
+                      <span className="text-xs font-semibold text-gray-700">{name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="mx-6 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
+
+              {/* Copy Link */}
+              <div className="px-6 py-6">
+                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-4 flex items-center gap-3 border border-gray-200">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Link</p>
+                    <p className="text-sm text-gray-900 truncate font-mono">{fullUrl}</p>
+                  </div>
+                  <button
+                    onClick={handleCopyLink}
+                    className={`flex-shrink-0 px-5 py-3 rounded-xl font-bold text-sm shadow-md active:scale-95 transition-all ${
+                      copied
+                        ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white"
+                        : "bg-gradient-to-r from-gray-900 to-gray-800 text-white hover:shadow-lg"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {copied ? <Check size={18} strokeWidth={3} /> : <Link2 size={18} />}
+                      <span>{copied ? "Copied!" : "Copy"}</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Toast Notification */}
+          {showToast && (
+            <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10 animate-[toastBounce_0.5s_cubic-bezier(0.34,1.56,0.64,1)]">
+              <div className="bg-gradient-to-r from-gray-900 to-gray-800 text-white px-5 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border border-gray-700">
+                <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Check size={18} className="text-white" strokeWidth={3} />
+                </div>
+                <span className="font-bold text-base whitespace-nowrap">Link copied!</span>
+              </div>
+            </div>
+          )}
         </div>
-      </PopoverContent>
-    </Popover>
+      )}
+
+      <style jsx>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        
+        @keyframes slideUpMobile {
+          from { 
+            transform: translateY(100%);
+            opacity: 0;
+          }
+          to { 
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+        
+        @keyframes scaleIn {
+          from { 
+            transform: translate(-50%, -50%) scale(0.9);
+            opacity: 0;
+          }
+          to { 
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+          }
+        }
+        
+        @keyframes popIn {
+          0% { 
+            transform: scale(0.5);
+            opacity: 0;
+          }
+          50% { 
+            transform: scale(1.1);
+          }
+          100% { 
+            transform: scale(1);
+            opacity: 1;
+          }
+        }
+        
+        @keyframes toastBounce {
+          0% { 
+            transform: translate(-50%, -150%);
+            opacity: 0;
+          }
+          60% { 
+            transform: translate(-50%, 10px);
+            opacity: 1;
+          }
+          100% { 
+            transform: translate(-50%, 0);
+            opacity: 1;
+          }
+        }
+      `}</style>
+    </>
   );
 };

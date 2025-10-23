@@ -1,8 +1,9 @@
+// file: components/sections/admin/applicants/ApplicantDetail.tsx
+
 import { Applicant, ApplicantStatus } from "@/lib/types/applicants";
 import { StatusBadge } from "./StatusBadge";
 import { Button } from "@/components/ui/button";
-import { Check, X, Info, Download, Mail, Phone } from "lucide-react";
-import Image from "next/image";
+import { Check, X, Download, Mail, Phone, ExternalLink } from "lucide-react";
 import Link from "next/link";
 
 type ApplicantDetailProps = {
@@ -42,7 +43,7 @@ export const ApplicantDetail = ({
               <h1 className="text-3xl font-bold text-gray-900">
                 {applicant.name}
               </h1>
-              <div className="flex items-center gap-4 mt-1 text-sm text-gray-600">
+              <div className="flex items-center flex-wrap gap-4 mt-1 text-sm text-gray-600">
                 <span className="flex items-center gap-1.5">
                   <Mail size={14} /> {applicant.email}
                 </span>
@@ -61,23 +62,19 @@ export const ApplicantDetail = ({
       {/* Actions Section */}
       <div className="bg-gray-50 p-4 rounded-lg border flex items-center justify-center gap-3">
         <Button
-          onClick={() => onUpdateStatus("Accepted")}
+          onClick={() => onUpdateStatus("accepted")}
           variant="primary"
-          className="bg-green-600 hover:bg-green-700"
+          className="bg-green-600 hover:bg-green-700 disabled:bg-green-300"
+          disabled={applicant.status === "accepted"}
         >
           <Check className="mr-2 h-4 w-4" /> Accept
         </Button>
         <Button
-          onClick={() => onUpdateStatus("Rejected")}
+          onClick={() => onUpdateStatus("rejected")}
           variant="destructive"
+          disabled={applicant.status === "rejected"}
         >
           <X className="mr-2 h-4 w-4" /> Reject
-        </Button>
-        <Button
-          onClick={() => onUpdateStatus("Requesting Info")}
-          variant="secondary"
-        >
-          <Info className="mr-2 h-4 w-4" /> Request Info
         </Button>
       </div>
 
@@ -85,9 +82,19 @@ export const ApplicantDetail = ({
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2 space-y-6">
           <DetailSection title="Cover Letter">
-            <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-              {applicant.coverLetter}
-            </p>
+            {applicant.coverLetter ? (
+              <Button asChild variant="secondary" className="w-full">
+                <Link
+                  href={applicant.coverLetter}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <ExternalLink className="mr-2 h-4 w-4" /> View Cover Letter
+                </Link>
+              </Button>
+            ) : (
+              <p className="text-gray-500 italic">No cover letter provided.</p>
+            )}
           </DetailSection>
         </div>
         <div className="space-y-6">
@@ -101,16 +108,22 @@ export const ApplicantDetail = ({
                 <strong className="text-gray-700">Applied on:</strong>{" "}
                 {new Date(applicant.appliedDate).toLocaleString()}
               </p>
-              <Button
-                asChild
-                variant="secondary"
-                size="sm"
-                className="w-full mt-2"
-              >
-                <Link href={applicant.resumeUrl} target="_blank">
-                  <Download className="mr-2 h-4 w-4" /> Download Resume
-                </Link>
-              </Button>
+              {applicant.resumeUrl && (
+                <Button
+                  asChild
+                  variant="secondary"
+                  size="sm"
+                  className="w-full mt-2"
+                >
+                  <Link
+                    href={applicant.resumeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Download className="mr-2 h-4 w-4" /> Download Resume
+                  </Link>
+                </Button>
+              )}
             </div>
           </DetailSection>
         </div>

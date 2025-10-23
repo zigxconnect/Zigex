@@ -38,7 +38,7 @@ export interface FormattedUserData {
  * @returns {Promise<FormattedUserData>}
  */
 export async function getProfileInfo(): Promise<FormattedUserData> {
-  const supabase = createServerActionClient();
+  const supabase = await createServerActionClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -85,7 +85,7 @@ export async function getProfileInfo(): Promise<FormattedUserData> {
  */
 export async function getRawProfileInfo(): Promise<UserProfile | null> {
   try {
-    const supabase = createServerActionClient();
+    const supabase = await createServerActionClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -117,7 +117,7 @@ export async function getRawProfileInfo(): Promise<UserProfile | null> {
  */
 export async function hasCompletedProfile(): Promise<boolean> {
   try {
-    const supabase = createServerActionClient();
+    const supabase = await createServerActionClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();

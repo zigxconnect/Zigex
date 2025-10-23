@@ -8,7 +8,7 @@ import { notFound } from "next/navigation";
  * It joins with company profiles and "flattens" the data for easy use in components.
  */
 export async function getDashboardInternships() {
-  const supabase = createServerActionClient();
+  const supabase = await createServerActionClient();
 
   const { data, error } = await supabase
     .from("internships")
@@ -54,7 +54,7 @@ export async function getDashboardInternships() {
  * This is used for the internship details page.
  */
 export async function getInternshipById(id: string) {
-  const supabase = createServerActionClient();
+  const supabase = await createServerActionClient();
 
   const { data, error } = await supabase
     .from("internships")
