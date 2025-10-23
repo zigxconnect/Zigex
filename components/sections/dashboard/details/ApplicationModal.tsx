@@ -149,7 +149,7 @@ export const ApplicationModal = ({
     }
 
     try {
-      const response = await fetch("/api/students/applications/manual", {
+      const response = await fetch("/api/students/applications/internship", {
         method: "POST",
         body: formData,
       });
