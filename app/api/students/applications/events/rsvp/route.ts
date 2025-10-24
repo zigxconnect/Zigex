@@ -85,7 +85,7 @@ export async function POST(request: Request) {
       expectations: expectations || null,
       comments: comments || null,
       rsvp_status: rsvp_status === "true",
-      status: "rsvp_confirmed"
+      status: null, // Pending review 
     };
 
     console.log("=== FINAL EVENT RSVP DATA ===");
