@@ -4,8 +4,10 @@ import { use, useState } from "react";
 import { useFetchDetails } from "@/hooks/useFetchDetails";
 import { Program } from "@/lib/types/dashoard/index";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import Image from "next/image";
-import { MapPin, Building2, ExternalLink, Clock, CalendarDays, Users, GraduationCap, Award } from "lucide-react";
+import Link from "next/link";
+import { MapPin, Building2, ExternalLink, Clock, CalendarDays, Users, GraduationCap, Award, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import DynamicForm from "@/components/sections/dashboard/Application/application";
 import { InternshipDetailsLoadingSkeleton } from "@/components/SinglePageLoadingSkeleton";
@@ -44,7 +46,7 @@ export default function ProgramDetailsPage({
 }) {
   const resolvedParams = use(params);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
-  const [showForm, setShowForm] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
   const {
     data: program,
@@ -64,26 +66,9 @@ export default function ProgramDetailsPage({
     MOCK_LIVE_IDS.includes(programId) ||
     /live/i.test(program.title || "");
 
-  if (showForm) {
-    return (
-      <div className="w-full max-w-4xl mx-auto p-4 md:p-5 flex items-start">
-        <Button
-          className="rounded-full w-12 h-12 flex-shrink-0 mr-4 p-1"
-          onClick={() => setShowForm(false)}
-          variant="primary"
-        >
-          ←
-        </Button>
-        <div className="flex-1 w-full">
-          <DynamicForm type="program" id={program.id} />
-        </div>
-      </div>
-    );
-  }
-
   return (
     <>
-      <div className="bg-[#F8FAFC] p-6 lg:p-8">
+      <div className="bg-[#F8FAFC]  lg:p-8">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 bg-white p-8 rounded-2xl shadow-lg border border-gray-200">
             <h1 className="text-4xl font-bold text-green-700">{program.title}</h1>
@@ -107,19 +92,27 @@ export default function ProgramDetailsPage({
             </div>
 
             {/* Company Info */}
-            <div className="mt-8 flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
-              <div className="w-16 h-16 rounded-lg flex items-center justify-center bg-green-500 text-white font-bold text-2xl shadow-md">
-                <Building2 size={32} />
+            <Link 
+              href={`/company/${company?.id || program.company_id}`} 
+              className="mt-8 flex items-center gap-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors group"
+            >
+              <div className="w-16 h-16 rounded-lg overflow-hidden relative shadow-md">
+                <Image
+                  src="/seedLogo.png"
+                  alt={company?.company_name || "Company Logo"}
+                  fill
+                  className="object-cover"
+                />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-gray-900">
+                <h2 className="text-xl font-bold text-gray-900 group-hover:text-green-600 transition-colors">
                   {company?.company_name || program.organizer || "Program Organizer"}
                 </h2>
                 <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
                   <MapPin size={14} /> {program.location || "Online"}
                 </div>
               </div>
-            </div>
+            </Link>
 
             {/* Description */}
             <div className="mt-8 prose max-w-none">
@@ -148,14 +141,38 @@ export default function ProgramDetailsPage({
             </Card>
             <Button
               className="w-full text-base py-3 font-semibold"
-              onClick={() => setShowForm(true)}
+              onClick={() => setIsFormOpen(true)}
               variant="primary"
+              className="relative overflow-hidden group"
             >
-              Register Now <ExternalLink size={16} className="ml-2" />
+              <span className="relative z-10 flex items-center justify-center gap-2">
+                Register Now <ExternalLink size={16} />
+              </span>
+              <div className="absolute inset-0 bg-gradient-to-r from-green-600 to-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </Button>
           </aside>
         </div>
       </div>
+
+      {/* Registration Dialog */}
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent className="max-w-4xl h-[90vh] overflow-y-auto">
+          <div className="sticky top-0 bg-white z-10 flex items-center justify-between pb-4 mb-4 border-b">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">{program.title}</h2>
+              <p className="text-sm text-gray-500 mt-1">{company?.company_name || "Program Registration"}</p>
+            </div>
+            <Button
+              variant="ghost"
+              className="w-8 h-8 p-0 rounded-full hover:bg-gray-100"
+              onClick={() => setIsFormOpen(false)}
+            >
+              <X size={20} />
+            </Button>
+          </div>
+          <DynamicForm type="program" id={program.id} />
+        </DialogContent>
+      </Dialog>
 
       {/* Live Video Modal */}
       <LiveVideoModal
