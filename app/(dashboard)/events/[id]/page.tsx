@@ -1,15 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, use } from "react";
 import Image from "next/image";
-import { MapPin, Building2, ExternalLink, TriangleAlert, Calendar, Clock, Users, X } from "lucide-react";
+import Link from "next/link";
+import { MapPin, ExternalLink, Calendar, Clock, Users, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import DynamicForm from "@/components/sections/dashboard/Application/application";
 import { useFetchDetails } from "@/hooks/useFetchDetails";
-import { Event } from "@/lib/types/dashoard/index";
 import { InternshipDetailsLoadingSkeleton } from "@/components/SinglePageLoadingSkeleton";
+import { normalizeImageSrc } from "@/lib/utils";
 
 const DetailItem = ({
   label,
@@ -36,22 +37,82 @@ const DetailItem = ({
   );
 };
 
+interface EventWithCompany {
+  id: string;
+  title: string;
+  description?: string;
+  location: string;
+  start_date: string;
+  end_date: string;
+  start_time?: string;
+  end_time?: string;
+  type?: string;
+  format?: string;
+  event_picture_url?: string;
+  company_id?: string;
+  company?: {
+    id: string;
+    company_name: string;
+    logo_url?: string;
+  };
+  is_live?: boolean;
+  max_participants?: number;
+  registration_deadline?: string;
+}
+
+function useOtherPrograms(event: EventWithCompany | null) {
+  const [programs, setPrograms] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!event) return;
+    const companyId = event.company_id || event.company?.id;
+    if (!companyId) return;
+
+    async function fetchPrograms() {
+      try {
+        const response = await fetch(`/api/public/companies/${companyId}/programs`);
+        const data = await response.json();
+        setPrograms((data.programs || []).filter((p: any) => p.id !== event.id));
+      } catch (error) {
+        console.error('Error fetching other programs:', error);
+        setPrograms([]);
+      }
+    }
+
+    fetchPrograms();
+  }, [event]);
+
+  return programs;
+}
+
 export default function EventDetailsPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const { data: event, isLoading, error } = useFetchDetails<Event>(
-    "/api/students/events",
-    params.id
-  );
-  const [showModal, setShowModal] = useState(false);
+  // First, resolve the params Promise
+  const resolvedParams = use(params);
+  
+  // Then initialize all state hooks
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
+  // Fetch event data
+  const { data: event, isLoading, error } = useFetchDetails<EventWithCompany>(
+    "/api/students/events",
+    resolvedParams.id
+  );
+
+  // Fetch other programs using custom hook
+  const otherPrograms = useOtherPrograms(event);
+
+  // Early returns after all hooks
   if (isLoading) return <InternshipDetailsLoadingSkeleton />;
   if (error) return <div className="text-center p-12 text-red-500">{error}</div>;
-  if (!event) return <div className="text-center p-12 text-gray-500">Event not found.</div>;
+  if (!event) return <div className="text-center p-12 text-gray-500">Event not found</div>;
 
   const company = event.company;
+  const isLive = event.is_live;
+  
   const formatDate = (dateString: string) =>
     new Date(dateString).toLocaleDateString("en-US", {
       month: "long",
@@ -61,7 +122,6 @@ export default function EventDetailsPage({
 
   const startDate = formatDate(event.start_date);
   const endDate = formatDate(event.end_date);
-  console.log("Event Data:", event);
 
   return (
     <>
@@ -74,7 +134,7 @@ export default function EventDetailsPage({
               <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
                 <div className="relative h-64 sm:h-80 lg:h-96 bg-gradient-to-br from-blue-100 to-indigo-100">
                   <Image
-                    src={event.event_picture_url || "/placeholder.png"}
+                    src={normalizeImageSrc(event.event_picture_url || "/placeholder.png")}
                     alt={event.title}
                     fill
                     className="object-cover"
@@ -94,12 +154,18 @@ export default function EventDetailsPage({
               {/* Company Info Card */}
               <Card className="border-0 shadow-md hover:shadow-lg transition-shadow duration-300">
                 <div className="p-6 sm:p-8">
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg flex-shrink-0">
-                      <Building2 size={32} className="sm:w-10 sm:h-10" />
+                  <Link href={`/company/${company?.id || event.company_id}`} className="flex items-center gap-4 group">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden flex-shrink-0 shadow-lg relative">
+                      <Image
+                        src={normalizeImageSrc(company?.logo_url || "/seedLogo.png")}
+                        alt={company?.company_name || event.location}
+                        width={80}
+                        height={80}
+                        className="object-cover w-full h-full"
+                      />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
+                      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">
                         {company?.company_name || event.location}
                       </h2>
                       <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -107,7 +173,7 @@ export default function EventDetailsPage({
                         <span className="truncate">{event.location}</span>
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 </div>
               </Card>
 
@@ -125,6 +191,67 @@ export default function EventDetailsPage({
                   </div>
                 </div>
               </Card>
+
+              {/* Map + Other programs by company */}
+              <div className="mt-6 space-y-4">
+                <div className="rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
+                  <div className="p-4 bg-white flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
+                        <MapPin size={18} className="text-blue-600" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-semibold">Location</div>
+                        <div className="text-xs text-gray-500">{event.location || "Online"}</div>
+                      </div>
+                    </div>
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location || "")}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sm text-blue-600 hover:underline"
+                    >
+                      Open in Google Maps
+                    </a>
+                  </div>
+                  <div className="w-full h-52 md:h-72 bg-gray-100">
+                    <iframe
+                      title="event-location"
+                      src={`https://www.google.com/maps?q=${encodeURIComponent(event.location || "")}&output=embed`}
+                      className="w-full h-full border-0"
+                      loading="lazy"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-lg font-semibold mb-3">Other programs by this company</h4>
+                  <div className="space-y-3">
+                    {otherPrograms.length === 0 ? (
+                      <div className="text-sm text-gray-500">No programs found.</div>
+                    ) : (
+                      otherPrograms.slice(0,6).map((p:any) => (
+                        <Link key={p.id} href={`/(dashboard)/programs/${p.id}`} className="block p-3 rounded-lg border hover:shadow transition">
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded overflow-hidden bg-gray-100 flex-shrink-0">
+                              {p.program_picture_url ? (
+                                <Image src={p.program_picture_url} alt={p.title} width={48} height={48} className="object-cover" />
+                              ) : (
+                                <img src="/seedLogo.png" alt="logo" className="object-cover w-full h-full" />
+                              )}
+                            </div>
+                            <div>
+                              <div className="text-sm font-semibold text-gray-900">{p.title}</div>
+                              <div className="text-xs text-gray-500">{formatDate(p.created_at)}</div>
+                            </div>
+                          </div>
+                        </Link>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+
             </div>
 
             {/* Sidebar - Fixed on desktop */}
@@ -165,21 +292,30 @@ export default function EventDetailsPage({
                 {/* CTA Button */}
                 <Button
                   className="w-full text-base py-6 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-0"
-                  onClick={() => setShowModal(true)}
+                  onClick={() => setIsFormOpen(true)}
                   variant="primary"
                 >
                   Register Now 
                   <ExternalLink size={18} className="ml-2" />
                 </Button>
 
-                {/* Alert */}
-                <Alert className="border-blue-200 bg-blue-50/50 shadow-md">
-                  <TriangleAlert className="h-4 w-4 text-blue-600" />
-                  <AlertTitle className="font-bold text-blue-900">Event Timing</AlertTitle>
-                  <AlertDescription className="text-blue-800 text-sm">
-                    This event runs from <strong>{startDate}</strong> to <strong>{endDate}</strong>.
-                  </AlertDescription>
-                </Alert>
+                <Card className="border-blue-200 bg-blue-50/50 shadow-md">
+                  <div className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                        <Calendar size={16} className="text-blue-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-blue-900 text-sm mb-1">Event Information</h4>
+                        <p className="text-blue-800 text-xs leading-relaxed">
+                          {event.is_live 
+                            ? "This event is currently live. Join now to participate in real-time!"
+                            : "Register early to secure your spot. Event capacity may be limited."}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
               </div>
             </aside>
           </div>
@@ -190,7 +326,7 @@ export default function EventDetailsPage({
           <div className="max-w-lg mx-auto">
             <Button
               className="w-full py-4 text-base font-semibold shadow-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-0 transform hover:scale-[1.02] transition-all duration-300"
-              onClick={() => setShowModal(true)}
+              onClick={() => setIsFormOpen(true)}
               variant="primary"
             >
               <Calendar size={20} className="mr-2" />
@@ -201,57 +337,24 @@ export default function EventDetailsPage({
         </div>
       </div>
 
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          {/* Backdrop */}
-          <div 
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
-            onClick={() => setShowModal(false)}
-          />
-          
-          {/* Modal Content */}
-          <div className="flex min-h-full items-center justify-center p-4">
-            <div className="relative w-full max-w-2xl transform transition-all duration-300 animate-in fade-in zoom-in-95">
-              {/* Close Button */}
-              <button
-                onClick={() => setShowModal(false)}
-                className="absolute -top-4 -right-4 z-10 w-10 h-10 rounded-full bg-white shadow-lg hover:bg-gray-100 flex items-center justify-center transition-all duration-200 hover:scale-110 group border-2 border-gray-200"
-              >
-                <X size={20} className="text-gray-600 group-hover:text-gray-900" />
-              </button>
-              
-              {/* Form Container with Custom Scrollbar */}
-              <div className="bg-white rounded-2xl shadow-2xl max-h-[85vh] overflow-y-auto custom-scrollbar">
-                <style jsx global>{`
-                  .custom-scrollbar::-webkit-scrollbar {
-                    width: 8px;
-                  }
-                  .custom-scrollbar::-webkit-scrollbar-track {
-                    background: #f1f5f9;
-                    border-radius: 10px;
-                  }
-                  .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: linear-gradient(180deg, #2563eb 0%, #4f46e5 100%);
-                    border-radius: 10px;
-                  }
-                  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                    background: linear-gradient(180deg, #1d4ed8 0%, #4338ca 100%);
-                  }
-                  
-                  /* Firefox */
-                  .custom-scrollbar {
-                    scrollbar-width: thin;
-                    scrollbar-color: #2563eb #f1f5f9;
-                  }
-                `}</style>
-                
-                <DynamicForm type="event" id={event.id} />
-              </div>
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent className="max-w-4xl h-[90vh] overflow-y-auto">
+          <div className="sticky top-0 bg-white z-10 flex items-center justify-between pb-4 mb-4 border-b">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">{event.title}</h2>
+              <p className="text-sm text-gray-500 mt-1">{company?.company_name || "Event Registration"}</p>
             </div>
+            <Button
+              variant="ghost"
+              className="w-8 h-8 p-0 rounded-full hover:bg-gray-100"
+              onClick={() => setIsFormOpen(false)}
+            >
+              <X size={20} />
+            </Button>
           </div>
-        </div>
-      )}
+          <DynamicForm type="event" id={event.id} />
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

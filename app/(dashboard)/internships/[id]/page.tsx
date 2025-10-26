@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, use } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { MapPin, Building2, ExternalLink, Clock, Briefcase, Users, X, CheckCircle2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,24 +36,108 @@ const DetailItem = ({
   );
 };
 
+const formatDate = (dateString?: string | null) => {
+  if (!dateString) return null;
+  try {
+    return new Date(dateString).toLocaleDateString(undefined, {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+  } catch (e) {
+    return dateString;
+  }
+};
+
+interface InternshipWithCompany {
+  id: string;
+  title: string;
+  description?: string;
+  location: string;
+  duration?: string;
+  department?: string;
+  internship_picture_url?: string;
+  company_id?: string;
+  company?: {
+    id: string;
+    company_name: string;
+    logo_url?: string;
+  };
+}
+
+function useOtherPrograms(internship: InternshipWithCompany | null) {
+  const [programs, setPrograms] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!internship) return;
+    const companyId = internship.company_id || internship.company?.id;
+    if (!companyId) return;
+
+    async function fetchPrograms() {
+      try {
+        const response = await fetch(`/api/public/companies/${companyId}/programs`);
+        const data = await response.json();
+        setPrograms(data.programs || []);
+      } catch (error) {
+        console.error('Error fetching other programs:', error);
+        setPrograms([]);
+      }
+    }
+
+    fetchPrograms();
+  }, [internship]);
+
+  return programs;
+}
+
 export default function InternshipDetailsPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const { data: internship, isLoading, error } = useFetchDetails<any>(
-    "/api/students/internships",
-    params.id
-  );
+  // ✅ ALL HOOKS MUST BE AT THE TOP - BEFORE ANY CONDITIONAL RETURNS
   const [showModal, setShowModal] = useState(false);
+  const [companyData, setCompanyData] = useState<InternshipWithCompany['company'] | null>(null);
+  
+  const resolvedParams = use(params);
+  const { data: internship, isLoading, error } = useFetchDetails<InternshipWithCompany>(
+    "/api/students/internships",
+    resolvedParams.id
+  );
+  const otherPrograms = useOtherPrograms(internship);
 
+  // Fetch company data if needed
+  useEffect(() => {
+    if (!internship) return;
+    if (internship.company) {
+      setCompanyData(internship.company);
+      return;
+    }
+    const companyId = internship.company_id;
+    if (!companyId) return;
+
+    let mounted = true;
+    fetch(`/api/public/companies/${companyId}`)
+      .then((r) => r.json())
+      .then((j) => {
+        if (!mounted) return;
+        setCompanyData(j.company || j);
+      })
+      .catch((e) => {
+        console.error('Failed to fetch company data:', e);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [internship]);
+
+  // ✅ NOW it's safe to do early returns - all hooks have been called
   if (isLoading) return <InternshipDetailsLoadingSkeleton />;
   if (error) return <div className="text-center p-12 text-red-500">{error}</div>;
   if (!internship) return <div className="text-center p-12 text-gray-500">Internship not found</div>;
 
-  const company = internship.company;
-  console.log("hello. checking internship data");
-  console.log("Internship Data:", internship);
+  const company = companyData || internship.company;
 
   return (
     <>
@@ -86,20 +171,26 @@ export default function InternshipDetailsPage({
               {/* Company Info Card */}
               <Card className="border-0 shadow-md hover:shadow-lg transition-shadow duration-300">
                 <div className="p-6 sm:p-8">
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg flex-shrink-0">
-                      <Building2 size={32} className="sm:w-10 sm:h-10" />
+                  <Link href={`/company/${company?.id || internship.company_id}`} className="flex items-center gap-4 group">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden flex-shrink-0 shadow-lg relative">
+                      <Image
+                        src={normalizeImageSrc(company?.logo_url || "/seedLogo.png")}
+                        alt={company?.company_name || "Company Logo"}
+                        width={80}
+                        height={80}
+                        className="object-cover w-full h-full"
+                      />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
-                        {company?.company_name || internship.company}
+                      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">
+                        {company?.company_name || "Company"}
                       </h2>
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <MapPin size={16} className="text-blue-600 flex-shrink-0" />
                         <span className="truncate">{internship.location}</span>
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 </div>
               </Card>
 
@@ -116,9 +207,86 @@ export default function InternshipDetailsPage({
                     </p>
                   </div>
                 </div>
+
+                {/* Map + Other programs by company */}
+                <div className="mt-6 space-y-4">
+                  <div className="rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
+                    <div className="p-4 bg-white flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
+                          <MapPin size={18} className="text-blue-600" />
+                        </div>
+                        <div>
+                          <div className="text-sm font-semibold">Location</div>
+                          <div className="text-xs text-gray-500">{internship.location || "Online"}</div>
+                        </div>
+                      </div>
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(internship.location || "")}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-sm text-blue-600 hover:underline"
+                      >
+                        Open in Google Maps
+                      </a>
+                    </div>
+                    <div className="w-full h-52 md:h-72 bg-gray-100">
+                      <iframe
+                        title="internship-location"
+                        src={`https://www.google.com/maps?q=${encodeURIComponent(internship.location || "")}&output=embed`}
+                        className="w-full h-full border-0"
+                        loading="lazy"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Other Programs Section */}
+                  <div className="mt-8">
+                    <h4 className="text-lg font-semibold mb-4">Other Programs by this Company</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {otherPrograms.length === 0 ? (
+                        <div className="text-sm text-gray-500">No other programs available.</div>
+                      ) : (
+                        otherPrograms.slice(0, 6).map((program: any) => (
+                          <Link 
+                            key={program.id} 
+                            href={`/programs/${program.id}`}
+                            className="block p-4 rounded-lg border hover:shadow-md transition-shadow bg-white"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                                {program.program_picture_url ? (
+                                  <Image 
+                                    src={normalizeImageSrc(program.program_picture_url)} 
+                                    alt={program.title} 
+                                    width={48} 
+                                    height={48} 
+                                    className="object-cover w-full h-full" 
+                                  />
+                                ) : (
+                                  <div className="w-full h-full bg-blue-100 flex items-center justify-center">
+                                    <Building2 className="w-6 h-6 text-blue-600" />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h5 className="font-semibold text-sm text-gray-900 truncate">
+                                  {program.title}
+                                </h5>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  {formatDate(program.created_at)}
+                                </p>
+                              </div>
+                            </div>
+                          </Link>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
               </Card>
 
-              {/* Requirements Card (if you have requirements data) */}
+              {/* Requirements Card */}
               <Card className="border-0 shadow-md hover:shadow-lg transition-shadow duration-300">
                 <div className="p-6 sm:p-8">
                   <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
@@ -173,6 +341,31 @@ export default function InternshipDetailsPage({
                   </div>
                 </Card>
 
+                {/* Small Map Preview */}
+                {internship.location && (
+                  <Card className="border-0 shadow-md hover:shadow-lg transition-shadow duration-300">
+                    <div className="p-4">
+                      <div className="text-sm font-semibold mb-2">Location Preview</div>
+                      <div className="w-full h-36 rounded-lg overflow-hidden border">
+                        <iframe
+                          title="internship-location-preview"
+                          src={`https://www.google.com/maps?q=${encodeURIComponent(internship.location)}&output=embed`}
+                          className="w-full h-full border-0"
+                          loading="lazy"
+                        />
+                      </div>
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(internship.location)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-sm text-blue-600 hover:underline mt-3 block"
+                      >
+                        Open in Google Maps
+                      </a>
+                    </div>
+                  </Card>
+                )}
+
                 {/* CTA Button */}
                 <Button
                   className="w-full text-base py-6 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-0"
@@ -199,6 +392,34 @@ export default function InternshipDetailsPage({
                     </div>
                   </div>
                 </Card>
+
+                {/* Other Programs by Company */}
+                <div>
+                  <h4 className="text-lg font-semibold mb-3">Other programs by this company</h4>
+                  <div className="space-y-3">
+                    {otherPrograms.length === 0 ? (
+                      <div className="text-sm text-gray-500">No programs found.</div>
+                    ) : (
+                      otherPrograms.slice(0,6).map((p:any) => (
+                        <Link key={p.id} href={`/(dashboard)/programs/${p.id}`} className="block p-3 rounded-lg border hover:shadow transition">
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded overflow-hidden bg-gray-100 flex-shrink-0">
+                              {p.program_picture_url ? (
+                                <Image src={normalizeImageSrc(p.program_picture_url)} alt={p.title} width={48} height={48} className="object-cover" />
+                              ) : (
+                                <img src="/seedLogo.png" alt="logo" className="object-cover w-full h-full" />
+                              )}
+                            </div>
+                            <div>
+                              <div className="text-sm font-semibold text-gray-900">{p.title}</div>
+                              <div className="text-xs text-gray-500">{formatDate(p.created_at)}</div>
+                            </div>
+                          </div>
+                        </Link>
+                      ))
+                    )}
+                  </div>
+                </div>
               </div>
             </aside>
           </div>
@@ -265,7 +486,7 @@ export default function InternshipDetailsPage({
                   }
                 `}</style>
                 
-                <DynamicForm type="internship" id={params.id} />
+                <DynamicForm type="internship" id={internship.id} />
               </div>
             </div>
           </div>
