@@ -3,12 +3,13 @@
 import { use, useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { MapPin, Building2, ExternalLink, Clock, CalendarDays, Users, GraduationCap, X } from "lucide-react";
+import { MapPin, Building2, ExternalLink, Clock, CalendarDays, Users, GraduationCap, X, Lock } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import DynamicForm from "@/components/sections/dashboard/Application/application";
 import { useFetchDetails } from "@/hooks/useFetchDetails";
+import { ExpiredOverlay, hasExpired } from "@/components/uiComponent/ExpiredOverlay";
 import { InternshipDetailsLoadingSkeleton } from "@/components/SinglePageLoadingSkeleton";
 import { Badge } from "@/components/uiComponent/Badge";
 import { normalizeImageSrc } from "@/lib/utils";
@@ -99,25 +100,6 @@ function useOtherPrograms(program: ProgramWithCompany | null) {
   return programs;
 }
 
-// Cache other programs for 4 minutes
-const getOtherPrograms = unstable_cache(
-  async (companyId: string, currentProgramId: string) => {
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/public/companies/${companyId}/programs`, {
-        next: { tags: [`company-programs-${companyId}`] }
-      });
-      if (!response.ok) throw new Error('Failed to fetch other programs');
-      const data = await response.json();
-      return (data.programs || []).filter((p: any) => p.id !== currentProgramId);
-    } catch (error) {
-      console.error('Error fetching other programs:', error);
-      return [];
-    }
-  },
-  ['other-programs'],
-  { revalidate: 240 } // 4 minutes
-);
-
 export default function ProgramDetailsPage({
   params,
 }: {
@@ -137,17 +119,22 @@ export default function ProgramDetailsPage({
     error,
   } = useFetchDetails<ProgramWithCompany>("/api/students/programs", resolvedParams.id);
 
+  // Fetch other programs using the hook
+  const otherPrograms = useOtherPrograms(program);
+
   // Early returns after all hooks
   if (isLoading) return <InternshipDetailsLoadingSkeleton />;
   if (error) return <div className="text-center p-12 text-red-500">{error}</div>;
   if (!program) return <div className="text-center p-12 text-gray-500">Program not found.</div>;
 
   const isLive = program.is_live || 
-                 MOCK_LIVE_IDS.includes(id) || 
+                 MOCK_LIVE_IDS.includes(resolvedParams.id) || 
                  /live/i.test(program.title || "");
 
   // Compute derived values
   const company = program.company;
+  const isExpired = hasExpired(program.end_date);
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
@@ -161,7 +148,7 @@ export default function ProgramDetailsPage({
                   src={normalizeImageSrc(program.program_picture_url)}
                   alt={program.title}
                   fill
-                  className="object-cover"
+                  className={`object-cover ${isExpired ? 'grayscale' : ''}`}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
@@ -216,10 +203,27 @@ export default function ProgramDetailsPage({
                     {program.description || "No description provided."}
                   </p>
                 </div>
+
+                {/* Expired Notice */}
+                {isExpired && (
+                  <div className="mt-4 bg-gray-50 border border-gray-200 rounded-xl p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                        <Lock className="w-5 h-5 text-gray-500" />
+                      </div>
+                      <div>
+                        <div className="font-semibold text-gray-900">Program Registration Closed</div>
+                        <div className="text-sm text-gray-500">
+                          This program ended on {new Date(program.end_date || '').toLocaleDateString()}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Map + Other programs section */}
-              <div className="mt-6 space-y-4">
+              <div className="mt-6 space-y-4 p-6 sm:p-8 pt-0">
                 {program.location && (
                   <div className="rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
                     <div className="p-4 bg-white flex items-center justify-between">
@@ -259,18 +263,18 @@ export default function ProgramDetailsPage({
                     {otherPrograms.length === 0 ? (
                       <div className="text-sm text-gray-500">No other programs available.</div>
                     ) : (
-                      otherPrograms.slice(0, 6).map((program: any) => (
+                      otherPrograms.slice(0, 6).map((prog: any) => (
                         <Link 
-                          key={program.id} 
-                          href={`/programs/${program.id}`}
+                          key={prog.id} 
+                          href={`/programs/${prog.id}`}
                           className="block p-4 rounded-lg border hover:shadow-md transition-shadow bg-white"
                         >
                           <div className="flex items-center gap-3">
                             <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                              {program.program_picture_url ? (
+                              {prog.program_picture_url ? (
                                 <Image 
-                                  src={normalizeImageSrc(program.program_picture_url)} 
-                                  alt={program.title} 
+                                  src={normalizeImageSrc(prog.program_picture_url)} 
+                                  alt={prog.title} 
                                   width={48} 
                                   height={48} 
                                   className="object-cover w-full h-full" 
@@ -283,10 +287,10 @@ export default function ProgramDetailsPage({
                             </div>
                             <div className="flex-1 min-w-0">
                               <h5 className="font-semibold text-sm text-gray-900 truncate">
-                                {program.title}
+                                {prog.title}
                               </h5>
                               <p className="text-xs text-gray-500 mt-1">
-                                {formatDate(program.created_at)}
+                                {formatDate(prog.created_at)}
                               </p>
                             </div>
                           </div>
@@ -322,6 +326,55 @@ export default function ProgramDetailsPage({
                 </div>
               </Card>
 
+              {/* Registration Button */}
+              <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div className="p-6 space-y-4">
+                  <Button
+                    onClick={() => !isExpired && setIsFormOpen(true)}
+                    disabled={isExpired}
+                    className={`w-full relative overflow-hidden rounded-lg ${
+                      isExpired 
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed hover:bg-gray-100'
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                    } font-semibold py-4 text-lg transition-all duration-300`}
+                  >
+                    Register Now
+                    {isExpired && (
+                      <div className="absolute inset-0 bg-gray-100/95 backdrop-blur-sm flex items-center justify-center gap-2">
+                        <Lock className="w-5 h-5" />
+                        <span>Registration Closed</span>
+                      </div>
+                    )}
+                  </Button>
+                  
+                  {isExpired && (
+                    <div className="text-sm text-center space-y-2">
+                      <p className="text-gray-600">
+                        Registration period ended on {new Date(program.end_date || '').toLocaleDateString()}
+                      </p>
+                      <p className="text-blue-600">
+                        Check back later for similar opportunities
+                      </p>
+                    </div>
+                  )}
+                  
+                  {!isExpired && (
+                    <div className="bg-blue-50 rounded-lg p-4 space-y-2">
+                      <div className="flex items-center gap-2 text-blue-700">
+                        <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
+                          <path d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                        </svg>
+                        <h4 className="font-semibold">Application Tips</h4>
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        Ensure your application highlights relevant experience and your motivation for joining this program. 
+                        Submissions are reviewed on a rolling basis.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </Card>
+
               {/* Small Map Preview */}
               {program.location && (
                 <Card className="border-0 shadow-md hover:shadow-lg transition-shadow duration-300">
@@ -349,12 +402,31 @@ export default function ProgramDetailsPage({
 
               {/* CTA Button */}
               <Button
-                className="w-full text-base py-6 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-0"
-                onClick={() => setIsFormOpen(true)}
-                variant="primary"
+                className={`w-full text-base py-6 font-semibold shadow-lg transition-all duration-300 relative
+                  ${!isExpired 
+                    ? "hover:shadow-xl transform hover:scale-[1.02] bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
+                    : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  } border-0`}
+                onClick={() => !isExpired && setIsFormOpen(true)}
+                disabled={isExpired}
               >
-                Register Now
-                <ExternalLink size={18} className="ml-2" />
+                {!isExpired ? (
+                  <>
+                    Register Now
+                    <ExternalLink size={18} className="ml-2" />
+                  </>
+                ) : (
+                  <div className="flex items-center justify-center gap-2">
+                    <Lock size={18} />
+                    <span>Registration Closed</span>
+                  </div>
+                )}
+                
+                {isExpired && (
+                  <div className="absolute -bottom-6 left-0 right-0 text-center text-sm text-gray-500">
+                    Program ended on {new Date(program.end_date || '').toLocaleDateString()}
+                  </div>
+                )}
               </Button>
 
               {/* Info Alert */}
