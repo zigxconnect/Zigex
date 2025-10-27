@@ -6,7 +6,7 @@ import { v4 as uuidv4, validate as isUUID } from "uuid";
 export async function POST(request: Request) {
   // Wrapping the entire function in a try...catch is great for debugging
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
