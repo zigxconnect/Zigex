@@ -15,6 +15,7 @@ import {
   Linkedin
 } from "lucide-react";
 import ConnectBar from "@/components/sections/dashboard/ConnectBar";
+import QRCodeButton from "@/components/sections/dashboard/QRCodeButton";
 
 interface Props {
   params: { id: string };
@@ -71,12 +72,11 @@ Looking forward to hearing from you!`;
     ? `https://wa.me/${data.phone.replace(/\D/g, '')}?text=${encodeURIComponent(whatsappMessage)}`
     : null;
 
-  // LinkedIn connection note (LinkedIn doesn't support pre-filled messages via URL, but we can open profile)
   const linkedinUrl = data.linkedin_url;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
-      {/* Header Card - Similar to WelcomeCard */}
+      {/* Header Card */}
       <div className="relative bg-white md:rounded-2xl md:w-full mx-auto shadow-lg md:border md:border-gray-200 overflow-hidden mb-6">
         {/* Cover Image */}
         <div className="relative h-32 md:h-36 lg:h-48 w-full">
@@ -90,8 +90,9 @@ Looking forward to hearing from you!`;
           <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40" />
         </div>
 
-        {/* Avatar */}
-        <div className="absolute top-20 md:top-24 lg:top-32 left-4 lg:left-6">
+        {/* Avatar and QR Code Section */}
+        <div className="absolute top-20 md:top-24 lg:top-32 left-4 lg:left-6 right-4 lg:right-6 flex justify-between items-end">
+          {/* Avatar */}
           <div className="relative group">
             <div className="w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 rounded-full border-4 border-white shadow-xl overflow-hidden bg-white">
               {avatarUrl ? (
@@ -112,6 +113,15 @@ Looking forward to hearing from you!`;
             {/* Online indicator */}
             <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-4 border-white shadow-md"></div>
           </div>
+
+          {/* QR Code Button */}
+          <QRCodeButton 
+            linkedinUrl={linkedinUrl}
+            whatsappUrl={whatsappUrl}
+            email={data.email}
+            fullName={data.full_name}
+            profileUrl={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://zigex.vercel.app'}/dashboard/student/${id}`}
+          />
         </div>
 
         {/* Content Area */}
