@@ -5,7 +5,7 @@ import { useFetchDetails } from "@/hooks/useFetchDetails";
 import { Event } from "@/lib/types/dashoard/index";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { MapPin, Building2, ExternalLink, TriangleAlert } from "lucide-react";
+import { MapPin, Building2, ExternalLink, TriangleAlert, Calendar, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import DynamicForm from "@/components/sections/dashboard/Application/application";

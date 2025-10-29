@@ -1,3 +1,4 @@
+// /api/students/applications/events/rsvp/route.ts
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
@@ -70,11 +71,11 @@ export async function POST(request: Request) {
 
     const student_id = studentData.id;
 
-    console.log("=== EVENT RSVP EXTRACTED VALUES ===");
-    console.log("event_id:", event_id);
-    console.log("expectations:", expectations);
-    console.log("comments:", comments);
-    console.log("rsvp_status:", rsvp_status);
+    // console.log("=== EVENT RSVP EXTRACTED VALUES ===");
+    // console.log("event_id:", event_id);
+    // console.log("expectations:", expectations);
+    // console.log("comments:", comments);
+    // console.log("rsvp_status:", rsvp_status);
 
     // ✅ Create event RSVP (NO FILES needed)
     const applicationData = {
@@ -84,7 +85,7 @@ export async function POST(request: Request) {
       expectations: expectations || null,
       comments: comments || null,
       rsvp_status: rsvp_status === "true",
-      status: "rsvp_confirmed"
+      status: null, // Pending review 
     };
 
     console.log("=== FINAL EVENT RSVP DATA ===");
