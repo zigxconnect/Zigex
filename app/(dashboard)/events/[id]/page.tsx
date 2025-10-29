@@ -2,12 +2,8 @@
 
 import { useState, useEffect, use } from "react";
 import Image from "next/image";
-<<<<<<< HEAD
-import { MapPin, Building2, ExternalLink, TriangleAlert, Calendar, X } from "lucide-react";
-=======
 import Link from "next/link";
 import { MapPin, ExternalLink, Calendar, Clock, Users, X } from "lucide-react";
->>>>>>> master
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -34,8 +30,12 @@ const DetailItem = ({
         </div>
       )}
       <div className="flex-1 min-w-0">
-        <span className="text-xs text-gray-500 font-medium uppercase tracking-wide block">{label}</span>
-        <span className="text-sm font-semibold text-gray-900 mt-0.5 block">{value}</span>
+        <span className="text-xs text-gray-500 font-medium uppercase tracking-wide block">
+          {label}
+        </span>
+        <span className="text-sm font-semibold text-gray-900 mt-0.5 block">
+          {value}
+        </span>
       </div>
     </div>
   );
@@ -74,11 +74,15 @@ function useOtherPrograms(event: EventWithCompany | null) {
 
     async function fetchPrograms() {
       try {
-        const response = await fetch(`/api/public/companies/${companyId}/programs`);
+        const response = await fetch(
+          `/api/public/companies/${companyId}/programs`
+        );
         const data = await response.json();
-        setPrograms((data.programs || []).filter((p: any) => p.id !== event.id));
+        setPrograms(
+          (data.programs || []).filter((p: any) => p.id !== event.id)
+        );
       } catch (error) {
-        console.error('Error fetching other programs:', error);
+        console.error("Error fetching other programs:", error);
         setPrograms([]);
       }
     }
@@ -96,12 +100,16 @@ export default function EventDetailsPage({
 }) {
   // First, resolve the params Promise
   const resolvedParams = use(params);
-  
+
   // Then initialize all state hooks
   const [isFormOpen, setIsFormOpen] = useState(false);
 
   // Fetch event data
-  const { data: event, isLoading, error } = useFetchDetails<EventWithCompany>(
+  const {
+    data: event,
+    isLoading,
+    error,
+  } = useFetchDetails<EventWithCompany>(
     "/api/students/events",
     resolvedParams.id
   );
@@ -111,12 +119,16 @@ export default function EventDetailsPage({
 
   // Early returns after all hooks
   if (isLoading) return <InternshipDetailsLoadingSkeleton />;
-  if (error) return <div className="text-center p-12 text-red-500">{error}</div>;
-  if (!event) return <div className="text-center p-12 text-gray-500">Event not found</div>;
+  if (error)
+    return <div className="text-center p-12 text-red-500">{error}</div>;
+  if (!event)
+    return (
+      <div className="text-center p-12 text-gray-500">Event not found</div>
+    );
 
   const company = event.company;
   const isLive = event.is_live;
-  
+
   const formatDate = (dateString: string) =>
     new Date(dateString).toLocaleDateString("en-US", {
       month: "long",
@@ -138,7 +150,9 @@ export default function EventDetailsPage({
               <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
                 <div className="relative h-64 sm:h-80 lg:h-96 bg-gradient-to-br from-blue-100 to-indigo-100">
                   <Image
-                    src={normalizeImageSrc(event.event_picture_url || "/placeholder.png")}
+                    src={normalizeImageSrc(
+                      event.event_picture_url || "/placeholder.png"
+                    )}
                     alt={event.title}
                     fill
                     className="object-cover"
@@ -158,10 +172,15 @@ export default function EventDetailsPage({
               {/* Company Info Card */}
               <Card className="border-0 shadow-md hover:shadow-lg transition-shadow duration-300">
                 <div className="p-6 sm:p-8">
-                  <Link href={`/company/${company?.id || event.company_id}`} className="flex items-center gap-4 group">
+                  <Link
+                    href={`/company/${company?.id || event.company_id}`}
+                    className="flex items-center gap-4 group"
+                  >
                     <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden flex-shrink-0 shadow-lg relative">
                       <Image
-                        src={normalizeImageSrc(company?.logo_url || "/seedLogo.png")}
+                        src={normalizeImageSrc(
+                          company?.logo_url || "/seedLogo.png"
+                        )}
                         alt={company?.company_name || event.location}
                         width={80}
                         height={80}
@@ -173,7 +192,10 @@ export default function EventDetailsPage({
                         {company?.company_name || event.location}
                       </h2>
                       <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <MapPin size={16} className="text-blue-600 flex-shrink-0" />
+                        <MapPin
+                          size={16}
+                          className="text-blue-600 flex-shrink-0"
+                        />
                         <span className="truncate">{event.location}</span>
                       </div>
                     </div>
@@ -206,7 +228,9 @@ export default function EventDetailsPage({
                       </div>
                       <div>
                         <div className="text-sm font-semibold">Location</div>
-                        <div className="text-xs text-gray-500">{event.location || "Online"}</div>
+                        <div className="text-xs text-gray-500">
+                          {event.location || "Online"}
+                        </div>
                       </div>
                     </div>
                     <a
@@ -229,24 +253,46 @@ export default function EventDetailsPage({
                 </div>
 
                 <div>
-                  <h4 className="text-lg font-semibold mb-3">Other programs by this company</h4>
+                  <h4 className="text-lg font-semibold mb-3">
+                    Other programs by this company
+                  </h4>
                   <div className="space-y-3">
                     {otherPrograms.length === 0 ? (
-                      <div className="text-sm text-gray-500">No programs found.</div>
+                      <div className="text-sm text-gray-500">
+                        No programs found.
+                      </div>
                     ) : (
-                      otherPrograms.slice(0,6).map((p:any) => (
-                        <Link key={p.id} href={`/(dashboard)/programs/${p.id}`} className="block p-3 rounded-lg border hover:shadow transition">
+                      otherPrograms.slice(0, 6).map((p: any) => (
+                        <Link
+                          key={p.id}
+                          href={`/(dashboard)/programs/${p.id}`}
+                          className="block p-3 rounded-lg border hover:shadow transition"
+                        >
                           <div className="flex items-center gap-3">
                             <div className="w-12 h-12 rounded overflow-hidden bg-gray-100 flex-shrink-0">
                               {p.program_picture_url ? (
-                                <Image src={p.program_picture_url} alt={p.title} width={48} height={48} className="object-cover" />
+                                <Image
+                                  src={p.program_picture_url}
+                                  alt={p.title}
+                                  width={48}
+                                  height={48}
+                                  className="object-cover"
+                                />
                               ) : (
-                                <img src="/seedLogo.png" alt="logo" className="object-cover w-full h-full" />
+                                <img
+                                  src="/seedLogo.png"
+                                  alt="logo"
+                                  className="object-cover w-full h-full"
+                                />
                               )}
                             </div>
                             <div>
-                              <div className="text-sm font-semibold text-gray-900">{p.title}</div>
-                              <div className="text-xs text-gray-500">{formatDate(p.created_at)}</div>
+                              <div className="text-sm font-semibold text-gray-900">
+                                {p.title}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {formatDate(p.created_at)}
+                              </div>
                             </div>
                           </div>
                         </Link>
@@ -255,7 +301,6 @@ export default function EventDetailsPage({
                   </div>
                 </div>
               </div>
-
             </div>
 
             {/* Sidebar - Fixed on desktop */}
@@ -270,24 +315,24 @@ export default function EventDetailsPage({
                     </h3>
                   </div>
                   <div className="p-5">
-                    <DetailItem 
-                      label="Location" 
-                      value={event.location} 
+                    <DetailItem
+                      label="Location"
+                      value={event.location}
                       icon={MapPin}
                     />
-                    <DetailItem 
-                      label="Start Date" 
-                      value={startDate} 
+                    <DetailItem
+                      label="Start Date"
+                      value={startDate}
                       icon={Calendar}
                     />
-                    <DetailItem 
-                      label="End Date" 
-                      value={endDate} 
+                    <DetailItem
+                      label="End Date"
+                      value={endDate}
                       icon={Calendar}
                     />
-                    <DetailItem 
-                      label="Time" 
-                      value={event.start_time || "Not specified"} 
+                    <DetailItem
+                      label="Time"
+                      value={event.start_time || "Not specified"}
                       icon={Clock}
                     />
                   </div>
@@ -299,7 +344,7 @@ export default function EventDetailsPage({
                   onClick={() => setIsFormOpen(true)}
                   variant="primary"
                 >
-                  Register Now 
+                  Register Now
                   <ExternalLink size={18} className="ml-2" />
                 </Button>
 
@@ -310,9 +355,11 @@ export default function EventDetailsPage({
                         <Calendar size={16} className="text-blue-600" />
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-bold text-blue-900 text-sm mb-1">Event Information</h4>
+                        <h4 className="font-bold text-blue-900 text-sm mb-1">
+                          Event Information
+                        </h4>
                         <p className="text-blue-800 text-xs leading-relaxed">
-                          {event.is_live 
+                          {event.is_live
                             ? "This event is currently live. Join now to participate in real-time!"
                             : "Register early to secure your spot. Event capacity may be limited."}
                         </p>
@@ -345,8 +392,12 @@ export default function EventDetailsPage({
         <DialogContent className="max-w-4xl h-[90vh] overflow-y-auto">
           <div className="sticky top-0 bg-white z-10 flex items-center justify-between pb-4 mb-4 border-b">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">{event.title}</h2>
-              <p className="text-sm text-gray-500 mt-1">{company?.company_name || "Event Registration"}</p>
+              <h2 className="text-2xl font-bold text-gray-900">
+                {event.title}
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">
+                {company?.company_name || "Event Registration"}
+              </p>
             </div>
             <Button
               variant="ghost"
