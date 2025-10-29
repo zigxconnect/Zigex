@@ -6,8 +6,8 @@ export default function LandingPage() {
   return (
     <div className="flex flex-col">
       <BamendaHeroSection />
-      <FeaturedInternships />
-      <WhyChoose />
+      {/* <FeaturedInternships /> */}
+      {/* <WhyChoose /> */}
     </div>
   );
 }

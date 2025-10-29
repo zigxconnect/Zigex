@@ -16,6 +16,9 @@ export type Internship = {
   companyURL?: string;
   company_email: string;
   headQuarterImage: string;
+  // optional live fields for demo/live UX
+  is_live?: boolean;
+  live_stream_url?: string;
 };
 
 // Paste your complete array of internship data here.
@@ -69,7 +72,9 @@ export const allInternships: Internship[] = [
     "requirement": "Strong understanding of Finance.",
     "companyURL": "https://healthinno.com",
     "company_email": "careers@healthinno.com",
-    "headQuarterImage": "https://picsum.photos/seed/healthinno-building/400/250"
+    "headQuarterImage": "https://picsum.photos/seed/healthinno-building/400/250",
+    "is_live": true,
+    "live_stream_url": "https://www.youtube.com/watch?v=ysz5S6PUM-U"
   },
   {
     "id": "3ff8ae88-c0ef-465d-acf0-aadbdf042450",
@@ -102,7 +107,9 @@ export const allInternships: Internship[] = [
     "description": "Dive into real-world projects with Dynamo Electric as a Technical Writing Intern. Build a strong portfolio. Expand your professional network. Work with cutting-edge technologies like AI/ML concepts. Gain invaluable experience in the Technology industry.",
     "requirement": "Previous experience with Sass is a plus. Currently pursuing a degree in {field}.",
     "company_email": "careers@dynamoelectric.com",
-    "headQuarterImage": "https://picsum.photos/seed/dynamoelectric-building/400/250"
+    "headQuarterImage": "https://picsum.photos/seed/dynamoelectric-building/400/250",
+    "is_live": true,
+    "live_stream_url": "https://www.youtube.com/watch?v=J---aiyznGQ"
   },
   {
     "id": "3714e5b0-122b-497f-9eee-36e488c8542e",

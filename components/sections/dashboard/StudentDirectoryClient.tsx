@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import StudentCard from "./StudentCard";
-import { Search } from "lucide-react";
+import { Search, TrendingUp, Sparkles } from "lucide-react";
 
 interface RawUserProfile {
   id: string;
@@ -29,26 +29,47 @@ export const StudentDirectoryClient: React.FC<{ profiles: RawUserProfile[] }> = 
   }, [profiles, query]);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        <header className="mb-6">
-          <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">Meet Our Bright ZigX</h1>
-          <p className="text-slate-600 mt-1">Discover and connect with fellow students — follow profiles you want to keep an eye on.</p>
-        </header>
-        <div className="mb-6">
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search students by name, university, or skill..." className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg" />
+    <div className="min-h-screen bg-white">
+      {/* Fixed Header */}
+      <div className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-gray-200 z-10">
+        <div className="max-w-2xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between mb-3">
+            <h1 className="text-xl font-bold text-slate-900">ZigX Students</h1>
+            <Sparkles size={20} className="text-blue-500" />
+          </div>
+          
+          {/* Search Bar */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input 
+              value={query} 
+              onChange={(e) => setQuery(e.target.value)} 
+              placeholder="Search students..." 
+              className="w-full pl-10 pr-4 py-2 bg-gray-100 border-none rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all" 
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Feed Container */}
+      <div className="max-w-2xl mx-auto">
+        {/* Trending Banner */}
+        <div className="border-b border-gray-200 px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50">
+          <div className="flex items-center gap-2">
+            <TrendingUp size={16} className="text-blue-600" />
+            <span className="text-sm font-semibold text-blue-900">
+              {filtered.length} Students • Live Feed
+            </span>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Student Feed */}
+        <div className="divide-y divide-gray-200">
           {filtered.map((s) => {
-            // deterministic dummy stats based on id string
             const seed = s.id.split("").reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
-            const internshipsApplied = (seed % 5) + 0; // 0-4
-            const programsApplied = (seed % 3) + 0; // 0-2
-            const eventsApplied = (seed % 4) + 0; // 0-3
+            const internshipsApplied = (seed % 5) + 0;
+            const programsApplied = (seed % 3) + 0;
+            const eventsApplied = (seed % 4) + 0;
 
             const stats = {
               internshipsApplied,
@@ -61,7 +82,18 @@ export const StudentDirectoryClient: React.FC<{ profiles: RawUserProfile[] }> = 
         </div>
 
         {filtered.length === 0 && (
-          <div className="text-center py-12 text-gray-500">No students found.</div>
+          <div className="text-center py-16 px-4">
+            <div className="text-6xl mb-4">🔍</div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">No students found</h3>
+            <p className="text-gray-500">Try adjusting your search</p>
+          </div>
+        )}
+
+        {/* End of Feed */}
+        {filtered.length > 0 && (
+          <div className="text-center py-8 text-gray-400 text-sm">
+            You've reached the end of the feed
+          </div>
         )}
       </div>
     </div>

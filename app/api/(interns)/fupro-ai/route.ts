@@ -1,248 +1,273 @@
 // /app/api/internship-agent/route.ts
-
-// ━━━━━━ 🚀 FUPRO AI AGENT - CONFIGURATION & SETUP 🚀 ━━━━━━
+// ━━━━━━ 🚀 ZIGEX AI AGENT v2.0 - TAVILY-POWERED & PRODUCTION-READY 🚀 ━━━━━━
 
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { TavilySearchAPIRetriever } from "@langchain/community/retrievers/tavily_search_api";
 import { createServerActionClient } from "@/lib/supabase/server";
 
-// Initialize the Google Generative AI client with the API key from environment variables
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+// --- SETUP & VALIDATION ---
+// Fail fast if essential API keys are missing.
+if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY environment variable not set.");
+if (!process.env.TAVILY_API_KEY) throw new Error("TAVILY_API_KEY environment variable not set.");
 
-// A curated and de-duplicated list of sources for internship searches.
-const prioritySources = {
-    innovateWithSeed: [
-        "innovatewithseed.com",
-        "linkedin.com/company/seed-cmr",
-    ],
-    other: [
-        "cameroondesk.com/category/internship", "akwajobs.com", "sky8.cm",
-        "tratz.tech", "civilsalt.com", "techchantier.com", "oppnergy.com",
-        "nasiatech.com", "zixtechcorporation.com", "activspaces.com",
-        "skademy.org", "waspito.com", "agrixtech.com", "clonesystems.org",
-        "njaka.com", "iagora.com/work/internships/cameroon",
-        "goabroad.com/intern-abroad/cameroon", "payyourinterns.com",
-        "princemesue.com", "untalent.org/internships", "uncareer.net",
-        "aijobs.net", "skye8.tech", "fabafriq.com", "makonjomedia.com",
-        "lukmefcameroon.org", "hisrcameroon.org", "gci-cameroon.org",
-        "icenecdev.org", "hofna.org", "rudec.org",
-        "wso2.com/careers/internships", "pwc.com/cm/en.html",
-        "cuib-cameroon.net", "ubuea.cm"
-    ]
-};
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// ━━━━━━ ✨ PROMPT ENGINEERING WIZARDRY ✨ ━━━━━━
-
-const createPersonalizedSystemPrompt = (userProfile: any) => {
-    const userName = userProfile?.full_name || "there";
-    const university = userProfile?.university || "your institution";
-    const skillsText = userProfile?.hard_skills?.join(", ") || "your skills";
-
-    return `You are "Bamenda Internship Connect," an expert, friendly, and highly interactive AI assistant powered by Seed (innovatewithseed.com). Your core mission is to help ${userName} from ${university} find exciting and relevant internship opportunities in Bamenda, Cameroon, and offer career guidance.
-
-Your personality should be:
--   **Friendly and Approachable:** Always start with a warm greeting or acknowledgment.
--   **Proactive and Helpful:** Offer suggestions on what the user can do next.
--   **Empathetic and Supportive:** Understand their goals and encourage them.
--   **Concise yet Informative:** Provide clear answers without unnecessary jargon.
--   **Not Robotic:** Use natural language, varying sentence structures, and occasional conversational fillers.
-
-Core Directives:
-
-1.  **Prioritize Seed (innovatewithseed.com):** Seed is our parent company. Always mention them first for relevant opportunities. If search results for Seed are empty, never say "no results found." Instead, use a positive and engaging tone (e.g., "While I'm looking for direct openings at Seed, remember they're a fantastic hub for growth!"). Guide the user to their blog, LinkedIn, or recent events to showcase their value as a learning and networking platform.
-
-2.  **Personalize & Connect:** Greet ${userName} by name. Tailor opportunities and advice to their skills (${skillsText}) and background.
-
-3.  **Deliver Value:** Provide actionable opportunities. Use direct, clickable Markdown links for all resources.
-
-4.  **Be Detailed but Focused:** Your entire response should be up to 320 words. Provide at least 5-10 "perfect match" opportunities with links when performing a search. Get straight to the point with a supportive and encouraging tone.
-
-5.  **Conditional Search Execution:**
-    *   If the query is a basic greeting or simple conversational opener (e.g., "hello", "how are you?"), do NOT perform a web search. Respond directly and interactively.
-    *   Only perform a web search if the user's query clearly indicates a need for information retrieval (e.g., "find internships", "jobs in tech").
-
-6.  **Output Structure (for search results):**
-    *   **🌟 Seed Inc:** Start with opportunities, events, or blog posts from Seed.
-    *   **🎯 Your Perfect Matches:** Provide a detailed list of roles that fit their skills, each with a direct link.
-    *   **💡 Proactive Suggestions:** Always end by offering further assistance.
-
-Example of a non-search response:
-"Hello ${userName}! I'm Bamenda Internship Connect, powered by Seed. How can I assist you with your internship search today?"`;
-};
-
-// ━━━━━━ 🛠️ UTILITY & HELPER FUNCTIONS 🛠️ ━━━━━━
-
-interface ChatHistoryItem { role: 'user' | 'model'; parts: { text: string }[]; }
-interface RequestBody { query: string; history: ChatHistoryItem[]; }
-interface SerpApiResponse { organic_results?: Array<{ title: string; link: string; snippet: string; }>; error?: string; }
-
-const generateThinkingSteps = (): string[] => [
-    "🚀 Igniting engines... Analyzing your request.",
-    "💡 Matching your profile to our opportunity matrix.",
-    "🌟 Checking in with our parent, Seed, for exclusives.",
-    "🌐 Executing a smart search across our trusted local sources.",
-    "🎯 Pinpointing the best matches for you.",
-    "✨ Crafting your personalized opportunity brief..."
-];
-
-const createSiteSearchQuery = (domains: string[]): string => {
-    return `(${domains.map(domain => `site:${domain}`).join(" OR ")})`;
-};
-
-async function performSmartSearch(query: string, userProfile: any): Promise<{
-    innovateWithSeedResults: any[];
-    generalResults: SerpApiResponse;
-}> {
-    console.log(`[SEARCH] Kicking off SMART search for query: "${query}"`);
-    const innovateSitesQuery = createSiteSearchQuery(prioritySources.innovateWithSeed);
-    const innovateQuery = `${innovateSitesQuery} ("internship" OR "bootcamp" OR "event" OR "${query}")`;
-    const generalSitesQuery = createSiteSearchQuery(prioritySources.other);
-    const userSkillsQuery = userProfile?.hard_skills?.join('" OR "') || '';
-    const generalQuery = `${generalSitesQuery} ("${query}" OR "${userSkillsQuery}") AND ("internship" OR "career" OR "job") AND "Bamenda"`;
-    console.log(`[SEARCH] Seed Query: ${innovateQuery}`);
-    console.log(`[SEARCH] General Smart Query: ${generalQuery}`);
-    const [innovateResults, generalResults] = await Promise.all([
-        fetch(`https://serpapi.com/search.json?engine=google&q=${encodeURIComponent(innovateQuery)}&api_key=${process.env.SERPAPI_API_KEY}`).then(res => res.json()).catch(() => ({ organic_results: [] })),
-        fetch(`https://serpapi.com/search.json?engine=google&q=${encodeURIComponent(generalQuery)}&api_key=${process.env.SERPAPI_API_KEY}`).then(res => res.json()).catch(() => ({ organic_results: [] }))
-    ]);
-    console.log(`[SEARCH] Found ${innovateResults.organic_results?.length || 0} results for Seed.`);
-    console.log(`[SEARCH] Found ${generalResults.organic_results?.length || 0} results from other sources.`);
-    return {
-        innovateWithSeedResults: innovateResults.organic_results || [],
-        generalResults: generalResults,
-    };
+// --- TYPE DEFINITIONS ---
+interface UserProfile {
+  full_name: string;
+  university: string;
+  hard_skills: string[];
+  // Add any other relevant fields from your student_profiles table
 }
 
-/**
- * [FIXED] This function now robustly validates the chat history.
- * It ensures the history always starts with a 'user' role and that
- * roles alternate correctly, preventing the API error.
- */
-const validateChatHistory = (history: ChatHistoryItem[]): ChatHistoryItem[] => {
-    if (!history || history.length === 0) {
-        return [];
-    }
+interface SourceData {
+  type: 'internship' | 'event' | 'program' | 'web';
+  title: string;
+  url?: string;
+  company?: string;
+  location?: string;
+  date?: string;
+}
 
-    // 1. Find the index of the first 'user' message.
-    const firstUserIndex = history.findIndex(item => item.role === 'user');
+interface AggregatedData {
+  internships: any[];
+  events: any[];
+  programs: any[];
+  metadata: any;
+}
 
-    // If no user message exists, the history is invalid to start a chat.
-    if (firstUserIndex === -1) {
-        return [];
-    }
-
-    // 2. Slice the array to begin from the very first user message.
-    const relevantHistory = history.slice(firstUserIndex);
-
-    // 3. Filter the array to ensure roles strictly alternate (user, model, user, ...).
-    const fixedHistory: ChatHistoryItem[] = [];
-    let expectedRole: 'user' | 'model' = 'user';
-
-    for (const item of relevantHistory) {
-        if (item.role === expectedRole) {
-            fixedHistory.push(item);
-            expectedRole = expectedRole === 'user' ? 'model' : 'user';
-        }
-    }
-
-    return fixedHistory;
-};
-
-const isConversationalQuery = (query: string): boolean => {
-    const lowerQuery = query.toLowerCase().trim();
-    const conversationalKeywords = [ "hello", "hi", "hey", "good morning", "how are you", "who are you", "what is your name", "tell me about yourself", "thanks", "thank you", "bye" ];
-    return conversationalKeywords.some(keyword => lowerQuery.includes(keyword));
-};
-
-
-// ━━━━━━ 🤖 CORE API LOGIC (THE MAIN EVENT) 🤖 ━━━━━━
-
-export async function POST(req: NextRequest) {
+// ━━━━━━ 👤 USER PROFILE FETCHER ━━━━━━
+// Encapsulates fetching the user's profile for personalization.
+async function getUserProfile(): Promise<UserProfile | null> {
     try {
-        const { query, history = [] } = (await req.json()) as RequestBody;
-        console.log(`\n\n[API] New request received. Query: "${query}"`);
+        const supabase = await createServerActionClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return null;
 
-        if (!query) return NextResponse.json({ error: 'Query is required' }, { status: 400 });
-        if (!process.env.GEMINI_API_KEY) return NextResponse.json({ error: 'API key not configured' }, { status: 500 });
-
-    const supabase = await createServerActionClient();
-    const { data: { user } } = await supabase.auth.getUser();
-        const { data: userProfile } = user ? await supabase.from("student_profiles").select("*").eq("user_id", user.id).single() : { data: null };
-
-        const encoder = new TextEncoder();
-        const stream = new ReadableStream({
-            async start(controller) {
-                try {
-                    const personalizedPrompt = createPersonalizedSystemPrompt(userProfile);
-                    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash', systemInstruction: personalizedPrompt });
-                    
-                    const validatedHistory = validateChatHistory(history);
-                    console.log(`[API] Validated history has ${validatedHistory.length} items.`);
-
-                    const chat = model.startChat({
-                        history: validatedHistory,
-                        generationConfig: { maxOutputTokens: 500, temperature: 0.8 },
-                    });
-
-                    let finalAnswer = "";
-
-                    if (isConversationalQuery(query)) {
-                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'thinking_start', steps: ["Thinking..."] })}\n\n`));
-                        
-                        const conversationalResponse = await chat.sendMessage(query);
-                        finalAnswer = conversationalResponse.response.text();
-
-                    } else {
-                        const thinkingSteps = generateThinkingSteps();
-                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'thinking_start', steps: thinkingSteps })}\n\n`));
-                        
-                        // NOTE: The step-by-step streaming is a UI effect. 
-                        // The actual search happens in parallel for speed.
-                        const searchPromise = performSmartSearch(query, userProfile);
-                        for (let i = 0; i < thinkingSteps.length; i++) {
-                            await new Promise(resolve => setTimeout(resolve, 600));
-                            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'thinking_step', step: i, message: thinkingSteps[i] })}\n\n`));
-                        }
-
-                        const { innovateWithSeedResults, generalResults } = await searchPromise;
-                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'thinking_complete', message: "✅ Success! Compiling brief..." })}\n\n`));
-
-                        const finalPrompt = `
-                            User Query: "${query}"
-                            User Profile: ${JSON.stringify(userProfile ? { name: userProfile.full_name, skills: userProfile.hard_skills } : {})}
-                            **Search Results - 🌟 PRIORITY: Seed**
-                            \`\`\`json
-                            ${JSON.stringify(innovateWithSeedResults, null, 2)}
-                            \`\`\`
-                            **Search Results - General**
-                            \`\`\`json
-                            ${JSON.stringify(generalResults.organic_results || [], null, 2)}
-                            \`\`\`
-                            **Final Instruction:** Generate a response based on the directives. Prioritize Seed. List 5-10 top matches with links from general results. Max 320 words.
-                        `;
-                        const result = await chat.sendMessage(finalPrompt);
-                        finalAnswer = result.response.text();
-                    }
-
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'response', answer: finalAnswer, userProfile })}\n\n`));
-                    controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
-                    controller.close();
-                    console.log("[API] Response stream completed successfully.");
-
-                } catch (error) {
-                    console.error('[STREAM ERROR]', error);
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'error', error: 'An unexpected error occurred while processing.' })}\n\n`));
-                    controller.close();
-                }
-            }
-        });
-
-        return new Response(stream, {
-            headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' },
-        });
-
-    } catch (err) {
-        console.error('[ROUTE ERROR]', err);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        const { data: profile } = await supabase
+            .from("student_profiles")
+            .select("full_name, university, hard_skills")
+            .eq("user_id", user.id)
+            .single();
+            
+        return profile as UserProfile | null;
+    } catch (error) {
+        console.error("[AGENT ERROR] Could not fetch user profile:", error);
+        return null;
     }
+}
+
+
+// ━━━━━━ 📊 PLATFORM DATA CACHE ━━━━━━
+// (This function remains the same - it's already optimized)
+let cachedAggregatedData: AggregatedData | null = null;
+let cacheTimestamp: number = 0;
+const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+
+async function getAggregatedData(): Promise<AggregatedData> {
+    const now = Date.now();
+    if (cachedAggregatedData && (now - cacheTimestamp) < CACHE_DURATION_MS) {
+        return cachedAggregatedData;
+    }
+    try {
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+        const response = await fetch(`${baseUrl}/api/students/aggregated-data`, { cache: 'no-store' });
+        if (!response.ok) throw new Error(`Failed to fetch aggregated data. Status: ${response.status}`);
+        const result = await response.json();
+        cachedAggregatedData = result.data;
+        cacheTimestamp = now;
+        return cachedAggregatedData;
+    } catch (error) {
+        console.error('[AGENT ERROR] Failed to fetch platform data:', error);
+        return { internships: [], events: [], programs: [], metadata: {} };
+    }
+}
+
+
+// ━━━━━━ 🌐 TAVILY WEB SEARCH AGENT ━━━━━━
+// This is the core of the new online search capability.
+async function searchWithTavily(query: string, userProfile: UserProfile | null): Promise<SourceData[]> {
+    console.log('[AGENT TAVILY] Initiating external web search.');
+
+    // 1. Construct a highly specific, profile-driven search query for better results.
+    let enhancedQuery = `Find job or internship opportunities related to: "${query}"`;
+    if (userProfile?.hard_skills?.length) {
+        enhancedQuery += ` for a candidate with skills in ${userProfile.hard_skills.join(', ')}.`;
+    }
+    enhancedQuery += " The results should include the company name, location (including 'Remote'), and a direct URL to the application page.";
+
+    console.log(`[AGENT TAVILY] Enhanced Query: "${enhancedQuery}"`);
+
+    // 2. Initialize the Tavily retriever. `k: 4` fetches the top 4 most relevant results.
+    const retriever = new TavilySearchAPIRetriever({ k: 4 });
+
+    try {
+        // 3. Perform the search.
+        const docs = await retriever.getRelevantDocuments(enhancedQuery);
+        
+        // 4. Format the raw results into our standardized SourceData structure.
+        return docs.map(doc => ({
+            type: 'web',
+            title: doc.metadata.title || 'Untitled Web Result',
+            url: doc.metadata.source || '#',
+            company: doc.metadata.author || 'Unknown Company',
+            location: 'Web / Remote', // Default location for web results
+        }));
+    } catch (error) {
+        console.error("[AGENT TAVILY ERROR] Tavily search failed:", error);
+        // 5. Reliability: Return an empty array on failure so the app doesn't crash.
+        return [];
+    }
+}
+
+
+// ━━━━━━ 🎯 QUERY ANALYSIS ENGINE ━━━━━━
+// The gatekeeper that decides if an expensive web search is necessary.
+interface QueryAnalysis {
+  isConversational: boolean;
+  needsExternalSearch: boolean;
+}
+
+function analyzeQuery(query: string): QueryAnalysis {
+  const lowerQuery = query.toLowerCase().trim();
+  const conversationalKeywords = ['hello', 'hi', 'hey', 'good morning', 'how are you', 'who are you', 'tell me about zigex'];
+  const externalSearchTriggers = ['remote', 'online', 'abroad', 'europe', 'usa', 'canada', 'germany', 'find jobs'];
+
+  // A query is conversational if it's a simple greeting or question about the platform itself.
+  const isConversational = conversationalKeywords.some(k => lowerQuery.includes(k));
+  // A query needs external search if it's NOT conversational AND contains triggers for external opportunities.
+  const needsExternalSearch = !isConversational && externalSearchTriggers.some(k => lowerQuery.includes(k));
+
+  return { isConversational, needsExternalSearch };
+}
+
+
+// ━━━━━━ ✨ DYNAMIC SYSTEM PROMPT ━━━━━━
+const createSystemPrompt = () => {
+    return `You are "Zigex Career Agent," an expert AI assistant for the Zigex platform in Bamenda, Cameroon. Your primary goal is to help users find internships and career opportunities.
+
+    Your personality: Professional, encouraging, and an expert on the tech/job market.
+
+    **CRITICAL INSTRUCTIONS:**
+    1.  **SYNTHESIZE, DON'T LIST:** Do not just list data. Your value is in synthesizing information from two sources: Zigex's internal database AND real-time web search results from Tavily.
+    2.  **PRIORITIZE ZIGEX:** Always mention relevant opportunities from the Zigex platform first. These are the most important.
+    3.  **INTRODUCE WEB RESULTS:** When presenting opportunities from the web search, introduce them clearly (e.g., "I also found a few remote opportunities on the web that might be a good fit...").
+    4.  **BE PERSONALIZED:** Use the provided user profile (skills, university) to tailor your recommendations and justify why an opportunity is a good match.
+    5.  **CONVERSATIONAL MODE:** For simple greetings ("hello"), respond naturally without mentioning data or searches.
+    6.  **BE RELIABLE:** If no relevant opportunities are found in either source, state that clearly. Do not invent opportunities.`;
+};
+
+
+// ━━━━━━ 🤖 MAIN API ROUTE HANDLER (POST) ━━━━━━
+export async function POST(req: NextRequest) {
+  try {
+    const { query, history = [] } = await req.json();
+    if (!query) return NextResponse.json({ error: 'Query is required' }, { status: 400 });
+
+    console.log(`\n[AGENT] New Request | Query: "${query}"`);
+
+    // --- Step 1: Analyze Intent & Fetch Profile ---
+    const queryAnalysis = analyzeQuery(query);
+    const [userProfile, platformData] = await Promise.all([
+        getUserProfile(),
+        getAggregatedData() // Fetches from cache if available
+    ]);
+
+    console.log(`[AGENT] Analysis: Conversational=${queryAnalysis.isConversational}, ExternalSearch=${queryAnalysis.needsExternalSearch}`);
+    
+    const stream = new ReadableStream({
+      async start(controller) {
+        const encoder = new TextEncoder();
+        
+        try {
+          const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash', systemInstruction: createSystemPrompt() });
+          const chat = model.startChat({ history });
+
+          let finalAnswer: string;
+          let allSources: SourceData[] = [];
+
+          // --- Route 1: Fast Path for Conversational Queries ---
+          if (queryAnalysis.isConversational) {
+              const result = await chat.sendMessage(query);
+              finalAnswer = result.response.text();
+          
+          // --- Route 2: Comprehensive Path for Opportunity Searches ---
+          } else {
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'thinking_start', steps: [
+                  "Analyzing your profile and request...",
+                  "Querying Zigex platform database...",
+                  ...(queryAnalysis.needsExternalSearch ? ["Searching the web for external opportunities..."] : []),
+                  "Synthesizing the best matches for you...",
+              ] })}\n\n`));
+
+              let externalSources: SourceData[] = [];
+              if (queryAnalysis.needsExternalSearch) {
+                  externalSources = await searchWithTavily(query, userProfile);
+              }
+              
+              // Prepare internal sources for display
+              const platformSources: SourceData[] = [
+                  ...platformData.internships.slice(0, 3).map(i => ({ type: 'internship', title: i.title, company: i.company, location: i.location, url: `/internships/${i.id}` })),
+                  ...platformData.events.slice(0, 2).map(e => ({ type: 'event', title: e.title, company: e.company, date: e.start_date, url: `/events/${e.id}` })),
+              ];
+
+              allSources = [...platformSources, ...externalSources];
+
+              // Construct the final, rich prompt for the AI
+              const finalPrompt = `
+                User Profile: ${JSON.stringify(userProfile, null, 2) || "Not available."}
+                Original Query: "${query}"
+
+                ---
+                Source 1: Internal Zigex Platform Data
+                Here are the most relevant opportunities from our platform. Prioritize these.
+                \`\`\`json
+                ${JSON.stringify(platformData, null, 2)}
+                \`\`\`
+                ---
+                ${allSources.length > platformSources.length ? `
+                Source 2: Real-time Web Search Results (from Tavily)
+                Here are external opportunities found on the web.
+                \`\`\`json
+                ${JSON.stringify(externalSources, null, 2)}
+                \`\`\`
+                ` : ''}
+                ---
+                
+                Now, acting as an expert career agent, synthesize all the information above to provide a helpful, personalized, and consolidated response to the user's original query.
+              `;
+
+              const result = await chat.sendMessage(finalPrompt);
+              finalAnswer = result.response.text();
+          }
+
+          // --- Step 4: Stream the Final Response ---
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
+            type: 'response', 
+            answer: finalAnswer, 
+            // Send the combined sources to the frontend for display
+            platformData: { topInternships: allSources.filter(s => s.type === 'internship' || s.type === 'web') } 
+          })}\n\n`));
+
+          console.log("[AGENT] Successfully streamed response.");
+
+        } catch (error) {
+          console.error('[AGENT STREAM ERROR]', error);
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'error', error: 'An error occurred during AI generation.' })}\n\n`));
+        } finally {
+          controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+          controller.close();
+        }
+      }
+    });
+
+    return new Response(stream, {
+      headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' },
+    });
+
+  } catch (err) {
+    console.error('[AGENT ROUTE ERROR]', err);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
 }

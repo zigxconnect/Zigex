@@ -2,6 +2,7 @@
 
 import { DashboardHeader } from "@/components/layout/dashboard/DashboardHeader";
 import { Sidebar } from "@/components/layout/dashboard/Sidebar";
+import { MobileTabBar } from "@/components/layout/dashboard/MobileTabBar";
 import { useState, useEffect } from "react";
 import { UserProfile } from "@/app/types/type";
 
@@ -10,9 +11,9 @@ interface DashboardClientLayoutProps {
   user: UserProfile | null;
 }
 
-export function DashboardClientLayout({ 
-  children, 
-  user 
+export function DashboardClientLayout({
+  children,
+  user
 }: DashboardClientLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -52,14 +53,14 @@ export function DashboardClientLayout({
       {/* Header with user data and menu click handler */}
       <DashboardHeader 
         user={user}
-        onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} 
+        onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
       />
       
       {/* Main Container */}
       <div className="flex relative">
         {/* Sidebar with user data */}
         <Sidebar 
-          isOpen={isSidebarOpen} 
+          isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
           user={user || {}} // Pass the fetched user data
         />
@@ -77,6 +78,7 @@ export function DashboardClientLayout({
           flex-1 min-h-[calc(100vh-4rem)] w-full
           transition-all duration-300 ease-in-out
           ${!isMobile && isSidebarOpen ? 'lg:ml-80' : 'ml-0'}
+          pb-20 lg:pb-0
         `}>
           {/* Content Container */}
           <div className="w-full max-w-full overflow-x-hidden">
@@ -89,14 +91,8 @@ export function DashboardClientLayout({
         </main>
       </div>
 
-      {/* Footer - Hidden on mobile when sidebar is open */}
-      <div className={`
-        ${isMobile && isSidebarOpen ? 'hidden' : 'block'}
-        ${!isMobile && isSidebarOpen ? 'lg:ml-80' : 'ml-0'}
-        transition-all duration-300
-      `}>
-        {/* <DashboardFooter /> */}
-      </div>
+      {/* Mobile Tab Bar - Only visible on mobile */}
+      {isMobile && <MobileTabBar user={user} />}
     </>
   );
 }

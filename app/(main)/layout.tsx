@@ -6,7 +6,7 @@ import { Inter } from "next/font/google";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "futureProspect",
+  title: "Zigex-Home",
   description: "Helping you build the future, one prospect at a time.",
 };
 
@@ -24,7 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <div className={`${inter.className} flex flex-col min-h-screen`}>
-      <Navbar />
+      {/* <Navbar /> */}
       <main className="flex-1">{children}</main>
       <Footer />
     </div>
