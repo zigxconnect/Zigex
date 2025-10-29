@@ -11,7 +11,8 @@ import {
   Calendar,
   Mail,
   Phone,
-  MessageCircle
+  MessageCircle,
+  Linkedin
 } from "lucide-react";
 import ConnectBar from "@/components/sections/dashboard/ConnectBar";
 
@@ -56,6 +57,22 @@ export default async function StudentDetailPage({ params }: Props) {
     .slice(0, 2)
     .join("")
     .toUpperCase();
+
+  // WhatsApp message template
+  const whatsappMessage = `Hi ${data.full_name || 'there'}! 👋
+
+I came across your profile on ZigX and I'm impressed by your background in ${skills[0] || 'your field'}. 
+
+I'd love to connect and explore potential collaboration opportunities.
+
+Looking forward to hearing from you!`;
+
+  const whatsappUrl = data.phone 
+    ? `https://wa.me/${data.phone.replace(/\D/g, '')}?text=${encodeURIComponent(whatsappMessage)}`
+    : null;
+
+  // LinkedIn connection note (LinkedIn doesn't support pre-filled messages via URL, but we can open profile)
+  const linkedinUrl = data.linkedin_url;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -165,15 +182,48 @@ export default async function StudentDetailPage({ params }: Props) {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center gap-3">
-               <button className="px-6 py-2.5 bg-gray-100 text-gray-700 font-semibold rounded-full hover:bg-gray-200 transition-all duration-200">
-                Following
-              </button>
-              <button className="px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-full hover:bg-blue-700 shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2">
-                <MessageCircle size={18} />
-                <span>Whatsapp</span>
-              </button>
-             
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              {/* LinkedIn Connect Button */}
+              {linkedinUrl ? (
+                <Link
+                  href={linkedinUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-2.5 bg-[#0A66C2] text-white font-semibold rounded-full hover:bg-[#004182] shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
+                >
+                  <Linkedin size={18} />
+                  <span>Connect on LinkedIn</span>
+                </Link>
+              ) : (
+                <button 
+                  disabled
+                  className="px-6 py-2.5 bg-gray-200 text-gray-400 font-semibold rounded-full cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  <Linkedin size={18} />
+                  <span>Connect on LinkedIn</span>
+                </button>
+              )}
+
+              {/* WhatsApp Message Button */}
+              {whatsappUrl ? (
+                <Link
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-2.5 bg-[#25D366] text-white font-semibold rounded-full hover:bg-[#1da851] shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
+                >
+                  <MessageCircle size={18} />
+                  <span>Message on WhatsApp</span>
+                </Link>
+              ) : (
+                <button 
+                  disabled
+                  className="px-6 py-2.5 bg-gray-200 text-gray-400 font-semibold rounded-full cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  <MessageCircle size={18} />
+                  <span>Message on WhatsApp</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -211,6 +261,80 @@ export default async function StudentDetailPage({ params }: Props) {
 
       {/* Content Container */}
       <div className="max-w-4xl mx-auto px-4 lg:px-6 space-y-6">
+        {/* Quick Connect Card */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100 shadow-sm">
+          <h3 className="text-lg font-bold text-gray-900 mb-4">Connect with {data.full_name?.split(' ')[0]}</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {/* LinkedIn */}
+            {linkedinUrl && (
+              <Link
+                href={linkedinUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-3 p-4 bg-white rounded-xl hover:shadow-md transition-all duration-200 border border-gray-200 hover:border-[#0A66C2] group"
+              >
+                <div className="w-10 h-10 bg-[#0A66C2] rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Linkedin size={20} className="text-white" />
+                </div>
+                <div className="flex-1">
+                  <div className="font-semibold text-gray-900 group-hover:text-[#0A66C2]">LinkedIn</div>
+                  <div className="text-xs text-gray-500">Professional network</div>
+                </div>
+              </Link>
+            )}
+
+            {/* WhatsApp */}
+            {whatsappUrl && (
+              <Link
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-3 p-4 bg-white rounded-xl hover:shadow-md transition-all duration-200 border border-gray-200 hover:border-[#25D366] group"
+              >
+                <div className="w-10 h-10 bg-[#25D366] rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <MessageCircle size={20} className="text-white" />
+                </div>
+                <div className="flex-1">
+                  <div className="font-semibold text-gray-900 group-hover:text-[#25D366]">WhatsApp</div>
+                  <div className="text-xs text-gray-500">Instant messaging</div>
+                </div>
+              </Link>
+            )}
+
+            {/* Email */}
+            {data.email && (
+              <Link
+                href={`mailto:${data.email}?subject=Connection Request from ZigX&body=Hi ${data.full_name || 'there'},%0D%0A%0D%0AI came across your profile on ZigX and I'm impressed by your background. I'd love to connect and explore potential collaboration opportunities.%0D%0A%0D%0ALooking forward to hearing from you!`}
+                className="flex items-center justify-center gap-3 p-4 bg-white rounded-xl hover:shadow-md transition-all duration-200 border border-gray-200 hover:border-blue-500 group"
+              >
+                <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Mail size={20} className="text-white" />
+                </div>
+                <div className="flex-1">
+                  <div className="font-semibold text-gray-900 group-hover:text-blue-500">Email</div>
+                  <div className="text-xs text-gray-500">Professional email</div>
+                </div>
+              </Link>
+            )}
+
+            {/* Phone */}
+            {data.phone && (
+              <Link
+                href={`tel:${data.phone}`}
+                className="flex items-center justify-center gap-3 p-4 bg-white rounded-xl hover:shadow-md transition-all duration-200 border border-gray-200 hover:border-green-500 group"
+              >
+                <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Phone size={20} className="text-white" />
+                </div>
+                <div className="flex-1">
+                  <div className="font-semibold text-gray-900 group-hover:text-green-500">Phone</div>
+                  <div className="text-xs text-gray-500">Direct call</div>
+                </div>
+              </Link>
+            )}
+          </div>
+        </div>
+
         {/* About Section */}
         {data.about && (
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">

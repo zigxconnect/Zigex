@@ -177,8 +177,7 @@ export default async function CompanyProfilePage({ params }: Props) {
 
           </aside>
         </div>
-{/* 
-        <div className="mt-10 text-center text-sm text-gray-500">Profile generated for preview. URL: <code className="bg-white px-2 py-1 rounded">/company/{id}</code></div> */}
+
       </div>
     </div>
   );
