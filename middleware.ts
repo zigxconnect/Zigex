@@ -15,35 +15,46 @@ export async function middleware(request: NextRequest) {
           return request.cookies.get(name)?.value;
         },
         set(name, value, options) {
-          request.cookies.set({ name, value, ...options });
           response.cookies.set({ name, value, ...options });
         },
         remove(name, options) {
-          request.cookies.set({ name, value: "", ...options });
-          response.cookies.set({ name, value: "", ...options });
+          // Remove cookie by setting value to empty string, maxAge: 0, and expires to a past date
+          response.cookies.set({
+            name,
+            value: "",
+            maxAge: 0,
+            expires: new Date(0), // Jan 1, 1970
+            ...options,
+          });
         },
       },
     }
   );
 
+  await supabase.auth.getSession();
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
   const { pathname } = request.nextUrl;
 
   const publicPaths = [
     "/",
     "/sign-in",
     "/sign-up",
-    "/auth/callback",
+    "/api/auth/callback",
     "/verify-otp",
   ];
 
   // --- 1. Handle Unauthenticated Users ---
   if (!user) {
-    if (publicPaths.includes(pathname)) {
-      return response; // Allow access to public pages, including the OTP page
+    // *** THE CRITICAL FIX IS HERE ***
+    // Allow access to public paths AND the create-profile page.
+    // This breaks the redirect loop after the auth callback.
+    if (publicPaths.includes(pathname) || pathname === "/create-profile") {
+      return response;
     }
+
     // For any other protected path, redirect to sign-in
     return NextResponse.redirect(new URL("/sign-in", request.url));
   }
@@ -70,14 +81,15 @@ export async function middleware(request: NextRequest) {
     if (pathname !== "/create-profile") {
       return NextResponse.redirect(new URL("/create-profile", request.url));
     }
-    return response;
+    return response; // Stay on the create-profile page
   }
 
-  // --- B. Redirect Logged-in Users from Public Pages ---
-  if (publicPaths.includes(pathname)) {
+  // --- B. Redirect Logged-in Users from Public/Setup Pages ---
+  if (publicPaths.includes(pathname) || pathname === "/create-profile") {
     if (userRole === "company") {
       return NextResponse.redirect(new URL("/admin/postings", request.url));
     }
+    // This now correctly handles a COMPLETED student trying to access /create-profile
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 

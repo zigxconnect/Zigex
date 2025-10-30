@@ -91,43 +91,39 @@ export const AuthForm = ({ type }: AuthFormProps) => {
   // New handler for Google Sign-In
   const handleGoogleSignIn = async () => {
     setApiError(null);
-    try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          // Use window.location.origin for better browser compatibility
-          redirectTo: `${window.location.origin}/api/auth/callback`,
-          queryParams: {
-            access_type: "offline",
-            prompt: "consent",
-          },
+    // Use the shared `supabase` client declared in the outer scope
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/api/auth/callback`,
+        // The 'prompt: "consent"' option is removed for a better user experience
+        queryParams: {
+          access_type: "offline",
         },
-      });
+      },
+    });
 
-      if (error) {
-        // Provide more specific error messages
-        if (error.message.includes("popup")) {
-          throw new Error(
-            "Pop-up was blocked. Please allow pop-ups for this site."
-          );
-        } else if (error.message.includes("network")) {
-          throw new Error(
-            "Network error. Please check your connection and try again."
-          );
-        } else {
-          throw new Error(
-            error.message ||
-              "Could not authenticate with Google. Please try again."
-          );
-        }
+    if (error) {
+      if (error.message.includes("popup")) {
+        setApiError("Pop-up was blocked. Please allow pop-ups for this site.");
+      } else if (error.message.includes("network")) {
+        setApiError(
+          "Network error. Please check your connection and try again."
+        );
+      } else {
+        setApiError(
+          error.message ||
+            "Could not authenticate with Google. Please try again."
+        );
       }
+    }
 
-      if (data.url) {
-        // Use router.push for better SPA experience if the URL is internal
-        router.push(data.url);
-      }
-    } catch (err) {
-      setApiError((err as Error).message);
+    // Stop execution if there was an error to avoid using `data.url` below.
+    if (error) return;
+
+    if (data.url) {
+      router.push(data.url);
     }
   };
 

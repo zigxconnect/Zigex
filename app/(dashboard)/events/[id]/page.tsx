@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { MapPin, ExternalLink, Calendar, Clock, Users, X } from "lucide-react";
+import { MapPin, ExternalLink, Calendar, Clock, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
