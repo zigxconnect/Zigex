@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { SocialButton } from "./SocialButton";
 import { GoogleIcon } from "./GoogleIcon";
-import { Cloud, GraduationCap, Eye, EyeOff, Linkedin } from "lucide-react";
+import { Cloud, GraduationCap, Eye, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/uiComponent/Spinner";
 import { Button } from "@/components/ui/button";
@@ -48,6 +48,7 @@ const Divider = () => (
 export const AuthForm = ({ type }: AuthFormProps) => {
   const isSignUp = type === "signUp";
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
@@ -61,11 +62,23 @@ export const AuthForm = ({ type }: AuthFormProps) => {
     resolver: zodResolver(isSignUp ? signUpSchema : signInSchema),
   });
 
+  useEffect(() => {
+    const errorDescription = searchParams.get("error_description");
+    if (errorDescription) {
+      const replaced = errorDescription.replace(/\+/g, " ");
+      let decoded = replaced;
+      try {
+        decoded = decodeURIComponent(replaced);
+      } catch {}
+      setApiError(decoded);
+    }
+  }, [searchParams]);
+
   const content = {
     signIn: {
       Icon: Cloud,
       title: "Welcome Back",
-      subtitle: "Sign in to your FutureProspect account",
+      subtitle: "Sign in to your ZIGEX account",
       buttonText: "Log In",
       socialButtonText: "Sign In",
       linkText: "Don't have an account?",
@@ -88,16 +101,13 @@ export const AuthForm = ({ type }: AuthFormProps) => {
   const finePrint =
     "By continuing, you agree to our Terms of Service and Privacy Policy.";
 
-  // New handler for Google Sign-In
+  // Handler for Google Sign-In
   const handleGoogleSignIn = async () => {
     setApiError(null);
-    // Use the shared `supabase` client declared in the outer scope
-
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/api/auth/callback`,
-        // The 'prompt: "consent"' option is removed for a better user experience
         queryParams: {
           access_type: "offline",
         },
@@ -105,28 +115,16 @@ export const AuthForm = ({ type }: AuthFormProps) => {
     });
 
     if (error) {
-      if (error.message.includes("popup")) {
-        setApiError("Pop-up was blocked. Please allow pop-ups for this site.");
-      } else if (error.message.includes("network")) {
-        setApiError(
-          "Network error. Please check your connection and try again."
-        );
-      } else {
-        setApiError(
-          error.message ||
-            "Could not authenticate with Google. Please try again."
-        );
-      }
+      setApiError(error.message || "Could not authenticate with Google.");
+      return;
     }
-
-    // Stop execution if there was an error to avoid using `data.url` below.
-    if (error) return;
 
     if (data.url) {
       router.push(data.url);
     }
   };
 
+  // Handler for manual form submission (Sign Up or Sign In)
   const onSubmit = async (data: FormData) => {
     setApiError(null);
     if (isSignUp) {
@@ -136,10 +134,10 @@ export const AuthForm = ({ type }: AuthFormProps) => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         });
-        if (!registerResponse.ok)
-          throw new Error(
-            (await registerResponse.json()).error || "Sign-up failed."
-          );
+        const responseData = await registerResponse.json();
+        if (!registerResponse.ok) {
+          throw new Error(responseData.error || "Sign-up failed.");
+        }
         router.push("/create-profile");
       } catch (err) {
         setApiError((err as Error).message);
@@ -152,8 +150,9 @@ export const AuthForm = ({ type }: AuthFormProps) => {
           body: JSON.stringify({ email: data.email, password: data.password }),
         });
         const responseData = await response.json();
-        if (!response.ok)
+        if (!response.ok) {
           throw new Error(responseData.error || "Login failed.");
+        }
 
         if (responseData.otpSent) {
           router.push(`/verify-otp?email=${encodeURIComponent(data.email)}`);
@@ -183,13 +182,8 @@ export const AuthForm = ({ type }: AuthFormProps) => {
       </div>
       <div className="mt-5 space-y-3">
         <SocialButton
-          icon={Linkedin}
-          text={`${currentContent.socialButtonText} with LinkedIn`}
-          className="bg-[#0A66C2] text-white hover:bg-[#0A66C2]/90"
-        />
-        <SocialButton
           icon={GoogleIcon}
-          onClick={handleGoogleSignIn} // The onClick handler is now connected
+          onClick={handleGoogleSignIn}
           text={`${currentContent.socialButtonText} with Google`}
         />
       </div>
@@ -237,7 +231,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
             </label>
             {!isSignUp && (
               <Link
-                href="#"
+                href="/forgot-password"
                 className="text-sm text-orange-500 hover:underline cursor-pointer"
               >
                 Forgot Password?

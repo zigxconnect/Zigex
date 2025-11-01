@@ -14,14 +14,40 @@ export async function POST(request: Request) {
     );
   }
 
-  // 1. Create the user and pass metadata for the trigger.
+  const { data: companyProfile, error } = await supabaseAdmin
+    .from("company_profiles")
+    .select("user_id")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (error) {
+    console.error(
+      "Error querying company_profiles for registration check:",
+      error
+    );
+    return NextResponse.json(
+      { error: "Internal server error while validating email." },
+      { status: 500 }
+    );
+  }
+
+  if (companyProfile) {
+    return NextResponse.json(
+      {
+        error:
+          "This email is registered to a company. Please use a different email or sign in as a company.",
+      },
+      { status: 409 }
+    );
+  }
+
   const { data: authData, error: authError } = await supabaseAdmin.auth.signUp({
     email,
     password,
     options: {
       data: {
         full_name: fullName,
-        user_role: "student", // This metadata tells our trigger to create a student profile.
+        user_role: "student",
       },
     },
   });
@@ -40,9 +66,6 @@ export async function POST(request: Request) {
     );
   }
 
-  // The manual profile creation is correctly removed, as the trigger handles it.
-
-  // 2. Sign in the new user to create a session.
   const cookieStore = cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

@@ -18,14 +18,7 @@ export async function middleware(request: NextRequest) {
           response.cookies.set({ name, value, ...options });
         },
         remove(name, options) {
-          // Remove cookie by setting value to empty string, maxAge: 0, and expires to a past date
-          response.cookies.set({
-            name,
-            value: "",
-            maxAge: 0,
-            expires: new Date(0), // Jan 1, 1970
-            ...options,
-          });
+          response.cookies.set({ name, value: "", ...options, maxAge: 0 });
         },
       },
     }
@@ -44,60 +37,58 @@ export async function middleware(request: NextRequest) {
     "/sign-up",
     "/api/auth/callback",
     "/verify-otp",
+    "/forgot-password",
+    "/update-password",
   ];
 
-  // --- 1. Handle Unauthenticated Users ---
   if (!user) {
-    // *** THE CRITICAL FIX IS HERE ***
-    // Allow access to public paths AND the create-profile page.
-    // This breaks the redirect loop after the auth callback.
     if (publicPaths.includes(pathname) || pathname === "/create-profile") {
       return response;
     }
-
-    // For any other protected path, redirect to sign-in
     return NextResponse.redirect(new URL("/sign-in", request.url));
   }
 
-  // --- 2. Handle Authenticated Users ---
+  // --- THE CRITICAL FIX ---
+  // If the user is authenticated (even with a temporary password reset token)
+  // and they are on the update-password page, DO NOT redirect them.
+  // This allows the password update form to handle the session.
+  if (pathname === "/update-password") {
+    return response;
+  }
+  // --- END OF FIX ---
+
+  // --- Handle Authenticated Users ---
   const { data: studentProfile } = await supabase
     .from("student_profiles")
     .select("role, profile_status")
     .eq("user_id", user.id)
     .single();
-
   const { data: companyProfile } = await supabase
     .from("company_profiles")
     .select("role")
     .eq("user_id", user.id)
     .single();
-
   const userRole = studentProfile?.role || companyProfile?.role;
   const isStudentProfileComplete =
     studentProfile?.profile_status === "complete";
 
-  // --- A. Force Profile Creation for New Students ---
   if (userRole === "student" && !isStudentProfileComplete) {
     if (pathname !== "/create-profile") {
       return NextResponse.redirect(new URL("/create-profile", request.url));
     }
-    return response; // Stay on the create-profile page
+    return response;
   }
 
-  // --- B. Redirect Logged-in Users from Public/Setup Pages ---
   if (publicPaths.includes(pathname) || pathname === "/create-profile") {
     if (userRole === "company") {
       return NextResponse.redirect(new URL("/admin/postings", request.url));
     }
-    // This now correctly handles a COMPLETED student trying to access /create-profile
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  // --- C. Role-Based Route Protection ---
   if (pathname.startsWith("/admin") && userRole !== "company") {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
-
   const studentPaths = [
     "/dashboard",
     "/profile-settings",
