@@ -3,9 +3,9 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
 
+// Helper function to create the Supabase client (your code, with async fixes)
 async function createSupabaseClient() {
-  // cookies() must be awaited in Next.js server runtime
-  const cookieStore = await cookies();
+  const cookieStore = cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -14,118 +14,105 @@ async function createSupabaseClient() {
         get(name: string) {
           return cookieStore.get(name)?.value;
         },
-        set(name: string, value: string, options: CookieOptions) {
-          try {
-            cookieStore.set({ name, value, ...options });
-          } catch (error) {
-            // Handle error
-          }
+        async set(name: string, value: string, options: CookieOptions) {
+          await cookieStore.set({ name, value, ...options });
         },
-        remove(name: string, options: CookieOptions) {
-          try {
-            cookieStore.set({ name, value: "", ...options });
-          } catch (error) {
-            // Handle error
-          }
+        async remove(name: string, options: CookieOptions) {
+          await cookieStore.set({ name, value: "", ...options });
         },
       },
     }
   );
 }
 
+/**
+ * GET: Securely fetches a hybrid list of personal and global notifications.
+ */
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const page = parseInt(searchParams.get("page") || "1");
-  const limit = parseInt(searchParams.get("limit") || "20");
-  const unreadOnly = searchParams.get("unreadOnly") === "true";
-
   const supabase = await createSupabaseClient();
-
   try {
-    // Get current user (just for authentication)
     const {
       data: { user },
       error: userError,
     } = await supabase.auth.getUser();
-
     if (userError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Calculate pagination
+    // --- Step 1: Fetch both PERSONAL and GLOBAL notifications in parallel ---
+    const [personalResult, globalResult] = await Promise.all([
+      // A) Fetch notifications meant ONLY for this user.
+      supabase.from("notifications").select("*").eq("user_id", user.id),
+      // B) Fetch notifications meant for EVERYONE (where user_id is null).
+      supabase.from("notifications").select("*").is("user_id", null),
+    ]);
+
+    if (personalResult.error) throw personalResult.error;
+    if (globalResult.error) throw globalResult.error;
+
+    // --- Step 2: Combine and sort the results ---
+    const combinedNotifications = [
+      ...(personalResult.data || []),
+      ...(globalResult.data || []),
+    ];
+    combinedNotifications.sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+
+    // --- Step 3: Determine the correct 'is_read' status for the hybrid list ---
+    const { data: adminUser } = await supabaseAdmin.auth.admin.getUserById(
+      user.id
+    );
+    const readList: string[] =
+      adminUser?.user?.user_metadata?.read_notifications || [];
+
+    const mappedNotifications = combinedNotifications.map((n) => {
+      // For personal notifications, the 'is_read' column is the source of truth.
+      // For global notifications, we fall back to your user_metadata system.
+      const isRead = n.user_id ? n.is_read : readList.includes(n.id);
+      return { ...n, is_read: isRead };
+    });
+
+    // --- Step 4: Apply filtering and pagination ---
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const unreadOnly = searchParams.get("unreadOnly") === "true";
+
+    const filtered = unreadOnly
+      ? mappedNotifications.filter((n) => !n.is_read)
+      : mappedNotifications;
+    const total = filtered.length;
     const from = (page - 1) * limit;
-    const to = from + limit - 1;
+    const to = from + limit;
+    const paginated = filtered.slice(from, to);
 
-    // Build base notifications query (no global read filter)
-    const { data: notifications, error, count } = await supabase
-      .from("notifications")
-      .select("*", { count: "exact" })
-      .order("created_at", { ascending: false })
-      .range(from, to);
-
-    if (error) {
-      console.error("Supabase query error:", error);
-      throw error;
-    }
-
-    // Try reading per-user read list from auth.user_metadata first (no schema change)
-    try {
-      const { data: adminUser, error: adminUserError } = await supabaseAdmin.auth.admin.getUserById(user.id);
-      if (!adminUserError && adminUser && adminUser.user) {
-        const readList: string[] = (adminUser.user.user_metadata?.read_notifications) || [];
-        const mapped = (notifications || []).map((n: any) => ({ ...n, is_read: readList.includes(n.id) }));
-        const filtered = unreadOnly ? mapped.filter((m: any) => !m.is_read) : mapped;
-        return NextResponse.json({ notifications: filtered, total: count, page, totalPages: Math.ceil((count || 0) / limit) });
-      }
-    } catch (metaErr) {
-      console.warn("user_metadata read mapping failed, will try other methods", metaErr);
-    }
-
-    // Fallback: use notification_reads table if available (mapping table)
-    try {
-      const notificationIds = (notifications || []).map((n: any) => n.id);
-      let readRows: any[] = [];
-
-      if (notificationIds.length > 0) {
-        const { data: reads, error: readsError } = await supabase
-          .from("notification_reads")
-          .select("notification_id")
-          .eq("user_id", user.id)
-          .in("notification_id", notificationIds);
-
-        if (!readsError && reads) {
-          readRows = reads;
-        }
-      }
-
-      const mapped = (notifications || []).map((n: any) => ({ ...n, is_read: !!readRows.find((r: any) => r.notification_id === n.id) }));
-      const filtered = unreadOnly ? mapped.filter((m: any) => !m.is_read) : mapped;
-      return NextResponse.json({ notifications: filtered, total: count, page, totalPages: Math.ceil((count || 0) / limit) });
-    } catch (mapError) {
-      // If mapping fails completely, fall back to legacy global is_read
-      console.warn("notification_reads mapping failed, falling back to global is_read", mapError);
-      const filteredLegacy = unreadOnly ? (notifications || []).filter((n: any) => !n.is_read) : notifications;
-      return NextResponse.json({ notifications: filteredLegacy, total: count, page, totalPages: Math.ceil((count || 0) / limit) });
-    }
+    return NextResponse.json({
+      notifications: paginated,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    });
   } catch (error: any) {
-    console.error("API Endpoint Error:", error);
+    console.error("GET Notifications Error:", error.message);
     return NextResponse.json(
-      { error: "Failed to fetch notifications", details: error.message },
+      { error: "Failed to fetch notifications" },
       { status: 500 }
     );
   }
 }
 
+/**
+ * POST: Securely marks notifications as read.
+ */
 export async function POST(request: Request) {
   const supabase = await createSupabaseClient();
-
   try {
-    // Get current user
     const {
       data: { user },
       error: userError,
     } = await supabase.auth.getUser();
-
     if (userError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -133,74 +120,87 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { notificationIds, markAll } = body;
 
+    // --- Logic for marking specific notifications as read ---
+    if (notificationIds && Array.isArray(notificationIds)) {
+      const { data: notificationsToUpdate } = await supabase
+        .from("notifications")
+        .select("id, user_id")
+        .in("id", notificationIds);
+
+      const personalIds = (notificationsToUpdate || [])
+        .filter((n) => n.user_id === user.id)
+        .map((n) => n.id);
+      const globalIds = (notificationsToUpdate || [])
+        .filter((n) => n.user_id === null)
+        .map((n) => n.id);
+
+      // Update personal notifications directly
+      if (personalIds.length > 0) {
+        await supabase
+          .from("notifications")
+          .update({ is_read: true })
+          .in("id", personalIds)
+          .eq("user_id", user.id);
+      }
+      // Update global notifications via metadata
+      if (globalIds.length > 0) {
+        const { data: adminUser } = await supabaseAdmin.auth.admin.getUserById(
+          user.id
+        );
+        const existing: string[] =
+          adminUser?.user?.user_metadata?.read_notifications || [];
+        const merged = Array.from(new Set([...existing, ...globalIds]));
+        await supabaseAdmin.auth.admin.updateUserById(user.id, {
+          user_metadata: {
+            ...adminUser?.user?.user_metadata,
+            read_notifications: merged,
+          },
+        });
+      }
+      return NextResponse.json({ message: "Notifications marked as read." });
+    }
+
+    // --- Logic for marking all as read ---
     if (markAll) {
-      // Persist 'mark all' by updating user's metadata read_notifications to include all current notification ids.
-      try {
-        const { data: allNotifications } = await supabase.from("notifications").select("id");
-        const ids = (allNotifications || []).map((n: any) => n.id);
+      // 1. Mark all PERSONAL notifications as read
+      await supabase
+        .from("notifications")
+        .update({ is_read: true })
+        .eq("user_id", user.id)
+        .eq("is_read", false);
 
-        // Fetch admin user metadata
-        const { data: adminUser } = await supabaseAdmin.auth.admin.getUserById(user.id);
-        const existing: string[] = (adminUser?.user?.user_metadata?.read_notifications) || [];
-        const merged = Array.from(new Set([...existing, ...ids]));
-
-        await supabaseAdmin.auth.admin.updateUserById(user.id, { user_metadata: { ...(adminUser?.user?.user_metadata || {}), read_notifications: merged } });
-
-        return NextResponse.json({ message: "All notifications marked as read for this user (metadata)" });
-      } catch (e) {
-        console.warn("user_metadata update failed, falling back to notification_reads or legacy", e);
-        // Fallback to notification_reads upsert
-        try {
-          const { data: allNotifications } = await supabase.from("notifications").select("id");
-          const rows = (allNotifications || []).map((n: any) => ({ notification_id: n.id, user_id: user.id, read_at: new Date().toISOString() }));
-          if (rows.length > 0) {
-            const { error: insertError } = await supabase.from("notification_reads").upsert(rows, { onConflict: "notification_id,user_id" });
-            if (insertError) throw insertError;
-          }
-          return NextResponse.json({ message: "All notifications marked as read for this user (notification_reads fallback)" });
-        } catch (e2) {
-          console.warn("fallback upsert failed, falling back to legacy global update", e2);
-          const { error } = await supabase.from("notifications").update({ is_read: true }).eq("is_read", false);
-          if (error) throw error;
-          return NextResponse.json({ message: "All notifications marked as read (legacy fallback)" });
-        }
-      }
-    }
-
-    if (!notificationIds || !Array.isArray(notificationIds)) {
-      return NextResponse.json(
-        { error: "Invalid notification IDs" },
-        { status: 400 }
+      // 2. Mark all GLOBAL notifications as read by adding them to metadata
+      const { data: allGlobalNotifications } = await supabase
+        .from("notifications")
+        .select("id")
+        .is("user_id", null);
+      const globalIds = (allGlobalNotifications || []).map((n) => n.id);
+      const { data: adminUser } = await supabaseAdmin.auth.admin.getUserById(
+        user.id
       );
+      const existing: string[] =
+        adminUser?.user?.user_metadata?.read_notifications || [];
+      const merged = Array.from(new Set([...existing, ...globalIds]));
+      await supabaseAdmin.auth.admin.updateUserById(user.id, {
+        user_metadata: {
+          ...adminUser?.user?.user_metadata,
+          read_notifications: merged,
+        },
+      });
+
+      return NextResponse.json({
+        message: "All notifications marked as read.",
+      });
     }
 
-    // Persist specific notification reads in user's metadata
-    try {
-      const { data: adminUser } = await supabaseAdmin.auth.admin.getUserById(user.id);
-      const existing: string[] = (adminUser?.user?.user_metadata?.read_notifications) || [];
-      const merged = Array.from(new Set([...existing, ...notificationIds]));
-
-      await supabaseAdmin.auth.admin.updateUserById(user.id, { user_metadata: { ...(adminUser?.user?.user_metadata || {}), read_notifications: merged } });
-
-      return NextResponse.json({ message: "Notifications marked as read for this user (metadata)" });
-    } catch (e) {
-      console.warn("user_metadata update failed, trying notification_reads fallback", e);
-      try {
-        const rows = notificationIds.map((id: string) => ({ notification_id: id, user_id: user.id, read_at: new Date().toISOString() }));
-        const { error: insertError } = await supabase.from("notification_reads").upsert(rows, { onConflict: "notification_id,user_id" });
-        if (insertError) throw insertError;
-        return NextResponse.json({ message: "Notifications marked as read for this user (notification_reads)" });
-      } catch (e2) {
-        console.warn("fallback upsert failed, falling back to legacy global update", e2);
-        const { error } = await supabase.from("notifications").update({ is_read: true }).in("id", notificationIds);
-        if (error) throw error;
-        return NextResponse.json({ message: "Notifications marked as read (legacy fallback)" });
-      }
-    }
-  } catch (error: any) {
-    console.error("API Endpoint Error:", error);
     return NextResponse.json(
-      { error: "Failed to update notifications", details: error.message },
+      { error: "Invalid request body" },
+      { status: 400 }
+    );
+  } catch (error: any) {
+    console.error("POST Notifications Error:", error.message);
+    return NextResponse.json(
+      { error: "Failed to update notifications" },
       { status: 500 }
     );
   }

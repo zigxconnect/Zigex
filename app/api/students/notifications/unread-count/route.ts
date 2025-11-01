@@ -3,10 +3,10 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
 
-export async function GET() {
-  const cookieStore = await cookies();
-
-  const supabase = createServerClient(
+// Helper function to create the Supabase client (with async fixes)
+async function createSupabaseClient() {
+  const cookieStore = cookies();
+  return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -14,77 +14,90 @@ export async function GET() {
         get(name: string) {
           return cookieStore.get(name)?.value;
         },
-        set(name: string, value: string, options: CookieOptions) {
-          try {
-            cookieStore.set({ name, value, ...options });
-          } catch (error) {
-            // Handle error
-          }
+        async set(name: string, value: string, options: CookieOptions) {
+          await cookieStore.set({ name, value, ...options });
         },
-        remove(name: string, options: CookieOptions) {
-          try {
-            cookieStore.set({ name, value: "", ...options });
-          } catch (error) {
-            // Handle error
-          }
+        async remove(name: string, options: CookieOptions) {
+          await cookieStore.set({ name, value: "", ...options });
         },
       },
     }
   );
+}
+
+/**
+ * GET: Securely calculates the total number of unread notifications
+ * for the logged-in user, combining personal and global alerts.
+ */
+export async function GET() {
+  const supabase = await createSupabaseClient();
 
   try {
-    // Get current user (for authentication only)
     const {
       data: { user },
       error: userError,
     } = await supabase.auth.getUser();
-
     if (userError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Prefer user_metadata; it's safer and requires no schema change
-    try {
-      const { data: adminUser } = await supabaseAdmin.auth.admin.getUserById(user.id);
-      const readList: string[] = (adminUser?.user?.user_metadata?.read_notifications) || [];
+    // --- We will calculate the unread count in two parts and add them together ---
 
-      const { data: allNotifications } = await supabase.from("notifications").select("id");
-      const notificationIds = (allNotifications || []).map((n: any) => n.id);
-      const unreadCount = notificationIds.filter((id: string) => !readList.includes(id)).length;
-      return NextResponse.json({ unreadCount });
-    } catch (err) {
-      console.warn("user_metadata unread-count failed, trying mapping table or legacy", err);
-      try {
-        const { data: allNotifications } = await supabase.from("notifications").select("id");
-        const notificationIds = (allNotifications || []).map((n: any) => n.id);
+    // Part 1: Count PERSONAL unread notifications directly from the database.
+    // This is very efficient as the database does the counting for us.
+    const { count: personalUnreadCount, error: personalCountError } =
+      await supabase
+        .from("notifications")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("is_read", false);
 
-        if (notificationIds.length === 0) return NextResponse.json({ unreadCount: 0 });
-
-        const { data: reads, error: readsError } = await supabase
-          .from("notification_reads")
-          .select("notification_id")
-          .eq("user_id", user.id)
-          .in("notification_id", notificationIds);
-
-        if (readsError) {
-          const { count, error } = await supabase
-            .from("notifications")
-            .select("*", { count: "exact", head: true })
-            .eq("is_read", false);
-          if (error) throw error;
-          return NextResponse.json({ unreadCount: count || 0 });
-        }
-
-        const readSet = new Set((reads || []).map((r: any) => r.notification_id));
-        const unreadCount = notificationIds.filter((id: string) => !readSet.has(id)).length;
-        return NextResponse.json({ unreadCount });
-      } catch (finalErr) {
-        console.error("Unread count error", finalErr);
-        return NextResponse.json({ unreadCount: 0 });
-      }
+    if (personalCountError) {
+      console.error(
+        "Error fetching personal unread count:",
+        personalCountError
+      );
+      throw personalCountError;
     }
+
+    // Part 2: Count GLOBAL unread notifications using the user_metadata.
+    let globalUnreadCount = 0;
+    try {
+      // Get the list of global notification IDs that the user has already read.
+      const { data: adminUser } = await supabaseAdmin.auth.admin.getUserById(
+        user.id
+      );
+      const readList: string[] =
+        adminUser?.user?.user_metadata?.read_notifications || [];
+      const readSet = new Set(readList);
+
+      // Get all global notification IDs from the database.
+      const { data: allGlobalNotifications, error: globalFetchError } =
+        await supabase.from("notifications").select("id").is("user_id", null);
+
+      if (globalFetchError) throw globalFetchError;
+
+      // Calculate the unread count in code.
+      if (allGlobalNotifications) {
+        globalUnreadCount = allGlobalNotifications.filter(
+          (n) => !readSet.has(n.id)
+        ).length;
+      }
+    } catch (err) {
+      console.warn(
+        "Could not calculate global unread count via user_metadata:",
+        err
+      );
+      // We default to 0 for globals if the metadata check fails, to avoid blocking the response.
+      globalUnreadCount = 0;
+    }
+
+    // --- Final Step: Combine the counts and return the result ---
+    const totalUnreadCount = (personalUnreadCount || 0) + globalUnreadCount;
+
+    return NextResponse.json({ unreadCount: totalUnreadCount });
   } catch (error: any) {
-    console.error("API Endpoint Error:", error);
+    console.error("API Endpoint Error (unread-count):", error);
     return NextResponse.json(
       { error: "Failed to fetch unread count" },
       { status: 500 }
