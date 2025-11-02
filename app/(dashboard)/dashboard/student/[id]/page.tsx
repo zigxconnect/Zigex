@@ -270,7 +270,7 @@ Looking forward to hearing from you!`;
       </div>
 
       {/* Content Container */}
-      <div className="max-w-4xl mx-auto px-4 lg:px-6 space-y-6">
+      <div className="max-w-4xl mx-auto px-4 lg:px-6 space-y-6 md:mb-0 mb-[4rem]">
         {/* Quick Connect Card */}
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100 shadow-sm">
           <h3 className="text-lg font-bold text-gray-900 mb-4">Connect with {data.full_name?.split(' ')[0]}</h3>

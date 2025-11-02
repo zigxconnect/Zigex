@@ -29,7 +29,7 @@ export default function QRCodeButton({
       setQrCodeDataUrl(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${qrData}&bgcolor=ffffff&color=000000`);
     }
   }, [isOpen, profileUrl, qrCodeDataUrl]);
-
+ 
   // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
@@ -57,14 +57,14 @@ export default function QRCodeButton({
     } catch (error) {
       console.error('Download failed:', error);
     }
-  };
+  }; 
 
   const handleShare = async () => {
     if (navigator.share) {
       try {
         await navigator.share({
           title: `Connect with ${fullName || 'me'}`,
-          text: `Check out ${fullName || 'this'}'s profile on ZigX!`,
+          text: `Check out ${fullName || 'this'}'s profile on ZigeX!`,
           url: profileUrl,
         });
       } catch (error) {
