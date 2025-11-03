@@ -1,5 +1,5 @@
 import React from "react";
-import { supabaseAdmin } from "@/lib/supabase/server";
+import { supabaseAdmin, createServerActionClient } from "@/lib/supabase/server";
 import Image from "next/image";
 import Link from "next/link";
 import { 
@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import ConnectBar from "@/components/sections/dashboard/ConnectBar";
 import QRCodeButton from "@/components/sections/dashboard/QRCodeButton";
+import SimilarStudentsSidebar from "@/components/sections/dashboard/SimilarStudentsSidebar";
+import StackedAvatarsWrapper from "@/components/sections/dashboard/StackedAvatarsWrapper";
 
 interface Props {
   params: { id: string };
@@ -52,6 +54,119 @@ export default async function StudentDetailPage({ params }: Props) {
   const avatarUrl = data.avatar_url || "/z3.png";
   const coverImageUrl = data.cover_image || "/n8.png";
 
+  // Determine if the current request user is the owner of this profile
+  let isOwner = false;
+  try {
+    const supabase = await createServerActionClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: myProfile } = await supabase
+        .from("student_profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (myProfile && myProfile.id === id) {
+        isOwner = true;
+      }
+    }
+  } catch (err) {
+    // ignore — if we cannot determine the current user, treat as not owner
+    isOwner = false;
+  }
+
+  // Fetch candidate students to compute similarity (server-side)
+  const { data: candidatesData } = await supabaseAdmin
+    .from("student_profiles")
+    .select(`
+      id, 
+      full_name, 
+      avatar_url,
+      image_url,
+      university, 
+      linkedin_url, 
+      phone, 
+      email, 
+      hard_skills, 
+      soft_skills,
+      user:user_id (
+        avatar_url
+      ),
+      user_id
+    `)
+    .neq("id", id)
+    .not('hard_skills', 'is', null)  // Ensure we get profiles with at least some skills
+    .not('full_name', 'is', null)    // Ensure profile has a name
+    .limit(50);  // Increased limit to find more potential matches
+
+  // Fetch user avatars for candidates
+  const userIds = candidatesData?.map(c => c.user_id).filter(Boolean) || [];
+  const { data: userProfiles } = await supabaseAdmin
+    .from('users')
+    .select('id, avatar_url')
+    .in('id', userIds);
+
+  const candidates = (candidatesData || []) as Array<any>;
+
+  const myHard: string[] = data.hard_skills || [];
+  const mySoft: string[] = data.soft_skills || [];
+
+  function countOverlap(arrA: string[], arrB: string[] = []) {
+    if (!arrA || !arrB) return 0;
+    const setA = new Set(arrA.map(x => (x || "").toLowerCase()));
+    const setB = new Set(arrB.map(x => (x || "").toLowerCase()));
+    let count = 0;
+    for (const item of setA) {
+      if (setB.has(item)) count++;
+    }
+    return count;
+  }
+
+  // Calculate skill similarity scores
+  const scored = candidates
+    .map((c) => {
+      const hard = countOverlap(c.hard_skills || [], myHard);
+      const soft = countOverlap(c.soft_skills || [], mySoft);
+      // Weight hard skills slightly more than soft skills
+      const score = (hard * 1.5) + soft;
+      return { ...c, score, hardMatches: hard, softMatches: soft };
+    })
+    .sort((a, b) => b.score - a.score);
+
+  // Get all candidates with any matching skills, or top 6 if no matches
+  let similar = scored.filter((s) => s.score > 0);
+  if (similar.length === 0) {
+    // If no skill matches, include some random suggestions
+    similar = scored.slice(0, 6);
+  } else if (similar.length > 6) {
+    // Limit to top 6 matches if we have more
+    similar = similar.slice(0, 6);
+  }
+
+  // Normalize similar students shape for client component
+  // Create a map of user_id to avatar_url for quick lookup
+  const userAvatarMap = new Map(
+    (userProfiles || []).map(user => [user.id, user.avatar_url])
+  );
+
+  const similarStudents = similar.slice(0, 6).map((s) => {
+    return {
+      id: s.id,
+      full_name: s.full_name,
+      avatar_url: s.user?.avatar_url || s.image_url || s.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(s.full_name)}`,
+      university: s.university,
+      linkedin_url: s.linkedin_url,
+      phone: s.phone,
+      email: s.email,
+      hard_skills: s.hard_skills,
+      soft_skills: s.soft_skills,
+      score: s.score,
+    };
+  });
+  
+  // Debug log to verify data
+  console.log("Server-side similarStudents:", similarStudents);
+
   const initials = (data.full_name || "")
     .split(" ")
     .map((n: string) => n[0])
@@ -75,7 +190,7 @@ Looking forward to hearing from you!`;
   const linkedinUrl = data.linkedin_url;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-gray-50 pb-24 lg:pr-80">
       {/* Header Card */}
       <div className="relative bg-white md:rounded-2xl md:w-full mx-auto shadow-lg md:border md:border-gray-200 overflow-hidden mb-6">
         {/* Cover Image */}
@@ -121,6 +236,7 @@ Looking forward to hearing from you!`;
             email={data.email}
             fullName={data.full_name}
             profileUrl={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://zigex.vercel.app'}/dashboard/student/${id}`}
+            isOwner={isOwner}
           />
         </div>
 
@@ -130,28 +246,48 @@ Looking forward to hearing from you!`;
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 lg:gap-6">
             {/* Name and Location */}
             <div className="flex-1">
-              <div className="flex items-center gap-2 flex-wrap mb-2">
-                <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
-                  {data.full_name || "Unnamed Student"}
-                </h1>
-                {/* Verification Badge */}
-                <div className="flex items-center justify-center bg-blue-500 rounded-full p-0.5">
-                  <svg 
-                    viewBox="0 0 24 24" 
-                    className="w-5 h-5 lg:w-6 lg:h-6 fill-white"
-                    aria-label="Verified"
-                  >
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                  </svg>
+              <div className="flex items-center gap-4 flex-wrap mb-2">
+                <div className="flex items-center gap-2">
+                  <h1 className="text-sm lg:text-[20px] font-bold text-gray-900">
+                    {data.full_name || "Zigex Student"}
+                  </h1>
+                  {/* Verification Badge */}
+                  <div className="flex items-center justify-center bg-blue-500 rounded-full p-0.5">
+                    <svg 
+                      viewBox="0 0 24 24" 
+                      className="w-5 h-5 lg:w-6 lg:h-6 fill-white"
+                      aria-label="Verified"
+                    >
+                      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                    </svg>
+                  </div>
                 </div>
+                
+                {/* Stacked Avatars next to username */}
+                {/* <div className="lg:hidden">
+                  <StackedAvatarsWrapper
+                    avatars={similarStudents.map(s => ({
+                      src: s.image_url || s.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(s.full_name)}`,
+                      name: s.full_name
+                    }))}
+                    maxVisible={3}
+                    moreCount={similarStudents.length > 3 ? similarStudents.length - 3 : 0}
+                    studentId={id}
+                  />
+                </div> */}
               </div>
+
+                {/* Similar students sidebar - fixed on large screens, responsive on mobile */}
+                <SimilarStudentsSidebar students={similarStudents} />
               
               <div className="flex items-center gap-2 text-gray-600 mb-3">
                 <MapPin size={18} className="text-gray-500" />
-                <p className="text-base lg:text-lg font-medium">
+                <p className="text-base text-[12px] lg:text-lg font-medium">
                   {data.university || "University not specified"}
                 </p>
               </div>
+
+
 
               {/* Social Links */}
               <div className="flex items-center gap-4 flex-wrap">
@@ -269,8 +405,8 @@ Looking forward to hearing from you!`;
         </div>
       </div>
 
-      {/* Content Container */}
-      <div className="max-w-4xl mx-auto px-4 lg:px-6 space-y-6 md:mb-0 mb-[4rem]">
+  {/* Content Container (leaves space on large screens for the right sidebar) */}
+  <div className="max-w-4xl mx-auto px-4 lg:px-6 space-y-6 md:mb-0 mb-[4rem]">
         {/* Quick Connect Card */}
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100 shadow-sm">
           <h3 className="text-lg font-bold text-gray-900 mb-4">Connect with {data.full_name?.split(' ')[0]}</h3>
@@ -450,3 +586,6 @@ Looking forward to hearing from you!`;
     </div>
   );
 }
+
+
+
