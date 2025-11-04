@@ -39,18 +39,15 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // --- Step 1: Fetch both PERSONAL and GLOBAL notifications in parallel ---
     const [personalResult, globalResult] = await Promise.all([
-      // A) Fetch notifications meant ONLY for this user.
       supabase.from("notifications").select("*").eq("user_id", user.id),
-      // B) Fetch notifications meant for EVERYONE (where user_id is null).
+
       supabase.from("notifications").select("*").is("user_id", null),
     ]);
 
     if (personalResult.error) throw personalResult.error;
     if (globalResult.error) throw globalResult.error;
 
-    // --- Step 2: Combine and sort the results ---
     const combinedNotifications = [
       ...(personalResult.data || []),
       ...(globalResult.data || []),
@@ -60,7 +57,6 @@ export async function GET(request: Request) {
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
 
-    // --- Step 3: Determine the correct 'is_read' status for the hybrid list ---
     const { data: adminUser } = await supabaseAdmin.auth.admin.getUserById(
       user.id
     );
@@ -68,13 +64,9 @@ export async function GET(request: Request) {
       adminUser?.user?.user_metadata?.read_notifications || [];
 
     const mappedNotifications = combinedNotifications.map((n) => {
-      // For personal notifications, the 'is_read' column is the source of truth.
-      // For global notifications, we fall back to your user_metadata system.
       const isRead = n.user_id ? n.is_read : readList.includes(n.id);
       return { ...n, is_read: isRead };
     });
-
-    // --- Step 4: Apply filtering and pagination ---
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
@@ -120,7 +112,6 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { notificationIds, markAll } = body;
 
-    // --- Logic for marking specific notifications as read ---
     if (notificationIds && Array.isArray(notificationIds)) {
       const { data: notificationsToUpdate } = await supabase
         .from("notifications")
@@ -134,7 +125,6 @@ export async function POST(request: Request) {
         .filter((n) => n.user_id === null)
         .map((n) => n.id);
 
-      // Update personal notifications directly
       if (personalIds.length > 0) {
         await supabase
           .from("notifications")
@@ -142,7 +132,7 @@ export async function POST(request: Request) {
           .in("id", personalIds)
           .eq("user_id", user.id);
       }
-      // Update global notifications via metadata
+
       if (globalIds.length > 0) {
         const { data: adminUser } = await supabaseAdmin.auth.admin.getUserById(
           user.id
