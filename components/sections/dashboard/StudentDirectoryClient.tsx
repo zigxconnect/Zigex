@@ -56,7 +56,7 @@ export const StudentDirectoryClient: React.FC<{ profiles: RawUserProfile[] }> = 
         {/* Trending Banner */}
         <div className="border-b border-gray-200 px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50">
           <div className="flex items-center gap-2">
-            <TrendingUp size={16} className="text-blue-600" />
+            {/* <TrendingUp size={16} className="text-blue-600" /> */}
             <span className="text-sm font-semibold text-blue-900">
               {filtered.length} Students • Live Feed
             </span>

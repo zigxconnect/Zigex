@@ -78,33 +78,9 @@ export default async function StudentDetailPage({ params }: Props) {
   // Fetch candidate students to compute similarity (server-side)
   const { data: candidatesData } = await supabaseAdmin
     .from("student_profiles")
-    .select(`
-      id, 
-      full_name, 
-      avatar_url,
-      image_url,
-      university, 
-      linkedin_url, 
-      phone, 
-      email, 
-      hard_skills, 
-      soft_skills,
-      user:user_id (
-        avatar_url
-      ),
-      user_id
-    `)
+    .select("id, full_name, avatar_url, university, linkedin_url, phone, email, hard_skills, soft_skills")
     .neq("id", id)
-    .not('hard_skills', 'is', null)  // Ensure we get profiles with at least some skills
-    .not('full_name', 'is', null)    // Ensure profile has a name
-    .limit(50);  // Increased limit to find more potential matches
-
-  // Fetch user avatars for candidates
-  const userIds = candidatesData?.map(c => c.user_id).filter(Boolean) || [];
-  const { data: userProfiles } = await supabaseAdmin
-    .from('users')
-    .select('id, avatar_url')
-    .in('id', userIds);
+    .limit(10);
 
   const candidates = (candidatesData || []) as Array<any>;
 
@@ -113,56 +89,39 @@ export default async function StudentDetailPage({ params }: Props) {
 
   function countOverlap(arrA: string[], arrB: string[] = []) {
     if (!arrA || !arrB) return 0;
-    const setA = new Set(arrA.map(x => (x || "").toLowerCase()));
-    const setB = new Set(arrB.map(x => (x || "").toLowerCase()));
-    let count = 0;
-    for (const item of setA) {
-      if (setB.has(item)) count++;
-    }
-    return count;
+    const s = new Set(arrB.map((x) => (x || "").toLowerCase()));
+    return arrA.reduce((acc: number, cur: string) => acc + (s.has((cur || "").toLowerCase()) ? 1 : 0), 0);
   }
 
-  // Calculate skill similarity scores
+  console.log(`Profile picture is URL: ${data.avatar_url}`);
+
   const scored = candidates
     .map((c) => {
       const hard = countOverlap(c.hard_skills || [], myHard);
       const soft = countOverlap(c.soft_skills || [], mySoft);
-      // Weight hard skills slightly more than soft skills
-      const score = (hard * 1.5) + soft;
-      return { ...c, score, hardMatches: hard, softMatches: soft };
+      return { ...c, score: hard + soft, hardMatches: hard, softMatches: soft };
     })
     .sort((a, b) => b.score - a.score);
 
-  // Get all candidates with any matching skills, or top 6 if no matches
-  let similar = scored.filter((s) => s.score > 0);
-  if (similar.length === 0) {
-    // If no skill matches, include some random suggestions
-    similar = scored.slice(0, 6);
-  } else if (similar.length > 6) {
-    // Limit to top 6 matches if we have more
-    similar = similar.slice(0, 6);
+  // Prefer profiles with at least 3 combined matches; otherwise pick top 3
+  let similar = scored.filter((s) => s.score >= 4);
+  if (similar.length < 4) {
+    similar = scored.slice(0, 3);
   }
 
   // Normalize similar students shape for client component
-  // Create a map of user_id to avatar_url for quick lookup
-  const userAvatarMap = new Map(
-    (userProfiles || []).map(user => [user.id, user.avatar_url])
-  );
-
-  const similarStudents = similar.slice(0, 6).map((s) => {
-    return {
-      id: s.id,
-      full_name: s.full_name,
-      avatar_url: s.user?.avatar_url || s.image_url || s.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(s.full_name)}`,
-      university: s.university,
-      linkedin_url: s.linkedin_url,
-      phone: s.phone,
-      email: s.email,
-      hard_skills: s.hard_skills,
-      soft_skills: s.soft_skills,
-      score: s.score,
-    };
-  });
+  const similarStudents = similar.slice(0, 6).map((s) => ({
+    id: s.id,
+    full_name: s.full_name,
+    avatar_url: s.avatar_url,
+    university: s.university,
+    linkedin_url: s.linkedin_url,
+    phone: s.phone,
+    email: s.email,
+    hard_skills: s.hard_skills,
+    soft_skills: s.soft_skills,
+    score: s.score,
+  }));
   
   // Debug log to verify data
   console.log("Server-side similarStudents:", similarStudents);
@@ -190,7 +149,7 @@ Looking forward to hearing from you!`;
   const linkedinUrl = data.linkedin_url;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24 lg:pr-80">
+    <div className="min-h-screen bg-gray-50 pb-24 lg:pr-[26rem]">
       {/* Header Card */}
       <div className="relative bg-white md:rounded-2xl md:w-full mx-auto shadow-lg md:border md:border-gray-200 overflow-hidden mb-6">
         {/* Cover Image */}
@@ -266,10 +225,7 @@ Looking forward to hearing from you!`;
                 {/* Stacked Avatars next to username */}
                 {/* <div className="lg:hidden">
                   <StackedAvatarsWrapper
-                    avatars={similarStudents.map(s => ({
-                      src: s.image_url || s.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(s.full_name)}`,
-                      name: s.full_name
-                    }))}
+                    avatars={similarStudents.map(s => ({ src: s.avatar_url, name: s.full_name }))}
                     maxVisible={3}
                     moreCount={similarStudents.length > 3 ? similarStudents.length - 3 : 0}
                     studentId={id}
@@ -277,8 +233,8 @@ Looking forward to hearing from you!`;
                 </div> */}
               </div>
 
-                {/* Similar students sidebar - fixed on large screens, responsive on mobile */}
-                <SimilarStudentsSidebar students={similarStudents} />
+                {/* Similar students sidebar - only shown to profile owner */}
+                {isOwner && <SimilarStudentsSidebar students={similarStudents} />}
               
               <div className="flex items-center gap-2 text-gray-600 mb-3">
                 <MapPin size={18} className="text-gray-500" />

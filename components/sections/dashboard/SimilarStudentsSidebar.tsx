@@ -24,8 +24,17 @@ export default function SimilarStudentsSidebar({
 }) {
   const [open, setOpen] = useState(false);
   
-  // Debug log to verify data
-  console.log("SimilarStudentsSidebar received students:", students);
+  // Helper to pick best avatar source
+  function pickAvatar(s: SimilarStudent) {
+    const anyS = s as any;
+    if (s.avatar_url) return s.avatar_url;
+    if (anyS.profile_picture) return anyS.profile_picture;
+    if (anyS.profile?.avatar_url) return anyS.profile.avatar_url;
+    if (anyS.user?.user_metadata?.avatar_url) return anyS.user.user_metadata.avatar_url;
+    // fallback generated avatar
+    const seed = encodeURIComponent(s.full_name || s.id || "unknown");
+    return `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
+  }
 
   return (
     <>
@@ -48,7 +57,7 @@ export default function SimilarStudentsSidebar({
           onClick={() => setOpen(false)}
         >
           <div
-            className="w-full max-w-md h-full bg-white shadow-2xl p-4 overflow-y-auto animate-slideRight"
+            className="w-full max-w-md h-full bg-white shadow-2xl p-4 overflow-y-auto animate-slideRight custom-scroll"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
@@ -66,12 +75,21 @@ export default function SimilarStudentsSidebar({
               {students.map((s) => (
                 <article key={s.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition">
                   <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold">
-                    {s.avatar_url ? (
-                      <Image src={s.avatar_url} alt={s.full_name || "S"} width={48} height={48} className="object-cover" />
-                    ) : (
-                      (s.full_name || "?").split(" ").map(n => n[0]).slice(0,2).join("")
-                    )}
+                    {(() => {
+                      const src = pickAvatar(s);
+                      return src ? (
+                        <img 
+                          src={src} 
+                          alt={s.full_name || "S"} 
+                          className="w-full h-full object-cover"
+                          loading="lazy" 
+                        />
+                      ) : (
+                        (s.full_name || "?").split(" ").map(n => n[0]).slice(0,2).join("")
+                      )
+                    })()}
                   </div>
+                {/* <p className="text-4xl bg-red-600 w-23 h-43 text-white">{s.avatar_url}</p> */}
 
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
@@ -101,7 +119,7 @@ export default function SimilarStudentsSidebar({
                         </a>
                       )}
 
-                      {/* Quick connect placeholder (X / Instagram style) */}
+                     
                       <button className="px-2 py-1 bg-gray-100 text-gray-700 rounded-md text-xs font-semibold hover:bg-gray-200">@</button>
                     </div>
                   </div>
@@ -116,14 +134,14 @@ export default function SimilarStudentsSidebar({
         </div>
       )}
 
-      {/* Desktop / large screen sidebar */}
-      <aside className="hidden lg:block fixed top-28 right-6 w-80 h-[calc(100vh-7rem)] overflow-y-auto p-4 bg-white rounded-l-3xl shadow-2xl border border-gray-100">
+    
+      <aside className="hidden lg:block fixed top-28 right-6 w-80 lg:w-96 h-[calc(100vh-7rem)] overflow-y-auto p-4 bg-white rounded-l-3xl shadow-2xl border border-gray-100 custom-scroll">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-bold">People with similar skills</h3>
+          <h3 className="text-lg font-bold">Zigx with similar skills</h3>
           <span className="text-xs text-gray-400">Connect • Explore</span>
         </div>
 
-        <p className="text-sm text-gray-500 mb-4">We found people who share at least a few of your skills. You can message, view or follow them.</p>
+        <p className="text-sm text-gray-500 mb-4">We found people who share at least a few of your skills. You can connect with them.</p>
 
         <div className="space-y-3">
           {students.length === 0 && (
@@ -183,6 +201,28 @@ export default function SimilarStudentsSidebar({
             to { transform: translateX(0); opacity: 1 }
           }
           .animate-slideRight { animation: slideRight 240ms ease-out; }
+
+          /* Custom scrollbar styling */
+          .custom-scroll::-webkit-scrollbar {
+            width: 8px;
+          }
+          
+          .custom-scroll::-webkit-scrollbar-track {
+            background: transparent;
+            margin: 8px 0;
+          }
+          
+          .custom-scroll::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, rgba(59,130,246,0.9), rgba(99,102,241,0.9));
+            border-radius: 999px;
+            border: 2px solid rgba(255,255,255,0.6);
+          }
+          
+          /* Firefox */
+          .custom-scroll {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(99,102,241,0.9) transparent;
+          }
         `}</style>
       </aside>
     </>
