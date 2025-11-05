@@ -18,19 +18,19 @@ const nextConfig = {
         pathname: '/**',
       },
 
-      {
-        protocol: 'https',
-        hostname: 'logo.png',
-        port: '',
-        pathname: '/**',
-      },
+         {
+      protocol: 'https',
+      hostname: 'logo.png',
+      port: '',
+      pathname: '/**',
+    },
 
       {
-        protocol: 'https',
-        hostname: 'cdn.sanity.io',
-        port: '',
-        pathname: '/**',
-      },
+      protocol: 'https',
+      hostname: 'cdn.sanity.io',
+      port: '',
+      pathname: '/**',
+    },
 
       // THE FIX IS HERE:
       // We are adding a new object to the array for your Supabase Storage.
@@ -40,34 +40,15 @@ const nextConfig = {
         port: '',
         pathname: '/storage/v1/object/public/**',
       },
-      {
+  {
         protocol: 'https',
         hostname: 'lh3.googleusercontent.com',
         port: '',
         pathname: '/**',
       },
+      
     ],
   },
-
-  // NEW: Suppress the metadata/viewport export warnings
-  webpack: (config, { isServer }) => {
-    if (isServer) {
-      config.ignoreWarnings = [
-        { module: /next-sanity\/studio/ },
-        { message: /export 'metadata'/ },
-        { message: /export 'viewport'/ },
-      ];
-    }
-    return config;
-  },
-
-  // NEW: Suppress Supabase Edge Runtime warnings
-  experimental: {
-    serverComponentsExternalPackages: ['@supabase/supabase-js'],
-  },
-
-  // NEW: Transpile Sanity packages (might help with React compatibility)
-  transpilePackages: ['sanity', 'next-sanity'],
 };
 
 export default nextConfig;
