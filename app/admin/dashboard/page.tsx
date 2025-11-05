@@ -1,5 +1,3 @@
-// FILE: app/admin/dashboard/page.tsx
-
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import {
@@ -21,14 +19,10 @@ async function DashboardContent({ companyId }: { companyId: string }) {
   return (
     <>
       <StatCardsGrid stats={dashboardData.stats} />
-
-      {/* *** FIX IS HERE *** */}
-      {/* The prop names now correctly match what ChartsSection expects */}
       <ChartsSection
         trendChartData={dashboardData.applicationsTrend}
         breakdownChartData={dashboardData.fieldBreakdown}
       />
-
       <RecentApplicationsTable
         applicationsData={dashboardData.recentApplications}
       />
@@ -44,13 +38,11 @@ export default async function AdminDashboardPage() {
   if (!companyProfile) return redirect("/sign-in");
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        <DashboardHeader />
-        <Suspense fallback={<DashboardSkeleton />}>
-          <DashboardContent companyId={companyProfile.id} />
-        </Suspense>
-      </div>
-    </div>
+    <>
+      <DashboardHeader />
+      <Suspense fallback={<DashboardSkeleton />}>
+        <DashboardContent companyId={companyProfile.id} />
+      </Suspense>
+    </>
   );
 }

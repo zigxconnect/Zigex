@@ -1,47 +1,91 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { KeyRound } from "lucide-react";
+import {
+  KeyRound,
+  ShieldAlert,
+  ShieldCheck,
+  AlertTriangle,
+} from "lucide-react";
 import { Spinner } from "@/components/uiComponent/Spinner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/uiComponent/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import { OtpInput } from "@/components/sections/auth/OtpInput";
 
+// --- Constants for maintainability ---
+const OTP_LENGTH = 6;
+const RESEND_COOLDOWN_SECONDS = 30;
+
+// --- Define the form schema using the constant ---
 const formSchema = z.object({
-  token: z.string().length(6, { message: "Your code must be 6 digits." }),
+  token: z
+    .string()
+    .length(OTP_LENGTH, `Your code must be ${OTP_LENGTH} digits.`),
 });
 type FormData = z.infer<typeof formSchema>;
 
+// --- Type for unified form messages ---
+type FormMessage = {
+  type: "success" | "error";
+  text: string;
+} | null;
+
+/**
+ * A form component for verifying a user's OTP sent via email.
+ * It handles OTP submission, validation, and a resend mechanism with a cooldown.
+ */
 export const VerifyOtpForm = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email");
   const supabase = createClient();
 
+  const [formMessage, setFormMessage] = useState<FormMessage>(null);
   const [isResending, setIsResending] = useState(false);
-  const [resendSuccess, setResendSuccess] = useState<string | null>(null);
-  const [resendError, setResendError] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(0);
 
   const {
-    register,
+    control,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<FormData>({ resolver: zodResolver(formSchema) });
+    setError,
+  } = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: { token: "" },
+  });
 
+  // --- Countdown timer effect ---
   useEffect(() => {
+    let timer: NodeJS.Timeout;
     if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-      return () => clearTimeout(timer);
+      timer = setTimeout(() => setCountdown(countdown - 1), 1000);
     }
+    return () => clearTimeout(timer);
   }, [countdown]);
 
+  // --- Main form submission handler ---
   const onSubmit = async (data: FormData) => {
-    if (!email) return alert("Email not found. Please try signing in again.");
+    if (!email) {
+      setFormMessage({
+        type: "error",
+        text: "Email not found. Please try signing in again.",
+      });
+      return;
+    }
+    setFormMessage(null);
 
     const { error } = await supabase.auth.verifyOtp({
       email,
@@ -50,17 +94,21 @@ export const VerifyOtpForm = () => {
     });
 
     if (error) {
-      alert(error.message || "Invalid OTP. Please try again.");
+      setError("token", {
+        type: "manual",
+        message: "Invalid or expired code. Please try again.",
+      });
     } else {
       router.push("/admin/dashboard");
     }
   };
 
+  // --- OTP resend handler ---
   const handleResendOtp = async () => {
     if (!email) return;
+
     setIsResending(true);
-    setResendSuccess(null);
-    setResendError(null);
+    setFormMessage(null);
 
     try {
       const response = await fetch("/api/auth/resend-otp", {
@@ -68,96 +116,146 @@ export const VerifyOtpForm = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
-      if (!response.ok) throw new Error("Failed to send code.");
 
-      setResendSuccess("A new code has been sent to your email.");
-      setCountdown(30);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to send code.");
+      }
+
+      setFormMessage({
+        type: "success",
+        text: "A new code has been sent to your email.",
+      });
+      setCountdown(RESEND_COOLDOWN_SECONDS);
     } catch (error) {
-      setResendError("An error occurred. Please try again.");
+      const errorMessage =
+        error instanceof Error ? error.message : "An unknown error occurred.";
+      setFormMessage({ type: "error", text: errorMessage });
     } finally {
       setIsResending(false);
     }
   };
 
+  // --- Graceful handling if email is missing from URL ---
   if (!email) {
     return (
-      <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl text-center text-red-500">
-        <p>Error: Email parameter is missing.</p>
-        <p>
-          Please{" "}
-          <a href="/sign-in" className="underline font-semibold">
-            return to the sign-in page
-          </a>{" "}
-          and try again.
-        </p>
-      </div>
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <AlertTriangle className="mx-auto h-12 w-12 text-destructive" />
+          <CardTitle className="text-xl">Missing Information</CardTitle>
+          <CardDescription>
+            The email address is missing. Please return to the sign-in page.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button
+            onClick={() => router.push("/sign-in")}
+            variant="outline"
+            className="w-full"
+          >
+            Return to Sign-In
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl">
-      <div className="text-center">
-        <div className="mx-auto w-12 h-12 bg-blue-900 rounded-full flex items-center justify-center">
-          <KeyRound className="w-7 h-7 text-white" />
+    <Card className="w-full max-w-md">
+      <CardHeader className="text-center">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+          <KeyRound className="h-8 w-8 text-primary" />
         </div>
-        <h1 className="mt-4 text-2xl font-bold text-gray-900">
-          Check your email
-        </h1>
-        <p className="mt-2 text-sm text-gray-600">
-          We&apos;ve sent a 6-digit verification code to{" "}
-          <span className="font-semibold text-gray-800">{email}</span>.
-        </p>
-      </div>
+        <CardTitle className="mt-4 text-2xl">Check your email</CardTitle>
+        <CardDescription>
+          We sent a {OTP_LENGTH}-digit code to{" "}
+          <span className="font-semibold text-foreground break-all">
+            {email}
+          </span>
+          .
+        </CardDescription>
+      </CardHeader>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-8">
-        <div>
-          <label className="text-sm font-medium text-gray-700">
-            Verification Code
-          </label>
-          <Input
-            placeholder="123456"
-            {...register("token")}
+      <CardContent>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div className="space-y-2">
+            <Controller
+              control={control}
+              name="token"
+              render={({ field }) => (
+                <OtpInput
+                  length={OTP_LENGTH}
+                  onChange={field.onChange}
+                  disabled={isSubmitting}
+                />
+              )}
+            />
+            {errors.token && (
+              <p className="text-sm text-destructive text-center pt-2">
+                {errors.token.message}
+              </p>
+            )}
+          </div>
+
+          {formMessage && (
+            <FormStatusMessage
+              type={formMessage.type}
+              text={formMessage.text}
+            />
+          )}
+
+          <Button
+            variant="orange"
+            type="submit"
+            className="w-full flex items-center justify-center gap-2"
             disabled={isSubmitting}
-            className="mt-1 tracking-[1em] text-center"
-          />
-          {errors.token && (
-            <p className="text-xs text-red-500 mt-1">{errors.token.message}</p>
-          )}
-        </div>
-        <Button
-          variant="orange"
-          type="submit"
-          className="w-full !mt-6 flex items-center justify-center gap-2"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? (
-            <>
-              <Spinner /> Verifying...
-            </>
-          ) : (
-            "Verify & Sign In"
-          )}
-        </Button>
-      </form>
+          >
+            {isSubmitting ? <Spinner /> : null}
+            {isSubmitting ? "Verifying..." : "Verify & Sign In"}
+          </Button>
+        </form>
+      </CardContent>
 
-      <div className="mt-6 text-center text-sm">
-        {resendSuccess && (
-          <p className="text-green-600 mb-2">{resendSuccess}</p>
-        )}
-        {resendError && <p className="text-red-600 mb-2">{resendError}</p>}
-        <button
-          type="button"
-          onClick={handleResendOtp}
-          disabled={isResending || countdown > 0}
-          className="text-orange-500 font-semibold hover:underline disabled:text-gray-400 disabled:no-underline disabled:cursor-wait"
-        >
-          {isResending
-            ? "Sending..."
-            : countdown > 0
-            ? `Resend code in ${countdown}s`
-            : "Didn't receive a code? Resend"}
-        </button>
-      </div>
+      <CardFooter className="flex justify-center text-sm">
+        <p className="text-muted-foreground">
+          Didn't get a code?{" "}
+          <button
+            type="button"
+            onClick={handleResendOtp}
+            disabled={isResending || countdown > 0}
+            className="font-semibold text-orange-500 hover:underline focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm disabled:text-muted-foreground disabled:no-underline disabled:cursor-not-allowed"
+          >
+            {isResending
+              ? "Sending..."
+              : countdown > 0
+                ? `Resend in ${countdown}s`
+                : "Click to resend"}
+          </button>
+        </p>
+      </CardFooter>
+    </Card>
+  );
+};
+
+/**
+ * A small component to display success or error messages consistently.
+ */
+const FormStatusMessage = ({ type, text }: NonNullable<FormMessage>) => {
+  const isError = type === "error";
+  const Icon = isError ? ShieldAlert : ShieldCheck;
+
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-3 p-3 rounded-lg text-sm",
+        isError
+          ? "bg-destructive/10 text-destructive"
+          : "bg-emerald-500/10 text-emerald-700"
+      )}
+      role="alert"
+    >
+      <Icon className="h-5 w-5 flex-shrink-0" />
+      <span className="font-medium">{text}</span>
     </div>
   );
 };

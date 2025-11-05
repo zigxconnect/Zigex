@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Eye, Inbox } from "lucide-react";
 
-// A reusable component to display when the table has no data.
 const EmptyTableState = ({
   title,
   message,
@@ -17,10 +18,16 @@ const EmptyTableState = ({
   </div>
 );
 
-// Define the shape of the prop for type safety.
+type Application = {
+  id: string | number;
+  name: string;
+  field: string;
+  status: string;
+};
+
 type ApplicationsData = {
   hasData: boolean;
-  data?: any[];
+  data?: Application[];
   emptyState?: { title: string; message: string };
 };
 
@@ -29,7 +36,8 @@ export const RecentApplicationsTable = ({
 }: {
   applicationsData: ApplicationsData;
 }) => {
-  // *** THIS FUNCTION WAS MISSING - NOW INCLUDED ***
+  const router = useRouter();
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "accepted":
@@ -50,22 +58,27 @@ export const RecentApplicationsTable = ({
           <h3 className="text-lg font-semibold text-gray-900">
             Recent Applications
           </h3>
-          <button className="flex items-center space-x-2 px-3 py-1 text-sm text-orange-600 hover:bg-orange-50 rounded-lg transition-colors">
+          <Link
+            href="/admin/applicants"
+            className="flex items-center space-x-2 px-3 py-1 text-sm text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+          >
             <Eye className="w-4 h-4" />
             <span>View All</span>
-          </button>
+          </Link>
         </div>
       </div>
 
       {!applicationsData.hasData ? (
         <EmptyTableState
-          title={applicationsData.emptyState!.title}
-          message={applicationsData.emptyState!.message}
+          title={applicationsData.emptyState?.title ?? "No Applications"}
+          message={
+            applicationsData.emptyState?.message ??
+            "There are no applications to display."
+          }
         />
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full">
-            {/* *** TABLE HEADER WAS MISSING - NOW INCLUDED *** */}
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -75,25 +88,24 @@ export const RecentApplicationsTable = ({
                   Posting
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date Applied
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Action
                 </th>
               </tr>
             </thead>
-            {/* *** TABLE BODY WAS MISSING - NOW INCLUDED *** */}
             <tbody className="bg-white divide-y divide-gray-200">
-              {applicationsData.data!.map((app: any) => (
-                <tr key={app.id} className="hover:bg-gray-50 transition-colors">
+              {(applicationsData.data ?? []).map((app) => (
+                <tr
+                  key={app.id}
+                  onClick={() =>
+                    router.push(`/admin/applicants?selected=${app.id}`)
+                  }
+                  className="hover:bg-gray-50 transition-colors cursor-pointer"
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="w-8 h-8 bg-gradient-to-r from-orange-400 to-orange-600 rounded-full flex items-center justify-center">
                         <span className="text-white text-sm font-medium">
-                          {app.name.charAt(0)}
+                          {app.name?.charAt(0) ?? "?"}
                         </span>
                       </div>
                       <div className="ml-3">
@@ -106,9 +118,6 @@ export const RecentApplicationsTable = ({
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {app.field}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {app.date}
-                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full capitalize ${getStatusColor(
@@ -117,11 +126,6 @@ export const RecentApplicationsTable = ({
                     >
                       {app.status}
                     </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button className="text-orange-600 hover:text-orange-900 transition-colors">
-                      Review
-                    </button>
                   </td>
                 </tr>
               ))}
