@@ -17,7 +17,10 @@ import {
 import ConnectBar from "@/components/sections/dashboard/ConnectBar";
 import QRCodeButton from "@/components/sections/dashboard/QRCodeButton";
 import SimilarStudentsSidebar from "@/components/sections/dashboard/SimilarStudentsSidebar";
+import MyMonthProject from "@/components/uiComponent/MyMonthProject";
 import AnimatedConnectButtons from "@/components/customButtons/AnimatedConnectButtons";
+import { Logo } from "@/components/uiComponent/Logo";
+import PostMonthProject from "@/components/uiComponent/PostMonthProject";
 // import AnimatedConnectButtons from "@/components/sections/dashboard/AnimatedConnectButtons";
 
 interface Props {
@@ -57,16 +60,20 @@ export default async function StudentDetailPage({ params }: Props) {
 
   // Determine if the current request user is the owner of this profile
   let isOwner = false;
+  let myProfile: any = null;
   try {
     const supabase = await createServerActionClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      const { data: myProfile } = await supabase
+      // fetch richer profile for the current viewer so we can render their sidebar when
+      // they view someone else's profile
+      const { data: _myProfile } = await supabase
         .from("student_profiles")
-        .select("id")
+        .select("id, full_name, avatar_url, github_url, email, phone, about, linkedin_url")
         .eq("user_id", user.id)
         .maybeSingle();
 
+      myProfile = _myProfile;
       if (myProfile && myProfile.id === id) {
         isOwner = true;
       }
@@ -222,8 +229,12 @@ Looking forward to hearing from you!`;
                 </div>
               </div>
 
-              {/* Similar students sidebar - only shown to profile owner */}
-              {isOwner && <SimilarStudentsSidebar students={similarStudents} />}
+              {/* Sidebar: if profile owner, show similar students. If visitor, show their own monthly project sidebar. */}
+              {isOwner ? (
+                <SimilarStudentsSidebar students={similarStudents} />
+              ) : (
+                myProfile && <MyMonthProject user={myProfile} />
+              )}
               
               <div className="flex items-center gap-1.5 text-gray-600 mb-2">
                 <MapPin size={14} className="text-gray-500 flex-shrink-0" />
@@ -271,10 +282,16 @@ Looking forward to hearing from you!`;
             </div>
 
             {/* Action Buttons - Enhanced with animations */}
-            <AnimatedConnectButtons 
+            <div className="flex justify-between items-center px-4">
+               <AnimatedConnectButtons 
               linkedinUrl={linkedinUrl}
               whatsappUrl={whatsappUrl}
             />
+
+      {!isOwner && !myProfile && <PostMonthProject user={myProfile} />}
+
+            </div>
+           
           </div>
 
           {/* Stats Section - More compact */}
@@ -332,6 +349,11 @@ Looking forward to hearing from you!`;
                 </div>
               </Link>
             )}
+
+            {/* Logo between LinkedIn and WhatsApp
+            <div className="flex items-center justify-center">
+              <Logo isLink={false} className="mx-2" />
+            </div> */}
 
             {/* WhatsApp */}
             {whatsappUrl && (
@@ -487,6 +509,7 @@ Looking forward to hearing from you!`;
         x={data.twitter_url || data.x_url} 
         email={data.email} 
       />
+      {/* Owner-only post button/modal */}
     </div>
   );
 }
