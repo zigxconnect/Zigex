@@ -17,7 +17,8 @@ import {
 import ConnectBar from "@/components/sections/dashboard/ConnectBar";
 import QRCodeButton from "@/components/sections/dashboard/QRCodeButton";
 import SimilarStudentsSidebar from "@/components/sections/dashboard/SimilarStudentsSidebar";
-import StackedAvatarsWrapper from "@/components/sections/dashboard/StackedAvatarsWrapper";
+import AnimatedConnectButtons from "@/components/customButtons/AnimatedConnectButtons";
+// import AnimatedConnectButtons from "@/components/sections/dashboard/AnimatedConnectButtons";
 
 interface Props {
   params: { id: string };
@@ -202,60 +203,46 @@ Looking forward to hearing from you!`;
         {/* Content Area */}
         <div className="pt-12 md:pt-14 lg:pt-16 px-4 lg:px-6 pb-4 lg:pb-6">
           {/* User Info and Actions */}
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 lg:gap-6">
-            {/* Name and Location */}
+          <div className="flex flex-col gap-4">
+            {/* Name and Location - Compact */}
             <div className="flex-1">
-              <div className="flex items-center gap-4 flex-wrap mb-2">
-                <div className="flex items-center gap-2">
-                  <h1 className="text-sm lg:text-[20px] font-bold text-gray-900">
-                    {data.full_name || "Zigex Student"}
-                  </h1>
-                  {/* Verification Badge */}
-                  <div className="flex items-center justify-center bg-blue-500 rounded-full p-0.5">
-                    <svg 
-                      viewBox="0 0 24 24" 
-                      className="w-5 h-5 lg:w-6 lg:h-6 fill-white"
-                      aria-label="Verified"
-                    >
-                      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                    </svg>
-                  </div>
+              <div className="flex items-center gap-2 mb-1">
+                <h1 className="text-base md:text-lg lg:text-xl font-bold text-gray-900">
+                  {data.full_name || "Zigex Student"}
+                </h1>
+                {/* Verification Badge - Smaller */}
+                <div className="flex items-center justify-center bg-blue-500 rounded-full p-0.5">
+                  <svg 
+                    viewBox="0 0 24 24" 
+                    className="w-4 h-4 md:w-5 md:h-5 fill-white"
+                    aria-label="Verified"
+                  >
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                  </svg>
                 </div>
-                
-                {/* Stacked Avatars next to username */}
-                {/* <div className="lg:hidden">
-                  <StackedAvatarsWrapper
-                    avatars={similarStudents.map(s => ({ src: s.avatar_url, name: s.full_name }))}
-                    maxVisible={3}
-                    moreCount={similarStudents.length > 3 ? similarStudents.length - 3 : 0}
-                    studentId={id}
-                  />
-                </div> */}
               </div>
 
-                {/* Similar students sidebar - only shown to profile owner */}
-                {isOwner && <SimilarStudentsSidebar students={similarStudents} />}
+              {/* Similar students sidebar - only shown to profile owner */}
+              {isOwner && <SimilarStudentsSidebar students={similarStudents} />}
               
-              <div className="flex items-center gap-2 text-gray-600 mb-3">
-                <MapPin size={18} className="text-gray-500" />
-                <p className="text-base text-[12px] lg:text-lg font-medium">
+              <div className="flex items-center gap-1.5 text-gray-600 mb-2">
+                <MapPin size={14} className="text-gray-500 flex-shrink-0" />
+                <p className="text-xs md:text-sm font-medium truncate">
                   {data.university || "University not specified"}
                 </p>
               </div>
 
-
-
-              {/* Social Links */}
-              <div className="flex items-center gap-4 flex-wrap">
+              {/* Social Links - Compact */}
+              <div className="flex items-center gap-3 flex-wrap text-xs">
                 {data.linkedin_url && (
                   <Link
                     href={data.linkedin_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                    className="flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline transition-colors"
                   >
-                    <Link2 size={16} />
-                    <span className="text-sm font-medium">LinkedIn</span>
+                    <Link2 size={14} />
+                    <span className="font-medium">LinkedIn</span>
                   </Link>
                 )}
 
@@ -264,105 +251,66 @@ Looking forward to hearing from you!`;
                     href={data.github_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                    className="flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline transition-colors"
                   >
-                    <Github size={16} />
-                    <span className="text-sm font-medium">Github</span>
+                    <Github size={14} />
+                    <span className="font-medium">Github</span>
                   </Link>
                 )}
 
                 {data.email && (
                   <Link
                     href={`mailto:${data.email}`}
-                    className="flex items-center gap-1.5 text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                    className="flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline transition-colors"
                   >
-                    <Mail size={16} />
-                    <span className="text-sm font-medium">Email</span>
+                    <Mail size={14} />
+                    <span className="font-medium">Email</span>
                   </Link>
                 )}
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              {/* LinkedIn Connect Button */}
-              {linkedinUrl ? (
-                <Link
-                  href={linkedinUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-6 py-2.5 bg-[#0A66C2] text-white font-semibold rounded-full hover:bg-[#004182] shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
-                >
-                  <Linkedin size={18} />
-                  <span>Connect on LinkedIn</span>
-                </Link>
-              ) : (
-                <button 
-                  disabled
-                  className="px-6 py-2.5 bg-gray-200 text-gray-400 font-semibold rounded-full cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  <Linkedin size={18} />
-                  <span>Connect on LinkedIn</span>
-                </button>
-              )}
-
-              {/* WhatsApp Message Button */}
-              {whatsappUrl ? (
-                <Link
-                  href={whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-6 py-2.5 bg-[#25D366] text-white font-semibold rounded-full hover:bg-[#1da851] shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
-                >
-                  <MessageCircle size={18} />
-                  <span>Message on WhatsApp</span>
-                </Link>
-              ) : (
-                <button 
-                  disabled
-                  className="px-6 py-2.5 bg-gray-200 text-gray-400 font-semibold rounded-full cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  <MessageCircle size={18} />
-                  <span>Message on WhatsApp</span>
-                </button>
-              )}
-            </div>
+            {/* Action Buttons - Enhanced with animations */}
+            <AnimatedConnectButtons 
+              linkedinUrl={linkedinUrl}
+              whatsappUrl={whatsappUrl}
+            />
           </div>
 
-          {/* Stats Section */}
-          <div className="mt-6 pt-4 border-t border-gray-200">
+          {/* Stats Section - More compact */}
+          <div className="mt-4 pt-3 border-t border-gray-200">
             <div className="flex items-center justify-around">
               <div className="flex flex-col items-center cursor-pointer group">
-                <span className="text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                <span className="text-xl md:text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
                   {internshipsApplied}
                 </span>
-                <span className="text-xs text-gray-500 font-medium">Internships</span>
+                <span className="text-[10px] md:text-xs text-gray-500 font-medium">Internships</span>
               </div>
 
-              <div className="w-px h-12 bg-gray-200"></div>
+              <div className="w-px h-8 md:h-10 bg-gray-200"></div>
 
               <div className="flex flex-col items-center cursor-pointer group">
-                <span className="text-2xl font-bold text-gray-900 group-hover:text-purple-600 transition-colors">
+                <span className="text-xl md:text-2xl font-bold text-gray-900 group-hover:text-purple-600 transition-colors">
                   {programsApplied}
                 </span>
-                <span className="text-xs text-gray-500 font-medium">Programs</span>
+                <span className="text-[10px] md:text-xs text-gray-500 font-medium">Programs</span>
               </div>
 
-              <div className="w-px h-12 bg-gray-200"></div>
+              <div className="w-px h-8 md:h-10 bg-gray-200"></div>
 
               <div className="flex flex-col items-center cursor-pointer group">
-                <span className="text-2xl font-bold text-gray-900 group-hover:text-green-600 transition-colors">
+                <span className="text-xl md:text-2xl font-bold text-gray-900 group-hover:text-green-600 transition-colors">
                   {eventsApplied}
                 </span>
-                <span className="text-xs text-gray-500 font-medium">Events</span>
+                <span className="text-[10px] md:text-xs text-gray-500 font-medium">Events</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-  {/* Content Container (leaves space on large screens for the right sidebar) */}
-  <div className="max-w-4xl mx-auto px-4 lg:px-6 space-y-6 md:mb-0 mb-[4rem]">
+      {/* Content Container (leaves space on large screens for the right sidebar) */}
+      <div className="max-w-4xl mx-auto px-4 lg:px-6 space-y-6 md:mb-0 mb-[4rem]">
         {/* Quick Connect Card */}
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100 shadow-sm">
           <h3 className="text-lg font-bold text-gray-900 mb-4">Connect with {data.full_name?.split(' ')[0]}</h3>
@@ -542,6 +490,3 @@ Looking forward to hearing from you!`;
     </div>
   );
 }
-
-
-
