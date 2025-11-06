@@ -37,7 +37,7 @@ const notificationsItem = {
 const navItems = [
   { href: "/dashboard", icon: User, label: "Home" },
   {
-    href: "/dashboard/student-directory",
+    href: "/dashboard/student",
     icon: Users,
     label: "Connection",
     matchPaths: ["/dashboard/student"],
