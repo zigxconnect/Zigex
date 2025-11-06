@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { Linkedin, MessageCircle, Mail, X, Users, AtSign } from "lucide-react";
 import StackedAvatars from "./StackedAvatars";
+import Link from "next/link";
 
 interface SimilarStudent {
   id: string;
@@ -149,7 +150,7 @@ export default function SimilarStudentsSidebar({
           )}
 
           {students.map((s) => (
-            <div key={s.id} className="flex items-start gap-3 p-3 rounded-xl hover:bg-gray-50 transition">
+            <Link href={`dashboard/student/${s.id}`} key={s.id} className="flex items-start gap-3 p-3 rounded-xl hover:bg-gray-100 transition ">
               <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold">
                 {s.avatar_url ? (
                   <Image src={s.avatar_url} alt={s.full_name || "S"} width={48} height={48} className="object-cover" />
@@ -187,7 +188,7 @@ export default function SimilarStudentsSidebar({
                   </div>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
 

@@ -80,7 +80,7 @@ export default function MyMonthProject({ user, project }: Props) {
       {/* Desktop aside (visible on md+) */}
       <aside id="my-month-project-panel" className="fixed right-6 top-32 w-72 lg:w-80 bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden hidden md:block">
         <div className="relative h-36 w-full bg-gray-100">
-          <Image src={p.mainImage || "/n8.png"} alt={p.title || "Project"} fill className="object-cover" />
+          <Image src={"/project.png"} alt={p.title || "Project"} fill className="object-cover" />
           <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/30" />
           <div className="absolute left-4 bottom-3">
             <h4 className="text-white text-sm font-semibold drop-shadow">{p.title}</h4>

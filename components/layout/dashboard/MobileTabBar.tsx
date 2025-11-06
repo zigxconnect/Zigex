@@ -20,7 +20,7 @@ interface MobileTabBarProps {
 const tabItems = [
   { href: "/dashboard", icon: Home, label: "Profile" },
   { href: "/dashboard/fupro-ai", icon: AiOutlineWechat, label: "AI Chat", isSpecial: true },
-  { href: "/dashboard/student-directory", icon: Users, label: "Students" },
+  { href: "/dashboard/student", icon: Users, label: "Students" },
   { href: "/notifications", icon: Bell, label: "Alerts" },
 ];
 
