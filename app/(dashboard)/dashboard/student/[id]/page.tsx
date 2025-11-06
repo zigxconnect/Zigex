@@ -282,15 +282,15 @@ Looking forward to hearing from you!`;
             </div>
 
             {/* Action Buttons - Enhanced with animations */}
-            <div className="flex justify-between items-center px-4">
+            {/* <div className="flex justify-between items-center px-4"> */}
                <AnimatedConnectButtons 
               linkedinUrl={linkedinUrl}
               whatsappUrl={whatsappUrl}
             />
 
-      {!isOwner && !myProfile && <PostMonthProject user={myProfile} />}
+      {/* {!isOwner && !myProfile && <PostMonthProject user={myProfile} />}
 
-            </div>
+            </div> */}
            
           </div>
 

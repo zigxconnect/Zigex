@@ -172,7 +172,7 @@ export const InternshipCard = ({
             {/* Image Section */}
             <div className="relative w-48 h-full flex-shrink-0">
               <Image
-                src={cover_image_url || "/int.png"}
+                src={cover_image_url || "/intern.png"}
                 alt={`Cover image for ${company}`}
                 fill
                 className="object-cover transition-transform duration-300 group-hover:scale-105"
@@ -301,7 +301,7 @@ export const InternshipCard = ({
         {/* Full Background Image */}
         <div className="absolute inset-0">
           <Image
-            src={cover_image_url || "/int.png"}
+            src={cover_image_url || "/intern.png"}
             alt={`Cover image for ${company}`}
             fill
             className="object-cover transition-transform duration-700 group-hover:scale-110"
