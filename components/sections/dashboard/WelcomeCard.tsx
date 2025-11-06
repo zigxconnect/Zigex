@@ -17,8 +17,8 @@ import { useState } from "react";
 import { EditProfileModal } from "./EditProfileModal";
 
 interface WelcomeCardProps {
-  user: UserProfile;
-  onProfileUpdated: () => void;
+  user: UserProfile | any;
+  onProfileUpdated?: () => void;
   profile?: any;
 }
 
