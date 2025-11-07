@@ -35,7 +35,7 @@ export const StudentDirectoryClient: React.FC<{ profiles: RawUserProfile[] }> = 
         <div className="max-w-2xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between mb-3">
             <h1 className="text-xl font-bold text-slate-900">ZigX Students</h1>
-            <Sparkles size={20} className="text-blue-500" />
+            {/* <Sparkles size={20} className="text-blue-500" /> */}
           </div>
           
           {/* Search Bar */}

@@ -163,7 +163,10 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
         {/* Back Button */}
         <div className="flex justify-between p-6">
         <BackButton />
+        {opportunityStatus.isOpen &&
         <RegisterGoDown href="registerDown" />
+        
+        }
         </div>
 
         {/* Header */}

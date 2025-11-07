@@ -299,12 +299,12 @@ export async function isOpportunityOpen(
       }
 
       // Check if program has started (and no applications after start)
-      if (item.start_date && !item.allow_late_applications) {
-        const startDate = new Date(item.start_date);
-        if (now > startDate) {
-          return { isOpen: false, reason: "Program has already started" };
-        }
-      }
+      // if (item.start_date && !item.allow_late_applications) {
+      //   const startDate = new Date(item.start_date);
+      //   if (now > startDate) {
+      //     return { isOpen: true, reason: "Program has already started" };
+      //   }
+      // }
 
       return { isOpen: true };
     }
