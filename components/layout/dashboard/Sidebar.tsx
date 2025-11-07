@@ -13,6 +13,7 @@ import {
   Bell,
   NewspaperIcon,
   PersonStanding,
+  IceCreamCone,
 } from "lucide-react";
 import { AiOutlineWechat } from "react-icons/ai";
 import { Button } from "@/components/ui/button";
@@ -36,7 +37,7 @@ const notificationsItem = {
 
 // Regular navigation items
 const navItems = [
-  { href: "/dashboard", icon: User, label: "Home" },
+  { href: "/dashboard", icon: IceCreamCone, label: "Browse" },
   {
     href: "/dashboard/student",
     icon: Users,
@@ -55,11 +56,11 @@ const navItems = [
   },
 
 
-   {
-    href: "/dashboard/track-progress",
-    icon: PersonStanding,
-    label: "Me",
-  },
+  //  {
+  //   href: "/dashboard/track-progress",
+  //   icon: PersonStanding,
+  //   label: "Me",
+  // },
 ];
 
 // Special navigation item for AI chat

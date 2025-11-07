@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { HappeningNowGrid } from "@/components/layout/dashboard/HappeningNow";
 import { FeedContent } from "@/components/feed/FeedContent";
-import { getAllFeedData } from "@/lib/actions/feed.action";
+import { getAllFeedData } from "@/lib/actions/feed/feed.action";
 
 interface MainFeedPageProps {
   searchQuery?: string;

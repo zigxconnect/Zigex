@@ -1,121 +1,155 @@
 // app/(dashboard)/feed/[id]/page.tsx
-"use client";
-
-import { use, useState, useEffect } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { MapPin, Building2, ExternalLink, Clock, Calendar, X, CheckCircle2, Users } from "lucide-react";
+import { Suspense } from "react";
+import { notFound } from "next/navigation";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import DynamicForm from "@/components/sections/dashboard/Application/application";
-import { normalizeImageSrc } from "@/lib/utils";
-import type { FeedItem, FeedType } from "@/lib/types/feed";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Briefcase, Calendar, Clock, MapPin, Users } from "lucide-react";
 
-const DetailItem = ({ label, value, icon: Icon }: { label: string; value: string | null; icon?: any }) => {
-  if (!value) return null;
-  return (
-    <div className="flex items-center gap-3 py-3.5 border-b border-gray-100 last:border-b-0 group hover:bg-gray-50/50 px-2 -mx-2 rounded-lg transition-all duration-200">
-      {Icon && (
-        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-          <Icon size={16} className="text-blue-600" />
-        </div>
-      )}
-      <div className="flex-1 min-w-0">
-        <span className="text-xs text-gray-500 font-medium uppercase tracking-wide block">{label}</span>
-        <span className="text-sm font-semibold text-gray-900 mt-0.5 block">{value}</span>
-      </div>
-    </div>
-  );
-};
+// Server Actions
+import {
+  type FeedType,
+  getFeedItemById,
+  getCompanyRelatedItems,
+  isOpportunityOpen,
+} from "@/lib/actions/feed/feed-detail.actions";
 
-export default function FeedDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = use(params);
-  const [item, setItem] = useState<FeedItem | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [showModal, setShowModal] = useState(false);
-  const [otherItems, setOtherItems] = useState<any[]>([]);
+// Components - Fixed imports
+import { FeedDetailHeader } from "@/components/feed/details/FeedDetailHeader";
+import { ApplyButton } from "@/components/feed/details/appyButton/ApplyButton";
+import { LocationMap } from "@/components/feed/details/LocationMap";
+import { RelatedItems } from "@/components/feed/details/RelatedItems";
+import { CompanyCard } from "@/components/feed/details/DetailsSidebar";
+import { DetailsSidebar } from "@/components/feed/details/CompanyCard";
+import { BackButton } from "@/components/feed/details/BackButton";
 
-  useEffect(() => {
-    async function fetchItem() {
-      try {
-        const endpoints = [
-          { type: "internships" as FeedType, url: "/api/students/internships" },
-          { type: "programs" as FeedType, url: "/api/students/programs" },
-          { type: "events" as FeedType, url: "/api/students/events" },
-        ];
+interface FeedDetailPageProps {
+  params: Promise<{ id: string }>;
+}
 
-        let foundItem = null;
+// Enable ISR with 5 minute revalidation
+export const revalidate = 300;
 
-        for (const { type, url } of endpoints) {
-          const res = await fetch(url);
-          if (res.ok) {
-            const data = await res.json();
-            console.log(`Fetching from ${type}:`, data);
-            console.log(`Looking for ID:`, resolvedParams.id);
-            
-            // Use strict equality and ensure both are strings
-            const found = data.find((i: any) => {
-              console.log(`Comparing: "${i?.id}" === "${resolvedParams.id}"`, i?.id === resolvedParams.id);
-              return i?.id && String(i.id) === String(resolvedParams.id);
-            });
-            
-            console.log(`Found item in ${type}:`, found);
-            
-            if (found) {
-              foundItem = { ...found, _type: type };
-              setItem(foundItem);
-              
-              // Fetch other items from same company
-              if (found.company_id || found.company?.id) {
-                const companyId = found.company_id || found.company.id;
-                try {
-                  const companyRes = await fetch(`/api/public/companies/${companyId}/programs`);
-                  if (companyRes.ok) {
-                    const companyData = await companyRes.json();
-                    setOtherItems((companyData.programs || []).filter((p: any) => String(p.id) !== String(found.id)));
-                  }
-                } catch (e) {
-                  console.error("Error fetching related items:", e);
-                }
-              }
-              break;
-            }
-          }
-        }
+// Generate metadata
+export async function generateMetadata({ params }: FeedDetailPageProps) {
+  const { id } = await params;
+  const { data: item } = await getFeedItemById(id);
 
-        if (!foundItem) {
-          throw new Error("Item not found");
-        }
-      } catch (err) {
-        console.error("Error in fetchItem:", err);
-        setError((err as Error).message);
-      } finally {
-        setIsLoading(false);
-      }
-    }
+  if (!item) {
+    return {
+      title: "Not Found",
+    };
+  }
 
-    fetchItem();
-  }, [resolvedParams.id]);
+  return {
+    title: `${item.title} | Opportunities`,
+    description:
+      item.description?.substring(0, 160) || `Apply for ${item.title}`,
+  };
+}
 
-  if (isLoading) return <div className="text-center py-20">Loading...</div>;
-  if (error) return <div className="text-center py-20 text-red-500">{error}</div>;
-  if (!item) return <div className="text-center py-20 text-gray-500">Item not found</div>;
+export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
+  const { id } = await params;
 
-  const company = item.company;
-  const companyName = typeof company === "string" ? company : company?.company_name || "Company";
-  
+  // Fetch the main item
+  const { data: item, error } = await getFeedItemById(id);
+
+  if (error || !item) {
+    notFound();
+  }
+
+  // Extract company info
+  const company =
+    typeof item.company_profiles === "object" ? item.company_profiles : null;
+  const companyId = company?.id || (item as any).company_id;
+  const companyName = company?.company_name || "Company";
+
+  // Check if opportunity is still open (await since it's async now)
+  const opportunityStatus = await isOpportunityOpen(item, item._type);
+
+  // Get image URL based on type
   const getImageUrl = () => {
     switch (item._type) {
-      case "internships": return normalizeImageSrc((item as any).cover_image_url || (item as any).internship_picture_url);
-      case "programs": return normalizeImageSrc((item as any).program_picture_url);
-      case "events": return normalizeImageSrc((item as any).event_picture_url);
+      case "internships":
+        return (
+          (item as any).cover_image_url ||
+          (item as any).internship_picture_url ||
+          "/placeholder.png"
+        );
+      case "programs":
+        return (item as any).program_picture_url || "/placeholder.png";
+      case "events":
+        return (item as any).event_picture_url || "/placeholder.png";
     }
   };
 
-  const formatDate = (dateString?: string | null) => {
-    if (!dateString) return null;
-    return new Date(dateString).toLocaleDateString(undefined, {
+  // Build details array based on type
+  const buildDetails = () => {
+    const details = [];
+
+    // Common details
+    if (item.location) {
+      details.push({
+        label: "Location",
+        value: item.location,
+        icon: "MapPin",
+      });
+    }
+
+    // Type-specific details
+    if (item._type === "internships") {
+      if ((item as any).duration) {
+        details.push({
+          label: "Duration",
+          value: (item as any).duration,
+          icon: "Clock",
+        });
+      }
+      if ((item as any).department) {
+        details.push({
+          label: "Department",
+          value: (item as any).department,
+          icon: "Briefcase",
+        });
+      }
+      if ((item as any).type) {
+        details.push({
+          label: "Type",
+          value: (item as any).type,
+          icon: "Users",
+        });
+      }
+    }
+
+    if (item._type === "programs" || item._type === "events") {
+      if ((item as any).start_date) {
+        details.push({
+          label: "Start Date",
+          value: formatDate((item as any).start_date),
+          icon: "Calendar",
+        });
+      }
+      if ((item as any).end_date) {
+        details.push({
+          label: "End Date",
+          value: formatDate((item as any).end_date),
+          icon: "Calendar",
+        });
+      }
+      if ((item as any).duration) {
+        details.push({
+          label: "Duration",
+          value: (item as any).duration,
+          icon: "Clock",
+        });
+      }
+    }
+
+    return details;
+  };
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "";
+    return new Date(dateString).toLocaleDateString("en-US", {
       month: "long",
       day: "numeric",
       year: "numeric",
@@ -123,149 +157,155 @@ export default function FeedDetailPage({ params }: { params: Promise<{ id: strin
   };
 
   return (
-    <>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-            {/* Main Content */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Header Card */}
-              <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <div className="relative h-64 sm:h-80 lg:h-96 bg-gradient-to-br from-blue-100 to-indigo-100">
-                  <Image src={getImageUrl()} alt={item.title} fill className="object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-600 text-white text-xs font-semibold rounded-full mb-3">
-                      {item._type.slice(0, -1)}
-                    </div>
-                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-2 drop-shadow-lg">
-                      {item.title}
-                    </h1>
-                  </div>
-                </div>
-              </Card>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+        {/* Back Button */}
+        <BackButton />
 
-              {/* Company Info */}
-              <Card className="border-0 shadow-md hover:shadow-lg transition-shadow duration-300">
-                <div className="p-6 sm:p-8">
-                  <Link href={`/company/${company?.id || (item as any).company_id}`} className="flex items-center gap-4 group">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden flex-shrink-0 shadow-lg relative">
-                      <Image
-                        src={normalizeImageSrc(company?.logo_url || "/seedLogo.png")}
-                        alt={companyName}
-                        width={80}
-                        height={80}
-                        className="object-cover w-full h-full"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">
-                        {companyName}
-                      </h2>
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <MapPin size={16} className="text-blue-600 flex-shrink-0" />
-                        <span className="truncate">{item.location}</span>
-                      </div>
-                    </div>
-                  </Link>
-                </div>
-              </Card>
+        {/* Header */}
+        <FeedDetailHeader
+          title={item.title}
+          type={item._type.slice(0, -1)}
+          imageUrl={getImageUrl()}
+          startDate={(item as any).start_date}
+          endDate={(item as any).end_date}
+          location={item.location}
+        />
 
-              {/* Description */}
-              <Card className="border-0 shadow-md hover:shadow-lg transition-shadow duration-300">
-                <div className="p-6 sm:p-8">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <div className="w-1 h-6 bg-gradient-to-b from-blue-600 to-indigo-600 rounded-full" />
-                    About this {item._type.slice(0, -1)}
-                  </h3>
-                  <div className="prose prose-gray max-w-none">
-                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                      {item.description || "No description provided."}
-                    </p>
-                  </div>
-                </div>
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 mt-8">
+          {/* Left Column - Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Company Card */}
+            {company && <CompanyCard company={company} />}
 
-                {/* Map */}
-                {item.location && (
-                  <div className="mt-6 p-6 pt-0">
-                    <div className="rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
-                      <div className="w-full h-52 md:h-72 bg-gray-100">
-                        <iframe
-                          title="location"
-                          src={`https://www.google.com/maps?q=${encodeURIComponent(item.location)}&output=embed`}
-                          className="w-full h-full border-0"
-                          loading="lazy"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
+            {/* Description */}
+            <Card className="p-6 sm:p-8 border-0 shadow-lg">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-1 h-8 bg-gradient-to-b from-blue-600 to-indigo-600 rounded-full" />
+                <h2 className="text-2xl font-bold text-gray-900">
+                  About this {item._type.slice(0, -1)}
+                </h2>
+              </div>
+              <div className="prose prose-gray max-w-none">
+                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                  {item.description || "No description provided."}
+                </p>
+              </div>
+            </Card>
+
+            {/* Location Map */}
+            {item.location && (
+              <LocationMap location={item.location} title={item.title} />
+            )}
+
+            {/* Related Items */}
+            {companyId && (
+              <Suspense fallback={<RelatedItemsSkeleton />}>
+                <RelatedItemsSection
+                  companyId={companyId}
+                  currentType={item._type}
+                  currentId={item.id}
+                  companyName={companyName}
+                />
+              </Suspense>
+            )}
+          </div>
+
+          {/* Right Column - Sidebar */}
+          <aside className="lg:col-span-1">
+            <div className="lg:sticky lg:top-6 space-y-6">
+              {/* Details */}
+              
+              <DetailsSidebar details={buildDetails()} />
+
+              {/* Apply Button */}
+              <ApplyButton
+                isOpen={opportunityStatus.isOpen}
+                reason={opportunityStatus.reason}
+                type={item._type.slice(0, -1) as any}
+                id={item.id}
+                title={item.title}
+              />
+
+              {/* Additional Info Card */}
+              <Card className="p-6 border-0 shadow-lg bg-gradient-to-br from-blue-50 to-indigo-50">
+                <h3 className="font-bold text-gray-900 mb-3">Need Help?</h3>
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  Have questions about this opportunity? Contact the company
+                  directly or reach out to our support team.
+                </p>
               </Card>
             </div>
-
-            {/* Sidebar */}
-            <aside className="lg:col-span-1">
-              <div className="lg:sticky lg:top-6 space-y-4">
-                <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden">
-                  <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-4">
-                    <h3 className="font-bold text-lg text-white">Details</h3>
-                  </div>
-                  <div className="p-5">
-                    <DetailItem label="Location" value={item.location} icon={MapPin} />
-                    {item._type === "internships" && (
-                      <>
-                        <DetailItem label="Duration" value={(item as any).duration} icon={Clock} />
-                        <DetailItem label="Department" value={(item as any).department} icon={Users} />
-                      </>
-                    )}
-                    {item._type === "programs" && (
-                      <>
-                        <DetailItem label="Duration" value={(item as any).duration} icon={Clock} />
-                        <DetailItem label="Start Date" value={formatDate((item as any).start_date)} icon={Calendar} />
-                        <DetailItem label="End Date" value={formatDate((item as any).end_date)} icon={Calendar} />
-                      </>
-                    )}
-                    {item._type === "events" && (
-                      <>
-                        <DetailItem label="Start Date" value={formatDate((item as any).start_date)} icon={Calendar} />
-                        <DetailItem label="End Date" value={formatDate((item as any).end_date)} icon={Calendar} />
-                        <DetailItem label="Time" value={(item as any).start_time} icon={Clock} />
-                      </>
-                    )}
-                  </div>
-                </Card>
-
-                <Button
-                  className="w-full text-base py-6 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-0"
-                  onClick={() => setShowModal(true)}
-                >
-                  Apply Now
-                  <ExternalLink size={18} className="ml-2" />
-                </Button>
-              </div>
-            </aside>
-          </div>
+          </aside>
         </div>
       </div>
+    </div>
+  );
+}
 
-      {showModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowModal(false)} />
-          <div className="flex min-h-full items-center justify-center p-4">
-            <div className="relative w-full max-w-2xl">
-              <button
-                onClick={() => setShowModal(false)}
-                className="absolute -top-4 -right-4 z-10 w-10 h-10 rounded-full bg-white shadow-lg hover:bg-gray-100 flex items-center justify-center"
-              >
-                <X size={20} />
-              </button>
-              <div className="bg-white rounded-2xl shadow-2xl max-h-[85vh] overflow-y-auto">
-                <DynamicForm type={item._type.slice(0, -1) as any} id={item.id} />
-              </div>
-            </div>
-          </div>
-        </div>
+// Related Items Server Component
+async function RelatedItemsSection({
+  companyId,
+  currentType,
+  currentId,
+  companyName,
+}: {
+  companyId: string;
+  currentType: FeedType;
+  currentId: string;
+  companyName: string;
+}) {
+  const relatedItems = await getCompanyRelatedItems(
+    companyId,
+    currentType,
+    currentId
+  );
+
+  return (
+    <>
+      {relatedItems.programs.length > 0 && currentType !== "programs" && (
+        <RelatedItems
+          items={relatedItems.programs}
+          type="programs"
+          companyName={companyName}
+        />
+      )}
+      {relatedItems.internships.length > 0 &&
+        currentType !== "internships" && (
+          <RelatedItems
+            items={relatedItems.internships}
+            type="internships"
+            companyName={companyName}
+          />
+        )}
+      {relatedItems.events.length > 0 && currentType !== "events" && (
+        <RelatedItems
+          items={relatedItems.events}
+          type="events"
+          companyName={companyName}
+        />
       )}
     </>
+  );
+}
+
+// Loading skeleton
+function RelatedItemsSkeleton() {
+  return (
+    <div className="mt-12">
+      <Skeleton className="h-8 w-64 mb-6" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[1, 2, 3].map((i) => (
+          <Card key={i} className="overflow-hidden">
+            <Skeleton className="h-48 w-full" />
+            <div className="p-5 space-y-3">
+              <Skeleton className="h-6 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
   );
 }
