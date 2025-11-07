@@ -21,6 +21,7 @@ import { RelatedItems } from "@/components/feed/details/RelatedItems";
 import { CompanyCard } from "@/components/feed/details/DetailsSidebar";
 import { DetailsSidebar } from "@/components/feed/details/CompanyCard";
 import { BackButton } from "@/components/feed/details/BackButton";
+import { RegisterGoDown } from "@/components/feed/details/RegisterDown";
 
 interface FeedDetailPageProps {
   params: Promise<{ id: string }>;
@@ -73,10 +74,10 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
         return (
           (item as any).cover_image_url ||
           (item as any).internship_picture_url ||
-          "/placeholder.png"
+          "/intern.png"
         );
       case "programs":
-        return (item as any).program_picture_url || "/placeholder.png";
+        return (item as any).program_picture_url || "/intern.png";
       case "events":
         return (item as any).event_picture_url || "/placeholder.png";
     }
@@ -160,7 +161,10 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         {/* Back Button */}
+        <div className="flex justify-between p-6">
         <BackButton />
+        <RegisterGoDown href="registerDown" />
+        </div>
 
         {/* Header */}
         <FeedDetailHeader
@@ -220,6 +224,7 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
               <DetailsSidebar details={buildDetails()} />
 
               {/* Apply Button */}
+             <section id="registerDown">
               <ApplyButton
                 isOpen={opportunityStatus.isOpen}
                 reason={opportunityStatus.reason}
@@ -227,6 +232,8 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
                 id={item.id}
                 title={item.title}
               />
+
+              </section>
 
               {/* Additional Info Card */}
               <Card className="p-6 border-0 shadow-lg bg-gradient-to-br from-blue-50 to-indigo-50">

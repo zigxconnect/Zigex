@@ -43,7 +43,7 @@ export function FeedDetailHeader({
           className="object-cover opacity-30"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+        {/* <div className="absolute inset-0 bg-gradient-to-t from-blue-100 via-blue-200 to-transparent" /> */}
       </div>
 
       {/* Content */}
