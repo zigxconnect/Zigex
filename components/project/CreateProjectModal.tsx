@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { X, Image as ImageIcon, Github, Calendar, Sparkles } from "lucide-react";
+import { X, Image as ImageIcon, Github, Calendar, Sparkles, Share } from "lucide-react";
 import Image from "next/image";
 
 interface CreateProjectModalProps {
@@ -89,7 +89,7 @@ export default function CreateProjectModal({ isOpen, onClose, onSubmit }: Create
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+    <div className="fixed inset-0 z-999 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
       <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
@@ -118,7 +118,7 @@ export default function CreateProjectModal({ isOpen, onClose, onSubmit }: Create
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                <Sparkles size={20} className="text-white" />
+                <Share size={20} className="text-white" />
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900 mb-1">Share what you're building!</h3>

@@ -22,7 +22,7 @@ export type Internship = {
 };
 
 export type Event = {
-  id: string;
+  id:string;
   title: string;
   start_date: string;
   end_date: string;
@@ -50,6 +50,8 @@ export type Program = {
     company_name: string;
     logo_url: string;
   };
+  // ADDED: isOpen property to determine if the program is locked
+  isOpen: boolean;
 };
 
 /**
@@ -121,7 +123,7 @@ export const getInternships = cache(async (searchQuery?: string) => {
           company_profiles (
             company_name,
             logo_url,
-            cover_image_url 
+            cover_image_url
           )
         `
         )
@@ -175,7 +177,7 @@ export const getEvents = cache(async (searchQuery?: string) => {
 });
 
 /**
- * Get programs with React cache
+ * MODIFIED: Get programs with React cache, status checks, and custom sorting
  */
 export const getPrograms = cache(async (searchQuery?: string) => {
   try {
@@ -183,8 +185,9 @@ export const getPrograms = cache(async (searchQuery?: string) => {
 
     let query = supabase
       .from("programs")
-      .select("*, company:company_profiles (company_name, logo_url)")
-      .order("created_at", { ascending: false });
+      .select("*, company:company_profiles (company_name, logo_url)");
+      // REMOVED: .order("created_at", { ascending: false });
+      // Sorting will be handled in the code now.
 
     if (searchQuery) {
       query = query.or(
@@ -199,7 +202,39 @@ export const getPrograms = cache(async (searchQuery?: string) => {
       return { data: [], error: "Failed to fetch programs" };
     }
 
-    return { data: programs || [], error: null };
+    const now = new Date();
+    const weekendOfCodeProgramTitle = "Weekend of Code";
+
+    // 1. Determine if each program is open or closed
+    const programsWithStatus = (programs || []).map((program) => ({
+      ...program,
+      isOpen: program.end_date ? new Date(program.end_date) > now : true, // Assumes open if no end date
+    }));
+
+    // 2. Separate the "Weekend of Code" program
+    let pinnedProgram: Program | null = null;
+    const otherPrograms: Program[] = [];
+
+    programsWithStatus.forEach((program) => {
+      if (program.title === weekendOfCodeProgramTitle) {
+        pinnedProgram = program as Program;
+      } else {
+        otherPrograms.push(program as Program);
+      }
+    });
+
+    // 3. Sort the remaining programs: open first, then closed
+    otherPrograms.sort((a, b) => {
+      if (a.isOpen && !b.isOpen) return -1; // a (open) comes before b (closed)
+      if (!a.isOpen && b.isOpen) return 1;  // b (open) comes before a (closed)
+      // Optional: if both are open or both are closed, sort by creation date
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+
+    // 4. Combine the lists: pinned program first, then the sorted programs
+    const sortedPrograms = pinnedProgram ? [pinnedProgram, ...otherPrograms] : otherPrograms;
+
+    return { data: sortedPrograms, error: null };
   } catch (error) {
     console.error("Programs fetch error:", error);
     return { data: [], error: "Failed to fetch programs" };
