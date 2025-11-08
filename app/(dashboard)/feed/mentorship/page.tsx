@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { MessageCircle, Linkedin } from "lucide-react";
+import { MessageCircle, Linkedin, LinkedinIcon } from "lucide-react";
+import { BackButton } from "@/components/feed/details/BackButton";
 
 type Mentor = {
   id: string;
@@ -21,7 +22,7 @@ type Mentor = {
 const mentors: Mentor[] = [
   {
     id: "1",
-    name: "Chinonso Okafor",
+    name: "Fonyuy Gita",
     avatar: "/z3.png",
     title: "Senior IoT Engineer",
     field: "iot",
@@ -34,7 +35,7 @@ const mentors: Mentor[] = [
   },
   {
     id: "2",
-    name: "Amina Bello",
+    name: "Fien Dora",
     avatar: "/z3.png",
     title: "Full Stack Developer",
     field: "web",
@@ -47,7 +48,7 @@ const mentors: Mentor[] = [
   },
   {
     id: "3",
-    name: "Emmanuel Ndukwe",
+    name: "Abdul Fadiga",
     avatar: "/z3.png",
     title: "AI Research Scientist",
     field: "ai",
@@ -60,7 +61,7 @@ const mentors: Mentor[] = [
   },
   {
     id: "4",
-    name: "Fatima Yusuf",
+    name: "John Brindi",
     avatar: "/z3.png",
     title: "ML Engineer",
     field: "ml",
@@ -73,7 +74,7 @@ const mentors: Mentor[] = [
   },
   {
     id: "5",
-    name: "David Tambe",
+    name: "Tayuh Favour",
     avatar: "/z3.png",
     title: "Embedded Systems Expert",
     field: "embedded",
@@ -86,7 +87,7 @@ const mentors: Mentor[] = [
   },
   {
     id: "6",
-    name: "Kemi Adeleke",
+    name: "Tracy Jacy",
     avatar: "/z3.png",
     title: "Cybersecurity Specialist",
     field: "cybersecurity",
@@ -99,7 +100,7 @@ const mentors: Mentor[] = [
   },
   {
     id: "7",
-    name: "Chukwuma Eze",
+    name: "Emma Rita",
     avatar: "/z3.png",
     title: "IoT Solutions Architect",
     field: "iot",
@@ -112,7 +113,7 @@ const mentors: Mentor[] = [
   },
   {
     id: "8",
-    name: "Sarah Musa",
+    name: "Will Yefon",
     avatar: "/z3.png",
     title: "Frontend Specialist",
     field: "web",
@@ -151,7 +152,8 @@ export default function MentorshipPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <div className="border-b border-gray-200 sticky top-0 z-40 bg-white/80 backdrop-blur-md">
+      <div className="border-b border-gray-200 sticky top-0  bg-white/80 backdrop-blur-md">
+      <BackButton/>
         <div className="max-w-3xl mx-auto px-4 py-4">
           <h1 className="text-xl font-bold text-gray-900">Mentors</h1>
           
@@ -247,18 +249,18 @@ export default function MentorshipPage() {
                       <Link
                         href={whatsappUrl}
                         target="_blank"
-                        className="group flex items-center justify-center w-9 h-9 rounded-full hover:bg-green-50 transition-colors"
+                        className="px-3 py-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-full  group flex items-center justify-center w-9 h-9  hover:bg-green-50 transition-colors"
                         title="Message on WhatsApp"
                       >
-                        <MessageCircle className="w-[18px] h-[18px] text-gray-500 group-hover:text-green-600 transition-colors" />
+                        <MessageCircle className="w-[18px] h-[18px] text-white group-hover:text-green-600 transition-colors" />
                       </Link>
                       <Link
                         href={mentor.linkedin}
                         target="_blank"
-                        className="group flex items-center justify-center w-9 h-9 rounded-full hover:bg-blue-50 transition-colors"
+                        className="px-3 py-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-full  group flex items-center justify-center w-9 h-9 rounded-full hover:bg-blue-50 transition-colors"
                         title="Connect on LinkedIn"
                       >
-                        <Linkedin className="w-[18px] h-[18px] text-gray-500 group-hover:text-blue-600 transition-colors" />
+                        <LinkedinIcon className="w-[18px] h-[18px] text-white group-hover:text-blue-600 transition-colors" />
                       </Link>
                     </div>
                   </div>

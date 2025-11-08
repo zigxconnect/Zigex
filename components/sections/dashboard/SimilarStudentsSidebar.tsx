@@ -183,7 +183,7 @@ export default function SimilarStudentsSidebar({
                 <div className="mt-2 flex items-center justify-between">
                   <div className="text-xs text-gray-500">{(s.hard_skills || []).slice(0,3).join(', ')}</div>
                   <div className="flex items-center gap-2">
-                    <button className="px-3 py-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full text-xs font-semibold hover:scale-105">Message</button>
+                    <button className="px-3 py-1 bg-gradient-to-r from-orange-600 to-orange-600 text-white rounded-full text-xs font-semibold hover:scale-105">Message</button>
                     <button className="px-2 py-1 border rounded-md text-xs">View</button>
                   </div>
                 </div>
