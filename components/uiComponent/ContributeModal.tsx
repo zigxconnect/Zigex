@@ -95,7 +95,7 @@ export default function ContributeModal({
               onClick={onClose}
               onMouseEnter={() => setHoveredButton('blue')}
               onMouseLeave={() => setHoveredButton(null)}
-              className="relative overflow-hidden w-full inline-flex items-center justify-center gap-3 px-6 py-4 sm:py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl sm:rounded-2xl font-bold text-base sm:text-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg shadow-blue-500/40 hover:shadow-xl hover:shadow-blue-500/50 hover:-translate-y-1 active:scale-95 group"
+              className="relative overflow-hidden w-full inline-flex items-center justify-center gap-3 px-6 py-3 md:py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl sm:rounded-2xl font-bold text-base sm:text-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg shadow-blue-500/40 hover:shadow-xl hover:shadow-blue-500/50 hover:-translate-y-1 active:scale-95 group"
             >
               {/* Animated background pulse */}
               <span
@@ -136,7 +136,7 @@ export default function ContributeModal({
               onClick={onClose}
               onMouseEnter={() => setHoveredButton('white')}
               onMouseLeave={() => setHoveredButton(null)}
-              className="relative overflow-hidden w-full inline-flex items-center justify-center gap-3 px-6 py-4 sm:py-4 bg-white text-gray-800 border-2 border-gray-200 rounded-xl sm:rounded-2xl font-bold text-base sm:text-lg hover:bg-gray-50 hover:border-gray-300 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 active:scale-95 group"
+              className="relative overflow-hidden w-full inline-flex items-center justify-center gap-3 px-4 py-2 md:py-2 bg-white text-gray-800 border-2 border-gray-200 rounded-xl sm:rounded-2xl font-bold text-base sm:text-lg hover:bg-gray-50 hover:border-gray-300 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 active:scale-95 group"
             >
               {/* Animated background pulse */}
               <span

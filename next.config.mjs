@@ -18,19 +18,19 @@ const nextConfig = {
         pathname: '/**',
       },
 
-         {
-      protocol: 'https',
-      hostname: 'logo.png',
-      port: '',
-      pathname: '/**',
-    },
+      {
+        protocol: 'https',
+        hostname: 'logo.png',
+        port: '',
+        pathname: '/**',
+      },
 
       {
-      protocol: 'https',
-      hostname: 'cdn.sanity.io',
-      port: '',
-      pathname: '/**',
-    },
+        protocol: 'https',
+        hostname: 'cdn.sanity.io',
+        port: '',
+        pathname: '/**',
+      },
 
       // THE FIX IS HERE:
       // We are adding a new object to the array for your Supabase Storage.
@@ -40,13 +40,21 @@ const nextConfig = {
         port: '',
         pathname: '/storage/v1/object/public/**',
       },
-  {
+
+      {
         protocol: 'https',
         hostname: 'lh3.googleusercontent.com',
         port: '',
         pathname: '/**',
       },
-      
+
+      // ADD THIS FOR DICEBEAR AVATARS
+      {
+        protocol: 'https',
+        hostname: 'api.dicebear.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };

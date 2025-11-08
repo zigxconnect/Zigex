@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { Phone, Linkedin, MessageCircle } from "lucide-react";
+import { MessageCircle, Linkedin } from "lucide-react";
 
 type Mentor = {
   id: string;
@@ -127,165 +126,152 @@ const mentors: Mentor[] = [
 ];
 
 const fields = [
-  { id: "all", name: "All Mentors", count: mentors.length },
-  { id: "iot", name: "IoT", count: mentors.filter(m => m.field === "iot").length },
-  { id: "web", name: "Web Development", count: mentors.filter(m => m.field === "web").length },
-  { id: "ai", name: "Artificial Intelligence", count: mentors.filter(m => m.field === "ai").length },
-  { id: "ml", name: "Machine Learning", count: mentors.filter(m => m.field === "ml").length },
-  { id: "embedded", name: "Embedded Systems", count: mentors.filter(m => m.field === "embedded").length },
-  { id: "cybersecurity", name: "Cybersecurity", count: mentors.filter(m => m.field === "cybersecurity").length },
+  { id: "all", name: "All" },
+  { id: "iot", name: "IoT" },
+  { id: "web", name: "Web Dev" },
+  { id: "ai", name: "AI" },
+  { id: "ml", name: "ML" },
+  { id: "embedded", name: "Embedded" },
+  { id: "cybersecurity", name: "Security" },
 ];
+
+function pickAvatar(mentor: Mentor) {
+  if (mentor.avatar && mentor.avatar !== "/z3.png") return mentor.avatar;
+  const seed = encodeURIComponent(mentor.name || mentor.id || "unknown");
+  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
+}
 
 export default function MentorshipPage() {
   const [activeField, setActiveField] = useState("all");
-  const [hoveredMentor, setHoveredMentor] = useState<string | null>(null);
 
   const filteredMentors = activeField === "all" 
     ? mentors 
     : mentors.filter(m => m.field === activeField);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-6">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Find Your Mentor</h1>
-            <p className="mt-1 text-sm text-gray-600">
-              Connect with experienced professionals to level up your skills
-            </p>
-          </div>
-
-          {/* Field Tabs - Horizontal Scroll */}
-          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 hide-scrollbar">
-            <div className="flex gap-2 pb-4 min-w-max">
-              {fields.map((field) => (
-                <button
-                  key={field.id}
-                  onClick={() => setActiveField(field.id)}
-                  className={`
-                    px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all
-                    ${activeField === field.id
-                      ? "bg-blue-600 text-white shadow-md"
-                      : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
-                    }
-                  `}
-                >
-                  {field.name}
-                  <span className={`ml-2 text-xs ${activeField === field.id ? "text-blue-100" : "text-gray-500"}`}>
-                    ({field.count})
-                  </span>
-                </button>
-              ))}
-            </div>
+      <div className="border-b border-gray-200 sticky top-0 z-40 bg-white/80 backdrop-blur-md">
+        <div className="max-w-3xl mx-auto px-4 py-4">
+          <h1 className="text-xl font-bold text-gray-900">Mentors</h1>
+          
+          {/* Tabs */}
+          <div className="flex gap-2 mt-4 overflow-x-auto hide-scrollbar pb-1">
+            {fields.map((field) => (
+              <button
+                key={field.id}
+                onClick={() => setActiveField(field.id)}
+                className={`
+                  px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors
+                  ${activeField === field.id
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }
+                `}
+              >
+                {field.name}
+              </button>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Mentors Grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredMentors.map((mentor) => (
+      {/* Feed */}
+      <div className="max-w-3xl mx-auto">
+        {filteredMentors.map((mentor) => {
+          const whatsappMessage = encodeURIComponent(`Hi ${mentor.name}, I'd like to learn more about ${mentor.expertise[0]}. Can you mentor me?`);
+          const whatsappUrl = `${mentor.whatsapp}?text=${whatsappMessage}`;
+          const avatarSrc = pickAvatar(mentor);
+          
+          return (
             <div
               key={mentor.id}
-              onMouseEnter={() => setHoveredMentor(mentor.id)}
-              onMouseLeave={() => setHoveredMentor(null)}
-              className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+              className="border-b border-gray-200 px-4 py-4 hover:bg-gray-50/50 transition-colors"
             >
-              {/* Avatar Section */}
-              <div className="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg">
-                    <Image
-                      src={mentor.avatar}
+              <div className="flex gap-3">
+                {/* Avatar */}
+                <div className="flex-shrink-0">
+                  <div className="relative w-12 h-12 rounded-full overflow-hidden bg-gray-200">
+                    <img
+                      src={avatarSrc}
                       alt={mentor.name}
-                      fill
-                      className="object-cover"
+                      className="w-full h-full object-cover"
+                      loading="lazy"
                     />
                   </div>
                 </div>
-              </div>
 
-              {/* Info Section */}
-              <div className="p-5">
-                <div className="text-center mb-4">
-                  <h3 className="text-lg font-bold text-gray-900">{mentor.name}</h3>
-                  <p className="text-sm text-gray-600 mt-0.5">{mentor.title}</p>
-                </div>
-
-                {/* Stats */}
-                <div className="flex items-center justify-center gap-4 mb-4 pb-4 border-b border-gray-100">
-                  <div className="text-center">
-                    <div className="flex items-center gap-1 text-yellow-500">
-                      <span className="text-lg font-bold">{mentor.rating}</span>
-                      <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
-                        <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                      </svg>
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  {/* Header */}
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-gray-900 text-[15px] truncate">
+                          {mentor.name}
+                        </span>
+                        <span className="text-gray-500 text-[15px]">·</span>
+                        <span className="text-gray-500 text-sm">
+                          ⭐ {mentor.rating}
+                        </span>
+                      </div>
+                      <div className="text-gray-500 text-sm">{mentor.title}</div>
                     </div>
-                    <p className="text-xs text-gray-500 mt-0.5">Rating</p>
                   </div>
-                  <div className="w-px h-8 bg-gray-200" />
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-gray-900">{mentor.students}</div>
-                    <p className="text-xs text-gray-500 mt-0.5">Students</p>
+
+                  {/* Bio */}
+                  <p className="text-[15px] text-gray-900 leading-normal mb-2">
+                    {mentor.bio}
+                  </p>
+
+                  {/* Skills */}
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    {mentor.expertise.slice(0, 4).map((skill, idx) => (
+                      <span
+                        key={idx}
+                        className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-xs font-medium"
+                      >
+                        {skill}
+                      </span>
+                    ))}
                   </div>
-                </div>
 
-                {/* Bio */}
-                <p className="text-xs text-gray-600 leading-relaxed mb-4 line-clamp-2">
-                  {mentor.bio}
-                </p>
-
-                {/* Expertise Tags */}
-                <div className="flex flex-wrap gap-1.5 mb-4">
-                  {mentor.expertise.slice(0, 3).map((skill, idx) => (
-                    <span
-                      key={idx}
-                      className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-medium"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                  {mentor.expertise.length > 3 && (
-                    <span className="px-2 py-1 bg-gray-100 text-gray-500 rounded text-xs">
-                      +{mentor.expertise.length - 3}
-                    </span>
-                  )}
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-2">
-                  <Link
-                    href={mentor.whatsapp}
-                    target="_blank"
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-sm"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    <span>WhatsApp</span>
-                  </Link>
-                  <Link
-                    href={mentor.linkedin}
-                    target="_blank"
-                    className="flex items-center justify-center w-10 h-10 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    <Linkedin className="w-4 h-4" />
-                  </Link>
+                  {/* Stats & Actions */}
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-gray-500">
+                      {mentor.students} students mentored
+                    </div>
+                    
+                    {/* Action Icons */}
+                    <div className="flex gap-2">
+                      <Link
+                        href={whatsappUrl}
+                        target="_blank"
+                        className="group flex items-center justify-center w-9 h-9 rounded-full hover:bg-green-50 transition-colors"
+                        title="Message on WhatsApp"
+                      >
+                        <MessageCircle className="w-[18px] h-[18px] text-gray-500 group-hover:text-green-600 transition-colors" />
+                      </Link>
+                      <Link
+                        href={mentor.linkedin}
+                        target="_blank"
+                        className="group flex items-center justify-center w-9 h-9 rounded-full hover:bg-blue-50 transition-colors"
+                        title="Connect on LinkedIn"
+                      >
+                        <Linkedin className="w-[18px] h-[18px] text-gray-500 group-hover:text-blue-600 transition-colors" />
+                      </Link>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          ))}
-        </div>
+          );
+        })}
 
         {/* Empty State */}
         {filteredMentors.length === 0 && (
-          <div className="text-center py-16">
-            <div className="text-gray-400 mb-4">
-              <svg className="w-16 h-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">No mentors found</h3>
-            <p className="text-sm text-gray-600">Try selecting a different field</p>
+          <div className="text-center py-16 px-4">
+            <p className="text-gray-500">No mentors found in this category</p>
           </div>
         )}
       </div>
