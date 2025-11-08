@@ -9,6 +9,7 @@ import {
   Users,
   Bell,
   Home,
+  SearchCode,
 } from "lucide-react";
 import { AiOutlineWechat } from "react-icons/ai";
 import { useState, useEffect } from "react";
@@ -18,7 +19,7 @@ interface MobileTabBarProps {
 }
 
 const tabItems = [
-  { href: "/dashboard", icon: Home, label: "Profile" },
+  { href: "/feed", icon: SearchCode, label: "Browse" },
   { href: "/dashboard/fupro-ai", icon: AiOutlineWechat, label: "AI Chat", isSpecial: true },
   { href: "/dashboard/student", icon: Users, label: "Students" },
   { href: "/notifications", icon: Bell, label: "Alerts" },

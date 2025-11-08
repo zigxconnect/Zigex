@@ -37,7 +37,7 @@ const notificationsItem = {
 
 // Regular navigation items
 const navItems = [
-  { href: "/dashboard", icon: IceCreamCone, label: "Browse" },
+  { href: "/feed", icon: IceCreamCone, label: "Browse" },
   {
     href: "/dashboard/student",
     icon: Users,

@@ -2,9 +2,7 @@
 "use client";
 
 import { useFeedStore } from "@/lib/zustand/store";
-// import { useFeedStore } from "@/lib/zustand/store";
-// import { useFeedStore } from "@/lib/store/feedStore";
-import { Briefcase, GraduationCap, Calendar, Sparkles, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { useState } from "react";
 
@@ -25,64 +23,29 @@ const tabs = [
   {
     id: "live" as TabId,
     label: "Live",
-    icon: Sparkles,
-    color: "red",
   },
   {
     id: "all" as TabId,
     label: "All",
-    icon: Sparkles,
-    color: "gray",
   },
   {
     id: "internships" as TabId,
     label: "Internships",
-    icon: Briefcase,
-    color: "blue",
   },
   {
     id: "programs" as TabId,
     label: "Programs",
-    icon: GraduationCap,
-    color: "purple",
   },
   {
     id: "events" as TabId,
     label: "Events",
-    icon: Calendar,
-    color: "green",
   },
 ];
-
-const getTabColorClasses = (color: string, isActive: boolean) => {
-  const colorMap: Record<string, any> = {
-    red: {
-      active: "bg-red-600 text-white shadow-red-200",
-      inactive: "text-red-600 hover:bg-red-50",
-    },
-    gray: {
-      active: "bg-blue-600 text-white shadow-blue-200",
-      inactive: "text-gray-600 hover:bg-gray-50",
-    },
-    blue: {
-      active: "bg-blue-600 text-white shadow-blue-200",
-      inactive: "text-blue-600 hover:bg-blue-50",
-    },
-    purple: {
-      active: "bg-purple-600 text-white shadow-purple-200",
-      inactive: "text-purple-600 hover:bg-purple-50",
-    },
-    green: {
-      active: "bg-green-600 text-white shadow-green-200",
-      inactive: "text-green-600 hover:bg-green-50",
-    },
-  };
-  return isActive ? colorMap[color].active : colorMap[color].inactive;
-};
 
 export function FeedTabs({ counts, isLoading = false }: FeedTabsProps) {
   const { activeTab, setActiveTab, searchQuery, setSearchQuery } = useFeedStore();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [hoveredTab, setHoveredTab] = useState<TabId | null>(null);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -104,7 +67,7 @@ export function FeedTabs({ counts, isLoading = false }: FeedTabsProps) {
             {/* Search Button */}
             <button
               onClick={() => setIsSearchOpen(true)}
-              className="w-full lg:w-96 flex items-center gap-3 px-4 py-2.5 bg-white border-2 border-gray-200 rounded-xl hover:border-blue-400 hover:shadow-md transition-all duration-200 group"
+              className="w-full cursor-pointer lg:w-96 flex items-center gap-3 px-4 py-2.5 bg-white border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:shadow-md transition-all duration-200 group"
             >
               <Search
                 size={20}
@@ -120,27 +83,57 @@ export function FeedTabs({ counts, isLoading = false }: FeedTabsProps) {
 
             {/* Tabs */}
             <div className="w-full lg:w-auto overflow-x-auto scrollbar-hide">
-              <div className="inline-flex bg-gray-100 rounded-xl p-1.5 shadow-sm min-w-max">
+              <div className="inline-flex bg-gray-50 rounded-xl p-1.5 shadow-sm min-w-max border border-gray-200">
                 {tabs.map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => handleTabChange(tab.id)}
-                    className={`relative flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all duration-300 whitespace-nowrap ${getTabColorClasses(
-                      tab.color,
-                      activeTab === tab.id
-                    )} ${
-                      activeTab === tab.id ? "scale-105 shadow-lg" : "hover:scale-102"
-                    }`}
+                    onMouseEnter={() => setHoveredTab(tab.id)}
+                    onMouseLeave={() => setHoveredTab(null)}
+                    className={`
+                      relative flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm 
+                      transition-all duration-300 whitespace-nowrap overflow-hidden
+                      ${
+                        activeTab === tab.id
+                          ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/30 scale-105"
+                          : "text-gray-600 hover:bg-white hover:text-blue-600 hover:shadow-sm"
+                      }
+                    `}
                   >
-                    <tab.icon size={16} />
-                    <span>{tab.label}</span>
+                    {/* Shimmer effect on active tab */}
+                    {activeTab === tab.id && (
+                      <span
+                        className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"
+                      />
+                    )}
+
+                    {/* Particle effects on hover for active tab */}
+                    {activeTab === tab.id && hoveredTab === tab.id && (
+                      <>
+                        <span className="absolute top-0 left-1/4 w-1 h-1 bg-white rounded-full animate-particle-1" />
+                        <span className="absolute top-0 right-1/4 w-1 h-1 bg-white rounded-full animate-particle-2" />
+                        <span className="absolute bottom-0 left-1/3 w-1 h-1 bg-white rounded-full animate-particle-3" />
+                      </>
+                    )}
+
+                    {/* Pulse background on hover for active tab */}
+                    {activeTab === tab.id && hoveredTab === tab.id && (
+                      <span className="absolute inset-0 bg-blue-400 animate-ping opacity-20" />
+                    )}
+
+                    {/* Tab content */}
+                    <span className="relative z-10">{tab.label}</span>
+                    
                     {!isLoading && counts && counts[tab.id] > 0 && (
                       <span
-                        className={`px-2 py-0.5 text-xs rounded-full font-semibold ${
-                          activeTab === tab.id
-                            ? "bg-white/20 text-white"
-                            : "bg-gray-200 text-gray-600"
-                        }`}
+                        className={`
+                          relative z-10 px-2 py-0.5 text-xs rounded-full font-bold
+                          ${
+                            activeTab === tab.id
+                              ? "bg-white/25 text-white"
+                              : "bg-gray-200 text-gray-700"
+                          }
+                        `}
                       >
                         {counts[tab.id]}
                       </span>
@@ -219,6 +212,66 @@ export function FeedTabs({ counts, isLoading = false }: FeedTabsProps) {
         }
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
+        }
+
+        @keyframes shimmer {
+          0% {
+            transform: translateX(-100%);
+          }
+          100% {
+            transform: translateX(100%);
+          }
+        }
+
+        @keyframes particle-1 {
+          0% {
+            transform: translate(0, 0) scale(1);
+            opacity: 1;
+          }
+          100% {
+            transform: translate(-10px, -20px) scale(0);
+            opacity: 0;
+          }
+        }
+
+        @keyframes particle-2 {
+          0% {
+            transform: translate(0, 0) scale(1);
+            opacity: 1;
+          }
+          100% {
+            transform: translate(10px, -20px) scale(0);
+            opacity: 0;
+          }
+        }
+
+        @keyframes particle-3 {
+          0% {
+            transform: translate(0, 0) scale(1);
+            opacity: 1;
+          }
+          100% {
+            transform: translate(5px, 20px) scale(0);
+            opacity: 0;
+          }
+        }
+
+        .animate-shimmer {
+          animation: shimmer 2s infinite;
+        }
+
+        .animate-particle-1 {
+          animation: particle-1 0.8s ease-out forwards;
+        }
+
+        .animate-particle-2 {
+          animation: particle-2 0.8s ease-out forwards;
+          animation-delay: 0.1s;
+        }
+
+        .animate-particle-3 {
+          animation: particle-3 0.8s ease-out forwards;
+          animation-delay: 0.2s;
         }
       `}</style>
     </>

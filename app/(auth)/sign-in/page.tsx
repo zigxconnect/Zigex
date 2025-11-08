@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default async function SignInPage() {
   try {
     await checkAuthStatus();
-    redirect("/dashboard");
+    redirect("/feed");
   } catch (error) {}
 
   return (
