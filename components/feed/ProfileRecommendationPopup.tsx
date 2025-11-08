@@ -2,10 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, User, Sparkles, User2 } from 'lucide-react';
+import Image from 'next/image';
 
-export default function ProfileRecommendationPopup() {
+export default function ProfileRecommendationPopup({user}:{user:any}) {
   const [isVisible, setIsVisible] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+    const coverImageUrl = user?.profile.cover_image || "/ar.png";
 
   useEffect(() => {
     // Check if user has seen the popup before
@@ -24,14 +26,13 @@ export default function ProfileRecommendationPopup() {
     setIsAnimating(false);
     setTimeout(() => {
       setIsVisible(false);
-      localStorage.setItem('zigex_profile_popup_seen', 'true');
     }, 300);
   };
 
   const handleViewProfile = () => {
     // Mark as seen and redirect
     localStorage.setItem('zigex_profile_popup_seen', 'true');
-    window.location.href = '/profile';
+    window.location.href = `/dashboard/student/${user?.profile?.id}`
   };
 
   const handleDismiss = () => {
@@ -42,9 +43,11 @@ export default function ProfileRecommendationPopup() {
 
   return (
     <>
-      {/* Backdrop - Now fully transparent */}
+      {/* Dark Backdrop Overlay */}
       <div
-        className="fixed inset-0 bg-transparent z-40"
+        className={`fixed inset-0 bg-black z-40 transition-opacity duration-300 ${
+          isAnimating ? 'opacity-50' : 'opacity-0'
+        }`}
         onClick={handleClose}
       />
 
@@ -59,7 +62,7 @@ export default function ProfileRecommendationPopup() {
           <div className="relative p-6 pb-4">
             <button
               onClick={handleClose}
-              className="absolute top-4 right-4 p-1 hover:bg-gray-100 rounded-full transition-colors"
+              className="absolute cursor-pointer top-4 right-4 p-1 hover:bg-gray-100 rounded-full transition-colors"
               aria-label="Close"
             >
               <X className="w-5 h-5 text-gray-600" />
@@ -68,23 +71,31 @@ export default function ProfileRecommendationPopup() {
             {/* Icon */}
             <div className="flex justify-center mb-4">
               <div className="relative">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                {coverImageUrl ? (
+                     <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                  {/* <User className="w-8 h-8 text-white" /> */}
+                  <Image src={coverImageUrl} alt='avatar' fill className='rounded-full' objectFit='cover'/>
+                </div>
+                ) : (
+                      <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                   <User className="w-8 h-8 text-white" />
                 </div>
+                )}
+               
                 <div className="absolute -top-1 -right-1">
-                  <User2 className="w-6 h-6 text-yellow-400 fill-yellow-400" />
+                  <Sparkles className="w-6 h-6 text-yellow-400 fill-yellow-400" />
                 </div>
               </div>
             </div>
 
             {/* Title */}
             <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
-              Get a personalized feed
+              Get personalized feeds
             </h2>
 
             {/* Description */}
             <p className="text-gray-600 text-center leading-relaxed">
-              Complete your profile to see opportunities tailored just for you. We'll match you with internships, events, and programs that fit your interests and goals.
+              Navigate to your profile section to set your preferences and interests. We'll use this to show you opportunities, events, and programs that match what you're looking for.
             </p>
           </div>
 
@@ -120,9 +131,9 @@ export default function ProfileRecommendationPopup() {
           <div className="p-6 pt-2 space-y-3">
             <button
               onClick={handleViewProfile}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 px-4 rounded-full transition-colors shadow-sm"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 px-4 rounded-full transition-colors cursor-pointer shadow-sm"
             >
-              Complete your profile
+              Go to profile
             </button>
             <button
               onClick={handleDismiss}

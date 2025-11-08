@@ -182,7 +182,7 @@ export const DashboardHeader = ({
           </div>
 
           {/* User Avatar & Info */}
-          <div className="hidden md:flex items-center gap-3 ml-2 lg:ml-3 flex-shrink-0">
+          <Link  href={`/dashboard/student/${user.profile.id}`} className="flex items-center gap-3 ml-2 lg:ml-3 flex-shrink-0">
             <div className="relative w-9 h-9 lg:w-10 lg:h-10 rounded-full border-2 border-gray-200 overflow-hidden ring-2 ring-transparent hover:ring-blue-400 transition-all duration-200">
               <Image
                 src={userAvatar}
@@ -191,13 +191,13 @@ export const DashboardHeader = ({
                 className="object-cover"
               />
             </div>
-            <div className="hidden lg:block">
+            <div className="">
               <p className="text-sm font-semibold text-gray-900 leading-tight">
                 {userName}
               </p>
               <p className="text-xs text-gray-500 leading-tight">{userRole}</p>
             </div>
-          </div>
+          </Link>
         </div>
       </div>
 
