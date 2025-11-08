@@ -132,7 +132,7 @@ export default function ContributeModal({
 
             {/* White Button - "Teach Me First" */}
             <Link
-              href="/mentorship"
+              href="/feed/mentorship"
               onClick={onClose}
               onMouseEnter={() => setHoveredButton('white')}
               onMouseLeave={() => setHoveredButton(null)}

@@ -219,11 +219,11 @@ Looking forward to hearing from you!`;
               </div>
 
               {/* Sidebar: if profile owner, show similar students. If visitor, show their own monthly project sidebar. */}
-              {isOwner ? (
-                <SimilarStudentsSidebar students={similarStudents} />
-              ) : (
-                myProfile && <MyMonthProject user={myProfile} />
-              )}
+            {isOwner ? (
+  <SimilarStudentsSidebar students={similarStudents} />
+) : (
+  myProfile && <MyMonthProject user={myProfile} isVisitor={true} />
+)}
               
               <div className="flex items-center gap-1.5 text-gray-600 mb-2">
                 <MapPin size={14} className="text-gray-500 flex-shrink-0" />
