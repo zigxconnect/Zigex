@@ -23,6 +23,7 @@ interface WelcomeCardProps {
 }
 
 export const WelcomeCard = ({ user, onProfileUpdated, profile }: WelcomeCardProps) => {
+  console.log("User in WelcomeCard:", user);
   const [isAboutExpanded, setIsAboutExpanded] = useState(false);
   const [isSkillsExpanded, setIsSkillsExpanded] = useState(false);
   const [isAvatarHovered, setIsAvatarHovered] = useState(false);
@@ -42,7 +43,7 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile }: WelcomeCardProp
     return skillsText.substring(0, maxLength) + "...";
   };
 
-  const avatarUrl = user.profile.avatar_url || "/gita.png";
+  const avatarUrl = user.profile.avatar_url || "/ar.png";
   const coverImageUrl = user.profile.cover_image || "/ar.png";
 
   return (

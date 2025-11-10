@@ -31,10 +31,11 @@ export const metadata = {
 export default async function FeedPage({ searchParams }: FeedPageProps) {
   // Fetch user profile
   const userData = await getProfileInfo();
+  console.log("User Data in FeedPage:", userData);
 
   return (
     <>
-    <ProfileRecommendationPopup/>
+    <ProfileRecommendationPopup user={userData}/>
       <WelcomeCard user={userData} />
       <MainFeedPage searchQuery={searchParams.q} />
     </>

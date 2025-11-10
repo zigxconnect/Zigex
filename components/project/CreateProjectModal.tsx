@@ -81,11 +81,17 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
         onClose();
         router.refresh();
       } else {
-        setSubmitError(result.error || "Failed to create project");
-
-        if (result.fieldErrors) {
+        // Handle active project case
+        if (result.activeProject) {
+          const endDate = new Date(result.activeProject.end_date);
+          const remainingDays = Math.ceil((endDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+          setSubmitError(`You have an active project that expires in ${remainingDays} days. You can only create a new project once your current project expires.`);
+          toast.error("Active project exists");
+        } else if (result.fieldErrors) {
+          setSubmitError(result.error || "Validation failed");
           toast.error(result.error || "Validation failed");
         } else {
+          setSubmitError(result.error || "Failed to create project");
           toast.error(result.error || "Something went wrong");
         }
       }

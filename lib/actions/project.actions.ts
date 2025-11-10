@@ -11,6 +11,12 @@ interface CreateProjectResult {
   data?: any;
   error?: string;
   fieldErrors?: Record<string, string>;
+  activeProject?: {
+    id: string;
+    title: string;
+    end_date: string;
+    duration: string;
+  };
 }
 
 export async function createProjectAction(formData: FormData): Promise<CreateProjectResult> {
@@ -42,6 +48,27 @@ export async function createProjectAction(formData: FormData): Promise<CreatePro
       return { 
         success: false, 
         error: 'You must be logged in to create a project.' 
+      };
+    }
+
+    // Step 2.5: Check if user has an active project
+    const { data: activeProject } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('user_id', user.id)
+      .gt('end_date', new Date().toISOString())
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (activeProject) {
+      const endDate = new Date(activeProject.end_date);
+      const remainingDays = Math.ceil((endDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+      
+      return {
+        success: false,
+        error: `You have an active project that expires in ${remainingDays} days`,
+        activeProject
       };
     }
 

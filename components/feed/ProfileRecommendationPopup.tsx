@@ -3,15 +3,24 @@
 import React, { useState, useEffect } from 'react';
 import { X, User, Sparkles, User2 } from 'lucide-react';
 import Image from 'next/image';
+import { UserProfile } from '@/app/types/type';
 
-export default function ProfileRecommendationPopup({user}:{user:any}) {
+interface WelcomeCardProps {
+  user: UserProfile | any;
+  onProfileUpdated?: () => void;
+  profile?: any;
+}
+
+export default function ProfileRecommendationPopup({user}: WelcomeCardProps) {
+  console.log("User in ProfileRecommendationPopup:", user);
   const [isVisible, setIsVisible] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
-    const coverImageUrl = user?.profile.cover_image || "/ar.png";
+    const coverImageUrl = user?.avatarUrl || "/ar.png";
 
   useEffect(() => {
     // Check if user has seen the popup before
     const hasSeenPopup = localStorage.getItem('zigex_profile_popup_seen');
+    console.log("user is :", user);
     
     if (!hasSeenPopup) {
       // Show popup after a brief delay for smooth entrance
@@ -90,7 +99,7 @@ export default function ProfileRecommendationPopup({user}:{user:any}) {
 
             {/* Title */}
             <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
-              Get personalized feeds
+             {user.name}  Get personalized feeds
             </h2>
 
             {/* Description */}
