@@ -84,7 +84,7 @@ export const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats
     <div 
       ref={cardRef}
       className={`
-        w-full bg-white border-b border-gray-200 hover:bg-gray-50/50 transition-all duration-500
+        w-full bg-white border-b border-gray-200 hover:bg-blue-100 transition-all duration-500
         ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
       `}
     >

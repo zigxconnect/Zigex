@@ -10,6 +10,7 @@ import {
   Bell,
   Home,
   SearchCode,
+  PersonStanding,
 } from "lucide-react";
 import { AiOutlineWechat } from "react-icons/ai";
 import { useState, useEffect } from "react";
@@ -19,6 +20,7 @@ interface MobileTabBarProps {
 }
 
 const tabItems = [
+  { href: "/dashboard/student/id", icon: PersonStanding, label: "Me" },
   { href: "/feed", icon: SearchCode, label: "Browse" },
   { href: "/dashboard/fupro-ai", icon: AiOutlineWechat, label: "AI Chat", isSpecial: true },
   { href: "/dashboard/student", icon: Users, label: "Students" },

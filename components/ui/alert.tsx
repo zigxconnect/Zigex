@@ -15,9 +15,9 @@ const VARIANT_STYLES: Record<
   { container: string; title: string; description: string }
 > = {
   danger: {
-    container: "bg-red-50 text-red-800",
-    title: "text-red-900",
-    description: "text-red-700",
+    container: "bg-blue-50 text-blue-90",
+    title: "text-blue-900",
+    description: "text-white",
   },
   info: {
     container: "bg-blue-50 text-blue-800",

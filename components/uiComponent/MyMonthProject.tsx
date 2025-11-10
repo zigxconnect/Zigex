@@ -24,12 +24,21 @@ interface Props {
     github_url?: string | null;
   } | null;
   project?: Project | null;
-  isVisitor?: boolean; // New prop to determine if viewing as a visitor
+  isVisitor?: boolean;
 }
 
 export default function MyMonthProject({ user, project, isVisitor = false }: Props) {
   const [open, setOpen] = useState(false);
   const [showContributeModal, setShowContributeModal] = useState(false);
+  const [showIndicator, setShowIndicator] = useState(true);
+
+  // Hide indicator after 3 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowIndicator(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // lock body scroll when open on mobile
   useEffect(() => {
@@ -66,10 +75,43 @@ export default function MyMonthProject({ user, project, isVisitor = false }: Pro
     <div>
       {/* Mobile: Show as main card component for visitors */}
       {isVisitor && (
-        <div className="md:hidden bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden mb-6">
+        <div className="md:hidden bg-white rounded-2xl border-2 border-blue-200 shadow-lg overflow-hidden mb-6 relative">
+          {/* First-time Project Indicator - Mobile */}
+          {showIndicator && (
+            <div className="absolute -top-1 left-1/2 -translate-x-1/2 z-10 animate-bounce">
+              <div className="bg-blue-600 text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-lg border-2 border-white flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                  <polyline points="22 4 12 14.01 9 11.01" />
+                </svg>
+                YOUR ACTIVE PROJECT
+              </div>
+            </div>
+          )}
+
           <div className="relative h-48 w-full bg-gray-100">
             <Image src={p.mainImage || "/n8.png"} alt={p.title || "Project"} fill className="object-cover" />
             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/40" />
+            
+            {/* Active Project Badge */}
+            <div className="absolute top-3 right-3">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-full shadow-lg border border-blue-700/50 backdrop-blur-sm">
+                <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                <span className="text-xs font-semibold">Active Project</span>
+              </div>
+            </div>
+
+            {/* Project Type Label */}
+            <div className="absolute top-3 left-3">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/95 backdrop-blur-sm text-blue-600 rounded-lg shadow-md border border-blue-100">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                  <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                </svg>
+                <span className="text-xs font-bold">PROJECT</span>
+              </div>
+            </div>
+            
             <div className="absolute left-4 bottom-3">
               <h4 className="text-white text-base font-semibold drop-shadow">{p.title}</h4>
               <p className="text-xs text-white/90 drop-shadow">Monthly highlight</p>
@@ -141,27 +183,76 @@ export default function MyMonthProject({ user, project, isVisitor = false }: Pro
 
       {/* Mobile: floating toggle button (only if NOT visitor) */}
       {!isVisitor && (
-        <button
-          aria-expanded={open}
-          aria-controls="my-month-project-panel"
-          onClick={() => setOpen(true)}
-          className="cursor-pointer md:hidden fixed left-4 bottom-6 z-50 inline-flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-full shadow-lg border border-blue-700 hover:bg-blue-700 focus:outline-none"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M3 12h18M3 6h18M3 18h18" />
-          </svg>
-          <span className="text-sm font-medium">See month project</span>
-        </button>
+        <div className="relative">
+          {/* First-time Indicator for floating button */}
+          {showIndicator && (
+            <div className="md:hidden fixed left-4 bottom-20 z-50 animate-bounce">
+              <div className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-lg border-2 border-white flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                  <polyline points="22 4 12 14.01 9 11.01" />
+                </svg>
+                YOUR PROJECT
+              </div>
+            </div>
+          )}
+
+          <button
+            aria-expanded={open}
+            aria-controls="my-month-project-panel"
+            onClick={() => setOpen(true)}
+            className="cursor-pointer md:hidden fixed left-4 bottom-6 z-50 inline-flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-full shadow-lg border border-blue-700 hover:bg-blue-700 focus:outline-none"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+            </svg>
+            <span className="text-sm font-medium">See month project</span>
+          </button>
+        </div>
       )}
 
       {/* Overlay for mobile when open */}
       {open && <div onClick={() => setOpen(false)} className="md:hidden fixed inset-0 bg-black/40 z-40" />}
 
       {/* Desktop aside (visible on md+) */}
-      <aside id="my-month-project-panel" className="fixed right-6 top-32 w-72 lg:w-80 bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden hidden md:block">
+      <aside id="my-month-project-panel" className="fixed right-6 top-32 w-72 lg:w-80 bg-white rounded-2xl border-2 border-blue-200 shadow-xl overflow-hidden hidden md:block">
+        {/* First-time Project Indicator - Desktop */}
+        {showIndicator && (
+          <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 animate-bounce">
+            <div className="bg-blue-600 text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-lg border-2 border-white flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+              YOUR ACTIVE PROJECT
+            </div>
+          </div>
+        )}
+
         <div className="relative h-36 w-full bg-gray-100">
           <Image src={"/projects.png"} alt={p.title || "Project"} fill className="object-cover" />
           <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/30" />
+          
+          {/* Active Project Badge - Desktop */}
+          <div className="absolute top-3 right-3">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-600 text-white rounded-full shadow-lg border border-blue-700/50 backdrop-blur-sm">
+              <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+              <span className="text-xs font-semibold">Active</span>
+            </div>
+          </div>
+
+          {/* Project Type Label - Desktop */}
+          <div className="absolute top-3 left-3">
+            <div className="inline-flex items-center gap-1 px-2 py-1 bg-white/95 backdrop-blur-sm text-blue-600 rounded-md shadow-md border border-blue-100">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+              </svg>
+              <span className="text-xs font-bold">PROJECT</span>
+            </div>
+          </div>
+          
           <div className="absolute left-4 bottom-3">
             <h4 className="text-white text-sm font-semibold drop-shadow">{p.title}</h4>
             <p className="text-xs text-white/90 drop-shadow">Monthly highlight</p>
@@ -234,20 +325,23 @@ export default function MyMonthProject({ user, project, isVisitor = false }: Pro
       {!isVisitor && (
         <aside
           className={
-            "md:hidden fixed top-0 left-0 h-full z-50 w-72 bg-white border-r border-gray-200 shadow-xl transform transition-transform duration-300 " + (open ? "translate-x-0" : "-translate-x-full")
+            "md:hidden fixed top-0 left-0 h-full z-50 w-72 bg-white border-r-2 border-blue-200 shadow-xl transform transition-transform duration-300 " + (open ? "translate-x-0" : "-translate-x-full")
           }
           role="dialog"
           aria-modal="true"
         >
-          <div className="flex items-center justify-between p-3 border-b border-gray-100">
+          <div className="flex items-center justify-between p-3 border-b border-gray-100 bg-blue-50">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-md overflow-hidden bg-gray-100">
+              <div className="w-9 h-9 rounded-md overflow-hidden bg-gray-100 ring-2 ring-blue-200">
                 {p.mainImage ? (
                   <Image src={p.mainImage} alt={p.title || "Project"} width={36} height={36} className="object-cover" />
                 ) : null}
               </div>
               <div>
-                <div className="text-sm font-semibold text-gray-900">{p.title}</div>
+                <div className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                  {p.title}
+                  <span className="inline-flex items-center px-1.5 py-0.5 bg-blue-600 text-white rounded text-xs font-bold">PROJECT</span>
+                </div>
                 <div className="text-xs text-gray-500">Monthly highlight</div>
               </div>
             </div>
@@ -267,6 +361,14 @@ export default function MyMonthProject({ user, project, isVisitor = false }: Pro
             <div className="relative h-36 w-full bg-gray-100 rounded-md overflow-hidden">
               <Image src={p.mainImage || "/n8.png"} alt={p.title || "Project"} fill className="object-cover" />
               <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/30" />
+              
+              {/* Active Project Badge - Mobile Panel */}
+              <div className="absolute top-2 right-2">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-600 text-white rounded-full shadow-lg border border-blue-700/50 backdrop-blur-sm">
+                  <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                  <span className="text-xs font-semibold">Active</span>
+                </div>
+              </div>
             </div>
 
             <div className="mt-4">

@@ -14,6 +14,7 @@ import {
   NewspaperIcon,
   PersonStanding,
   IceCreamCone,
+  PersonStandingIcon,
 } from "lucide-react";
 import { AiOutlineWechat } from "react-icons/ai";
 import { Button } from "@/components/ui/button";
@@ -41,8 +42,14 @@ const navItems = [
   {
     href: "/dashboard/student",
     icon: Users,
-    label: "Connection",
+    label: "zigx",
     matchPaths: ["/dashboard/student"],
+  },
+   {
+    href: "/dashboard/student/id",
+    icon: PersonStandingIcon,
+    label: "For Me",
+    matchPaths: ["/dashboard/student/id"],
   },
   {
     href: "/dashboard/track-progress",

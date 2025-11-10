@@ -1,259 +1,272 @@
 "use client";
 
-import React, { useState, useRef } from "react";
-import { X, Image as ImageIcon, Github, Calendar, Sparkles, Share } from "lucide-react";
-import Image from "next/image";
+import React, { useState } from "react";
+import { X, Github, Calendar, Link, Loader2, CheckCircle2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
-interface CreateProjectModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (projectData: ProjectFormData) => void;
-}
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { CreateProjectModalProps, PROJECT_DURATIONS } from "@/app/types/project.types";
+import { createProjectAction } from "@/lib/actions/project.actions";
+import { InputField } from "../feed/project-form/InputField";
+import { TextareaField } from "../feed/project-form/TextareaField";
+import { ImageUpload } from "../feed/project-form/ImageUpload";
+import { SelectField } from "../feed/project-form/SelectField";
+import { useProjectForm } from "@/hooks/useProjectForm";
 
-export interface ProjectFormData {
-  title: string;
-  description: string;
-  coverImage: File | null;
-  githubLink: string;
-  duration: string;
-}
-
-const PROJECT_DURATIONS = [
-  "2 months",
-  "3 months",
-  "5 months",
-  "6 months",
-  "1 year",
-  "1+ years",
-  "Ongoing"
-];
-
-export default function CreateProjectModal({ isOpen, onClose, onSubmit }: CreateProjectModalProps) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [coverImage, setCoverImage] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [githubLink, setGithubLink] = useState("");
-  const [duration, setDuration] = useState("3 months");
+export default function CreateProjectModal({ isOpen, onClose }: CreateProjectModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const router = useRouter();
+  
+  const {
+    formData,
+    errors,
+    touched,
+    previewUrl,
+    handleInputChange,
+    handleBlur,
+    handleImageChange,
+    removeImage,
+    validateForm,
+    resetForm,
+    isFormValid,
+    getFormData,
+    validateAllFieldsOnChange
+  } = useProjectForm();
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setCoverImage(file);
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
+  // Always validate all fields on change
+  React.useEffect(() => {
+    if (typeof validateAllFieldsOnChange === 'function') {
+      validateAllFieldsOnChange();
+    } else {
+      validateForm();
     }
-  };
+  }, [formData]);
 
-  const removeImage = () => {
-    setCoverImage(null);
-    setPreviewUrl(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-  const handleSubmit = async () => {
-    if (!title.trim() || !description.trim()) {
-      alert("Please fill in title and description");
+    try {
+      const { isValid, errors: validationErrors } = validateForm();
+
+      if (!isValid && validationErrors) {
+        Object.keys(validationErrors).forEach((key) => {
+          handleBlur(key as keyof typeof formData);
+        });
+        setSubmitError("Please fix the highlighted fields");
+        console.log('Validation failed:', validationErrors);
+        return;
+      }
+    } catch (error) {
+      console.error('Validation error:', error);
+      setSubmitError("Form validation failed");
       return;
     }
 
-    setIsSubmitting(true);
+    console.log('handleSubmit called, validation passed:', formData);
+
     try {
-      await onSubmit({
-        title,
-        description,
-        coverImage,
-        githubLink,
-        duration,
-      });
-      
-      // Reset form
-      setTitle("");
-      setDescription("");
-      setCoverImage(null);
-      setPreviewUrl(null);
-      setGithubLink("");
-      setDuration("3 months");
-      onClose();
+      setIsSubmitting(true);
+      setSubmitError(null);
+
+      const formDataToSubmit = getFormData();
+      const result = await createProjectAction(formDataToSubmit);
+
+      if (result.success) {
+        toast.success("Project created successfully! 🎉");
+        resetForm();
+        onClose();
+        router.refresh();
+      } else {
+        setSubmitError(result.error || "Failed to create project");
+
+        if (result.fieldErrors) {
+          toast.error(result.error || "Validation failed");
+        } else {
+          toast.error(result.error || "Something went wrong");
+        }
+      }
     } catch (error) {
       console.error("Error submitting project:", error);
+      setSubmitError("An unexpected error occurred. Please try again.");
+      toast.error("An unexpected error occurred");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleClose = () => {
+    if (!isSubmitting) {
+      resetForm();
+      setSubmitError(null);
+      onClose();
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-999 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-              aria-label="Close"
+    <div 
+      className="fixed inset-0 z-999 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 p-5"
+      onClick={(e) => {
+        if (e.target === e.currentTarget && !isSubmitting) {
+          handleClose();
+        }
+      }}
+    >
+      <div 
+        className="relative w-full sm:max-w-2xl bg-white dark:bg-gray-950 sm:rounded-2xl rounded-t-3xl shadow-2xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col border-t sm:border border-gray-200 dark:border-gray-800 sm:m-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header - Mobile Optimized */}
+        <div className="flex items-center justify-between px-3 sm:px-5 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleClose}
+              disabled={isSubmitting}
+              className="h-8 w-8 sm:h-9 sm:w-9 rounded-full"
             >
-              <X size={20} className="text-gray-600" />
-            </button>
-            <h2 className="text-xl font-bold text-gray-900">Share Your Project</h2>
+              <X className="h-4 w-4 sm:h-5 sm:w-5" />
+            </Button>
+            <h2 className="text-base sm:text-xl font-bold text-gray-900 dark:text-white">
+              New Project
+            </h2>
           </div>
-          <button
+          <Button
             onClick={handleSubmit}
-            disabled={isSubmitting || !title.trim() || !description.trim()}
-            className="px-6 py-2 bg-blue-500 text-white font-semibold rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105 active:scale-95"
+            disabled={isSubmitting}
+            className="px-3 sm:px-6 py-1.5 sm:py-2 rounded-full font-semibold text-sm sm:text-base h-8 sm:h-auto"
           >
-            {isSubmitting ? "Posting..." : "Post"}
-          </button>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
+                <span className="hidden xs:inline">Creating...</span>
+                <span className="xs:hidden">...</span>
+              </>
+            ) : (
+              <>
+                <span className="hidden xs:inline">Create Project</span>
+                <span className="xs:hidden">Create</span>
+              </>
+            )}
+          </Button>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {/* Inspirational Message */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                <Share size={20} className="text-white" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-1">Share what you're building!</h3>
-                <p className="text-sm text-gray-600">
-                  Tell others about your project so they can collaborate and build something great together. 
-                  Your next co-founder or teammate might be here! 🚀
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Project Title */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Project Title *
-            </label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="What's your project called?"
-              className="w-full px-4 py-3 text-lg border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              maxLength={100}
-            />
-            <div className="text-xs text-gray-500 mt-1 text-right">
-              {title.length}/100
-            </div>
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Description *
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe your project, what problem it solves, and what kind of collaborators you're looking for..."
-              className="w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all"
-              rows={6}
-              maxLength={500}
-            />
-            <div className="text-xs text-gray-500 mt-1 text-right">
-              {description.length}/500
-            </div>
-          </div>
-
-          {/* Cover Image Upload */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Cover Image
-            </label>
-            
-            {previewUrl ? (
-              <div className="relative w-full h-48 rounded-xl overflow-hidden border border-gray-300">
-                <Image
-                  src={previewUrl}
-                  alt="Cover preview"
-                  fill
-                  className="object-cover"
-                />
-                <button
-                  onClick={removeImage}
-                  className="absolute top-2 right-2 p-2 bg-black/60 hover:bg-black/80 rounded-full transition-colors"
-                >
-                  <X size={16} className="text-white" />
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full h-32 border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all flex flex-col items-center justify-center gap-2 group"
-              >
-                <ImageIcon size={32} className="text-gray-400 group-hover:text-blue-500 transition-colors" />
-                <span className="text-sm text-gray-500 group-hover:text-blue-500 font-medium">
-                  Click to upload cover image
-                </span>
-              </button>
+        {/* Content - Optimized Scrolling */}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto overscroll-contain">
+          <div className="px-3 sm:px-5 py-4 sm:py-6 space-y-4 sm:space-y-6">
+            {/* Error Alert */}
+            {submitError && (
+              <Alert className="border-red-200 bg-red-50 dark:bg-red-950/20">
+                <AlertDescription className="text-xs sm:text-sm text-red-900 dark:text-red-100">
+                  {submitError}
+                </AlertDescription>
+              </Alert>
             )}
-            
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="hidden"
+
+            {/* Info Alert - Mobile Friendly */}
+            <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950/20">
+              <AlertDescription className="text-xs sm:text-sm text-blue-900 dark:text-blue-100 leading-relaxed">
+                Share your project to find collaborators and get feedback! 🚀
+              </AlertDescription>
+            </Alert>
+
+            {/* Project Title */}
+            <InputField
+              id="title"
+              label="Project Title"
+              value={formData.title || ""}
+              onChange={(value) => handleInputChange("title", value)}
+              onBlur={() => handleBlur("title")}
+              placeholder="Give your project a name..."
+              required
+              error={errors.title}
+              touched={touched.title}
+              maxLength={100}
+              showCharCount
             />
-          </div>
 
-          {/* GitHub Link */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              GitHub Repository
-            </label>
-            <div className="relative">
-              <div className="absolute left-3 top-1/2 -translate-y-1/2">
-                <Github size={20} className="text-gray-400" />
-              </div>
-              <input
-                type="url"
-                value={githubLink}
-                onChange={(e) => setGithubLink(e.target.value)}
-                placeholder="https://github.com/username/repo"
-                className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              />
-            </div>
-          </div>
+            {/* Description */}
+            <TextareaField
+              id="description"
+              label="Description"
+              value={formData.description || ""}
+              onChange={(value) => handleInputChange("description", value)}
+              onBlur={() => handleBlur("description")}
+              placeholder="What's your project about? What problem does it solve?"
+              required
+              error={errors.description}
+              touched={touched.description}
+              maxLength={500}
+              rows={4}
+            />
 
-          {/* Project Duration */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Project Duration
-            </label>
-            <div className="relative">
-              <div className="absolute left-3 top-1/2 -translate-y-1/2">
-                <Calendar size={20} className="text-gray-400" />
-              </div>
-              <select
-                value={duration}
-                onChange={(e) => setDuration(e.target.value)}
-                className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all appearance-none cursor-pointer bg-white"
-              >
-                {PROJECT_DURATIONS.map((dur) => (
-                  <option key={dur} value={dur}>
-                    {dur}
-                  </option>
-                ))}
-              </select>
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-            </div>
+            {/* Cover Image */}
+            <ImageUpload
+              previewUrl={previewUrl}
+              onImageChange={handleImageChange}
+              onRemove={removeImage}
+              error={errors.coverImage}
+            />
+
+            {/* GitHub Link */}
+            <InputField
+              id="github"
+              label="GitHub Repository"
+              type="url"
+              value={formData.githubLink || ""}
+              onChange={(value) => handleInputChange("githubLink", value)}
+              onBlur={() => handleBlur("githubLink")}
+              placeholder="https://github.com/username/repo"
+              error={errors.githubLink}
+              touched={touched.githubLink}
+              icon={<Github className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />}
+            />
+
+            {/* YouTube Link */}
+            <InputField
+              id="youtube"
+              label="YouTube Demo"
+              type="url"
+              value={formData.youtubeLink || ""}
+              onChange={(value) => handleInputChange("youtubeLink", value)}
+              onBlur={() => handleBlur("youtubeLink")}
+              placeholder="https://youtube.com/watch?v=..."
+              error={errors.youtubeLink}
+              touched={touched.youtubeLink}
+              icon={<Link className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />}
+            />
+
+            {/* Duration */}
+            <SelectField
+              id="duration"
+              label="Project Duration"
+              value={formData.duration || ""}
+              onChange={(value) => handleInputChange("duration", value)}
+              onBlur={() => handleBlur("duration")}
+              options={PROJECT_DURATIONS}
+              placeholder="Select duration..."
+              required
+              error={errors.duration}
+              touched={touched.duration}
+              icon={<Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />}
+            />
+
+            {/* Bottom Spacing for Mobile */}
+            <div className="h-4 sm:h-0" />
           </div>
+        </form>
+
+        {/* Footer - Mobile Optimized */}
+        <div className="px-3 sm:px-5 py-2.5 sm:py-3 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 shrink-0">
+          <p className="text-[10px] sm:text-xs text-muted-foreground text-center">
+            <span className="text-red-500">*</span> Required fields
+          </p>
         </div>
       </div>
     </div>

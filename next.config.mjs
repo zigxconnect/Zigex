@@ -55,6 +55,15 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+
+       {
+        protocol: 'https',
+        hostname: 'cover.png',
+        port: '',
+        pathname: '/**',
+      },
+
+      
     ],
   },
 };
