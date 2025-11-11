@@ -21,7 +21,8 @@ import MyMonthProject from "@/components/uiComponent/MyMonthProject";
 import AnimatedConnectButtons from "@/components/customButtons/AnimatedConnectButtons";
 import PersonalizedFeed from "@/components/feed/PersonalizedFeed";
 import CreateProjectButton from "@/components/project/CreateProjectButton";
-// import PersonalizedFeed from "@/components/sections/dashboard/PersonalizedFeed";
+import { fetchUserActiveProject } from "@/lib/actions/getProjects.action";
+
 
 interface Props {
   params: { id: string };
@@ -61,19 +62,28 @@ export default async function StudentDetailPage({ params }: Props) {
   // Determine if the current request user is the owner of this profile
   let isOwner = false;
   let myProfile: any = null;
+  let visitorProject: any = null;
+
   try {
     const supabase = await createServerActionClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       const { data: _myProfile } = await supabase
         .from("student_profiles")
-        .select("id, full_name, avatar_url, github_url, email, phone, about, linkedin_url")
+        .select("id, full_name, avatar_url, github_url, email, phone, about, linkedin_url, user_id")
         .eq("user_id", user.id)
         .maybeSingle();
 
       myProfile = _myProfile;
       if (myProfile && myProfile.id === id) {
         isOwner = true;
+      } else if (myProfile) {
+        // Fetch visitor's active project
+        const projectResult = await fetchUserActiveProject(id);
+        if (projectResult.success && projectResult.data) {
+          visitorProject = projectResult.data;
+          console.log('Visitor project:', visitorProject);
+        }
       }
     }
   } catch (err) {
@@ -219,11 +229,18 @@ Looking forward to hearing from you!`;
               </div>
 
               {/* Sidebar: if profile owner, show similar students. If visitor, show their own monthly project sidebar. */}
-            {isOwner ? (
-  <SimilarStudentsSidebar students={similarStudents} />
-) : (
-  myProfile && <MyMonthProject user={myProfile} isVisitor={true} />
-)}
+              {isOwner ? (
+                <SimilarStudentsSidebar students={similarStudents} />
+              ) : (
+                myProfile &&  (
+                  <MyMonthProject 
+                    user={myProfile} 
+                    project={visitorProject}
+                    isVisitor={true} 
+                    id={id}
+                  />
+                )
+              )}
               
               <div className="flex items-center gap-1.5 text-gray-600 mb-2">
                 <MapPin size={14} className="text-gray-500 flex-shrink-0" />
@@ -502,11 +519,7 @@ Looking forward to hearing from you!`;
           email={data.email} 
         />
       )}
-      {isOwner &&
-      <CreateProjectButton/>
-      
-      }
-
+      {isOwner && <CreateProjectButton />}
     </div>
   );
 }

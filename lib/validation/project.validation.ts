@@ -23,13 +23,14 @@ export const projectFormSchema = z.object({
     z.literal("")
   ]).optional(),
   
-  youtubeLink: z.union([
-    z.string().regex(
-      /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/)|youtu\.be\/)[\w-]{11}$/,
-      "Must be a valid YouTube video URL"
-    ),
-    z.literal("")
-  ]).optional(),
+youtubeLink: z.union([
+  z.string().regex(
+    /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/|shorts\/)|youtu\.be\/)[\w-]{11}(\?.*)?$/,
+    "Must be a valid YouTube video URL"
+  ),
+  z.literal("")
+]).optional(),
+
   
   duration: z.string().min(1, "Please select a duration"),
   

@@ -294,7 +294,7 @@ export async function createProjectAction(formData: FormData): Promise<CreatePro
     console.error('Critical error in createProjectAction:', error);
     return { 
       success: false, 
-      error: 'An unexpected error occurred. Please try again.' 
+      error: `An unexpected error occurred. Please try again.: ${error}` 
     };
   }
 }

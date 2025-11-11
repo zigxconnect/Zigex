@@ -54,12 +54,17 @@ export const SelectField: React.FC<SelectFieldProps> = ({
         )}
         <Select value={value} onValueChange={onChange}>
           <SelectTrigger 
+            id={id}
             className={`${icon ? "pl-10" : ""} ${error && touched ? "border-red-500 focus:ring-red-500" : ""}`}
             onBlur={onBlur}
           >
             <SelectValue placeholder={placeholder} />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent 
+            position="popper"
+            sideOffset={5}
+            className="z-[9999]"
+          >
             {options.map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}
