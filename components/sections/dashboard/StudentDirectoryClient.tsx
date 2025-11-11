@@ -35,7 +35,7 @@ export const StudentDirectoryClient: React.FC<{ profiles: RawUserProfile[] }> = 
         <div className="max-w-2xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between mb-3">
             <h1 className="text-xl font-bold text-slate-900">ZigX Students</h1>
-            <Sparkles size={20} className="text-blue-500" />
+            {/* <Sparkles size={20} className="text-blue-500" /> */}
           </div>
           
           {/* Search Bar */}
@@ -56,7 +56,7 @@ export const StudentDirectoryClient: React.FC<{ profiles: RawUserProfile[] }> = 
         {/* Trending Banner */}
         <div className="border-b border-gray-200 px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50">
           <div className="flex items-center gap-2">
-            <TrendingUp size={16} className="text-blue-600" />
+            {/* <TrendingUp size={16} className="text-blue-600" /> */}
             <span className="text-sm font-semibold text-blue-900">
               {filtered.length} Students • Live Feed
             </span>

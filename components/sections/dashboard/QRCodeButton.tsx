@@ -10,6 +10,7 @@ interface QRCodeButtonProps {
   email?: string | null;
   fullName?: string | null;
   profileUrl: string;
+  isOwner?: boolean;
 }
 
 export default function QRCodeButton({ 
@@ -18,6 +19,7 @@ export default function QRCodeButton({
   email, 
   fullName,
   profileUrl 
+  , isOwner = false
 }: QRCodeButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
@@ -29,7 +31,7 @@ export default function QRCodeButton({
       setQrCodeDataUrl(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${qrData}&bgcolor=ffffff&color=000000`);
     }
   }, [isOpen, profileUrl, qrCodeDataUrl]);
-
+ 
   // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
@@ -57,14 +59,14 @@ export default function QRCodeButton({
     } catch (error) {
       console.error('Download failed:', error);
     }
-  };
+  }; 
 
   const handleShare = async () => {
     if (navigator.share) {
       try {
         await navigator.share({
           title: `Connect with ${fullName || 'me'}`,
-          text: `Check out ${fullName || 'this'}'s profile on ZigX!`,
+          text: `Check out ${fullName || 'this'}'s profile on ZigeX!`,
           url: profileUrl,
         });
       } catch (error) {
@@ -81,9 +83,11 @@ export default function QRCodeButton({
     <>
       {/* QR Code Button */}
       <button
-        onClick={() => setIsOpen(true)}
-        className="w-12 h-12 md:w-14 md:h-14 bg-white rounded-xl shadow-xl border-2 border-gray-200 hover:border-blue-500 flex items-center justify-center transition-all duration-300 hover:scale-110 group relative z-10"
+        onClick={() => isOwner && setIsOpen(true)}
+        className={`w-12 h-12 md:w-14 md:h-14 bg-white rounded-xl shadow-xl border-2 border-gray-200 flex items-center justify-center transition-all duration-300 group relative z-10 ${isOwner ? 'hover:border-blue-500 hover:scale-110 cursor-pointer' : 'opacity-70 cursor-not-allowed'}`}
         aria-label="Show QR Code"
+        aria-disabled={!isOwner}
+        title={!isOwner ? 'Only the profile owner can open and share this QR code' : 'Show QR Code'}
       >
         <QrCode size={24} className="text-gray-700 group-hover:text-blue-600 transition-colors" />
         
@@ -161,7 +165,8 @@ export default function QRCodeButton({
               <div className="space-y-3 mb-6">
                 <button
                   onClick={handleDownload}
-                  className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
+                  disabled={!isOwner}
+                  className={`w-full flex items-center justify-center gap-3 px-6 py-3 text-white font-semibold rounded-xl shadow-lg transition-all duration-200 transform active:scale-95 ${isOwner ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:scale-105' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
                 >
                   <Download size={20} />
                   <span>Download QR Code</span>
@@ -169,7 +174,8 @@ export default function QRCodeButton({
 
                 <button
                   onClick={handleShare}
-                  className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-all duration-200 transform hover:scale-105 active:scale-95"
+                  disabled={!isOwner}
+                  className={`w-full flex items-center justify-center gap-3 px-6 py-3 font-semibold rounded-xl transition-all duration-200 transform active:scale-95 ${isOwner ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:scale-105' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
                 >
                   <Share2 size={20} />
                   <span>Share Profile</span>

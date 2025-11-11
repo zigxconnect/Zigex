@@ -1,13 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 import {
-  Upload,
-  Briefcase,
   LogOut,
   X,
   Users,
@@ -15,18 +12,22 @@ import {
   User,
   Bell,
   NewspaperIcon,
+  PersonStanding,
+  IceCreamCone,
 } from "lucide-react";
 import { AiOutlineWechat } from "react-icons/ai";
 import { Button } from "@/components/ui/button";
+import AnimatedNavLink from "@/components/customButtons/AnimatedNavLink";
+// import AnimatedNavLink from "@/components/sections/dashboard/AnimatedNavLink";
 
 interface SidebarProps {
-  user: any; // Use your UserProfile type here
+  user: any;
   isOpen?: boolean;
   onClose?: () => void;
   onToggle?: () => void;
 }
 
-// Notifications nav item (we render it dynamically because its badge updates)
+// Notifications nav item
 const notificationsItem = {
   href: "/notifications",
   icon: Bell,
@@ -36,12 +37,11 @@ const notificationsItem = {
 
 // Regular navigation items
 const navItems = [
-  { href: "/dashboard", icon: User, label: "Home" },
+  { href: "/feed", icon: IceCreamCone, label: "Browse" },
   {
-    href: "/dashboard/student-directory",
+    href: "/dashboard/student",
     icon: Users,
     label: "Connection",
-    // also match dynamic student detail pages like /dashboard/student/:id
     matchPaths: ["/dashboard/student"],
   },
   {
@@ -49,15 +49,19 @@ const navItems = [
     icon: TrendingUp,
     label: "Track Progress",
   },
-// blog
   {
     href: "/dashboard/blog",
     icon: NewspaperIcon,
     label: "News",
   },
+
+
+  //  {
+  //   href: "/dashboard/track-progress",
+  //   icon: PersonStanding,
+  //   label: "Me",
+  // },
 ];
-
-
 
 // Special navigation item for AI chat
 const aiChatItem = {
@@ -83,8 +87,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     user?.profile?.avatar_url ||
     user?.avatarUrl ||
     "/default-avatar.png";
-  const userEmail = user?.email || user?.profile?.email || "";
-  const isOnline = user?.isOnline ?? true; // Default to online if not specified
+  const isOnline = user?.isOnline ?? true;
   const applicationsCount =
     user?.applicationsCount || user?.stats?.applications || 0;
   const profileViews = user?.profileViews || user?.stats?.profileViews || 0;
@@ -99,13 +102,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
-  const isRouteActive = (href: string) => {
-    // Normalize to avoid trailing slash mismatches
+  const isRouteActive = (href: string, matchPaths?: string[]) => {
     const normalize = (p: string | undefined) => (p ? p.replace(/\/+$|^\s+|\s+$/g, "") : "");
     const path = normalize(pathname);
     const target = normalize(href);
 
     if (!target) return false;
+
+    // Check explicit matchPaths first
+    if (matchPaths) {
+      return matchPaths.some((p: string) => {
+        const normalized = normalize(p);
+        return path === normalized || path.startsWith(normalized + "/");
+      });
+    }
 
     // Special-case root dashboard exact match
     if (target === "/dashboard") {
@@ -113,7 +123,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
 
     // exact match or prefix match for nested/dynamic routes
-    return path === target || path.startsWith(target + "/") || path.startsWith(target);
+    return path === target || path.startsWith(target + "/");
   };
 
   // Handle nav item click
@@ -121,82 +131,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     if (window.innerWidth < 1024 && onClose) {
       onClose();
     }
-  };
-
-  const renderNavItem = (item: any, isSpecial = false) => {
-    const Icon = item.icon;
-    // support explicit matchPaths override
-    const isActive = item.matchPaths
-      ? item.matchPaths.some((p: string) => pathname === p || pathname.startsWith(p))
-      : isRouteActive(item.href);
-
-    return (
-      <Link
-        key={item.href}
-        href={item.href}
-        onClick={handleNavClick}
-        className={`
-          group flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all duration-200 
-          ${
-            isSpecial
-              ? // Special styling for AI Chat
-                isActive
-                ? "bg-blue-600 text-white shadow-lg hover:bg-blue-700"
-                : "bg-white text-blue-600 hover:bg-blue-50 border border-blue-200 hover:border-blue-300 shadow-sm"
-              : // Regular styling for other items
-                isActive
-                ? "bg-blue-600 text-white shadow-lg hover:bg-blue-700"
-                : "text-gray-700 hover:bg-gray-50 hover:text-blue-600"
-          }
-        `}
-      >
-        <div
-          className={`
-            p-2 rounded-lg transition-colors flex-shrink-0
-            ${
-              isSpecial
-                ? isActive
-                  ? "bg-white/20"
-                  : "bg-blue-50 group-hover:bg-blue-100"
-                : isActive
-                  ? "bg-blue-700"
-                  : "bg-gray-100 group-hover:bg-blue-50"
-            }
-          `}
-        >
-          <Icon
-            size={18}
-            className={`
-              ${
-                isSpecial
-                  ? isActive
-                    ? "text-white"
-                    : "text-blue-600 group-hover:text-blue-700"
-                  : isActive
-                    ? "text-white"
-                    : "text-gray-600 group-hover:text-blue-600"
-              }
-            `}
-          />
-        </div>
-        <span className="flex-1 truncate font-medium">{item.label}</span>
-        {/* show dynamic badge for notifications */}
-        {(item.href === notificationsItem.href ? unreadCount : item.badge) && (
-          <span
-            className={`
-              px-2 py-1 text-xs font-semibold rounded-full flex-shrink-0
-              ${
-                isActive
-                  ? "bg-white/20 text-white"
-                  : "bg-blue-100 text-blue-600 group-hover:bg-blue-600 group-hover:text-white"
-              }
-            `}
-          >
-            {item.href === notificationsItem.href ? (unreadCount > 99 ? "99+" : unreadCount) : item.badge}
-          </span>
-        )}
-      </Link>
-    );
   };
 
   // Fetch unread notifications count and poll every 30s
@@ -256,7 +190,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Header with User Profile - Fixed at top */}
         <div className="flex-shrink-0 p-4 lg:p-6 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-purple-50">
           <div className="flex items-center gap-4">
-            <div className="relative w-16 h-16 rounded-full overflow-hidden border-3 border-white shadow-lg flex-shrink-0 fill">
+            <div className="relative w-16 h-16 rounded-full overflow-hidden border-3 border-white shadow-lg flex-shrink-0">
               <Image
                 src={userAvatar}
                 alt={`${userName}'s Avatar`}
@@ -306,9 +240,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   Navigation
                 </h4>
                 <div className="space-y-1">
-                  {navItems.map((item) => renderNavItem(item))}
-                  {/* Notifications entry in the main nav so it can show the badge and be highlighted */}
-                  {renderNavItem(notificationsItem)}
+                  {navItems.map((item) => (
+                    <AnimatedNavLink
+                      key={item.href}
+                      href={item.href}
+                      icon={item.icon}
+                      label={item.label}
+                      isActive={isRouteActive(item.href, item.matchPaths)}
+                      onClick={handleNavClick}
+                    />
+                  ))}
+                  
+                  {/* Notifications with badge */}
+                  <AnimatedNavLink
+                    href={notificationsItem.href}
+                    icon={notificationsItem.icon}
+                    label={notificationsItem.label}
+                    isActive={isRouteActive(notificationsItem.href, notificationsItem.matchPaths)}
+                    onClick={handleNavClick}
+                    badge={unreadCount > 0 ? unreadCount : undefined}
+                  />
                 </div>
               </div>
 
@@ -318,9 +269,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   AI Assistant
                 </h4>
                 <div className="relative">
-                  {renderNavItem(aiChatItem, true)}
+                  <AnimatedNavLink
+                    href={aiChatItem.href}
+                    icon={aiChatItem.icon}
+                    label={aiChatItem.label}
+                    isActive={isRouteActive(aiChatItem.href)}
+                    onClick={handleNavClick}
+                    isSpecial={true}
+                  />
                   {/* AI Badge */}
-                  <div className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs px-2 py-1 rounded-full shadow-lg">
+                  <div className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs px-2 py-1 rounded-full shadow-lg z-50">
                     AI
                   </div>
                 </div>

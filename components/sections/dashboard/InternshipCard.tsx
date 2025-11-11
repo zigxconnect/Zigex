@@ -15,9 +15,11 @@ import {
   Heart,
   ChevronRight,
   Share2,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
-import { useState } from "react";
-import { SharePopover } from "@/components/SharePopover";
+import { useState, useRef, useEffect } from "react";
+// SharePopover removed in favour of native Web Share API fallback
 import LiveBadge from "@/components/uiComponent/LiveBadge";
 import LivePanel from "@/components/uiComponent/LivePanel";
 
@@ -29,7 +31,10 @@ interface InternshipCardProps {
   type: string;
   category: string;
   logoColor: string;
-  cover_image_url: string;
+  cover_image_url: string; 
+  company_logo_url?: string;
+  start_date?: string | null;
+  end_date?: string | null;
   viewMode?: "grid" | "list";
   is_live?: boolean;
   live_stream_url?: string;
@@ -46,6 +51,9 @@ export const InternshipCard = ({
   category,
   logoColor,
   cover_image_url,
+  company_logo_url,
+  start_date,
+  end_date,
   viewMode = "grid",
   is_live = false,
   live_stream_url,
@@ -56,6 +64,8 @@ export const InternshipCard = ({
   const [isLiked, setIsLiked] = useState(false);
   const [openLive, setOpenLive] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const cardRef = useRef<HTMLDivElement | null>(null);
 
   const handleBookmark = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -75,6 +85,71 @@ export const InternshipCard = ({
     }
   };
 
+  // Determine internship open/closed based on start/end dates (inclusive)
+  function isOpenWindow(start?: string | null, end?: string | null) {
+    try {
+      const now = new Date();
+      if (start && end) {
+        const s = new Date(start);
+        const e = new Date(end);
+        return now >= s && now <= e;
+      }
+      if (end) {
+        const e = new Date(end);
+        return now <= e;
+      }
+      if (start) {
+        const s = new Date(start);
+        return now >= s;
+      }
+      return true; // no dates provided => treat as open
+    } catch (err) {
+      return true;
+    }
+  }
+
+  // Entrance animation using IntersectionObserver
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+            obs.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.12 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  const openStatusComputed = isOpenWindow(start_date, end_date);
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/internships/${id}`;
+    const text = `${title} at ${company}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, text, url });
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(url);
+        alert('Link copied to clipboard');
+      } else {
+        // fallback
+        window.open(url, '_blank');
+      }
+    } catch (err) {
+      // silent
+      console.error('Share failed', err);
+    }
+  };
+
   const formatViewCount = (count: number) => {
     if (count >= 1000) {
       return `${(count / 1000).toFixed(1)}K`;
@@ -84,7 +159,11 @@ export const InternshipCard = ({
 
   if (viewMode === "list") {
     return (
-      <Link href={`/internships/${id}`}>
+      <div
+        ref={cardRef}
+        className={`${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'} transition-all duration-700`}
+      >
+        <Link href={`/internships/${id}`}>
         <div 
           onClick={handleCardClick}
           className={`bg-white rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300 overflow-hidden group ${is_live ? 'cursor-pointer' : ''}`}
@@ -93,7 +172,7 @@ export const InternshipCard = ({
             {/* Image Section */}
             <div className="relative w-48 h-full flex-shrink-0">
               <Image
-                src={cover_image_url || "/int.png"}
+                src={cover_image_url || "/intern.png"}
                 alt={`Cover image for ${company}`}
                 fill
                 className="object-cover transition-transform duration-300 group-hover:scale-105"
@@ -131,9 +210,19 @@ export const InternshipCard = ({
                 <h3 className="text-lg font-bold text-blue-900 leading-tight mb-1">
                   {title}
                 </h3>
-                <div className="flex items-center gap-1 text-sm text-blue-800 font-medium mb-3">
-                  <Building2 size={14} className="text-blue-600" />
-                  <p>{company}</p>
+                <div className="flex items-center gap-3 text-sm text-blue-800 font-medium mb-3">
+                  <div className="relative w-6 h-6 rounded-full overflow-hidden border border-gray-200">
+                    <Image
+                      src={company_logo_url || "/seedLogo.png"}
+                      alt={`${company} logo`}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Building2 size={14} className="text-blue-600" />
+                    <p>{company}</p>
+                  </div>
                 </div>
                 <div className="flex items-center gap-4 text-sm text-gray-600">
                   <div className="flex items-center gap-1">
@@ -159,7 +248,27 @@ export const InternshipCard = ({
                     <Bookmark size={18} className="text-gray-500" />
                   )}
                 </Button>
-                <SharePopover title={title} urlPath={`/internships/${id}`} />
+                <button
+                  onClick={handleShare}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  className="w-10 h-10 bg-white/95 backdrop-blur-xl hover:bg-white shadow rounded-md flex items-center justify-center"
+                  aria-label="Share"
+                >
+                  <Share2 size={16} className="text-gray-700" />
+                </button>
+                <div className="ml-2">
+                  {openStatusComputed ? (
+                    <div className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold border border-emerald-100">
+                      <CheckCircle size={14} className="text-emerald-600" />
+                      <span>Open</span>
+                    </div>
+                  ) : (
+                    <div className="inline-flex items-center gap-1 px-2 py-1 bg-red-50 text-red-700 rounded-full text-xs font-semibold border border-red-100">
+                      <XCircle size={14} className="text-red-600" />
+                      <span>Closed</span>
+                    </div>
+                  )}
+                </div>
                 <Button className="bg-blue-700 hover:bg-blue-600 text-white px-5 py-2 rounded-lg flex items-center gap-2 h-10">
                   View
                   <ExternalLink size={14} />
@@ -168,13 +277,15 @@ export const InternshipCard = ({
             </div>
           </div>
         </div>
-      </Link>
+        </Link>
+      </div>
     );
   }
 
   // Grid View - Full Image Card with Overlay (TikTok/Instagram Style)
   return (
     <>
+      <div ref={cardRef} className={`${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'} transition-all duration-700`}>
       <div 
         className="relative group cursor-pointer overflow-hidden rounded-3xl shadow-2xl border-2 border-transparent hover:border-blue-500 transition-all duration-500 aspect-[3/4]"
         onMouseEnter={() => setIsHovered(true)}
@@ -190,7 +301,7 @@ export const InternshipCard = ({
         {/* Full Background Image */}
         <div className="absolute inset-0">
           <Image
-            src={cover_image_url || "/int.png"}
+            src={cover_image_url || "/intern.png"}
             alt={`Cover image for ${company}`}
             fill
             className="object-cover transition-transform duration-700 group-hover:scale-110"
@@ -233,7 +344,7 @@ export const InternshipCard = ({
             )}
 
             {/* Action Buttons - Right Side */}
-            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-3">
               {/* Bookmark */}
               <button
                 onClick={handleBookmark}
@@ -262,12 +373,28 @@ export const InternshipCard = ({
               </button>
 
               {/* Share Button - Styled same as Like and Bookmark */}
-              <div onClick={(e) => e.stopPropagation()}>
-                <SharePopover 
-                  title={title} 
-                  urlPath={`/internships/${id}`}
-                  
-                />
+              <button
+                onClick={handleShare}
+                onMouseDown={(e) => e.stopPropagation()}
+                className="w-11 h-11 bg-white/95 backdrop-blur-xl hover:bg-white shadow-2xl rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95"
+                aria-label="Share"
+              >
+                <Share2 size={18} className="text-gray-700" />
+              </button>
+
+              {/* Open/Closed status */}
+              <div className="flex items-center justify-center">
+                {openStatusComputed ? (
+                  <div className="flex flex-col items-center gap-1">
+                    <CheckCircle size={18} className="text-emerald-500" />
+                    <span className="text-xs text-emerald-600">Open</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-1">
+                    <XCircle size={18} className="text-red-500" />
+                    <span className="text-xs text-red-600">Closed</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -305,11 +432,13 @@ export const InternshipCard = ({
         <div className="absolute bottom-0 left-0 right-0 p-5 z-20">
           {/* Company Logo Badge */}
           <div className="flex items-center gap-3 mb-3">
-            <div
-              className="w-14 h-14 rounded-2xl flex items-center justify-center font-black text-white text-xl shadow-2xl border-2 border-white/30"
-              style={{ backgroundColor: logoColor }}
-            >
-              {company.charAt(0).toUpperCase()}
+            <div className="relative w-14 h-14 rounded-2xl overflow-hidden shadow-2xl border-2 border-white/30">
+              <Image
+                src={company_logo_url || "/seedLogo.png"}
+                alt={`${company} logo`}
+                fill
+                className="object-cover"
+              />
             </div>
             <div className="flex-1">
               <p className="text-white/80 text-xs font-semibold uppercase tracking-wider mb-0.5">
@@ -364,6 +493,7 @@ export const InternshipCard = ({
             }}
           />
         )}
+        </div>
       </div>
 
       <LivePanel

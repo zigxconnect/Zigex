@@ -19,7 +19,6 @@ export default async function EditProfilePage() {
 
   // Safeguard: Although middleware protects this, it's good practice to check again.
   if (!user) {
-    redirect("/sign-in");
   }
 
   // Fetch the company profile linked to the authenticated user.

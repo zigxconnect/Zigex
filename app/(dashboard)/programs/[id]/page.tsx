@@ -327,7 +327,7 @@ export default function ProgramDetailsPage({
               </Card>
 
               {/* Registration Button */}
-              <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
+              {/* <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
                 <div className="p-6 space-y-4">
                   <Button
                     onClick={() => !isExpired && setIsFormOpen(true)}
@@ -373,7 +373,7 @@ export default function ProgramDetailsPage({
                     </div>
                   )}
                 </div>
-              </Card>
+              </Card> */}
 
               {/* Small Map Preview */}
               {program.location && (

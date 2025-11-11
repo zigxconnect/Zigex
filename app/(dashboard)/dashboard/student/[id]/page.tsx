@@ -1,5 +1,5 @@
 import React from "react";
-import { supabaseAdmin } from "@/lib/supabase/server";
+import { supabaseAdmin, createServerActionClient } from "@/lib/supabase/server";
 import Image from "next/image";
 import Link from "next/link";
 import { 
@@ -16,6 +16,12 @@ import {
 } from "lucide-react";
 import ConnectBar from "@/components/sections/dashboard/ConnectBar";
 import QRCodeButton from "@/components/sections/dashboard/QRCodeButton";
+import SimilarStudentsSidebar from "@/components/sections/dashboard/SimilarStudentsSidebar";
+import MyMonthProject from "@/components/uiComponent/MyMonthProject";
+import AnimatedConnectButtons from "@/components/customButtons/AnimatedConnectButtons";
+import PersonalizedFeed from "@/components/feed/PersonalizedFeed";
+import CreateProjectButton from "@/components/project/CreateProjectButton";
+// import PersonalizedFeed from "@/components/sections/dashboard/PersonalizedFeed";
 
 interface Props {
   params: { id: string };
@@ -52,6 +58,72 @@ export default async function StudentDetailPage({ params }: Props) {
   const avatarUrl = data.avatar_url || "/z3.png";
   const coverImageUrl = data.cover_image || "/n8.png";
 
+  // Determine if the current request user is the owner of this profile
+  let isOwner = false;
+  let myProfile: any = null;
+  try {
+    const supabase = await createServerActionClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: _myProfile } = await supabase
+        .from("student_profiles")
+        .select("id, full_name, avatar_url, github_url, email, phone, about, linkedin_url")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      myProfile = _myProfile;
+      if (myProfile && myProfile.id === id) {
+        isOwner = true;
+      }
+    }
+  } catch (err) {
+    isOwner = false;
+  }
+
+  // Fetch candidate students to compute similarity (server-side)
+  const { data: candidatesData } = await supabaseAdmin
+    .from("student_profiles")
+    .select("id, full_name, avatar_url, university, linkedin_url, phone, email, hard_skills, soft_skills")
+    .neq("id", id)
+    .limit(10);
+
+  const candidates = (candidatesData || []) as Array<any>;
+
+  const myHard: string[] = data.hard_skills || [];
+  const mySoft: string[] = data.soft_skills || [];
+
+  function countOverlap(arrA: string[], arrB: string[] = []) {
+    if (!arrA || !arrB) return 0;
+    const s = new Set(arrB.map((x) => (x || "").toLowerCase()));
+    return arrA.reduce((acc: number, cur: string) => acc + (s.has((cur || "").toLowerCase()) ? 1 : 0), 0);
+  }
+
+  const scored = candidates
+    .map((c) => {
+      const hard = countOverlap(c.hard_skills || [], myHard);
+      const soft = countOverlap(c.soft_skills || [], mySoft);
+      return { ...c, score: hard + soft, hardMatches: hard, softMatches: soft };
+    })
+    .sort((a, b) => b.score - a.score);
+
+  let similar = scored.filter((s) => s.score >= 4);
+  if (similar.length < 4) {
+    similar = scored.slice(0, 3);
+  }
+
+  const similarStudents = similar.slice(0, 6).map((s) => ({
+    id: s.id,
+    full_name: s.full_name,
+    avatar_url: s.avatar_url,
+    university: s.university,
+    linkedin_url: s.linkedin_url,
+    phone: s.phone,
+    email: s.email,
+    hard_skills: s.hard_skills,
+    soft_skills: s.soft_skills,
+    score: s.score,
+  }));
+
   const initials = (data.full_name || "")
     .split(" ")
     .map((n: string) => n[0])
@@ -59,7 +131,6 @@ export default async function StudentDetailPage({ params }: Props) {
     .join("")
     .toUpperCase();
 
-  // WhatsApp message template
   const whatsappMessage = `Hi ${data.full_name || 'there'}! 👋
 
 I came across your profile on ZigX and I'm impressed by your background in ${skills[0] || 'your field'}. 
@@ -75,7 +146,7 @@ Looking forward to hearing from you!`;
   const linkedinUrl = data.linkedin_url;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-gray-50 pb-24 lg:pr-[26rem]">
       {/* Header Card */}
       <div className="relative bg-white md:rounded-2xl md:w-full mx-auto shadow-lg md:border md:border-gray-200 overflow-hidden mb-6">
         {/* Cover Image */}
@@ -121,49 +192,57 @@ Looking forward to hearing from you!`;
             email={data.email}
             fullName={data.full_name}
             profileUrl={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://zigex.vercel.app'}/dashboard/student/${id}`}
+            isOwner={isOwner}
           />
         </div>
 
         {/* Content Area */}
         <div className="pt-12 md:pt-14 lg:pt-16 px-4 lg:px-6 pb-4 lg:pb-6">
           {/* User Info and Actions */}
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 lg:gap-6">
-            {/* Name and Location */}
+          <div className="flex flex-col gap-4">
+            {/* Name and Location - Compact */}
             <div className="flex-1">
-              <div className="flex items-center gap-2 flex-wrap mb-2">
-                <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
-                  {data.full_name || "Unnamed Student"}
+              <div className="flex items-center gap-2 mb-1">
+                <h1 className="text-base md:text-lg lg:text-xl font-bold text-gray-900">
+                  {data.full_name || "Zigex Student"}
                 </h1>
-                {/* Verification Badge */}
+                {/* Verification Badge - Smaller */}
                 <div className="flex items-center justify-center bg-blue-500 rounded-full p-0.5">
                   <svg 
                     viewBox="0 0 24 24" 
-                    className="w-5 h-5 lg:w-6 lg:h-6 fill-white"
+                    className="w-4 h-4 md:w-5 md:h-5 fill-white"
                     aria-label="Verified"
                   >
                     <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
                   </svg>
                 </div>
               </div>
+
+              {/* Sidebar: if profile owner, show similar students. If visitor, show their own monthly project sidebar. */}
+            {isOwner ? (
+  <SimilarStudentsSidebar students={similarStudents} />
+) : (
+  myProfile && <MyMonthProject user={myProfile} isVisitor={true} />
+)}
               
-              <div className="flex items-center gap-2 text-gray-600 mb-3">
-                <MapPin size={18} className="text-gray-500" />
-                <p className="text-base lg:text-lg font-medium">
+              <div className="flex items-center gap-1.5 text-gray-600 mb-2">
+                <MapPin size={14} className="text-gray-500 flex-shrink-0" />
+                <p className="text-xs md:text-sm font-medium truncate">
                   {data.university || "University not specified"}
                 </p>
               </div>
 
-              {/* Social Links */}
-              <div className="flex items-center gap-4 flex-wrap">
+              {/* Social Links - Compact */}
+              <div className="flex items-center gap-3 flex-wrap text-xs">
                 {data.linkedin_url && (
                   <Link
                     href={data.linkedin_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                    className="flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline transition-colors"
                   >
-                    <Link2 size={16} />
-                    <span className="text-sm font-medium">LinkedIn</span>
+                    <Link2 size={14} />
+                    <span className="font-medium">LinkedIn</span>
                   </Link>
                 )}
 
@@ -172,97 +251,60 @@ Looking forward to hearing from you!`;
                     href={data.github_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                    className="flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline transition-colors"
                   >
-                    <Github size={16} />
-                    <span className="text-sm font-medium">Github</span>
+                    <Github size={14} />
+                    <span className="font-medium">Github</span>
                   </Link>
                 )}
 
                 {data.email && (
                   <Link
                     href={`mailto:${data.email}`}
-                    className="flex items-center gap-1.5 text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                    className="flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline transition-colors"
                   >
-                    <Mail size={16} />
-                    <span className="text-sm font-medium">Email</span>
+                    <Mail size={14} />
+                    <span className="font-medium">Email</span>
                   </Link>
                 )}
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              {/* LinkedIn Connect Button */}
-              {linkedinUrl ? (
-                <Link
-                  href={linkedinUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-6 py-2.5 bg-[#0A66C2] text-white font-semibold rounded-full hover:bg-[#004182] shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
-                >
-                  <Linkedin size={18} />
-                  <span>Connect on LinkedIn</span>
-                </Link>
-              ) : (
-                <button 
-                  disabled
-                  className="px-6 py-2.5 bg-gray-200 text-gray-400 font-semibold rounded-full cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  <Linkedin size={18} />
-                  <span>Connect on LinkedIn</span>
-                </button>
-              )}
-
-              {/* WhatsApp Message Button */}
-              {whatsappUrl ? (
-                <Link
-                  href={whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-6 py-2.5 bg-[#25D366] text-white font-semibold rounded-full hover:bg-[#1da851] shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
-                >
-                  <MessageCircle size={18} />
-                  <span>Message on WhatsApp</span>
-                </Link>
-              ) : (
-                <button 
-                  disabled
-                  className="px-6 py-2.5 bg-gray-200 text-gray-400 font-semibold rounded-full cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  <MessageCircle size={18} />
-                  <span>Message on WhatsApp</span>
-                </button>
-              )}
-            </div>
+            {/* Action Buttons - Only show if NOT owner */}
+            {!isOwner && (
+              <AnimatedConnectButtons 
+                linkedinUrl={linkedinUrl}
+                whatsappUrl={whatsappUrl}
+              />
+            )}
           </div>
 
-          {/* Stats Section */}
-          <div className="mt-6 pt-4 border-t border-gray-200">
+          {/* Stats Section - More compact */}
+          <div className="mt-4 pt-3 border-t border-gray-200">
             <div className="flex items-center justify-around">
               <div className="flex flex-col items-center cursor-pointer group">
-                <span className="text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                <span className="text-xl md:text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
                   {internshipsApplied}
                 </span>
-                <span className="text-xs text-gray-500 font-medium">Internships</span>
+                <span className="text-[10px] md:text-xs text-gray-500 font-medium">Internships</span>
               </div>
 
-              <div className="w-px h-12 bg-gray-200"></div>
+              <div className="w-px h-8 md:h-10 bg-gray-200"></div>
 
               <div className="flex flex-col items-center cursor-pointer group">
-                <span className="text-2xl font-bold text-gray-900 group-hover:text-purple-600 transition-colors">
+                <span className="text-xl md:text-2xl font-bold text-gray-900 group-hover:text-purple-600 transition-colors">
                   {programsApplied}
                 </span>
-                <span className="text-xs text-gray-500 font-medium">Programs</span>
+                <span className="text-[10px] md:text-xs text-gray-500 font-medium">Programs</span>
               </div>
 
-              <div className="w-px h-12 bg-gray-200"></div>
+              <div className="w-px h-8 md:h-10 bg-gray-200"></div>
 
               <div className="flex flex-col items-center cursor-pointer group">
-                <span className="text-2xl font-bold text-gray-900 group-hover:text-green-600 transition-colors">
+                <span className="text-xl md:text-2xl font-bold text-gray-900 group-hover:text-green-600 transition-colors">
                   {eventsApplied}
                 </span>
-                <span className="text-xs text-gray-500 font-medium">Events</span>
+                <span className="text-[10px] md:text-xs text-gray-500 font-medium">Events</span>
               </div>
             </div>
           </div>
@@ -270,80 +312,91 @@ Looking forward to hearing from you!`;
       </div>
 
       {/* Content Container */}
-      <div className="max-w-4xl mx-auto px-4 lg:px-6 space-y-6">
-        {/* Quick Connect Card */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100 shadow-sm">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Connect with {data.full_name?.split(' ')[0]}</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {/* LinkedIn */}
-            {linkedinUrl && (
-              <Link
-                href={linkedinUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-3 p-4 bg-white rounded-xl hover:shadow-md transition-all duration-200 border border-gray-200 hover:border-[#0A66C2] group"
-              >
-                <div className="w-10 h-10 bg-[#0A66C2] rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Linkedin size={20} className="text-white" />
-                </div>
-                <div className="flex-1">
-                  <div className="font-semibold text-gray-900 group-hover:text-[#0A66C2]">LinkedIn</div>
-                  <div className="text-xs text-gray-500">Professional network</div>
-                </div>
-              </Link>
-            )}
+      <div className="max-w-4xl mx-auto px-4 lg:px-6 space-y-6 md:mb-0 mb-[4rem]">
+        {/* Show Personalized Feed if Owner, else show Connect Card */}
+        {isOwner ? (
+          <PersonalizedFeed 
+            userId={id}
+            userSkills={[...skills, ...soft]}
+            university={data.university}
+          />
+        ) : (
+          <>
+            {/* Quick Connect Card */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100 shadow-sm">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Connect with {data.full_name?.split(' ')[0]}</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {/* LinkedIn */}
+                {linkedinUrl && (
+                  <Link
+                    href={linkedinUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-3 p-4 bg-white rounded-xl hover:shadow-md transition-all duration-200 border border-gray-200 hover:border-[#0A66C2] group"
+                  >
+                    <div className="w-10 h-10 bg-[#0A66C2] rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Linkedin size={20} className="text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-gray-900 group-hover:text-[#0A66C2]">LinkedIn</div>
+                      <div className="text-xs text-gray-500">Professional network</div>
+                    </div>
+                  </Link>
+                )}
 
-            {/* WhatsApp */}
-            {whatsappUrl && (
-              <Link
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-3 p-4 bg-white rounded-xl hover:shadow-md transition-all duration-200 border border-gray-200 hover:border-[#25D366] group"
-              >
-                <div className="w-10 h-10 bg-[#25D366] rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <MessageCircle size={20} className="text-white" />
-                </div>
-                <div className="flex-1">
-                  <div className="font-semibold text-gray-900 group-hover:text-[#25D366]">WhatsApp</div>
-                  <div className="text-xs text-gray-500">Instant messaging</div>
-                </div>
-              </Link>
-            )}
+                {/* WhatsApp */}
+                {whatsappUrl && (
+                  <Link
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-3 p-4 bg-white rounded-xl hover:shadow-md transition-all duration-200 border border-gray-200 hover:border-[#25D366] group"
+                  >
+                    <div className="w-10 h-10 bg-[#25D366] rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <MessageCircle size={20} className="text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-gray-900 group-hover:text-[#25D366]">WhatsApp</div>
+                      <div className="text-xs text-gray-500">Instant messaging</div>
+                    </div>
+                  </Link>
+                )}
 
-            {/* Email */}
-            {data.email && (
-              <Link
-                href={`mailto:${data.email}?subject=Connection Request from ZigX&body=Hi ${data.full_name || 'there'},%0D%0A%0D%0AI came across your profile on ZigX and I'm impressed by your background. I'd love to connect and explore potential collaboration opportunities.%0D%0A%0D%0ALooking forward to hearing from you!`}
-                className="flex items-center justify-center gap-3 p-4 bg-white rounded-xl hover:shadow-md transition-all duration-200 border border-gray-200 hover:border-blue-500 group"
-              >
-                <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Mail size={20} className="text-white" />
-                </div>
-                <div className="flex-1">
-                  <div className="font-semibold text-gray-900 group-hover:text-blue-500">Email</div>
-                  <div className="text-xs text-gray-500">Professional email</div>
-                </div>
-              </Link>
-            )}
+                {/* Email */}
+                {data.email && (
+                  <Link
+                    href={`mailto:${data.email}?subject=Connection Request from ZigX&body=Hi ${data.full_name || 'there'},%0D%0A%0D%0AI came across your profile on ZigX and I'm impressed by your background. I'd love to connect and explore potential collaboration opportunities.%0D%0A%0D%0ALooking forward to hearing from you!`}
+                    className="flex items-center justify-center gap-3 p-4 bg-white rounded-xl hover:shadow-md transition-all duration-200 border border-gray-200 hover:border-blue-500 group"
+                  >
+                    <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Mail size={20} className="text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-gray-900 group-hover:text-blue-500">Email</div>
+                      <div className="text-xs text-gray-500">Professional email</div>
+                    </div>
+                  </Link>
+                )}
 
-            {/* Phone */}
-            {data.phone && (
-              <Link
-                href={`tel:${data.phone}`}
-                className="flex items-center justify-center gap-3 p-4 bg-white rounded-xl hover:shadow-md transition-all duration-200 border border-gray-200 hover:border-green-500 group"
-              >
-                <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Phone size={20} className="text-white" />
-                </div>
-                <div className="flex-1">
-                  <div className="font-semibold text-gray-900 group-hover:text-green-500">Phone</div>
-                  <div className="text-xs text-gray-500">Direct call</div>
-                </div>
-              </Link>
-            )}
-          </div>
-        </div>
+                {/* Phone */}
+                {data.phone && (
+                  <Link
+                    href={`tel:${data.phone}`}
+                    className="flex items-center justify-center gap-3 p-4 bg-white rounded-xl hover:shadow-md transition-all duration-200 border border-gray-200 hover:border-green-500 group"
+                  >
+                    <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Phone size={20} className="text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-gray-900 group-hover:text-green-500">Phone</div>
+                      <div className="text-xs text-gray-500">Direct call</div>
+                    </div>
+                  </Link>
+                )}
+              </div>
+            </div>
+          </>
+        )}
 
         {/* About Section */}
         {data.about && (
@@ -440,13 +493,20 @@ Looking forward to hearing from you!`;
         </div>
       </div>
 
-      {/* Connect bar fixed to bottom */}
-      <ConnectBar 
-        linkedin={data.linkedin_url} 
-        whatsapp={data.phone} 
-        x={data.twitter_url || data.x_url} 
-        email={data.email} 
-      />
+      {/* Connect bar fixed to bottom - Only show if NOT owner */}
+      {!isOwner && (
+        <ConnectBar 
+          linkedin={data.linkedin_url} 
+          whatsapp={data.phone} 
+          x={data.twitter_url || data.x_url} 
+          email={data.email} 
+        />
+      )}
+      {isOwner &&
+      <CreateProjectButton/>
+      
+      }
+
     </div>
   );
 }

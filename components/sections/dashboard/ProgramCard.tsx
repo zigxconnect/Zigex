@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
 import {
   MapPin,
   Clock,
@@ -15,10 +14,13 @@ import {
   Heart,
   ChevronRight,
   Share2,
+  CheckCircle,
+  XCircle,
+  LockIcon,
+  LockOpen,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Program } from "@/lib/types/dashoard";
-import { SharePopover } from "@/components/SharePopover";
 import LiveBadge from "@/components/uiComponent/LiveBadge";
 import LivePanel from "@/components/uiComponent/LivePanel";
 
@@ -45,12 +47,38 @@ export const ProgramCard = ({
   const [isLiked, setIsLiked] = useState(false);
   const [openLive, setOpenLive] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const cardRef = useRef<HTMLDivElement | null>(null);
+
+  // Setup intersection observer for smooth scroll animation
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      {
+        threshold: 0.1,
+        rootMargin: '50px',
+      }
+    );
+
+    if (cardRef.current) {
+      observer.observe(cardRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
 
   const companyName = program.company?.company_name || "Community Program";
   const coverImage = program.program_picture_url || "/program-placeholder.jpg";
   const isLive = (program as any).is_live || /live/i.test(program.title || "");
   const viewerCount = (program as any).viewerCount || 0;
-  const logoColor = "#a855f7"; // Purple theme for programs
+  const logoColor = "#2563eb"; // Blue theme for programs like internships
   const category = program.program_category || "Training";
   const locationType = program.location || program.type || "Remote";
 
@@ -72,6 +100,57 @@ export const ProgramCard = ({
     }
   };
 
+  // Handle native sharing
+  const handleShare = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const shareData = {
+      title: program.title,
+      text: `Check out this program: ${program.title} at ${companyName}`,
+      url: window.location.origin + `/programs/${program.id}`
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        // Fallback to copy link
+        await navigator.clipboard.writeText(shareData.url);
+        // You might want to add a toast notification here
+        alert('Link copied to clipboard!');
+      }
+    } catch (err) {
+      console.error('Error sharing:', err);
+    }
+  };
+
+  // Determine if program is open based on dates
+  const isOpenWindow = (program: Program) => {
+    try {
+      const now = new Date();
+      if (program.start_date && program.end_date) {
+        const start = new Date(program.start_date);
+        const end = new Date(program.end_date);
+        return now >= start && now <= end;
+      }
+      if (program.end_date) {
+        const end = new Date(program.end_date);
+        return now <= end;
+      }
+      if (program.start_date) {
+        const start = new Date(program.start_date);
+        return now >= start;
+      }
+      return true; // If no dates are set, consider it open
+    } catch (error) {
+      console.error('Error checking program status:', error);
+      return true; // Default to open if there's an error
+    }
+  };
+
+  const openStatusComputed = isOpenWindow(program);
+
   const formatViewCount = (count: number) => {
     if (count >= 1000) {
       return `${(count / 1000).toFixed(1)}K`;
@@ -81,11 +160,15 @@ export const ProgramCard = ({
 
   if (viewMode === "list") {
     return (
-      <Link href={`/programs/${program.id}`}>
-        <div 
-          onClick={handleCardClick}
-          className={`bg-white rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300 overflow-hidden group ${isLive ? 'cursor-pointer' : ''}`}
-        >
+      <div
+        ref={cardRef}
+        className={`${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'} transition-all duration-700`}
+      >
+        <Link href={`/programs/${program.id}`}>
+          <div 
+            onClick={handleCardClick}
+            className={`bg-white rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300 overflow-hidden group ${isLive ? 'cursor-pointer' : ''}`}
+          >
           <div className="flex">
             {/* Image Section */}
             <div className="relative w-48 h-full flex-shrink-0">
@@ -112,7 +195,7 @@ export const ProgramCard = ({
                   </div>
                   <div className="absolute inset-0 flex items-center justify-center z-10">
                     <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-xl transform transition-transform duration-300 group-hover:scale-110">
-                      <Play className="w-5 h-5 text-purple-700 fill-purple-700 ml-0.5" />
+                      <Play className="w-5 h-5 text-blue-700 fill-blue-700 ml-0.5" />
                     </div>
                   </div>
                 </>
@@ -122,14 +205,14 @@ export const ProgramCard = ({
             {/* Content Section */}
             <div className="flex-1 p-6 flex items-center justify-between">
               <div className="flex-1">
-                <span className="px-3 py-1.5 mb-2 inline-block text-xs text-purple-800 bg-purple-100 rounded-full font-medium border border-purple-200 capitalize">
+                <span className="px-3 py-1.5 mb-2 inline-block text-xs text-blue-800 bg-blue-100 rounded-full font-medium border border-blue-200">
                   {category}
                 </span>
-                <h3 className="text-lg font-bold text-purple-900 leading-tight mb-1">
+                <h3 className="text-lg font-bold text-blue-900 leading-tight mb-1">
                   {program.title}
                 </h3>
-                <div className="flex items-center gap-1 text-sm text-purple-800 font-medium mb-3">
-                  <GraduationCap size={14} className="text-purple-600" />
+                <div className="flex items-center gap-1 text-sm text-blue-800 font-medium mb-3">
+                  <GraduationCap size={14} className="text-blue-600" />
                   <p>{companyName}</p>
                 </div>
                 <div className="flex items-center gap-4 text-sm text-gray-600">
@@ -144,46 +227,85 @@ export const ProgramCard = ({
                 </div>
               </div>
               <div className="flex items-center gap-2 ml-4">
-                <Button
-                  variant="outline"
-                  size="icon"
+                {/* Bookmark */}
+                <button
                   onClick={handleBookmark}
-                  className="rounded-lg"
+                  className="w-10 h-10 bg-white/95 backdrop-blur-xl hover:bg-white shadow rounded-md flex items-center justify-center"
                 >
                   {isBookmarked ? (
-                    <BookmarkCheck size={18} className="text-purple-600" />
+                    <BookmarkCheck size={18} className="text-blue-600" />
                   ) : (
                     <Bookmark size={18} className="text-gray-500" />
                   )}
-                </Button>
-                <SharePopover title={program.title} urlPath={`/programs/${program.id}`} />
-                <Button className="bg-purple-700 hover:bg-purple-600 text-white px-5 py-2 rounded-lg flex items-center gap-2 h-10">
+                </button>
+
+                {/* Like button */}
+                <button
+                  onClick={handleLike}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  className="w-10 h-10 bg-white/95 backdrop-blur-xl hover:bg-white shadow rounded-md flex items-center justify-center"
+                >
+                  <Heart size={18} className={`transition-all duration-300 ${isLiked ? 'text-red-600 fill-red-600' : 'text-gray-700'}`} />
+                </button>
+
+                {/* Share (native) */}
+                <button
+                  onClick={handleShare}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  className="w-10 h-10 bg-white/95 backdrop-blur-xl hover:bg-white shadow rounded-md flex items-center justify-center"
+                  aria-label="Share"
+                >
+                  <Share2 size={18} className="text-gray-700" />
+                </button>
+
+                {/* Open/Closed status */}
+                <div className="ml-2">
+                  {openStatusComputed ? (
+                    <div className="px-2 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold inline-flex items-center gap-1 border border-emerald-100">
+                      <CheckCircle size={14} className="text-emerald-600" />
+                      <span>Open</span>
+                    </div>
+                  ) : (
+                    <div className="px-2 py-1 bg-red-50 text-red-700 rounded-full text-xs font-semibold inline-flex items-center gap-1 border border-red-100">
+                      <XCircle size={14} className="text-red-600" />
+                      <span>Closed</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* CTA Button - View */}
+                <button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white px-5 py-2 rounded-lg flex items-center gap-2 h-10">
                   View
                   <ExternalLink size={14} />
-                </Button>
+                </button>
               </div>
             </div>
           </div>
         </div>
       </Link>
+    </div>
     );
   }
 
   // Grid View - Full Image Card with Overlay (TikTok/Instagram Style)
   return (
     <>
-      <div 
-        className="relative group cursor-pointer overflow-hidden rounded-3xl shadow-2xl border-2 border-transparent hover:border-purple-500 transition-all duration-500 aspect-[3/4]"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        onClick={handleCardClick}
-        style={{
-          transform: isHovered ? 'scale(1.02) translateY(-8px)' : 'scale(1)',
-          boxShadow: isHovered 
-            ? '0 25px 50px -12px rgba(168, 85, 247, 0.4), 0 0 0 3px rgba(168, 85, 247, 0.1)' 
-            : '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-        }}
+      <div
+        ref={cardRef}
+        className={`${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'} transition-all duration-700`}
       >
+        <div 
+          className="relative group cursor-pointer overflow-hidden rounded-3xl shadow-2xl border-2 border-transparent hover:border-blue-500 transition-all duration-500 aspect-[3/4]"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          onClick={handleCardClick}
+          style={{
+            transform: isHovered ? 'scale(1.02) translateY(-8px)' : 'scale(1)',
+            boxShadow: isHovered 
+              ? '0 25px 50px -12px rgba(59, 130, 246, 0.4), 0 0 0 3px rgba(59, 130, 246, 0.1)' 
+              : '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+          }}
+        >
         {/* Full Background Image */}
         <div className="absolute inset-0">
           <Image
@@ -222,8 +344,8 @@ export const ProgramCard = ({
                 </span>
               </div>
             ) : (
-              <div className="px-4 py-2 bg-purple-600/90 backdrop-blur-xl rounded-full shadow-lg border border-white/20">
-                <span className="text-white text-xs font-bold uppercase tracking-wide capitalize">
+              <div className="px-4 py-2 bg-blue-600/90 backdrop-blur-xl rounded-full shadow-lg border border-white/20">
+                <span className="text-white text-xs font-bold uppercase tracking-wide">
                   {category}
                 </span>
               </div>
@@ -237,7 +359,7 @@ export const ProgramCard = ({
                 className="w-11 h-11 bg-white/95 backdrop-blur-xl hover:bg-white shadow-2xl rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95"
               >
                 {isBookmarked ? (
-                  <BookmarkCheck size={18} className="text-purple-600" />
+                  <BookmarkCheck size={18} className="text-blue-600" />
                 ) : (
                   <Bookmark size={18} className="text-gray-700" />
                 )}
@@ -258,12 +380,29 @@ export const ProgramCard = ({
                 />
               </button>
 
-              {/* Share Button */}
-              <div onClick={(e) => e.stopPropagation()}>
-                <SharePopover 
-                  title={program.title} 
-                  urlPath={`/programs/${program.id}`}
-                />
+              {/* Share Button (native) */}
+              <button
+                onClick={handleShare}
+                onMouseDown={(e) => e.stopPropagation()}
+                className="w-11 h-11 bg-white/95 backdrop-blur-xl hover:bg-white shadow-2xl rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95"
+                aria-label="Share"
+              >
+                <Share2 size={18} className="text-gray-700" />
+              </button>
+
+              {/* Open/Closed status */}
+              <div className="flex items-center justify-center b">
+                {openStatusComputed ? (
+                  <div className="flex flex-col items-center gap-1 bg-blue-600/90 backdrop-blur-xl rounded-full shadow-lg border border-white/20 p-2">
+                    <LockOpen size={18} className="text-white" />
+                    {/* <span className="text-xs text-white">Open</span> */}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-1 bg-red-600/90 backdrop-blur-xl rounded-full shadow-lg border border-white/20 p-2">
+                    <LockIcon size={18} className="text-white" />
+                    {/* <span className="text-xs text-white">Closed</span> */}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -288,8 +427,8 @@ export const ProgramCard = ({
                 transform: isHovered ? 'scale(1.1)' : 'scale(1)',
               }}
             >
-              <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-2xl">
-                <Play className="w-9 h-9 text-purple-600 fill-purple-600 ml-1" />
+                <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-2xl">
+                <Play className="w-9 h-9 text-blue-600 fill-blue-600 ml-1" />
               </div>
               {/* Pulsing Ring */}
               <div className="absolute inset-0 w-20 h-20 bg-white rounded-full animate-ping-slow opacity-40" />
@@ -299,13 +438,15 @@ export const ProgramCard = ({
 
         {/* Bottom Content - Always Visible */}
         <div className="absolute bottom-0 left-0 right-0 p-5 z-20">
-          {/* Company/Organizer Logo Badge */}
+          {/* Company/Organizer Logo Badge (use actual logo with seed fallback) */}
           <div className="flex items-center gap-3 mb-3">
-            <div
-              className="w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-2xl border-2 border-white/30"
-              style={{ backgroundColor: logoColor }}
-            >
-              <GraduationCap size={28} className="font-bold" />
+            <div className="relative w-14 h-14 rounded-2xl overflow-hidden shadow-2xl border-2 border-white/30">
+              <Image
+                src={program.company?.logo_url || "/seedLogo.png"}
+                alt={`${companyName} logo`}
+                fill
+                className="object-cover"
+              />
             </div>
             <div className="flex-1">
               <p className="text-white/80 text-xs font-semibold uppercase tracking-wider mb-0.5">
@@ -337,7 +478,7 @@ export const ProgramCard = ({
           {/* CTA Button - Full Width, Instagram Story Style */}
           <Link href={`/programs/${program.id}`} onClick={(e) => e.stopPropagation()}>
             <button
-              className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 shadow-2xl transition-all duration-300 hover:shadow-purple-500/50 active:scale-98 group/btn"
+              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 shadow-2xl transition-all duration-300 hover:shadow-blue-500/50 active:scale-98 group/btn cursor-pointer"
             >
               <span className="text-base">
                 {isLive ? 'Join Live Session' : 'View Program'}
@@ -361,6 +502,7 @@ export const ProgramCard = ({
           />
         )}
       </div>
+      </div>
 
       <LivePanel
         open={openLive}
@@ -373,7 +515,7 @@ export const ProgramCard = ({
         applyUrl={`/programs/${program.id}`}
       />
 
-      <style jsx>{`
+      <style jsx global>{`
         @keyframes ping {
           75%, 100% {
             transform: scale(2);
