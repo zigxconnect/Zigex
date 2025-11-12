@@ -7,6 +7,8 @@ import { ExternalLink, X, CheckCircle2, AlertCircle } from "lucide-react";
 import DynamicForm from "@/components/sections/dashboard/Application/application";
 import { cn } from "@/lib/utils";
 import ApplicationModal from "./Modal";
+// import { ApplicationModal } from "@/components/sections/dashboard/details/ApplicationModal";
+// import ApplicationModal from "./Modal";
 
 interface ApplyButtonProps {
   isOpen: boolean;
@@ -40,7 +42,7 @@ export function ApplyButton({ isOpen, reason, type, id, title }: ApplyButtonProp
       <Button
         onClick={() => setShowModal(true)}
         className={cn(
-          "w-full text-base py-6 font-semibold rounded-2xl",
+          "w-full text-base p2-6 font-semibold rounded-2xl",
           "shadow-lg hover:shadow-xl transition-all duration-300",
           "transform hover:scale-[1.02] active:scale-[0.98]",
           "bg-gradient-to-r from-blue-600 to-indigo-600",

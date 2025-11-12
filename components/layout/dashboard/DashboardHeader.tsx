@@ -86,9 +86,9 @@ export const DashboardHeader = ({
           {/* Logo/Brand */}
           <Link
             href="/"
-            className="flex items-center group flex-shrink-0 p-1 bg-[#cfc7c7] shadow-2xl rounded-full"
+            className="flex items-center group flex-shrink-0 p-1.2"
           >
-            <div className="relative w-10 h-10 sm:w-11 sm:h-11 lg:w-12 lg:h-12 transition-transform group-hover:scale-105">
+            <div className="relative w-14 h-14 sm:w-11 sm:h-11 lg:w-12 lg:h-12 transition-transform group-hover:scale-105">
               <Image
                 src="/z3.png"
                 alt="Zigex Logo"
@@ -175,15 +175,8 @@ export const DashboardHeader = ({
               </>
             )}
           </button>
-
-          {/* Notifications Dropdown */}
-          <div className="flex-shrink-0">
-            <NotificationDropdown />
-          </div>
-
-          {/* User Avatar & Info */}
-          <Link  href={`/dashboard/student/${user.profile.id}`} className="flex items-center gap-3 ml-2 lg:ml-3 flex-shrink-0">
-            <div className="relative w-9 h-9 lg:w-10 lg:h-10 rounded-full border-2 border-gray-200 overflow-hidden ring-2 ring-transparent hover:ring-blue-400 transition-all duration-200">
+  <Link  href={`/dashboard/student/${user.profile.id}`} className="flex items-center gap-3 ml-2 lg:ml-3 flex-shrink-0">
+            <div className=" relative w-9 h-9 lg:w-10 lg:h-10 rounded-full border-2 border-gray-200 overflow-hidden ring-2 ring-transparent hover:ring-blue-400 transition-all duration-200">
               <Image
                 src={userAvatar}
                 alt={userName}
@@ -191,13 +184,35 @@ export const DashboardHeader = ({
                 className="object-cover"
               />
             </div>
-            <div className="">
+            <div className="hidden md:flex">
               <p className="text-sm font-semibold text-gray-900 leading-tight">
                 {userName}
               </p>
               <p className="text-xs text-gray-500 leading-tight">{userRole}</p>
             </div>
           </Link>
+          {/* Notifications Dropdown */}
+          <div className="flex-shrink-0">
+            <NotificationDropdown />
+          </div>
+
+          {/* User Avatar & Info */}
+          {/* <Link  href={`/dashboard/student/${user.profile.id}`} className="flex items-center gap-3 ml-2 lg:ml-3 flex-shrink-0">
+            <div className=" relative w-9 h-9 lg:w-10 lg:h-10 rounded-full border-2 border-gray-200 overflow-hidden ring-2 ring-transparent hover:ring-blue-400 transition-all duration-200">
+              <Image
+                src={userAvatar}
+                alt={userName}
+                fill
+                className="object-cover"
+              />
+            </div>
+            <div className="hidden md:flex">
+              <p className="text-sm font-semibold text-gray-900 leading-tight">
+                {userName}
+              </p>
+              <p className="text-xs text-gray-500 leading-tight">{userRole}</p>
+            </div>
+          </Link> */}
         </div>
       </div>
 

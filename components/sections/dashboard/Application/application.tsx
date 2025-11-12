@@ -218,7 +218,7 @@ export default function DynamicForm({ type, id }: DynamicFormProps) {
   }
 
   return (
-    <div className="p-6 sm:p-8 lg:p-10">
+    <div className="z-9999 relative p-6 sm:p-8 lg:p-12 bg-white rounded-3xl shadow-2xl border-0">
       {/* Header */}
       <div className="text-center mb-8">
         <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mb-4 mx-auto shadow-lg">

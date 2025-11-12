@@ -22,6 +22,7 @@ import { CompanyCard } from "@/components/feed/details/DetailsSidebar";
 import { DetailsSidebar } from "@/components/feed/details/CompanyCard";
 import { BackButton } from "@/components/feed/details/BackButton";
 import { RegisterGoDown } from "@/components/feed/details/RegisterDown";
+import CurriculumSection from "@/components/feed/details/Curriculum";
 
 interface FeedDetailPageProps {
   params: Promise<{ id: string }>;
@@ -237,6 +238,11 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
               />
 
               </section>
+
+              {/* Curriculum Section - Bottom Right */}
+              {item._type === "programs" && (
+                <CurriculumSection programTitle="Weekend of Code" />
+              )}
 
               {/* Additional Info Card */}
               <Card className="p-6 border-0 shadow-lg bg-gradient-to-br from-blue-50 to-indigo-50">
