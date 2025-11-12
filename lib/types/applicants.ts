@@ -1,4 +1,4 @@
-// file: lib/types/applicants.ts
+// file: src/lib/types/applicants.ts
 
 /**
  * Defines the allowed statuses for an application.

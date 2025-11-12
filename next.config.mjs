@@ -10,7 +10,7 @@ const nextConfig = {
 
   images: {
     remotePatterns: [
-      // Your existing rule for picsum.photos is preserved.
+
       {
         protocol: 'https',
         hostname: 'picsum.photos',
@@ -32,8 +32,6 @@ const nextConfig = {
         pathname: '/**',
       },
 
-      // THE FIX IS HERE:
-      // We are adding a new object to the array for your Supabase Storage.
       {
         protocol: 'https',
         hostname: 'tmvipinvvhgklmqwvows.supabase.co',
@@ -55,15 +53,12 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
-
-       {
+      {
         protocol: 'https',
-        hostname: 'cover.png',
+        hostname: 'i.pravatar.cc',
         port: '',
         pathname: '/**',
       },
-
-      
     ],
   },
 };

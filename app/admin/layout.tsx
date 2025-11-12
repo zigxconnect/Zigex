@@ -1,9 +1,8 @@
-// FILE: app/admin/layout.tsx
-
 import { redirect } from "next/navigation";
-import { AdminHeader } from "@/components/layout/admin/AdminHeader";
-import { AdminSidebar } from "@/components/layout/admin/AdminSiderbar";
 import { ReactNode } from "react";
+import { AdminHeader } from "@/components/layout/admin/AdminHeader";
+import { AdminSidebar } from "@/components/layout/admin/AdminSidebar";
+import { AdminLayoutProvider } from "@/components/layout/admin/AdminLayoutProvider";
 import {
   getAuthenticatedCompanyProfile,
   getHeaderStats,
@@ -17,22 +16,30 @@ export default async function AdminDashboardLayout({
   const companyProfile = await getAuthenticatedCompanyProfile();
 
   if (!companyProfile) {
-    // This could happen if auth succeeds but profile doesn't exist.
-    // Or if getAuthenticatedCompanyProfile returns null because there's no user.
     return redirect("/sign-in");
   }
 
   const headerStats = await getHeaderStats(companyProfile.id);
 
   return (
-    <div className="flex h-screen bg-slate-50 text-gray-800">
-      <AdminSidebar companyProfile={companyProfile} />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <AdminHeader stats={headerStats} />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto p-6 lg:p-8">
-          {children}
+    <AdminLayoutProvider>
+      {/* Header is fixed and always visible */}
+      <AdminHeader stats={headerStats} />
+
+      <div className="flex">
+        {/* Sidebar is an off-canvas menu on mobile, and fixed on desktop */}
+        <AdminSidebar companyProfile={companyProfile} />
+
+        {/* Main content area that adapts its margin based on screen size */}
+        <main
+          className="flex-1 w-full transition-all duration-300 ease-in-out
+            pt-20
+            lg:ml-72 
+          "
+        >
+          <div className="p-4 sm:p-6 lg:p-8">{children}</div>
         </main>
       </div>
-    </div>
+    </AdminLayoutProvider>
   );
 }

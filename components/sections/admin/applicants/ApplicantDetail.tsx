@@ -1,10 +1,13 @@
-// file: components/sections/admin/applicants/ApplicantDetail.tsx
+// file: src/components/sections/admin/applicants/ApplicantDetail.tsx
+
+import Link from "next/link";
+import Image from "next/image"; // Correctly using next/image
+import { Download, Mail, Phone, ExternalLink } from "lucide-react";
 
 import { Applicant, ApplicantStatus } from "@/lib/types/applicants";
-import { StatusBadge } from "./StatusBadge";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { Check, X, Download, Mail, Phone, ExternalLink } from "lucide-react";
-import Link from "next/link";
+import { ApplicantActions } from "./ApplicantActions";
 
 type ApplicantDetailProps = {
   applicant: Applicant;
@@ -18,8 +21,8 @@ const DetailSection = ({
   title: string;
   children: React.ReactNode;
 }) => (
-  <div className="bg-white p-6 rounded-lg border border-gray-200">
-    <h3 className="text-lg font-bold text-gray-800 mb-4">{title}</h3>
+  <div className="bg-card p-6 rounded-xl border">
+    <h3 className="text-lg font-semibold text-card-foreground mb-4">{title}</h3>
     {children}
   </div>
 );
@@ -29,61 +32,48 @@ export const ApplicantDetail = ({
   onUpdateStatus,
 }: ApplicantDetailProps) => {
   return (
-    <div className="space-y-8">
-      {/* Header Section */}
-      <header>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <img
-              src={applicant.avatarUrl}
-              alt={applicant.name}
-              className="h-20 w-20 rounded-full object-cover ring-4 ring-white shadow-sm"
-            />
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                {applicant.name}
-              </h1>
-              <div className="flex items-center flex-wrap gap-4 mt-1 text-sm text-gray-600">
-                <span className="flex items-center gap-1.5">
-                  <Mail size={14} /> {applicant.email}
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <Phone size={14} /> {applicant.phone}
-                </span>
-              </div>
+    <div className="space-y-8 animate-in fade-in duration-300">
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center gap-5">
+          {/* This Image component is now configured to work */}
+          <Image
+            src={applicant.avatarUrl}
+            alt={applicant.name}
+            width={80}
+            height={80}
+            className="h-20 w-20 rounded-full object-cover ring-4 ring-background"
+          />
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">
+              {applicant.name}
+            </h1>
+            <div className="flex items-center flex-wrap gap-x-4 gap-y-1 mt-1 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <Mail size={14} /> {applicant.email}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Phone size={14} /> {applicant.phone}
+              </span>
             </div>
           </div>
-          <div className="flex-shrink-0">
-            <StatusBadge status={applicant.status} large />
-          </div>
+        </div>
+        <div className="flex-shrink-0 self-start sm:self-center">
+          <StatusBadge status={applicant.status} size="large" />
         </div>
       </header>
 
-      {/* Actions Section */}
-      <div className="bg-gray-50 p-4 rounded-lg border flex items-center justify-center gap-3">
-        <Button
-          onClick={() => onUpdateStatus("accepted")}
-          variant="primary"
-          className="bg-green-600 hover:bg-green-700 disabled:bg-green-300"
-          disabled={applicant.status === "accepted"}
-        >
-          <Check className="mr-2 h-4 w-4" /> Accept
-        </Button>
-        <Button
-          onClick={() => onUpdateStatus("rejected")}
-          variant="destructive"
-          disabled={applicant.status === "rejected"}
-        >
-          <X className="mr-2 h-4 w-4" /> Reject
-        </Button>
-      </div>
+      <DetailSection title="Manage Application">
+        <ApplicantActions
+          applicant={applicant}
+          onUpdateStatus={onUpdateStatus}
+        />
+      </DetailSection>
 
-      {/* Details Sections */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div className="xl:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-2">
           <DetailSection title="Cover Letter">
             {applicant.coverLetter ? (
-              <Button asChild variant="secondary" className="w-full">
+              <Button asChild variant="outline" className="w-full">
                 <Link
                   href={applicant.coverLetter}
                   target="_blank"
@@ -93,19 +83,27 @@ export const ApplicantDetail = ({
                 </Link>
               </Button>
             ) : (
-              <p className="text-gray-500 italic">No cover letter provided.</p>
+              <p className="text-muted-foreground italic">
+                No cover letter provided.
+              </p>
             )}
           </DetailSection>
         </div>
-        <div className="space-y-6">
+        <div>
           <DetailSection title="Application Details">
             <div className="space-y-3 text-sm">
               <p>
-                <strong className="text-gray-700">Applying for:</strong>{" "}
+                <strong className="font-medium text-foreground">
+                  Applying for:
+                </strong>
+                <br />
                 {applicant.internshipTitle}
               </p>
               <p>
-                <strong className="text-gray-700">Applied on:</strong>{" "}
+                <strong className="font-medium text-foreground">
+                  Applied on:
+                </strong>
+                <br />
                 {new Date(applicant.appliedDate).toLocaleString()}
               </p>
               {applicant.resumeUrl && (
@@ -113,7 +111,7 @@ export const ApplicantDetail = ({
                   asChild
                   variant="secondary"
                   size="sm"
-                  className="w-full mt-2"
+                  className="w-full mt-4"
                 >
                   <Link
                     href={applicant.resumeUrl}

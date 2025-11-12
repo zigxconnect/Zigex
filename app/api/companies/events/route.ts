@@ -2,45 +2,10 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "../../../../lib/supabase/server";
 import { authMiddleware } from "@/lib/middleware/auth";
 import { eventSchema } from "@/lib/validation/event";
-// import { v4 as uuidv4 } from 'uuid';
-// import { GoogleSpreadsheet } from 'google-spreadsheet';
-// import { JWT } from 'google-auth-library';
-
-// Initialize Google Sheets connection
 
 /**
- * @swagger
- * /api/companies/events:
- *   post:
- *     summary: Add a new event for a company with image upload
- *     description: Create a new event (conference, workshop, webinar, networking, hackathon) including an optional event picture. Data is stored in a spreadsheet.
- *     tags:
- *          - Company Events
- *     requestBody:
- *             required:
- *               - title
- *               - description
- *               - event_type
- *               - start_date
- *               - end_date
- *               - location
- *     responses:
- *       201:
- *         description: Event created successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Event'
- *       400:
- *         description: Bad request (validation error)
- *       403:
- *         description: Unauthorized access
- *       404:
- *         description: Company profile not found
- *       500:
- *         description: Internal server error
+ * Handles fetching all events for the authenticated company.
  */
-
 export async function GET(request: Request) {
   const auth = await authMiddleware(request);
   if (auth instanceof NextResponse) {
@@ -77,41 +42,9 @@ export async function GET(request: Request) {
   return NextResponse.json(data);
 }
 
-/*
-Handles the creation of a new company event with image upload.
-
-Usage:
-Send a POST request to /api/companies/events with multipart/form-data encoding.
-
-Required Form Fields:
-- title: The title of the event (string)
-- description: A description of the event (string)
-- event_type: The type of event (e.g., conference, workshop, webinar, networking, hackathon) (string)
-- start_date: The start date of the event (ISO 8601 string)
-- end_date: The end date of the event (ISO 8601 string)
-- location: The location of the event (string)
-- event_image: The image file for the event (File)
-
-Authentication:
-- The request must be authenticated as a company user. Unauthorized or non-company users will receive a 403 error.
-
-Behavior:
-- Validates the form data using the eventSchema.
-- Uploads the provided image to Supabase Storage under the company's assets.
-- Stores the event data, including the public URL of the uploaded image, in the Supabase event table.
-- Returns the created event object on success.
-
-Responses:
-- 201: Event created successfully. Returns the event object.
-- 400: Validation error or missing required fields.
-- 403: Unauthorized access (not a company user).
-- 404: Company profile not found.
-- 500: Internal server error (e.g., failed image upload or database error).
-
-@param request - The incoming HTTP request containing form data for the new event.
-@returns A JSON response with the created event or an error message.
-*/
-
+/**
+ * Handles the creation of a new company event with image upload.
+ */
 export async function POST(request: Request) {
   const auth = await authMiddleware(request);
   if (auth instanceof NextResponse) {
@@ -131,59 +64,53 @@ export async function POST(request: Request) {
     );
   }
 
-  const formData = await request.formData();
-
-  //Extract image file
-  const eventImage = formData.get("event_image") as File | null;
-
-  // Validate other form fields by converting FormData to an object then use the eventSchema to validate
-  const dataobject = Object.fromEntries(formData.entries());
-
-  //Ensure image is present
-  if (!eventImage) {
-    return NextResponse.json(
-      { error: "Event image is required" },
-      { status: 400 }
-    );
-  }
-
-  //uplaod image to supabase storage and get the public URL
-  //Set the image name and filepath. file path is company_name/events/event_title-timestamp.ext
-  const imageExt = eventImage.name.split(".").pop();
-  const imageName = `${dataobject.title}-${Date.now()}.${imageExt}`;
-  const imagePath = `${company.company_name}/events/${imageName}`;
-
-  //Upload the image to company-assets bucket in supabase storage
-  const { error: uploadError } = await supabaseAdmin.storage
-    .from("company-assets")
-    .upload(imagePath, eventImage, {
-      cacheControl: "3600",
-      upsert: false,
-    });
-
-  if (uploadError) {
-    console.error("Supabase storage upload error:", uploadError);
-    return NextResponse.json(
-      { error: "Failed to upload event image" },
-      { status: 500 }
-    );
-  }
-
-  //Get the public URL of the uploaded image
-  const { data: imageData } = supabaseAdmin.storage
-    .from("company-assets")
-    .getPublicUrl(imagePath);
-  const eventImageUrl = imageData.publicUrl;
-
-  // Validate other form fields
   try {
+    const formData = await request.formData();
+    const eventImage = formData.get("event_image") as File | null;
+    const dataobject = Object.fromEntries(formData.entries());
+
+    if (!eventImage) {
+      return NextResponse.json(
+        { error: "Event image is required" },
+        { status: 400 }
+      );
+    }
+    if (!dataobject.title || typeof dataobject.title !== "string") {
+      return NextResponse.json(
+        { error: "Event title is required" },
+        { status: 400 }
+      );
+    }
+
+    const sanitizePathComponent = (str: string) =>
+      str.replace(/[^a-zA-Z0-9_-]/g, "_");
+    const imageExt = eventImage.name.split(".").pop();
+    const imageName = `${sanitizePathComponent(dataobject.title)}-${Date.now()}.${imageExt}`;
+    const imagePath = `${sanitizePathComponent(company.company_name)}/events/${imageName}`;
+
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from("company-assets")
+      .upload(imagePath, eventImage, { cacheControl: "3600", upsert: false });
+
+    if (uploadError) {
+      console.error("Supabase storage upload error:", uploadError);
+      return NextResponse.json(
+        { error: "Failed to upload event image" },
+        { status: 500 }
+      );
+    }
+
+    const { data: imageData } = supabaseAdmin.storage
+      .from("company-assets")
+      .getPublicUrl(imagePath);
+    const eventImageUrl = imageData.publicUrl;
+
     const validatedData = eventSchema.parse({
       ...dataobject,
       event_picture_url: eventImageUrl,
       company_id: company.id,
     });
 
-    // Insert the new event into Supabase
     const { data, error } = await supabaseAdmin
       .from("event")
       .insert([validatedData])
@@ -192,6 +119,7 @@ export async function POST(request: Request) {
 
     if (error) {
       console.error("Supabase insert error:", error);
+      await supabaseAdmin.storage.from("company-assets").remove([imagePath]);
       return NextResponse.json(
         { error: "Failed to create event" },
         { status: 500 }
@@ -203,6 +131,111 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "Validation error", details: validationError },
       { status: 400 }
+    );
+  }
+}
+
+/**
+ * Handles the deletion of a company event.
+ */
+export async function DELETE(request: Request) {
+  const auth = await authMiddleware(request);
+  if (auth instanceof NextResponse) {
+    return auth;
+  }
+
+  const { user, type } = auth;
+  if (type !== "company") {
+    return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
+  }
+
+  const { company } = auth;
+  if (!company) {
+    return NextResponse.json(
+      { error: "Company profile not found" },
+      { status: 404 }
+    );
+  }
+
+  try {
+    const body = await request.json();
+    const { id } = body;
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "Event ID is required for deletion" },
+        { status: 400 }
+      );
+    }
+
+    const { data: existingEvent, error: fetchError } = await supabaseAdmin
+      .from("event")
+      .select("id, event_picture_url")
+      .eq("id", id)
+      .eq("company_id", company.id)
+      .single();
+
+    if (fetchError || !existingEvent) {
+      return NextResponse.json(
+        {
+          error: "Event not found or you do not have permission to delete it.",
+        },
+        { status: 404 }
+      );
+    }
+
+    const { error: deleteError } = await supabaseAdmin
+      .from("event")
+      .delete()
+      .eq("id", id);
+
+    if (deleteError) {
+      console.error("Supabase Delete Error:", deleteError);
+      return NextResponse.json(
+        { error: "Failed to delete event from database." },
+        { status: 500 }
+      );
+    }
+
+    // --- APPLIED DIFF: More robust image path parsing and deletion ---
+    if (existingEvent.event_picture_url) {
+      try {
+        const url = new URL(existingEvent.event_picture_url);
+        // This regex reliably extracts the path after the bucket name
+        const pathMatch = url.pathname.match(
+          /\/storage\/v1\/object\/public\/company-assets\/(.+)$/
+        );
+        const imagePath = pathMatch ? pathMatch[1] : null;
+
+        if (imagePath) {
+          // decodeURIComponent is still needed as the path can contain encoded characters
+          const { error: storageError } = await supabaseAdmin.storage
+            .from("company-assets")
+            .remove([decodeURIComponent(imagePath)]);
+
+          if (storageError) {
+            console.warn(
+              `DB record deleted, but failed to delete image from storage: ${imagePath}`,
+              storageError
+            );
+          }
+        }
+      } catch (parseError) {
+        // This catch block prevents the function from crashing if the URL is malformed
+        console.warn(
+          `DB record deleted, but failed to parse image URL for cleanup: ${existingEvent.event_picture_url}`,
+          parseError
+        );
+      }
+    }
+    // --- END OF APPLIED DIFF ---
+
+    return new NextResponse(null, { status: 204 });
+  } catch (err) {
+    console.error("DELETE Event Error:", err);
+    return NextResponse.json(
+      { error: "An unexpected error occurred." },
+      { status: 500 }
     );
   }
 }

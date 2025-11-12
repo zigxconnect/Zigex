@@ -81,7 +81,7 @@ export async function middleware(request: NextRequest) {
 
   if (publicPaths.includes(pathname) || pathname === "/create-profile") {
     if (userRole === "company") {
-      return NextResponse.redirect(new URL("/admin/postings", request.url));
+      return NextResponse.redirect(new URL("/admin/dashboard", request.url));
     }
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
@@ -101,7 +101,7 @@ export async function middleware(request: NextRequest) {
     studentPaths.some((p) => pathname.startsWith(p)) &&
     userRole !== "student"
   ) {
-    return NextResponse.redirect(new URL("/admin/postings", request.url));
+    return NextResponse.redirect(new URL("/admin/dashboard", request.url));
   }
 
   return response;
