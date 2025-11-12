@@ -13,8 +13,8 @@ export const OtpInput = ({ length, onChange, disabled }: OtpInputProps) => {
   const [otp, setOtp] = useState<string[]>(new Array(length).fill(""));
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
    useEffect(() => {
-+    setOtp(new Array(length).fill(""))
-+  }, [length]);
+    setOtp(new Array(length).fill(""))
+  }, [length]);
 
   const handleChange = (element: HTMLInputElement, index: number) => {
     const value = element.value;
