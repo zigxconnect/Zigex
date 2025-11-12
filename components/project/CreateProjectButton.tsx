@@ -33,7 +33,7 @@ export default function CreateProjectButton() {
       {/* Floating Action Button */}
       <button
         onClick={() => setIsModalOpen(true)}
-        className="fixed bottom-30 right-6 lg:bottom-8 lg:right-8 z-40 group cursor-pointer"
+        className="hidden fixed bottom-30 right-6 lg:bottom-8 lg:right-8 z-40 group cursor-pointer"
         aria-label="Create project post"
       >
         {/* Tooltip */}
