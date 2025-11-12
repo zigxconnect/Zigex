@@ -13,7 +13,7 @@ export const OtpInput = ({ length, onChange, disabled }: OtpInputProps) => {
   const [otp, setOtp] = useState<string[]>(new Array(length).fill(""));
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
    useEffect(() => {
-+    setOtp(new Array(length).fill(""));
++    setOtp(new Array(length).fill(""))
 +  }, [length]);
 
   const handleChange = (element: HTMLInputElement, index: number) => {
@@ -37,6 +37,8 @@ export const OtpInput = ({ length, onChange, disabled }: OtpInputProps) => {
     if (e.key === "Backspace" && !otp[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
+  };
+
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
     const pastedData = e.clipboardData
@@ -55,9 +57,8 @@ export const OtpInput = ({ length, onChange, disabled }: OtpInputProps) => {
       const nextIndex = Math.min(pastedData.length, length - 1);
       inputRefs.current[nextIndex]?.focus();
     }
-  };     inputRefs.current[nextIndex]?.focus();
-    }
   };
+  
 
   return (
     <div
@@ -67,7 +68,9 @@ export const OtpInput = ({ length, onChange, disabled }: OtpInputProps) => {
       {otp.map((data, index) => (
         <Input
           key={index}
-          ref={(el) => (inputRefs.current[index] = el)}
+          ref={(el) => {
+            inputRefs.current[index] = el;
+          }}
           type="text"
           inputMode="numeric"
           maxLength={1}
