@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Linkedin, MessageCircle, Mail, X, Users, AtSign } from "lucide-react";
 import StackedAvatars from "./StackedAvatars";
 import Link from "next/link";
+import { useRouter } from 'next/navigation';
 
 interface SimilarStudent {
   id: string;
@@ -24,6 +25,7 @@ export default function SimilarStudentsSidebar({
   students: SimilarStudent[];
 }) {
   const [open, setOpen] = useState(false);
+  const router = useRouter();
   
   // Helper to pick best avatar source
   function pickAvatar(s: SimilarStudent) {
@@ -103,21 +105,21 @@ export default function SimilarStudentsSidebar({
 
                     <div className="mt-2 flex gap-2">
                       {s.linkedin_url && (
-                        <a href={s.linkedin_url} target="_blank" rel="noreferrer" className="px-2 py-1 bg-[#0A66C2]/10 text-[#0A66C2] rounded-md text-xs font-semibold hover:bg-[#0A66C2]/20"> 
+                        <Link href={s.linkedin_url} target="_blank" rel="noreferrer" className="px-2 py-1 bg-[#0A66C2]/10 text-[#0A66C2] rounded-md text-xs font-semibold hover:bg-[#0A66C2]/20"> 
                           <Linkedin size={14} />
-                        </a>
+                        </Link>
                       )}
 
                       {s.phone && (
-                        <a href={`https://wa.me/${s.phone.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="px-2 py-1 bg-[#25D366]/10 text-[#25D366] rounded-md text-xs font-semibold hover:bg-[#25D366]/20"> 
+                        <Link href={`https://wa.me/${s.phone.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="px-2 py-1 bg-[#25D366]/10 text-[#25D366] rounded-md text-xs font-semibold hover:bg-[#25D366]/20"> 
                           <MessageCircle size={14} />
-                        </a>
+                        </Link>
                       )}
 
                       {s.email && (
-                        <a href={`mailto:${s.email}`} className="px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-xs font-semibold hover:bg-blue-100"> 
+                        <Link href={`mailto:${s.email}`} className="px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-xs font-semibold hover:bg-blue-100"> 
                           <Mail size={14} />
-                        </a>
+                        </Link>
                       )}
 
                      
@@ -150,7 +152,14 @@ export default function SimilarStudentsSidebar({
           )}
 
           {students.map((s) => (
-            <Link href={`/dashboard/student/${s.id}`} key={s.id} className="flex items-start gap-3 p-3 rounded-xl hover:bg-gray-100 transition ">
+            <div
+              key={s.id}
+              role="link"
+              tabIndex={0}
+              onClick={() => router.push(`/dashboard/student/${s.id}`)}
+              onKeyDown={(e) => { if (e.key === 'Enter') router.push(`/dashboard/student/${s.id}`); }}
+              className="flex items-start gap-3 p-3 rounded-xl hover:bg-gray-100 transition cursor-pointer"
+            >
               <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold">
                 {s.avatar_url ? (
                   <Image src={s.avatar_url} alt={s.full_name || "S"} width={48} height={48} className="object-cover" />
@@ -166,7 +175,7 @@ export default function SimilarStudentsSidebar({
                     <div className="text-xs text-gray-500">{s.university}</div>
                   </div>
                   <div className="flex items-center gap-2">
-                    {/* subtle social style buttons */}
+                    {/* subtle social style buttons (external links are safe because outer element is not an <a>) */}
                     {s.linkedin_url && (
                       <a href={s.linkedin_url} target="_blank" rel="noreferrer" className="p-2 rounded-md bg-[#0A66C2]/10 text-[#0A66C2] hover:bg-[#0A66C2]/20">
                         <Linkedin size={16} />
@@ -188,12 +197,12 @@ export default function SimilarStudentsSidebar({
                   </div>
                 </div>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
 
         <div className="mt-4 text-center">
-          <a href="/dashboard/student" className="text-sm text-blue-600 font-semibold">See more recommendations</a>
+          <Link href="/dashboard/student" className="text-sm text-blue-600 font-semibold">See more recommendations</Link>
         </div>
 
         <style jsx>{`
