@@ -85,6 +85,38 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState<number>(0);
+  const navItems = [
+  { href: "/feed", icon: IceCreamCone, label: "Browse" },
+  {
+    href: "/dashboard/student",
+    icon: Users,
+    label: "zigx",
+    matchPaths: ["/dashboard/student/"],
+  },
+   {
+    href: `/dashboard/student/${user?.profile?.id || "id"}`,
+    icon: PersonStandingIcon,
+    label: "Profile",
+    matchPaths: [`/dashboard/student/${user?.profile?.id || "id"}`],
+  },
+  {
+    href: "/dashboard/track-progress",
+    icon: TrendingUp,
+    label: "Track Progress",
+  },
+  {
+    href: "/dashboard/blog",
+    icon: NewspaperIcon,
+    label: "News",
+  },
+
+
+  //  {
+  //   href: "/dashboard/track-progress",
+  //   icon: PersonStanding,
+  //   label: "Me",
+  // },
+];
 
   // Extract user data with fallbacks
   const userName = user?.name || user?.profile?.name || "Guest User";
@@ -109,7 +141,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
-  const isRouteActive = (href: string, matchPaths?: string[]) => {
+const isRouteActive = (href: string, matchPaths?: string[]) => {
     const normalize = (p: string | undefined) => (p ? p.replace(/\/+$|^\s+|\s+$/g, "") : "");
     const path = normalize(pathname);
     const target = normalize(href);
@@ -120,7 +152,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     if (matchPaths) {
       return matchPaths.some((p: string) => {
         const normalized = normalize(p);
-        return path === normalized || path.startsWith(normalized + "/");
+        // Exact match only for matchPaths
+        return path === normalized;
       });
     }
 
@@ -129,7 +162,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       return path === "/dashboard";
     }
 
-    // exact match or prefix match for nested/dynamic routes
+    // For /dashboard/student, only match exactly (not its sub-routes)
+    if (target === "/dashboard/student") {
+      return path === "/dashboard/student";
+    }
+
+    // exact match or prefix match for other nested/dynamic routes
     return path === target || path.startsWith(target + "/");
   };
 

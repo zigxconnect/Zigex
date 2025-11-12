@@ -32,9 +32,10 @@ export const TextareaField: React.FC<TextareaFieldProps> = ({
   rows = 5
 }) => {
   return (
-    <div className="space-y-2">
-      <Label htmlFor={id} className="text-sm font-semibold">
-        {label} {required && <span className="text-red-500">*</span>}
+    <div className="space-y-2 w-full">
+      <Label htmlFor={id} className="text-sm font-semibold flex items-center flex-wrap gap-x-2">
+        <span>{label}</span>
+        {required && <span className="text-red-500 text-base">*</span>}
       </Label>
       <Textarea
         id={id}
@@ -44,9 +45,13 @@ export const TextareaField: React.FC<TextareaFieldProps> = ({
         placeholder={placeholder}
         rows={rows}
         maxLength={maxLength}
-        className={`resize-none ${error && touched ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+        className={`resize-none w-full ${
+          error && touched 
+            ? "border-red-500 focus-visible:ring-red-500" 
+            : ""
+        } text-sm sm:text-base min-h-[100px]`}
       />
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
         <FormFieldError error={error} touched={touched} />
         {maxLength && (
           <CharacterCount current={value.length} max={maxLength} />

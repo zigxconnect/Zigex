@@ -42,11 +42,12 @@ export const SelectField: React.FC<SelectFieldProps> = ({
   icon
 }) => {
   return (
-    <div className="space-y-2">
-      <Label htmlFor={id} className="text-sm font-semibold">
-        {label} {required && <span className="text-red-500">*</span>}
+    <div className="space-y-2 w-full">
+      <Label htmlFor={id} className="text-sm font-semibold flex items-center flex-wrap gap-x-2">
+        <span>{label}</span>
+        {required && <span className="text-red-500 text-base">*</span>}
       </Label>
-      <div className="relative">
+      <div className="relative w-full">
         {icon && (
           <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10">
             {icon}
@@ -55,7 +56,11 @@ export const SelectField: React.FC<SelectFieldProps> = ({
         <Select value={value} onValueChange={onChange}>
           <SelectTrigger 
             id={id}
-            className={`${icon ? "pl-10" : ""} ${error && touched ? "border-red-500 focus:ring-red-500" : ""}`}
+            className={`w-full ${icon ? "pl-10" : ""} ${
+              error && touched 
+                ? "border-red-500 focus:ring-red-500" 
+                : ""
+            } text-sm sm:text-base h-10 sm:h-11`}
             onBlur={onBlur}
           >
             <SelectValue placeholder={placeholder} />
@@ -63,10 +68,14 @@ export const SelectField: React.FC<SelectFieldProps> = ({
           <SelectContent 
             position="popper"
             sideOffset={5}
-            className="z-[9999]"
+            className="z-[9999] w-full max-h-[300px] overflow-y-auto"
           >
             {options.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
+              <SelectItem 
+                key={option.value} 
+                value={option.value}
+                className="text-sm sm:text-base cursor-pointer"
+              >
                 {option.label}
               </SelectItem>
             ))}

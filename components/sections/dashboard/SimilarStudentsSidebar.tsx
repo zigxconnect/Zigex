@@ -77,7 +77,7 @@ export default function SimilarStudentsSidebar({
 
               {students.map((s) => (
                 <article key={s.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition">
-                  <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold">
+                  <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br cursor-pointer from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold">
                     {(() => {
                       const src = pickAvatar(s);
                       return src ? (

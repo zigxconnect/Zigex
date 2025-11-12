@@ -155,7 +155,7 @@ export default function MentorshipPage() {
       <div className="border-b border-gray-200 sticky top-0  bg-white/80 backdrop-blur-md">
       <BackButton/>
         <div className="max-w-3xl mx-auto px-4 py-4">
-          <h1 className="text-xl font-bold text-gray-900">Mentors</h1>
+          <h1 className="text-xl font-bold text-gray-900">See Your Mentors Here</h1>
           
           {/* Tabs */}
           <div className="flex gap-2 mt-4 overflow-x-auto hide-scrollbar pb-1">

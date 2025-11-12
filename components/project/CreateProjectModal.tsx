@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { X, Github, Calendar, Link, Loader2 } from "lucide-react";
+import React, { useState, useEffect, useCallback } from "react";
+import { X, Github, Calendar, Link, Loader2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useRouter } from "next/navigation";
@@ -13,13 +13,17 @@ import { TextareaField } from "../feed/project-form/TextareaField";
 import { ImageUpload } from "../feed/project-form/ImageUpload";
 import { SelectField } from "../feed/project-form/SelectField";
 import { useProjectForm } from "@/hooks/useProjectForm";
-import ProjectSuccessModal from "./ProjectSuccessModal"; // Import the new component
+import ProjectSuccessModal from "./ProjectSuccessModal";
+
+// Local storage key for draft persistence
+const DRAFT_STORAGE_KEY = "project_form_draft";
 
 export default function CreateProjectModal({ isOpen, onClose }: CreateProjectModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [submittedProjectTitle, setSubmittedProjectTitle] = useState("");
+  const [hasDraft, setHasDraft] = useState(false);
   const router = useRouter();
   
   const {
@@ -38,8 +42,83 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
     validateAllFieldsOnChange
   } = useProjectForm();
 
+  // Check for saved draft on mount
+  useEffect(() => {
+    if (isOpen) {
+      try {
+        const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
+        if (savedDraft) {
+          const draft = JSON.parse(savedDraft);
+          // Check if draft has any content
+          const hasContent = Object.values(draft).some(val => 
+            val !== "" && val !== null && val !== undefined
+          );
+          setHasDraft(hasContent);
+        }
+      } catch (error) {
+        console.error("Error loading draft:", error);
+      }
+    }
+  }, [isOpen]);
+
+  // Auto-save draft to localStorage
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    const saveDraft = () => {
+      try {
+        const draftData = {
+          title: formData.title || "",
+          description: formData.description || "",
+          githubLink: formData.githubLink || "",
+          youtubeLink: formData.youtubeLink || "",
+          duration: formData.duration || "",
+          timestamp: new Date().toISOString()
+        };
+        localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draftData));
+      } catch (error) {
+        console.error("Error saving draft:", error);
+      }
+    };
+
+    // Debounce the save operation
+    const timeoutId = setTimeout(saveDraft, 1000);
+    return () => clearTimeout(timeoutId);
+  }, [formData, isOpen]);
+
+  // Load draft when user wants to restore
+  const loadDraft = useCallback(() => {
+    try {
+      const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
+      if (savedDraft) {
+        const draft = JSON.parse(savedDraft);
+        Object.entries(draft).forEach(([key, value]) => {
+          if (key !== "timestamp" && value) {
+            handleInputChange(key as any, value as string);
+          }
+        });
+        toast.success("Draft restored!");
+        setHasDraft(false);
+      }
+    } catch (error) {
+      console.error("Error loading draft:", error);
+      toast.error("Failed to load draft");
+    }
+  }, [handleInputChange]);
+
+  // Clear draft
+  const clearDraft = useCallback(() => {
+    try {
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      setHasDraft(false);
+      toast.success("Draft cleared");
+    } catch (error) {
+      console.error("Error clearing draft:", error);
+    }
+  }, []);
+
   // Always validate all fields on change
-  React.useEffect(() => {
+  useEffect(() => {
     if (typeof validateAllFieldsOnChange === 'function') {
       validateAllFieldsOnChange();
     } else {
@@ -59,7 +138,6 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
           handleBlur(key as keyof typeof formData);
         });
         setSubmitError("Please fix the highlighted fields");
-        console.log('Validation failed:', validationErrors);
         return;
       }
     } catch (error) {
@@ -67,8 +145,6 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
       setSubmitError("Form validation failed");
       return;
     }
-
-    console.log('handleSubmit called, validation passed:', formData);
 
     try {
       setIsSubmitting(true);
@@ -78,21 +154,18 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
       const result = await createProjectAction(formDataToSubmit);
 
       if (result.success) {
-        // Store the project title for the success modal
         setSubmittedProjectTitle(formData.title || "Your project");
         
-        // Close the create modal first
-        onClose();
+        // Clear the draft on successful submission
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
         
-        // Reset the form
+        onClose();
         resetForm();
         
-        // Show success modal after a brief delay for smooth transition
         setTimeout(() => {
           setShowSuccessModal(true);
         }, 200);
         
-        // Refresh the page to show the new project
         router.refresh();
       } else {
         setSubmitError(result.error || "Failed to create project");
@@ -114,9 +187,19 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
 
   const handleClose = () => {
     if (!isSubmitting) {
-      resetForm();
+      // Don't reset form or clear draft - data persists
       setSubmitError(null);
       onClose();
+      
+      // Show a toast to inform user their progress is saved
+      const hasContent = Object.values(formData).some(val => 
+        val !== "" && val !== null && val !== undefined
+      );
+      if (hasContent) {
+        toast.info("Your progress has been saved", {
+          description: "You can continue where you left off"
+        });
+      }
     }
   };
 
@@ -130,7 +213,7 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
   return (
     <>
       <div 
-        className="fixed inset-0 z-[998] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 p-5"
+        className="fixed inset-0 z-[998] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
         onClick={(e) => {
           if (e.target === e.currentTarget && !isSubmitting) {
             handleClose();
@@ -141,57 +224,89 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
           className="relative w-full sm:max-w-2xl bg-white dark:bg-gray-950 sm:rounded-2xl rounded-t-3xl shadow-2xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col border-t sm:border border-gray-200 dark:border-gray-800 sm:m-4"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header - Mobile Optimized */}
-          <div className="flex items-center justify-between px-3 sm:px-5 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 shrink-0">
-            <div className="flex items-center gap-2 sm:gap-3">
+          {/* Header - Fully Responsive */}
+          <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={handleClose}
                 disabled={isSubmitting}
-                className="h-8 w-8 sm:h-9 sm:w-9 rounded-full"
+                className="h-9 w-9 rounded-full shrink-0"
               >
-                <X className="h-4 w-4 sm:h-5 sm:w-5" />
+                <X className="h-5 w-5" />
               </Button>
-              <h2 className="text-base sm:text-xl font-bold text-gray-900 dark:text-white">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white truncate">
                 New Project
               </h2>
             </div>
             <Button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="px-3 sm:px-6 py-1.5 sm:py-2 rounded-full font-semibold text-sm sm:text-base h-8 sm:h-auto"
+              className="px-4 sm:px-6 py-2 rounded-full font-semibold text-sm sm:text-base h-9 sm:h-10 shrink-0 ml-2"
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
-                  <span className="hidden xs:inline">Creating...</span>
-                  <span className="xs:hidden">...</span>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <span className="hidden sm:inline">Creating...</span>
+                  <span className="sm:hidden">...</span>
                 </>
               ) : (
                 <>
-                  <span className="hidden xs:inline">Create Project</span>
-                  <span className="xs:hidden">Create</span>
+                  <span className="hidden sm:inline">Create Project</span>
+                  <span className="sm:hidden">Create</span>
                 </>
               )}
             </Button>
           </div>
 
-          {/* Content - Optimized Scrolling */}
+          {/* Draft Notification */}
+          {hasDraft && (
+            <div className="px-4 sm:px-6 pt-4 pb-2 shrink-0">
+              <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-950/20">
+                <AlertDescription className="text-sm text-amber-900 dark:text-amber-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Save className="h-4 w-4 shrink-0" />
+                    <span>You have a saved draft</span>
+                  </div>
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={loadDraft}
+                      className="flex-1 sm:flex-none h-8 text-xs bg-white dark:bg-gray-900"
+                    >
+                      Load Draft
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={clearDraft}
+                      className="flex-1 sm:flex-none h-8 text-xs"
+                    >
+                      Dismiss
+                    </Button>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
+
+          {/* Content - Enhanced Scrolling */}
           <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto overscroll-contain">
-            <div className="px-3 sm:px-5 py-4 sm:py-6 space-y-4 sm:space-y-6">
+            <div className="px-4 sm:px-6 py-4 sm:py-6 space-y-5 sm:space-y-6">
               {/* Error Alert */}
               {submitError && (
                 <Alert className="border-red-200 bg-red-50 dark:bg-red-950/20">
-                  <AlertDescription className="text-xs sm:text-sm text-red-900 dark:text-red-100">
+                  <AlertDescription className="text-sm text-red-900 dark:text-red-100">
                     {submitError}
                   </AlertDescription>
                 </Alert>
               )}
 
-              {/* Info Alert - Mobile Friendly */}
+              {/* Info Alert - Responsive */}
               <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950/20">
-                <AlertDescription className="text-xs sm:text-sm text-blue-900 dark:text-blue-100 leading-relaxed">
+                <AlertDescription className="text-sm text-blue-900 dark:text-blue-100 leading-relaxed">
                   Share your project to find collaborators and get feedback! 🚀
                 </AlertDescription>
               </Alert>
@@ -245,7 +360,7 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
                 placeholder="https://github.com/username/repo"
                 error={errors.githubLink}
                 touched={touched.githubLink}
-                icon={<Github className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />}
+                icon={<Github className="h-4 w-4 text-muted-foreground" />}
               />
 
               {/* YouTube Link */}
@@ -259,7 +374,7 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
                 placeholder="https://youtube.com/watch?v=..."
                 error={errors.youtubeLink}
                 touched={touched.youtubeLink}
-                icon={<Link className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />}
+                icon={<Link className="h-4 w-4 text-muted-foreground" />}
               />
 
               {/* Duration */}
@@ -274,18 +389,18 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
                 required
                 error={errors.duration}
                 touched={touched.duration}
-                icon={<Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />}
+                icon={<Calendar className="h-4 w-4 text-muted-foreground" />}
               />
 
-              {/* Bottom Spacing for Mobile */}
-              <div className="h-4 sm:h-0" />
+              {/* Bottom Spacing */}
+              <div className="h-6 sm:h-4" />
             </div>
           </form>
 
-          {/* Footer - Mobile Optimized */}
-          <div className="px-3 sm:px-5 py-2.5 sm:py-3 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 shrink-0">
-            <p className="text-[10px] sm:text-xs text-muted-foreground text-center">
-              <span className="text-red-500">*</span> Required fields
+          {/* Footer - Enhanced */}
+          <div className="px-4 sm:px-6 py-3 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 shrink-0">
+            <p className="text-xs text-muted-foreground text-center">
+              <span className="text-red-500">*</span> Required fields • Your progress is automatically saved
             </p>
           </div>
         </div>

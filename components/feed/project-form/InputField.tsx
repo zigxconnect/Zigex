@@ -36,14 +36,17 @@ export const InputField: React.FC<InputFieldProps> = ({
   type = "text"
 }) => {
   return (
-    <div className="space-y-2">
-      <Label htmlFor={id} className="text-sm font-semibold">
-        {label} {required && <span className="text-red-500">*</span>}
-        {!required && <span className="text-xs text-muted-foreground font-normal">(Optional)</span>}
+    <div className="space-y-2 w-full">
+      <Label htmlFor={id} className="text-sm font-semibold flex items-center flex-wrap gap-x-2">
+        <span>{label}</span>
+        {required && <span className="text-red-500 text-base">*</span>}
+        {!required && (
+          <span className="text-xs text-muted-foreground font-normal">(Optional)</span>
+        )}
       </Label>
-      <div className="relative">
+      <div className="relative w-full">
         {icon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10 pointer-events-none">
             {icon}
           </div>
         )}
@@ -55,10 +58,14 @@ export const InputField: React.FC<InputFieldProps> = ({
           onBlur={onBlur}
           placeholder={placeholder}
           maxLength={maxLength}
-          className={`${icon ? "pl-10" : ""} ${error && touched ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+          className={`w-full ${icon ? "pl-10" : ""} ${
+            error && touched 
+              ? "border-red-500 focus-visible:ring-red-500" 
+              : ""
+          } text-sm sm:text-base h-10 sm:h-11`}
         />
       </div>
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
         <FormFieldError error={error} touched={touched} />
         {showCharCount && maxLength && (
           <CharacterCount current={value.length} max={maxLength} />

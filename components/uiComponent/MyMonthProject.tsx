@@ -555,7 +555,7 @@ export default function MyMonthProject({
                   {videoUrl && (
                     <button
                       onClick={() => setShowVideo(true)}
-                      className="absolute inset-0 flex items-center justify-center group"
+                      className="absolute inset-0 flex items-center justify-center group cursor-pointer"
                     >
                       <div className="w-14 h-14 bg-white/95 rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
                         <Play size={24} className="text-[#1a8cd8] ml-1" fill="currentColor" />
