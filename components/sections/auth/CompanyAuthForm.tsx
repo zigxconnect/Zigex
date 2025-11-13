@@ -19,29 +19,31 @@ import {
   Loader2,
 } from "lucide-react";
 
-// --- UI Components (self-contained for portability) ---
+// --- UI Components (with updated blue theme) ---
 const Button = ({
   children,
-  variant = "default",
+  variant = "primary",
   className = "",
   disabled = false,
   ...props
 }: {
   children: React.ReactNode;
-  variant?: "default" | "orange" | "outline";
+  variant?: "primary" | "outline";
   className?: string;
   disabled?: boolean;
   [key: string]: any;
 }) => {
   const baseClasses =
     "w-full flex items-center justify-center px-4 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2";
+
+  // MODIFIED: Changed variants to use a primary blue style
   const variants = {
-    default: "bg-blue-900 text-white hover:bg-blue-800 focus:ring-blue-500",
-    orange:
-      "bg-orange-500 text-white hover:bg-orange-600 focus:ring-orange-500",
+    primary:
+      "bg-blue-500 text-white hover:bg-blue-600 focus:ring-blue-500 shadow-md",
     outline:
       "border border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-blue-500",
   };
+
   return (
     <button
       className={`${baseClasses} ${variants[variant]} ${
@@ -63,7 +65,8 @@ const Input = ({
   [key: string]: any;
 }) => (
   <input
-    className={`w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${className}`}
+    // MODIFIED: Updated focus styles for consistency
+    className={`w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all duration-200 ${className}`}
     {...props}
   />
 );
@@ -76,13 +79,14 @@ const TextArea = ({
   [key: string]: any;
 }) => (
   <textarea
-    className={`w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none ${className}`}
+    // MODIFIED: Updated focus styles for consistency
+    className={`w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all duration-200 resize-none ${className}`}
     rows={3}
     {...props}
   />
 );
 
-// --- Form Schema for Sign-Up ---
+// --- Form Schema for Sign-Up (No changes) ---
 const signUpSchema = z.object({
   company_name: z.string().min(2, { message: "Company name is required." }),
   email: z.string().email({ message: "A valid email is required." }),
@@ -102,7 +106,7 @@ const signUpSchema = z.object({
 });
 type SignUpFormData = z.infer<typeof signUpSchema>;
 
-// --- Success Message Component ---
+// --- Success Message Component (with updated button) ---
 const SuccessMessage = ({ onClose }: { onClose: () => void }) => (
   <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
     <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center">
@@ -117,7 +121,8 @@ const SuccessMessage = ({ onClose }: { onClose: () => void }) => (
         sign in.
       </p>
       <Link href="/sign-in">
-        <Button variant="orange" onClick={onClose} className="cursor-pointer">
+        {/* MODIFIED: Using the new primary button variant */}
+        <Button variant="primary" onClick={onClose} className="cursor-pointer">
           Continue to Sign In
         </Button>
       </Link>
@@ -144,15 +149,12 @@ export const CompanyAuthForm = () => {
       const response = await fetch("/api/auth/company/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // The form data is sent directly as it now matches the API's expectations.
         body: JSON.stringify(data),
       });
-
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || "An unknown error occurred.");
       }
-
       setShowSuccess(true);
       reset();
     } catch (err) {
@@ -162,7 +164,7 @@ export const CompanyAuthForm = () => {
 
   const handleSuccessClose = () => {
     setShowSuccess(false);
-    router.push("/sign-in"); // Redirect to the unified sign-in page
+    router.push("/sign-in");
   };
 
   return (
@@ -170,7 +172,8 @@ export const CompanyAuthForm = () => {
       <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden">
         <div className="p-6 lg:p-8">
           <div className="text-center mb-6">
-            <div className="mx-auto w-16 h-16 bg-blue-900 rounded-full flex items-center justify-center mb-4">
+            {/* MODIFIED: Changed icon background to blue-500 */}
+            <div className="mx-auto w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mb-4">
               <Building2 className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
@@ -181,6 +184,7 @@ export const CompanyAuthForm = () => {
             </p>
           </div>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            {/* --- Form fields (no structural changes) --- */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Company Name *
@@ -245,7 +249,7 @@ export const CompanyAuthForm = () => {
                 <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
                   type="tel"
-                  placeholder="+1 (555) 123-4567"
+                  placeholder="+237 6XX-XXX-XXX"
                   {...register("phone")}
                   disabled={isSubmitting}
                 />
@@ -264,7 +268,7 @@ export const CompanyAuthForm = () => {
                 <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
                   type="text"
-                  placeholder="123 Business Street, City, Country"
+                  placeholder="Commercial Avenue, Bamenda"
                   {...register("address")}
                   disabled={isSubmitting}
                 />
@@ -329,7 +333,7 @@ export const CompanyAuthForm = () => {
             {apiError && (
               <p className="text-sm text-red-500 text-center">{apiError}</p>
             )}
-            <Button variant="orange" type="submit" disabled={isSubmitting}>
+            <Button variant="primary" type="submit" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -343,9 +347,10 @@ export const CompanyAuthForm = () => {
           <div className="text-center mt-6">
             <p className="text-gray-600 text-sm">
               Already have an account?{" "}
+              {/* MODIFIED: Changed link color to blue */}
               <Link
                 href="/sign-in"
-                className="font-semibold text-orange-500 hover:text-orange-600 hover:underline"
+                className="font-semibold text-blue-600 hover:text-blue-700 hover:underline"
               >
                 Sign In
               </Link>

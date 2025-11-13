@@ -55,25 +55,33 @@ const PasswordStrengthIndicator = ({
     "bg-green-500", // 4
   ];
 
+  if (!password) {
+    return null; // Don't show the indicator if there's no password input yet
+  }
+
   return (
-    <div className="space-y-2">
-      {password.length > 0 && strength > 0 && (
-        <div className="flex w-full h-2 rounded-full overflow-hidden">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="w-1/4">
-              {i <= strength && (
-                <div className={`h-full ${strengthColors[strength]}`} />
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-      <ul className="text-xs text-gray-500 list-disc list-inside">
+    <div className="space-y-2 pt-2">
+      <div className="flex w-full h-2 rounded-full overflow-hidden bg-gray-200">
+        <div
+          className={`h-full ${strengthColors[strength] || ""} transition-all duration-300`}
+          style={{ width: `${strength * 25}%` }}
+        />
+      </div>
+      <ul className="grid grid-cols-2 gap-x-4 text-xs text-gray-500">
         {checks.map((check, i) => (
           <li
             key={i}
-            className={check.regex.test(password) ? "text-green-600" : ""}
+            className={`flex items-center transition-colors duration-300 ${
+              check.regex.test(password) ? "text-green-600" : ""
+            }`}
           >
+            <CheckCircle
+              size={12}
+              className="mr-1.5 flex-shrink-0"
+              style={{
+                opacity: check.regex.test(password) ? 1 : 0.3,
+              }}
+            />
             {check.message}
           </li>
         ))}
@@ -88,7 +96,6 @@ export const UpdatePasswordForm = () => {
   const [isSessionReady, setIsSessionReady] = useState(false);
   const [formState, setFormState] = useState<"idle" | "success">("idle");
   const [showPassword, setShowPassword] = useState(false);
-  // Memoize Supabase client so it doesn't trigger useEffect on every render
   const supabase = useMemo(() => createClient(), []);
   const redirectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -116,6 +123,12 @@ export const UpdatePasswordForm = () => {
     return () => authListener.subscription.unsubscribe();
   }, [supabase]);
 
+  useEffect(() => {
+    return () => {
+      if (redirectTimeoutRef.current) clearTimeout(redirectTimeoutRef.current);
+    };
+  }, []);
+
   const onSubmit = async (data: FormData) => {
     setApiError(null);
     try {
@@ -124,10 +137,6 @@ export const UpdatePasswordForm = () => {
       });
       if (error) throw new Error(error.message);
       setFormState("success");
-      // Clear any previous timeout before setting a new one
-      if (redirectTimeoutRef.current) {
-        clearTimeout(redirectTimeoutRef.current);
-      }
       redirectTimeoutRef.current = setTimeout(() => {
         router.push("/sign-in");
       }, 3000);
@@ -135,14 +144,6 @@ export const UpdatePasswordForm = () => {
       setApiError((err as Error).message);
     }
   };
-  // Cleanup redirect timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (redirectTimeoutRef.current) {
-        clearTimeout(redirectTimeoutRef.current);
-      }
-    };
-  }, []);
 
   if (!isSessionReady) {
     return (
@@ -176,7 +177,8 @@ export const UpdatePasswordForm = () => {
   return (
     <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl">
       <div className="text-center">
-        <div className="mx-auto w-12 h-12 bg-blue-900 rounded-full flex items-center justify-center">
+        {/* MODIFIED: Changed icon background to blue-500 */}
+        <div className="mx-auto w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
           <LockKeyhole className="w-7 h-7 text-white" />
         </div>
         <h1 className="mt-4 text-2xl font-bold text-gray-900">
@@ -195,12 +197,15 @@ export const UpdatePasswordForm = () => {
             <Input
               id="password"
               type={showPassword ? "text" : "password"}
+              // MODIFIED: Added blue focus styles
+              className="focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
               {...register("password")}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500"
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -223,6 +228,8 @@ export const UpdatePasswordForm = () => {
             <Input
               id="confirmPassword"
               type={showPassword ? "text" : "password"}
+              // MODIFIED: Added blue focus styles
+              className="focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
               {...register("confirmPassword")}
             />
           </div>
@@ -241,10 +248,10 @@ export const UpdatePasswordForm = () => {
           </p>
         )}
 
+        {/* MODIFIED: Changed button from orange to blue */}
         <Button
-          variant="orange"
           type="submit"
-          className="w-full !mt-6 text-base py-2.5 flex items-center justify-center gap-2"
+          className="w-full !mt-6 text-base py-2.5 flex items-center justify-center gap-2 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
           disabled={isSubmitting}
         >
           {isSubmitting ? <Spinner /> : "Update Password"}

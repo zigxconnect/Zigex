@@ -35,6 +35,7 @@ export async function middleware(request: NextRequest) {
     "/",
     "/sign-in",
     "/sign-up",
+    "/company/sign-up",
     "/api/auth/callback",
     "/verify-otp",
     "/forgot-password",
