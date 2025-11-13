@@ -1,28 +1,29 @@
+"use client";
+
 import { useFormContext, Controller } from "react-hook-form";
 import { ProfileFormData } from "@/app/types/profile";
 import { FormField } from "@/components/uiComponent/FormField";
-import { ToggleChip } from "@/components/uiComponent/ToggleChip";
 import { Input } from "@/components/uiComponent/input";
+import { CreatableMultiSelect } from "@/components/uiComponent/CreatableMultiSelect";
 
-const hardSkillsOptions = [
-  "JavaScript",
-  "Python",
-  "React",
-  "Node.js",
-  "SQL",
-  "HTML/CSS",
-  "Data Analysis",
-  "Figma",
+// These now act as *suggestions*, not a restrictive list.
+const hardSkillsSuggestions = [
+  { value: "JavaScript", label: "JavaScript" },
+  { value: "Python", label: "Python" },
+  { value: "React", label: "React" },
+  { value: "Node.js", label: "Node.js" },
+  { value: "SQL", label: "SQL" },
 ];
-const softSkillsOptions = [
-  "Communication",
-  "Teamwork",
-  "Problem-Solving",
-  "Creativity",
-  "Leadership",
-  "Adaptability",
+const softSkillsSuggestions = [
+  { value: "Communication", label: "Communication" },
+  { value: "Teamwork", label: "Teamwork" },
+  { value: "Problem-Solving", label: "Problem-Solving" },
 ];
-const languageOptions = ["English", "French", "Spanish", "German"];
+const languageSuggestions = [
+  { value: "English", label: "English" },
+  { value: "French", label: "French" },
+  { value: "Spanish", label: "Spanish" },
+];
 
 export const Step3Skills = () => {
   const {
@@ -37,74 +38,48 @@ export const Step3Skills = () => {
         <Controller
           control={control}
           name="hard_skills"
-          defaultValue={[]}
-          render={({ field: { onChange, value } }) => (
-            <div className="flex flex-wrap gap-2 mt-2">
-              {hardSkillsOptions.map((skill) => (
-                <ToggleChip
-                  key={skill}
-                  text={skill}
-                  isSelected={value.includes(skill)}
-                  onToggle={(toggledSkill) => {
-                    const newValue = value.includes(toggledSkill)
-                      ? value.filter((s) => s !== toggledSkill)
-                      : [...value, toggledSkill];
-                    onChange(newValue);
-                  }}
-                />
-              ))}
-            </div>
+          render={({ field }) => (
+            <CreatableMultiSelect
+              placeholder="Select or type a skill..."
+              options={hardSkillsSuggestions}
+              value={field.value || []}
+              onChange={field.onChange}
+            />
           )}
         />
       </FormField>
+
       <FormField label="Soft Skills" error={errors.soft_skills}>
         <Controller
           control={control}
           name="soft_skills"
-          defaultValue={[]}
-          render={({ field: { onChange, value } }) => (
-            <div className="flex flex-wrap gap-2 mt-2">
-              {softSkillsOptions.map((skill) => (
-                <ToggleChip
-                  key={skill}
-                  text={skill}
-                  isSelected={value.includes(skill)}
-                  onToggle={(toggledSkill) => {
-                    const newValue = value.includes(toggledSkill)
-                      ? value.filter((s) => s !== toggledSkill)
-                      : [...value, toggledSkill];
-                    onChange(newValue);
-                  }}
-                />
-              ))}
-            </div>
+          render={({ field }) => (
+            <CreatableMultiSelect
+              placeholder="Select or type a skill..."
+              options={softSkillsSuggestions}
+              value={field.value || []}
+              onChange={field.onChange}
+            />
           )}
         />
       </FormField>
+
       <FormField label="Languages" error={errors.languages}>
         <Controller
           control={control}
           name="languages"
-          defaultValue={[]}
-          render={({ field: { onChange, value } }) => (
-            <div className="flex flex-wrap gap-2 mt-2">
-              {languageOptions.map((lang) => (
-                <ToggleChip
-                  key={lang}
-                  text={lang}
-                  isSelected={value.includes(lang)}
-                  onToggle={(toggledLang) => {
-                    const newValue = value.includes(toggledLang)
-                      ? value.filter((s) => s !== toggledLang)
-                      : [...value, toggledLang];
-                    onChange(newValue);
-                  }}
-                />
-              ))}
-            </div>
+          render={({ field }) => (
+            <CreatableMultiSelect
+              placeholder="Select or type a language..."
+              options={languageSuggestions}
+              value={field.value || []}
+              onChange={field.onChange}
+            />
           )}
         />
       </FormField>
+
+      {/* --- URL Inputs Remain the Same --- */}
       <div className="space-y-6 border-t border-gray-200 pt-8">
         <FormField
           label="Portfolio URL (Optional)"

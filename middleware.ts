@@ -24,11 +24,9 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  await supabase.auth.getSession();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
   const { pathname } = request.nextUrl;
 
   const publicPaths = [
@@ -42,37 +40,64 @@ export async function middleware(request: NextRequest) {
     "/update-password",
   ];
 
+  // --- 1. Handle Unauthenticated Users ---
   if (!user) {
-    if (publicPaths.includes(pathname) || pathname === "/create-profile") {
+    if (
+      publicPaths.includes(pathname) ||
+      pathname === "/create-profile" ||
+      pathname === "/profile-complete"
+    ) {
       return response;
     }
     return NextResponse.redirect(new URL("/sign-in", request.url));
   }
 
-  // --- THE CRITICAL FIX ---
-  // If the user is authenticated (even with a temporary password reset token)
-  // and they are on the update-password page, DO NOT redirect them.
-  // This allows the password update form to handle the session.
+  // --- 2. Handle Authenticated Users ---
+
   if (pathname === "/update-password") {
     return response;
   }
-  // --- END OF FIX ---
 
-  // --- Handle Authenticated Users ---
-  const { data: studentProfile } = await supabase
+  const { data: studentProfile, error: studentError } = await supabase
     .from("student_profiles")
     .select("role, profile_status")
     .eq("user_id", user.id)
-    .single();
-  const { data: companyProfile } = await supabase
+    .maybeSingle();
+
+  const { data: companyProfile, error: companyError } = await supabase
     .from("company_profiles")
     .select("role")
     .eq("user_id", user.id)
-    .single();
-  const userRole = studentProfile?.role || companyProfile?.role;
+    .maybeSingle();
+
+  // Log any errors for debugging
+  if (studentError) {
+    console.error("[Middleware] Error fetching student profile:", studentError);
+  }
+  if (companyError) {
+    console.error("[Middleware] Error fetching company profile:", companyError);
+  }
+
+  // Determine user role, or mark as "unassigned" if neither profile exists
+  let userRole: "student" | "company" | "unassigned" = "unassigned";
+  if (studentProfile?.role === "student") {
+    userRole = "student";
+  } else if (companyProfile?.role === "company") {
+    userRole = "company";
+  }
+
   const isStudentProfileComplete =
     studentProfile?.profile_status === "complete";
 
+  // --- 3. Handle Unassigned Users (No Profile Yet) ---
+  if (userRole === "unassigned") {
+    if (pathname !== "/create-profile" && pathname !== "/company/sign-up") {
+      return NextResponse.redirect(new URL("/create-profile", request.url));
+    }
+    return response;
+  }
+
+  // --- 4. Enforce Profile Creation for Students ---
   if (userRole === "student" && !isStudentProfileComplete) {
     if (pathname !== "/create-profile") {
       return NextResponse.redirect(new URL("/create-profile", request.url));
@@ -80,16 +105,32 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  if (publicPaths.includes(pathname) || pathname === "/create-profile") {
+  // --- 5. Redirect Authenticated Users from Restricted Pages ---
+
+  // --- THE FIX ---
+  // Create a list of all pages an authenticated and fully set-up user should NOT be able to access.
+  const authRedirectPaths = [
+    ...publicPaths,
+    "/create-profile",
+    "/profile-complete", // Added the new page here
+  ];
+
+  // If the user is on any of these restricted pages, redirect them to their dashboard.
+  if (authRedirectPaths.includes(pathname)) {
     if (userRole === "company") {
       return NextResponse.redirect(new URL("/admin/dashboard", request.url));
     }
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    if (userRole === "student") {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
   }
+  // --- END OF FIX ---
 
+  // --- 6. Role-Based Authorization ---
   if (pathname.startsWith("/admin") && userRole !== "company") {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
+
   const studentPaths = [
     "/dashboard",
     "/profile-settings",
