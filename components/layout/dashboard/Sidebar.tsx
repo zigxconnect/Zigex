@@ -19,6 +19,7 @@ import {
 import { AiOutlineWechat } from "react-icons/ai";
 import { Button } from "@/components/ui/button";
 import AnimatedNavLink from "@/components/customButtons/AnimatedNavLink";
+import { ProjectsIcon } from "@sanity/icons";
 // import AnimatedNavLink from "@/components/sections/dashboard/AnimatedNavLink";
 
 interface SidebarProps {
@@ -103,6 +104,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
     href: "/dashboard/track-progress",
     icon: TrendingUp,
     label: "Track Progress",
+  },
+{
+    href: "/dashboard/projects",
+    icon: ProjectsIcon,
+    label: "projects",
   },
   {
     href: "/dashboard/blog",

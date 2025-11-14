@@ -1,9 +1,10 @@
 import { z } from "zod";
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB for cover image
+const MAX_VIDEO_SIZE = 20 * 1024 * 1024; // 20MB for uploaded short videos (strictly)
+const MAX_YOUTUBE_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB for reference (not used in validation)
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"];
-const ACCEPTED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/ogg"];
+const ACCEPTED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/ogg", "video/quicktime"]; // Added quicktime for .mov files
 
 export const projectFormSchema = z.object({
   title: z.string()
@@ -25,8 +26,8 @@ export const projectFormSchema = z.object({
   
 youtubeLink: z.union([
   z.string().regex(
-    /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/|shorts\/)|youtu\.be\/)[\w-]{11}(\?.*)?$/,
-    "Must be a valid YouTube video URL"
+    /^https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[\w-]+$/,
+    "Must be a valid YouTube video URL (e.g., https://www.youtube.com/watch?v=dQw4w9WgXcQ or https://youtu.be/dQw4w9WgXcQ)"
   ),
   z.literal("")
 ]).optional(),
@@ -34,24 +35,29 @@ youtubeLink: z.union([
   
   duration: z.string().min(1, "Please select a duration"),
   
-  coverImage: z.instanceof(File)
-    .refine((file) => file.size > 0, "Please select an image")
-    .refine((file) => file.size <= MAX_FILE_SIZE, "Image must be less than 5MB")
-    .refine(
-      (file) => ACCEPTED_IMAGE_TYPES.includes(file.type),
-      "Only .jpg, .jpeg, .png, .webp, and .gif formats are supported"
-    )
-    .optional()
-    .nullable(),
+  coverImage: z.union([
+    z.instanceof(File)
+      .refine((file) => file.size > 0, "Please select an image")
+      .refine((file) => file.size <= MAX_FILE_SIZE, "Image must be less than 5MB")
+      .refine(
+        (file) => ACCEPTED_IMAGE_TYPES.includes(file.type),
+        "Only .jpg, .jpeg, .png, .webp, and .gif formats are supported"
+      ),
+    z.null(),
+    z.undefined()
+  ]).optional(),
     
-  uploadedVideo: z.instanceof(File)
-    .refine((file) => file.size <= MAX_VIDEO_SIZE, "Video must be less than 50MB")
-    .refine(
-      (file) => ACCEPTED_VIDEO_TYPES.includes(file.type),
-      "Only .mp4, .webm, and .ogg formats are supported"
-    )
-    .optional()
-    .nullable(),
+  uploadedVideo: z.union([
+    z.instanceof(File)
+      .refine((file) => file.size > 0, "Please select a video file")
+      .refine((file) => file.size <= MAX_VIDEO_SIZE, "Video must be less than 20MB")
+      .refine(
+        (file) => ACCEPTED_VIDEO_TYPES.includes(file.type),
+        "Only .mp4, .webm, .ogg, and .mov formats are supported"
+      ),
+    z.null(),
+    z.undefined()
+  ]).optional(),
 });
 
 export type ProjectFormInput = z.infer<typeof projectFormSchema>;

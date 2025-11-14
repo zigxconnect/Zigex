@@ -17,6 +17,7 @@ interface ActiveProjectResult {
     project_duration: string;
     end_date: string;
     created_at: string;
+    is_valid: boolean;
   } | null;
   error?: string;
 }

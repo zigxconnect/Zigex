@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { X, Github, Calendar, Link, Loader2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { CreateProjectModalProps, PROJECT_DURATIONS } from "@/app/types/project.types";
@@ -11,6 +10,7 @@ import { createProjectAction } from "@/lib/actions/project.actions";
 import { InputField } from "../feed/project-form/InputField";
 import { TextareaField } from "../feed/project-form/TextareaField";
 import { ImageUpload } from "../feed/project-form/ImageUpload";
+import { VideoUpload } from "../feed/project-form/VideoUpload";
 import { SelectField } from "../feed/project-form/SelectField";
 import { useProjectForm } from "@/hooks/useProjectForm";
 import ProjectSuccessModal from "./ProjectSuccessModal";
@@ -31,10 +31,13 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
     errors,
     touched,
     previewUrl,
+    videoPreviewUrl,
     handleInputChange,
     handleBlur,
     handleImageChange,
+    handleVideoChange,
     removeImage,
+    removeVideo,
     validateForm,
     resetForm,
     isFormValid,
@@ -132,32 +135,54 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
 
     try {
       const { isValid, errors: validationErrors } = validateForm();
+      console.log('Form validation result:', { isValid, validationErrors, formData });
 
-      if (!isValid && validationErrors) {
-        Object.keys(validationErrors).forEach((key) => {
-          handleBlur(key as keyof typeof formData);
-        });
+      if (!isValid) {
+        console.warn('Form validation failed:', validationErrors);
         setSubmitError("Please fix the highlighted fields");
+        // Show toast with more specific errors
+        const errorMessages = Object.entries(validationErrors || {})
+          .map(([field, message]) => `${field}: ${message}`)
+          .join('\n');
+        toast.error('Validation failed', {
+          description: errorMessages.substring(0, 100) // Limit description length
+        });
         return;
       }
     } catch (error) {
       console.error('Validation error:', error);
       setSubmitError("Form validation failed");
+      toast.error("Form validation failed");
       return;
     }
 
     try {
       setIsSubmitting(true);
       setSubmitError(null);
+      console.log('Starting project creation...');
 
       const formDataToSubmit = getFormData();
+      console.log('Submitting form data:', { 
+        title: formDataToSubmit.get('title'),
+        description: formDataToSubmit.get('description'),
+        githubLink: formDataToSubmit.get('githubLink'),
+        youtubeLink: formDataToSubmit.get('youtubeLink'),
+        duration: formDataToSubmit.get('duration'),
+        hasCoverImage: !!formDataToSubmit.get('coverImage'),
+        hasVideo: !!formDataToSubmit.get('uploadedVideo')
+      });
+      
       const result = await createProjectAction(formDataToSubmit);
+      console.log('Project creation result:', result);
 
       if (result.success) {
+        console.log('Project created successfully');
         setSubmittedProjectTitle(formData.title || "Your project");
         
         // Clear the draft on successful submission
         localStorage.removeItem(DRAFT_STORAGE_KEY);
+        
+        toast.success("Project created successfully! 🎉");
         
         onClose();
         resetForm();
@@ -168,18 +193,22 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
         
         router.refresh();
       } else {
-        setSubmitError(result.error || "Failed to create project");
+        console.error('Project creation failed:', result);
+        const errorMsg = result.error || "Failed to create project";
+        setSubmitError(errorMsg);
 
         if (result.fieldErrors) {
-          toast.error(result.error || "Validation failed");
+          console.warn('Field errors:', result.fieldErrors);
+          toast.error(errorMsg);
         } else {
-          toast.error(result.error || "Something went wrong");
+          toast.error(errorMsg);
         }
       }
     } catch (error) {
       console.error("Error submitting project:", error);
-      setSubmitError("An unexpected error occurred. Please try again.");
-      toast.error("An unexpected error occurred");
+      const errorMsg = "An unexpected error occurred. Please try again.";
+      setSubmitError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -213,7 +242,7 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
   return (
     <>
       <div 
-        className="fixed inset-0 z-[998] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+        className="fixed inset-0 z-998 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
         onClick={(e) => {
           if (e.target === e.currentTarget && !isSubmitting) {
             handleClose();
@@ -227,15 +256,14 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
           {/* Header - Fully Responsive */}
           <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 shrink-0">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleClose}
-                disabled={isSubmitting}
-                className="h-9 w-9 rounded-full shrink-0"
-              >
-                <X className="h-5 w-5" />
-              </Button>
+            <Button
+              variant="secondary"
+              onClick={handleClose}
+              disabled={isSubmitting}
+              className="h-9 w-9 rounded-full shrink-0 p-0"
+            >
+              <X className="h-5 w-5" />
+            </Button>
               <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white truncate">
                 New Project
               </h2>
@@ -263,32 +291,29 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
           {/* Draft Notification */}
           {hasDraft && (
             <div className="px-4 sm:px-6 pt-4 pb-2 shrink-0">
-              <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-950/20">
-                <AlertDescription className="text-sm text-amber-900 dark:text-amber-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+              <div className="border border-amber-200 bg-amber-50 dark:bg-amber-950/20 rounded-lg p-3 sm:p-4">
+                <div className="text-sm text-amber-900 dark:text-amber-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
                     <Save className="h-4 w-4 shrink-0" />
                     <span>You have a saved draft</span>
                   </div>
                   <div className="flex gap-2 w-full sm:w-auto">
                     <Button
-                      size="sm"
-                      variant="outline"
                       onClick={loadDraft}
-                      className="flex-1 sm:flex-none h-8 text-xs bg-white dark:bg-gray-900"
+                      variant="secondary"
+                      className="flex-1 sm:flex-none h-8 text-xs px-3 py-1"
                     >
                       Load Draft
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
+                    <button
                       onClick={clearDraft}
-                      className="flex-1 sm:flex-none h-8 text-xs"
+                      className="flex-1 sm:flex-none h-8 text-xs px-3 py-1 bg-transparent text-amber-700 hover:bg-amber-100 rounded transition-colors"
                     >
                       Dismiss
-                    </Button>
+                    </button>
                   </div>
-                </AlertDescription>
-              </Alert>
+                </div>
+              </div>
             </div>
           )}
 
@@ -297,19 +322,17 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
             <div className="px-4 sm:px-6 py-4 sm:py-6 space-y-5 sm:space-y-6">
               {/* Error Alert */}
               {submitError && (
-                <Alert className="border-red-200 bg-red-50 dark:bg-red-950/20">
-                  <AlertDescription className="text-sm text-red-900 dark:text-red-100">
-                    {submitError}
-                  </AlertDescription>
-                </Alert>
+                <div className="border border-red-200 bg-red-50 dark:bg-red-950/20 rounded-lg p-3 sm:p-4">
+                  <p className="text-sm text-red-900 dark:text-red-100">{submitError}</p>
+                </div>
               )}
 
               {/* Info Alert - Responsive */}
-              <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950/20">
-                <AlertDescription className="text-sm text-blue-900 dark:text-blue-100 leading-relaxed">
+              <div className="border border-blue-200 bg-blue-50 dark:bg-blue-950/20 rounded-lg p-3 sm:p-4">
+                <p className="text-sm text-blue-900 dark:text-blue-100 leading-relaxed">
                   Share your project to find collaborators and get feedback! 🚀
-                </AlertDescription>
-              </Alert>
+                </p>
+              </div>
 
               {/* Project Title */}
               <InputField
@@ -390,6 +413,15 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
                 error={errors.duration}
                 touched={touched.duration}
                 icon={<Calendar className="h-4 w-4 text-muted-foreground" />}
+              />
+
+              {/* Upload Short Video */}
+              <VideoUpload
+                videoPreviewUrl={videoPreviewUrl}
+                onVideoChange={handleVideoChange}
+                onRemove={removeVideo}
+                error={errors.uploadedVideo}
+                coverImageUrl={previewUrl}
               />
 
               {/* Bottom Spacing */}

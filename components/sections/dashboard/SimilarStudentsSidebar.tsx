@@ -76,7 +76,9 @@ export default function SimilarStudentsSidebar({
               )}
 
               {students.map((s) => (
-                <article key={s.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition">
+                <article key={s.id} className="flex items-center gap-3 p-3 cursor-pointer rounded-lg hover:bg-gray-50 transition"
+                 onClick={() => router.push(`/dashboard/student/${s.id}`)}
+                >
                   <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br cursor-pointer from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold">
                     {(() => {
                       const src = pickAvatar(s);
@@ -140,6 +142,9 @@ export default function SimilarStudentsSidebar({
     
       <aside className="hidden lg:block fixed top-28 right-6 w-80 lg:w-96 h-[calc(100vh-7rem)] overflow-y-auto p-4 bg-white rounded-l-3xl shadow-2xl border border-gray-100 custom-scroll">
         <div className="flex items-center justify-between mb-3">
+
+          <h3 className="text-lg text-blue-900">My Projects...</h3>
+          <p className="text-sm">Here are some of my projects I'll be working on....</p>
           <h3 className="text-lg font-bold">Zigx with similar skills</h3>
           <span className="text-xs text-gray-400">Connect • Explore</span>
         </div>
@@ -192,7 +197,7 @@ export default function SimilarStudentsSidebar({
                 <div className="mt-2 flex items-center justify-between">
                   <div className="text-xs text-gray-500">{(s.hard_skills || []).slice(0,3).join(', ')}</div>
                   <div className="flex items-center gap-2">
-                    <button className="px-3 py-1 bg-gradient-to-r from-orange-600 to-orange-600 text-white rounded-full text-xs font-semibold hover:scale-105">Message</button>
+                    <button className="px-3 py-1 bg-gradient-to-r from-blue-600 to-blue-600 text-white rounded-full text-xs font-semibold hover:scale-105">Message</button>
                     <button className="px-2 py-1 border rounded-md text-xs">View</button>
                   </div>
                 </div>

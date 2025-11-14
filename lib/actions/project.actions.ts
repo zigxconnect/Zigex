@@ -81,6 +81,20 @@ export async function createProjectAction(formData: FormData): Promise<CreatePro
     const coverImage = formData.get('coverImage') as File | null;
     const uploadedVideo = formData.get('uploadedVideo') as File | null;
 
+    // Clean and validate YouTube URL to ensure it matches database constraint
+    let cleanedYoutubeLink: string | null = null;
+    if (youtubeLink && youtubeLink.trim()) {
+      const youtubeUrlPattern = /^https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[\w-]+$/;
+      if (!youtubeUrlPattern.test(youtubeLink)) {
+        return {
+          success: false,
+          error: 'Invalid YouTube URL. Please use the standard YouTube watch URL (e.g., https://www.youtube.com/watch?v=dQw4w9WgXcQ or https://youtu.be/dQw4w9WgXcQ)',
+          fieldErrors: { youtubeLink: 'Invalid YouTube URL format' }
+        };
+      }
+      cleanedYoutubeLink = youtubeLink;
+    }
+
     // Validate basic fields
     try {
       serverProjectSchema.parse({
@@ -90,10 +104,10 @@ export async function createProjectAction(formData: FormData): Promise<CreatePro
         youtubeLink: youtubeLink || undefined,
         duration,
       });
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof z.ZodError) {
         const fieldErrors: Record<string, string> = {};
-        error.errors.forEach(err => {
+        (error as z.ZodError).issues?.forEach((err: z.ZodIssue) => {
           if (err.path.length > 0) {
             fieldErrors[err.path[0] as string] = err.message;
           }
@@ -220,11 +234,21 @@ export async function createProjectAction(formData: FormData): Promise<CreatePro
         };
       }
 
-      const { data: { publicUrl } } = supabase.storage
+      // Generate a signed URL that expires in 365 days (1 year)
+      const { data, error: signError } = await supabase.storage
         .from('project-assets')
-        .getPublicUrl(uploadData.path);
+        .createSignedUrl(uploadData.path, 365 * 24 * 60 * 60); // 365 days in seconds
       
-      coverImageUrl = publicUrl;
+      if (signError || !data) {
+        console.error('Failed to create signed URL for cover image:', signError);
+        // Fallback to public URL if signed URL generation fails
+        const { data: { publicUrl } } = supabase.storage
+          .from('project-assets')
+          .getPublicUrl(uploadData.path);
+        coverImageUrl = publicUrl;
+      } else {
+        coverImageUrl = data.signedUrl;
+      }
     }
 
     // Step 8: Upload video
@@ -248,11 +272,21 @@ export async function createProjectAction(formData: FormData): Promise<CreatePro
         };
       }
 
-      const { data: { publicUrl } } = supabase.storage
+      // Generate a signed URL that expires in 365 days (1 year)
+      const { data, error: signError } = await supabase.storage
         .from('project-videos')
-        .getPublicUrl(uploadData.path);
+        .createSignedUrl(uploadData.path, 365 * 24 * 60 * 60); // 365 days in seconds
       
-      uploadedVideoUrl = publicUrl;
+      if (signError || !data) {
+        console.error('Failed to create signed URL for video:', signError);
+        // Fallback to public URL if signed URL generation fails
+        const { data: { publicUrl } } = supabase.storage
+          .from('project-videos')
+          .getPublicUrl(uploadData.path);
+        uploadedVideoUrl = publicUrl;
+      } else {
+        uploadedVideoUrl = data.signedUrl;
+      }
     }
 
     // Step 9: Insert project into database
@@ -266,8 +300,9 @@ export async function createProjectAction(formData: FormData): Promise<CreatePro
         project_duration: duration,
         end_date: endDate,
         cover_image_url: coverImageUrl,
-        project_video_url: youtubeLink || null,
+        project_video_url: cleanedYoutubeLink,
         uploaded_video_url: uploadedVideoUrl,
+        is_valid: false, // Default to false, can be validated later
       })
       .select()
       .single();

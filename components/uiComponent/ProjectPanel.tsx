@@ -25,6 +25,7 @@ interface Project {
   project_duration: string;
   end_date: string;
   created_at: string;
+  is_valid: boolean;
 }
 
 interface UserData {
@@ -118,6 +119,10 @@ export default function ProjectPanel({
     : null;
 
   const coverImage = project?.cover_image_url || youtubeThumbnail;
+  
+  // Determine if there's a video (uploaded or YouTube)
+  const hasUploadedVideo = !!project?.uploaded_video_url;
+  const hasYoutubeVideo = !!youtubeVideoId;
 
   // Prepare WhatsApp message
   const whatsappMessage = `Hi ${user.full_name || 'there'}! 👋

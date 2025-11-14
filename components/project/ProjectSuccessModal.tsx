@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { CheckCircle2, Clock, Sparkles, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 interface ProjectSuccessModalProps {
   isOpen: boolean;
@@ -54,14 +53,12 @@ export default function ProjectSuccessModal({
         <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-br from-green-500/10 via-blue-500/10 to-purple-500/10 dark:from-green-500/5 dark:via-blue-500/5 dark:to-purple-500/5" />
 
         {/* Close Button */}
-        <Button
-          variant="ghost"
-          size="icon"
+        <button
           onClick={handleClose}
-          className="absolute top-3 right-3 h-8 w-8 rounded-full z-10 hover:bg-gray-100 dark:hover:bg-gray-800"
+          className="absolute top-3 right-3 h-8 w-8 rounded-full z-10 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center transition-colors"
         >
           <X className="h-4 w-4" />
-        </Button>
+        </button>
 
         {/* Content */}
         <div className="relative px-6 pt-8 pb-6 sm:px-8 sm:pt-10 sm:pb-8">
@@ -143,12 +140,12 @@ export default function ProjectSuccessModal({
           </div>
 
           {/* Action Button */}
-          <Button
+          <button
             onClick={handleClose}
-            className="w-full rounded-full font-semibold text-sm sm:text-base h-11 sm:h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
+            className="w-full rounded-full font-semibold text-sm sm:text-base h-11 sm:h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-200 text-white"
           >
             Got it, thanks!
-          </Button>
+          </button>
 
           {/* Footer Note */}
           <p className="text-[10px] sm:text-xs text-center text-gray-500 dark:text-gray-500 mt-4">

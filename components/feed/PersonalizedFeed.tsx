@@ -248,11 +248,11 @@ export default function PersonalizedFeed({ userId, userSkills = [], university }
                   {/* Avatar */}
                   <div className="flex-shrink-0 relative">
                     <div className={`w-12 h-12 rounded-full overflow-hidden shadow-md ring-2 ring-offset-2 dark:ring-offset-gray-900 transition-all duration-300 ${item.isOpen ? 'ring-blue-100 dark:ring-blue-900 hover:ring-blue-300 dark:hover:ring-blue-700 hover:scale-105' : 'ring-gray-200 dark:ring-gray-700'} ${item.isPinned ? 'ring-amber-300 dark:ring-amber-600 ring-offset-amber-50 dark:ring-offset-amber-900' : ''}`}>
-                      <Image src={item.companyLogo || '/seedLogo.png'} alt={item.companyName} width={48} height={48} className="w-full h-full object-cover" />
+                      <Image src={item.companyLogo || 'https://i.ibb.co/xqCftyWn/seedLogo.webp'} alt={item.companyName} width={48} height={48} className="w-full h-full object-cover" />
                     </div>
                     
                     {item.isPinned && item.isOpen && (
-                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-gray-900">
+                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-gradient-to-br from-blue-400 to-blue-500 rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-gray-900">
                         <Flame size={12} className="text-white" />
                       </div>
                     )}
@@ -269,7 +269,7 @@ export default function PersonalizedFeed({ userId, userSkills = [], university }
                       <span className={`font-bold text-sm transition-colors ${item.isOpen ? 'text-gray-900 dark:text-white hover:text-blue-600' : 'text-gray-500 dark:text-gray-400'}`}>{item.companyName}</span>
                       
                       {item.isPinned && (
-                        <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-sm flex items-center gap-1"><Star size={10} fill="currentColor" />PINNED</span>
+                        <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-blue-500 to-blue-700 text-white shadow-sm flex items-center gap-1"><Star size={10} fill="currentColor" />PINNED</span>
                       )}
                       
                       <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${getTypeBadgeColor(item.type, item.isOpen)}`}>{getTypeLabel(item.type)}</span>
@@ -321,7 +321,7 @@ export default function PersonalizedFeed({ userId, userSkills = [], university }
                     )}
 
                     {item.isOpen ? (
-                      <button className={`w-full py-3 rounded-xl font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 group relative overflow-hidden ${item.isPinned ? 'bg-gradient-to-r from-orange-500 via-orange-500 to-red-500 text-white shadow-lg hover:shadow-xl hover:scale-[1.02]' : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:shadow-lg hover:scale-[1.02]'}`} onClick={(e) => { e.preventDefault(); window.location.href = `/feed/${item.id}`; }}>
+                      <button className={`w-full py-3 rounded-xl font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 group relative overflow-hidden ${item.isPinned ? 'bg-gradient-to-r from-blue-600 via-blue-500 to-blue-500 text-white shadow-lg hover:shadow-xl hover:scale-[1.02]' : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:shadow-lg hover:scale-[1.02]'}`} onClick={(e) => { e.preventDefault(); window.location.href = `/feed/${item.id}`; }}>
                         <span className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent"></span>
                         <span className="relative flex items-center gap-2">{item.isPinned && <Zap size={16} fill="currentColor" />}<span>{item.type === 'event' ? 'Register Now' : 'Learn More'}</span><ArrowRight size={16} className={`transition-transform duration-300 ${hoveredCard === item.id ? 'translate-x-1' : ''}`} /></span>
                       </button>

@@ -238,6 +238,7 @@ Looking forward to hearing from you!`;
                     project={visitorProject}
                     isVisitor={true} 
                     id={id}
+                    isOwner={isOwner}
                   />
                 )
               )}
@@ -458,7 +459,7 @@ Looking forward to hearing from you!`;
           {soft.length > 0 && (
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
                   <Award size={20} className="text-white" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900">Soft Skills</h3>

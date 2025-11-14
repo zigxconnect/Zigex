@@ -32,7 +32,7 @@ export const useProjectForm = () => {
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
-        const fieldError = error.errors.find(err => 
+        const fieldError = (error as z.ZodError).issues.find((err: z.ZodIssue) => 
           err.path.length > 0 && err.path[0] === name
         );
         
@@ -102,17 +102,17 @@ export const useProjectForm = () => {
   const handleVideoChange = (file: File | null) => {
     if (!file) return;
 
-    const validTypes = ["video/mp4", "video/webm", "video/ogg"];
+    const validTypes = ["video/mp4", "video/webm", "video/ogg", "video/quicktime"];
     
-    if (file.size > 50000000) {
-      setErrors(prev => ({ ...prev, uploadedVideo: "Video must be less than 50MB" }));
+    if (file.size > 20000000) {
+      setErrors(prev => ({ ...prev, uploadedVideo: "Video must be less than 20MB" }));
       return;
     }
 
     if (!validTypes.includes(file.type)) {
       setErrors(prev => ({ 
         ...prev, 
-        uploadedVideo: "Only .mp4, .webm, and .ogg formats are supported" 
+        uploadedVideo: "Only .mp4, .webm, .ogg, and .mov formats are supported" 
       }));
       return;
     }
@@ -161,13 +161,25 @@ export const useProjectForm = () => {
 
   const validateForm = (): { isValid: boolean; errors?: FormErrors } => {
     try {
+      console.log('Validating form with data:', {
+        title: formData.title,
+        descriptionLength: formData.description?.length,
+        githubLink: formData.githubLink,
+        youtubeLink: formData.youtubeLink,
+        duration: formData.duration,
+        hasCoverImage: !!formData.coverImage,
+        hasUploadedVideo: !!formData.uploadedVideo
+      });
+      
       // Parse with schema
       projectFormSchema.parse(formData);
       // Clear errors if validation passes
       setErrors({});
+      console.log('Form validation passed!');
       return { isValid: true };
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.warn('Zod validation errors:', error.issues);
         // Create a new errors object
         const fieldErrors: FormErrors = {};
         
@@ -191,6 +203,7 @@ export const useProjectForm = () => {
         });
         setTouched(newTouched);
         
+        console.log('Form validation failed with errors:', fieldErrors);
         return { isValid: false, errors: fieldErrors };
       }
       // Handle unexpected errors
@@ -245,6 +258,24 @@ export const useProjectForm = () => {
     return formDataObj;
   };
 
+  const validateAllFieldsOnChange = () => {
+    // This function validates all fields when form data changes
+    // Used primarily for real-time validation feedback
+    const fieldsToCheck: (keyof ProjectFormData)[] = [
+      'title',
+      'description',
+      'duration',
+      'githubLink',
+      'youtubeLink'
+    ];
+    
+    fieldsToCheck.forEach(field => {
+      if (touched[field]) {
+        validateField(field, formData[field]);
+      }
+    });
+  };
+
   return {
     formData,
     errors,
@@ -260,6 +291,7 @@ export const useProjectForm = () => {
     validateForm,
     resetForm,
     isFormValid,
-    getFormData
+    getFormData,
+    validateAllFieldsOnChange
   };
 };
