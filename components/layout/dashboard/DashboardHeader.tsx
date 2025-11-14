@@ -90,7 +90,7 @@ export const DashboardHeader = ({
           >
             <div className="relative w-14 h-14 sm:w-11 sm:h-11 lg:w-12 lg:h-12 transition-transform group-hover:scale-105">
               <Image
-                src="/z3.png"
+                src="https://i.ibb.co/xKpXs0p3/z3.jpg"
                 alt="Zigex Logo"
                 fill
                 className="object-cover rounded-full"
