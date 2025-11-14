@@ -6,6 +6,7 @@ import { getRawProfileInfo } from '@/lib/actions/profile.actions';
 import { redirect } from 'next/navigation';
 import { Plus, Briefcase, Users, ExternalLink } from 'lucide-react';
 import MyMonthProject from '@/components/uiComponent/ProjectCard';
+import CreateProjectButton from '@/components/project/CreateProjectButton';
 
 export const revalidate = 60;
 
@@ -95,11 +96,7 @@ export default async function DashboardProjectsPage() {
                 <p className="text-sm text-gray-600 mt-1">Manage your projects and discover others</p>
               </div>
               
-                <a href="/dashboard/projects/create"
-                className="inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200 text-sm sm:text-base">
-                <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-                Create Project
-              </a>
+              <CreateProjectButton />
             </div>
           </div>
         </div>

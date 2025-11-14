@@ -24,13 +24,12 @@ export const projectFormSchema = z.object({
     z.literal("")
   ]).optional(),
   
-youtubeLink: z.union([
-  z.string().regex(
-    /^https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[\w-]+$/,
-    "Must be a valid YouTube video URL (e.g., https://www.youtube.com/watch?v=dQw4w9WgXcQ or https://youtu.be/dQw4w9WgXcQ)"
+youtubeLink: z.string()
+  .min(1, "YouTube URL is required")
+  .regex(
+    /^https:\/\/youtube\.com\/.+$/,
+    "Must be a valid YouTube URL starting with https://youtube.com"
   ),
-  z.literal("")
-]).optional(),
 
   
   duration: z.string().min(1, "Please select a duration"),
@@ -67,6 +66,6 @@ export const serverProjectSchema = z.object({
   title: z.string().min(3).max(100),
   description: z.string().min(50).max(500),
   githubLink: z.string().optional(),
-  youtubeLink: z.string().optional(),
+  youtubeLink: z.string().min(1, "YouTube URL is required"),
   duration: z.string().min(1),
 });

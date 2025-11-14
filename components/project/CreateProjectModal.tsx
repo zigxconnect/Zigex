@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import { X, Github, Calendar, Link, Loader2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
@@ -237,12 +238,18 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
     setSubmittedProjectTitle("");
   };
 
+  // Handle portal mounting on client side
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   if (!isOpen) return null;
 
-  return (
+  const modalContent = (
     <>
       <div 
-        className="fixed inset-0 z-998 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+        className="fixed inset-0 z-9999 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
         onClick={(e) => {
           if (e.target === e.currentTarget && !isSubmitting) {
             handleClose();
@@ -395,6 +402,7 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
                 onChange={(value) => handleInputChange("youtubeLink", value)}
                 onBlur={() => handleBlur("youtubeLink")}
                 placeholder="https://youtube.com/watch?v=..."
+                required
                 error={errors.youtubeLink}
                 touched={touched.youtubeLink}
                 icon={<Link className="h-4 w-4 text-muted-foreground" />}
@@ -437,7 +445,13 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
           </div>
         </div>
       </div>
+    </>
+  );
 
+  return (
+    <>
+      {isMounted && createPortal(modalContent, document.body)}
+      
       {/* Success Modal */}
       <ProjectSuccessModal
         isOpen={showSuccessModal}

@@ -520,7 +520,7 @@ Looking forward to hearing from you!`;
           email={data.email} 
         />
       )}
-      {isOwner && <CreateProjectButton />}
+      {isOwner && <CreateProjectButton variant="floating" />}
     </div>
   );
 }

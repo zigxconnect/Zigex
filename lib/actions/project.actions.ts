@@ -81,18 +81,78 @@ export async function createProjectAction(formData: FormData): Promise<CreatePro
     const coverImage = formData.get('coverImage') as File | null;
     const uploadedVideo = formData.get('uploadedVideo') as File | null;
 
-    // Clean and validate YouTube URL to ensure it matches database constraint
+    // Clean and validate YouTube URL - it's now REQUIRED
     let cleanedYoutubeLink: string | null = null;
-    if (youtubeLink && youtubeLink.trim()) {
-      const youtubeUrlPattern = /^https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[\w-]+$/;
+    
+    if (!youtubeLink || !youtubeLink.trim()) {
+      return {
+        success: false,
+        error: 'YouTube URL is required. Please provide a valid YouTube video URL.',
+        fieldErrors: { youtubeLink: 'YouTube URL is required' }
+      };
+    }
+
+    try {
+      const youtubeUrlPattern = /^https:\/\/youtube\.com\/.+$/;
       if (!youtubeUrlPattern.test(youtubeLink)) {
         return {
           success: false,
-          error: 'Invalid YouTube URL. Please use the standard YouTube watch URL (e.g., https://www.youtube.com/watch?v=dQw4w9WgXcQ or https://youtu.be/dQw4w9WgXcQ)',
+          error: 'Invalid YouTube URL. Please use a YouTube URL starting with https://youtube.com',
           fieldErrors: { youtubeLink: 'Invalid YouTube URL format' }
         };
       }
-      cleanedYoutubeLink = youtubeLink;
+      
+      // Extract video ID from YouTube URL
+      let videoId: string | null = null;
+      
+      // Try to extract from watch?v= parameter
+      const watchMatch = youtubeLink.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
+      if (watchMatch && watchMatch[1]) {
+        videoId = watchMatch[1];
+      }
+      
+      // Try to extract from /embed/ URL
+      if (!videoId) {
+        const embedMatch = youtubeLink.match(/\/embed\/([a-zA-Z0-9_-]{11})/);
+        if (embedMatch && embedMatch[1]) {
+          videoId = embedMatch[1];
+        }
+      }
+      
+      // Try to extract from /v/ URL
+      if (!videoId) {
+        const vMatch = youtubeLink.match(/\/v\/([a-zA-Z0-9_-]{11})/);
+        if (vMatch && vMatch[1]) {
+          videoId = vMatch[1];
+        }
+      }
+      
+      // Try to extract from shortened youtu.be URL
+      if (!videoId) {
+        const shortMatch = youtubeLink.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/);
+        if (shortMatch && shortMatch[1]) {
+          videoId = shortMatch[1];
+        }
+      }
+      
+      // If video ID found, store the URL as-is
+      if (videoId && videoId.length === 11) {
+        cleanedYoutubeLink = youtubeLink.trim();
+      } else {
+        // Video ID not found or invalid
+        return {
+          success: false,
+          error: 'Invalid YouTube URL. Please ensure you\'re using a valid YouTube video URL (e.g., https://youtube.com/watch?v=dQw4w9WgXcQ).',
+          fieldErrors: { youtubeLink: 'Could not extract valid video ID from URL' }
+        };
+      }
+    } catch (err) {
+      console.warn('YouTube URL processing error:', err);
+      return {
+        success: false,
+        error: 'Error processing YouTube URL. Please try again.',
+        fieldErrors: { youtubeLink: 'Error processing YouTube URL' }
+      };
     }
 
     // Validate basic fields
@@ -290,20 +350,23 @@ export async function createProjectAction(formData: FormData): Promise<CreatePro
     }
 
     // Step 9: Insert project into database
+    const projectInsertData: any = {
+      student_id: studentId,
+      project_title: title,
+      description,
+      github_repository: githubLink || null,
+      project_duration: duration,
+      end_date: endDate,
+      cover_image_url: coverImageUrl,
+      // Always include project_video_url, set to null if not valid
+      project_video_url: cleanedYoutubeLink,
+      uploaded_video_url: uploadedVideoUrl,
+      is_valid: false, // Default to false, can be validated later
+    };
+
     const { data: projectData, error: projectError } = await supabase
       .from('projects')
-      .insert({
-        student_id: studentId,
-        project_title: title,
-        description,
-        github_repository: githubLink || null,
-        project_duration: duration,
-        end_date: endDate,
-        cover_image_url: coverImageUrl,
-        project_video_url: cleanedYoutubeLink,
-        uploaded_video_url: uploadedVideoUrl,
-        is_valid: false, // Default to false, can be validated later
-      })
+      .insert(projectInsertData)
       .select()
       .single();
 
