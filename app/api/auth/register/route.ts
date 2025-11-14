@@ -1,12 +1,65 @@
 // app/api/auth/register/route.ts
 
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
-  const { email, password, fullName } = await request.json();
+  // --- MODIFICATION 1: Receive the 'origin' from the request body ---
+  const { email, password, fullName, origin } = await request.json();
+
+  // Validate origin to prevent open-redirects.
+  // Strategy:
+  // 1) If origin is a relative path (starts with '/'), accept and prepend the configured base URL.
+  // 2) If origin is an absolute URL, attempt to parse it and compare protocol+host against an allowlist.
+  // 3) If origin is missing or invalid, fall back to the safe base URL from env.
+  const safeBase =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    "http://localhost:3000";
+
+  // Allowlist can be provided as a comma-separated env var (HOSTS or ORIGINS). Fallback to safeBase host.
+  const allowedOriginsEnv =
+    process.env.ALLOWED_ORIGINS ||
+    process.env.NEXT_PUBLIC_ALLOWED_ORIGINS ||
+    "";
+  const allowedOrigins = allowedOriginsEnv
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  // Always include the configured safeBase origin in the allowlist (protocol + host)
+  try {
+    const parsedSafe = new URL(safeBase);
+    const safeOrigin = `${parsedSafe.protocol}//${parsedSafe.host}`;
+    if (!allowedOrigins.includes(safeOrigin)) allowedOrigins.push(safeOrigin);
+  } catch {
+    // ignore parse errors and proceed; safeBase might be a relative path
+  }
+
+  let validatedOrigin = safeBase; // default fallback
+
+  if (origin) {
+    // If origin looks like a relative path, accept and build full URL
+    if (typeof origin === "string" && origin.startsWith("/")) {
+      validatedOrigin = `${safeBase.replace(/\/$/, "")}${origin}`;
+    } else {
+      // Try to parse as absolute URL and compare protocol+host to allowlist
+      try {
+        const parsed = new URL(origin);
+        const originKey = `${parsed.protocol}//${parsed.host}`;
+        if (allowedOrigins.includes(originKey)) {
+          validatedOrigin = `${parsed.protocol}//${parsed.host}`;
+        } else {
+          // Not allowed: keep the safe fallback and log
+          console.warn(`Blocked registration redirect origin: ${origin}`);
+        }
+      } catch {
+        // Parsing failed: treat as invalid and keep fallback
+        console.warn(`Invalid registration origin provided: ${origin}`);
+      }
+    }
+  }
+
   if (!email || !password || !fullName) {
     return NextResponse.json(
       { error: "All fields are required." },
@@ -14,6 +67,7 @@ export async function POST(request: Request) {
     );
   }
 
+  // This check is great custom logic and should remain untouched.
   const { data: companyProfile, error } = await supabaseAdmin
     .from("company_profiles")
     .select("user_id")
@@ -45,6 +99,11 @@ export async function POST(request: Request) {
     email,
     password,
     options: {
+      // --- MODIFICATION 2: Add the emailRedirectTo option ---
+      // This tells Supabase where to send the user AFTER they click the verification link.
+      // Use the validated origin (or safe fallback) when building the redirect target.
+      emailRedirectTo: `${validatedOrigin.replace(/\/$/, "")}/create-profile`,
+
       data: {
         full_name: fullName,
         user_role: "student",
@@ -56,49 +115,30 @@ export async function POST(request: Request) {
     if (authError?.message.includes("User already registered")) {
       return NextResponse.json(
         { error: "A user with this email already exists." },
-        { status: 400 }
+        { status: 400 } // Using 409 Conflict might be more semantically correct here
       );
     }
     console.error("Supabase SignUp Error:", authError?.message);
     return NextResponse.json(
-      { error: "There was an error creating the user." },
+      { error: authError?.message || "There was an error creating the user." },
       { status: 400 }
     );
   }
 
-  const cookieStore = cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          cookieStore.set({ name, value, ...options });
-        },
-        remove(name: string, options: CookieOptions) {
-          cookieStore.set({ name, value: "", ...options });
-        },
-      },
-    }
-  );
+  // --- MODIFICATION 3: REMOVE the automatic sign-in block ---
+  /* 
+    The entire block for createServerClient and signInWithPassword has been removed.
+    The signUp call is now the final step. It triggers the confirmation email, 
+    which is exactly what we want.
+  */
 
-  const { error: signInError } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-
-  if (signInError) {
-    return NextResponse.json(
-      { message: "Registration successful, but auto-login failed." },
-      { status: 201 }
-    );
-  }
-
+  // --- MODIFICATION 4: Update the success response ---
+  // We now return a simple success message indicating an email has been sent.
   return NextResponse.json(
-    { message: "Student registered and logged in successfully" },
+    {
+      message:
+        "Registration successful. Please check your email to verify your account.",
+    },
     { status: 201 }
   );
 }

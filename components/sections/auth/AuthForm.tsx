@@ -8,13 +8,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { SocialButton } from "./SocialButton";
 import { GoogleIcon } from "./GoogleIcon";
-import { Cloud, GraduationCap, Eye, EyeOff } from "lucide-react";
+import { Cloud, GraduationCap, Eye, EyeOff, MailCheck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/uiComponent/Spinner";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 
-// Schema for the Sign Up form
+// --- Schemas ---
 const signUpSchema = z.object({
   fullName: z
     .string()
@@ -24,13 +24,10 @@ const signUpSchema = z.object({
     .string()
     .min(6, { message: "Password must be at least 6 characters." }),
 });
-
-// Schema for the Sign In form
 const signInSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
   password: z.string().min(1, { message: "Password is required." }),
 });
-
 type FormData = z.infer<typeof signUpSchema>;
 type AuthFormProps = { type: "signIn" | "signUp" };
 
@@ -51,6 +48,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
   const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [emailSent, setEmailSent] = useState(false);
 
   const supabase = createClient();
 
@@ -74,6 +72,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
     }
   }, [searchParams]);
 
+  // --- THIS IS THE CORRECTED OBJECT ---
   const content = {
     signIn: {
       Icon: Cloud,
@@ -96,53 +95,43 @@ export const AuthForm = ({ type }: AuthFormProps) => {
       linkActionText: "Sign In",
     },
   };
-
   const currentContent = content[type];
   const finePrint =
     "By continuing, you agree to our Terms of Service and Privacy Policy.";
 
-  // Handler for Google Sign-In
   const handleGoogleSignIn = async () => {
     setApiError(null);
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/api/auth/callback`,
-        queryParams: {
-          access_type: "offline",
-        },
       },
     });
-
     if (error) {
-      setApiError(error.message || "Could not authenticate with Google.");
-      return;
-    }
-
-    if (data.url) {
+      setApiError(error.message);
+    } else if (data.url) {
       router.push(data.url);
     }
   };
 
-  // Handler for manual form submission (Sign Up or Sign In)
   const onSubmit = async (data: FormData) => {
     setApiError(null);
     if (isSignUp) {
       try {
-        const registerResponse = await fetch("/api/auth/register", {
+        const response = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
+          body: JSON.stringify({ ...data, origin: window.location.origin }),
         });
-        const responseData = await registerResponse.json();
-        if (!registerResponse.ok) {
+        const responseData = await response.json();
+        if (!response.ok)
           throw new Error(responseData.error || "Sign-up failed.");
-        }
-        router.push("/create-profile");
+        setEmailSent(true);
       } catch (err) {
         setApiError((err as Error).message);
       }
     } else {
+      // Sign-in logic
       try {
         const response = await fetch("/api/auth/login", {
           method: "POST",
@@ -150,29 +139,41 @@ export const AuthForm = ({ type }: AuthFormProps) => {
           body: JSON.stringify({ email: data.email, password: data.password }),
         });
         const responseData = await response.json();
-        if (!response.ok) {
+        if (!response.ok)
           throw new Error(responseData.error || "Login failed.");
-        }
-
-        if (responseData.otpSent) {
-          router.push(`/verify-otp?email=${encodeURIComponent(data.email)}`);
-        } else {
-          if (responseData.profileComplete) {
-            router.push("/dashboard");
-          } else {
-            router.push("/create-profile");
-          }
-        }
+        router.push(
+          responseData.profileComplete ? "/dashboard" : "/create-profile"
+        );
       } catch (err) {
         setApiError((err as Error).message);
       }
     }
   };
 
+  if (isSignUp && emailSent) {
+    return (
+      <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl flex flex-col justify-center items-center text-center min-h-[650px]">
+        <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+          <MailCheck className="w-9 h-9 text-green-600" />
+        </div>
+        <h1 className="mt-6 text-2xl font-bold text-gray-900">
+          Confirm your email
+        </h1>
+        <p className="mt-2 text-gray-600">
+          We&lsquo;ve sent a verification link to your email address. Please
+          click the link to continue.
+        </p>
+        <p className="mt-4 text-sm text-gray-500">
+          Didn&lsquo;t receive it? Check your spam folder.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl flex flex-col justify-center min-h-[650px]">
       <div className="text-center">
-        <div className="mx-auto w-12 h-12 bg-blue-900 rounded-full flex items-center justify-center">
+        <div className="mx-auto w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
           <currentContent.Icon className="w-7 h-7 text-white" />
         </div>
         <h1 className="mt-4 text-2xl font-bold text-gray-900">
@@ -198,7 +199,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
               id="fullName"
               type="text"
               placeholder="Enter your full name"
-              className="mt-1 text-gray-900"
+              className="mt-1 text-gray-900 focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
               {...register("fullName")}
               disabled={isSubmitting}
             />
@@ -216,7 +217,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
             type="email"
             autoComplete="email"
             placeholder="Enter your email address"
-            className="mt-1 text-gray-900"
+            className="mt-1 text-gray-900 focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
             {...register("email")}
             disabled={isSubmitting}
           />
@@ -232,7 +233,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
             {!isSignUp && (
               <Link
                 href="/forgot-password"
-                className="text-sm text-orange-500 hover:underline cursor-pointer"
+                className="text-sm text-blue-600 hover:underline cursor-pointer"
               >
                 Forgot Password?
               </Link>
@@ -244,6 +245,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
               type={showPassword ? "text" : "password"}
               autoComplete={isSignUp ? "new-password" : "current-password"}
               placeholder="Enter your password"
+              className="focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
               {...register("password")}
               disabled={isSubmitting}
             />
@@ -266,9 +268,8 @@ export const AuthForm = ({ type }: AuthFormProps) => {
           <p className="text-sm text-red-500 text-center pt-1">{apiError}</p>
         )}
         <Button
-          variant="orange"
           type="submit"
-          className="w-full !mt-6 text-base py-2.5 flex items-center justify-center gap-2"
+          className="w-full !mt-6 text-base py-2.5 flex items-center justify-center gap-2 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
           disabled={isSubmitting}
         >
           {isSubmitting ? (
@@ -288,7 +289,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
             Looking to hire?{" "}
             <Link
               href="/company/sign-up"
-              className="font-semibold text-orange-500 hover:underline"
+              className="font-semibold text-blue-600 hover:underline"
             >
               Sign up as a company
             </Link>
@@ -298,7 +299,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
           {currentContent.linkText}{" "}
           <Link
             href={currentContent.linkHref}
-            className="font-semibold text-orange-500 hover:underline cursor-pointer"
+            className="font-semibold text-blue-600 hover:underline cursor-pointer"
           >
             {currentContent.linkActionText}
           </Link>

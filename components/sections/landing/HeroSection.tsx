@@ -1,4 +1,4 @@
-// app/page.js or components/HeroSection.js
+// app/page.tsx or components/HeroSection.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -33,14 +33,29 @@ const BamendaHeroSection: React.FC = () => {
   const [hoveredFeature, setHoveredFeature] = useState<number | null>(null);
   const [currentSlide, setCurrentSlide] = useState<number>(0);
 
+  // --- NEW STATE: To hold client-side-only values ---
+  const [gridStyles, setGridStyles] = useState<React.CSSProperties[]>([]);
+  const [newJobsCount, setNewJobsCount] = useState<number>(0);
+
   useEffect(() => {
     setIsVisible(true);
+
+    // --- NEW LOGIC: Generate random values only on the client ---
+    // This code runs once after the component mounts, preventing hydration errors.
+    const styles = Array.from({ length: 144 }, () => ({
+      animationDelay: `${Math.random() * 5}s`,
+      animationDuration: `${2 + Math.random() * 3}s`,
+    }));
+    setGridStyles(styles);
+
+    setNewJobsCount(Math.floor(Math.random() * 50) + 20);
+
     // Auto-rotate testimonials
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % testimonials.length);
     }, 4000);
     return () => clearInterval(interval);
-  }, []);
+  }, []); // Empty dependency array [] ensures this runs only once on mount
 
   const features: Feature[] = [
     {
@@ -124,14 +139,12 @@ const BamendaHeroSection: React.FC = () => {
         {/* Animated Grid Pattern */}
         <div className="absolute inset-0 opacity-5">
           <div className="grid grid-cols-12 gap-4 h-full">
+            {/* MODIFIED: Use state-driven styles to avoid hydration error */}
             {[...Array(144)].map((_, i) => (
               <div
                 key={i}
                 className="bg-blue-600 rounded-sm animate-pulse"
-                style={{
-                  animationDelay: `${Math.random() * 5}s`,
-                  animationDuration: `${2 + Math.random() * 3}s`,
-                }}
+                style={gridStyles[i] || {}}
               />
             ))}
           </div>
@@ -151,9 +164,6 @@ const BamendaHeroSection: React.FC = () => {
 
       {/* Main Container */}
       <div className="relative z-10 container mx-auto px-4 py-8 sm:py-12 lg:py-16">
-        {/* Top Stats Bar */}
-        
-
         {/* Main Hero Content */}
         <div className="grid lg:grid-cols-2 gap-12 items-center max-w-7xl mx-auto">
           {/* Left Column - Content */}
@@ -167,7 +177,6 @@ const BamendaHeroSection: React.FC = () => {
               }`}
             >
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500/10 to-blue-500/10 rounded-full border border-blue-200">
-                {/* <Sparkles className="w-4 h-4 text-orange-500" /> */}
                 <span className="text-sm font-semibold text-blue-700">
                   Your #1 Career Platform{" "}
                 </span>
@@ -184,7 +193,7 @@ const BamendaHeroSection: React.FC = () => {
             >
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
                 Launch Your
-                <span className="block  bg-clip-text bg-gradient-to-r text-blue-600">
+                <span className="block bg-clip-text bg-gradient-to-r text-blue-600">
                   Dream Career
                 </span>
                 Here
@@ -215,21 +224,16 @@ const BamendaHeroSection: React.FC = () => {
               }`}
             >
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="sign-in">
-                <button className="group cursor-pointer relative px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-800 text-white font-semibold rounded-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-orange-500/25">
-                  <span className="relative z-10 flex items-center justify-center gap-2">
-                    <Users className="w-5 h-5" />
-                    Get Started Now
-                    <ArrowRight className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" />
-                  </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-700 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
-                </button>
+                <Link href="/sign-in">
+                  <button className="group cursor-pointer relative px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-800 text-white font-semibold rounded-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-orange-500/25">
+                    <span className="relative z-10 flex items-center justify-center gap-2">
+                      <Users className="w-5 h-5" />
+                      Get Started Now
+                      <ArrowRight className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" />
+                    </span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-700 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
+                  </button>
                 </Link>
-
-                {/* <button className="group  cursor-pointer flex items-center justify-center gap-2 px-8 py-4 bg-white/80 backdrop-blur-sm border-2 border-gray-200 text-gray-700 font-semibold rounded-xl transition-all duration-300 hover:bg-white hover:border-gray-300 hover:shadow-lg hover:scale-105">
-                  <Play className="w-5 h-5" />
-                  Watch Demo
-                </button> */}
               </div>
             </div>
 
@@ -351,8 +355,9 @@ const BamendaHeroSection: React.FC = () => {
                     <TrendingUp className="w-5 h-5 text-green-600" />
                   </div>
                   <div>
+                    {/* MODIFIED: Use state to display random number safely */}
                     <div className="font-semibold text-gray-800 text-sm">
-                      +{Math.floor(Math.random() * 50) + 20} New Jobs
+                      {newJobsCount > 0 && `+${newJobsCount} New Jobs`}
                     </div>
                     <div className="text-xs text-gray-500">This week</div>
                   </div>
@@ -362,6 +367,7 @@ const BamendaHeroSection: React.FC = () => {
           </div>
         </div>
 
+        {/* Stats Section */}
         <div
           className={`transform transition-all duration-1000 ${
             isVisible ? "translate-y-0 opacity-100" : "translate-y-5 opacity-0"
@@ -424,12 +430,9 @@ const BamendaHeroSection: React.FC = () => {
                       hoveredFeature === index ? "shadow-2xl" : ""
                     }`}
                   >
-                    {/* Animated Background Gradient */}
                     <div
                       className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500`}
                     ></div>
-
-                    {/* Icon with Metric */}
                     <div className="relative z-10 mb-6">
                       <div className="flex items-center justify-between mb-4">
                         <div
@@ -449,8 +452,6 @@ const BamendaHeroSection: React.FC = () => {
                         )}
                       </div>
                     </div>
-
-                    {/* Content */}
                     <div className="relative z-10">
                       <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-gray-700 transition-colors">
                         {feature.title}
@@ -459,8 +460,6 @@ const BamendaHeroSection: React.FC = () => {
                         {feature.description}
                       </p>
                     </div>
-
-                    {/* Hover Border Effect */}
                     <div
                       className={`absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-gradient transition-all duration-300`}
                       style={{

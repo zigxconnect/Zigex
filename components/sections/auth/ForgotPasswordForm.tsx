@@ -31,37 +31,37 @@ export const ForgotPasswordForm = () => {
 
   const onSubmit = async (data: FormData) => {
     setApiError(null);
-    // Optional: wrap fetch with a timeout using AbortController
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
     try {
+      // Add timeout via AbortController to avoid hanging requests
+      const controller = new AbortController();
+      const timeoutMs = 30000; // 30 seconds
+      const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
       const response = await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
         signal: controller.signal,
       });
-      clearTimeout(timeoutId);
+
+      clearTimeout(timeout);
       if (response.ok) {
-        const responseData = await response.json();
         setSubmittedEmail(data.email);
         setFormState("success");
       } else {
-        let errorMsg = "An error occurred.";
-        try {
-          const errorData = await response.json();
-          errorMsg = errorData.error || errorMsg;
-        } catch {
-          try {
-            errorMsg = await response.text();
-          } catch {}
-        }
-        throw new Error(errorMsg);
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to send reset link.");
       }
     } catch (err) {
-      setApiError(
-        err instanceof Error ? err.message : "An unexpected error occurred"
-      );
+      // Handle aborted requests separately. Use safe typing to check the name property.
+      const maybeName = (err as { name?: unknown } | null)?.name;
+      if (typeof maybeName === "string" && maybeName === "AbortError") {
+        setApiError("The request timed out. Please try again.");
+      } else {
+        setApiError(
+          err instanceof Error ? err.message : "An unexpected error occurred"
+        );
+      }
     }
   };
 
@@ -73,13 +73,14 @@ export const ForgotPasswordForm = () => {
           Check your inbox
         </h1>
         <p className="mt-2 text-sm text-gray-600">
-          We've sent a password reset link to <br />
+          We have sent a password reset link to <br />
           <span className="font-semibold text-gray-800">{submittedEmail}</span>
         </p>
         <div className="mt-6">
+          {/* MODIFIED: Changed link color to blue */}
           <Link
             href="/sign-in"
-            className="text-sm text-orange-500 hover:underline"
+            className="text-sm text-blue-600 hover:underline"
           >
             Back to Sign In
           </Link>
@@ -91,14 +92,15 @@ export const ForgotPasswordForm = () => {
   return (
     <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl">
       <div className="text-center">
-        <div className="mx-auto w-12 h-12 bg-blue-900 rounded-full flex items-center justify-center">
+        {/* MODIFIED: Changed icon background to blue-500 */}
+        <div className="mx-auto w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
           <Mail className="w-7 h-7 text-white" />
         </div>
         <h1 className="mt-4 text-2xl font-bold text-gray-900">
           Forgot Password
         </h1>
         <p className="mt-1 text-sm text-gray-600">
-          No worries, we'll send you reset instructions.
+          No worries, we will send you reset instructions.
         </p>
       </div>
       <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-4">
@@ -109,7 +111,8 @@ export const ForgotPasswordForm = () => {
             type="email"
             autoComplete="email"
             placeholder="Enter your email address"
-            className="mt-1 text-gray-900"
+            // MODIFIED: Added blue focus styles
+            className="mt-1 text-gray-900 focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
             {...register("email")}
             disabled={isSubmitting}
           />
@@ -128,20 +131,18 @@ export const ForgotPasswordForm = () => {
           </p>
         )}
 
+        {/* MODIFIED: Changed button from orange to blue */}
         <Button
-          variant="orange"
           type="submit"
-          className="w-full !mt-6 text-base py-2.5 flex items-center justify-center gap-2"
+          className="w-full mt-6! text-base py-2.5 flex items-center justify-center gap-2 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
           disabled={isSubmitting}
         >
           {isSubmitting ? <Spinner /> : "Send Reset Link"}
         </Button>
       </form>
       <div className="text-center mt-4">
-        <Link
-          href="/sign-in"
-          className="text-sm text-orange-500 hover:underline"
-        >
+        {/* MODIFIED: Changed link color to blue */}
+        <Link href="/sign-in" className="text-sm text-blue-600 hover:underline">
           Back to Sign In
         </Link>
       </div>

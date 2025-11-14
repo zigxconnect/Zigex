@@ -1,14 +1,23 @@
-import { useFormContext } from "react-hook-form";
+"use client";
+
+import { useFormContext, Controller } from "react-hook-form";
 import { ProfileFormData } from "@/app/types/profile";
 import { FormField } from "@/components/uiComponent/FormField";
 import { Textarea } from "@/components/uiComponent/Textarea";
 import { Input } from "@/components/uiComponent/input";
+import { isValidPhoneNumber } from "react-phone-number-input";
+
+// Import the library and its required CSS
+import PhoneInput from "react-phone-number-input";
+import "react-phone-number-input/style.css";
 
 export const Step1Personal = () => {
   const {
+    control,
     register,
     formState: { errors },
   } = useFormContext<ProfileFormData>();
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -25,9 +34,31 @@ export const Step1Personal = () => {
           />
         </FormField>
       </div>
+
+      {/* Replaced with the Phone Input Library */}
       <FormField label="Phone Number" error={errors.phone}>
-        <Input placeholder="e.g., +123 456 7890" {...register("phone")} />
+        <Controller
+          name="phone"
+          control={control}
+          rules={{
+            validate: (value) =>
+              !value || isValidPhoneNumber(value) || "Invalid phone number",
+          }}
+          render={({ field }) => (
+            <PhoneInput
+              {...field}
+              id="phone-input"
+              placeholder="Enter phone number"
+              // Sets the default country shown to the user
+              defaultCountry="CM"
+              international
+              // Custom class allows you to style it in your global CSS file
+              className="phone-input-control"
+            />
+          )}
+        />
       </FormField>
+
       <FormField label="Location" error={errors.location}>
         <Input
           placeholder="e.g., Bamenda, Cameroon"
