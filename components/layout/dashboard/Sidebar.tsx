@@ -15,6 +15,7 @@ import {
   PersonStanding,
   IceCreamCone,
   PersonStandingIcon,
+  Zap,
 } from "lucide-react";
 import { AiOutlineWechat } from "react-icons/ai";
 import { Button } from "@/components/ui/button";
@@ -114,6 +115,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
     href: "/dashboard/blog",
     icon: NewspaperIcon,
     label: "News",
+  },
+  {
+    href: "/upload-live",
+    icon: Zap,
+    label: "Upload Live",
+    matchPaths: ["/upload-live"],
   },
 
 

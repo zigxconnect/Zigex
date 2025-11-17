@@ -1,107 +1,34 @@
 "use client";
 
-import { useState } from "react";
-import { Play, Eye, Clock, Zap } from "lucide-react";
-
-interface HappeningNowItem {
-  id: string;
-  type: "image" | "video";
-  src: string;
-  thumbnail?: string;
-  caption: string;
-  company: string;
-  viewCount: number;
-  isLive?: boolean;
-}
-
-const mockData: HappeningNowItem[] = [
-  {
-    id: "1",
-    type: "video",
-    src: "https://player.vimeo.com/video/1127249560",
-    thumbnail: "/n7.png",
-    caption: "Live Q&A: Software Engineering Internship",
-    company: "NervTech",
-    viewCount: 1247,
-    isLive: true,
-  },
-  {
-    id: "2",
-    type: "image",
-    src: "/n8.png",
-    caption: "Networking Hour with Industry Leaders",
-    company: "TechHub",
-    viewCount: 856,
-  },
-  {
-    id: "3",
-    type: "image",
-    src: "/n2.png",
-    caption: "Design Sprint Kickoff Ceremony",
-    company: "Creative Labs",
-    viewCount: 623,
-  },
-  {
-    id: "4",
-    type: "image",
-    src: "/n3.png",
-    caption: "Panel Discussion: Future of Tech",
-    company: "Innovation Summit",
-    viewCount: 1089,
-  },
-  {
-    id: "5",
-    type: "image",
-    src: "/n5.png",
-    caption: "Workshop: AI & Machine Learning",
-    company: "Data Science Co",
-    viewCount: 734,
-  },
-  {
-    id: "6",
-    type: "image",
-    src: "/z1.png",
-    caption: "Career Fair: Meet Your Future Team",
-    company: "StartUp Expo",
-    viewCount: 945,
-  },
-  {
-    id: "7",
-    type: "image",
-    src: "/z2.png",
-    caption: "Coding Challenge: Win Prizes",
-    company: "DevCommunity",
-    viewCount: 512,
-  },
-//   {
-//     id: "8",
-//     type: "image",
-//     src: "/skye8-internship.jpg",
-//     caption: "Product Launch Event",
-//     company: "NextGen Labs",
-//     viewCount: 1456,
-//   },
-//   {
-//     id: "9",
-//     type: "image",
-//     src: "/nervtech.png",
-//     caption: "Mentorship Meetup",
-//     company: "Growth Network",
-//     viewCount: 678,
-//   },
-//   {
-//     id: "10",
-//     type: "image",
-//     src: "/sky8.png",
-//     caption: "Demo Day Presentations",
-//     company: "Accelerator Hub",
-//     viewCount: 892,
-//   },
-];
+import { useState, useEffect } from "react";
+import { Play, Eye, Clock, Zap, Loader2, AlertCircle } from "lucide-react";
+import { getHappeningNowContent, type HappeningNowItem } from "@/lib/actions/happening-now.actions";
 
 export const HappeningNowGrid = () => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<HappeningNowItem | null>(null);
+  const [data, setData] = useState<HappeningNowItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const result = await getHappeningNowContent();
+        setData(result || []);
+        setError(null);
+      } catch (err) {
+        console.error("Error loading happening now:", err);
+        setError("Failed to load content");
+        setData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
 
   const formatViewCount = (count: number) => {
     if (count >= 1000) {
@@ -109,6 +36,52 @@ export const HappeningNowGrid = () => {
     }
     return count.toString();
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="w-full mb-12">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="relative">
+              <Zap className="w-8 h-8 text-blue-500 fill-blue-500 animate-pulse" />
+            </div>
+            <h2 className="text-3xl font-bold text-blue-600">Happening Now</h2>
+          </div>
+          <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">
+            <div className="flex flex-col items-center gap-2">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+              <p className="text-gray-600">Loading happening now...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || data.length === 0) {
+    return (
+      <div className="w-full mb-12">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="relative">
+              <Zap className="w-8 h-8 text-blue-500 fill-blue-500 animate-pulse" />
+            </div>
+            <h2 className="text-3xl font-bold text-blue-600">Happening Now</h2>
+          </div>
+          <div className="flex items-center justify-center h-64 bg-red-50 rounded-lg border border-red-200">
+            <div className="flex flex-col items-center gap-2 text-center">
+              <AlertCircle className="w-8 h-8 text-red-500" />
+              <p className="text-red-600">
+                {error || "No happening now content available"}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full mb-12">
@@ -131,7 +104,7 @@ export const HappeningNowGrid = () => {
 
         {/* Responsive Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
-          {mockData.map((item, index) => {
+          {data.map((item, index) => {
             const isHovered = hoveredId === item.id;
             const isFirstItem = index === 0;
 
@@ -140,7 +113,7 @@ export const HappeningNowGrid = () => {
                 key={item.id}
                 className={`
                   relative group cursor-pointer overflow-hidden rounded-2xl
-                  ${isFirstItem ? 'col-span-2 row-span-2' : 'aspect-[3/4]'}
+                  ${isFirstItem ? 'col-span-2 row-span-2' : 'aspect-3/4'}
                   transform transition-all duration-300
                   ${isHovered ? 'scale-[1.02] z-10' : 'scale-100'}
                 `}
@@ -149,7 +122,7 @@ export const HappeningNowGrid = () => {
                 onClick={() => setSelectedItem(item)}
               >
                 {/* Image/Video Container */}
-                <div className="relative w-full h-full bg-gradient-to-br from-gray-900 to-gray-800">
+                <div className="relative w-full h-full bg-linear-to-br from-gray-900 to-gray-800">
                   <img
                     src={item.type === "video" ? item.thumbnail : item.src}
                     alt={item.caption}
@@ -157,7 +130,7 @@ export const HappeningNowGrid = () => {
                   />
 
                   {/* Gradient Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
 
                   {/* Live Badge (for live items) */}
                   {item.isLive && (
@@ -273,7 +246,7 @@ export const HappeningNowGrid = () => {
             </button>
 
             {/* Content Container */}
-            <div className="relative bg-gradient-to-br from-blue-600/40 to-blue-800/40 backdrop-blur-xl rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
+            <div className="relative bg-linear-to-br from-blue-600/40 to-blue-800/40 backdrop-blur-xl rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
               {selectedItem.type === "video" ? (
                 <div className="aspect-video">
                   <iframe
@@ -290,12 +263,12 @@ export const HappeningNowGrid = () => {
                     alt={selectedItem.caption}
                     className="w-full max-h-[70vh] object-contain"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
                 </div>
               )}
 
               {/* Info Overlay */}
-              <div className="relative bg-gradient-to-t from-black/80 to-transparent p-8">
+              <div className="relative bg-linear-to-t from-black/80 to-transparent p-8">
                 <div className="max-w-3xl">
                   {selectedItem.isLive && (
                     <div className="flex items-center gap-2 mb-3">
@@ -331,9 +304,9 @@ export const HappeningNowGrid = () => {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  const currentIndex = mockData.findIndex(item => item.id === selectedItem.id);
-                  const prevIndex = currentIndex === 0 ? mockData.length - 1 : currentIndex - 1;
-                  setSelectedItem(mockData[prevIndex]);
+                  const currentIndex = data.findIndex((item: HappeningNowItem) => item.id === selectedItem.id);
+                  const prevIndex = currentIndex === 0 ? data.length - 1 : currentIndex - 1;
+                  setSelectedItem(data[prevIndex]);
                 }}
                 className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all duration-300 border border-white/20 hover:scale-110"
               >
@@ -342,9 +315,9 @@ export const HappeningNowGrid = () => {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  const currentIndex = mockData.findIndex(item => item.id === selectedItem.id);
-                  const nextIndex = currentIndex === mockData.length - 1 ? 0 : currentIndex + 1;
-                  setSelectedItem(mockData[nextIndex]);
+                  const currentIndex = data.findIndex((item: HappeningNowItem) => item.id === selectedItem.id);
+                  const nextIndex = currentIndex === data.length - 1 ? 0 : currentIndex + 1;
+                  setSelectedItem(data[nextIndex]);
                 }}
                 className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all duration-300 border border-white/20 hover:scale-110"
               >
@@ -353,7 +326,7 @@ export const HappeningNowGrid = () => {
 
               {/* Slideshow Indicators */}
               <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex items-center gap-2">
-                {mockData.map((item) => (
+                {data.map((item: HappeningNowItem) => (
                   <button
                     key={item.id}
                     onClick={(e) => {

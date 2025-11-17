@@ -35,8 +35,9 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 
   return (
     <>
-    <ProfileRecommendationPopup user={userData}/>
+      <ProfileRecommendationPopup user={userData} />
       <WelcomeCard user={userData} />
+ 
       <MainFeedPage searchQuery={searchParams.q} />
     </>
   );

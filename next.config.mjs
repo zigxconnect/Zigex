@@ -8,6 +8,12 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
 
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '100mb', // Allow up to 100MB for video uploads
+    },
+  },
+
   images: {
     remotePatterns: [
 
