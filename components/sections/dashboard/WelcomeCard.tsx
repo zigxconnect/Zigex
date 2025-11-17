@@ -43,8 +43,8 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile }: WelcomeCardProp
     return skillsText.substring(0, maxLength) + "...";
   };
 
-  const avatarUrl = user.profile.avatar_url || "/ar.png";
-  const coverImageUrl = user.profile.cover_image || "/ar.png";
+  const avatarUrl = user.profile.avatar_url || "/https://i.ibb.co/CpS0wpjC/z3.jpg";
+  const coverImageUrl = user.profile.cover_image || "https://i.ibb.co/vv3sgJwd/n8.jpg";
 
   return (
     <div className="relative bg-white md:rounded-2xl md:w-full mx-auto shadow-lg md:border md:border-gray-200 overflow-hidden">

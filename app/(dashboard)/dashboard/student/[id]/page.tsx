@@ -29,7 +29,7 @@ interface Props {
 }
 
 export default async function StudentDetailPage({ params }: Props) {
-  const { id } = params;
+  const { id } =  params;
 
   const { data, error } = await supabaseAdmin
     .from("student_profiles")
@@ -51,13 +51,35 @@ export default async function StudentDetailPage({ params }: Props) {
   const skills = data.hard_skills || [];
   const soft = data.soft_skills || [];
 
-  // deterministic dummy stats based on id
-  const seed = id.split("").reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
-  const internshipsApplied = (seed % 5) + 0;
-  const programsApplied = (seed % 3) + 0;
-  const eventsApplied = (seed % 4) + 0;
-  const avatarUrl = data.avatar_url || "/z3.png";
-  const coverImageUrl = data.cover_image || "/n8.png";
+  // Fetch accepted application counts for this student
+  const [internRes, progRes, eventRes] = await Promise.all([
+    supabaseAdmin
+      .from("Applications")
+      .select("id", { count: "exact", head: true })
+      .eq("student_id", data.id)
+      .eq("application_type", "internship")
+      .eq("status", "accepted"),
+    supabaseAdmin
+      .from("Applications")
+      .select("id", { count: "exact", head: true })
+      .eq("student_id", data.id)
+      .eq("application_type", "program")
+      .eq("status", "rsvp_confirmed"),
+    supabaseAdmin
+      .from("Applications")
+      .select("id", { count: "exact", head: true })
+      .eq("student_id", data.id)
+      .eq("application_type", "event")
+      .eq("status", "rsvp_confirmed"),
+  ]);
+
+  const internshipsApplied = internRes?.count ?? 0;
+  const programsApplied = progRes?.count ?? 0;
+  const eventsApplied = eventRes?.count ?? 0;
+  const avatarUrl = data.avatar_url || "https://i.ibb.co/CpS0wpjC/z3.jpg";
+  const coverImageUrl = data.cover_image || "https://i.ibb.co/vv3sgJwd/n8.jpg";
+
+  console.log(`Programs applied: ${programsApplied}`);
 
   // Determine if the current request user is the owner of this profile
   let isOwner = false;
@@ -288,8 +310,24 @@ Looking forward to hearing from you!`;
               </div>
             </div>
 
-            {/* Action Buttons - Only show if NOT owner */}
-            {!isOwner && (
+              {/* Action Buttons - Owner gets Edit/My projects, visitors get connect buttons */}
+            {isOwner ? (
+              <div className="flex items-center gap-3 mt-2">
+                <Link
+                  href="/dashboard/edit-profile"
+                  className="px-4 py-2 rounded-lg bg-white border border-gray-200 shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  Edit profile
+                </Link>
+
+                <Link
+                  href="/dashboard/projects"
+                  className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
+                >
+                  My projects
+                </Link>
+              </div>
+            ) : (
               <AnimatedConnectButtons 
                 linkedinUrl={linkedinUrl}
                 whatsappUrl={whatsappUrl}

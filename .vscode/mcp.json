@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "git": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-git",
+        "--repository",
+        "/c/Users/THE EYE INFORMATIQUE/OneDrive/Desktop/zApp"
+      ]
+    }
+  }
+}

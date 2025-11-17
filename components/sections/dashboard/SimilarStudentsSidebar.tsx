@@ -143,8 +143,7 @@ export default function SimilarStudentsSidebar({
       <aside className="hidden lg:block fixed top-28 right-6 w-80 lg:w-96 h-[calc(100vh-7rem)] overflow-y-auto p-4 bg-white rounded-l-3xl shadow-2xl border border-gray-100 custom-scroll">
         <div className="flex items-center justify-between mb-3">
 
-          <h3 className="text-lg text-blue-900">My Projects...</h3>
-          <p className="text-sm">Here are some of my projects I'll be working on....</p>
+       
           <h3 className="text-lg font-bold">Zigx with similar skills</h3>
           <span className="text-xs text-gray-400">Connect • Explore</span>
         </div>
