@@ -3,9 +3,10 @@
 import { useState, useEffect, use } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { MapPin, ExternalLink, Calendar, Clock, X } from "lucide-react";
+import { MapPin, ExternalLink, Calendar, Clock, X, Share2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ShareButton } from "@/components/sections/dashboard/ShareButton";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import DynamicForm from "@/components/sections/dashboard/Application/application";
 import { useFetchDetails } from "@/hooks/useFetchDetails";
@@ -158,6 +159,16 @@ export default function EventDetailsPage({
                     className="object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                  {/* Share Button */}
+                  <div className="absolute top-4 right-4 z-20">
+                    <ShareButton
+                      title={event.title}
+                      description={event.description || "Check out this event"}
+                      url={`/event/${event.id}`}
+                      imageUrl={normalizeImageSrc(event.event_picture_url || "/placeholder.png")}
+                      type="event"
+                    />
+                  </div>
                   <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
                     <div className="inline-block px-3 py-1 bg-blue-600 text-white text-xs font-semibold rounded-full mb-3">
                       Event

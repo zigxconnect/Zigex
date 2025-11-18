@@ -11,24 +11,32 @@ import {
   Calendar,
   Mail,
   Phone,
-  MessageCircle,
-  Linkedin
 } from "lucide-react";
-import ConnectBar from "@/components/sections/dashboard/ConnectBar";
+import { EditProfileButton } from "@/components/sections/student-profile/EditProfileButton";
+import { QuickEditField } from "@/components/sections/student-profile/QuickEditField";
 import QRCodeButton from "@/components/sections/dashboard/QRCodeButton";
+import PersonalizedFeed from "@/components/feed/PersonalizedFeed";
+import CreateProjectButton from "@/components/project/CreateProjectButton";
 import SimilarStudentsSidebar from "@/components/sections/dashboard/SimilarStudentsSidebar";
-import MyMonthProject from "@/components/uiComponent/MyMonthProject";
-import AnimatedConnectButtons from "@/components/customButtons/AnimatedConnectButtons";
-import { fetchUserActiveProject } from "@/lib/actions/getProjects.action";
-
+import { redirect } from "next/navigation";
 
 interface Props {
   params: { id: string };
 }
 
-export default async function StudentDetailPage({ params }: Props) {
+export default async function ProfilePage({ params }: Props) {
   const { id } = params;
 
+  // Get current authenticated user
+  const supabase = await createServerActionClient();
+  const { data: { user: authUser } } = await supabase.auth.getUser();
+
+  // Redirect to sign in if not authenticated
+  if (!authUser) {
+    redirect("/sign-in");
+  }
+
+  // Fetch the profile being viewed
   const { data, error } = await supabaseAdmin
     .from("student_profiles")
     .select("*")
@@ -39,11 +47,22 @@ export default async function StudentDetailPage({ params }: Props) {
     return (
       <div className="min-h-screen p-6">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-xl font-semibold">Student not found</h2>
+          <h2 className="text-xl font-semibold">Profile not found</h2>
           <p className="text-gray-500 mt-2">This profile may have been removed.</p>
         </div>
       </div>
     );
+  }
+
+  // Verify this is the current user's profile
+  const myProfile = await supabase
+    .from("student_profiles")
+    .select("*")
+    .eq("user_id", authUser.id)
+    .maybeSingle();
+
+  if (myProfile.error || !myProfile.data || myProfile.data.id !== id) {
+    redirect(`/dashboard/student/${id}`);
   }
 
   const skills = data.hard_skills || [];
@@ -76,32 +95,6 @@ export default async function StudentDetailPage({ params }: Props) {
   const eventsApplied = eventRes?.count ?? 0;
   const avatarUrl = data.avatar_url || "https://i.ibb.co/CpS0wpjC/z3.jpg";
   const coverImageUrl = data.cover_image || "https://i.ibb.co/vv3sgJwd/n8.jpg";
-
-  // Fetch visitor's profile and project
-  let myProfile: any = null;
-  let visitorProject: any = null;
-
-  try {
-    const supabase = await createServerActionClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data: _myProfile } = await supabase
-        .from("student_profiles")
-        .select("id, full_name, avatar_url, github_url, email, phone, about, linkedin_url, user_id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      myProfile = _myProfile;
-
-      // Fetch visitor's active project
-      const projectResult = await fetchUserActiveProject(id);
-      if (projectResult.success && projectResult.data) {
-        visitorProject = projectResult.data;
-      }
-    }
-  } catch (err) {
-    console.error("Error fetching visitor data:", err);
-  }
 
   // Fetch similar students
   const { data: candidatesData } = await supabaseAdmin
@@ -154,18 +147,6 @@ export default async function StudentDetailPage({ params }: Props) {
     .join("")
     .toUpperCase();
 
-  const whatsappMessage = `Hi ${data.full_name || 'there'}! 👋
-
-I came across your profile on ZigX and I'm impressed by your background in ${skills[0] || 'your field'}. 
-
-I'd love to connect and explore potential collaboration opportunities.
-
-Looking forward to hearing from you!`;
-
-  const whatsappUrl = data.phone 
-    ? `https://wa.me/${data.phone.replace(/\D/g, '')}?text=${encodeURIComponent(whatsappMessage)}`
-    : null;
-
   const linkedinUrl = data.linkedin_url;
 
   return (
@@ -192,7 +173,7 @@ Looking forward to hearing from you!`;
               {avatarUrl ? (
                 <Image
                   src={avatarUrl}
-                  alt={data.full_name || "Student"}
+                  alt={data.full_name || "Profile"}
                   width={112}
                   height={112}
                   className="w-full h-full object-cover"
@@ -211,11 +192,11 @@ Looking forward to hearing from you!`;
           {/* QR Code Button */}
           <QRCodeButton 
             linkedinUrl={linkedinUrl}
-            whatsappUrl={whatsappUrl}
+            whatsappUrl={null}
             email={data.email}
             fullName={data.full_name}
-            profileUrl={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://zigex.vercel.app'}/dashboard/student/${id}`}
-            isOwner={false}
+            profileUrl={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://zigex.vercel.app'}/profile/${id}`}
+            isOwner={true}
           />
         </div>
 
@@ -223,13 +204,13 @@ Looking forward to hearing from you!`;
         <div className="pt-12 md:pt-14 lg:pt-16 px-4 lg:px-6 pb-4 lg:pb-6">
           {/* User Info and Actions */}
           <div className="flex flex-col gap-4">
-            {/* Name and Location - Compact */}
+            {/* Name and Location */}
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <h1 className="text-base md:text-lg lg:text-xl font-bold text-gray-900">
-                  {data.full_name || "Zigex Student"}
+                  {data.full_name || "Your Profile"}
                 </h1>
-                {/* Verification Badge - Smaller */}
+                {/* Verification Badge */}
                 <div className="flex items-center justify-center bg-blue-500 rounded-full p-0.5">
                   <svg 
                     viewBox="0 0 24 24" 
@@ -241,27 +222,17 @@ Looking forward to hearing from you!`;
                 </div>
               </div>
 
-              {/* Show visitor's own monthly project sidebar */}
-              {myProfile && (
-                <MyMonthProject 
-                  user={myProfile} 
-                  project={visitorProject}
-                  isVisitor={true} 
-                  isOwner={false}
-                />
-              )}
-
-              {/* Similar Students Sidebar */}
-              <SimilarStudentsSidebar students={similarStudents} />
-              
               <div className="flex items-center gap-1.5 text-gray-600 mb-2">
-                <MapPin size={14} className="text-gray-500 flex-shrink-0" />
+                <MapPin size={14} className="text-gray-500 shrink-0" />
                 <p className="text-xs md:text-sm font-medium truncate">
                   {data.university || "University not specified"}
                 </p>
               </div>
 
-              {/* Social Links - Compact */}
+              {/* Similar Students Sidebar */}
+              <SimilarStudentsSidebar students={similarStudents} />
+
+              {/* Social Links */}
               <div className="flex items-center gap-3 flex-wrap text-xs">
                 {data.linkedin_url && (
                   <Link
@@ -299,14 +270,23 @@ Looking forward to hearing from you!`;
               </div>
             </div>
 
-            {/* Connect Buttons - Visitor actions */}
-            <AnimatedConnectButtons 
-              linkedinUrl={linkedinUrl}
-              whatsappUrl={whatsappUrl}
-            />
+            {/* Action Buttons - Edit and My Projects */}
+            <div className="flex items-center gap-3 mt-2">
+              <EditProfileButton
+                isOwner={true}
+                userId={authUser.id}
+                profileData={data}
+              />
+              <Link
+                href="/dashboard/projects"
+                className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
+              >
+                My projects
+              </Link>
+            </div>
           </div>
 
-          {/* Stats Section - More compact */}
+          {/* Stats Section */}
           <div className="mt-4 pt-3 border-t border-gray-200">
             <div className="flex items-center justify-around">
               <div className="flex flex-col items-center cursor-pointer group">
@@ -338,81 +318,14 @@ Looking forward to hearing from you!`;
         </div>
       </div>
 
-      {/* Content Container - Visitor View */}
+      {/* Content Container */}
       <div className="max-w-4xl mx-auto px-4 lg:px-6 space-y-6 md:mb-0 mb-16">
-        {/* Quick Connect Card - Visitor View */}
-        <div className="bg-linear-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100 shadow-sm">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Connect with {data.full_name?.split(' ')[0]}</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {/* LinkedIn */}
-            {linkedinUrl && (
-              <Link
-                href={linkedinUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-3 p-4 bg-white rounded-xl hover:shadow-md transition-all duration-200 border border-gray-200 hover:border-[#0A66C2] group"
-              >
-                <div className="w-10 h-10 bg-[#0A66C2] rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Linkedin size={20} className="text-white" />
-                </div>
-                <div className="flex-1">
-                  <div className="font-semibold text-gray-900 group-hover:text-[#0A66C2]">LinkedIn</div>
-                  <div className="text-xs text-gray-500">Professional network</div>
-                </div>
-              </Link>
-            )}
-
-            {/* WhatsApp */}
-            {whatsappUrl && (
-              <Link
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-3 p-4 bg-white rounded-xl hover:shadow-md transition-all duration-200 border border-gray-200 hover:border-[#25D366] group"
-              >
-                <div className="w-10 h-10 bg-[#25D366] rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <MessageCircle size={20} className="text-white" />
-                </div>
-                <div className="flex-1">
-                  <div className="font-semibold text-gray-900 group-hover:text-[#25D366]">WhatsApp</div>
-                  <div className="text-xs text-gray-500">Instant messaging</div>
-                </div>
-              </Link>
-            )}
-
-            {/* Email */}
-            {data.email && (
-              <Link
-                href={`mailto:${data.email}?subject=Connection Request from ZigX&body=Hi ${data.full_name || 'there'},%0D%0A%0D%0AI came across your profile on ZigX and I'm impressed by your background. I'd love to connect and explore potential collaboration opportunities.%0D%0A%0D%0ALooking forward to hearing from you!`}
-                className="flex items-center justify-center gap-3 p-4 bg-white rounded-xl hover:shadow-md transition-all duration-200 border border-gray-200 hover:border-blue-500 group"
-              >
-                <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Mail size={20} className="text-white" />
-                </div>
-                <div className="flex-1">
-                  <div className="font-semibold text-gray-900 group-hover:text-blue-500">Email</div>
-                  <div className="text-xs text-gray-500">Professional email</div>
-                </div>
-              </Link>
-            )}
-
-            {/* Phone */}
-            {data.phone && (
-              <Link
-                href={`tel:${data.phone}`}
-                className="flex items-center justify-center gap-3 p-4 bg-white rounded-xl hover:shadow-md transition-all duration-200 border border-gray-200 hover:border-green-500 group"
-              >
-                <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Phone size={20} className="text-white" />
-                </div>
-                <div className="flex-1">
-                  <div className="font-semibold text-gray-900 group-hover:text-green-500">Phone</div>
-                  <div className="text-xs text-gray-500">Direct call</div>
-                </div>
-              </Link>
-            )}
-          </div>
-        </div>
+        {/* Personalized Feed */}
+        <PersonalizedFeed 
+          userId={id}
+          userSkills={[...skills, ...soft]}
+          university={data.university}
+        />
 
         {/* About Section */}
         {data.about && (
@@ -423,9 +336,13 @@ Looking forward to hearing from you!`;
               </div>
               <h2 className="text-lg font-bold text-gray-900">About</h2>
             </div>
-            <p className="text-gray-700 leading-relaxed text-base">
-              {data.about}
-            </p>
+            <QuickEditField
+              label="About"
+              value={data.about || ""}
+              fieldName="about"
+              multiline
+              maxLength={500}
+            />
           </div>
         )}
 
@@ -476,7 +393,7 @@ Looking forward to hearing from you!`;
           )}
         </div>
 
-        {/* Additional Info Card */}
+        {/* Activity Stats */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
@@ -509,13 +426,8 @@ Looking forward to hearing from you!`;
         </div>
       </div>
 
-      {/* Connect Bar at Bottom - Visitor View */}
-      <ConnectBar 
-        linkedin={data.linkedin_url} 
-        whatsapp={data.phone} 
-        x={data.twitter_url || data.x_url} 
-        email={data.email} 
-      />
+      {/* Create Project Floating Button */}
+      <CreateProjectButton variant="floating" />
     </div>
   );
 }

@@ -39,38 +39,38 @@ const notificationsItem = {
 };
 
 // Regular navigation items
-const navItems = [
-  { href: "/feed", icon: IceCreamCone, label: "Browse" },
-  {
-    href: "/dashboard/student",
-    icon: Users,
-    label: "zigx",
-    matchPaths: ["/dashboard/student"],
-  },
-   {
-    href: "/dashboard/student/id",
-    icon: PersonStandingIcon,
-    label: "For Me",
-    matchPaths: ["/dashboard/student/id"],
-  },
-  {
-    href: "/dashboard/track-progress",
-    icon: TrendingUp,
-    label: "Track Progress",
-  },
-  {
-    href: "/dashboard/blog",
-    icon: NewspaperIcon,
-    label: "News",
-  },
+// const navItems = [
+//   { href: "/feed", icon: IceCreamCone, label: "Browse" },
+//   {
+//     href: "/dashboard/student",
+//     icon: Users,
+//     label: "zigx",
+//     matchPaths: ["/dashboard/student/"],
+//   },
+//    {
+//     href: "/dashboard/student/id",
+//     icon: PersonStandingIcon,
+//     label: "For Me",
+//     matchPaths: ["/dashboard/student/id"],
+//   },
+//   {
+//     href: "/dashboard/track-progress",
+//     icon: TrendingUp,
+//     label: "Track Progress",
+//   },
+//   {
+//     href: "/dashboard/blog",
+//     icon: NewspaperIcon,
+//     label: "News",
+//   },
 
 
-  //  {
-  //   href: "/dashboard/track-progress",
-  //   icon: PersonStanding,
-  //   label: "Me",
-  // },
-];
+//   //  {
+//   //   href: "/dashboard/track-progress",
+//   //   icon: PersonStanding,
+//   //   label: "Me",
+//   // },
+// ];
 
 // Special navigation item for AI chat
 const aiChatItem = {
@@ -88,33 +88,41 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const navItems = [
-  { href: "/feed", icon: IceCreamCone, label: "Browse" },
+  { 
+    href: "/feed", 
+    icon: IceCreamCone, 
+    label: "Browse",
+    matchPaths: ["/feed", "/internships/", "/events/", "/programs/"]
+  },
   {
     href: "/dashboard/student",
     icon: Users,
     label: "zigx",
-    matchPaths: ["/dashboard/student/"],
+    matchPaths: ["/dashboard/student"],
   },
    {
-    href: `/dashboard/student/${user?.profile?.id || "id"}`,
+    href: `/profile/${user?.profile?.id || "id"}`,
     icon: PersonStandingIcon,
-    label: "Profile",
-    matchPaths: [`/dashboard/student/${user?.profile?.id || "id"}`],
+    label: "My Profile",
+    matchPaths: [`/profile/`],
   },
   {
     href: "/dashboard/track-progress",
     icon: TrendingUp,
     label: "Track Progress",
+    matchPaths: ["/dashboard/track-progress"],
   },
 {
     href: "/dashboard/projects",
     icon: ProjectsIcon,
     label: "projects",
+    matchPaths: ["/dashboard/projects"],
   },
   {
     href: "/dashboard/blog",
     icon: NewspaperIcon,
     label: "News",
+    matchPaths: ["/dashboard/blog"],
   },
   {
     href: "/upload-live",
@@ -165,22 +173,16 @@ const isRouteActive = (href: string, matchPaths?: string[]) => {
     if (matchPaths) {
       return matchPaths.some((p: string) => {
         const normalized = normalize(p);
-        // Exact match only for matchPaths
+        // If matchPath ends with /, it's a prefix match
+        if (p.endsWith("/")) {
+          return path.startsWith(normalized);
+        }
+        // Otherwise, exact match
         return path === normalized;
       });
     }
 
-    // Special-case root dashboard exact match
-    if (target === "/dashboard") {
-      return path === "/dashboard";
-    }
-
-    // For /dashboard/student, only match exactly (not its sub-routes)
-    if (target === "/dashboard/student") {
-      return path === "/dashboard/student";
-    }
-
-    // exact match or prefix match for other nested/dynamic routes
+    // Default: exact match or prefix match for nested routes
     return path === target || path.startsWith(target + "/");
   };
 

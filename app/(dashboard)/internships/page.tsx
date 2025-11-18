@@ -1,8 +1,7 @@
 "use client";
 
-"use client";
-
 import { InternshipDetailsModal } from "@/components/sections/dashboard/Internship/InternshipDetailsModal";
+import { ShareButton } from "@/components/sections/dashboard/ShareButton";
 import { Card } from "@/components/ui/card";
 import { Building2, Clock, MapPin } from "lucide-react";
 
@@ -97,20 +96,29 @@ export default function InternshipsPage() {
             trigger={
               <Card className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow duration-200">
                 <div className="p-6">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="h-12 w-12 rounded-lg overflow-hidden flex-shrink-0">
-                      <img
-                        src={internship.companyLogo}
-                        alt={internship.company}
-                        className="h-full w-full object-cover"
-                      />
+                  <div className="flex items-center gap-4 mb-4 justify-between">
+                    <div className="flex items-center gap-4 flex-1">
+                      <div className="h-12 w-12 rounded-lg overflow-hidden flex-shrink-0">
+                        <img
+                          src={internship.companyLogo}
+                          alt={internship.company}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">
+                          {internship.title}
+                        </h3>
+                        <p className="text-sm text-gray-600">{internship.company}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">
-                        {internship.title}
-                      </h3>
-                      <p className="text-sm text-gray-600">{internship.company}</p>
-                    </div>
+                    <ShareButton
+                      title={internship.title}
+                      description={internship.description}
+                      url={`/internship/${internship.id}`}
+                      imageUrl={internship.companyLogo}
+                      type="internship"
+                    />
                   </div>
                   
                   <p className="text-gray-600 mb-4 line-clamp-2">

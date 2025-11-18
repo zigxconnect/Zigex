@@ -1,6 +1,7 @@
 "use client";
 
 import { EventDetailsModal } from "@/components/sections/dashboard/Event/EventDetailsModal";
+import { ShareButton } from "@/components/sections/dashboard/ShareButton";
 import { Card } from "@/components/ui/card";
 import { CalendarDays, MapPin } from "lucide-react";
 
@@ -64,6 +65,15 @@ export default function EventsPage() {
                     alt={event.title}
                     className="h-full w-full object-cover transform group-hover:scale-105 transition-transform duration-200"
                   />
+                  <div className="absolute top-2 right-2 z-20">
+                    <ShareButton
+                      title={event.title}
+                      description={event.description}
+                      url={`/event/${event.id}`}
+                      imageUrl={event.imageUrl}
+                      type="event"
+                    />
+                  </div>
                 </div>
                 <div className="p-6">
                   <h3 className="text-xl font-semibold text-gray-900 mb-2 line-clamp-1">

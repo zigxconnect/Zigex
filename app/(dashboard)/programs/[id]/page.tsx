@@ -3,9 +3,10 @@
 import { use, useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { MapPin, Building2, ExternalLink, Clock, CalendarDays, Users, GraduationCap, X, Lock } from "lucide-react";
+import { MapPin, Building2, ExternalLink, Clock, CalendarDays, Users, GraduationCap, X, Lock, Share2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ShareButton } from "@/components/sections/dashboard/ShareButton";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import DynamicForm from "@/components/sections/dashboard/Application/application";
 import { useFetchDetails } from "@/hooks/useFetchDetails";
@@ -151,6 +152,16 @@ export default function ProgramDetailsPage({
                   className={`object-cover ${isExpired ? 'grayscale' : ''}`}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                {/* Share Button */}
+                <div className="absolute top-4 right-4 z-20">
+                  <ShareButton
+                    title={program.title}
+                    description={program.description || "Check out this program"}
+                    url={`/program/${program.id}`}
+                    imageUrl={normalizeImageSrc(program.program_picture_url)}
+                    type="program"
+                  />
+                </div>
                 <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
                   {isLive && (
                     <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-600 text-white text-xs font-semibold rounded-full mb-3">

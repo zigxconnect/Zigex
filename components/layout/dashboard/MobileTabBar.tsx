@@ -21,21 +21,67 @@ interface MobileTabBarProps {
 
 const tabItems = [
   // { href: "/dashboard/student/id", icon: PersonStanding, label: "Me" },
-  { href: "/feed", icon: SearchCode, label: "Browse" },
-  { href: "/dashboard/fupro-ai", icon: AiOutlineWechat, label: "AI Chat", isSpecial: true },
-  { href: "/dashboard/student", icon: Users, label: "Students" },
-  { href: "/notifications", icon: Bell, label: "Alerts" },
+  { 
+    href: "/feed", 
+    icon: SearchCode, 
+    label: "Browse",
+    matchPaths: ["/feed", "/internships/", "/events/", "/programs/"]
+  },
+  { 
+    href: "/dashboard/fupro-ai", 
+    icon: AiOutlineWechat, 
+    label: "AI Chat", 
+    isSpecial: true,
+    matchPaths: ["/dashboard/fupro-ai"]
+  },
+  { 
+    href: "/dashboard/student", 
+    icon: Users, 
+    label: "Students",
+    matchPaths: ["/dashboard/student"]
+  },
+  { 
+    href: "/notifications", 
+    icon: Bell, 
+    label: "Alerts",
+    matchPaths: ["/notifications"]
+  },
 ];
+
+interface TabItem {
+  href: string;
+  icon: any;
+  label: string;
+  isSpecial?: boolean;
+  matchPaths?: string[];
+}
 
 export function MobileTabBar({ user }: MobileTabBarProps) {
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState<number>(0);
 
-  const isRouteActive = (href: string) => {
-    if (href === "/dashboard") {
-      return pathname === "/dashboard";
+  const isRouteActive = (href: string, matchPaths?: string[]) => {
+    const normalize = (p: string | undefined) => (p ? p.replace(/\/+$|^\s+|\s+$/g, "") : "");
+    const path = normalize(pathname);
+    const target = normalize(href);
+
+    if (!target) return false;
+
+    // Check explicit matchPaths first
+    if (matchPaths) {
+      return matchPaths.some((p: string) => {
+        const normalized = normalize(p);
+        // If matchPath ends with /, it's a prefix match
+        if (p.endsWith("/")) {
+          return path.startsWith(normalized);
+        }
+        // Otherwise, exact match
+        return path === normalized;
+      });
     }
-    return pathname === href || pathname.startsWith(href + "/");
+
+    // Default: exact match or prefix match for nested routes
+    return path === target || path.startsWith(target + "/");
   };
 
   // Fetch unread notifications count
@@ -60,7 +106,7 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
       <div className="flex items-center justify-around px-2 py-2">
         {tabItems.map((item) => {
           const Icon = item.icon;
-          const isActive = isRouteActive(item.href);
+          const isActive = isRouteActive(item.href, item.matchPaths);
           const showBadge = item.href === "/notifications" && unreadCount > 0;
 
           return (

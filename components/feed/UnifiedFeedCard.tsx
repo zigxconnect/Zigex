@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/uiComponent/Badge";
+import { ShareButton } from "@/components/sections/dashboard/ShareButton";
 import type { FeedItem } from "@/lib/types/feed";
 import { normalizeImageSrc } from "@/lib/utils";
 
@@ -165,7 +166,7 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
 
             {/* Lock Status for Programs - Enhanced */}
             {item._type === "programs" && (
-              <div className="absolute top-3 right-3 z-10 group/lock">
+              <div className="absolute top-3 right-12 z-10 group/lock">
                 {isOpen ? (
                   <div 
                     className="bg-gradient-to-br from-blue-600 to-blue-600 text-white   shadow-lg backdrop-blur-sm transform flex transition-all duration-300 hover:scale-110 hover:rotate-12 cursor-pointer p-2 align-center justify-center rounded-sm" 
@@ -190,6 +191,17 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
                 </div>
               </div>
             )}
+
+            {/* Share Button - Top Right */}
+            <div className="absolute top-3 right-3 z-10">
+              <ShareButton
+                title={item.title}
+                description={item.description || `Check out this ${item._type.slice(0, -1)}`}
+                url={`/feed/${item.id}`}
+                imageUrl={getImageUrl()}
+                type={item._type === "internships" ? "internship" : item._type === "events" ? "event" : "program"}
+              />
+            </div>
 
             {/* Bottom Stats - Enhanced */}
             <div className="absolute bottom-3 left-3 flex items-center gap-2 z-10">

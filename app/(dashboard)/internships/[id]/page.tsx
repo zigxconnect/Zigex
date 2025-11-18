@@ -3,9 +3,10 @@
 import { useState, useEffect, use } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { MapPin, Building2, ExternalLink, Clock, Briefcase, Users, X, CheckCircle2 } from "lucide-react";
+import { MapPin, Building2, ExternalLink, Clock, Briefcase, Users, X, CheckCircle2, Share2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ShareButton } from "@/components/sections/dashboard/ShareButton";
 import DynamicForm from "@/components/sections/dashboard/Application/application";
 import { useFetchDetails } from "@/hooks/useFetchDetails";
 import { InternshipDetailsLoadingSkeleton } from "@/components/SinglePageLoadingSkeleton";
@@ -156,6 +157,16 @@ export default function InternshipDetailsPage({
                     className="object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                  {/* Share Button */}
+                  <div className="absolute top-4 right-4 z-20">
+                    <ShareButton
+                      title={internship.title}
+                      description={internship.description || "Check out this internship opportunity"}
+                      url={`/internship/${internship.id}`}
+                      imageUrl={normalizeImageSrc(internship.internship_picture_url)}
+                      type="internship"
+                    />
+                  </div>
                   <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
                     <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-600 text-white text-xs font-semibold rounded-full mb-3">
                       <Briefcase size={14} />
