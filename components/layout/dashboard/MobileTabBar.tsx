@@ -11,9 +11,12 @@ import {
   Home,
   SearchCode,
   PersonStanding,
+  LogOut,
 } from "lucide-react";
 import { AiOutlineWechat } from "react-icons/ai";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface MobileTabBarProps {
   user: any;
@@ -58,7 +61,9 @@ interface TabItem {
 
 export function MobileTabBar({ user }: MobileTabBarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const isRouteActive = (href: string, matchPaths?: string[]) => {
     // Remove trailing slashes for comparison but preserve leading slash
@@ -78,8 +83,8 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
         // Check if original matchPath ends with "/" (prefix match)
         if (p.endsWith("/")) {
           const normalized = normalize(p);
-          // Prefix match: /feed/ matches /feed/123
-          return path.startsWith(normalized + "/") || path === normalized;
+          // Prefix match: /feed matches /feed/123, /feed/projects/123, etc.
+          return path === normalized || path.startsWith(normalized + "/");
         } else {
           // Exact match
           return path === normalize(p);
@@ -107,6 +112,22 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
     const iv = setInterval(fetchCount, 30000);
     return () => { mounted = false; clearInterval(iv); };
   }, []);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      const response = await fetch("/api/auth/logout", { method: "POST" });
+
+      if (!response.ok) throw new Error("Logout failed");
+
+      toast.success("Logged out successfully");
+      router.push("/sign-in");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Failed to logout. Please try again.");
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 lg:hidden z-50 safe-area-bottom">
@@ -161,6 +182,41 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
             </Link>
           );
         })}
+
+        {/* Logout Button on Mobile */}
+        <button
+          onClick={handleLogout}
+          disabled={isLoggingOut}
+          className="flex flex-col items-center justify-center flex-1 py-2 px-1 group"
+        >
+          <div className="relative">
+            <div
+              className={`
+                p-2 rounded-xl transition-all duration-200
+                ${isLoggingOut 
+                  ? 'bg-red-300 text-white' 
+                  : 'text-gray-600 group-active:bg-red-100 hover:bg-red-50'
+                }
+              `}
+            >
+              <LogOut 
+                size={20} 
+                className={`
+                  ${isLoggingOut ? 'text-white' : 'text-red-600 group-active:text-red-700'}
+                `}
+              />
+            </div>
+          </div>
+          
+          <span
+            className={`
+              text-[10px] font-medium mt-1 transition-colors duration-200
+              ${isLoggingOut ? 'text-red-600' : 'text-gray-600 group-active:text-red-600'}
+            `}
+          >
+            Logout
+          </span>
+        </button>
       </div>
     </div>
   );

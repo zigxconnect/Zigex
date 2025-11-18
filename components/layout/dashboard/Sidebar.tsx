@@ -92,7 +92,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     href: "/feed", 
     icon: IceCreamCone, 
     label: "Browse",
-    matchPaths: ["/feed", "/feed/", "/internships/", "/events/", "/programs/"]
+    matchPaths: ["/feed", "/feed/", "/internships/", "/events/", "/programs/"],
+    excludePaths: ["/feed/projects/"]
   },
   {
     href: "/dashboard/student",
@@ -116,7 +117,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     href: "/dashboard/projects",
     icon: ProjectsIcon,
     label: "projects",
-    matchPaths: ["/dashboard/projects", "/dashboard/projects/"],
+    matchPaths: ["/dashboard/projects", "/dashboard/projects/", "/feed/projects/"],
   },
   {
     href: "/dashboard/blog",
@@ -162,7 +163,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
-const isRouteActive = (href: string, matchPaths?: string[]) => {
+const isRouteActive = (href: string, matchPaths?: string[], excludePaths?: string[]) => {
     // Remove trailing slashes for comparison but preserve leading slash
     const normalize = (p: string | undefined) => {
       if (!p) return "";
@@ -174,14 +175,27 @@ const isRouteActive = (href: string, matchPaths?: string[]) => {
 
     if (!target) return false;
 
+    // Check if path matches any exclude patterns
+    if (excludePaths && excludePaths.length > 0) {
+      const isExcluded = excludePaths.some((p: string) => {
+        if (p.endsWith("/")) {
+          const normalized = normalize(p);
+          return path === normalized || path.startsWith(normalized + "/");
+        } else {
+          return path === normalize(p);
+        }
+      });
+      if (isExcluded) return false;
+    }
+
     // Check explicit matchPaths first
     if (matchPaths && matchPaths.length > 0) {
       return matchPaths.some((p: string) => {
         // Check if original matchPath ends with "/" (prefix match)
         if (p.endsWith("/")) {
           const normalized = normalize(p);
-          // Prefix match: /feed/ matches /feed/123
-          return path.startsWith(normalized + "/") || path === normalized;
+          // Prefix match: /feed matches /feed/123, /feed/projects/123, etc.
+          return path === normalized || path.startsWith(normalized + "/");
         } else {
           // Exact match
           return path === normalize(p);
@@ -313,7 +327,7 @@ const isRouteActive = (href: string, matchPaths?: string[]) => {
                       href={item.href}
                       icon={item.icon}
                       label={item.label}
-                      isActive={isRouteActive(item.href, item.matchPaths)}
+                      isActive={isRouteActive(item.href, item.matchPaths, item.excludePaths)}
                       onClick={handleNavClick}
                     />
                   ))}

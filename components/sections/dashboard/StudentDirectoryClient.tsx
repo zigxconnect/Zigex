@@ -4,6 +4,13 @@ import React, { useMemo, useState } from "react";
 import StudentCard from "./StudentCard";
 import { Search, TrendingUp, Sparkles } from "lucide-react";
 
+interface StudentStats {
+  internshipsApplied?: number;
+  programsApplied?: number;
+  eventsApplied?: number;
+  projectsCreated?: number;
+}
+
 interface RawUserProfile {
   id: string;
   full_name?: string | null;
@@ -12,6 +19,7 @@ interface RawUserProfile {
   hard_skills?: string[] | null;
   soft_skills?: string[] | null;
   linkedin_url?: string | null;
+  stats?: StudentStats;
 }
 
 export const StudentDirectoryClient: React.FC<{ profiles: RawUserProfile[] }> = ({ profiles }) => {
@@ -65,20 +73,13 @@ export const StudentDirectoryClient: React.FC<{ profiles: RawUserProfile[] }> = 
 
         {/* Student Feed */}
         <div className="divide-y divide-gray-200">
-          {filtered.map((s) => {
-            const seed = s.id.split("").reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
-            const internshipsApplied = (seed % 5) + 0;
-            const programsApplied = (seed % 3) + 0;
-            const eventsApplied = (seed % 4) + 0;
-
-            const stats = {
-              internshipsApplied,
-              programsApplied,
-              eventsApplied,
-            };
-
-            return <StudentCard key={s.id} student={s} stats={stats} />;
-          })}
+          {filtered.map((s) => (
+            <StudentCard 
+              key={s.id} 
+              student={s} 
+              stats={s.stats}
+            />
+          ))}
         </div>
 
         {filtered.length === 0 && (
