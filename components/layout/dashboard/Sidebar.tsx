@@ -92,43 +92,43 @@ export const Sidebar: React.FC<SidebarProps> = ({
     href: "/feed", 
     icon: IceCreamCone, 
     label: "Browse",
-    matchPaths: ["/feed", "/internships/", "/events/", "/programs/"]
+    matchPaths: ["/feed", "/feed/", "/internships/", "/events/", "/programs/"]
   },
   {
     href: "/dashboard/student",
     icon: Users,
     label: "zigx",
-    matchPaths: ["/dashboard/student"],
+    matchPaths: ["/dashboard/student", "/dashboard/student/"],
   },
    {
     href: `/profile/${user?.profile?.id || "id"}`,
     icon: PersonStandingIcon,
     label: "My Profile",
-    matchPaths: [`/profile/`],
+    matchPaths: ["/profile/"],
   },
   {
     href: "/dashboard/track-progress",
     icon: TrendingUp,
     label: "Track Progress",
-    matchPaths: ["/dashboard/track-progress"],
+    matchPaths: ["/dashboard/track-progress", "/dashboard/track-progress/"],
   },
 {
     href: "/dashboard/projects",
     icon: ProjectsIcon,
     label: "projects",
-    matchPaths: ["/dashboard/projects"],
+    matchPaths: ["/dashboard/projects", "/dashboard/projects/"],
   },
   {
     href: "/dashboard/blog",
     icon: NewspaperIcon,
     label: "News",
-    matchPaths: ["/dashboard/blog"],
+    matchPaths: ["/dashboard/blog", "/dashboard/blog/"],
   },
   {
     href: "/upload-live",
     icon: Zap,
     label: "Upload Live",
-    matchPaths: ["/upload-live"],
+    matchPaths: ["/upload-live", "/upload-live/"],
   },
 
 
@@ -163,27 +163,34 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
 const isRouteActive = (href: string, matchPaths?: string[]) => {
-    const normalize = (p: string | undefined) => (p ? p.replace(/\/+$|^\s+|\s+$/g, "") : "");
+    // Remove trailing slashes for comparison but preserve leading slash
+    const normalize = (p: string | undefined) => {
+      if (!p) return "";
+      return p.replace(/\/+$/, ""); // Remove trailing slashes only
+    };
+
     const path = normalize(pathname);
     const target = normalize(href);
 
     if (!target) return false;
 
     // Check explicit matchPaths first
-    if (matchPaths) {
+    if (matchPaths && matchPaths.length > 0) {
       return matchPaths.some((p: string) => {
-        const normalized = normalize(p);
-        // If matchPath ends with /, it's a prefix match
+        // Check if original matchPath ends with "/" (prefix match)
         if (p.endsWith("/")) {
-          return path.startsWith(normalized);
+          const normalized = normalize(p);
+          // Prefix match: /feed/ matches /feed/123
+          return path.startsWith(normalized + "/") || path === normalized;
+        } else {
+          // Exact match
+          return path === normalize(p);
         }
-        // Otherwise, exact match
-        return path === normalized;
       });
     }
 
-    // Default: exact match or prefix match for nested routes
-    return path === target || path.startsWith(target + "/");
+    // Default: exact match only (no prefix matching)
+    return path === target;
   };
 
   // Handle nav item click
