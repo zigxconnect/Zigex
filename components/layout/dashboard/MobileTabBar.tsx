@@ -12,6 +12,7 @@ import {
   SearchCode,
   PersonStanding,
   LogOut,
+  PersonStandingIcon,
 } from "lucide-react";
 import { AiOutlineWechat } from "react-icons/ai";
 import { useState, useEffect } from "react";
@@ -22,7 +23,19 @@ interface MobileTabBarProps {
   user: any;
 }
 
-const tabItems = [
+
+
+interface TabItem {
+  href: string;
+  icon: any;
+  label: string;
+  isSpecial?: boolean;
+  matchPaths?: string[];
+}
+
+export function MobileTabBar({ user }: MobileTabBarProps) {
+
+  const tabItems = [
   // { href: "/dashboard/student/id", icon: PersonStanding, label: "Me" },
   { 
     href: "/feed", 
@@ -43,6 +56,13 @@ const tabItems = [
     label: "Students",
     matchPaths: ["/dashboard/student", "/dashboard/student/"]
   },
+
+   {
+    href: `/profile/${user?.profile?.id || "id"}`,
+    icon: PersonStandingIcon,
+    label: "Profile",
+    matchPaths: ["/profile/"],
+  },
   { 
     href: "/notifications", 
     icon: Bell, 
@@ -50,16 +70,6 @@ const tabItems = [
     matchPaths: ["/notifications", "/notifications/"]
   },
 ];
-
-interface TabItem {
-  href: string;
-  icon: any;
-  label: string;
-  isSpecial?: boolean;
-  matchPaths?: string[];
-}
-
-export function MobileTabBar({ user }: MobileTabBarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [unreadCount, setUnreadCount] = useState<number>(0);

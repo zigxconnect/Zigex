@@ -77,7 +77,24 @@ export const DashboardHeader = ({
         </div>
 
         {/* Right Side - Logout, Notifications & User */}
-        <div className="flex items-center gap-2 lg:gap-3">
+        <div className="flex items-center gap-3 lg:gap-3">
+
+            <Link  href={`/profile/${user.profile.id}`} className="flex items-center gap-3 ml-2 lg:ml-3 flex-shrink-0">
+            <div className=" relative w-9 h-9 lg:w-10 lg:h-10 rounded-full border-2 border-gray-200 overflow-hidden ring-2 ring-transparent hover:ring-blue-400 transition-all duration-200">
+              <Image
+                src={userAvatar}
+                alt={userName}
+                fill
+                className="object-cover"
+              />
+            </div>
+            <div className="hidden md:flex flex-col">
+              <p className="text-sm font-semibold text-gray-900 leading-tight">
+                {userName}
+              </p>
+              <p className="text-xs text-gray-500 leading-tight">{userRole}</p>
+            </div>
+          </Link>
           {/* Logout Button */}
           <button
             onClick={handleLogout}
@@ -101,22 +118,7 @@ export const DashboardHeader = ({
               {isLoading ? "Logging out..." : "Logout"}
             </span>
           </button>
-  <Link  href={`/dashboard/student/${user.profile.id}`} className="flex items-center gap-3 ml-2 lg:ml-3 flex-shrink-0">
-            <div className=" relative w-9 h-9 lg:w-10 lg:h-10 rounded-full border-2 border-gray-200 overflow-hidden ring-2 ring-transparent hover:ring-blue-400 transition-all duration-200">
-              <Image
-                src={userAvatar}
-                alt={userName}
-                fill
-                className="object-cover"
-              />
-            </div>
-            <div className="hidden md:flex">
-              <p className="text-sm font-semibold text-gray-900 leading-tight">
-                {userName}
-              </p>
-              <p className="text-xs text-gray-500 leading-tight">{userRole}</p>
-            </div>
-          </Link>
+
           {/* Notifications Dropdown */}
           <div className="flex-shrink-0">
             <NotificationDropdown />
