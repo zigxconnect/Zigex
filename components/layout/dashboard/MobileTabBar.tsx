@@ -53,7 +53,7 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
   { 
     href: "/dashboard/student", 
     icon: Users, 
-    label: "Students",
+    label: "Zigx",
     matchPaths: ["/dashboard/student", "/dashboard/student/"]
   },
 
@@ -63,12 +63,12 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
     label: "Profile",
     matchPaths: ["/profile/"],
   },
-  { 
-    href: "/notifications", 
-    icon: Bell, 
-    label: "Alerts",
-    matchPaths: ["/notifications", "/notifications/"]
-  },
+  // { 
+  //   href: "/notifications", 
+  //   icon: Bell, 
+  //   label: "Alerts",
+  //   matchPaths: ["/notifications", "/notifications/"]
+  // },
 ];
   const pathname = usePathname();
   const router = useRouter();
