@@ -87,6 +87,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [loadingAdminStatus, setLoadingAdminStatus] = useState<boolean>(true);
   const navItems = [
   { 
     href: "/feed", 
@@ -231,6 +233,28 @@ const isRouteActive = (href: string, matchPaths?: string[], excludePaths?: strin
     return () => { mounted = false; clearInterval(iv); };
   }, []);
 
+  // Fetch admin status on mount
+  useEffect(() => {
+    let mounted = true;
+    const fetchAdminStatus = async () => {
+      try {
+        const res = await fetch('/api/auth/check-admin');
+        const data = await res.json();
+        if (mounted) {
+          console.log('Admin check response:', data);
+          setIsAdmin(data.isAdmin === true);
+        }
+      } catch (e) {
+        console.error('Failed to fetch admin status', e);
+        if (mounted) setIsAdmin(false);
+      } finally {
+        if (mounted) setLoadingAdminStatus(false);
+      }
+    };
+    fetchAdminStatus();
+    return () => { mounted = false; };
+  }, []);
+
   return (
     <>
       {/* Custom Scrollbar Styles */}
@@ -321,7 +345,15 @@ const isRouteActive = (href: string, matchPaths?: string[], excludePaths?: strin
                   Navigation
                 </h4>
                 <div className="space-y-1">
-                  {navItems.map((item) => (
+                  {navItems
+                    .filter((item) => {
+                      // Only show upload-live link if user is admin
+                      if (item.href === "/upload-live" && !isAdmin) {
+                        return false;
+                      }
+                      return true;
+                    })
+                    .map((item) => (
                     <AnimatedNavLink
                       key={item.href}
                       href={item.href}
