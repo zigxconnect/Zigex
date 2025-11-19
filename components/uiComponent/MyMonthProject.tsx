@@ -324,7 +324,7 @@ export default function MyMonthProject({
       <div>
         {/* Mobile */}
         {isVisitor && (
-          <div className="md:hidden bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border-2 border-gray-200 shadow-lg overflow-hidden mb-6 relative">
+          <div className="hidden bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border-2 border-gray-200 shadow-lg overflow-hidden mb-6 relative">
             <div className="p-8 text-center">
               <div className="w-20 h-20 bg-gradient-to-br from-gray-300 to-gray-400 rounded-full flex items-center justify-center mx-auto mb-4 shadow-md">
                 <Calendar size={40} className="text-gray-600" />
