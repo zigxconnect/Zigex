@@ -165,7 +165,7 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
         <div className="flex justify-between p-6">
         <BackButton />
         {opportunityStatus.isOpen &&
-        <RegisterGoDown href="registerDown" />
+        <RegisterGoDown href="getStarted" />
         
         }
         </div>
@@ -218,6 +218,28 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
                 />
               </Suspense>
             )}
+
+            {/* Curriculum Section - Full Width on Mobile Only */}
+            {item._type === "programs" && (
+              <div className="lg:hidden">
+                <CurriculumSection programTitle="Weekend of Code" />
+              </div>
+            )}
+
+            {/* Get Started Button - After Curriculum */}
+            {opportunityStatus.isOpen && (
+              <section id="getStarted" className="mt-6 sm:mt-8">
+                <ApplyButton
+                  isOpen={opportunityStatus.isOpen}
+                  reason={opportunityStatus.reason}
+                  type={item._type.slice(0, -1) as any}
+                  id={item.id}
+                  title={item.title}
+                  fullWidth={true}
+                  buttonText="Get Started"
+                />
+              </section>
+            )}
           </div>
 
           {/* Right Column - Sidebar */}
@@ -227,21 +249,11 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
               
               <DetailsSidebar details={buildDetails()} />
 
-              {/* Apply Button */}
-             <section id="registerDown">
-              <ApplyButton
-                isOpen={opportunityStatus.isOpen}
-                reason={opportunityStatus.reason}
-                type={item._type.slice(0, -1) as any}
-                id={item.id}
-                title={item.title}
-              />
-
-              </section>
-
-              {/* Curriculum Section - Bottom Right */}
+              {/* Curriculum Section - Desktop Only */}
               {item._type === "programs" && (
-                <CurriculumSection programTitle="Weekend of Code" />
+                <div className="hidden lg:block">
+                  <CurriculumSection programTitle="Weekend of Code" />
+                </div>
               )}
 
               {/* Additional Info Card */}

@@ -236,15 +236,15 @@ export const HappeningNowGrid = () => {
           onClick={() => setSelectedItem(null)}
         >
           <div
-            className="relative max-w-5xl w-full"
+            className="relative w-full max-w-5xl mx-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close Button */}
+            {/* Close Button - Centered and Responsive */}
             <button
               onClick={() => setSelectedItem(null)}
-              className="absolute -top-12 right-0 z-10 w-12 h-12 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all duration-300 hover:rotate-90 border border-white/20"
+              className="absolute top-4 right-4 sm:top-6 sm:right-6 z-10 w-10 h-10 sm:w-12 sm:h-12 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center text-white transition-all duration-300 hover:rotate-90 border border-white/30 flex-shrink-0"
             >
-              ✕
+              <span className="text-xl sm:text-2xl font-light">✕</span>
             </button>
 
             {/* Content Container */}

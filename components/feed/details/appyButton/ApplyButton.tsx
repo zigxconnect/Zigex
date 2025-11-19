@@ -16,14 +16,16 @@ interface ApplyButtonProps {
   type: "internship" | "program" | "event";
   id: string;
   title: string;
+  fullWidth?: boolean;
+  buttonText?: string;
 }
 
-export function ApplyButton({ isOpen, reason, type, id, title }: ApplyButtonProps) {
+export function ApplyButton({ isOpen, reason, type, id, title, fullWidth = false, buttonText = "Apply Now" }: ApplyButtonProps) {
   const [showModal, setShowModal] = useState(false);
 
   if (!isOpen) {
     return (
-      <div className="w-full">
+      <div className={fullWidth ? "w-full" : ""}>
         <div className="p-4 rounded-2xl bg-red-50 border border-red-200">
           <div className="flex items-start gap-3">
             <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
@@ -42,16 +44,17 @@ export function ApplyButton({ isOpen, reason, type, id, title }: ApplyButtonProp
       <Button
         onClick={() => setShowModal(true)}
         className={cn(
-          "w-full text-base p2-6 font-semibold rounded-2xl",
+          "text-base font-semibold rounded-2xl",
           "shadow-lg hover:shadow-xl transition-all duration-300",
           "transform hover:scale-[1.02] active:scale-[0.98]",
           "bg-gradient-to-r from-blue-600 to-indigo-600",
           "hover:from-blue-700 hover:to-indigo-700",
-          "border-0 group relative overflow-hidden"
+          "border-0 group relative overflow-hidden",
+          fullWidth ? "w-full p-6" : "w-full p-6"
         )}
       >
         <span className="relative z-10 flex items-center justify-center gap-2">
-          Apply Now
+          {buttonText}
           <ExternalLink size={18} className="group-hover:translate-x-1 transition-transform" />
         </span>
         
