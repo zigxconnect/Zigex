@@ -3,11 +3,13 @@
 import { useState, useEffect } from "react";
 import { Play, Eye, Clock, Zap, Loader2, AlertCircle } from "lucide-react";
 import { getHappeningNowContent, type HappeningNowItem } from "@/lib/actions/happening-now.actions";
+import { getRandomViewCount, formatSimpleViewCount } from "@/lib/utils/randomViews";
 
 export const HappeningNowGrid = () => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<HappeningNowItem | null>(null);
   const [data, setData] = useState<HappeningNowItem[]>([]);
+  const [viewCounts, setViewCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,6 +19,13 @@ export const HappeningNowGrid = () => {
         setLoading(true);
         const result = await getHappeningNowContent();
         setData(result || []);
+        
+        // Generate random view counts for each item
+        const newViewCounts: Record<string, number> = {};
+        (result || []).forEach((item) => {
+          newViewCounts[item.id] = getRandomViewCount();
+        });
+        setViewCounts(newViewCounts);
         setError(null);
       } catch (err) {
         console.error("Error loading happening now:", err);
@@ -29,13 +38,6 @@ export const HappeningNowGrid = () => {
 
     loadData();
   }, []);
-
-  const formatViewCount = (count: number) => {
-    if (count >= 1000) {
-      return `${(count / 1000).toFixed(1)}K`;
-    }
-    return count.toString();
-  };
 
   // Loading state
   if (loading) {
@@ -166,7 +168,7 @@ export const HappeningNowGrid = () => {
                   <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 bg-blue-600 backdrop-blur-sm rounded-full">
                     <Eye className="w-3.5 h-3.5 text-white" />
                     <span className="text-white text-xs font-semibold">
-                      {formatViewCount(item.viewCount)}
+                      {formatSimpleViewCount(viewCounts[item.id] || 0)}
                     </span>
                   </div>
 
@@ -281,7 +283,7 @@ export const HappeningNowGrid = () => {
                       <div className="flex items-center gap-2 px-3 py-1.5 bg-white/10 backdrop-blur-sm rounded-full">
                         <Eye className="w-4 h-4 text-white" />
                         <span className="text-white text-sm font-semibold">
-                          {formatViewCount(selectedItem.viewCount)} watching
+                          {formatSimpleViewCount(viewCounts[selectedItem.id] || 0)} watching
                         </span>
                       </div>
                     </div>
