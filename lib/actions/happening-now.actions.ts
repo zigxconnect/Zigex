@@ -165,24 +165,49 @@ export async function uploadHappeningNow(
   try {
     const supabase = await createSupabaseClient();
 
-    // Extract form data
-    const company = formData.get("company") as string;
-    const isLive = formData.get("is_live") === "true";
-    const captionsStr = formData.get("captions") as string;
-    const captions = captionsStr ? JSON.parse(captionsStr) : [];
+    // Extract form data with proper type checking
+    const company = formData.get("company");
+    const isLiveStr = formData.get("is_live");
+    const captionsStr = formData.get("captions");
 
-    if (!company) {
+    if (!company || typeof company !== "string") {
       return { success: false, error: "Company name is required" };
     }
 
-    // Get image files
-    const imageFiles = formData.getAll("images") as File[];
+    const isLive = isLiveStr === "true";
+
+    let captions: string[] = [];
+    if (captionsStr) {
+      try {
+        captions = JSON.parse(captionsStr as string);
+        if (!Array.isArray(captions)) {
+          captions = [];
+        }
+      } catch (e) {
+        console.warn("Failed to parse captions:", e);
+        captions = [];
+      }
+    }
+
+    // Get image files with proper array handling
+    const imageFiles: File[] = [];
+    const formDataEntries = formData.entries();
+    for (const [key, value] of formDataEntries) {
+      if (key === "images" && value instanceof File) {
+        imageFiles.push(value);
+      }
+    }
+
     if (imageFiles.length === 0) {
       return { success: false, error: "At least one image is required" };
     }
 
     // Get video file if present
-    const videoFile = formData.get("video") as File | null;
+    let videoFile: File | null = null;
+    const videoValue = formData.get("video");
+    if (videoValue instanceof File) {
+      videoFile = videoValue;
+    }
 
     console.log(`📤 Upload Started:`);
     console.log(`  - Company: ${company}`);
@@ -205,7 +230,11 @@ export async function uploadHappeningNow(
 
       if (uploadError) {
         console.error("Error uploading image:", uploadError);
-        return { success: false, error: `Failed to upload image ${i + 1}` };
+        return { success: false, error: `Failed to upload image ${i + 1}: ${uploadError.message}` };
+      }
+
+      if (!uploadData) {
+        return { success: false, error: `Failed to upload image ${i + 1}: No upload data returned` };
       }
 
       // Get public URL
@@ -232,7 +261,11 @@ export async function uploadHappeningNow(
 
       if (uploadError) {
         console.error("Error uploading video:", uploadError);
-        return { success: false, error: "Failed to upload video" };
+        return { success: false, error: `Failed to upload video: ${uploadError.message}` };
+      }
+
+      if (!uploadData) {
+        return { success: false, error: "Failed to upload video: No upload data returned" };
       }
 
       // Get public URL
@@ -288,7 +321,7 @@ export async function uploadHappeningNow(
 
     if (result.error) {
       console.error("Error saving to database:", result.error);
-      return { success: false, error: "Failed to save content" };
+      return { success: false, error: `Failed to save content: ${result.error.message}` };
     }
 
     console.log(`✅ Successfully uploaded happening now content`);

@@ -131,14 +131,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  // --- 7. Admin-Only Routes ---
-  if (pathname.startsWith("/upload-live")) {
-    const adminEmail = process.env.ADMIN_EMAIL;
-    if (!adminEmail || user.email !== adminEmail) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
-    }
-  }
-
   const studentPaths = [
     "/dashboard",
     "/profile-settings",

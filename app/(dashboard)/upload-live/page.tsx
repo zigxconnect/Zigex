@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { uploadHappeningNow } from "@/lib/actions/happening-now.actions";
 import { Upload, X, Play, Image as ImageIcon } from "lucide-react";
 
 const MAX_IMAGES = 6;
@@ -82,7 +81,7 @@ export default function UploadLivePage() {
       // Build FormData
       const formData = new FormData();
       formData.append("company", company);
-      formData.append("is_live", isLive.toString());
+      formData.append("is_live", isLive ? "true" : "false");
       formData.append("captions", JSON.stringify(captions));
 
       console.log("📋 Form Data Before Upload:");
@@ -92,20 +91,33 @@ export default function UploadLivePage() {
       console.log("  - Captions:", captions);
       console.log("  - Captions JSON:", JSON.stringify(captions));
 
-      // Add images
-      images.forEach((img) => {
-        formData.append("images", img);
-      });
+      // Add images - ensure they are properly appended
+      for (const img of images) {
+        formData.append("images", img, img.name);
+      }
 
       // Add video if present
       if (video) {
-        formData.append("video", video);
+        formData.append("video", video, video.name);
       }
 
-      // Call server action
-      const result = await uploadHappeningNow(formData);
+      console.log("FormData ready - calling API endpoint");
 
-      if (result.success) {
+      // Call API endpoint instead of server action
+      const response = await fetch("/api/happening-now", {
+        method: "POST",
+        body: formData,
+      });
+
+      console.log("Response status:", response.status);
+      const data = await response.json();
+      console.log("Response data:", data);
+
+      if (!response.ok) {
+        throw new Error(data.error || `HTTP error! status: ${response.status}`);
+      }
+
+      if (data.success || response.status === 201) {
         setMessage({
           type: "success",
           text: "Content uploaded successfully!",
@@ -121,7 +133,7 @@ export default function UploadLivePage() {
       } else {
         setMessage({
           type: "error",
-          text: result.error || "Upload failed",
+          text: data.error || data.message || "Upload failed",
         });
       }
     } catch (error) {
