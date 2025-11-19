@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { HappeningNowDisplay } from "@/components/sections/HappeningNowDisplay";
+import { ViewIncrementTest } from "@/components/ViewIncrementTest";
 import { formatViewCount } from "@/lib/utils/formatViews";
 import { Eye, RefreshCw } from "lucide-react";
 
@@ -142,6 +143,20 @@ export default function ViewTrackingTestPage() {
             </li>
           </ol>
         </div>
+
+        {/* Manual Test Section */}
+        {items.length > 0 && (
+          <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 mb-8">
+            <h3 className="font-bold text-purple-900 mb-4">🧪 Manual Increment Test</h3>
+            <p className="text-sm text-purple-700 mb-4">
+              Use the button below to manually test the increment API for the first item:
+            </p>
+            <ViewIncrementTest 
+              itemId={items[0].id}
+              currentViewCount={items[0].view_count || 0}
+            />
+          </div>
+        )}
 
         {/* Console Logs Section */}
         <div className="bg-slate-900 rounded-2xl p-6 mb-8">

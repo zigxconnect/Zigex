@@ -3,9 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { Play, Eye, Heart, Share2, X, ChevronLeft, ChevronRight, Zap } from "lucide-react";
-import { createClient } from "@supabase/supabase-js";
-import { formatViewCount, formatViewCountWithLabel, getViewCountDescription } from "@/lib/utils/formatViews";
-import { useHappeningNowViewTracking, useIndividualMediaViewTracking } from "@/hooks/useHappeningNowViewTracking";
+import { getRandomViewCount, formatSimpleViewCount } from "@/lib/utils/randomViews";
 import { HappeningNowItem } from "@/lib/types/happening-now";
 
 interface HappeningNowCardProps {
@@ -16,38 +14,13 @@ interface HappeningNowCardProps {
 export function HappeningNowCard({ item, onClose }: HappeningNowCardProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-  const [localViewCount, setLocalViewCount] = useState(item.view_count || 0);
+  const [viewCount, setViewCount] = useState(0);
   const [liked, setLiked] = useState(false);
 
-  // Track views when component mounts or item changes
-  useHappeningNowViewTracking(item.id);
-
-  // Track individual media views when viewing
-  useIndividualMediaViewTracking(item.id, "image", currentImageIndex);
-
-  // Subscribe to real-time view count updates
+  // Generate random view count on mount
   useEffect(() => {
-    if (!item.id) return;
-
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-
-    // Subscribe to updates for this specific item
-    const subscription = supabase
-      .channel(`happening_now_${item.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "happening_now",
-          filter: `id=eq.${item.id}`,
-        },
-        (payload) => {
-          console.log("✅ View count updated:", payload.new.view_count);
-          setLocalViewCount(payload.new.view_count || 0);
+    setViewCount(getRandomViewCount());
+  }, [item.id]);
         }
       )
       .subscribe();
@@ -212,22 +185,17 @@ export function HappeningNowCard({ item, onClose }: HappeningNowCardProps) {
         </div>
       )}
 
-      {/* Stats & Actions */}
-      <div className="p-4 space-y-4">
-        {/* Stats */}
-        <div className="flex items-center gap-4 text-sm">
-          {/* View Count */}
-          <div className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900 transition-colors cursor-help group">
-            <div className="flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg group-hover:shadow-md transition-shadow">
-              <Eye size={16} className="text-blue-600" />
-              <span className="font-semibold text-blue-600">{formatViewCount(localViewCount)}</span>
-            </div>
-            <span className="text-xs text-gray-500 hidden group-hover:inline">
-              {getViewCountDescription(localViewCount)}
-            </span>
-          </div>
-
-          {/* Video indicator */}
+        {/* Stats & Actions */}
+        <div className="p-4 space-y-4">
+          {/* Stats */}
+          <div className="flex items-center gap-4 text-sm">
+            {/* View Count */}
+            <div className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900 transition-colors cursor-help group">
+              <div className="flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg group-hover:shadow-md transition-shadow">
+                <Eye size={16} className="text-blue-600" />
+                <span className="font-semibold text-blue-600">{formatSimpleViewCount(viewCount)}</span>
+              </div>
+            </div>          {/* Video indicator */}
           {hasVideo && (
             <div className="flex items-center gap-1 px-3 py-1.5 bg-purple-50 rounded-lg">
               <Play size={14} className="text-purple-600" />

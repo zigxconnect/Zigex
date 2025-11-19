@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { incrementHappeningNowViewCount } from '@/lib/actions/happening-now.actions';
 
 /**
  * Hook to track and increment view count for happening now items
@@ -20,14 +19,26 @@ export function useHappeningNowViewTracking(itemId: string | null) {
       try {
         console.log(`📊 Attempting to track view for: ${itemId}`);
         
-        // Use server action for more reliable update with service role key
-        const result = await incrementHappeningNowViewCount(itemId);
-        
-        if (result?.success) {
-          console.log(`✅ View tracked: ${itemId} - New count: ${result.newViewCount}`);
-        } else {
-          console.warn('Failed to track view:', result?.error);
+        // Use API endpoint for view count increment
+        const response = await fetch('/api/happening-now', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            itemId,
+            increment: 1,
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          console.warn(`❌ Failed to track view: ${error.error}`);
+          return;
         }
+
+        const result = await response.json();
+        console.log(`✅ View tracked: ${itemId} - New count: ${result.newViewCount}`);
       } catch (error) {
         console.warn('View tracking error:', error);
       }

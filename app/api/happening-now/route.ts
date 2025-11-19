@@ -269,3 +269,88 @@ export async function GET() {
     );
   }
 }
+
+/**
+ * PUT - Increment view count for a happening now item
+ * Body: { itemId: string, increment?: number }
+ */
+export async function PUT(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { itemId, increment = 1 } = body;
+
+    if (!itemId) {
+      return NextResponse.json(
+        { error: 'Missing itemId' },
+        { status: 400 }
+      );
+    }
+
+    const supabase = createSupabaseClient();
+
+    console.log(`🔄 Incrementing view for item: ${itemId}`);
+
+    // Get current view count
+    const { data: currentData, error: fetchError } = await supabase
+      .from('happening_now')
+      .select('id, view_count, company')
+      .eq('id', itemId)
+      .single();
+
+    if (fetchError) {
+      console.error(`❌ Fetch error: ${fetchError.message}`);
+      return NextResponse.json(
+        { error: fetchError.message },
+        { status: 500 }
+      );
+    }
+
+    if (!currentData) {
+      return NextResponse.json(
+        { error: 'Item not found' },
+        { status: 404 }
+      );
+    }
+
+    const oldViewCount = currentData.view_count || 0;
+    const newViewCount = oldViewCount + increment;
+
+    console.log(`📈 ${currentData.company}: ${oldViewCount} → ${newViewCount}`);
+
+    // Update view count
+    const { data: updatedData, error: updateError } = await supabase
+      .from('happening_now')
+      .update({ 
+        view_count: newViewCount,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', itemId)
+      .select('view_count')
+      .single();
+
+    if (updateError) {
+      console.error(`❌ Update error: ${updateError.message}`);
+      return NextResponse.json(
+        { error: updateError.message },
+        { status: 500 }
+      );
+    }
+
+    console.log(`✅ Successfully updated view count to: ${updatedData?.view_count}`);
+
+    return NextResponse.json({
+      success: true,
+      itemId,
+      company: currentData.company,
+      oldViewCount,
+      newViewCount: updatedData?.view_count,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`❌ Exception: ${message}`);
+    return NextResponse.json(
+      { error: message },
+      { status: 500 }
+    );
+  }
+}

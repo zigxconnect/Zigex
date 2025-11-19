@@ -44,27 +44,6 @@ export function HappeningNowDisplay({ limit = 10, showFullscreenView = true }: H
     };
 
     fetchItems();
-
-    // Set up real-time subscription for view count updates
-    const supabase = createClient();
-    const subscription = supabase
-      .channel("happening_now_updates")
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "happening_now" },
-        (payload) => {
-          setItems((prev) =>
-            prev.map((item) =>
-              item.id === payload.new.id ? { ...item, ...payload.new } : item
-            )
-          );
-        }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
   }, [limit]);
 
   const handleRefresh = async () => {
