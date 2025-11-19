@@ -19,6 +19,7 @@ import QRCodeButton from "@/components/sections/dashboard/QRCodeButton";
 import SimilarStudentsSidebar from "@/components/sections/dashboard/SimilarStudentsSidebar";
 import MyMonthProject from "@/components/uiComponent/MyMonthProject";
 import AnimatedConnectButtons from "@/components/customButtons/AnimatedConnectButtons";
+import NoProjectMessage from "@/components/sections/dashboard/NoProjectMessage";
 import { fetchUserActiveProject } from "@/lib/actions/getProjects.action";
 
 
@@ -340,6 +341,14 @@ Looking forward to hearing from you!`;
 
       {/* Content Container - Visitor View */}
       <div className="max-w-4xl mx-auto px-4 lg:px-6 space-y-6 md:mb-0 mb-16">
+        {/* No Project Message - Show if student has no active project */}
+        {!visitorProject && (
+          <NoProjectMessage 
+            studentName={data.full_name || 'This student'} 
+            studentPhone={data.phone}
+          />
+        )}
+
         {/* Quick Connect Card - Visitor View */}
         <div className="bg-linear-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100 shadow-sm">
           <h3 className="text-lg font-bold text-gray-900 mb-4">Connect with {data.full_name?.split(' ')[0]}</h3>
