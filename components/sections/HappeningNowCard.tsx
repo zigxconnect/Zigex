@@ -21,14 +21,6 @@ export function HappeningNowCard({ item, onClose }: HappeningNowCardProps) {
   useEffect(() => {
     setViewCount(getRandomViewCount());
   }, [item.id]);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [item.id]);
 
   const hasMultipleImages = (item.images?.length || 0) > 1;
   const currentImage = item.images?.[currentImageIndex];
@@ -94,11 +86,10 @@ export function HappeningNowCard({ item, onClose }: HappeningNowCardProps) {
         {isVideoPlaying && hasVideo ? (
           // Video View
           <video
-            src={item.video.url}
+            src={item.video?.url}
             className="w-full h-full object-cover"
             controls
             autoPlay
-            onPlay={() => useIndividualMediaViewTracking(item.id, "video")}
           />
         ) : (
           // Image View
@@ -119,7 +110,7 @@ export function HappeningNowCard({ item, onClose }: HappeningNowCardProps) {
                 onClick={() => setIsVideoPlaying(true)}
                 className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/40 transition-colors group-hover:bg-black/40"
               >
-                <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center hover:bg-white transition-colors transform hover:scale-110 transition-transform">
+                <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center hover:bg-white transition-all transform hover:scale-110">
                   <Play size={32} className="text-gray-900 fill-gray-900 ml-1" />
                 </div>
               </button>
