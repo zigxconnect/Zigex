@@ -4,7 +4,8 @@ import React, { useState, useRef } from "react";
 import { Upload, X, Play, Image as ImageIcon } from "lucide-react";
 
 const MAX_IMAGES = 6;
-const MAX_VIDEO_SIZE_MB = 30;
+const MAX_VIDEO_SIZE_MB = 100; // Increased from 30MB to 100MB
+const MAX_TOTAL_UPLOAD_MB = 500; // Maximum total upload size
 
 export default function UploadLivePage() {
   const [company, setCompany] = useState("");
@@ -35,7 +36,7 @@ export default function UploadLivePage() {
       if (sizeInMB > MAX_VIDEO_SIZE_MB) {
         setMessage({
           type: "error",
-          text: `Video size exceeds ${MAX_VIDEO_SIZE_MB}MB limit`,
+          text: `Video size (${sizeInMB.toFixed(2)}MB) exceeds ${MAX_VIDEO_SIZE_MB}MB limit`,
         });
         return;
       }
@@ -60,6 +61,24 @@ export default function UploadLivePage() {
     setCaptions(newCaptions);
   };
 
+  const calculateTotalSize = (): number => {
+    let total = 0;
+    for (const img of images) {
+      total += img.size;
+    }
+    if (video) {
+      total += video.size;
+    }
+    // Add captions and metadata
+    total += JSON.stringify(captions).length;
+    total += company.length;
+    return total;
+  };
+
+  const getTotalSizeMB = (): number => {
+    return calculateTotalSize() / (1024 * 1024);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);
@@ -72,6 +91,16 @@ export default function UploadLivePage() {
 
     if (images.length === 0) {
       setMessage({ type: "error", text: "Please upload at least one image" });
+      return;
+    }
+
+    // Check total upload size
+    const totalSizeMB = getTotalSizeMB();
+    if (totalSizeMB > MAX_TOTAL_UPLOAD_MB) {
+      setMessage({ 
+        type: "error", 
+        text: `Total upload size (${totalSizeMB.toFixed(2)}MB) exceeds ${MAX_TOTAL_UPLOAD_MB}MB limit. Please reduce file sizes or number of images.` 
+      });
       return;
     }
 
@@ -111,6 +140,9 @@ export default function UploadLivePage() {
       const response = await fetch("/api/happening-now", {
         method: "POST",
         body: formData,
+        headers: {
+          // Don't set Content-Type header - let browser set it with boundary for FormData
+        },
       });
 
       if (process.env.NODE_ENV === 'development') {
@@ -141,6 +173,14 @@ export default function UploadLivePage() {
           console.error("Failed to parse response as JSON:", parseError);
           console.error("Response was:", responseText);
         }
+        
+        // Check for specific error patterns
+        if (responseText.includes('FUNCTIONAL_PAYLOAD_TOO_LARGE') || 
+            responseText.includes('PayloadTooLarge') ||
+            responseText.includes('413')) {
+          throw new Error(`Upload too large (${getTotalSizeMB().toFixed(2)}MB). Maximum is ${MAX_TOTAL_UPLOAD_MB}MB. Try reducing images, videos, or compression.`);
+        }
+        
         throw new Error(`Invalid response format: ${responseText.substring(0, 200)}`);
       }
       if (process.env.NODE_ENV === 'development') {
@@ -360,6 +400,18 @@ export default function UploadLivePage() {
               <Upload className="w-5 h-5" />
               {loading ? "Uploading..." : "Upload Content"}
             </button>
+
+            {/* Upload Size Indicator */}
+            {(images.length > 0 || video) && (
+              <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <p className="text-sm text-gray-700">
+                  <span className="font-semibold">Upload Size:</span> {getTotalSizeMB().toFixed(2)}MB / {MAX_TOTAL_UPLOAD_MB}MB
+                  {getTotalSizeMB() > MAX_TOTAL_UPLOAD_MB * 0.8 && (
+                    <span className="text-orange-600 ml-2">⚠️ Approaching limit</span>
+                  )}
+                </p>
+              </div>
+            )}
           </div>
         </form>
 
@@ -368,9 +420,11 @@ export default function UploadLivePage() {
           <h3 className="font-semibold text-blue-900 mb-2">Tips:</h3>
           <ul className="text-sm text-blue-800 space-y-1">
             <li>• Upload up to {MAX_IMAGES} images per update</li>
-            <li>• Video size limit is {MAX_VIDEO_SIZE_MB}MB</li>
+            <li>• Individual video size limit is {MAX_VIDEO_SIZE_MB}MB</li>
+            <li>• Total upload size limit is {MAX_TOTAL_UPLOAD_MB}MB</li>
             <li>• Add captions for each image to provide context</li>
             <li>• Mark as Live to highlight this content on the feed</li>
+            <li>• If upload fails due to size, compress images or reduce the number of files</li>
           </ul>
         </div>
       </div>

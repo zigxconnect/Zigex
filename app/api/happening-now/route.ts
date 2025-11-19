@@ -3,6 +3,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { HAPPENING_NOW_CONSTRAINTS } from '@/lib/types/happening-now';
 
 /**
+ * Set API route to accept large payloads (500MB)
+ * This allows uploading multiple images and videos
+ */
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '500mb',
+    },
+  },
+  maxDuration: 300, // 5 minutes timeout for large uploads
+};
+
+/**
  * Create Supabase client - use service role key if available, otherwise use anon key
  */
 function createSupabaseClient() {
