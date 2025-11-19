@@ -14,7 +14,7 @@ const nextConfig = {
       bodySizeLimit: '500mb', // Increased to 500MB for video uploads
     },
     optimizeCss: true,
-    forceSwcTransforms: true,
+    // Removed forceSwcTransforms - not supported by Turbopack
   },
 
   serverExternalPackages: ['@supabase/supabase-js'],
