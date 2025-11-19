@@ -125,33 +125,49 @@ export async function getHappeningNowContent(): Promise<HappeningNowItem[]> {
  */
 export async function incrementHappeningNowViewCount(
   itemId: string
-): Promise<void> {
+): Promise<{ success: boolean; newViewCount?: number; error?: string }> {
   try {
     const supabase = await createSupabaseClient();
 
     // Get the base ID (remove -video or -image-X suffix)
     const baseId = itemId.split("-")[0];
 
+    console.log(`🔄 Incrementing view for: ${baseId}`);
+
     // Get current view count
-    const { data: currentData } = await supabase
+    const { data: currentData, error: fetchError } = await supabase
       .from("happening_now")
       .select("view_count")
       .eq("id", baseId)
       .single();
 
+    if (fetchError) {
+      console.error("Error fetching view count:", fetchError);
+      return { success: false, error: fetchError.message };
+    }
+
     const currentViewCount = currentData?.view_count || 0;
+    const newViewCount = currentViewCount + 1;
+
+    console.log(`📈 View count: ${currentViewCount} → ${newViewCount}`);
 
     // Increment view count
-    const { error } = await supabase
+    const { error: updateError } = await supabase
       .from("happening_now")
-      .update({ view_count: currentViewCount + 1 })
+      .update({ view_count: newViewCount })
       .eq("id", baseId);
 
-    if (error) {
-      console.error("Error incrementing view count:", error);
+    if (updateError) {
+      console.error("Error incrementing view count:", updateError);
+      return { success: false, error: updateError.message };
     }
+
+    console.log(`✅ Successfully incremented view count to: ${newViewCount}`);
+    return { success: true, newViewCount };
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("Exception in incrementHappeningNowViewCount:", error);
+    return { success: false, error: errorMessage };
   }
 }
 
