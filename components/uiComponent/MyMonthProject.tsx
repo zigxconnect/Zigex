@@ -526,31 +526,31 @@ export default function MyMonthProject({
             {isMyProject ? (
               <Link
                 href={`/feed/projects/edit/${project.id}`}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all hover:shadow-md font-semibold text-sm"
+                className="w-full flex items-center justify-center gap-2 px-3 py-2.5 sm:px-4 sm:py-3 bg-linear-to-r from-blue-600 to-indigo-600 text-white rounded-lg sm:rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all hover:shadow-md font-semibold text-xs sm:text-sm"
               >
                 <Edit size={16} />
                 <span>Edit Project</span>
               </Link>
             ) : (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2 sm:gap-3">
                 {project.github_repository && (
                   <a
                     href={project.github_repository}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-colors shadow-md"
+                    className="flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2.5 sm:py-3 bg-gray-900 text-white rounded-lg sm:rounded-xl hover:bg-gray-800 transition-colors shadow-md text-xs sm:text-sm font-medium"
                   >
-                    <Github size={16} />
-                    <span className="text-sm font-medium">GitHub</span>
+                    <Github size={14} className="sm:w-4 sm:h-4" />
+                    <span>GitHub</span>
                   </a>
                 )}
                 
                 <Link 
                   href={`/feed/projects/${project.id}`}
-                  className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:shadow-lg transition-all duration-200"
+                  className="flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2.5 sm:py-3 bg-linear-to-r from-blue-500 to-blue-600 text-white rounded-lg sm:rounded-xl hover:shadow-lg transition-all duration-200 text-xs sm:text-sm font-medium"
                 >
-                  <ExternalLink size={16} />
-                  <span className="text-sm font-medium">View Details</span>
+                  <ExternalLink size={14} className="sm:w-4 sm:h-4" />
+                  <span>View Details</span>
                 </Link>
               </div>
             )}
@@ -592,10 +592,10 @@ export default function MyMonthProject({
 
           <button
             onClick={() => setOpen(true)}
-            className="cursor-pointer md:hidden fixed left-4 bottom-6 z-50 inline-flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-full shadow-lg border border-blue-700 hover:bg-blue-700"
+            className="cursor-pointer md:hidden fixed left-4 bottom-6 z-50 inline-flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 bg-blue-600 text-white rounded-full shadow-lg border border-blue-700 hover:bg-blue-700 transition-colors text-xs sm:text-sm font-medium"
           >
-            <Calendar size={16} />
-            <span className="text-sm font-medium">My Project</span>
+            <Calendar size={14} className="sm:w-4 sm:h-4" />
+            <span>My Project</span>
           </button>
         </div>
       )}

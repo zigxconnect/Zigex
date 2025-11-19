@@ -242,19 +242,6 @@ Looking forward to hearing from you!`;
                 </div>
               </div>
 
-              {/* Show visitor's own monthly project sidebar */}
-              {myProfile && (
-                <MyMonthProject 
-                  user={myProfile} 
-                  project={visitorProject}
-                  isVisitor={true} 
-                  isOwner={false}
-                />
-              )}
-
-              {/* Similar Students Sidebar */}
-              <SimilarStudentsSidebar students={similarStudents} />
-              
               <div className="flex items-center gap-1.5 text-gray-600 mb-2">
                 <MapPin size={14} className="text-gray-500 flex-shrink-0" />
                 <p className="text-xs md:text-sm font-medium truncate">
@@ -341,6 +328,18 @@ Looking forward to hearing from you!`;
 
       {/* Content Container - Visitor View */}
       <div className="max-w-4xl mx-auto px-4 lg:px-6 space-y-6 md:mb-0 mb-16">
+        {/* Project Card - Show if student has active project */}
+        {visitorProject && (
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+            <MyMonthProject 
+              user={myProfile} 
+              project={visitorProject}
+              isVisitor={true} 
+              isOwner={false}
+            />
+          </div>
+        )}
+
         {/* No Project Message - Show if student has no active project */}
         {!visitorProject && (
           <NoProjectMessage 
@@ -348,6 +347,9 @@ Looking forward to hearing from you!`;
             studentPhone={data.phone}
           />
         )}
+
+        {/* Similar Students Sidebar */}
+        <SimilarStudentsSidebar students={similarStudents} />
 
         {/* Quick Connect Card - Visitor View */}
         <div className="bg-linear-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100 shadow-sm">
