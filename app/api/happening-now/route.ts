@@ -12,9 +12,9 @@ function createSupabaseClient() {
   const key = serviceKey || anonKey;
 
   if (!url || !key) {
-    throw new Error(
-      'Missing required environment variables: NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY/NEXT_PUBLIC_SUPABASE_ANON_KEY'
-    );
+    const errorMsg = 'Missing required environment variables: NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY/NEXT_PUBLIC_SUPABASE_ANON_KEY';
+    console.error('❌ ' + errorMsg);
+    throw new Error(errorMsg);
   }
 
   return createClient(url, key);
@@ -27,9 +27,13 @@ export async function POST(request: NextRequest) {
     // Parse form data with error handling
     try {
       formData = await request.formData();
-      console.log('✅ FormData parsed successfully');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ FormData parsed successfully');
+      }
     } catch (parseError) {
-      console.error('❌ FormData parsing error:', parseError);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('❌ FormData parsing error:', parseError);
+      }
       return NextResponse.json(
         { error: 'Failed to parse form data. Ensure all files are properly uploaded.' },
         { status: 400 }
@@ -51,14 +55,18 @@ export async function POST(request: NextRequest) {
         }
       }
     } catch (e) {
-      console.warn('Failed to parse captions:', e);
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Failed to parse captions:', e);
+      }
       captions = [];
     }
 
-    console.log(`📤 Received upload request:`);
-    console.log(`  - Company: ${company}`);
-    console.log(`  - Is Live: ${isLive}`);
-    console.log(`  - Captions count: ${captions.length}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`📤 Received upload request:`);
+      console.log(`  - Company: ${company}`);
+      console.log(`  - Is Live: ${isLive}`);
+      console.log(`  - Captions count: ${captions.length}`);
+    }
 
     if (!company) {
       return NextResponse.json(
@@ -71,7 +79,9 @@ export async function POST(request: NextRequest) {
     const imageUrls: string[] = [];
     const imageFiles = formData.getAll('images') as File[];
 
-    console.log(`📸 Processing ${imageFiles.length} images`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`📸 Processing ${imageFiles.length} images`);
+    }
 
     if (imageFiles.length === 0) {
       return NextResponse.json(
@@ -89,7 +99,9 @@ export async function POST(request: NextRequest) {
 
     for (let i = 0; i < imageFiles.length; i++) {
       const file = imageFiles[i];
-      console.log(`  - Image ${i + 1}: ${file.name} (${file.type}, ${(file.size / 1024).toFixed(2)}KB)`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`  - Image ${i + 1}: ${file.name} (${file.type}, ${(file.size / 1024).toFixed(2)}KB)`);
+      }
 
       if (!HAPPENING_NOW_CONSTRAINTS.ALLOWED_IMAGE_TYPES.includes(file.type)) {
         return NextResponse.json(
@@ -99,14 +111,18 @@ export async function POST(request: NextRequest) {
       }
 
       const fileName = `happening-now/images/${Date.now()}-${i}-${file.name}`;
-      console.log(`  - Uploading to: ${fileName}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`  - Uploading to: ${fileName}`);
+      }
 
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('media')
         .upload(fileName, file, { upsert: false });
 
       if (uploadError) {
-        console.error(`❌ Image ${i + 1} upload failed:`, uploadError);
+        if (process.env.NODE_ENV === 'development') {
+          console.error(`❌ Image ${i + 1} upload failed:`, uploadError);
+        }
         return NextResponse.json(
           { error: `Image upload failed: ${uploadError.message}` },
           { status: 500 }
@@ -114,7 +130,9 @@ export async function POST(request: NextRequest) {
       }
 
       if (!uploadData || !uploadData.path) {
-        console.error(`❌ Image ${i + 1} upload returned no path`);
+        if (process.env.NODE_ENV === 'development') {
+          console.error(`❌ Image ${i + 1} upload returned no path`);
+        }
         return NextResponse.json(
           { error: `Image ${i + 1} upload failed: No path returned` },
           { status: 500 }
@@ -126,7 +144,9 @@ export async function POST(request: NextRequest) {
         .getPublicUrl(uploadData.path);
 
       imageUrls.push(publicUrl.publicUrl);
-      console.log(`  ✅ Image ${i + 1} uploaded: ${publicUrl.publicUrl}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`  ✅ Image ${i + 1} uploaded: ${publicUrl.publicUrl}`);
+      }
     }
 
     // Process video
@@ -134,7 +154,9 @@ export async function POST(request: NextRequest) {
     const videoFile = formData.get('video') as File | null;
 
     if (videoFile && videoFile instanceof File && videoFile.size > 0) {
-      console.log(`🎥 Processing video: ${videoFile.name} (${(videoFile.size / (1024 * 1024)).toFixed(2)}MB)`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`🎥 Processing video: ${videoFile.name} (${(videoFile.size / (1024 * 1024)).toFixed(2)}MB)`);
+      }
 
       if (videoFile.size > HAPPENING_NOW_CONSTRAINTS.MAX_VIDEO_SIZE_BYTES) {
         return NextResponse.json(
@@ -153,14 +175,18 @@ export async function POST(request: NextRequest) {
       }
 
       const videoFileName = `happening-now/videos/${Date.now()}-${videoFile.name}`;
-      console.log(`  - Uploading to: ${videoFileName}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`  - Uploading to: ${videoFileName}`);
+      }
 
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('media')
         .upload(videoFileName, videoFile, { upsert: false });
 
       if (uploadError) {
-        console.error('❌ Video upload failed:', uploadError);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('❌ Video upload failed:', uploadError);
+        }
         return NextResponse.json(
           { error: `Video upload failed: ${uploadError.message}` },
           { status: 500 }
@@ -168,7 +194,9 @@ export async function POST(request: NextRequest) {
       }
 
       if (!uploadData || !uploadData.path) {
-        console.error('❌ Video upload returned no path');
+        if (process.env.NODE_ENV === 'development') {
+          console.error('❌ Video upload returned no path');
+        }
         return NextResponse.json(
           { error: 'Video upload failed: No path returned' },
           { status: 500 }
@@ -183,10 +211,14 @@ export async function POST(request: NextRequest) {
         url: publicUrl.publicUrl,
         size: videoFile.size,
       };
-      console.log(`  ✅ Video uploaded: ${publicUrl.publicUrl}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`  ✅ Video uploaded: ${publicUrl.publicUrl}`);
+      }
     }
 
-    console.log('💾 Saving to database...');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('💾 Saving to database...');
+    }
 
     // Delete existing happeningNow data and insert new
     await supabase
@@ -210,14 +242,18 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (insertError) {
-      console.error('❌ Database insert failed:', insertError);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('❌ Database insert failed:', insertError);
+      }
       return NextResponse.json(
         { error: `Failed to save data: ${insertError.message}` },
         { status: 500 }
       );
     }
 
-    console.log('✅ Data saved successfully');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('✅ Data saved successfully');
+    }
 
     return NextResponse.json(
       {
@@ -228,7 +264,9 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('❌ Upload error:', error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('❌ Upload error:', error);
+    }
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
@@ -262,7 +300,9 @@ export async function GET() {
 
     return NextResponse.json({ data: data[0] }, { status: 200 });
   } catch (error) {
-    console.error('Fetch error:', error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Fetch error:', error);
+    }
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
@@ -288,7 +328,9 @@ export async function PUT(request: NextRequest) {
 
     const supabase = createSupabaseClient();
 
-    console.log(`🔄 Incrementing view for item: ${itemId}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🔄 Incrementing view for item: ${itemId}`);
+    }
 
     // Get current view count
     const { data: currentData, error: fetchError } = await supabase
@@ -298,7 +340,9 @@ export async function PUT(request: NextRequest) {
       .single();
 
     if (fetchError) {
-      console.error(`❌ Fetch error: ${fetchError.message}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.error(`❌ Fetch error: ${fetchError.message}`);
+      }
       return NextResponse.json(
         { error: fetchError.message },
         { status: 500 }
@@ -315,7 +359,9 @@ export async function PUT(request: NextRequest) {
     const oldViewCount = currentData.view_count || 0;
     const newViewCount = oldViewCount + increment;
 
-    console.log(`📈 ${currentData.company}: ${oldViewCount} → ${newViewCount}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`📈 ${currentData.company}: ${oldViewCount} → ${newViewCount}`);
+    }
 
     // Update view count
     const { data: updatedData, error: updateError } = await supabase
@@ -329,14 +375,18 @@ export async function PUT(request: NextRequest) {
       .single();
 
     if (updateError) {
-      console.error(`❌ Update error: ${updateError.message}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.error(`❌ Update error: ${updateError.message}`);
+      }
       return NextResponse.json(
         { error: updateError.message },
         { status: 500 }
       );
     }
 
-    console.log(`✅ Successfully updated view count to: ${updatedData?.view_count}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`✅ Successfully updated view count to: ${updatedData?.view_count}`);
+    }
 
     return NextResponse.json({
       success: true,
@@ -347,10 +397,35 @@ export async function PUT(request: NextRequest) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error(`❌ Exception: ${message}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.error(`❌ Exception: ${message}`);
+    }
     return NextResponse.json(
       { error: message },
       { status: 500 }
     );
   }
+}
+
+/**
+ * OPTIONS - Handle CORS preflight requests
+ */
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || '';
+  const frontendUrl = process.env.FRONTEND_URL || process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000';
+  const allowedOrigin = origin === frontendUrl ? origin : frontendUrl;
+  
+  return NextResponse.json(
+    {},
+    {
+      status: 200,
+      headers: {
+        'Access-Control-Allow-Origin': allowedOrigin,
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Max-Age': '86400',
+      },
+    }
+  );
 }

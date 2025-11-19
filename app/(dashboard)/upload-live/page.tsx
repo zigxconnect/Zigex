@@ -84,12 +84,14 @@ export default function UploadLivePage() {
       formData.append("is_live", isLive ? "true" : "false");
       formData.append("captions", JSON.stringify(captions));
 
-      console.log("📋 Form Data Before Upload:");
-      console.log("  - Company:", company);
-      console.log("  - Is Live:", isLive);
-      console.log("  - Images:", images.length);
-      console.log("  - Captions:", captions);
-      console.log("  - Captions JSON:", JSON.stringify(captions));
+      if (process.env.NODE_ENV === 'development') {
+        console.log("📋 Form Data Before Upload:");
+        console.log("  - Company:", company);
+        console.log("  - Is Live:", isLive);
+        console.log("  - Images:", images.length);
+        console.log("  - Captions:", captions);
+        console.log("  - Captions JSON:", JSON.stringify(captions));
+      }
 
       // Add images - ensure they are properly appended
       for (const img of images) {
@@ -101,7 +103,9 @@ export default function UploadLivePage() {
         formData.append("video", video, video.name);
       }
 
-      console.log("FormData ready - calling API endpoint");
+      if (process.env.NODE_ENV === 'development') {
+        console.log("FormData ready - calling API endpoint");
+      }
 
       // Call API endpoint instead of server action
       const response = await fetch("/api/happening-now", {
@@ -109,9 +113,39 @@ export default function UploadLivePage() {
         body: formData,
       });
 
-      console.log("Response status:", response.status);
-      const data = await response.json();
-      console.log("Response data:", data);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Response status:", response.status);
+        console.log("Response headers:", {
+          contentType: response.headers.get("content-type"),
+        });
+      }
+      
+      // Clone response to read as text first for debugging
+      const responseClone = response.clone();
+      const responseText = await responseClone.text();
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Response text length:", responseText.length);
+        console.log("Response text preview:", responseText.substring(0, 300));
+      }
+      
+      let data;
+      try {
+        // Try to parse JSON from the original response
+        const contentType = response.headers.get("content-type");
+        if (!contentType?.includes("application/json")) {
+          throw new Error(`Expected JSON response but got: ${contentType}`);
+        }
+        data = await response.json();
+      } catch (parseError) {
+        if (process.env.NODE_ENV === 'development') {
+          console.error("Failed to parse response as JSON:", parseError);
+          console.error("Response was:", responseText);
+        }
+        throw new Error(`Invalid response format: ${responseText.substring(0, 200)}`);
+      }
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Response data:", data);
+      }
 
       if (!response.ok) {
         throw new Error(data.error || `HTTP error! status: ${response.status}`);

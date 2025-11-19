@@ -10,8 +10,10 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", {
       headers: {
-        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Origin": Deno.env.get("FRONTEND_URL") || "http://localhost:3000",
         "Access-Control-Allow-Headers": "content-type",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Credentials": "true",
       },
     });
   }
