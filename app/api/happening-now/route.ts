@@ -1,5 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
+
+// Use Node.js runtime for this route because @supabase/supabase-js
+// relies on Node APIs that are not available in the Edge runtime.
+export const runtime = 'nodejs';
 import { HAPPENING_NOW_CONSTRAINTS } from '@/lib/types/happening-now';
 
 /**

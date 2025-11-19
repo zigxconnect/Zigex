@@ -1,4 +1,6 @@
-import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/server";
+
+export const runtime = 'nodejs';
 
 /**
  * Test endpoint to increment view count
@@ -16,7 +18,7 @@ export async function GET(request: Request) {
       );
     }
 
-    const supabase = await createClient();
+    const supabase = supabaseAdmin;
 
     console.log(`🧪 Testing increment for item: ${itemId}`);
 

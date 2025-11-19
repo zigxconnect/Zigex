@@ -18,6 +18,7 @@ import { AiOutlineWechat } from "react-icons/ai";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { ProjectsIcon } from "@sanity/icons";
 
 interface MobileTabBarProps {
   user: any;
@@ -43,12 +44,11 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
     label: "Browse",
     matchPaths: ["/feed", "/feed/", "/internships/", "/events/", "/programs/"]
   },
-  { 
-    href: "/dashboard/fupro-ai", 
-    icon: AiOutlineWechat, 
-    label: "AI Chat", 
-    isSpecial: true,
-    matchPaths: ["/dashboard/fupro-ai", "/dashboard/fupro-ai/"]
+  {
+    href: "/dashboard/projects",
+    icon: ProjectsIcon,
+    label: "projects",
+    matchPaths: ["/dashboard/projects", "/dashboard/projects/", "/feed/projects/"],
   },
   { 
     href: "/dashboard/student", 
