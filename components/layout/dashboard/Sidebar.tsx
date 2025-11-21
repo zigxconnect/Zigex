@@ -28,6 +28,7 @@ interface SidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
   onToggle?: () => void;
+  showUploadLive?: boolean;
 }
 
 // Notifications nav item
@@ -83,7 +84,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isOpen = false,
   onClose,
   onToggle,
-  user
+  user,
+  showUploadLive = false,
 }) => {
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState<number>(0);
@@ -107,12 +109,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
     label: "My Profile",
     matchPaths: ["/profile/"],
   },
-  {
-    href: "/dashboard/track-progress",
-    icon: TrendingUp,
-    label: "Track Progress",
-    matchPaths: ["/dashboard/track-progress", "/dashboard/track-progress/"],
-  },
+  // {
+  //   href: "/dashboard/track-progress",
+  //   icon: TrendingUp,
+  //   label: "Track Progress",
+  //   matchPaths: ["/dashboard/track-progress", "/dashboard/track-progress/"],
+  // },
 {
     href: "/dashboard/projects",
     icon: ProjectsIcon,
@@ -125,20 +127,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
     label: "News",
     matchPaths: ["/dashboard/blog", "/dashboard/blog/"],
   },
-  {
-    href: "/upload-live",
-    icon: Zap,
-    label: "Upload Live",
-    matchPaths: ["/upload-live", "/upload-live/"],
-  },
-
-
-  //  {
-  //   href: "/dashboard/track-progress",
-  //   icon: PersonStanding,
-  //   label: "Me",
-  // },
+  // Upload Live item is intentionally omitted above; add it here when allowed
 ];
+
+  if (showUploadLive) {
+    navItems.push({
+      href: "/upload-live",
+      icon: Zap,
+      label: "Upload Live",
+      matchPaths: ["/upload-live", "/upload-live/"],
+    });
+  }
 
   // Extract user data with fallbacks
   const userName = user?.name || user?.profile?.name || "Guest User";

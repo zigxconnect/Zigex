@@ -9,11 +9,13 @@ import { UserProfile } from "@/app/types/type";
 interface DashboardClientLayoutProps {
   children: React.ReactNode;
   user: UserProfile | null;
+  showUploadLive?: boolean;
 }
 
 export function DashboardClientLayout({
   children,
   user
+  , showUploadLive = false
 }: DashboardClientLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -63,6 +65,7 @@ export function DashboardClientLayout({
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
           user={user || {}} // Pass the fetched user data
+          showUploadLive={showUploadLive}
         />
 
         {/* Mobile Overlay */}

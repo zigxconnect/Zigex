@@ -6,16 +6,18 @@ import { cookies } from "next/headers";
 /**
  * EXPORT 1: The Admin Client
  */
-const supabaseUrl =
-  process.env.NEXT_PUBLIC_SUPABASE_URL! ||
-  "https://tmvipinvvhgklmqwvows.supabase.co";
-const supabaseServiceRoleKey =
-  process.env.SUPABASE_SERVICE_ROLE_KEY! ||
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRtdmlwaW52dmhna2xtcXd2b3dzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MjE4MjQ4MiwiZXhwIjoyMDY3NzU4NDgyfQ.8YJlls7rDdK5DvezGosyRbk7gMUHXXAK8XqZlwGZMWU";
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl) {
+  throw new Error(
+    'CRITICAL: NEXT_PUBLIC_SUPABASE_URL is not set in environment variables.'
+  );
+}
 
 if (!supabaseServiceRoleKey) {
   throw new Error(
-    "CRITICAL: SUPABASE_SERVICE_ROLE_KEY is not set in .env.local. The application cannot perform administrative tasks."
+    'CRITICAL: SUPABASE_SERVICE_ROLE_KEY is not set in environment variables.'
   );
 }
 
@@ -32,11 +34,16 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
 export async function createServerActionClient() {
   const cookieStore = await cookies();
 
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL! ||
-      "https://tmvipinvvhgklmqwvows.supabase.co",
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY! ||
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRtdmlwaW52dmhna2xtcXd2b3dzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIxODI0ODIsImV4cCI6MjA2Nzc1ODQ4Mn0.QJWhxJzHgdP07_YTBOmS7i8P-ZWMK2VaNZmD1fwBPho",
+    const anonUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!anonUrl || !anonKey) {
+      throw new Error(
+        'CRITICAL: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set in environment variables.'
+      );
+    }
+
+    return createServerClient(anonUrl, anonKey,
     {
       cookies: {
         async get(name: string) {
@@ -63,15 +70,20 @@ export async function createServerActionClient() {
  */
 export const createSupabaseServerClient = async () => {
   const cookieStore = await cookies();
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
+  const anonUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!anonUrl || !anonKey) {
+    throw new Error(
+      'CRITICAL: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set in environment variables.'
+    );
+  }
+
+  return createServerClient(anonUrl, anonKey, {
+    cookies: {
+      get(name: string) {
+        return cookieStore.get(name)?.value;
       },
-    }
-  );
+    },
+  });
 };

@@ -238,7 +238,7 @@ export default function ApplicationModal({
             size="icon"
             onClick={handleClose}
             disabled={isSubmitting}
-            className="h-8 w-8 sm:h-9 sm:w-9 rounded-full shrink-0 bg-white rounded-full p-3"
+            className="h-8 w-8 sm:h-9 sm:w-9 rounded-full shrink-0 bg-white rounded-fullp-4"
           >
             <X className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
           </Button>

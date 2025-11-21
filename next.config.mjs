@@ -66,6 +66,13 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+
+       {
+        protocol: 'https',
+        hostname: 'logo.png',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 

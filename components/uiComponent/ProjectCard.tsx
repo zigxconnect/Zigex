@@ -432,14 +432,14 @@ export default function MyMonthProject({
             <>
               {project.github_repository && (
                 
-                 <a href={project.github_repository}
+                 <Link href={`/feed/projects/${project.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors shadow-md font-medium text-sm"
                 >
                   <Github className="w-4 h-4" />
                   Repository
-                </a>
+                </Link>
               )}
               
               <Link 

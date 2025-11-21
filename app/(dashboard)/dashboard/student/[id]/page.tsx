@@ -332,7 +332,7 @@ Looking forward to hearing from you!`;
         {visitorProject && (
           <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
             <MyMonthProject 
-              user={myProfile} 
+              user={data} 
               project={visitorProject}
               isVisitor={true} 
               isOwner={false}

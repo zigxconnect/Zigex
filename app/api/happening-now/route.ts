@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
+import { createServerActionClient } from '@/lib/supabase/server';
 
 // Use Node.js runtime for this route because @supabase/supabase-js
 // relies on Node APIs that are not available in the Edge runtime.
@@ -39,8 +40,28 @@ function createSupabaseClient() {
 
 export async function POST(request: NextRequest) {
   try {
+    // Authenticate and authorize the requester on the server
+    try {
+      const authClient = await createServerActionClient();
+      const {
+        data: { user },
+      } = await authClient.auth.getUser();
+
+      if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+
+      // Only allow ADMIN_EMAIL to perform uploads
+      if (process.env.ADMIN_EMAIL && user.email !== process.env.ADMIN_EMAIL) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    } catch (authErr) {
+      console.error('Authorization check failed:', authErr);
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     let formData;
-    
+
     // Parse form data with error handling
     try {
       formData = await request.formData();
@@ -58,11 +79,11 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = createSupabaseClient();
-    
+
     const company = formData.get('company') as string;
     const isLive = formData.get('is_live') === 'true';
     let captions: string[] = [];
-    
+
     try {
       const captionsStr = formData.get('captions') as string;
       if (captionsStr) {
@@ -383,7 +404,7 @@ export async function PUT(request: NextRequest) {
     // Update view count
     const { data: updatedData, error: updateError } = await supabase
       .from('happening_now')
-      .update({ 
+      .update({
         view_count: newViewCount,
         updated_at: new Date().toISOString()
       })
@@ -431,7 +452,7 @@ export async function OPTIONS(request: NextRequest) {
   const origin = request.headers.get('origin') || '';
   const frontendUrl = process.env.FRONTEND_URL || process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000';
   const allowedOrigin = origin === frontendUrl ? origin : frontendUrl;
-  
+
   return NextResponse.json(
     {},
     {
