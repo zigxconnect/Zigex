@@ -7,6 +7,7 @@ import { redirect } from 'next/navigation';
 import { Plus, Briefcase, Users, ExternalLink } from 'lucide-react';
 import MyMonthProject from '@/components/uiComponent/ProjectCard';
 import CreateProjectButton from '@/components/project/CreateProjectButton';
+import ProjectSearch from '@/components/project/ProjectSearch';
 
 export const revalidate = 60;
 
@@ -92,6 +93,9 @@ export default async function DashboardProjectsPage() {
                 <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-3">
                   <Briefcase className="w-7 h-7 sm:w-8 sm:h-8 text-blue-600" />
                   Projects
+                  <span className="ml-3">
+                    <ProjectSearch />
+                  </span>
                 </h1>
                 <p className="text-sm text-gray-600 mt-1">Manage your projects and discover others</p>
               </div>

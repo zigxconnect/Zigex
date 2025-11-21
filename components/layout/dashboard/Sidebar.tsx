@@ -94,8 +94,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
     href: "/feed", 
     icon: IceCreamCone, 
     label: "Browse",
-    matchPaths: ["/feed", "/feed/", "/internships/", "/events/", "/programs/"],
-    excludePaths: ["/feed/projects/"]
+    // Keep the feed match conservative to avoid accidentally matching
+    // more specific child routes like /feed/projects/[id].
+    matchPaths: ["/feed", "/internships/", "/events/", "/programs/"],
+    // Explicitly exclude project detail routes (with and without trailing slash)
+    excludePaths: ["/feed/projects", "/feed/projects/"]
   },
   {
     href: "/dashboard/student",
