@@ -23,6 +23,8 @@ const nextConfig = {
 
   // Images configuration
   images: {
+    // Allow local images in development, optimize in production
+    unoptimized: process.env.NODE_ENV === 'development',
     remotePatterns: [
       {
         protocol: 'https',
@@ -63,13 +65,6 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'i.ibb.co',
-        port: '',
-        pathname: '/**',
-      },
-
-       {
-        protocol: 'https',
-        hostname: 'logo.png',
         port: '',
         pathname: '/**',
       },

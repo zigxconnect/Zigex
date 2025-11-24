@@ -4,7 +4,7 @@
 import { useFeedStore } from "@/lib/zustand/store";
 import { Search } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 type TabId = "all" | "live" | "internships" | "programs" | "events";
 
@@ -49,7 +49,15 @@ export function FeedTabs({ counts, isLoading = false }: FeedTabsProps) {
   const router = useRouter();
   const pathname = usePathname();
 
-  const isDetailPage = pathname.includes("/feed/") && pathname !== "/feed";
+  // Check if we're on a projects detail page
+  const isProjectDetailPage = pathname.includes("/feed/projects/") && pathname !== "/feed/projects";
+
+  // If on project detail page, don't render the tabs at all
+  if (isProjectDetailPage) {
+    return null;
+  }
+
+  const isDetailPage = pathname.includes("/feed/") && pathname !== "/feed" && !pathname.includes("/feed/projects");
 
   const handleTabChange = (tabId: TabId) => {
     setActiveTab(tabId);

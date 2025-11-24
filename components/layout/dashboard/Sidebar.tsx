@@ -94,11 +94,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     href: "/feed", 
     icon: IceCreamCone, 
     label: "Browse",
-    // Keep the feed match conservative to avoid accidentally matching
-    // more specific child routes like /feed/projects/[id].
-    matchPaths: ["/feed", "/internships/", "/events/", "/programs/"],
-    // Explicitly exclude project detail routes (with and without trailing slash)
-    excludePaths: ["/feed/projects", "/feed/projects/"]
+    matchPaths: ["/feed", "/feed/"],
+    excludePaths: ["/feed/projects"]
   },
   {
     href: "/dashboard/student",
@@ -177,15 +174,12 @@ const isRouteActive = (href: string, matchPaths?: string[], excludePaths?: strin
 
     if (!target) return false;
 
-    // Check if path matches any exclude patterns
+    // Check if path matches any exclude patterns (with prefix matching for all)
     if (excludePaths && excludePaths.length > 0) {
       const isExcluded = excludePaths.some((p: string) => {
-        if (p.endsWith("/")) {
-          const normalized = normalize(p);
-          return path === normalized || path.startsWith(normalized + "/");
-        } else {
-          return path === normalize(p);
-        }
+        const normalized = normalize(p);
+        // Always do prefix matching for excludePaths
+        return path === normalized || path.startsWith(normalized + "/");
       });
       if (isExcluded) return false;
     }

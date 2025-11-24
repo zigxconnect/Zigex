@@ -32,6 +32,7 @@ interface TabItem {
   label: string;
   isSpecial?: boolean;
   matchPaths?: string[];
+  excludePaths?: string[];
 }
 
 export function MobileTabBar({ user }: MobileTabBarProps) {
@@ -42,7 +43,8 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
     href: "/feed", 
     icon: SearchCode, 
     label: "Browse",
-    matchPaths: ["/feed", "/feed/", "/internships/", "/events/", "/programs/"]
+    matchPaths: ["/feed", "/feed/"],
+    excludePaths: ["/feed/projects"]
   },
   {
     href: "/dashboard/projects",
@@ -75,7 +77,7 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const isRouteActive = (href: string, matchPaths?: string[]) => {
+  const isRouteActive = (href: string, matchPaths?: string[], excludePaths?: string[]) => {
     // Remove trailing slashes for comparison but preserve leading slash
     const normalize = (p: string | undefined) => {
       if (!p) return "";
@@ -86,6 +88,16 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
     const target = normalize(href);
 
     if (!target) return false;
+
+    // Check if path matches any exclude patterns (with prefix matching for all)
+    if (excludePaths && excludePaths.length > 0) {
+      const isExcluded = excludePaths.some((p: string) => {
+        const normalized = normalize(p);
+        // Always do prefix matching for excludePaths
+        return path === normalized || path.startsWith(normalized + "/");
+      });
+      if (isExcluded) return false;
+    }
 
     // Check explicit matchPaths first
     if (matchPaths && matchPaths.length > 0) {
@@ -144,7 +156,7 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
       <div className="flex items-center justify-around px-2 py-2">
         {tabItems.map((item) => {
           const Icon = item.icon;
-          const isActive = isRouteActive(item.href, item.matchPaths);
+          const isActive = isRouteActive(item.href, item.matchPaths, item.excludePaths);
           const showBadge = item.href === "/notifications" && unreadCount > 0;
 
           return (

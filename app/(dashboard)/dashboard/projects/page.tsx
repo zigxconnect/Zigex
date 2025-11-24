@@ -84,20 +84,17 @@ export default async function DashboardProjectsPage() {
     const displayedOtherProjects = otherProjects && otherProjects.length > 0 ? otherProjects : fallbackProjects;
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50">
+      <div className="min-h-screen bg-white">
         {/* Header Section */}
-        <div className="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm">
+        <div className="sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-3">
-                  <Briefcase className="w-7 h-7 sm:w-8 sm:h-8 text-blue-600" />
+                <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 flex items-center gap-3">
+                  <Briefcase className="w-8 h-8 text-blue-600" />
                   Projects
-                  <span className="ml-3">
-                    <ProjectSearch />
-                  </span>
                 </h1>
-                <p className="text-sm text-gray-600 mt-1">Manage your projects and discover others</p>
+                <p className="text-sm text-gray-600 mt-2">Showcase your work and discover amazing projects</p>
               </div>
               
               <CreateProjectButton />
@@ -105,31 +102,31 @@ export default async function DashboardProjectsPage() {
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-12">
           {/* My Projects Section */}
-          <section className="mb-10 sm:mb-12 lg:mb-16">
+          <section className="mb-12 sm:mb-14 lg:mb-16">
             {/* Section Header with Badge */}
-            <div className="flex items-center gap-3 mb-6">
-              <div className="flex-shrink-0 w-1 h-8 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full"></div>
+            <div className="flex items-center gap-4 mb-6">
+              <div className="flex-shrink-0 w-1.5 h-10 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full shadow-md"></div>
               <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-3">
                   My Projects
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 shadow-sm">
                     {myProjects.length}
                   </span>
                 </h2>
-                <p className="text-xs sm:text-sm text-gray-500 mt-0.5">Projects you have created and shared</p>
+                <p className="text-sm text-gray-600 mt-1">Projects you have created and shared</p>
               </div>
             </div>
 
             {/* My Projects Content */}
-            <div className="bg-gradient-to-br from-blue-50 via-indigo-50/30 to-blue-50 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 border-2 border-blue-200 shadow-sm">
+            <div className="rounded-2xl p-6 sm:p-8 lg:p-10 border border-gray-200 bg-gradient-to-br from-blue-50 to-white shadow-md">
               {myProjects && myProjects.length > 0 ? (
-                <div className="space-y-4 sm:space-y-5 lg:space-y-6">
+                <div className="space-y-5 sm:space-y-6 lg:space-y-7">
                   {myProjects.map((p: any) => (
                     <div 
                       key={p.id}
-                      className="bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 border border-blue-100">
+                      className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-200 hover:border-blue-300 group overflow-hidden">
                       <MyMonthProject
                         user={{
                           id: profile!.id,
@@ -146,18 +143,18 @@ export default async function DashboardProjectsPage() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12 sm:py-16 lg:py-20">
-                  <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-blue-100 rounded-full mb-4">
-                    <Briefcase className="w-8 h-8 sm:w-10 sm:h-10 text-blue-600" />
+                <div className="text-center py-16 sm:py-20 lg:py-24">
+                  <div className="inline-flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 bg-blue-100 rounded-full mb-5 border border-blue-200">
+                    <Briefcase className="w-10 h-10 sm:w-12 sm:h-12 text-blue-600" />
                   </div>
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">No projects yet</h3>
-                  <p className="text-sm sm:text-base text-gray-600 mb-6 max-w-md mx-auto px-4">
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3">No projects yet</h3>
+                  <p className="text-sm sm:text-base text-gray-600 mb-7 max-w-md mx-auto">
                     Start building your portfolio by creating your first project
                   </p>
                   
                     <a href="/dashboard/projects/create"
-                    className="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200 text-sm sm:text-base">
-                    <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                    className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all duration-200 text-sm sm:text-base">
+                    <Plus className="w-5 h-5" />
                     Create Your First Project
                   </a>
                 </div>
@@ -168,29 +165,29 @@ export default async function DashboardProjectsPage() {
           {/* Other Projects Section */}
           <section>
             {/* Section Header */}
-            <div className="flex items-center gap-3 mb-6">
-              <div className="flex-shrink-0 w-1 h-8 bg-gradient-to-b from-slate-400 to-slate-500 rounded-full"></div>
+            <div className="flex items-center gap-4 mb-6">
+              <div className="flex-shrink-0 w-1.5 h-10 bg-gradient-to-b from-slate-400 to-slate-500 rounded-full shadow-md"></div>
               <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
-                  <Users className="w-5 h-5 sm:w-6 sm:h-6 text-slate-600" />
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-3">
+                  <Users className="w-6 h-6 text-slate-600" />
                   Discover Projects
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700 shadow-sm">
                     {displayedOtherProjects.length}
                   </span>
                 </h2>
-                <p className="text-xs sm:text-sm text-gray-500 mt-0.5">Explore projects from other students</p>
+                <p className="text-sm text-gray-600 mt-1">Explore projects from other students</p>
               </div>
             </div>
 
             {/* Other Projects Content */}
-            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 border border-slate-200 shadow-sm">
+            <div className="rounded-2xl p-6 sm:p-8 lg:p-10 border border-gray-200 bg-white shadow-md">
               {displayedOtherProjects && displayedOtherProjects.length > 0 ? (
-                <div className="space-y-5 sm:space-y-6 lg:space-y-8">
+                <div className="space-y-6 sm:space-y-7 lg:space-y-8">
                   {displayedOtherProjects.map((p: any) => (
                     <div 
                       key={p.id}
                       className="group">
-                      <div className="bg-slate-50 rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-all duration-200 border border-slate-200 hover:border-slate-300">
+                      <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-200 hover:border-slate-300 overflow-hidden">
                         <MyMonthProject
                           user={
                             p.student_profiles || {
@@ -208,13 +205,13 @@ export default async function DashboardProjectsPage() {
 
                       {/* Link to visit owner's profile */}
                       {p.student_profiles && (
-                        <div className="mt-3 px-3 sm:px-4">
+                        <div className="mt-3 px-4">
                           
                             <a href={`/dashboard/student/${p.student_profiles.id}`}
-                            className="inline-flex items-center gap-2 text-sm sm:text-base text-slate-700 hover:text-blue-600 font-medium group/link transition-colors duration-200">
+                            className="inline-flex items-center gap-2 text-sm sm:text-base text-gray-700 hover:text-blue-600 font-semibold group/link transition-colors duration-200">
                             <span className="flex items-center gap-1.5">
                               View {p.student_profiles.full_name}&apos;s profile
-                              <ExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform duration-200" />
+                              <ExternalLink className="w-4 h-4 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform duration-200" />
                             </span>
                           </a>
                         </div>
@@ -223,12 +220,12 @@ export default async function DashboardProjectsPage() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12 sm:py-16 lg:py-20">
-                  <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-slate-100 rounded-full mb-4">
-                    <Users className="w-8 h-8 sm:w-10 sm:h-10 text-slate-500" />
+                <div className="text-center py-16 sm:py-20 lg:py-24">
+                  <div className="inline-flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-full mb-5 border border-gray-200">
+                    <Users className="w-10 h-10 sm:w-12 sm:h-12 text-gray-600" />
                   </div>
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">No projects available</h3>
-                  <p className="text-sm sm:text-base text-gray-600 max-w-md mx-auto px-4">
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3">No projects available</h3>
+                  <p className="text-sm sm:text-base text-gray-600 max-w-md mx-auto">
                     Check back later to discover projects from other students
                   </p>
                 </div>

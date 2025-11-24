@@ -72,24 +72,25 @@ export default function ProjectDetailCard({ project, owner }: { project: Project
               
               {/* Author Info - Mobile */}
               <div className="flex items-center gap-3 lg:hidden mb-4">
-                {owner?.avatar_url ? (
-                  <Image
-                    src={owner.avatar_url}
-                    alt={owner.full_name}
-                    width={40}
-                    height={40}
-                    className="rounded-full ring-2 ring-indigo-100"
-                  />
-                ) : (
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-sm font-bold ring-2 ring-indigo-100">
-                    {owner?.full_name?.[0] || "U"}
-                  </div>
-                )}
-                <div>
-                  <p className="text-sm text-gray-600">Created by</p>
-                  <p className="font-semibold text-gray-900">{owner?.full_name || 'Contributor'}</p>
-                </div>
-              </div>
+  {owner?.avatar_url ? (
+    <Image
+      src={owner.avatar_url}
+      alt={owner.full_name}
+      width={40}
+      height={40}
+      className="rounded-full ring-2 ring-indigo-100 object-cover"
+      style={{ width: '40px', height: '40px' }}
+    />
+  ) : (
+    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-sm font-bold ring-2 ring-indigo-100">
+      {owner?.full_name?.[0] || "U"}
+    </div>
+  )}
+  <div>
+    <p className="text-sm text-gray-600">Created by</p>
+    <p className="font-semibold text-gray-900">{owner?.full_name || 'Contributor'}</p>
+  </div>
+</div>
 
               {/* Stats Bar */}
               <div className="flex flex-wrap gap-4 sm:gap-6 pt-4 border-t border-gray-100">

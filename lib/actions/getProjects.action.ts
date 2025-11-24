@@ -97,6 +97,22 @@ export async function fetchActiveProject(): Promise<ActiveProjectResult> {
       };
     }
 
+    // Check if project is invalid and older than 48 hours
+    if (activeProject && !activeProject.is_valid) {
+      const createdAt = new Date(activeProject.created_at);
+      const now = new Date();
+      const fortyEightHoursInMs = 48 * 60 * 60 * 1000;
+      const timeDifference = now.getTime() - createdAt.getTime();
+
+      // If invalid project is older than 48 hours, return null (don't show it)
+      if (timeDifference > fortyEightHoursInMs) {
+        return {
+          success: true,
+          data: null
+        };
+      }
+    }
+
     return { 
       success: true, 
       data: activeProject 
@@ -159,6 +175,22 @@ export async function fetchUserActiveProject(studentProfileId: string): Promise<
         error: 'Failed to fetch project.',
         data: null
       };
+    }
+
+    // Check if project is invalid and older than 48 hours
+    if (activeProject && !activeProject.is_valid) {
+      const createdAt = new Date(activeProject.created_at);
+      const now = new Date();
+      const fortyEightHoursInMs = 48 * 60 * 60 * 1000;
+      const timeDifference = now.getTime() - createdAt.getTime();
+
+      // If invalid project is older than 48 hours, return null (don't show it)
+      if (timeDifference > fortyEightHoursInMs) {
+        return {
+          success: true,
+          data: null
+        };
+      }
     }
 
     return { 

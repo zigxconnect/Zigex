@@ -12,6 +12,7 @@ import {
   Play,
 } from "lucide-react";
 import Link from "next/link";
+import DeveloperAvatarOverlap from "@/components/ui/DeveloperAvatarOverlap";
 
 interface Feature {
   icon: React.ElementType;
@@ -35,7 +36,6 @@ const BamendaHeroSection: React.FC = () => {
 
   // --- NEW STATE: To hold client-side-only values ---
   const [gridStyles, setGridStyles] = useState<React.CSSProperties[]>([]);
-  const [newJobsCount, setNewJobsCount] = useState<number>(0);
 
   useEffect(() => {
     setIsVisible(true);
@@ -47,8 +47,6 @@ const BamendaHeroSection: React.FC = () => {
       animationDuration: `${2 + Math.random() * 3}s`,
     }));
     setGridStyles(styles);
-
-    setNewJobsCount(Math.floor(Math.random() * 50) + 20);
 
     // Auto-rotate testimonials
     const interval = setInterval(() => {
@@ -349,19 +347,39 @@ const BamendaHeroSection: React.FC = () => {
               </div>
 
               {/* Floating Success Card */}
-              <div className="absolute -right-4 -bottom-4 bg-white rounded-xl shadow-xl p-4 border border-gray-200 animate-float">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                    <TrendingUp className="w-5 h-5 text-green-600" />
-                  </div>
-                  <div>
-                    {/* MODIFIED: Use state to display random number safely */}
-                    <div className="font-semibold text-gray-800 text-sm">
-                      {newJobsCount > 0 && `+${newJobsCount} New Jobs`}
-                    </div>
-                    <div className="text-xs text-gray-500">This week</div>
-                  </div>
-                </div>
+              <div className="absolute -right-4 -bottom-4 bg-white rounded-xl shadow-xl p-6 border border-gray-200">
+                <DeveloperAvatarOverlap
+                  developers={[
+                    {
+                      id: '1',
+                      name: 'Abdul Fadiga',
+                      role: 'AI Research Scientist',
+                      avatar: 'https://i.ibb.co/wFVCrg5K/Whats-App-Image-2025-11-23-at-11-14-41-AM.jpg',
+                    },
+                    {
+                      id: '2',
+                      name: 'John Brindi',
+                      role: 'Cybersecurity & Backend',
+                      avatar: 'https://i.ibb.co/xqWXw548/Whats-App-Image-2025-11-23-at-12-38-01-PM.jpg',
+                    },
+                    {
+                      id: '3',
+                      name: 'Tayuh Favour',
+                      role: 'Frontend & ML',
+                      avatar: 'https://i.ibb.co/JFpCHS9h/Whats-App-Image-2025-11-23-at-11-12-52-AM.jpg',
+                    },
+                    {
+                      id: '4',
+                      name: 'Tracy Jacy',
+                      role: 'Cybersecurity Specialist',
+                      avatar: 'https://i.ibb.co/zH2c0MhN/Whats-App-Image-2025-11-23-at-2-56-03-PM.jpg',
+                    },
+                  ]}
+                  maxDisplay={4}
+                  size="md"
+                  title="Our Expert Mentors"
+                  subtitle="Leading the tech revolution in Africa"
+                />
               </div>
             </div>
           </div>

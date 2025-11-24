@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Play, Calendar, Github, Clock, ExternalLink, Edit, AlertCircle, CheckCircle2, Eye } from "lucide-react";
+import { Play, Calendar, Github, Clock, ExternalLink, AlertCircle, CheckCircle2, Eye } from "lucide-react";
 import ContributeModal from "./ContributeModal";
 
 interface Project {
@@ -339,12 +339,12 @@ export default function MyMonthProject({
             <Image
               src={user.avatar_url}
               alt={user.full_name}
-              width={40}
-              height={40}
-              className="rounded-full border-2 border-gray-200"
+              width={48}
+              height={48}
+              className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
             />
           ) : (
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-bold border-2 border-gray-200">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-bold border-2 border-gray-200">
               {user.full_name.split(" ").map(n => n[0]).join("").toUpperCase()}
             </div>
           )}
@@ -421,12 +421,12 @@ export default function MyMonthProject({
         {/* Action Buttons */}
         <div className="space-y-2 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-3">
           {isMyProject ? (
-            <Link
-              href={`/dashboard/projects/edit/${project.id}`}
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg font-semibold text-sm"
+            <Link 
+              href={`/feed/projects/${project.id}`}
+              className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl transition-all duration-200 shadow-md hover:shadow-lg font-semibold text-sm"
             >
-              <Edit className="w-4 h-4" />
-              Edit Project
+              <Eye className="w-4 h-4" />
+              View Project
             </Link>
           ) : (
             <>
@@ -435,7 +435,7 @@ export default function MyMonthProject({
                  <Link href={`/feed/projects/${project.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors shadow-md font-medium text-sm"
+                  className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-gray-900 hover:bg-gray-800 text-white rounded-xl transition-colors shadow-md font-medium text-sm"
                 >
                   <Github className="w-4 h-4" />
                   Repository
@@ -444,7 +444,7 @@ export default function MyMonthProject({
               
               <Link 
                 href={`/feed/projects/${project.id}`}
-                className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:shadow-lg transition-all duration-200 font-medium text-sm"
+                className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl hover:shadow-lg transition-all duration-200 font-semibold text-sm"
               >
                 <ExternalLink className="w-4 h-4" />
                 View Details
