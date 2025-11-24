@@ -156,7 +156,7 @@ export default function ProjectDetailCard({ project, owner }: { project: Project
                 Contribute to Project
               </button>
 
-              {project.github_repository && (
+              {/* {project.github_repository && (
                 <a 
                   href={project.github_repository} 
                   target="_blank" 
@@ -166,7 +166,7 @@ export default function ProjectDetailCard({ project, owner }: { project: Project
                   <Github className="w-5 h-5" />
                   View Repository
                 </a>
-              )}
+              )} */}
 
               <Link 
                 href={`/dashboard/student/${project.student_id}`} 

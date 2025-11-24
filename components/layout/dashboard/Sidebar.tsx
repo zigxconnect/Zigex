@@ -31,13 +31,13 @@ interface SidebarProps {
   showUploadLive?: boolean;
 }
 
-// Notifications nav item
-const notificationsItem = {
-  href: "/notifications",
-  icon: Bell,
-  label: "Notifications",
-  matchPaths: ["/notifications", "/notifications"],
-};
+// // Notifications nav item
+// const notificationsItem = {
+//   href: "/notifications",
+//   icon: Bell,
+//   label: "Notifications",
+//   matchPaths: ["/notifications", "/notifications"],
+// };
 
 // Regular navigation items
 // const navItems = [
@@ -217,21 +217,21 @@ const isRouteActive = (href: string, matchPaths?: string[], excludePaths?: strin
   };
 
   // Fetch unread notifications count and poll every 30s
-  useEffect(() => {
-    let mounted = true;
-    const fetchCount = async () => {
-      try {
-        const res = await fetch('/api/students/notifications/unread-count');
-        const data = await res.json();
-        if (mounted) setUnreadCount(data.unreadCount || 0);
-      } catch (e) {
-        console.error('Failed to fetch unread count', e);
-      }
-    };
-    fetchCount();
-    const iv = setInterval(fetchCount, 30000);
-    return () => { mounted = false; clearInterval(iv); };
-  }, []);
+  // useEffect(() => {
+  //   let mounted = true;
+  //   const fetchCount = async () => {
+  //     try {
+  //       const res = await fetch('/api/students/notifications/unread-count');
+  //       const data = await res.json();
+  //       if (mounted) setUnreadCount(data.unreadCount || 0);
+  //     } catch (e) {
+  //       console.error('Failed to fetch unread count', e);
+  //     }
+  //   };
+  //   fetchCount();
+  //   const iv = setInterval(fetchCount, 30000);
+  //   return () => { mounted = false; clearInterval(iv); };
+  // }, []);
 
   return (
     <>
@@ -335,14 +335,14 @@ const isRouteActive = (href: string, matchPaths?: string[], excludePaths?: strin
                   ))}
                   
                   {/* Notifications with badge */}
-                  <AnimatedNavLink
+                  {/* <AnimatedNavLink
                     href={notificationsItem.href}
                     icon={notificationsItem.icon}
                     label={notificationsItem.label}
                     isActive={isRouteActive(notificationsItem.href, notificationsItem.matchPaths)}
                     onClick={handleNavClick}
                     badge={unreadCount > 0 ? unreadCount : undefined}
-                  />
+                  /> */}
                 </div>
               </div>
 

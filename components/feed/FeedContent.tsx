@@ -250,7 +250,7 @@ export function FeedContent({ initialData, error }: FeedContentProps) {
               <button
                 onClick={handleLoadMore}
                 disabled={isLoadingMore}
-                className="group px-8 py-3.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-2xl flex items-center gap-2 transform hover:scale-105 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
+                className="group px-8 py-3.5 bg-gradient-to-r from-blue-600 to-blue-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-blue-700 transition-all shadow-lg hover:shadow-2xl flex items-center gap-2 transform hover:scale-105 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
               >
                 {isLoadingMore ? (
                   <>

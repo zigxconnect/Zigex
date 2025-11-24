@@ -13,7 +13,7 @@ export default function FuproAiPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-16">
-      <div className="max-w-4xl mx-auto px-6">
+      <div className="max-w-6xl mx-auto px-6">
         <div className="bg-white/80 backdrop-blur-md border border-gray-100 rounded-3xl shadow-2xl p-6 sm:p-10 text-center transform-gpu transition-all duration-500 ease-out sm:scale-95 scale-100">
           <div className="flex items-center justify-center mb-6">
             <div className="relative">
