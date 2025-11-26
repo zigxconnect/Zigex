@@ -49,6 +49,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [emailSent, setEmailSent] = useState(false);
+  const [signInCooldown, setSignInCooldown] = useState(0);
 
   const supabase = createClient();
 
@@ -71,6 +72,16 @@ export const AuthForm = ({ type }: AuthFormProps) => {
       setApiError(decoded);
     }
   }, [searchParams]);
+
+  // Cooldown timer for sign-in to avoid spamming OTP requests
+  useEffect(() => {
+    if (signInCooldown <= 0) return;
+    const t = setInterval(
+      () => setSignInCooldown((c) => Math.max(0, c - 1)),
+      1000
+    );
+    return () => clearInterval(t);
+  }, [signInCooldown]);
 
   // --- THIS IS THE CORRECTED OBJECT ---
   const content = {
@@ -141,9 +152,19 @@ export const AuthForm = ({ type }: AuthFormProps) => {
         const responseData = await response.json();
         if (!response.ok)
           throw new Error(responseData.error || "Login failed.");
-        router.push(
-          responseData.profileComplete ? "/dashboard" : "/create-profile"
-        );
+        // If the server indicates an OTP was sent (company flow), redirect
+        // to the verify page and include the email in the query string.
+        if (responseData?.otpSent) {
+          // use Retry-After header if provided to set cooldown
+          const ra = response.headers?.get?.("Retry-After");
+          const retryAfter = ra ? Number(ra) : responseData.retryAfter || 10;
+          setSignInCooldown(Number.isFinite(retryAfter) ? retryAfter : 10);
+          router.push(`/verify-otp?email=${encodeURIComponent(data.email)}`);
+        } else {
+          router.push(
+            responseData.profileComplete ? "/dashboard" : "/create-profile"
+          );
+        }
       } catch (err) {
         setApiError((err as Error).message);
       }
@@ -270,7 +291,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
         <Button
           type="submit"
           className="w-full !mt-6 text-base py-2.5 flex items-center justify-center gap-2 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
-          disabled={isSubmitting}
+          disabled={isSubmitting || signInCooldown > 0}
         >
           {isSubmitting ? (
             <>
@@ -283,6 +304,11 @@ export const AuthForm = ({ type }: AuthFormProps) => {
         </Button>
       </form>
       <div className="flex-grow"></div>
+      {signInCooldown > 0 && (
+        <p className="text-center text-sm text-gray-500 mt-2">
+          Please wait {signInCooldown}s before retrying sign-in.
+        </p>
+      )}
       <div className="space-y-4 text-center mt-5">
         {isSignUp && (
           <p className="text-sm text-gray-500">

@@ -34,7 +34,6 @@ export async function POST(request: Request) {
     }
   );
 
-
   // 1. Check if user is a company
   const { data: companyProfile } = await supabase
     .from("company_profiles")
@@ -54,6 +53,36 @@ export async function POST(request: Request) {
     });
 
     if (otpError) {
+      // If Supabase reports an email send rate limit, return a 200 with
+      // otpSent=true so the client knows an OTP was recently requested and
+      // should proceed to the verification screen instead of showing a
+      // server error. This avoids confusing 500 errors while respecting the
+      // provider's rate limit.
+      if (
+        (otpError as any)?.status === 429 ||
+        (otpError as any)?.code === "over_email_send_rate_limit"
+      ) {
+        console.warn("Supabase OTP rate limit:", otpError);
+        // Try to extract suggested wait time from message, default to 10s
+        let retryAfter = 10;
+        try {
+          const m = String((otpError as any).message || "").match(
+            /after\s+(\d+)\s+seconds?/i
+          );
+          if (m) retryAfter = Number(m[1]);
+        } catch (e) {}
+
+        return NextResponse.json(
+          {
+            message: "OTP was recently requested. Please check your email.",
+            otpSent: true,
+            email: email,
+            retryAfter,
+          },
+          { status: 200, headers: { "Retry-After": String(retryAfter) } }
+        );
+      }
+
       console.error("Supabase OTP Error:", otpError);
       return NextResponse.json(
         { error: "Failed to send verification code. Please try again." },

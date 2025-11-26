@@ -51,7 +51,6 @@ export const VerifyOtpForm = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email");
-  const supabase = createClient();
 
   const [formMessage, setFormMessage] = useState<FormMessage>(null);
   const [isResending, setIsResending] = useState(false);
@@ -85,21 +84,31 @@ export const VerifyOtpForm = () => {
       });
       return;
     }
+
     setFormMessage(null);
 
-    const { error } = await supabase.auth.verifyOtp({
-      email,
-      token: data.token,
-      type: "email",
-    });
-
-    if (error) {
-      setError("token", {
-        type: "manual",
-        message: "Invalid or expired code. Please try again.",
+    try {
+      const res = await fetch("/api/auth/verify-otp-server", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, token: data.token }),
       });
-    } else {
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        console.error("verify-otp-server error:", err, res.status);
+        setError("token", {
+          type: "manual",
+          message: err?.error || "Invalid or expired code. Please try again.",
+        });
+        return;
+      }
+
+      // Success — server should have set the session cookies for middleware
       router.push("/admin/dashboard");
+    } catch (e) {
+      console.error("verify-otp-server unexpected error", e);
+      setFormMessage({ type: "error", text: "An unexpected error occurred." });
     }
   };
 
