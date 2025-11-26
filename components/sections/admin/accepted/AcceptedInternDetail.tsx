@@ -1,9 +1,21 @@
 // file: components/sections/admin/accepted/AcceptedInternDetail.tsx
 
+"use client";
+
+import { useState } from "react";
+import { toast } from "sonner";
 import { Applicant } from "@/lib/types/applicants";
 import { Button } from "@/components/ui/button";
 import { Download, Mail, Phone, ExternalLink, Calendar, MapPin } from "lucide-react";
 import Link from "next/link";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { SendWelcomeEmailDialog } from "./SendWelcomeEmailDialog";
+import { ScheduleOnboardingDialog } from "./ScheduleOnboardingDialog";
 
 type AcceptedInternDetailProps = {
   intern: Applicant;
@@ -23,6 +35,9 @@ const DetailSection = ({
 );
 
 export const AcceptedInternDetail = ({ intern }: AcceptedInternDetailProps) => {
+  const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
+  const [isWelcomeEmailDialogOpen, setIsWelcomeEmailDialogOpen] = useState(false);
+
   return (
     <div className="space-y-8">
       {/* Header Section */}
@@ -58,15 +73,43 @@ export const AcceptedInternDetail = ({ intern }: AcceptedInternDetailProps) => {
 
       {/* Action Buttons */}
       <div className="bg-gray-50 p-4 rounded-lg border flex items-center justify-center gap-3 flex-wrap">
-        <Button variant="primary" className="bg-green-600 hover:bg-green-700">
-          <Mail className="mr-2 h-4 w-4" /> Send Welcome Email
+        <Button
+          onClick={() => setIsWelcomeEmailDialogOpen(true)}
+          variant="primary"
+          className="bg-green-600 hover:bg-green-700"
+        >
+          <Mail className="mr-2 h-4 w-4" />
+          Send Welcome Email
         </Button>
-        <Button variant="secondary">
+        <Button
+          onClick={() => setIsScheduleDialogOpen(true)}
+          variant="secondary"
+        >
           <Calendar className="mr-2 h-4 w-4" /> Schedule Onboarding
         </Button>
-        <Button variant="outline">
-          <Phone className="mr-2 h-4 w-4" /> Contact Intern
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">
+              <Phone className="mr-2 h-4 w-4" /> Contact Intern
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+              <a href={`mailto:${intern.email}`} className="cursor-pointer">
+                <Mail className="mr-2 h-4 w-4" />
+                Send Email
+              </a>
+            </DropdownMenuItem>
+            {intern.phone && (
+              <DropdownMenuItem asChild>
+                <a href={`tel:${intern.phone}`} className="cursor-pointer">
+                  <Phone className="mr-2 h-4 w-4" />
+                  Call Phone
+                </a>
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Details Sections */}
@@ -161,8 +204,10 @@ export const AcceptedInternDetail = ({ intern }: AcceptedInternDetailProps) => {
 
           <DetailSection title="Quick Actions">
             <div className="grid grid-cols-1 gap-2">
-              <Button variant="outline" size="sm" className="justify-start">
-                <Mail className="mr-2 h-4 w-4" /> Send Contract
+              <Button variant="outline" size="sm" className="justify-start" asChild>
+                <a href={`mailto:${intern.email}?subject=Internship Contract`}>
+                  <Mail className="mr-2 h-4 w-4" /> Send Contract
+                </a>
               </Button>
               <Button variant="outline" size="sm" className="justify-start">
                 <Calendar className="mr-2 h-4 w-4" /> Add to Team Calendar
@@ -174,6 +219,29 @@ export const AcceptedInternDetail = ({ intern }: AcceptedInternDetailProps) => {
           </DetailSection>
         </div>
       </div>
+
+      {/* Send Welcome Email Dialog */}
+      <SendWelcomeEmailDialog
+        internId={intern.id}
+        internName={intern.name}
+        internEmail={intern.email}
+        isOpen={isWelcomeEmailDialogOpen}
+        onClose={() => setIsWelcomeEmailDialogOpen(false)}
+        onSuccess={() => {
+          toast.success("Welcome email sent!");
+        }}
+      />
+
+      {/* Schedule Onboarding Dialog */}
+      <ScheduleOnboardingDialog
+        internId={intern.id}
+        internName={intern.name}
+        isOpen={isScheduleDialogOpen}
+        onClose={() => setIsScheduleDialogOpen(false)}
+        onSuccess={() => {
+          toast.success("Onboarding scheduled!");
+        }}
+      />
     </div>
   );
 };

@@ -45,7 +45,7 @@ export const ApplicationAcceptedEmail = ({
             <Section className="text-center mt-[32px] mb-[32px]">
               <Button
                 className="bg-[#000000] rounded text-white text-[12px] font-semibold no-underline text-center px-5 py-3"
-                href="https://future-prospect.vercel.app/dashboard"
+                href="https://zigex.vercel.app/dashboard"
               >
                 View Dashboard
               </Button>

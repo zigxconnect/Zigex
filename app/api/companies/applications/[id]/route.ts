@@ -1,6 +1,7 @@
 import { authMiddleware } from "@/lib/middleware/auth";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { sendApplicationAcceptedEmail } from "@/lib/mail";
 
 /**
  * Helper function to create a notification for a student.
@@ -32,7 +33,7 @@ const createNotification = async (
  */
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await authMiddleware(request);
   if (auth instanceof NextResponse) {
@@ -52,7 +53,7 @@ export async function GET(
     );
   }
 
-  const id = params?.id;
+  const { id } = await params;
 
   const { data: application, error: applicationError } = await supabaseAdmin
     .from("Applications")
@@ -110,7 +111,7 @@ export async function GET(
  */
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await authMiddleware(request);
   if (auth instanceof NextResponse) {
@@ -122,20 +123,13 @@ export async function PATCH(
     return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
   }
 
-  const id = params?.id;
+  const { id } = await params;
   const { status } = await request.json();
 
+  // First, get the application
   const { data: application, error: applicationError } = await supabaseAdmin
     .from("Applications")
-    .select(
-      `
-        *,
-        student_profiles ( user_id ), 
-        internship:internships(title),
-        program:programs(title),
-        event:event(title)
-    `
-    )
+    .select("*")
     .eq("id", id)
     .single();
 
@@ -146,37 +140,43 @@ export async function PATCH(
     );
   }
 
-  if (!application.student_profiles?.user_id) {
+  // Get the student profile
+  const { data: studentProfile } = await supabaseAdmin
+    .from("student_profiles")
+    .select("user_id, full_name")
+    .eq("id", application.student_id)
+    .single();
+
+  if (!studentProfile?.user_id) {
     return NextResponse.json(
       { error: "Could not find the student's user authentication ID." },
       { status: 404 }
     );
   }
 
-  if (application.application_type == "event") {
-    const { data: opportunity, error } = await supabaseAdmin
-      .from("event")
-      .select("company_id")
-      .eq("id", application.event_id)
-      .single();
-    if (error || !opportunity || opportunity.company_id !== company.id)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-  } else if (application.application_type == "program") {
-    const { data: opportunity, error } = await supabaseAdmin
-      .from("programs")
-      .select("company_id")
-      .eq("id", application.program_id)
-      .single();
-    if (error || !opportunity || opportunity.company_id !== company.id)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-  } else if (application.application_type == "internship") {
-    const { data: opportunity, error } = await supabaseAdmin
+  // Get the opportunity title based on application type
+  let opportunityTitle = "your application";
+  if (application.application_type === "internship" && application.internship_id) {
+    const { data: internship } = await supabaseAdmin
       .from("internships")
-      .select("company_id")
+      .select("title")
       .eq("id", application.internship_id)
       .single();
-    if (error || !opportunity || opportunity.company_id !== company.id)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    opportunityTitle = internship?.title || opportunityTitle;
+  } else if (application.application_type === "program" && application.program_id) {
+    const { data: program } = await supabaseAdmin
+      .from("programs")
+      .select("title")
+      .eq("id", application.program_id)
+      .single();
+    opportunityTitle = program?.title || opportunityTitle;
+  } else if (application.application_type === "event" && application.event_id) {
+    const { data: event } = await supabaseAdmin
+      .from("event")
+      .select("title")
+      .eq("id", application.event_id)
+      .single();
+    opportunityTitle = event?.title || opportunityTitle;
   }
 
   // --- Update the application status in the database ---
@@ -192,19 +192,29 @@ export async function PATCH(
     return NextResponse.json({ error: updateError.message }, { status: 400 });
   }
 
-  // --- Create notification for the student AFTER the update is successful ---
-  const opportunityTitle =
-    application.internship?.title ||
-    application.program?.title ||
-    application.event?.title ||
-    "your application";
+  // --- Create notification and send email for the student AFTER the update is successful ---
   const referenceId =
     application.internship_id || application.program_id || application.event_id;
-
-  const studentAuthId = application.student_profiles.user_id;
+  const studentAuthId = studentProfile.user_id;
 
   if (referenceId && application.application_type) {
     if (status === "accepted") {
+      // Send Email
+      const { data: userData } = await supabaseAdmin.auth.admin.getUserById(
+        studentAuthId
+      );
+      const studentEmail = userData?.user?.email;
+      const studentName = studentProfile.full_name || "Student";
+
+      if (studentEmail) {
+        await sendApplicationAcceptedEmail(
+          studentEmail,
+          studentName,
+          opportunityTitle,
+          application.application_type
+        );
+      }
+
       await createNotification(
         studentAuthId,
         "Congratulations! Your Application was Accepted!",

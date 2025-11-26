@@ -6,12 +6,12 @@ import { programSchema } from "@/lib/validation/program";
 import { v4 as uuidv4 } from "uuid"; // For unique file names
 
 /*
-* Function to handle CRUD operations for company programs
-* GET /api/companies/programs (Authenticated: returns programs for the authenticated company)
-* POST /api/companies/programs (Authenticated: create a new program)
-* PATCH /api/companies/programs (Authenticated: update an existing program)
-* DELETE /api/companies/programs (Authenticated: delete a program)
-*/
+ * Function to handle CRUD operations for company programs
+ * GET /api/companies/programs (Authenticated: returns programs for the authenticated company)
+ * POST /api/companies/programs (Authenticated: create a new program)
+ * PATCH /api/companies/programs (Authenticated: update an existing program)
+ * DELETE /api/companies/programs (Authenticated: delete a program)
+ */
 
 export async function GET(request: Request) {
   const auth = await authMiddleware(request);
@@ -406,8 +406,8 @@ export async function DELETE(request: Request) {
   }
 }
 /*
-* Function to get programs posted by the authenticated company
-*/
+ * Function to get programs posted by the authenticated company
+ */
 // GET /api/companies/programs (Authenticated: returns programs for the authenticated company)
 export async function getAuthenticatedCompanyPrograms(request: Request) {
   const auth = await authMiddleware(request);
@@ -439,5 +439,3 @@ export async function getAuthenticatedCompanyPrograms(request: Request) {
 
   return NextResponse.json(data);
 }
-
-
