@@ -112,115 +112,6 @@ export const AcceptedInternDetail = ({ intern }: AcceptedInternDetailProps) => {
         </DropdownMenu>
       </div>
 
-      {/* Details Sections */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <div className="space-y-6">
-          <DetailSection title="Internship Details">
-            <div className="space-y-3 text-sm">
-              <p>
-                <strong className="text-gray-700">Position:</strong>{" "}
-                {intern.internshipTitle}
-              </p>
-              <p>
-                <strong className="text-gray-700">Application Date:</strong>{" "}
-                {new Date(intern.appliedDate).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </p>
-              <p>
-                <strong className="text-gray-700">Status:</strong>{" "}
-                <span className="text-green-600 font-medium">Accepted</span>
-              </p>
-            </div>
-          </DetailSection>
-
-          <DetailSection title="Documents">
-            <div className="space-y-3">
-              {intern.resumeUrl && (
-                <Button asChild variant="secondary" className="w-full justify-start">
-                  <Link
-                    href={intern.resumeUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Download className="mr-2 h-4 w-4" /> Download Resume
-                  </Link>
-                </Button>
-              )}
-              
-              {intern.coverLetter ? (
-                <Button asChild variant="secondary" className="w-full justify-start">
-                  <Link
-                    href={intern.coverLetter}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <ExternalLink className="mr-2 h-4 w-4" /> View Cover Letter
-                  </Link>
-                </Button>
-              ) : (
-                <p className="text-gray-500 italic">No cover letter provided.</p>
-              )}
-            </div>
-          </DetailSection>
-        </div>
-
-        <div className="space-y-6">
-          <DetailSection title="Next Steps">
-            <div className="space-y-4">
-              <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
-                <div className="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
-                <div>
-                  <h4 className="font-medium text-blue-900">Send Welcome Package</h4>
-                  <p className="text-sm text-blue-700 mt-1">
-                    Prepare and send the internship offer letter and welcome materials.
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-3 p-3 bg-green-50 rounded-lg">
-                <div className="w-2 h-2 bg-green-600 rounded-full mt-2"></div>
-                <div>
-                  <h4 className="font-medium text-green-900">Schedule Onboarding</h4>
-                  <p className="text-sm text-green-700 mt-1">
-                    Arrange orientation and training sessions for the intern.
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg">
-                <div className="w-2 h-2 bg-purple-600 rounded-full mt-2"></div>
-                <div>
-                  <h4 className="font-medium text-purple-900">Setup Workspace</h4>
-                  <p className="text-sm text-purple-700 mt-1">
-                    Prepare necessary equipment and access for the intern.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </DetailSection>
-
-          <DetailSection title="Quick Actions">
-            <div className="grid grid-cols-1 gap-2">
-              <Button variant="outline" size="sm" className="justify-start" asChild>
-                <a href={`mailto:${intern.email}?subject=Internship Contract`}>
-                  <Mail className="mr-2 h-4 w-4" /> Send Contract
-                </a>
-              </Button>
-              <Button variant="outline" size="sm" className="justify-start">
-                <Calendar className="mr-2 h-4 w-4" /> Add to Team Calendar
-              </Button>
-              <Button variant="outline" size="sm" className="justify-start">
-                <MapPin className="mr-2 h-4 w-4" /> Share Office Information
-              </Button>
-            </div>
-          </DetailSection>
-        </div>
-      </div>
-
-      {/* Send Welcome Email Dialog */}
       <SendWelcomeEmailDialog
         internId={intern.id}
         internName={intern.name}
@@ -232,7 +123,6 @@ export const AcceptedInternDetail = ({ intern }: AcceptedInternDetailProps) => {
         }}
       />
 
-      {/* Schedule Onboarding Dialog */}
       <ScheduleOnboardingDialog
         internId={intern.id}
         internName={intern.name}
