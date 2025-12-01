@@ -159,7 +159,7 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50 pb-80 md:pb-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         {/* Back Button */}
         <div className="flex justify-between p-6">
@@ -237,6 +237,15 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
                   title={item.title}
                   fullWidth={true}
                   buttonText="Get Started"
+                  opportunityData={{
+                    title: item.title,
+                    description: item.description,
+                    type: item._type.slice(0, -1),
+                    company_profiles: company,
+                    location: item.location,
+                    duration: (item as any).duration,
+                    department: (item as any).department,
+                  }}
                 />
               </section>
             )}
