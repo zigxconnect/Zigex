@@ -5,17 +5,16 @@ import Link from "next/link";
 
 export default function FuproAiPage() {
   const team = [
-    { id: 1, name: "Fonyuy Gita", avatar: "https://i.pravatar.cc/150?img=32", role: "ML Engineer" },
-    { id: 2, name: "Leohnard Kwaleh", avatar: "https://i.pravatar.cc/150?img=12", role: "Product" },
-    { id: 3, name: "Favour Deoum", avatar: "https://i.pravatar.cc/150?img=44", role: "Research" },
-    { id: 4, name: "Maxwell", avatar: "https://i.pravatar.cc/150?img=56", role: "Frontend" },
+    { id: 1, name: "Fonyuy Gita", avatar: "/gita.png", role: "ML Engineer" },
+    { id: 2, name: "Leohnard Kwaleh", avatar: "/z3.png", role: "Product" },
+
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-16">
       <div className="max-w-6xl mx-auto px-6">
         <div className="bg-white/80 backdrop-blur-md border border-gray-100 rounded-3xl shadow-2xl p-6 sm:p-10 text-center transform-gpu transition-all duration-500 ease-out sm:scale-95 scale-100">
-          <div className="flex items-center justify-center mb-6">
+        <div className="flex items-center justify-center mb-6">
             <div className="relative">
               {/* Animated agentic icon */}
               <div className="w-32 h-32 sm:w-28 sm:h-28 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-2xl transform transition-transform duration-500 hover:scale-105 active:scale-98 animate-float">

@@ -9,9 +9,10 @@ import { PostProgramForm } from "@/components/sections/admin/PostProgramForm";
 export default async function EditPostingPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const posting = await getPostingById(params.id);
+  const { id } = await params;
+  const posting = await getPostingById(id);
 
   if (!posting) {
     notFound();

@@ -9,7 +9,6 @@ import {
   MessageCircle, 
   Linkedin, 
   ChevronRight,
-  Sparkles,
   MapPin,
   AlertCircle
 } from "lucide-react";
@@ -416,7 +415,6 @@ Looking forward to hearing from you 🚀`;
           {showIndicator && (
             <div className="absolute -top-1 left-1/2 -translate-x-1/2 z-10 animate-bounce">
               <div className="bg-linear-to-r from-blue-600 to-purple-600 text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-lg border-2 border-white flex items-center gap-2">
-                <Sparkles className="w-4 h-4" />
                 ACTIVE PROJECT
               </div>
             </div>
@@ -448,7 +446,6 @@ Looking forward to hearing from you 🚀`;
             {/* Project Type Badge - Mobile */}
             <div className="absolute top-3 left-3">
               <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/95 backdrop-blur-sm text-blue-600 rounded-lg shadow-md border border-blue-100">
-                <Sparkles className="w-4 h-4" />
                 <span className="text-xs font-bold">PROJECT</span>
               </div>
             </div>
@@ -499,7 +496,6 @@ Looking forward to hearing from you 🚀`;
                 target="_blank"
                 className="flex-1 inline-flex cursor-pointer items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all hover:shadow-md font-semibold text-sm"
               >
-                <Sparkles className="w-5 h-5" />
                 View Project
               </Link>
             </div>
@@ -513,7 +509,6 @@ Looking forward to hearing from you 🚀`;
         {showIndicator && !isOwner && (
           <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 animate-bounce">
             <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-lg border-2 border-white flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5" />
               ACTIVE PROJECT
             </div>
           </div>
@@ -547,7 +542,6 @@ Looking forward to hearing from you 🚀`;
           {/* Project Type Badge - Desktop */}
           <div className="absolute top-3 left-3">
             <div className="inline-flex items-center gap-1 px-2 py-1 bg-white/95 backdrop-blur-sm text-blue-600 rounded-md shadow-md border border-blue-100">
-              <Sparkles className="w-3.5 h-3.5" />
               <span className="text-xs font-bold">PROJECT</span>
             </div>
           </div>
@@ -598,7 +592,6 @@ Looking forward to hearing from you 🚀`;
             onClick={() => youtubeVideoId && window.open(`https://www.youtube.com/watch?v=${youtubeVideoId}`, '_blank')}
             className="cursor-pointer w-full inline-flex items-center justify-center gap-1.5 px-3 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all hover:shadow-md font-medium text-sm"
           >
-            <Sparkles className="w-4 h-4" />
             {youtubeVideoId ? 'Watch on YouTube' : 'View Project'}
           </button>
         </div>
