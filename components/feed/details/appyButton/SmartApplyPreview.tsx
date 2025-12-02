@@ -151,7 +151,7 @@ export function SmartApplyPreview({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-3 md:p-4 overflow-y-auto pb-20 md:pb-0">
+    <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-3 md:p-4 overflow-y-auto pb-20 md:pb-0">
       <div className="bg-white rounded-xl md:rounded-2xl shadow-2xl w-full max-w-md md:max-w-2xl my-4 md:my-8 max-h-[90vh] md:max-h-[85vh] flex flex-col">
         {/* Header */}
         <div className="flex items-start justify-between p-4 md:p-6 border-b border-gray-200 flex-shrink-0">
