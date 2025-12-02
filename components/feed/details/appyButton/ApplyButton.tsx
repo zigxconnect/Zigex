@@ -1,4 +1,3 @@
-// components/feed/detail/ApplyButton.tsx
 "use client";
 
 import { useState } from "react";
@@ -9,8 +8,7 @@ import { cn } from "@/lib/utils";
 import ApplicationModal from "./Modal";
 import { SmartApplyPreview } from "./SmartApplyPreview";
 import { generateSmartApplicationDraft } from "@/lib/actions/feed/smart-apply.actions";
-// import { ApplicationModal } from "@/components/sections/dashboard/details/ApplicationModal";
-// import ApplicationModal from "./Modal";
+import { MonetbilPaymentModal } from "@/components/payment/MonetbilPaymentModal";
 
 interface ApplyButtonProps {
   isOpen: boolean;
@@ -42,39 +40,26 @@ export function ApplyButton({
 }: ApplyButtonProps) {
   const [showModal, setShowModal] = useState(false);
   const [showSmartPreview, setShowSmartPreview] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false); // New state for payment
   const [isHovered, setIsHovered] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingError, setGeneratingError] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
 
-  const handleSmartApply = async () => {
-    if (!opportunityData) {
-      setGeneratingError("Opportunity data not available");
-      return;
-    }
+  // Triggered when user clicks "Smart Apply"
+  const handleSmartApplyClick = () => {
+    setShowPaymentModal(true);
+  };
 
-    setIsGenerating(true);
-    setGeneratingError(null);
-
-    try {
-      const result = await generateSmartApplicationDraft(id, opportunityData);
-      
-      if (result.success && result.draft) {
-        setDraft(result.draft);
-        setShowSmartPreview(true);
-      } else {
-        setGeneratingError(result.error || "Failed to generate application");
-      }
-    } catch (error) {
-      setGeneratingError(
-        error instanceof Error ? error.message : "An unexpected error occurred"
-      );
-    } finally {
-      setIsGenerating(false);
-    }
+  // Triggered after successful payment
+  const handlePaymentSuccess = async () => {
+    // For prototyping: Just confirm payment without generating
+    console.log("Payment successful for opportunity:", id);
+    // In a real app, you would verify the transaction here
   };
 
   if (!isOpen) {
+    // ... existing closed state return
     return (
       <div className={fullWidth ? "w-full" : ""}>
         <div className="p-4 rounded-2xl bg-red-50 border border-red-200">
@@ -112,7 +97,7 @@ export function ApplyButton({
               group
             "
           >
-            {/* Animated background pulse */}
+            {/* ... existing Apply Now button content ... */}
             <span
               className={`
                 absolute inset-0 bg-blue-400
@@ -120,7 +105,6 @@ export function ApplyButton({
               `}
             />
 
-            {/* Shimmer effect */}
             <span
               className={`
                 absolute inset-0 -translate-x-full
@@ -137,7 +121,7 @@ export function ApplyButton({
 
           {/* Smart Apply Button */}
           <button
-            onClick={handleSmartApply}
+            onClick={handleSmartApplyClick}
             disabled={isGenerating}
             className="
               w-full relative overflow-hidden flex items-center justify-center gap-2 
@@ -152,7 +136,7 @@ export function ApplyButton({
               group
             "
           >
-            {/* Animated gradient background */}
+            {/* ... existing Smart Apply button content ... */}
             <span className="absolute inset-0 bg-gradient-to-r from-orange-400 to-orange-500 opacity-0 group-hover:opacity-20 transition-opacity" />
 
             <span className="relative z-10 flex items-center justify-center gap-2">
@@ -192,6 +176,14 @@ export function ApplyButton({
           title={title}
         />
       )}
+
+      {/* Payment Modal */}
+      <MonetbilPaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        onSuccess={handlePaymentSuccess}
+        amount={1000} // Set your price here (e.g., 1000 XAF)
+      />
 
       {/* Smart Apply Preview Modal */}
       <SmartApplyPreview
