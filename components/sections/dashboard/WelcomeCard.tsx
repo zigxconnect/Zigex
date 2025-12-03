@@ -2,7 +2,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import {
-  Edit,
   Github,
   Link2,
   User,
@@ -14,7 +13,6 @@ import {
 } from "lucide-react";
 import { UserProfile } from "@/app/types/type";
 import { useState } from "react";
-import { EditProfileModal } from "./EditProfileModal";
 
 interface WelcomeCardProps {
   user: UserProfile | any;
@@ -27,7 +25,7 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile }: WelcomeCardProp
   const [isAboutExpanded, setIsAboutExpanded] = useState(false);
   const [isSkillsExpanded, setIsSkillsExpanded] = useState(false);
   const [isAvatarHovered, setIsAvatarHovered] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
   const [isProfileBtnHovered, setIsProfileBtnHovered] = useState(false);
 
   const truncateText = (text: string, maxLength: number) => {
@@ -58,15 +56,6 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile }: WelcomeCardProp
           priority
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40" />
-
-        {/* Edit Cover Image Button */}
-        <button
-          onClick={() => setIsEditModalOpen(true)}
-          className="absolute top-3 right-3 p-2 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors duration-200 z-10"
-          aria-label="Edit Cover Image"
-        >
-          <Edit size={16} />
-        </button>
 
         {/* Skills and About Cards positioned over background */}
         <div className="absolute top-2 right-2 lg:top-4 lg:right-4 flex flex-col lg:flex-row gap-2 lg:gap-3 max-w-[320px] lg:max-w-none">
@@ -162,7 +151,6 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile }: WelcomeCardProp
           className="relative group cursor-pointer"
           onMouseEnter={() => setIsAvatarHovered(true)}
           onMouseLeave={() => setIsAvatarHovered(false)}
-          onClick={() => setIsEditModalOpen(true)}
         >
           <div className="w-20 h-20 md:w-24 md:h-24 lg:w-20 lg:h-20 rounded-full border-3 lg:border-4 border-white shadow-lg overflow-hidden bg-white transition-all duration-300 group-hover:shadow-2xl group-hover:scale-105">
             <Image
@@ -173,24 +161,6 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile }: WelcomeCardProp
               className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-75"
               priority
             />
-          </div>
-          
-          {/* Edit Overlay */}
-          <div
-            className={`
-              absolute inset-0 rounded-full bg-black/60 flex items-center justify-center
-              transition-all duration-300 ease-in-out backdrop-blur-sm
-              ${isAvatarHovered ? "opacity-100 scale-100" : "opacity-0 scale-95"}
-            `}
-          >
-            <div className="flex flex-col items-center gap-1 text-white">
-              <div className="w-6 h-6 lg:w-8 lg:h-8 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30">
-                <Edit size={12} className="lg:w-4 lg:h-4" />
-              </div>
-              <span className="text-[10px] lg:text-xs font-medium tracking-wide">
-                Edit
-              </span>
-            </div>
           </div>
 
           {/* Animated Ring */}
@@ -308,16 +278,6 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile }: WelcomeCardProp
           </div>
         </div>
       </div>
-
-      {/* Edit Profile Modal */}
-      <EditProfileModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        userId={user.profile.id}
-        currentAvatarUrl={avatarUrl}
-        currentCoverImageUrl={coverImageUrl}
-        onProfileUpdated={onProfileUpdated}
-      />
 
       <style jsx global>{`
         @keyframes shimmer {
