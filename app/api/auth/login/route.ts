@@ -1,9 +1,18 @@
+import { generateCSRFToken } from "@/lib/utils/csrf";
+
+// GET: Return a CSRF token for the frontend
+export async function GET() {
+  const secret = process.env.CSRF_SECRET || 'dev-secret-please-change';
+  const token = generateCSRFToken(secret);
+  return NextResponse.json({ csrfToken: token });
+}
 
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import { withCSRFProtection } from "@/lib/utils/csrf";
 
 // Upstash rate limiter: 5 login attempts per 15 minutes per email
 const ratelimit = new Ratelimit({
@@ -24,7 +33,7 @@ async function checkRateLimit(identifier: string) {
 }
 
 
-export async function POST(request: Request) {
+const _POST = async function(request: Request) {
   const { email, password } = await request.json();
   console.log("Login attempt for email:", email);
 
@@ -168,3 +177,5 @@ export async function POST(request: Request) {
     { status: 401 }
   );
 }
+
+export const POST = withCSRFProtection(_POST);

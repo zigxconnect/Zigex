@@ -51,8 +51,18 @@ export const AuthForm = ({ type }: AuthFormProps) => {
   const [emailSent, setEmailSent] = useState(false);
   const [signInCooldown, setSignInCooldown] = useState(0);
   const [rateLimitError, setRateLimitError] = useState<string | null>(null);
+  const [csrfToken, setCsrfToken] = useState<string | null>(null);
 
   const supabase = createClient();
+  // Fetch CSRF token on mount (for sign-in only)
+  useEffect(() => {
+    if (!isSignUp) {
+      fetch("/api/auth/login")
+        .then((res) => res.json())
+        .then((data) => setCsrfToken(data.csrfToken))
+        .catch(() => setCsrfToken(null));
+    }
+  }, [isSignUp]);
 
   const {
     register,
@@ -147,7 +157,10 @@ export const AuthForm = ({ type }: AuthFormProps) => {
       try {
         const response = await fetch("/api/auth/login", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(csrfToken ? { "x-csrf-token": csrfToken } : {}),
+          },
           body: JSON.stringify({ email: data.email, password: data.password }),
         });
         const responseData = await response.json();

@@ -44,6 +44,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "critters": "latest",
+    "csrf": "^3.1.0",
     "framer-motion": "^12.23.6",
     "google-auth-library": "^10.3.0",
     "google-spreadsheet": "^5.0.2",
