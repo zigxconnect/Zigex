@@ -1,6 +1,28 @@
+
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
+
+// Upstash rate limiter: 5 login attempts per 15 minutes per email
+const ratelimit = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(5, "15 m"),
+  analytics: true,
+});
+
+async function checkRateLimit(identifier: string) {
+  const { success, reset } = await ratelimit.limit(identifier);
+  if (!success) {
+    return {
+      blocked: true,
+      reset: Math.ceil((reset - Date.now()) / 1000),
+    };
+  }
+  return { blocked: false, reset: 0 };
+}
+
 
 export async function POST(request: Request) {
   const { email, password } = await request.json();
@@ -10,6 +32,15 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "Email and password are required." },
       { status: 400 }
+    );
+  }
+
+  // Rate limit check (per email)
+  const rate = await checkRateLimit(email);
+  if (rate.blocked) {
+    return NextResponse.json(
+      { error: `Too many login attempts. Try again in ${rate.reset} seconds.` },
+      { status: 429, headers: { "Retry-After": String(rate.reset) } }
     );
   }
 
