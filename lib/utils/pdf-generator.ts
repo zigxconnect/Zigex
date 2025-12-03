@@ -80,12 +80,6 @@ export async function generatePDFFromApplication(
       const element = document.createElement("div");
       element.innerHTML = htmlContent;
 
-      // Append to body to ensure styles are applied and it's renderable
-      element.style.position = 'absolute';
-      element.style.left = '-9999px';
-      element.style.top = '0';
-      document.body.appendChild(element);
-
       const filename = `Application_${data.opportunityTitle.replace(/\s+/g, "_")}_${new Date().getTime()}.pdf`;
 
       const options = {
@@ -102,14 +96,10 @@ export async function generatePDFFromApplication(
         .save()
         .then(() => {
           console.log("PDF generated successfully:", filename);
-          document.body.removeChild(element);
           resolve();
         })
         .catch((error: any) => {
           console.error("PDF generation error:", error);
-          if (document.body.contains(element)) {
-            document.body.removeChild(element);
-          }
           reject(new Error("Failed to generate PDF. Please try again."));
         });
     } catch (error) {

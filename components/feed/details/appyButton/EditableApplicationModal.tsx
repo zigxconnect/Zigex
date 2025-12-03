@@ -75,9 +75,8 @@ export function EditableApplicationModal({
   useEffect(() => {
     if (!isDragging) return;
 
-    const handleMouseMove = (e: MouseEvent | TouchEvent) => {
-      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-      const deltaY = clientY - dragStartY.current;
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaY = e.clientY - dragStartY.current;
       const newHeight = Math.max(150, dragStartHeight.current + deltaY);
       const maxHeight = window.innerHeight * 0.7;
       setEditorHeight(Math.min(newHeight, maxHeight));
@@ -89,14 +88,10 @@ export function EditableApplicationModal({
 
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseup", handleMouseUp);
-    window.addEventListener("touchmove", handleMouseMove);
-    window.addEventListener("touchend", handleMouseUp);
 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
-      window.removeEventListener("touchmove", handleMouseMove);
-      window.removeEventListener("touchend", handleMouseUp);
     };
   }, [isDragging]);
 

@@ -12,7 +12,6 @@ interface UserProfile {
   email?: string;
   phone?: string;
   linkedin_url?: string;
-  github_url?: string;
   university?: string;
   hard_skills?: string[];
   bio?: string;
@@ -55,10 +54,10 @@ interface SmartApplyResponse {
 async function getUserProfile(): Promise<UserProfile | null> {
   try {
     const supabase = await createSupabaseServerClient();
-
+    
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-
+    
     if (authError || !user?.id) {
       console.error("Error getting user:", authError);
       return null;
@@ -93,7 +92,6 @@ User Profile:
 - Phone: ${user.phone || "Not provided"}
 - University: ${user.university || "Not provided"}
 - LinkedIn: ${user.linkedin_url || "Not provided"}
-- GitHub: ${user.github_url || "Not provided"}
 - Skills: ${Array.isArray(user.hard_skills) ? user.hard_skills.join(", ") : "Not provided"}
 - Bio: ${user.bio || "Not provided"}
 `;
@@ -146,36 +144,29 @@ export async function generateSmartApplicationDraft(
     const userContext = formatUserContext(userProfile);
     const opportunityContext = formatOpportunityContext(opportunityData);
 
-    // Determine terminology based on type
-    const isProgram = opportunityData.type.toLowerCase().includes('program') || opportunityData.type.toLowerCase().includes('event');
-    const roleTerm = isProgram ? "program" : "position";
-    const applyTerm = isProgram ? "participate in" : "join";
-
     // Create the prompt with explicit JSON instruction
     const prompt = `IMPORTANT: You must respond ONLY with valid JSON, no additional text before or after.
 
-You are an expert career coach and application writer. Your task is to generate a compelling, personalized application letter/statement for a ${opportunityData.type} opportunity.
+You are an expert career coach and application writer. Your task is to generate a compelling, personalized application letter/statement for a job/program opportunity.
 
 ${userContext}
 
 ${opportunityContext}
 
 Create a professional, personalized application that:
-1. Shows clear understanding of the ${roleTerm} and company
+1. Shows clear understanding of the role and company
 2. Highlights relevant skills and experience from the user's profile
 3. Demonstrates genuine interest and enthusiasm
 4. Uses professional but authentic language
 5. Is concise but impactful (300-400 words)
 6. Includes specific examples where possible
-7. ${isProgram ? `Since this is a program/event, avoid using "hiring" or "job" terminology. Instead use "selection", "participation", "program", etc.` : 'Use standard professional job application terminology.'}
-8. IMPORTANT: You MUST include the user's LinkedIn and GitHub links (if available in the profile) at the end of the application so the reviewer can check them out.
 
 Respond with ONLY this JSON structure (no markdown, no extra text):
 {
-  "title": "Application for [${roleTerm}]",
-  "content": "[Full application content - professional, personalized, compelling. Include links at the bottom]",
+  "title": "Application Letter for [Position]",
+  "content": "[Full application content - professional, personalized, compelling]",
   "highlights": ["Key point 1", "Key point 2", "Key point 3"],
-  "personalizedPoints": ["Why this user is perfect for this ${roleTerm} point 1", "Why this user is perfect for this ${roleTerm} point 2"]
+  "personalizedPoints": ["Why this user is perfect for this role point 1", "Why this user is perfect for this role point 2"]
 }`;
 
     // Call Gemini 2.5 Pro
@@ -202,12 +193,12 @@ Respond with ONLY this JSON structure (no markdown, no extra text):
 
     // Extract response
     const responseText = result.response.text();
-
+    
     console.log("Raw Gemini response:", responseText);
 
     // Parse JSON from response - try multiple approaches
     let parsedResponse;
-
+    
     // Try 1: Direct JSON parse (cleanest response)
     try {
       parsedResponse = JSON.parse(responseText.trim());
@@ -279,18 +270,16 @@ function generateFallbackContent(
   opportunity: OpportunityData,
   aiResponse: string
 ) {
-  const isProgram = opportunity.type.toLowerCase().includes('program') || opportunity.type.toLowerCase().includes('event');
-  const roleTerm = isProgram ? "program" : "position";
-  const title = `Application for ${opportunity.title}`;
-
+  const title = `Application Letter for ${opportunity.title}`;
+  
   // Create content from user profile and opportunity info
-  let content = `Dear Selection Team,
+  const content = `Dear Hiring Team,
 
-I am writing to express my strong interest in the ${opportunity.title} ${roleTerm} at ${opportunity.company_profiles.company_name}.
+I am writing to express my strong interest in the ${opportunity.title} position at ${opportunity.company_profiles.company_name}.
 
-With my background in ${user.hard_skills?.slice(0, 2).join(" and ") || "software development"}, I am confident that I can make valuable contributions. Throughout my academic journey at ${user.university || "university"}, I have developed a passion for ${isProgram ? "continuous learning and professional development" : "solving real-world challenges"}.
+With my background in ${user.hard_skills?.slice(0, 2).join(" and ") || "software development"}, I am confident that I can make valuable contributions to your team. Throughout my academic journey at ${user.university || "university"}, I have developed a passion for ${opportunity.type === "program" ? "continuous learning and professional development" : "solving real-world challenges"}.
 
-The ${opportunity.title} ${roleTerm} aligns perfectly with my career goals and the skills I have cultivated. I am particularly drawn to ${opportunity.company_profiles.company_name} because of its commitment to innovation and excellence. I am excited about the opportunity to participate and grow professionally.
+The ${opportunity.title} role aligns perfectly with my career goals and the skills I have cultivated. I am particularly drawn to ${opportunity.company_profiles.company_name} because of its commitment to innovation and excellence. I am excited about the opportunity to contribute to your team and grow professionally.
 
 My key strengths include:
 - Proficiency in ${user.hard_skills?.slice(0, 3).join(", ") || "relevant technologies"}
@@ -298,18 +287,10 @@ My key strengths include:
 - Ability to work effectively in collaborative environments
 - Commitment to continuous learning and improvement
 
-I would welcome the opportunity to discuss how my skills and experiences can contribute to your program. Thank you for considering my application.
+I would welcome the opportunity to discuss how my skills and experiences can contribute to your team. Thank you for considering my application.
 
 Sincerely,
-${user.full_name || "Applicant"}
-`;
-
-  // Add links if available
-  if (user.linkedin_url || user.github_url) {
-    content += `\n\nYou can view my professional profiles here:`;
-    if (user.linkedin_url) content += `\nLinkedIn: ${user.linkedin_url}`;
-    if (user.github_url) content += `\nGitHub: ${user.github_url}`;
-  }
+${user.full_name || "Applicant"}`;
 
   const highlights = [
     `Strong technical background in ${user.hard_skills?.[0] || "technology"}`,
@@ -318,9 +299,9 @@ ${user.full_name || "Applicant"}
   ];
 
   const personalizedPoints = [
-    `Your skills in ${user.hard_skills?.slice(0, 2).join(" and ") || "relevant areas"} directly match the requirements for this ${roleTerm}`,
+    `Your skills in ${user.hard_skills?.slice(0, 2).join(" and ") || "relevant areas"} directly match the requirements for this ${opportunity.title} role`,
     `Your educational background from ${user.university || "your institution"} demonstrates commitment to professional development`,
-    `Your experience makes you an excellent fit for ${opportunity.company_profiles.company_name}'s ${roleTerm}`,
+    `Your experience makes you an excellent fit for ${opportunity.company_profiles.company_name}'s team`,
   ];
 
   return {
@@ -343,10 +324,10 @@ export async function submitSmartApplication(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = await createSupabaseServerClient();
-
+    
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-
+    
     if (authError || !user?.id) {
       return {
         success: false,
@@ -390,10 +371,10 @@ export async function submitSmartApplication(
           try {
             const result = await emailjs.send(serviceId, templateId, emailParams);
             console.log("Email sent successfully via EmailJS:", result);
-
-            return {
+            
+            return { 
               success: true,
-              error: undefined
+              error: undefined 
             };
           } catch (emailSendError) {
             console.error("EmailJS send failed, simulating success:", emailSendError);
@@ -411,10 +392,10 @@ export async function submitSmartApplication(
           console.log("SIMULATED: Opportunity:", opportunityTitle);
           console.log("SIMULATED: Applicant:", userProfile.full_name);
           console.log("SIMULATED: Message preview:", applicationContent.substring(0, 100) + "...");
-
+          
           // Simulate a small delay to feel real
           await new Promise(resolve => setTimeout(resolve, 500));
-
+          
           return {
             success: true,
             error: undefined
