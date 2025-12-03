@@ -13,6 +13,10 @@ export const profileSchema = z.object({
   about: z
     .string()
     .min(20, { message: "Tell us more about yourself (min 20 characters)." }),
+  
+  // --- Step 1.5 (Uploads) ---
+  avatar_url: z.string().optional(),
+  cover_image: z.string().optional(),
 
   // --- Step 2 ---
   university: z.string().min(1, { message: "University name is required." }),

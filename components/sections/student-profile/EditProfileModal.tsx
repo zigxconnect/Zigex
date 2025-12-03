@@ -10,6 +10,7 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FormStepper } from "@/components/sections/create-profile/FormStepper";
 import { Step1Personal } from "@/components/sections/create-profile/Step1Personal";
+import { Step1Uploads } from "@/components/sections/create-profile/Step1Uploads";
 import { Step2Education } from "@/components/sections/create-profile/Step2Education";
 import { Step3Skills } from "@/components/sections/create-profile/Step3Skills";
 import { Step4Experience } from "@/components/sections/create-profile/Step4Experience";
@@ -26,6 +27,7 @@ interface EditProfileModalProps {
 
 const stepsFields: (keyof ProfileFormData)[][] = [
   ["first_name", "last_name", "phone", "location", "about"],
+  ["avatar_url", "cover_image"],
   ["university", "degree", "field_of_study", "graduation_year", "gpa"],
   [
     "hard_skills",
@@ -48,7 +50,7 @@ export const EditProfileModal = ({
 }: EditProfileModalProps) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const totalSteps = 5;
+  const totalSteps = 6;
 
   const methods = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema) as any,
@@ -59,6 +61,8 @@ export const EditProfileModal = ({
       phone: initialData.phone || "",
       location: initialData.location || "",
       about: initialData.about || "",
+      avatar_url: initialData.avatar_url || "",
+      cover_image: initialData.cover_image || "",
       university: initialData.university || "",
       degree: initialData.degree || "",
       field_of_study: initialData.field_of_study || "",
@@ -121,10 +125,11 @@ export const EditProfileModal = ({
 
   const steps = [
     <Step1Personal key={1} />,
-    <Step2Education key={2} />,
-    <Step3Skills key={3} />,
-    <Step4Experience key={4} />,
-    <Step5Additional key={5} />,
+    <Step1Uploads key={2} />,
+    <Step2Education key={3} />,
+    <Step3Skills key={4} />,
+    <Step4Experience key={5} />,
+    <Step5Additional key={6} />,
   ];
 
   if (!isOpen) return null;

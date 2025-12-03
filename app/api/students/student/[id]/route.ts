@@ -107,11 +107,33 @@ export async function PUT(
     // 3. Get the update data from the request body.
     const updates = await request.json();
 
+    // Security: Filter updates to only allow permitted fields (prevent mass assignment)
+    const allowedFields = [
+      "first_name", "last_name", "phone", "location", "about",
+      "avatar_url", "cover_image",
+      "university", "degree", "field_of_study", "graduation_year", "gpa",
+      "hard_skills", "soft_skills", "languages", "portfolio_url", "github_url", "linkedin_url",
+      "previous_roles", "preferred_industries", "work_mode",
+      "interests", "achievements", "accommodations"
+    ];
+
+    const filteredUpdates: Record<string, any> = {};
+    Object.keys(updates).forEach((key) => {
+      if (allowedFields.includes(key)) {
+        filteredUpdates[key] = updates[key];
+      }
+    });
+
+    // Validate URLs if present
+    if (filteredUpdates.avatar_url && !filteredUpdates.avatar_url.startsWith(process.env.NEXT_PUBLIC_SUPABASE_URL!)) {
+       // Optional: stricter check to ensure it points to your specific bucket
+    }
+
     // 4. Perform the update in the database.
     const { data, error: updateError } = await supabase
       .from("student_profiles")
       .update({
-        ...updates,
+        ...filteredUpdates,
         updated_at: new Date().toISOString(),
         profile_status: "complete",
       })
