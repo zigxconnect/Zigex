@@ -41,16 +41,32 @@ export async function middleware(request: NextRequest) {
   ];
 
   // --- 1. Handle Unauthenticated Users ---
-  if (!user) {
-    if (
-      publicPaths.includes(pathname) ||
-      pathname === "/create-profile" ||
-      pathname === "/profile-complete"
-    ) {
-      return response;
+    const publicApiPaths = [
+      "/api/auth/login",
+      "/api/auth/register",
+      "/api/auth/forgot-password",
+      "/api/auth/verify-otp",
+      "/api/auth/callback",
+      // add more public API endpoints as needed
+    ];
+    if (!user) {
+      if (
+        publicPaths.includes(pathname) ||
+        pathname === "/create-profile" ||
+        pathname === "/profile-complete" ||
+        publicApiPaths.includes(pathname)
+      ) {
+        return response;
+      }
+      // If API route, return JSON error instead of redirect
+      if (pathname.startsWith('/api')) {
+        return new NextResponse(
+          JSON.stringify({ error: 'Unauthorized' }),
+          { status: 401, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+      return NextResponse.redirect(new URL("/sign-in", request.url));
     }
-    return NextResponse.redirect(new URL("/sign-in", request.url));
-  }
 
   // --- 2. Handle Authenticated Users ---
 
@@ -151,13 +167,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+    // Protect all routes except static/image/favicon
+    "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 };
