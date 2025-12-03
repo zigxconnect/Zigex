@@ -1,74 +1,96 @@
 import { Check } from "lucide-react";
 import clsx from "clsx";
 
-type FormStepperProps = {
-  currentStep: number;
-  totalSteps?: number;
+export type Step = {
+  number: number;
+  title: string;
+  description?: string;
 };
 
-const steps = [
-  { number: 1, title: "Personal Information" },
-  { number: 2, title: "Education" },
-  { number: 3, title: "Skills" },
-  { number: 4, title: "Experience" },
-  { number: 5, title: "Additional Info" },
-];
+type FormStepperProps = {
+  currentStep: number;
+  steps: Step[];
+};
 
-export const FormStepper = ({ currentStep }: FormStepperProps) => {
+export const FormStepper = ({ currentStep, steps }: FormStepperProps) => {
   return (
-    <div className="hidden md:sticky md:top-24 h-full md:block">
-      <h2 className="text-xl font-bold text-gray-900 mb-2">
-        Create Your Profile
-      </h2>
-      <p className="text-sm text-gray-500 mb-8">
-        Complete the steps to build a standout profile for employers.
-      </p>
-      <div className="space-y-6">
-        {steps.map((step) => {
-          const isCompleted = currentStep > step.number;
-          const isCurrent = currentStep === step.number;
-          return (
-            <div key={step.number} className="flex items-start gap-4">
-              <div className="flex flex-col items-center">
-                <div
-                  className={clsx(
-                    "w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300",
-                    {
-                      "bg-blue-500 text-white": isCompleted,
-                      "bg-blue-500 text-white ring-4 ring-blue-200": isCurrent,
-                      "bg-gray-200 text-gray-500": !isCompleted && !isCurrent,
-                    }
-                  )}
-                >
-                  {isCompleted ? <Check size={20} /> : step.number}
-                </div>
-                {step.number < steps.length && (
+    <div className="hidden md:block h-full">
+      <div className="sticky top-24">
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
+            Create Your Profile
+          </h2>
+          <p className="text-sm text-gray-500 mt-2 leading-relaxed">
+            Follow these steps to build a professional profile that stands out to
+            employers.
+          </p>
+        </div>
+
+        <div className="relative">
+          {/* Continuous Vertical Line Background */}
+          <div className="absolute left-5 top-4 bottom-4 w-0.5 bg-gray-100" />
+
+          <div className="space-y-0">
+            {steps.map((step, index) => {
+              const isCompleted = currentStep > step.number;
+              const isCurrent = currentStep === step.number;
+              const isLast = index === steps.length - 1;
+
+              return (
+                <div key={step.number} className="relative flex gap-6 pb-8">
+                  {/* Step Indicator */}
+                  <div className="relative z-10 flex flex-col items-center">
+                    <div
+                      className={clsx(
+                        "w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-500 border-2",
+                        {
+                          "bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200 scale-110":
+                            isCurrent,
+                          "bg-blue-50 border-blue-500 text-blue-600":
+                            isCompleted,
+                          "bg-white border-gray-200 text-gray-400":
+                            !isCompleted && !isCurrent,
+                        }
+                      )}
+                    >
+                      {isCompleted ? (
+                        <Check size={18} strokeWidth={3} />
+                      ) : (
+                        step.number
+                      )}
+                    </div>
+                    {/* Active Line Segment */}
+                    {!isLast && isCompleted && (
+                      <div className="absolute top-10 bottom-[-32px] w-0.5 bg-blue-500 transition-all duration-500" />
+                    )}
+                  </div>
+
+                  {/* Text Content */}
                   <div
                     className={clsx(
-                      "w-0.5 h-12 mt-2 transition-colors duration-300",
-                      isCompleted ? "bg-blue-500" : "bg-gray-200"
+                      "pt-1.5 transition-all duration-500",
+                      isCurrent ? "opacity-100 translate-x-0" : "opacity-60"
                     )}
-                  ></div>
-                )}
-              </div>
-              <div
-                className={clsx(
-                  "pt-1.5 transition-opacity duration-300",
-                  isCurrent ? "opacity-100" : "opacity-75"
-                )}
-              >
-                <h3
-                  className={clsx(
-                    "font-bold transition-colors duration-300",
-                    isCurrent ? "text-blue-600" : "text-gray-700"
-                  )}
-                >
-                  {step.title}
-                </h3>
-              </div>
-            </div>
-          );
-        })}
+                  >
+                    <h3
+                      className={clsx(
+                        "font-bold text-base transition-colors duration-300",
+                        isCurrent ? "text-blue-700" : "text-gray-700"
+                      )}
+                    >
+                      {step.title}
+                    </h3>
+                    {step.description && (
+                      <p className="text-sm text-gray-500 mt-1 font-medium">
+                        {step.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );
