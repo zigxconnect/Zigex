@@ -1,8 +1,18 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { NextResponse } from "next/server";
+import { loginRateLimiter } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
+  // Rate Limiting
+  const ip = (await headers()).get("x-forwarded-for") || "unknown";
+  if (!loginRateLimiter.check(ip)) {
+    return NextResponse.json(
+      { error: "Too many login attempts. Please try again later." },
+      { status: 429 }
+    );
+  }
+
   const { email, password } = await request.json();
   console.log("Login attempt for email:", email);
 
@@ -100,7 +110,21 @@ export async function POST(request: Request) {
     );
   }
 
-  // 2. If not a company, check if it's a student and attempt password login
+  // 2. If not a company, attempt password login FIRST (Timing Attack Prevention)
+  // We do NOT check for student profile existence before auth.
+  const { data, error: signInError } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (signInError) {
+    return NextResponse.json(
+      { error: "Invalid email or password." },
+      { status: 401 }
+    );
+  }
+
+  // 3. Auth successful, NOW check if it's a student
   const { data: studentProfile } = await supabase
     .from("student_profiles")
     .select("profile_status")
@@ -108,20 +132,6 @@ export async function POST(request: Request) {
     .single();
 
   if (studentProfile) {
-    const { data, error: signInError } = await supabase.auth.signInWithPassword(
-      {
-        email,
-        password,
-      }
-    );
-
-    if (signInError) {
-      return NextResponse.json(
-        { error: "Invalid email or password." },
-        { status: 401 }
-      );
-    }
-
     return NextResponse.json(
       {
         message: "Login successful",
@@ -132,8 +142,13 @@ export async function POST(request: Request) {
     );
   }
 
+  // 4. If authenticated but not a student (and we already checked company),
+  // this is an edge case (maybe a user without a profile row yet, or wrong role).
+  // We should sign them out to be safe, or just return error.
+  await supabase.auth.signOut();
+
   return NextResponse.json(
-    { error: "Invalid email or password." },
+    { error: "Invalid email or password." }, // Generic error to maintain ambiguity
     { status: 401 }
   );
 }
