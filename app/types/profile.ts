@@ -4,7 +4,7 @@ import { isValidPhoneNumber } from "react-phone-number-input";
 export const profileSchema = z.object({
   // --- Step 1 ---
   first_name: z.string().min(2, { message: "First name is required." }),
-  last_name: z.string().min(2, { message: "Last name is required." }),
+  username: z.string().min(3, { message: "Username is required and must be at least 3 characters." }),
   phone: z
     .string()
     .min(10, { message: "Please enter a valid phone number." })
