@@ -53,18 +53,34 @@ export async function GET(
     // 2. Get the target user ID from the URL parameters.
     const { id } = params;
 
-    // 3. Fetch the user profile from the database using the user_id.
+    // 3. Authorization check: Only allow if requester is the profile owner or a company user
+    if (id !== user.id) {
+      // Only allow if requester is a company viewing candidates
+      const { data: companyProfile } = await supabase
+        .from("company_profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+      if (!companyProfile) {
+        return NextResponse.json(
+          { error: "Forbidden: You can only view your own profile" },
+          { status: 403 }
+        );
+      }
+    }
+
+    // 4. Fetch the user profile from the database using the user_id.
     const { data, error } = await supabase
       .from("student_profiles")
       .select("*")
-      .eq("user_id", id) // Query by the `user_id` foreign key.
+      .eq("user_id", id)
       .single();
 
     if (error) {
       throw error;
     }
 
-    // 4. Return the user profile data.
+    // 5. Return the user profile data.
     return NextResponse.json(data, { status: 200 });
   } catch (error: any) {
     console.error("API Route Error (GET):", error);
