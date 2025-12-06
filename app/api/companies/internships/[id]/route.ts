@@ -170,22 +170,19 @@ export async function GET(
 
   const id = (await params)?.id;
 
-  // Fetch the single internship that matches the ID.
+  // Fetch the single internship that matches the ID and is owned by the requesting company.
   const { data: internship, error } = await supabaseAdmin
     .from("internships")
-    .select(
-      `
-            *
-        `
-    )
+    .select(`*`)
     .eq("id", id)
+    .eq("company_id", company.id)
     .single();
 
-  // Handle cases where the internship is not found
+  // Handle cases where the internship is not found or not owned by the company
   if (error || !internship) {
     console.error("Supabase query error:", error);
     return NextResponse.json(
-      { error: "Internship not found" },
+      { error: "Internship not found or not owned by your company" },
       { status: 404 }
     );
   }
