@@ -178,6 +178,61 @@ export async function POST(request: Request) {
       }
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    // --- NOTIFICATION & EMAIL LOGIC ---
+    try {
+        // 1. Get subscribed users
+        const { data: users, error: userError } = await supabaseAdmin.rpc("get_subscribed_emails");
+        
+        let recipients = users || [];
+        if (userError) {
+            console.error("RPC get_subscribed_emails failed:", userError);
+        }
+
+        if (recipients.length > 0) {
+            const recipientEmails = recipients.map((u: any) => u.email).filter(Boolean);
+            
+            // 2. Send Email (Batch BCC)
+            if (process.env.RESEND_API_KEY) {
+                const { Resend } = await import("resend");
+                const resend = new Resend(process.env.RESEND_API_KEY);
+                const { NewPostEmail } = await import("@/emails/NewPostEmail");
+
+                // Use "notifications@futureprospect.online" as 'to' and everyone else as 'bcc'
+                await resend.emails.send({
+                    from: "FutureProspect <notifications@futureprospect.online>",
+                    to: "notifications@futureprospect.online", 
+                    bcc: recipientEmails,
+                    subject: `New Program Posted: ${data.title}`,
+                    react: NewPostEmail({
+                        postTitle: data.title,
+                        postType: "Program",
+                        postLocation: data.location || "Online", // Fallback
+                        viewPostUrl: `https://futureprospect.online/programs/${data.id}`,
+                        companyLogoUrl: "https://tmvipinvvhgklmqwvows.supabase.co/storage/v1/object/public/company-assets/Seed%20Company/events/SEED%20community%20Challenge-1757769838240.jpg", 
+                        managePreferencesUrl: "https://futureprospect.online/profile/notifications",
+                        postedDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
+                    }),
+                });
+            }
+
+            // 3. Create Notifications in DB
+            const notifications = recipients.map((u: any) => ({
+                user_id: u.id || u.user_id, 
+                title: "New Program Posted!",
+                message: `A new program "${data.title}" is available.`,
+                type: "program",
+                reference_id: data.id,
+            }));
+
+            const { error: notifError } = await supabaseAdmin.from("notifications").insert(notifications);
+            if (notifError) console.error("Failed to create notifications:", notifError);
+        }
+    } catch (innerErr) {
+        console.error("Async notification error:", innerErr);
+    }
+    // ---------------------------------------------------------------
+
     return NextResponse.json(data, { status: 201 });
   } catch (err) {
     console.error("Validation or processing error:", err);

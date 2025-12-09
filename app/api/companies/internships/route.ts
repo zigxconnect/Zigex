@@ -105,16 +105,74 @@ export async function POST(request: Request) {
             company_id: company.id
         });
 
-        console.log(supabaseAdmin.auth.getSession()); // Should return null or service context
-
-        const { data, error } = await supabaseAdmin.from('internships').insert([validatedData]).select('*').single();
+        const { data: internship, error } = await supabaseAdmin.from('internships').insert([validatedData]).select('*').single();
         if (error) {
             console.log( error);
             return NextResponse.json(
                 { error: error.message }, 
                 { status: 500 });
         }
-        return NextResponse.json(data, { status: 201 });
+
+        // --- NOTIFICATION & EMAIL LOGIC (Migrated from Edge Function) ---
+        try {
+            // 1. Get subscribed users
+            const { data: users, error: userError } = await supabaseAdmin.rpc("get_subscribed_emails");
+            
+            let recipients = users || [];
+            if (userError) {
+                console.error("RPC get_subscribed_emails failed:", userError);
+            }
+
+            if (recipients.length > 0) {
+                const recipientEmails = recipients.map((u: any) => u.email).filter(Boolean);
+                
+                // 2. Send Emails (Sequential Sends to avoid Rate Limits)
+                if (process.env.RESEND_API_KEY) {
+                    const { Resend } = await import("resend");
+                    const resend = new Resend(process.env.RESEND_API_KEY);
+                    const { NewPostEmail } = await import("@/emails/NewPostEmail");
+
+                    // Send to each recipient individually and sequentially
+                    for (const email of recipientEmails) {
+                        try {
+                            await resend.emails.send({
+                                from: "FutureProspect <notifications@futureprospect.online>",
+                                to: email, 
+                                subject: `New Internship Posted: ${internship.title}`,
+                                react: NewPostEmail({
+                                    postTitle: internship.title,
+                                    postType: "Internship",
+                                    postLocation: internship.location,
+                                    viewPostUrl: `https://futureprospect.online/internships/${internship.id}`,
+                                    companyLogoUrl: "https://tmvipinvvhgklmqwvows.supabase.co/storage/v1/object/public/company-assets/Seed%20Company/events/SEED%20community%20Challenge-1757769838240.jpg", 
+                                    managePreferencesUrl: "https://futureprospect.online/profile/notifications",
+                                    postedDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
+                                }),
+                            });
+                        } catch (err) {
+                            console.error(`Failed to send email to ${email}:`, err);
+                        }
+                    }
+                }
+
+                // 3. Create Notifications in DB
+                const notifications = recipients.map((u: any) => ({
+                    user_id: u.id || u.user_id, 
+                    title: "New Internship Posted!",
+                    message: `A new internship "${internship.title}" is available.`,
+                    type: "internship",
+                    reference_id: internship.id,
+                }));
+
+                const { error: notifError } = await supabaseAdmin.from("notifications").insert(notifications);
+                if (notifError) console.error("Failed to create notifications:", notifError);
+            }
+        } catch (innerErr) {
+            console.error("Async notification error:", innerErr);
+        }
+        // ---------------------------------------------------------------
+
+        return NextResponse.json(internship, { status: 201 });
     }
     catch(err){
         console.log(err)
