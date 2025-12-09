@@ -198,23 +198,38 @@ export async function PATCH(
   const studentAuthId = studentProfile.user_id;
 
   if (referenceId && application.application_type) {
-    if (status === "accepted") {
-      // Send Email
-      const { data: userData } = await supabaseAdmin.auth.admin.getUserById(
-        studentAuthId
-      );
-      const studentEmail = userData?.user?.email;
-      const studentName = studentProfile.full_name || "Student";
+    const { data: userData } = await supabaseAdmin.auth.admin.getUserById(
+      studentAuthId
+    );
+    const studentEmail = userData?.user?.email;
+    const studentName = studentProfile.full_name || "Student";
+    const companyName = company.company_name || "The Company";
 
-      if (studentEmail) {
-        await sendApplicationAcceptedEmail(
-          studentEmail,
-          studentName,
-          opportunityTitle,
-          application.application_type
-        );
+    if (status === "accepted") {
+      // 1. Send Accepted Email
+      if (process.env.RESEND_API_KEY && studentEmail) {
+        try {
+            const { Resend } = await import("resend");
+            const resend = new Resend(process.env.RESEND_API_KEY);
+            // Correct import name
+            const { ApplicationAcceptedEmail } = await import("@/emails/ApplicationAccepted");
+            
+            await resend.emails.send({
+                from: "FutureProspect <notifications@futureprospect.online>",
+                to: studentEmail,
+                subject: `Congratulations! Application Accepted: ${opportunityTitle}`,
+                react: ApplicationAcceptedEmail({
+                    studentName: studentName,
+                    opportunityTitle: opportunityTitle,
+                    type: application.application_type,
+                }),
+            });
+        } catch (err) {
+            console.error("Failed to send accepted email:", err);
+        }
       }
 
+      // 2. Create Notification
       await createNotification(
         studentAuthId,
         "Congratulations! Your Application was Accepted!",
@@ -223,6 +238,31 @@ export async function PATCH(
         referenceId
       );
     } else if (status === "rejected") {
+      // 1. Send Rejected Email
+      if (process.env.RESEND_API_KEY && studentEmail) {
+        try {
+            const { Resend } = await import("resend");
+            const resend = new Resend(process.env.RESEND_API_KEY);
+            const { ApplicationRejectedEmail } = await import("@/emails/ApplicationRejected");
+
+            await resend.emails.send({
+                from: "FutureProspect <notifications@futureprospect.online>",
+                to: studentEmail,
+                subject: `Update on your application: ${opportunityTitle}`,
+                react: ApplicationRejectedEmail({
+                    studentName: studentName,
+                    postTitle: opportunityTitle,
+                    postType: application.application_type.charAt(0).toUpperCase() + application.application_type.slice(1) as any,
+                    companyName: companyName,
+                    viewApplicationUrl: "https://futureprospect.online/applications",
+                }),
+            });
+        } catch (err) {
+             console.error("Failed to send rejected email:", err);
+        }
+      }
+
+      // 2. Create Notification
       await createNotification(
         studentAuthId,
         "Update on Your Application",

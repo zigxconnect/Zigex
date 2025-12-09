@@ -217,7 +217,10 @@ export async function POST(request: Request) {
             }
 
             // 3. Create Notifications in DB
-            const notifications = recipients.map((u: any) => ({
+            // Deduplicate recipients to ensure only one notification per user
+            const uniqueRecipients = Array.from(new Map(recipients.map((item:any) => [item.id || item.user_id, item])).values());
+
+            const notifications = uniqueRecipients.map((u: any) => ({
                 user_id: u.id || u.user_id, 
                 title: "New Program Posted!",
                 message: `A new program "${data.title}" is available.`,

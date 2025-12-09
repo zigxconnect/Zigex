@@ -124,39 +124,43 @@ export async function POST(request: Request) {
             }
 
             if (recipients.length > 0) {
-                const recipientEmails = recipients.map((u: any) => u.email).filter(Boolean);
+                // Deduplicate recipients based on user_id/id
+                const uniqueRecipientsMap = new Map();
+                recipients.forEach((item: any) => {
+                    const uid = item.id || item.user_id;
+                    if (uid && !uniqueRecipientsMap.has(uid)) {
+                        uniqueRecipientsMap.set(uid, item);
+                    }
+                });
+                const uniqueRecipients = Array.from(uniqueRecipientsMap.values());
+                const recipientEmails = uniqueRecipients.map((u: any) => u.email).filter(Boolean);
                 
-                // 2. Send Emails (Sequential Sends to avoid Rate Limits)
-                if (process.env.RESEND_API_KEY) {
+                // 2. Send Email (Batch BCC with Generic To)
+                if (process.env.RESEND_API_KEY && recipientEmails.length > 0) {
                     const { Resend } = await import("resend");
                     const resend = new Resend(process.env.RESEND_API_KEY);
                     const { NewPostEmail } = await import("@/emails/NewPostEmail");
 
-                    // Send to each recipient individually and sequentially
-                    for (const email of recipientEmails) {
-                        try {
-                            await resend.emails.send({
-                                from: "FutureProspect <notifications@futureprospect.online>",
-                                to: email, 
-                                subject: `New Internship Posted: ${internship.title}`,
-                                react: NewPostEmail({
-                                    postTitle: internship.title,
-                                    postType: "Internship",
-                                    postLocation: internship.location,
-                                    viewPostUrl: `https://futureprospect.online/internships/${internship.id}`,
-                                    companyLogoUrl: "https://tmvipinvvhgklmqwvows.supabase.co/storage/v1/object/public/company-assets/Seed%20Company/events/SEED%20community%20Challenge-1757769838240.jpg", 
-                                    managePreferencesUrl: "https://futureprospect.online/profile/notifications",
-                                    postedDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
-                                }),
-                            });
-                        } catch (err) {
-                            console.error(`Failed to send email to ${email}:`, err);
-                        }
-                    }
+                    // Send to "notifications@futureprospect.online" (ourselves) and BCC everyone else
+                    await resend.emails.send({
+                        from: "FutureProspect <notifications@futureprospect.online>",
+                        to: "notifications@futureprospect.online", 
+                        bcc: recipientEmails, // Everyone goes to BCC
+                        subject: `New Internship Posted: ${internship.title}`,
+                        react: NewPostEmail({
+                            postTitle: internship.title,
+                            postType: "Internship",
+                            postLocation: internship.location,
+                            viewPostUrl: `https://futureprospect.online/internships/${internship.id}`,
+                            companyLogoUrl: "https://tmvipinvvhgklmqwvows.supabase.co/storage/v1/object/public/company-assets/Seed%20Company/events/SEED%20community%20Challenge-1757769838240.jpg", 
+                            managePreferencesUrl: "https://futureprospect.online/profile/notifications",
+                            postedDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
+                        }),
+                    });
                 }
 
-                // 3. Create Notifications in DB
-                const notifications = recipients.map((u: any) => ({
+                // 3. Create Notifications in DB (using unique recipients)
+                const notifications = uniqueRecipients.map((u: any) => ({
                     user_id: u.id || u.user_id, 
                     title: "New Internship Posted!",
                     message: `A new internship "${internship.title}" is available.`,
