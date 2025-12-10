@@ -33,7 +33,7 @@ function createSupabaseServerClient() {
  */
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const supabase = createSupabaseServerClient();
 
@@ -51,7 +51,7 @@ export async function GET(
     }
 
     // 2. Get the target user ID from the URL parameters.
-    const { id } = params;
+    const { id } = await params;
 
     // 3. Authorization check: Only allow if requester is the profile owner or a company user
     if (id !== user.id) {
@@ -97,7 +97,7 @@ export async function GET(
  */
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const supabase = createSupabaseServerClient();
 
@@ -112,7 +112,7 @@ export async function PUT(
     }
 
     // 2. Verify that the user is updating their own profile.
-    const { id } = params;
+    const { id } = await params;
     if (id !== user.id) {
       return NextResponse.json(
         { error: "Unauthorized: You can only update your own profile" },
@@ -125,7 +125,7 @@ export async function PUT(
 
     // Security: Filter updates to only allow permitted fields (prevent mass assignment)
     const allowedFields = [
-      "first_name", "last_name", "phone", "location", "about",
+      "first_name", "last_name", "username", "phone", "location", "about",
       "avatar_url", "cover_image",
       "university", "degree", "field_of_study", "graduation_year", "gpa",
       "hard_skills", "soft_skills", "languages", "portfolio_url", "github_url", "linkedin_url",
@@ -145,15 +145,41 @@ export async function PUT(
        // Optional: stricter check to ensure it points to your specific bucket
     }
 
+    // Check if username is taken by another user
+    if (filteredUpdates.username) {
+      const { data: existingUser, error: checkError } = await supabase
+        .from("student_profiles")
+        .select("user_id")
+        .eq("username", filteredUpdates.username)
+        .neq("user_id", id)
+        .maybeSingle();
+
+      if (checkError) {
+        console.error("Error checking username:", checkError);
+      }
+
+      if (existingUser) {
+        console.log(`[API] Username '${filteredUpdates.username}' is already taken by user ${existingUser.user_id}`);
+        return NextResponse.json(
+          { error: `Username '${filteredUpdates.username}' is already taken.` },
+          { status: 409 }
+        );
+      }
+    }
+
     // 4. Perform the update in the database.
+    // 4. Perform the update or insert (upsert) in the database.
     const { data, error: updateError } = await supabase
       .from("student_profiles")
-      .update({
-        ...filteredUpdates,
-        updated_at: new Date().toISOString(),
-        profile_status: "complete",
-      })
-      .eq("user_id", id)
+      .upsert(
+        {
+          user_id: id,
+          ...filteredUpdates,
+          updated_at: new Date().toISOString(),
+          profile_status: "complete",
+        },
+        { onConflict: "user_id" }
+      )
       .select()
       .single();
 
@@ -167,6 +193,14 @@ export async function PUT(
     );
   } catch (error: any) {
     console.error("API Route Error (PUT):", error);
+    if (error.code === "23505") {
+      return NextResponse.json(
+        {
+          error: "Username already taken. Please choose a different one.",
+        },
+        { status: 409 }
+      );
+    }
     return NextResponse.json(
       {
         error: "Update failed",

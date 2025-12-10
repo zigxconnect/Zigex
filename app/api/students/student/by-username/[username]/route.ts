@@ -29,7 +29,7 @@ function createSupabaseServerClient() {
 
 export async function GET(
   request: Request,
-  { params }: { params: { username: string } }
+  { params }: { params: Promise<{ username: string }> }
 ) {
   const supabase = createSupabaseServerClient();
   try {
@@ -42,7 +42,7 @@ export async function GET(
         { status: 401 }
       );
     }
-    const { username } = params;
+    const { username } = await params;
     const { data, error } = await supabase
       .from("student_profiles")
       .select("*")
@@ -63,7 +63,7 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { username: string } }
+  { params }: { params: Promise<{ username: string }> }
 ) {
   const supabase = createSupabaseServerClient();
   try {
@@ -73,9 +73,9 @@ export async function PUT(
     if (!user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
-    const { username } = params;
+    const { username } = await params;
     // Log incoming request
-    console.log("[API] Incoming PUT /student/", username);
+    console.log("[API] Incoming PUT /student/by-username/", username);
     let updates;
     try {
       updates = await request.json();

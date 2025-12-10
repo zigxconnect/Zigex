@@ -107,7 +107,11 @@ export async function middleware(request: NextRequest) {
 
   // --- 3. Handle Unassigned Users (No Profile Yet) ---
   if (userRole === "unassigned") {
-    if (pathname !== "/create-profile" && pathname !== "/company/sign-up") {
+    if (
+      pathname !== "/create-profile" &&
+      pathname !== "/company/sign-up" &&
+      !pathname.startsWith("/api")
+    ) {
       return NextResponse.redirect(new URL("/create-profile", request.url));
     }
     return response;
@@ -115,7 +119,7 @@ export async function middleware(request: NextRequest) {
 
   // --- 4. Enforce Profile Creation for Students ---
   if (userRole === "student" && !isStudentProfileComplete) {
-    if (pathname !== "/create-profile") {
+    if (pathname !== "/create-profile" && !pathname.startsWith("/api")) {
       return NextResponse.redirect(new URL("/create-profile", request.url));
     }
     return response;
