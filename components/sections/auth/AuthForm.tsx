@@ -50,8 +50,19 @@ export const AuthForm = ({ type }: AuthFormProps) => {
   const [apiError, setApiError] = useState<string | null>(null);
   const [emailSent, setEmailSent] = useState(false);
   const [signInCooldown, setSignInCooldown] = useState(0);
+  const [rateLimitError, setRateLimitError] = useState<string | null>(null);
+  const [csrfToken, setCsrfToken] = useState<string | null>(null);
 
   const supabase = createClient();
+  // Fetch CSRF token on mount (for sign-in only)
+  useEffect(() => {
+    if (!isSignUp) {
+      fetch("/api/auth/login")
+        .then((res) => res.json())
+        .then((data) => setCsrfToken(data.csrfToken))
+        .catch(() => setCsrfToken(null));
+    }
+  }, [isSignUp]);
 
   const {
     register,
@@ -146,16 +157,26 @@ export const AuthForm = ({ type }: AuthFormProps) => {
       try {
         const response = await fetch("/api/auth/login", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(csrfToken ? { "x-csrf-token": csrfToken } : {}),
+          },
           body: JSON.stringify({ email: data.email, password: data.password }),
         });
         const responseData = await response.json();
+        if (response.status === 429) {
+          // Rate limit exceeded
+          const ra = response.headers?.get?.("Retry-After");
+          const retryAfter = ra ? Number(ra) : responseData.retryAfter || 10;
+          setSignInCooldown(Number.isFinite(retryAfter) ? retryAfter : 10);
+          setRateLimitError(responseData.error || "Too many login attempts. Please wait before retrying.");
+          return;
+        }
         if (!response.ok)
           throw new Error(responseData.error || "Login failed.");
         // If the server indicates an OTP was sent (company flow), redirect
         // to the verify page and include the email in the query string.
         if (responseData?.otpSent) {
-          // use Retry-After header if provided to set cooldown
           const ra = response.headers?.get?.("Retry-After");
           const retryAfter = ra ? Number(ra) : responseData.retryAfter || 10;
           setSignInCooldown(Number.isFinite(retryAfter) ? retryAfter : 10);
@@ -311,8 +332,10 @@ export const AuthForm = ({ type }: AuthFormProps) => {
       </form>
       <div className="flex-grow"></div>
       {signInCooldown > 0 && (
-        <p className="text-center text-sm text-gray-500 mt-2">
-          Please wait {signInCooldown}s before retrying sign-in.
+        <p className="text-center text-sm text-red-500 mt-2">
+          {rateLimitError
+            ? `${rateLimitError} (${signInCooldown}s)`
+            : `Please wait ${signInCooldown}s before retrying sign-in.`}
         </p>
       )}
       <div className="space-y-4 text-center mt-5">

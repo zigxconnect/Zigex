@@ -104,7 +104,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     matchPaths: ["/dashboard/student", "/dashboard/student/"],
   },
    {
-    href: `/profile/${user?.profile?.id || "id"}`,
+    href: `/profile/${user?.profile?.username || "username"}`,
     icon: PersonStandingIcon,
     label: "My Profile",
     matchPaths: ["/profile/"],

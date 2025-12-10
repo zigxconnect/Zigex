@@ -79,7 +79,7 @@ export const DashboardHeader = ({
         {/* Right Side - Logout, Notifications & User */}
         <div className="flex items-center gap-3 lg:gap-3">
 
-            <Link  href={`/profile/${user.profile.id}`} className="flex items-center gap-3 ml-2 lg:ml-3 flex-shrink-0">
+            <Link  href={`/profile/${user.profile.username}`} className="flex items-center gap-3 ml-2 lg:ml-3 flex-shrink-0">
             <div className=" relative w-9 h-9 lg:w-10 lg:h-10 rounded-full border-2 border-gray-200 overflow-hidden ring-2 ring-transparent hover:ring-blue-400 transition-all duration-200">
               <Image
                 src={userAvatar}

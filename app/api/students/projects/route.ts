@@ -99,7 +99,16 @@ export async function POST(req: NextRequest) {
     let coverImageUrl: string | null = null;
     let uploadedVideoUrl: string | null = null;
     
+
     if (coverImage && coverImage.size > 0) {
+      // Validate file type (jpg/png only)
+      const allowedTypes = ['image/jpeg', 'image/png'];
+      if (!allowedTypes.includes(coverImage.type)) {
+        return NextResponse.json(
+          { error: 'Only JPG and PNG files are allowed for cover image.' },
+          { status: 400 }
+        );
+      }
       const { data, error } = await supabase.storage
         .from('project-assets')
         .upload(`${user.id}/${Date.now()}_${coverImage.name}`, coverImage);
