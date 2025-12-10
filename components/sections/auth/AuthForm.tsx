@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/uiComponent/Spinner";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
+import { toast } from "react-hot-toast";
 
 // --- Schemas ---
 const signUpSchema = z.object({
@@ -47,7 +48,6 @@ export const AuthForm = ({ type }: AuthFormProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
-  const [apiError, setApiError] = useState<string | null>(null);
   const [emailSent, setEmailSent] = useState(false);
   const [signInCooldown, setSignInCooldown] = useState(0);
   const [rateLimitError, setRateLimitError] = useState<string | null>(null);
@@ -80,7 +80,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
       try {
         decoded = decodeURIComponent(replaced);
       } catch {}
-      setApiError(decoded);
+      toast.error(decoded);
     }
   }, [searchParams]);
 
@@ -122,7 +122,6 @@ export const AuthForm = ({ type }: AuthFormProps) => {
     "By continuing, you agree to our Terms of Service and Privacy Policy.";
 
   const handleGoogleSignIn = async () => {
-    setApiError(null);
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -130,14 +129,13 @@ export const AuthForm = ({ type }: AuthFormProps) => {
       },
     });
     if (error) {
-      setApiError(error.message);
+      toast.error(error.message);
     } else if (data.url) {
       router.push(data.url);
     }
   };
 
   const onSubmit = async (data: FormData) => {
-    setApiError(null);
     if (isSignUp) {
       try {
         const response = await fetch("/api/auth/register", {
@@ -149,8 +147,9 @@ export const AuthForm = ({ type }: AuthFormProps) => {
         if (!response.ok)
           throw new Error(responseData.error || "Sign-up failed.");
         setEmailSent(true);
+        toast.success("Verification email sent! Please check your inbox.");
       } catch (err) {
-        setApiError((err as Error).message);
+        toast.error((err as Error).message);
       }
     } else {
       // Sign-in logic
@@ -169,7 +168,9 @@ export const AuthForm = ({ type }: AuthFormProps) => {
           const ra = response.headers?.get?.("Retry-After");
           const retryAfter = ra ? Number(ra) : responseData.retryAfter || 10;
           setSignInCooldown(Number.isFinite(retryAfter) ? retryAfter : 10);
-          setRateLimitError(responseData.error || "Too many login attempts. Please wait before retrying.");
+          const errorMsg = responseData.error || "Too many login attempts. Please wait before retrying.";
+          setRateLimitError(errorMsg);
+          toast.error(errorMsg);
           return;
         }
         if (!response.ok)
@@ -180,14 +181,16 @@ export const AuthForm = ({ type }: AuthFormProps) => {
           const ra = response.headers?.get?.("Retry-After");
           const retryAfter = ra ? Number(ra) : responseData.retryAfter || 10;
           setSignInCooldown(Number.isFinite(retryAfter) ? retryAfter : 10);
+          toast.success("OTP sent to your email.");
           router.push(`/verify-otp?email=${encodeURIComponent(data.email)}`);
         } else {
+          toast.success("Logged in successfully!");
           router.push(
             responseData.profileComplete ? "/dashboard" : "/create-profile"
           );
         }
       } catch (err) {
-        setApiError((err as Error).message);
+        toast.error((err as Error).message);
       }
     }
   };
@@ -312,9 +315,6 @@ export const AuthForm = ({ type }: AuthFormProps) => {
             </p>
           )}
         </div>
-        {apiError && (
-          <p className="text-sm text-red-500 text-center pt-1">{apiError}</p>
-        )}
         <Button
           type="submit"
           className="w-full !mt-6 text-base py-2.5 flex items-center justify-center gap-2 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
@@ -364,3 +364,4 @@ export const AuthForm = ({ type }: AuthFormProps) => {
     </div>
   );
 };
+

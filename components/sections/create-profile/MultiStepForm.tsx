@@ -171,6 +171,7 @@ export const MultiStepForm = () => {
       console.log(
         `[Step Validation] Validation failed for step ${currentStep}`
       );
+      toast.error("Please fill in all required fields correctly.");
     }
     setIsNavigating(false);
   };
