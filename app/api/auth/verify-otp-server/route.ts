@@ -63,7 +63,7 @@ export async function POST(request: Request) {
 
     const session = verifyData?.session;
     if (session && session.access_token && session.refresh_token) {
-      const cookieStore = cookies();
+      const cookieStore = await cookies();
       const anonUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
       const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 

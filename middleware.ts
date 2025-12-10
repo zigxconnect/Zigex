@@ -46,6 +46,8 @@ export async function middleware(request: NextRequest) {
       "/api/auth/register",
       "/api/auth/forgot-password",
       "/api/auth/verify-otp",
+      "/api/auth/verify-otp-server",
+      "/api/auth/resend-otp",
       "/api/auth/callback",
       // add more public API endpoints as needed
     ];
