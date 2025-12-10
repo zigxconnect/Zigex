@@ -226,7 +226,7 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile }: WelcomeCardProp
 
             {/* My Profile Button - Enhanced Interactive Version */}
             <Link
-              href={`/profile/${user.profile.id}`}
+              href={`/profile/${user.profile.username}`}
               onMouseEnter={() => setIsProfileBtnHovered(true)}
               onMouseLeave={() => setIsProfileBtnHovered(false)}
               className={`

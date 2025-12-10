@@ -27,10 +27,10 @@ export const Step1Personal = () => {
             {...register("first_name")}
           />
         </FormField>
-        <FormField label="Last Name" error={errors.last_name}>
+        <FormField label="Username (unique)" error={errors.username}>
           <Input
-            placeholder="Enter your last name"
-            {...register("last_name")}
+            placeholder="Choose a unique username"
+            {...register("username", { required: true })}
           />
         </FormField>
       </div>

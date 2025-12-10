@@ -2,6 +2,8 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { v4 as uuidv4, validate as isUUID } from "uuid";
+import { Resend } from "resend";
+import { ApplicationConfirmationEmail } from "@/emails/ApplicationConfirmationEmail";
 
 // --- Notification Helper Function ---
 const createNotification = async (
@@ -100,7 +102,7 @@ export async function POST(request: Request) {
 
       const { data: postingInfo, error: postingError } = await supabase
         .from("internships")
-        .select("company_id, title, deadline")
+        .select("company_id, title, deadline, company_profiles(company_name)")
         .eq("id", internship_id)
         .single();
 
@@ -189,6 +191,28 @@ export async function POST(request: Request) {
         "internship",
         internship_id
       );
+
+      // --- SEND CONFIRMATION EMAIL ---
+      if (process.env.RESEND_API_KEY) {
+        try {
+          const resend = new Resend(process.env.RESEND_API_KEY);
+          await resend.emails.send({
+            from: "FutureProspect <notifications@futureprospect.online>",
+            to: user.email!,
+            subject: `Application Received: ${postingInfo.title}`,
+            react: ApplicationConfirmationEmail({
+              studentName: studentData.full_name || "Student", // Assuming full_name is available in studentData, otherwise fallback
+              postTitle: postingInfo.title,
+              postType: "Internship",
+              companyName: postingInfo.company_profiles?.company_name || "the company",
+              viewApplicationUrl: `https://futureprospect.online/applications`,
+              postedDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
+            }),
+          });
+        } catch (emailError) {
+          console.error("Failed to send confirmation email:", emailError);
+        }
+      }
       return NextResponse.json(
         {
           message: "Internship application submitted successfully!",
@@ -225,7 +249,7 @@ export async function POST(request: Request) {
 
       const { data: postingInfo, error: postingError } = await supabase
         .from("programs")
-        .select("company_id, title")
+        .select("company_id, title, company_profiles(company_name)")
         .eq("id", program_id)
         .single();
       if (postingError || !postingInfo?.company_id) {
@@ -266,6 +290,28 @@ export async function POST(request: Request) {
         "program",
         program_id
       );
+
+      // --- SEND CONFIRMATION EMAIL ---
+      if (process.env.RESEND_API_KEY) {
+        try {
+          const resend = new Resend(process.env.RESEND_API_KEY);
+          await resend.emails.send({
+            from: "FutureProspect <notifications@futureprospect.online>",
+            to: user.email!,
+            subject: `Application Received: ${postingInfo.title}`,
+            react: ApplicationConfirmationEmail({
+              studentName: studentData.full_name || "Student",
+              postTitle: postingInfo.title,
+              postType: "Program",
+              companyName: postingInfo.company_profiles?.company_name || "the company",
+              viewApplicationUrl: `https://futureprospect.online/applications`,
+              postedDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
+            }),
+          });
+        } catch (emailError) {
+          console.error("Failed to send confirmation email:", emailError);
+        }
+      }
       return NextResponse.json(
         {
           message: "Program application submitted successfully!",
@@ -302,7 +348,7 @@ export async function POST(request: Request) {
 
       const { data: postingInfo, error: postingError } = await supabase
         .from("event")
-        .select("company_id, title")
+        .select("company_id, title, company_profiles(company_name)")
         .eq("id", event_id)
         .single();
       if (postingError || !postingInfo?.company_id) {
@@ -343,6 +389,28 @@ export async function POST(request: Request) {
         "event",
         event_id
       );
+
+      // --- SEND CONFIRMATION EMAIL ---
+      if (process.env.RESEND_API_KEY) {
+        try {
+          const resend = new Resend(process.env.RESEND_API_KEY);
+          await resend.emails.send({
+            from: "FutureProspect <notifications@futureprospect.online>",
+            to: user.email!,
+            subject: `RSVP Confirmed: ${postingInfo.title}`,
+            react: ApplicationConfirmationEmail({
+              studentName: studentData.full_name || "Student",
+              postTitle: postingInfo.title,
+              postType: "Event",
+              companyName: postingInfo.company_profiles?.company_name || "the company",
+              viewApplicationUrl: `https://futureprospect.online/applications`,
+              postedDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
+            }),
+          });
+        } catch (emailError) {
+          console.error("Failed to send confirmation email:", emailError);
+        }
+      }
       return NextResponse.json(
         { message: "RSVP submitted successfully!", applicationId: appData.id },
         { status: 201 }

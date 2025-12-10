@@ -60,7 +60,7 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
   },
 
    {
-    href: `/profile/${user?.profile?.id || "id"}`,
+    href: `/profile/${user?.profile?.username || "username"}`,
     icon: PersonStandingIcon,
     label: "Profile",
     matchPaths: ["/profile/"],
