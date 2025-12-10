@@ -105,16 +105,78 @@ export async function POST(request: Request) {
             company_id: company.id
         });
 
-        console.log(supabaseAdmin.auth.getSession()); // Should return null or service context
-
-        const { data, error } = await supabaseAdmin.from('internships').insert([validatedData]).select('*').single();
+        const { data: internship, error } = await supabaseAdmin.from('internships').insert([validatedData]).select('*').single();
         if (error) {
             console.log( error);
             return NextResponse.json(
                 { error: error.message }, 
                 { status: 500 });
         }
-        return NextResponse.json(data, { status: 201 });
+
+        // --- NOTIFICATION & EMAIL LOGIC (Migrated from Edge Function) ---
+        try {
+            // 1. Get subscribed users
+            const { data: users, error: userError } = await supabaseAdmin.rpc("get_subscribed_emails");
+            
+            let recipients = users || [];
+            if (userError) {
+                console.error("RPC get_subscribed_emails failed:", userError);
+            }
+
+            if (recipients.length > 0) {
+                // Deduplicate recipients based on user_id/id
+                const uniqueRecipientsMap = new Map();
+                recipients.forEach((item: any) => {
+                    const uid = item.id || item.user_id;
+                    if (uid && !uniqueRecipientsMap.has(uid)) {
+                        uniqueRecipientsMap.set(uid, item);
+                    }
+                });
+                const uniqueRecipients = Array.from(uniqueRecipientsMap.values());
+                const recipientEmails = uniqueRecipients.map((u: any) => u.email).filter(Boolean);
+                
+                // 2. Send Email (Batch BCC with Generic To)
+                if (process.env.RESEND_API_KEY && recipientEmails.length > 0) {
+                    const { Resend } = await import("resend");
+                    const resend = new Resend(process.env.RESEND_API_KEY);
+                    const { NewPostEmail } = await import("@/emails/NewPostEmail");
+
+                    // Send to "notifications@futureprospect.online" (ourselves) and BCC everyone else
+                    await resend.emails.send({
+                        from: "FutureProspect <notifications@futureprospect.online>",
+                        to: "notifications@futureprospect.online", 
+                        bcc: recipientEmails, // Everyone goes to BCC
+                        subject: `New Internship Posted: ${internship.title}`,
+                        react: NewPostEmail({
+                            postTitle: internship.title,
+                            postType: "Internship",
+                            postLocation: internship.location,
+                            viewPostUrl: `https://futureprospect.online/internships/${internship.id}`,
+                            companyLogoUrl: "https://tmvipinvvhgklmqwvows.supabase.co/storage/v1/object/public/company-assets/Seed%20Company/events/SEED%20community%20Challenge-1757769838240.jpg", 
+                            managePreferencesUrl: "https://futureprospect.online/profile/notifications",
+                            postedDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
+                        }),
+                    });
+                }
+
+                // 3. Create Notifications in DB (using unique recipients)
+                const notifications = uniqueRecipients.map((u: any) => ({
+                    user_id: u.id || u.user_id, 
+                    title: "New Internship Posted!",
+                    message: `A new internship "${internship.title}" is available.`,
+                    type: "internship",
+                    reference_id: internship.id,
+                }));
+
+                const { error: notifError } = await supabaseAdmin.from("notifications").insert(notifications);
+                if (notifError) console.error("Failed to create notifications:", notifError);
+            }
+        } catch (innerErr) {
+            console.error("Async notification error:", innerErr);
+        }
+        // ---------------------------------------------------------------
+
+        return NextResponse.json(internship, { status: 201 });
     }
     catch(err){
         console.log(err)

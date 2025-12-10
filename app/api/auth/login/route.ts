@@ -1,8 +1,39 @@
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import { generateCSRFToken } from "@/lib/utils/csrf";
 
-export async function POST(request: Request) {
+// GET: Return a CSRF token for the frontend
+export async function GET() {
+  const secret = process.env.CSRF_SECRET || 'dev-secret-please-change';
+  const token = generateCSRFToken(secret);
+  return NextResponse.json({ csrfToken: token });
+}
+
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { cookies, headers } from "next/headers";
+import { NextResponse } from "next/server";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
+import { withCSRFProtection } from "@/lib/utils/csrf";
+
+// Upstash rate limiter: 5 login attempts per 15 minutes per email
+const ratelimit = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(5, "15 m"),
+  analytics: true,
+});
+
+async function checkRateLimit(identifier: string) {
+  const { success, reset } = await ratelimit.limit(identifier);
+  if (!success) {
+    return {
+      blocked: true,
+      reset: Math.ceil((reset - Date.now()) / 1000),
+    };
+  }
+  return { blocked: false, reset: 0 };
+}
+
+
+const _POST = async function(request: Request) {
   const { email, password } = await request.json();
   console.log("Login attempt for email:", email);
 
@@ -10,6 +41,15 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "Email and password are required." },
       { status: 400 }
+    );
+  }
+
+  // Rate limit check (per email)
+  const rate = await checkRateLimit(email);
+  if (rate.blocked) {
+    return NextResponse.json(
+      { error: `Too many login attempts. Try again in ${rate.reset} seconds.` },
+      { status: 429, headers: { "Retry-After": String(rate.reset) } }
     );
   }
 
@@ -100,7 +140,21 @@ export async function POST(request: Request) {
     );
   }
 
-  // 2. If not a company, check if it's a student and attempt password login
+  // 2. If not a company, attempt password login FIRST (Timing Attack Prevention)
+  // We do NOT check for student profile existence before auth.
+  const { data, error: signInError } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (signInError) {
+    return NextResponse.json(
+      { error: "Invalid email or password." },
+      { status: 401 }
+    );
+  }
+
+  // 3. Auth successful, NOW check if it's a student
   const { data: studentProfile } = await supabase
     .from("student_profiles")
     .select("profile_status")
@@ -108,20 +162,6 @@ export async function POST(request: Request) {
     .single();
 
   if (studentProfile) {
-    const { data, error: signInError } = await supabase.auth.signInWithPassword(
-      {
-        email,
-        password,
-      }
-    );
-
-    if (signInError) {
-      return NextResponse.json(
-        { error: "Invalid email or password." },
-        { status: 401 }
-      );
-    }
-
     return NextResponse.json(
       {
         message: "Login successful",
@@ -132,8 +172,15 @@ export async function POST(request: Request) {
     );
   }
 
+  // 4. If authenticated but not a student (and we already checked company),
+  // this is an edge case (maybe a user without a profile row yet, or wrong role).
+  // We should sign them out to be safe, or just return error.
+  await supabase.auth.signOut();
+
   return NextResponse.json(
-    { error: "Invalid email or password." },
+    { error: "Invalid email or password." }, // Generic error to maintain ambiguity
     { status: 401 }
   );
 }
+
+export const POST = withCSRFProtection(_POST);

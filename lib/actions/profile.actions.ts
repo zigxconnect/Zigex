@@ -29,6 +29,10 @@ export interface FormattedUserData {
   skills: string[];
   coverImageUrl: string;
   profile: UserProfile;
+  stats?: {
+    applications: number;
+    profileViews: number;
+  };
 }
 
 /**
@@ -61,6 +65,15 @@ export async function getProfileInfo(): Promise<FormattedUserData> {
     );
   }
 
+  const { count: applicationsCount, error: countError } = await supabase
+    .from("Applications")
+    .select("*", { count: "exact", head: true })
+    .eq("student_id", profile.id);
+
+  if (countError) {
+    console.error("Error fetching application count:", countError);
+  }
+
   const userData: FormattedUserData = {
     name: profile.full_name || "New User",
     avatarUrl: profile.avatar_url,
@@ -72,6 +85,10 @@ export async function getProfileInfo(): Promise<FormattedUserData> {
     skills: profile.hard_skills || [],
     coverImageUrl: "/placeholder-cover.jpg",
     profile: profile,
+    stats: {
+      applications: applicationsCount || 0,
+      profileViews: 0, // Placeholder as this is not yet tracked
+    },
   };
 
   return userData;

@@ -125,6 +125,64 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
+
+    // --- NOTIFICATION & EMAIL LOGIC ---
+    try {
+        // 1. Get subscribed users
+        const { data: users, error: userError } = await supabaseAdmin.rpc("get_subscribed_emails");
+        
+        let recipients = users || [];
+        if (userError) {
+            console.error("RPC get_subscribed_emails failed:", userError);
+        }
+
+        if (recipients.length > 0) {
+            const recipientEmails = recipients.map((u: any) => u.email).filter(Boolean);
+            
+            // 2. Send Email (Batch BCC)
+            if (process.env.RESEND_API_KEY) {
+                const { Resend } = await import("resend");
+                const resend = new Resend(process.env.RESEND_API_KEY);
+                const { NewPostEmail } = await import("@/emails/NewPostEmail");
+
+                // Use "notifications@futureprospect.online" as 'to' and everyone else as 'bcc'
+                await resend.emails.send({
+                    from: "FutureProspect <notifications@futureprospect.online>",
+                    to: "notifications@futureprospect.online", 
+                    bcc: recipientEmails,
+                    subject: `New Event Posted: ${data.title}`,
+                    react: NewPostEmail({
+                        postTitle: data.title,
+                        postType: "Event",
+                        postLocation: data.location || "Online", // Fallback if location missing
+                        viewPostUrl: `https://futureprospect.online/events/${data.id}`,
+                        companyLogoUrl: "https://tmvipinvvhgklmqwvows.supabase.co/storage/v1/object/public/company-assets/Seed%20Company/events/SEED%20community%20Challenge-1757769838240.jpg", 
+                        managePreferencesUrl: "https://futureprospect.online/profile/notifications",
+                        postedDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
+                    }),
+                });
+            }
+
+            // 3. Create Notifications in DB
+            // Deduplicate recipients to ensure only one notification per user
+            const uniqueRecipients = Array.from(new Map(recipients.map((item:any) => [item.id || item.user_id, item])).values());
+
+            const notifications = uniqueRecipients.map((u: any) => ({
+                user_id: u.id || u.user_id, 
+                title: "New Event Posted!",
+                message: `A new event "${data.title}" is available.`,
+                type: "event",
+                reference_id: data.id,
+            }));
+
+            const { error: notifError } = await supabaseAdmin.from("notifications").insert(notifications);
+            if (notifError) console.error("Failed to create notifications:", notifError);
+        }
+    } catch (innerErr) {
+        console.error("Async notification error:", innerErr);
+    }
+    // ---------------------------------------------------------------
+
     return NextResponse.json(data, { status: 201 });
   } catch (validationError) {
     console.error("Validation error:", validationError);
