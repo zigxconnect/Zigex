@@ -25,7 +25,7 @@ interface ActiveProjectResult {
 export async function fetchActiveProject(): Promise<ActiveProjectResult> {
   try {
     // Set up Supabase client
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -131,7 +131,7 @@ export async function fetchActiveProject(): Promise<ActiveProjectResult> {
 // Helper function to fetch project for a specific student profile ID (for visitor view)
 export async function fetchUserActiveProject(studentProfileId: string): Promise<ActiveProjectResult> {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

@@ -22,7 +22,7 @@ interface CreateProjectResult {
 export async function createProjectAction(formData: FormData): Promise<CreateProjectResult> {
   try {
     // Step 1: Set up Supabase client
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

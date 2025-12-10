@@ -2,25 +2,15 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-function createSupabaseServerClient() {
-  const cookieStore = cookies();
+async function createSupabaseServerClient() {
+  const cookieStore = await cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get: async (name: string) => {
-          return (await cookieStore).get(name)?.value;
-        },
-        set: async (name: string, value: string, options: CookieOptions) => {
-          try {
-            (await cookieStore).set({ name, value, ...options });
-          } catch (error) {}
-        },
-        remove: async (name: string, options: CookieOptions) => {
-          try {
-            (await cookieStore).set({ name, value: "", ...options });
-          } catch (error) {}
+        get(name: string) {
+          return cookieStore.get(name)?.value;
         },
       },
     }
@@ -31,7 +21,7 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ username: string }> }
 ) {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   try {
     const {
       data: { user },
@@ -65,7 +55,7 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ username: string }> }
 ) {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   try {
     const {
       data: { user },

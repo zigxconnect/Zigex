@@ -21,11 +21,11 @@ import SimilarStudentsSidebar from "@/components/sections/dashboard/SimilarStude
 import { redirect } from "next/navigation";
 
 interface Props {
-  params: { username: string };
+  params: Promise<{ username: string }>;
 }
 
 export default async function ProfilePage({ params }: Props) {
-  const { username } = params;
+  const { username } = await params;
 
   // Get current authenticated user
   const supabase = await createServerActionClient();
@@ -99,7 +99,7 @@ export default async function ProfilePage({ params }: Props) {
   // Fetch similar students
   const { data: candidatesData } = await supabaseAdmin
     .from("student_profiles")
-    .select("id, full_name, avatar_url, university, linkedin_url, phone, email, hard_skills, soft_skills")
+    .select("id, username, full_name, avatar_url, university, linkedin_url, phone, email, hard_skills, soft_skills")
     .neq("username", username)
     .limit(10);
 
@@ -129,6 +129,7 @@ export default async function ProfilePage({ params }: Props) {
 
   const similarStudents = similar.slice(0, 6).map((s) => ({
     id: s.id,
+    username: s.username,
     full_name: s.full_name,
     avatar_url: s.avatar_url,
     university: s.university,
