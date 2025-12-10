@@ -11,26 +11,22 @@ import {
   ExternalLink, 
   Star, 
   GitFork, 
-  Calendar, 
   Clock, 
-  MapPin, 
   BookOpen, 
-  X, 
-  MessageSquare,
   Share2,
-  MoreHorizontal,
-  Heart,
-  User,
-  CheckCircle2
+  CheckCircle2,
+  AlertCircle,
+  ArrowLeft
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import ProjectDetailMedia from "@/components/uiComponent/ProjectDetailMedia";
 import ContributeModal from "@/components/uiComponent/ContributeModal";
+import ContributorManualModal from "@/components/uiComponent/ContributorManualModal";
+import ProjectGamification from "@/components/uiComponent/ProjectGamification";
 
 interface Contributor {
   login: string;
@@ -101,330 +97,320 @@ export default function ProjectDetailsView({
 }: ProjectDetailsViewProps) {
   const [isReadmeOpen, setIsReadmeOpen] = useState(false);
   const [isContributeOpen, setIsContributeOpen] = useState(false);
+  const [isManualOpen, setIsManualOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 selection:bg-blue-100">
-      {/* Header / Navigation Bar - This sticky header stays at the top as users scroll */}
-      <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 px-4 py-3">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/dashboard/projects" className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-600 hover:text-slate-900">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
-            </Link>
-            <div>
-              <h1 className="text-xl font-bold leading-tight truncate max-w-[200px] sm:max-w-md">
-                {project.title}
-              </h1>
-              <p className="text-xs text-slate-500">
-                {githubData?.stars ? `${githubData.stars} stars` : 'Project Details'}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-900">
-              <Share2 className="w-5 h-5" />
-            </Button>
-            {project.github_repository && (
-              <Button asChild variant="outline" size="sm" className="rounded-full bg-slate-900 text-white hover:bg-slate-800 border-none font-bold hidden sm:flex">
-                <a href={project.github_repository} target="_blank" rel="noopener noreferrer">
-                  <Github className="w-4 h-4 mr-2" />
-                  Code
-                </a>
+    <div className="min-h-screen bg-slate-50 selection:bg-blue-100 selection:text-blue-900">
+      
+      {/* 1. Header Navigation */}
+      <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+           <div className="flex items-center gap-4">
+              <Link 
+                href="/dashboard/projects" 
+                className="p-2 -ml-2 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                title="Back to Projects"
+              >
+                 <ArrowLeft className="w-5 h-5" />
+              </Link>
+              <div className="h-6 w-px bg-slate-200 mx-2 hidden sm:block" />
+              <div className="flex flex-col">
+                 <h1 className="text-sm font-bold text-slate-900 leading-tight line-clamp-1 max-w-[200px] sm:max-w-md">
+                    {project.title}
+                 </h1>
+                 <span className="text-[10px] text-slate-500 font-medium">
+                    by {owner?.full_name || 'Unknown'}
+                 </span>
+              </div>
+           </div>
+
+           <div className="flex items-center gap-2">
+              <Button asChild variant="secondary" className="hidden sm:flex rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 h-9 px-4 text-sm">
+                 <a href={`mailto:?subject=Check out this project: ${project.title}&body=I found this amazing project on Future Prospect: ${typeof window !== 'undefined' ? window.location.href : ''}`}>
+                    <Share2 className="w-4 h-4 mr-2" /> Share
+                 </a>
               </Button>
-            )}
-          </div>
+              {project.github_repository && (
+                  <Button asChild className="rounded-full bg-slate-900 hover:bg-slate-800 text-white font-bold shadow-md shadow-slate-200 h-9 px-4 text-sm">
+                     <a href={project.github_repository} target="_blank" rel="noopener noreferrer">
+                        <Github className="w-4 h-4 mr-2" />
+                        <span className="hidden sm:inline">GitHub</span>
+                     </a>
+                  </Button>
+              )}
+           </div>
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr,350px] gap-0 lg:gap-8 lg:px-4 lg:py-6">
-        {/* Left Column: Main Content - This contains the primary project information */}
-        <div className="border-r border-slate-200 min-h-screen pb-20">
-          
-          {/* Hero Media - Displays the project's video or cover image */}
-          <div className="w-full aspect-video bg-slate-100 border-b border-slate-200 lg:rounded-2xl lg:border lg:overflow-hidden relative group">
-            <ProjectDetailMedia
-              uploadedVideo={project.uploaded_video_url}
-              youtubeVideo={project.project_video_url}
-              coverImage={project.cover_image_url ?? undefined}
-              title={project.title}
-            />
-          </div>
-
-          {/* Project Stats & Actions Row - Shows verification status and GitHub metrics */}
-          <div className="px-4 py-4 flex items-center justify-between border-b border-slate-200">
-            <div className="flex items-center gap-6">
-               <div className="flex flex-col">
-                 <span className="text-slate-500 text-xs uppercase tracking-wider font-semibold">Status</span>
-                 <div className="flex items-center gap-1.5 mt-1">
-                   {project.is_valid ? (
-                     <>
-                       <CheckCircle2 className="w-4 h-4 text-green-500" />
-                       <span className="text-sm font-medium text-green-500">Verified</span>
-                     </>
-                   ) : (
-                     <>
-                       <Clock className="w-4 h-4 text-amber-500" />
-                       <span className="text-sm font-medium text-amber-500">Pending</span>
-                     </>
-                   )}
-                 </div>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+            
+            {/* LEFT COLUMN (Main Content) */}
+            <div className="lg:col-span-8 space-y-8">
+               
+               {/* Hero Media Section */}
+               <div className="bg-white rounded-3xl p-1.5 shadow-sm border border-slate-100 overflow-hidden">
+                  <div className="relative aspect-video rounded-[18px] overflow-hidden bg-slate-900 shadow-inner">
+                     <ProjectDetailMedia
+                        uploadedVideo={project.uploaded_video_url}
+                        youtubeVideo={project.project_video_url}
+                        coverImage={project.cover_image_url ?? undefined}
+                        title={project.title}
+                      />
+                  </div>
                </div>
 
-               {githubData && (
-                 <>
-                   <div className="flex flex-col">
-                     <span className="text-slate-500 text-xs uppercase tracking-wider font-semibold">Activity</span>
-                     <div className="flex items-center gap-3 mt-1 text-sm">
-                       <span className="flex items-center gap-1 text-slate-700 hover:text-yellow-600 transition-colors cursor-help" title="GitHub Stars">
-                         <Star className="w-4 h-4" /> {githubData.stars}
-                       </span>
-                       <span className="flex items-center gap-1 text-slate-700 hover:text-blue-600 transition-colors cursor-help" title="GitHub Forks">
-                         <GitFork className="w-4 h-4" /> {githubData.forks}
-                       </span>
+               {/* Title & Description Card */}
+               <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm">
+                  {/* Status & Date Row */}
+                  <div className="flex items-center gap-4 mb-6">
+                     {project.is_valid ? (
+                       <Badge variant="secondary" className="bg-emerald-50 text-emerald-600 border-emerald-100 px-3 py-1 rounded-full gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 fill-current" /> Validated
+                       </Badge>
+                     ) : (
+                        <Badge variant="secondary" className="bg-amber-50 text-amber-600 border-amber-100 px-3 py-1 rounded-full gap-1.5">
+                           <Clock className="w-3.5 h-3.5 fill-current" /> Pending Review
+                        </Badge>
+                     )}
+                     <span className="text-slate-400 text-sm font-medium">
+                        Posted on {format(new Date(project.created_at), "MMMM d, yyyy")}
+                     </span>
+                  </div>
+
+                  <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-6 tracking-tight">
+                     {project.title}
+                  </h1>
+
+                  <div className=" prose prose-slate prose-lg max-w-none text-slate-600 leading-relaxed">
+                     {project.description}
+                  </div>
+
+                  {/* Tech Stack / Topics */}
+                  {githubData?.topics && githubData.topics.length > 0 && (
+                     <div className="mt-8 flex flex-wrap gap-2">
+                        {githubData.topics.map(topic => (
+                           <Badge key={topic} variant="secondary" className="bg-slate-50 text-slate-600 border-slate-200 px-3 py-1.5 text-sm font-medium rounded-lg hover:bg-slate-100 transition-colors cursor-default">
+                              #{topic}
+                           </Badge>
+                        ))}
                      </div>
+                  )}
+               </div>
+
+               {/* README Section */}
+               {githubData?.readme && (
+                   <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                      <div className="px-6 py-4 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
+                         <div className="flex items-center gap-2 text-slate-900 font-bold">
+                            <BookOpen className="w-5 h-5 text-blue-600" />
+                            README.md
+                         </div>
+                         <Button variant="secondary" onClick={() => setIsReadmeOpen(true)} className="text-blue-600 hover:text-blue-700 bg-transparent hover:bg-blue-50 font-bold h-8 px-3 text-xs">
+                            Expand View
+                         </Button>
+                      </div>
+                      <div className="p-6 sm:p-8 max-h-[500px] overflow-hidden relative group">
+                         <article className="prose prose-slate max-w-none prose-img:rounded-xl">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                               {githubData.readme}
+                            </ReactMarkdown>
+                         </article>
+                         {/* Fade overlay */}
+                         <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-white via-white/90 to-transparent flex items-end justify-center pb-8">
+                             <Button onClick={() => setIsReadmeOpen(true)} className="bg-white text-slate-900 border border-slate-200 shadow-lg hover:bg-slate-50 font-bold rounded-full px-8">
+                                Read Full Documentation
+                             </Button>
+                         </div>
+                      </div>
                    </div>
-                 </>
                )}
             </div>
 
-            <Button 
-              onClick={() => setIsContributeOpen(true)}
-              className="rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-sm shadow-blue-200"
-            >
-              Contribute
-            </Button>
-          </div>
 
-          {/* Description Section - Shows the project creator and detailed description */}
-          <div className="px-4 py-6 border-b border-slate-200">
-            <div className="flex items-start gap-4">
-              {/* Owner Avatar - Links to the creator's profile */}
-              <Link href={`/dashboard/student/${project.student_id}`} className="shrink-0">
-                {owner?.avatar_url ? (
-                  <Image 
-                    src={owner.avatar_url} 
-                    alt={owner.full_name} 
-                    width={48} 
-                    height={48} 
-                    className="rounded-full object-cover hover:opacity-90 transition-opacity"
-                  />
-                ) : (
-                  <div className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center text-xl font-bold text-slate-500">
-                    {owner?.full_name?.[0] || "?"}
-                  </div>
-                )}
-              </Link>
-              
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                   <Link href={`/dashboard/student/${project.student_id}`} className="group">
-                     <h3 className="font-bold text-lg text-slate-900 group-hover:underline decoration-slate-400 underline-offset-2">
-                       {owner?.full_name || "Unknown Creator"}
-                     </h3>
-                     <p className="text-slate-500 text-sm">@{owner?.full_name?.toLowerCase().replace(/\s+/g, '') || "user"}</p>
-                   </Link>
-                   <span className="text-slate-500 text-sm">
-                     {format(new Date(project.created_at), "MMM d")}
-                   </span>
-                </div>
-
-                <div className="mt-3 text-[15px] leading-relaxed text-slate-700 whitespace-pre-wrap">
-                  {project.description}
-                </div>
-
-                {/* Topic Tags - Display GitHub repository topics as clickable badges */}
-                {githubData?.topics && githubData.topics.length > 0 && (
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {githubData.topics.map(topic => (
-                      <Badge key={topic} variant="secondary" className="rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1 font-normal border border-blue-100">
-                        #{topic}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-
-                {/* Meta details - Duration, language, and demo link */}
-                <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-slate-500">
-                  {project.project_duration && (
-                     <div className="flex items-center gap-1.5">
-                       <Clock className="w-4 h-4" />
-                       <span>{project.project_duration}</span>
-                     </div>
-                  )}
-                  {githubData?.language && (
-                    <div className="flex items-center gap-1.5">
-                       <div className="w-3 h-3 rounded-full bg-yellow-400" />
-                       <span>{githubData.language}</span>
-                    </div>
-                  )}
-                  {githubData?.homepage && (
-                    <a href={githubData.homepage} target="_blank" rel="noopener" className="flex items-center gap-1.5 text-blue-600 hover:underline font-medium">
-                      <ExternalLink className="w-4 h-4" />
-                      <span>Live Demo</span>
-                    </a>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* README Preview - Shows a truncated preview with a button to view the full documentation */}
-          {githubData?.readme ? (
-            <div className="px-4 py-6 border-b border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => setIsReadmeOpen(true)}>
-               <div className="flex items-center gap-3 mb-3 text-slate-500">
-                 <BookOpen className="w-5 h-5" />
-                 <span className="font-semibold text-sm uppercase tracking-wider">README.md</span>
-               </div>
-               
-               <div className="relative max-h-[200px] overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                  <article className="prose prose-slate prose-sm max-w-none opacity-70 pointer-events-none">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {githubData.readme}
-                    </ReactMarkdown>
-                  </article>
-                  <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white via-white/80 to-transparent flex items-end justify-center pb-4">
-                     <Button variant="secondary" className="rounded-full font-bold shadow-sm bg-slate-100 text-slate-900 hover:bg-slate-200">
-                       Read Full Documentation
-                     </Button>
-                  </div>
-               </div>
-            </div>
-          ) : (
-            <div className="px-4 py-12 text-center border-b border-slate-200">
-              <p className="text-slate-500 italic">No README available for this project.</p>
-            </div>
-          )}
-
-          {/* Contributors Section - Lists all project contributors with their GitHub profiles */}
-          {githubData?.contributors && githubData.contributors.length > 0 && (
-             <div className="px-4 py-6 border-b border-slate-200">
-                <h3 className="font-bold text-lg mb-4 text-slate-900">Contributors</h3>
-                <div className="flex flex-wrap gap-3">
-                  {githubData.contributors.map((contributor) => (
-                    <a 
-                      key={contributor.login}
-                      href={`https://github.com/${contributor.login}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 bg-slate-50 hover:bg-slate-100 px-3 py-2 rounded-full transition-colors border border-slate-200"
-                    >
-                      <Image 
-                        src={contributor.avatar_url}
-                        alt={contributor.login}
-                        width={24}
-                        height={24}
-                        className="rounded-full"
-                      />
-                      <span className="text-sm font-medium text-slate-700">{contributor.login}</span>
-                      <span className="text-xs text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded-full">{contributor.contributions}</span>
-                    </a>
-                  ))}
-                </div>
-             </div>
-          )}
-
-        </div>
-
-        {/* Right Column: Sidebar - Contains search and similar projects (sticky on large screens) */}
-        <div className="hidden lg:block pt-6">
-          <div className="sticky top-[80px] space-y-6">
-            
-            {/* Search Input - Allows users to search for other projects */}
-            <div className="bg-slate-50 rounded-full py-3 px-5 flex items-center gap-3 border border-slate-200 group focus-within:border-blue-500/50 focus-within:bg-white transition-all shadow-sm">
-               <svg className="w-5 h-5 text-slate-400 group-focus-within:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-               <input type="text" placeholder="Search projects..." className="bg-transparent border-none outline-none text-slate-900 w-full placeholder-slate-400" />
-            </div>
-
-            {/* Similar Projects - Shows related GitHub repositories */}
-            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-               <div className="p-4 border-b border-slate-200">
-                 <h3 className="font-bold text-lg text-slate-900">Similar on GitHub</h3>
-               </div>
-               
-               <div className="divide-y divide-slate-100">
-                 {similarProjects.length > 0 ? (
-                   similarProjects.map((repo) => (
-                     <a 
-                      key={repo.id} 
-                      href={repo.html_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="block p-4 hover:bg-slate-50 transition-colors"
-                     >
-                        <div className="flex items-center gap-3 mb-1">
-                          <Image 
-                            src={repo.owner.avatar_url} 
-                            alt={repo.owner.login} 
-                            width={20} 
-                            height={20} 
-                            className="rounded-full" 
-                          />
-                          <span className="text-xs font-bold text-slate-500 hover:underline">{repo.owner.login}</span>
-                        </div>
-                        <h4 className="font-bold text-sm mb-1 line-clamp-1 text-slate-900">{repo.name}</h4>
-                        <p className="text-xs text-slate-500 line-clamp-2 mb-2">
-                          {repo.description || "No description provided."}
-                        </p>
-                        <div className="flex items-center gap-3 text-xs text-slate-500">
-                           {repo.language && (
-                             <span className="text-blue-600">{repo.language}</span>
-                           )}
-                           <span className="flex items-center gap-1">
-                              <Star className="w-3 h-3" /> {repo.stargazers_count}
-                           </span>
-                        </div>
-                     </a>
-                   ))
-                 ) : (
-                   <div className="p-4 text-center text-slate-500 text-sm">
-                     No similar projects found.
+            {/* RIGHT COLUMN (Sidebar) */}
+            <div className="lg:col-span-4 space-y-6 h-fit sticky top-24">
+                
+                {/* Creator Card */}
+                <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+                   <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Project Creator</h3>
+                   <div className="flex items-center gap-4">
+                      <Link href={`/dashboard/student/${project.student_id}`} className="shrink-0 relative">
+                         {owner?.avatar_url ? (
+                            <Image src={owner.avatar_url} alt={owner.full_name} width={64} height={64} className="rounded-2xl object-cover shadow-sm bg-slate-50" />
+                         ) : (
+                            <div className="w-16 h-16 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xl">
+                               {owner?.full_name?.charAt(0)}
+                            </div>
+                         )}
+                         {/* Online indicator placeholder could go here */}
+                      </Link>
+                      <div>
+                         <Link href={`/dashboard/student/${project.student_id}`} className="block">
+                            <h4 className="text-lg font-bold text-slate-900 hover:text-blue-600 transition-colors line-clamp-1">{owner?.full_name}</h4>
+                         </Link>
+                         <p className="text-sm text-slate-500 line-clamp-1">{owner?.university || "Student"}</p>
+                         <Link href={`/dashboard/student/${project.student_id}`} className="text-xs font-bold text-blue-600 mt-1 inline-block hover:underline">
+                            View Profile
+                         </Link>
+                      </div>
                    </div>
-                 )}
-               </div>
-               <div className="p-4">
-                  <a href="https://github.com/explore" target="_blank" rel="noopener noreferrer" className="text-blue-600 text-sm hover:underline font-medium">
-                    Show more on GitHub
-                  </a>
-               </div>
-            </div>
+                </div>
 
-            {/* Footer Links - Legal and support links */}
-            <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-500 px-2">
-              <a href="#" className="hover:underline hover:text-blue-600">Terms of Service</a>
-              <a href="#" className="hover:underline hover:text-blue-600">Privacy Policy</a>
-              <a href="#" className="hover:underline hover:text-blue-600">Support</a>
-              <span>© 2024 Future Prospect</span>
-            </div>
+                {/* Project Links & Stats */}
+                <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-6">
+                    <div className="space-y-3">
+                      <Button onClick={() => setIsContributeOpen(true)} className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-base shadow-lg shadow-blue-200 transition-all hover:scale-[1.02]">
+                         👋 Contribute to Project
+                      </Button>
+                      <Button onClick={() => setIsManualOpen(true)} variant="secondary" className="w-full h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm">
+                         <BookOpen className="w-4 h-4 mr-2" /> How to Contribute
+                      </Button>
+                    </div>
 
-          </div>
-        </div>
+                    {githubData && (
+                       <ProjectGamification 
+                          stars={githubData.stars} 
+                          forks={githubData.forks} 
+                          lastUpdate={githubData.last_pushed} 
+                       />
+                    )}
+                     
+                    <div className="space-y-3 pt-2">
+                       {project.project_duration && (
+                          <div className="flex items-center justify-between text-sm">
+                             <span className="text-slate-500 flex items-center gap-2">
+                                <Clock className="w-4 h-4" /> Duration
+                             </span>
+                             <span className="font-semibold text-slate-900 capitalize">{project.project_duration.replace('-', ' ')}</span>
+                          </div>
+                       )}
+                       {githubData?.language && (
+                          <div className="flex items-center justify-between text-sm">
+                              <span className="text-slate-500">Language</span>
+                              <Badge variant="outline" className="text-slate-700 border-slate-300">
+                                 {githubData.language}
+                              </Badge>
+                          </div>
+                       )}
+                       {githubData?.homepage && (
+                          <div className="flex items-center justify-between text-sm pt-2 border-t border-slate-100 mt-2">
+                             <span className="text-slate-500">Live Demo</span>
+                             <a href={githubData.homepage} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600 font-bold hover:underline">
+                                Visit Site <ExternalLink className="w-3.5 h-3.5" />
+                             </a>
+                          </div>
+                       )}
+                    </div>
+                </div>
+
+                {/* Contributors */}
+                {githubData?.contributors && githubData.contributors.length > 0 && (
+                   <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Contributors</h3>
+                      <div className="flex flex-wrap gap-2">
+                         {githubData.contributors.map((contributor) => (
+                            <a 
+                               key={contributor.login}
+                               href={`https://github.com/${contributor.login}`}
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               title={`${contributor.login} (${contributor.contributions} commits)`}
+                               className="relative w-10 h-10 rounded-full border-2 border-white shadow-sm hover:scale-110 hover:z-10 transition-transform cursor-pointer"
+                            >
+                               <Image 
+                                  src={contributor.avatar_url} 
+                                  alt={contributor.login} 
+                                  fill
+                                  className="rounded-full object-cover"
+                               />
+                            </a>
+                         ))}
+                      </div>
+                   </div>
+                )}
+               
+               {/* Similar Projects */}
+               {similarProjects.length > 0 && (
+                  <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Similar Projects</h3>
+                     <div className="space-y-4">
+                        {similarProjects.map((repo) => (
+                           <a 
+                             key={repo.id} 
+                             href={repo.html_url}
+                             target="_blank"
+                             rel="noopener noreferrer"
+                             className="flex items-start gap-3 p-3 rounded-2xl hover:bg-slate-50 transition-colors group"
+                            >
+                               <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center shrink-0 text-slate-400 group-hover:bg-white group-hover:text-blue-600 group-hover:shadow-sm transition-all">
+                                  <BookOpen className="w-5 h-5" />
+                               </div>
+                               <div className="min-w-0">
+                                  <h4 className="font-bold text-slate-900 text-sm truncate group-hover:text-blue-600 transition-colors">{repo.name}</h4>
+                                  <div className="flex items-center gap-3 mt-1">
+                                     <span className="text-xs text-slate-500 flex items-center gap-1">
+                                        <Star className="w-3 h-3 text-amber-400 fill-current" /> {repo.stargazers_count}
+                                     </span>
+                                     {repo.language && (
+                                       <span className="text-[10px] font-medium text-slate-400 border border-slate-200 px-1.5 rounded-md">
+                                          {repo.language}
+                                       </span>
+                                     )}
+                                  </div>
+                               </div>
+                            </a>
+                        ))}
+                     </div>
+                  </div>
+               )}
+
+            </div>
+         </div>
       </main>
 
-      {/* README Full View Dialog - Opens when user clicks "Read Full Documentation" */}
+      {/* Fullscreen README Modal */}
       <Dialog open={isReadmeOpen} onOpenChange={setIsReadmeOpen}>
-        <DialogContent className="max-w-4xl h-[85vh] p-0 bg-white border-slate-200 text-slate-900 overflow-hidden flex flex-col">
-           <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+        <DialogContent className="max-w-5xl h-[90vh] p-0 gap-0 overflow-hidden bg-white">
+           <div className="h-16 px-6 border-b border-slate-200 flex items-center justify-between bg-slate-50/80 backdrop-blur-sm">
               <div className="flex items-center gap-3">
-                 <BookOpen className="w-5 h-5 text-blue-600" />
-                 <h2 className="font-bold text-lg">README.md</h2>
+                 <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+                    <BookOpen className="w-5 h-5" />
+                 </div>
+                 <div>
+                    <h2 className="font-bold text-slate-900">README.md</h2>
+                    <p className="text-xs text-slate-500">Documentation preview</p>
+                 </div>
               </div>
+              <Button variant="secondary" onClick={() => setIsReadmeOpen(false)} className="rounded-full bg-slate-200 hover:bg-slate-300 h-8 px-4 text-xs">
+                 Close
+              </Button>
            </div>
-           <ScrollArea className="flex-1 p-6 sm:p-10">
-              <article className="prose prose-slate prose-lg max-w-none">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {githubData?.readme || ""}
-                </ReactMarkdown>
-              </article>
+           
+           <ScrollArea className="flex-1 bg-white">
+              <div className="p-8 sm:p-12 max-w-4xl mx-auto">
+                 <article className="prose prose-slate prose-lg max-w-none prose-headings:font-bold prose-a:text-blue-600 prose-img:rounded-xl">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                       {githubData?.readme || ""}
+                    </ReactMarkdown>
+                 </article>
+              </div>
            </ScrollArea>
         </DialogContent>
       </Dialog>
       
-      {/* Contribute Modal - Opens when user clicks the "Contribute" button */}
+      {/* Configure Contribute Modal */}
       <ContributeModal 
         isOpen={isContributeOpen} 
         onClose={() => setIsContributeOpen(false)} 
         projectTitle={project.title} 
         githubUrl={project.github_repository} 
+      />
+
+      <ContributorManualModal
+        isOpen={isManualOpen}
+        onClose={() => setIsManualOpen(false)}
+        repoUrl={project.github_repository || ""}
       />
     </div>
   );
