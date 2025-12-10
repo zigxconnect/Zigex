@@ -17,7 +17,7 @@ interface ActiveProjectResult {
     project_duration: string;
     end_date: string;
     created_at: string;
-    is_valid: boolean;
+    status: string; // 'valid' | 'pending' | 'cancel'
   } | null;
   error?: string;
 }
@@ -25,7 +25,7 @@ interface ActiveProjectResult {
 export async function fetchActiveProject(): Promise<ActiveProjectResult> {
   try {
     // Set up Supabase client
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -48,8 +48,8 @@ export async function fetchActiveProject(): Promise<ActiveProjectResult> {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return { 
-        success: false, 
+      return {
+        success: false,
         error: 'You must be logged in to view your project.',
         data: null
       };
@@ -63,8 +63,8 @@ export async function fetchActiveProject(): Promise<ActiveProjectResult> {
       .single();
 
     if (profileError || !studentProfile) {
-      return { 
-        success: false, 
+      return {
+        success: false,
         error: 'Student profile not found.',
         data: null
       };
@@ -90,15 +90,15 @@ export async function fetchActiveProject(): Promise<ActiveProjectResult> {
 
     if (projectError) {
       console.error('Project fetch error:', projectError);
-      return { 
-        success: false, 
+      return {
+        success: false,
         error: 'Failed to fetch project.',
         data: null
       };
     }
 
     // Check if project is invalid and older than 48 hours
-    if (activeProject && !activeProject.is_valid) {
+    if (activeProject && activeProject.status !== 'valid') {
       const createdAt = new Date(activeProject.created_at);
       const now = new Date();
       const fortyEightHoursInMs = 48 * 60 * 60 * 1000;
@@ -113,15 +113,15 @@ export async function fetchActiveProject(): Promise<ActiveProjectResult> {
       }
     }
 
-    return { 
-      success: true, 
-      data: activeProject 
+    return {
+      success: true,
+      data: activeProject
     };
 
   } catch (error: any) {
     console.error('Critical error in fetchActiveProject:', error);
-    return { 
-      success: false, 
+    return {
+      success: false,
       error: 'An unexpected error occurred.',
       data: null
     };
@@ -131,7 +131,7 @@ export async function fetchActiveProject(): Promise<ActiveProjectResult> {
 // Helper function to fetch project for a specific student profile ID (for visitor view)
 export async function fetchUserActiveProject(studentProfileId: string): Promise<ActiveProjectResult> {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -170,15 +170,15 @@ export async function fetchUserActiveProject(studentProfileId: string): Promise<
 
     if (projectError) {
       console.error('Project fetch error:', projectError);
-      return { 
-        success: false, 
+      return {
+        success: false,
         error: 'Failed to fetch project.',
         data: null
       };
     }
 
     // Check if project is invalid and older than 48 hours
-    if (activeProject && !activeProject.is_valid) {
+    if (activeProject && activeProject.status !== 'valid') {
       const createdAt = new Date(activeProject.created_at);
       const now = new Date();
       const fortyEightHoursInMs = 48 * 60 * 60 * 1000;
@@ -193,15 +193,15 @@ export async function fetchUserActiveProject(studentProfileId: string): Promise<
       }
     }
 
-    return { 
-      success: true, 
-      data: activeProject 
+    return {
+      success: true,
+      data: activeProject
     };
 
   } catch (error: any) {
     console.error('Critical error in fetchUserActiveProject:', error);
-    return { 
-      success: false, 
+    return {
+      success: false,
       error: 'An unexpected error occurred.',
       data: null
     };

@@ -24,7 +24,7 @@ interface Project {
   project_duration: string;
   end_date: string;
   created_at: string;
-  is_valid: boolean;
+  status: string;
 }
 
 interface UserData {
@@ -126,7 +126,7 @@ export default function ProjectPanel({
   // Prepare WhatsApp message
   const whatsappMessage = `Hi ${user.full_name || 'there'}! 👋
 
-I saw your profile on ZigX and I'm impressed by your work${project ? ` on "${project.project_title}"` : ''}. ${project?.hard_skills?.[0] ? `Your skills in ${user.hard_skills?.[0]} caught my attention.` : ''}
+I saw your profile on ZigX and I'm impressed by your work${project ? ` on "${project.project_title}"` : ''}. ${user.hard_skills?.[0] ? `Your skills in ${user.hard_skills?.[0]} caught my attention.` : ''}
 
 I'd love to connect and chat!
 

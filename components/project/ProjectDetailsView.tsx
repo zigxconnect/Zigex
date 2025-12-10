@@ -45,7 +45,7 @@ interface ProjectData {
   project_duration: string | null;
   created_at: string;
   end_date: string | null;
-  is_valid: boolean;
+  status: string; // 'valid' | 'pending' | 'cancel'
   student_id: string;
 }
 
@@ -164,10 +164,14 @@ export default function ProjectDetailsView({
                <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm">
                   {/* Status & Date Row */}
                   <div className="flex items-center gap-4 mb-6">
-                     {project.is_valid ? (
+                     {project.status === 'valid' ? (
                        <Badge variant="secondary" className="bg-emerald-50 text-emerald-600 border-emerald-100 px-3 py-1 rounded-full gap-1.5">
                           <CheckCircle2 className="w-3.5 h-3.5 fill-current" /> Validated
                        </Badge>
+                     ) : project.status === 'cancel' ? (
+                        <Badge variant="destructive" className="bg-red-50 text-red-600 border-red-100 px-3 py-1 rounded-full gap-1.5 hover:bg-red-100">
+                           <AlertCircle className="w-3.5 h-3.5 fill-current" /> Cancelled
+                        </Badge>
                      ) : (
                         <Badge variant="secondary" className="bg-amber-50 text-amber-600 border-amber-100 px-3 py-1 rounded-full gap-1.5">
                            <Clock className="w-3.5 h-3.5 fill-current" /> Pending Review

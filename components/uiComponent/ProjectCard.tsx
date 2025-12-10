@@ -20,7 +20,7 @@ interface Project {
   created_at: string;
   end_date: string | null;
   student_id: string;
-  is_valid: boolean;
+  status: string;
 }
 
 interface User {
@@ -92,7 +92,7 @@ export default function MyMonthProject({
   const coverImageUrl = getImageUrl(project?.cover_image_url ?? null);
 
   // --- CARD 1: UNDER REVIEW / PENDING ---
-  if (project && !project.is_valid && isVisitor) {
+  if (project && project.status !== 'valid' && isVisitor) {
     return (
       <div className="bg-white rounded-3xl border border-amber-100 shadow-sm overflow-hidden hover:shadow-md transition-all duration-300">
         <div className="p-6">
@@ -138,7 +138,7 @@ export default function MyMonthProject({
              <h3 className="text-lg font-bold text-slate-900 mb-1">{user.full_name}</h3>
              <p className="text-sm text-slate-500 mb-6">No active project yet.</p>
              {isMyProject && (
-                 <Button variant="outline" className="rounded-full border-dashed border-slate-300 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50">
+                 <Button variant="secondary-outline" className="rounded-full border-dashed border-slate-300 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50">
                      Create Project
                  </Button>
              )}
@@ -295,7 +295,7 @@ export default function MyMonthProject({
                  </Link>
              </Button>
              {project.github_repository && (
-                 <Button asChild variant="outline" size="icon" className="rounded-xl border-slate-200 hover:bg-slate-50 hover:text-slate-900 text-slate-500">
+                 <Button asChild variant="secondary-outline" className="h-10 w-10 p-0 rounded-xl border-slate-200 hover:bg-slate-50 hover:text-slate-900 text-slate-500">
                      <a href={project.github_repository} target="_blank" rel="noopener noreferrer">
                          <Github className="w-5 h-5" />
                      </a>

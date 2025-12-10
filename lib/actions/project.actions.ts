@@ -22,7 +22,7 @@ interface CreateProjectResult {
 export async function createProjectAction(formData: FormData): Promise<CreateProjectResult> {
   try {
     // Step 1: Set up Supabase client
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -32,10 +32,22 @@ export async function createProjectAction(formData: FormData): Promise<CreatePro
             return cookieStore.get(name)?.value;
           },
           set(name: string, value: string, options: CookieOptions) {
-            cookieStore.set({ name, value, ...options });
+            try {
+              cookieStore.set({ name, value, ...options });
+            } catch (error) {
+              // The `set` method was called from a Server Component.
+              // This can be ignored if you have middleware refreshing
+              // user sessions.
+            }
           },
           remove(name: string, options: CookieOptions) {
-            cookieStore.set({ name, value: '', ...options });
+            try {
+              cookieStore.set({ name, value: '', ...options });
+            } catch (error) {
+              // The `delete` method was called from a Server Component.
+              // This can be ignored if you have middleware refreshing
+              // user sessions.
+            }
           },
         },
       }
@@ -309,7 +321,7 @@ export async function createProjectAction(formData: FormData): Promise<CreatePro
       // Always include project_video_url, set to null if not valid
       project_video_url: cleanedYoutubeLink,
       uploaded_video_url: uploadedVideoUrl,
-      is_valid: false, // Default to false, can be validated later
+      status: 'pending', // Default to 'pending', can be validated later
     };
 
     const { data: projectData, error: projectError } = await supabase

@@ -13,8 +13,8 @@ export async function GET(req: Request) {
     // Fetch lightweight summary fields for other students' projects
     const { data, error } = await supabaseAdmin
       .from('projects')
-      .select('id, project_title, cover_image_url, project_duration, created_at, is_valid, student_id, student_profiles(id, full_name, avatar_url)')
-      .eq('is_valid', true)
+      .select('id, project_title, cover_image_url, project_duration, created_at, status, student_id, student_profiles(id, full_name, avatar_url)')
+      .eq('status', 'valid')
       .gt('end_date', new Date().toISOString())
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);

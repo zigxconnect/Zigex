@@ -32,8 +32,8 @@ export default async function DashboardProjectsPage() {
       // Public (valid) projects by other students
       supabaseAdmin
         .from('projects')
-        .select('*, student_profiles(id, full_name, avatar_url, university, hard_skills)')
-        .eq('is_valid', true)
+        .select('*, student_profiles(id, user_id, full_name, avatar_url, university, hard_skills)')
+        .eq('status', 'valid')
         .gt('end_date', new Date().toISOString())
         .neq('student_id', profile!.id)
         .order('created_at', { ascending: false })
@@ -49,7 +49,7 @@ export default async function DashboardProjectsPage() {
        try {
         const { data: fbData } = await supabaseAdmin
           .from('projects')
-          .select('*, student_profiles(id, full_name, avatar_url, university, hard_skills)')
+          .select('*, student_profiles(id, user_id, full_name, avatar_url, university, hard_skills)')
           .neq('student_id', profile!.id)
           .order('created_at', { ascending: false })
           .limit(50);
@@ -94,7 +94,7 @@ export default async function DashboardProjectsPage() {
                {myProjects.length > 0 && (
                    <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-slate-500 bg-white px-3 py-1.5 rounded-full border border-slate-200 shadow-sm">
                       <Sparkles className="w-3.5 h-3.5 text-amber-400 fill-current" />
-                      <span>{myProjects.filter((p: any) => p.is_valid).length} Active</span>
+                      <span>{myProjects.filter((p: any) => p.status === 'valid').length} Active</span>
                    </div>
                )}
             </div>
@@ -109,7 +109,8 @@ export default async function DashboardProjectsPage() {
                         full_name: profile!.full_name || 'Unknown',
                         avatar_url: (profile as any).avatar_url || null,
                         university: (profile as any).university || null,
-                        hard_skills: (profile as any).hard_skills || []
+                        hard_skills: (profile as any).hard_skills || [],
+                        user_id: profile!.user_id
                       }}
                       project={p}
                       isVisitor={false}
@@ -158,6 +159,7 @@ export default async function DashboardProjectsPage() {
                             id: p.student_id,
                             full_name: 'Unknown',
                             avatar_url: null,
+                            user_id: p.student_id // Fallback
                           }
                         }
                         project={p}
