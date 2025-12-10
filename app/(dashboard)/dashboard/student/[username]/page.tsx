@@ -110,11 +110,16 @@ export default async function StudentDetailPage({ params }: Props) {
   }
 
   // Fetch similar students
-  const { data: candidatesData } = await supabaseAdmin
+  let similarQuery = supabaseAdmin
     .from("student_profiles")
     .select("id, username, full_name, avatar_url, university, linkedin_url, phone, email, hard_skills, soft_skills")
-    .neq("id", data.id)
-    .limit(10);
+    .neq("id", data.id);
+
+  if (myProfile?.id) {
+    similarQuery = similarQuery.neq("id", myProfile.id);
+  }
+
+  const { data: candidatesData } = await similarQuery.limit(10);
 
   const candidates = (candidatesData || []) as Array<any>;
 
