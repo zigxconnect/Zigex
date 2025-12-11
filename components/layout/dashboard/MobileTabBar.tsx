@@ -199,6 +199,13 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
                     {unreadCount > 99 ? '99+' : unreadCount}
                   </div>
                 )}
+
+                {/* Beta Badge for ZAi */}
+                {item.label === "ZAi" && (
+                   <div className="absolute -top-3 -right-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-sm z-10 tracking-wide">
+                    BETA
+                  </div>
+                )}
               </div>
               
               <span

@@ -41,6 +41,7 @@ export function ZigAgentInterface({ user }: ZigAgentInterfaceProps) {
   const [hasStarted, setHasStarted] = useState(false);
   const [greeting, setGreeting] = useState("");
   const [isToolsOpen, setIsToolsOpen] = useState(false);
+  const [selectedTool, setSelectedTool] = useState<string | null>(null);
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -97,19 +98,22 @@ export function ZigAgentInterface({ user }: ZigAgentInterfaceProps) {
   }, [messages, isThinking, hasStarted]);
 
   const handleSendMessage = () => {
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() && !selectedTool) return;
 
     if (!hasStarted) setHasStarted(true);
+
+    const fullContent = selectedTool ? `Using ${selectedTool}: ${inputValue}` : inputValue;
 
     const newUserMsg: Message = {
       id: Date.now().toString(),
       role: "user",
-      content: inputValue,
+      content: fullContent,
       timestamp: new Date(),
     };
 
     setMessages((prev) => [...prev, newUserMsg]);
     setInputValue("");
+    setSelectedTool(null); // Clear tool after sending
     setIsThinking(true);
 
     // Simulate AI response
@@ -134,7 +138,7 @@ export function ZigAgentInterface({ user }: ZigAgentInterfaceProps) {
 
   const handleToolSelect = (toolName: string) => {
     setIsToolsOpen(false);
-    setInputValue(`Using ${toolName}: `);
+    setSelectedTool(toolName);
     if(textareaRef.current) textareaRef.current.focus();
   };
 
@@ -432,21 +436,39 @@ export function ZigAgentInterface({ user }: ZigAgentInterfaceProps) {
                             <Plus size={22} strokeWidth={2.5} />
                          </button>
 
-                         {/* Input Field */}
-                        <textarea
-                            ref={textareaRef}
-                            rows={1}
-                            value={inputValue}
-                            onChange={handleInput}
-                            onKeyDown={handleKeyDown}
-                            placeholder="Ask me anything..."
-                            className="flex-1 bg-transparent border-none focus:ring-0 focus:outline-none text-gray-900 placeholder-gray-400 px-0 py-2.5 text-[17px] leading-[1.6] resize-none max-h-[200px] min-h-[52px] scrollbar-none font-medium"
-                            style={{ boxShadow: 'none' }} // Force no shadow
-                        />
+                         {/* Input Field & Selected Tool Badge */}
+                         <div className="flex-1 flex flex-col justify-center min-w-0">
+                            <textarea
+                                ref={textareaRef}
+                                rows={1}
+                                value={inputValue}
+                                onChange={handleInput}
+                                onKeyDown={handleKeyDown}
+                                placeholder="Ask me anything..."
+                                className="w-full bg-transparent border-none focus:ring-0 focus:outline-none text-gray-900 placeholder-gray-400 px-0 py-2.5 text-[17px] leading-[1.6] resize-none max-h-[200px] min-h-[52px] scrollbar-none font-medium"
+                                style={{ boxShadow: 'none' }} // Force no shadow
+                            />
+                            
+                            {selectedTool && (
+                                <motion.div 
+                                    initial={{ opacity: 0, y: -5 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="flex items-center gap-2 self-start bg-blue-50 text-blue-700 px-2.5 py-1 rounded-md mb-1.5"
+                                >
+                                    <span className="text-xs font-semibold">Using {selectedTool}</span>
+                                    <button 
+                                        onClick={() => setSelectedTool(null)}
+                                        className="hover:text-blue-900 transition-colors"
+                                    >
+                                        <Plus size={14} className="rotate-45" />
+                                    </button>
+                                </motion.div>
+                            )}
+                         </div>
 
                         {/* Send / Mic Button */}
                         <div className="pb-1.5 flex gap-2">
-                             {inputValue.trim() ? (
+                             {inputValue.trim() || selectedTool ? (
                                 <motion.button 
                                     initial={{ scale: 0.8, opacity: 0 }}
                                     animate={{ scale: 1, opacity: 1 }}
