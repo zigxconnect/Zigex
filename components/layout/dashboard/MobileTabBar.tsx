@@ -13,6 +13,7 @@ import {
   PersonStanding,
   LogOut,
   PersonStandingIcon,
+  BrainCircuit,
 } from "lucide-react";
 import { AiOutlineWechat } from "react-icons/ai";
 import { useState, useEffect } from "react";
@@ -64,6 +65,13 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
     icon: PersonStandingIcon,
     label: "Profile",
     matchPaths: ["/profile/"],
+  },
+  {
+    href: "/dashboard/fupro-ai",
+    icon: BrainCircuit,
+    label: "ZAi",
+    matchPaths: ["/dashboard/fupro-ai", "/dashboard/fupro-ai/"],
+    isSpecial: true
   },
   // { 
   //   href: "/notifications", 
@@ -204,41 +212,6 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
             </Link>
           );
         })}
-
-        {/* Logout Button on Mobile */}
-        <button
-          onClick={handleLogout}
-          disabled={isLoggingOut}
-          className="flex flex-col items-center justify-center flex-1 py-2 px-1 group"
-        >
-          <div className="relative">
-            <div
-              className={`
-                p-2 rounded-xl transition-all duration-200
-                ${isLoggingOut 
-                  ? 'bg-red-300 text-white' 
-                  : 'text-gray-600 group-active:bg-red-100 hover:bg-red-50'
-                }
-              `}
-            >
-              <LogOut 
-                size={20} 
-                className={`
-                  ${isLoggingOut ? 'text-white' : 'text-red-600 group-active:text-red-700'}
-                `}
-              />
-            </div>
-          </div>
-          
-          <span
-            className={`
-              text-[10px] font-medium mt-1 transition-colors duration-200
-              ${isLoggingOut ? 'text-red-600' : 'text-gray-600 group-active:text-red-600'}
-            `}
-          >
-            Logout
-          </span>
-        </button>
       </div>
     </div>
   );
