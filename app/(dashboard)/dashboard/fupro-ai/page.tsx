@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function ZigAgentPage() {
   return (
-    <div className="h-screen w-full bg-[#0f172a] text-white overflow-hidden">
+    <div className="h-screen w-full bg-white overflow-hidden">
         <ZigAgentInterface />
     </div>
   );
