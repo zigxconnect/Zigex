@@ -20,6 +20,9 @@ import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserProfile } from "@/app/types/type";
 import Image from "next/image";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+
 
 // --- Types ---
 interface Message {
@@ -97,12 +100,13 @@ export function ZigAgentInterface({ user }: ZigAgentInterfaceProps) {
     scrollToBottom();
   }, [messages, isThinking, hasStarted]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!inputValue.trim() && !selectedTool) return;
 
     if (!hasStarted) setHasStarted(true);
 
     const fullContent = selectedTool ? `Using ${selectedTool}: ${inputValue}` : inputValue;
+    const userMessage = inputValue; // Store before clearing
 
     const newUserMsg: Message = {
       id: Date.now().toString(),
@@ -113,20 +117,108 @@ export function ZigAgentInterface({ user }: ZigAgentInterfaceProps) {
 
     setMessages((prev) => [...prev, newUserMsg]);
     setInputValue("");
-    setSelectedTool(null); // Clear tool after sending
+    setSelectedTool(null);
     setIsThinking(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      setIsThinking(false);
-      const newAiMsg: Message = {
-        id: (Date.now() + 1).toString(),
+    try {
+      // Prepare conversation history
+      const conversationHistory = messages.map(msg => ({
+        role: msg.role === "user" ? "user" : "assistant",
+        content: msg.content
+      }));
+
+      // Create AI message placeholder for streaming
+      const aiMessageId = (Date.now() + 1).toString();
+      const aiMsg: Message = {
+        id: aiMessageId,
         role: "ai",
-        content: "I've analyzed your request against our opportunity database. I found 3 research grants and 2 collaborative projects that match your profile skills.",
+        content: "",
         timestamp: new Date(),
       };
-      setMessages((prev) => [...prev, newAiMsg]);
-    }, 2000);
+
+      setMessages((prev) => [...prev, aiMsg]);
+      setIsThinking(false);
+
+      // Call streaming endpoint
+      const response = await fetch('/api/ai/stream', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: userMessage,
+          conversationHistory: conversationHistory
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) {
+        throw new Error('No response body');
+      }
+
+      let accumulatedText = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            
+            if (data === '[DONE]') {
+              break;
+            }
+
+            try {
+              const parsed = JSON.parse(data);
+              
+              if (parsed.error) {
+                console.error('Stream error:', parsed.error);
+                break;
+              }
+
+              if (parsed.text) {
+                accumulatedText += parsed.text;
+                
+                // Update the AI message with accumulated text
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === aiMessageId
+                      ? { ...msg, content: accumulatedText }
+                      : msg
+                  )
+                );
+              }
+            } catch (e) {
+              // Ignore JSON parse errors for incomplete chunks
+            }
+          }
+        }
+      }
+
+    } catch (error) {
+      console.error('Error sending message:', error);
+      setIsThinking(false);
+      
+      const errorMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "ai",
+        content: "I'm having trouble connecting right now. Please check your connection and try again.",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMsg]);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -259,7 +351,50 @@ export function ZigAgentInterface({ user }: ZigAgentInterfaceProps) {
                                         : "bg-white border border-gray-100 text-gray-800 rounded-[24px] rounded-tl-md shadow-sm"
                                     )}
                                 >
-                                    {msg.content}
+                                    {msg.role === "ai" ? (
+                                      <div className="prose prose-sm max-w-none
+                                          prose-headings:font-bold prose-headings:text-gray-900
+                                          prose-h1:text-xl prose-h2:text-lg prose-h3:text-base
+                                          prose-p:text-gray-800 prose-p:leading-relaxed prose-p:my-2
+                                          prose-strong:text-gray-900 prose-strong:font-semibold
+                                          prose-em:text-gray-700
+                                          prose-ul:my-2 prose-ul:list-disc prose-ul:pl-4
+                                          prose-ol:my-2 prose-ol:list-decimal prose-ol:pl-4
+                                          prose-li:text-gray-800 prose-li:my-1
+                                          prose-code:bg-gray-100 prose-code:text-blue-600 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-mono
+                                          prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:p-4 prose-pre:rounded-lg prose-pre:overflow-x-auto
+                                          prose-blockquote:border-l-4 prose-blockquote:border-blue-500 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-gray-700
+                                          prose-a:text-blue-600 prose-a:underline hover:prose-a:text-blue-700
+                                          [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+                                        <ReactMarkdown
+                                          remarkPlugins={[remarkGfm]}
+                                          components={{
+                                            // Custom rendering for code blocks
+                                            code: ({node, inline, className, children, ...props}: any) => {
+                                              return inline ? (
+                                                <code className="bg-gray-100 text-blue-600 px-1.5 py-0.5 rounded text-sm font-mono" {...props}>
+                                                  {children}
+                                                </code>
+                                              ) : (
+                                                <code className={className} {...props}>
+                                                  {children}
+                                                </code>
+                                              );
+                                            },
+                                            // Make links open in new tab
+                                            a: ({node, children, href, ...props}: any) => (
+                                              <a href={href} target="_blank" rel="noopener noreferrer" {...props}>
+                                                {children}
+                                              </a>
+                                            ),
+                                          }}
+                                        >
+                                          {msg.content}
+                                        </ReactMarkdown>
+                                      </div>
+                                    ) : (
+                                      <span>{msg.content}</span>
+                                    )}
                                 </div>
 
                                 {/* AI Actions */}
