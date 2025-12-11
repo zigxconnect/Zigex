@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 
 interface SimilarStudent {
   id: string;
+  username?: string;
   full_name: string | null;
   avatar_url?: string | null;
   university?: string | null;
@@ -77,7 +78,7 @@ export default function SimilarStudentsSidebar({
 
               {students.map((s) => (
                 <article key={s.id} className="flex items-center gap-3 p-3 cursor-pointer rounded-lg hover:bg-gray-50 transition"
-                 onClick={() => router.push(`/dashboard/student/${s.id}`)}
+                 onClick={() => router.push(`/dashboard/student/${s.username || s.id}`)}
                 >
                   <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br cursor-pointer from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold">
                     {(() => {
@@ -160,8 +161,8 @@ export default function SimilarStudentsSidebar({
               key={s.id}
               role="link"
               tabIndex={0}
-              onClick={() => router.push(`/dashboard/student/${s.id}`)}
-              onKeyDown={(e) => { if (e.key === 'Enter') router.push(`/dashboard/student/${s.id}`); }}
+              onClick={() => router.push(`/dashboard/student/${s.username || s.id}`)}
+              onKeyDown={(e) => { if (e.key === 'Enter') router.push(`/dashboard/student/${s.username || s.id}`); }}
               className="flex items-start gap-3 p-3 rounded-xl hover:bg-gray-100 transition cursor-pointer"
             >
               <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold">

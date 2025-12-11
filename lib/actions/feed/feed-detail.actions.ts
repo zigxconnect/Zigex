@@ -115,7 +115,7 @@ export const getCompanyPrograms = cache(
 
       let query = supabase
         .from("programs")
-        .select("id, title, company_id, created_at, program_picture_url, duration, start_date, end_date")
+        .select("id, title, company_id, created_at, program_picture_url, start_date, end_date")
         .eq("company_id", companyId)
         .order("created_at", { ascending: false })
         .limit(6);
@@ -149,7 +149,7 @@ export const getCompanyInternships = cache(
 
       let query = supabase
         .from("internships")
-        .select("id, title,company_id, created_at, cover_image_url, duration, type")
+        .select("id, title,company_id, created_at, type")
         .eq("company_id", companyId)
         .order("created_at", { ascending: false })
         .limit(6);

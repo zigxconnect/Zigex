@@ -22,19 +22,25 @@ import AnimatedConnectButtons from "@/components/customButtons/AnimatedConnectBu
 import NoProjectMessage from "@/components/sections/dashboard/NoProjectMessage";
 import { fetchUserActiveProject } from "@/lib/actions/getProjects.action";
 
-
 interface Props {
-  params: { id: string };
+  params: Promise<{ username: string }>;
 }
 
 export default async function StudentDetailPage({ params }: Props) {
-  const { id } = params;
+  const { username } = await params;
 
-  const { data, error } = await supabaseAdmin
-    .from("student_profiles")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
+  // Check if the username param is a UUID (fallback for old links or users without usernames)
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(username);
+
+  let query = supabaseAdmin.from("student_profiles").select("*");
+
+  if (isUuid) {
+    query = query.eq("id", username);
+  } else {
+    query = query.eq("username", username);
+  }
+
+  const { data, error } = await query.maybeSingle();
 
   if (error || !data) {
     return (
@@ -49,7 +55,6 @@ export default async function StudentDetailPage({ params }: Props) {
 
   const skills = data.hard_skills || [];
   const soft = data.soft_skills || [];
-
   // Fetch accepted application counts
   const [internRes, progRes, eventRes] = await Promise.all([
     supabaseAdmin
@@ -95,7 +100,7 @@ export default async function StudentDetailPage({ params }: Props) {
       myProfile = _myProfile;
 
       // Fetch visitor's active project
-      const projectResult = await fetchUserActiveProject(id);
+      const projectResult = await fetchUserActiveProject(data.id);
       if (projectResult.success && projectResult.data) {
         visitorProject = projectResult.data;
       }
@@ -105,11 +110,16 @@ export default async function StudentDetailPage({ params }: Props) {
   }
 
   // Fetch similar students
-  const { data: candidatesData } = await supabaseAdmin
+  let similarQuery = supabaseAdmin
     .from("student_profiles")
-    .select("id, full_name, avatar_url, university, linkedin_url, phone, email, hard_skills, soft_skills")
-    .neq("id", id)
-    .limit(10);
+    .select("id, username, full_name, avatar_url, university, linkedin_url, phone, email, hard_skills, soft_skills")
+    .neq("id", data.id);
+
+  if (myProfile?.id) {
+    similarQuery = similarQuery.neq("id", myProfile.id);
+  }
+
+  const { data: candidatesData } = await similarQuery.limit(10);
 
   const candidates = (candidatesData || []) as Array<any>;
 
@@ -137,6 +147,7 @@ export default async function StudentDetailPage({ params }: Props) {
 
   const similarStudents = similar.slice(0, 6).map((s) => ({
     id: s.id,
+    username: s.username,
     full_name: s.full_name,
     avatar_url: s.avatar_url,
     university: s.university,
@@ -215,7 +226,7 @@ Looking forward to hearing from you!`;
             whatsappUrl={whatsappUrl}
             email={data.email}
             fullName={data.full_name}
-            profileUrl={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://zigex.vercel.app'}/dashboard/student/${id}`}
+            profileUrl={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://zigex.vercel.app'}/dashboard/student/${username}`}
             isOwner={false}
           />
         </div>

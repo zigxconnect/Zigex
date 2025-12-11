@@ -55,7 +55,7 @@ export default async function StudentDirectoryPage() {
   const userData = await getProfileInfo();
 
   // Filter out current user
-  const filteredProfiles = profiles.filter((p) => p.id !== userData?.id);
+  const filteredProfiles = profiles.filter((p) => p.id !== userData?.profile?.id);
 
   // Fetch real stats for each student
   const profilesWithStats = await Promise.all(
