@@ -34,7 +34,7 @@ export default async function DashboardProjectsPage() {
       // Public (valid) projects by other students (use admin client to bypass RLS)
       supabaseAdmin
         .from('projects')
-        .select('*, student_profiles(id, full_name, avatar_url, university, hard_skills)')
+        .select('*, student_profiles(id, username, full_name, avatar_url, university, hard_skills)')
         .eq('is_valid', true)
         .gt('end_date', new Date().toISOString())
         .neq('student_id', profile!.id)
@@ -66,7 +66,7 @@ export default async function DashboardProjectsPage() {
       try {
         const { data: fbData, error: fbError } = await supabaseAdmin
           .from('projects')
-          .select('*, student_profiles(id, full_name, avatar_url, university, hard_skills)')
+          .select('*, student_profiles(id, username, full_name, avatar_url, university, hard_skills)')
           .neq('student_id', profile!.id)
           .order('created_at', { ascending: false })
           .limit(50);
@@ -130,7 +130,7 @@ export default async function DashboardProjectsPage() {
                       <MyMonthProject
                         user={{
                           id: profile!.id,
-                          full_name: profile!.full_name,
+                          full_name: profile!.full_name || '',
                           avatar_url: (profile as any).avatar_url || null,
                           university: (profile as any).university || null,
                           hard_skills: (profile as any).hard_skills || []
@@ -207,7 +207,7 @@ export default async function DashboardProjectsPage() {
                       {p.student_profiles && (
                         <div className="mt-3 px-4">
                           
-                            <a href={`/dashboard/student/${p.student_profiles.id}`}
+                            <a href={`/dashboard/student/${p.student_profiles.username || p.student_profiles.id}`}
                             className="inline-flex items-center gap-2 text-sm sm:text-base text-gray-700 hover:text-blue-600 font-semibold group/link transition-colors duration-200">
                             <span className="flex items-center gap-1.5">
                               View {p.student_profiles.full_name}&apos;s profile

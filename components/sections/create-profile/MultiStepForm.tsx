@@ -37,7 +37,7 @@ const Step5Additional = dynamic(() => import("./Step5Additional").then(mod => mo
 });
 
 const stepsFields: (keyof ProfileFormData)[][] = [
-  ["first_name", "last_name", "phone", "location", "about"],
+  ["first_name", "username", "phone", "location", "about"],
   ["avatar_url", "cover_image"],
   ["university", "degree", "field_of_study", "graduation_year", "gpa"],
   [
@@ -98,7 +98,7 @@ export const MultiStepForm = () => {
     mode: "onTouched",
     defaultValues: {
       first_name: "",
-      last_name: "",
+      username: "",
       phone: "",
       location: "",
       about: "",
@@ -171,6 +171,7 @@ export const MultiStepForm = () => {
       console.log(
         `[Step Validation] Validation failed for step ${currentStep}`
       );
+      toast.error("Please fill in all required fields correctly.");
     }
     setIsNavigating(false);
   };

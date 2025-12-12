@@ -2,16 +2,31 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { v4 as uuidv4, validate as isUUID } from "uuid";
+import { Resend } from "resend";
+import { ApplicationConfirmationEmail } from "@/emails/ApplicationConfirmationEmail";
 
-// --- Notification Helper Function ---
-const createNotification = async (
-  supabase: any,
-  studentId: string,
-  title: string,
-  message: string,
-  type: "internship" | "program" | "event",
-  referenceId: string
-) => {
+// --- Types ---
+type ApplicationType = "internship" | "program" | "event";
+
+interface NotificationParams {
+  supabase: any;
+  studentId: string;
+  title: string;
+  message: string;
+  type: ApplicationType;
+  referenceId: string;
+}
+
+// --- Helper Functions ---
+
+const createNotification = async ({
+  supabase,
+  studentId,
+  title,
+  message,
+  type,
+  referenceId,
+}: NotificationParams) => {
   const { error } = await supabase.from("notifications").insert({
     user_id: studentId,
     title,
@@ -24,349 +39,487 @@ const createNotification = async (
   }
 };
 
-// --- The Single, Unified POST Endpoint ---
+const sendConfirmationEmail = async (
+  userEmail: string,
+  studentName: string,
+  postTitle: string,
+  postType: string,
+  companyName: string
+) => {
+  if (!process.env.RESEND_API_KEY) return;
+
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    await resend.emails.send({
+      from: "FutureProspect <notifications@futureprospect.online>",
+      to: userEmail,
+      subject: `Application Received: ${postTitle}`,
+      react: ApplicationConfirmationEmail({
+        studentName: studentName || "Student",
+        postTitle: postTitle,
+        postType: postType as "Internship" | "Program" | "Event",
+        companyName: companyName || "the company",
+        viewApplicationUrl: `https://futureprospect.online/applications`,
+        postedDate: new Date().toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        }),
+      }),
+    });
+  } catch (emailError) {
+    console.error("Failed to send confirmation email:", emailError);
+  }
+};
+
+const getSupabaseClient = async () => {
+  const cookieStore = await cookies();
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get: (name: string) => cookieStore.get(name)?.value,
+      },
+    }
+  );
+};
+
+const getAuthenticatedStudent = async (supabase: any) => {
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { error: "Unauthorized. Please log in.", status: 401 };
+  }
+
+  const { data: studentData, error: studentError } = await supabase
+    .from("student_profiles")
+    .select("id, full_name")
+    .eq("user_id", user.id)
+    .single();
+
+  if (studentError || !studentData?.id) {
+    return { error: "Student profile not found.", status: 404 };
+  }
+
+  return { user, studentData };
+};
+
+// --- Application Handlers ---
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+const handleInternshipApplication = async (
+  supabase: any,
+  user: any,
+  studentData: any,
+  formData: FormData
+) => {
+  const internship_id = formData.get("internship_id") as string;
+  if (!isUUID(internship_id)) {
+    return NextResponse.json(
+      { error: "A valid Internship ID is required." },
+      { status: 400 }
+    );
+  }
+
+  // Check duplicate
+  const { data: existingApp } = await supabase
+    .from("Applications")
+    .select("id")
+    .eq("student_id", studentData.id)
+    .eq("internship_id", internship_id)
+    .maybeSingle();
+
+  if (existingApp) {
+    return NextResponse.json(
+      { error: "You have already applied to this internship." },
+      { status: 409 }
+    );
+  }
+
+  // Get posting info
+  const { data: postingInfo, error: postingError } = await supabase
+    .from("internships")
+    .select("company_id, title, deadline, company_profiles(company_name)")
+    .eq("id", internship_id)
+    .single();
+
+  if (postingError || !postingInfo?.company_id) {
+    return NextResponse.json(
+      { error: "The internship you are applying for could not be found." },
+      { status: 404 }
+    );
+  }
+
+  if (new Date(postingInfo.deadline) < new Date()) {
+    return NextResponse.json(
+      { error: "The deadline for this internship has passed." },
+      { status: 400 }
+    );
+  }
+
+  // Handle Resume
+  const resume_file = formData.get("resume") as File | null;
+  if (!resume_file || resume_file.size === 0) {
+    return NextResponse.json(
+      { error: "A resume file is required." },
+      { status: 400 }
+    );
+  }
+
+  if (resume_file.size > MAX_FILE_SIZE) {
+    return NextResponse.json(
+      { error: "Resume file size exceeds 10MB limit." },
+      { status: 400 }
+    );
+  }
+
+  // Handle Cover Letter
+  const cover_letter_file = formData.get("cover_letter") as File | null;
+  if (!cover_letter_file || cover_letter_file.size === 0) {
+    return NextResponse.json(
+      { error: "A cover letter is required." },
+      { status: 400 }
+    );
+  }
+
+  if (cover_letter_file.size > MAX_FILE_SIZE) {
+    return NextResponse.json(
+      { error: "Cover letter file size exceeds 10MB limit." },
+      { status: 400 }
+    );
+  }
+
+  const allowedTypes = [
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ];
+  
+  if (!allowedTypes.includes(resume_file.type) || !allowedTypes.includes(cover_letter_file.type)) {
+    return NextResponse.json(
+      { error: "Only PDF and Word (DOC, DOCX) documents are allowed." },
+      { status: 400 }
+    );
+  }
+
+  // Upload Files in Parallel
+  const resumeExt = resume_file.name.split(".").pop() || "pdf";
+  const resumeFileName = `resume_${uuidv4()}.${resumeExt}`;
+  const resumePath = `students/${user.id}/applications/${internship_id}/${resumeFileName}`;
+
+  const clExt = cover_letter_file.name.split(".").pop() || "pdf";
+  const clFileName = `cover_letter_${uuidv4()}.${clExt}`;
+  const clPath = `students/${user.id}/applications/${internship_id}/${clFileName}`;
+
+  const [resumeUpload, clUpload] = await Promise.all([
+    supabase.storage.from("student-assets").upload(resumePath, resume_file),
+    supabase.storage.from("student-assets").upload(clPath, cover_letter_file),
+  ]);
+
+  if (resumeUpload.error) {
+    console.error("Resume upload error:", resumeUpload.error);
+    return NextResponse.json(
+      { error: "Failed to upload resume." },
+      { status: 500 }
+    );
+  }
+
+  if (clUpload.error) {
+    console.error("Cover letter upload error:", clUpload.error);
+    return NextResponse.json(
+      { error: "Failed to upload cover letter." },
+      { status: 500 }
+    );
+  }
+
+  const resumeUrl = supabase.storage
+    .from("student-assets")
+    .getPublicUrl(resumePath).data.publicUrl;
+
+  const coverLetterUrl = supabase.storage
+    .from("student-assets")
+    .getPublicUrl(clPath).data.publicUrl;
+
+  // Map location to work_mode
+  const location = formData.get("location") as string;
+  const WORK_MODE_MAP: Record<string, string> = {
+    "On-site": "onsite",
+    "Remote": "online",
+    "Hybrid": "hybrid",
+  };
+  const dbWorkMode = WORK_MODE_MAP[location] || location?.toLowerCase() || "onsite";
+
+  // Insert Application
+  const { data: appData, error: appError } = await supabase
+    .from("Applications")
+    .insert({
+      student_id: studentData.id,
+      internship_id,
+      company_id: postingInfo.company_id,
+      application_type: "internship",
+      resume_url: resumeUrl,
+      cover_letter_url: coverLetterUrl,
+      duration: (formData.get("duration") as string) || null,
+      department: (formData.get("department") as string) || null,
+      work_mode: dbWorkMode,
+      expectations: (formData.get("expectations") as string) || null,
+      status: "pending",
+    })
+    .select("id")
+    .single();
+
+  if (appError) {
+    console.error("Internship application insert error:", appError);
+    return NextResponse.json(
+      { error: "Failed to submit internship application." },
+      { status: 500 }
+    );
+  }
+
+  // Notifications
+  await createNotification({
+    supabase,
+    studentId: user.id,
+    title: "Application Submitted!",
+    message: `Your application for "${postingInfo.title}" is under review.`,
+    type: "internship",
+    referenceId: internship_id,
+  });
+
+  await sendConfirmationEmail(
+    user.email,
+    studentData.full_name,
+    postingInfo.title,
+    "Internship",
+    postingInfo.company_profiles?.company_name
+  );
+
+  return NextResponse.json(
+    {
+      message: "Internship application submitted successfully!",
+      applicationId: appData.id,
+    },
+    { status: 201 }
+  );
+};
+
+const handleProgramApplication = async (
+  supabase: any,
+  user: any,
+  studentData: any,
+  formData: FormData
+) => {
+  const program_id = formData.get("program_id") as string;
+  if (!isUUID(program_id)) {
+    return NextResponse.json(
+      { error: "A valid Program ID is required." },
+      { status: 400 }
+    );
+  }
+
+  const { data: existingApp } = await supabase
+    .from("Applications")
+    .select("id")
+    .eq("student_id", studentData.id)
+    .eq("program_id", program_id)
+    .maybeSingle();
+
+  if (existingApp) {
+    return NextResponse.json(
+      { error: "You have already applied to this program." },
+      { status: 409 }
+    );
+  }
+
+  const { data: postingInfo, error: postingError } = await supabase
+    .from("programs")
+    .select("company_id, title, company_profiles(company_name)")
+    .eq("id", program_id)
+    .single();
+
+  if (postingError || !postingInfo?.company_id) {
+    return NextResponse.json(
+      { error: "The program you are applying for could not be found." },
+      { status: 404 }
+    );
+  }
+
+  const { data: appData, error: appError } = await supabase
+    .from("Applications")
+    .insert({
+      student_id: studentData.id,
+      program_id,
+      company_id: postingInfo.company_id,
+      application_type: "program",
+      level: (formData.get("level") as string)?.toLowerCase() || null,
+      expectations: (formData.get("expectations") as string) || null,
+      comments: (formData.get("comments") as string) || null,
+      status: "pending",
+    })
+    .select("id")
+    .single();
+
+  if (appError) {
+    return NextResponse.json(
+      { error: "Failed to submit program application." },
+      { status: 500 }
+    );
+  }
+
+  await createNotification({
+    supabase,
+    studentId: user.id,
+    title: "Application Submitted!",
+    message: `Your application for "${postingInfo.title}" is under review.`,
+    type: "program",
+    referenceId: program_id,
+  });
+
+  await sendConfirmationEmail(
+    user.email,
+    studentData.full_name,
+    postingInfo.title,
+    "Program",
+    postingInfo.company_profiles?.company_name
+  );
+
+  return NextResponse.json(
+    {
+      message: "Program application submitted successfully!",
+      applicationId: appData.id,
+    },
+    { status: 201 }
+  );
+};
+
+const handleEventRSVP = async (
+  supabase: any,
+  user: any,
+  studentData: any,
+  formData: FormData
+) => {
+  const event_id = formData.get("event_id") as string;
+  if (!isUUID(event_id)) {
+    return NextResponse.json(
+      { error: "A valid Event ID is required." },
+      { status: 400 }
+    );
+  }
+
+  const { data: existingRsvp } = await supabase
+    .from("Applications")
+    .select("id")
+    .eq("student_id", studentData.id)
+    .eq("event_id", event_id)
+    .maybeSingle();
+
+  if (existingRsvp) {
+    return NextResponse.json(
+      { error: "You have already RSVP'd to this event." },
+      { status: 409 }
+    );
+  }
+
+  const { data: postingInfo, error: postingError } = await supabase
+    .from("event")
+    .select("company_id, title, company_profiles(company_name)")
+    .eq("id", event_id)
+    .single();
+
+  if (postingError || !postingInfo?.company_id) {
+    return NextResponse.json(
+      { error: "The event you are RSVPing to could not be found." },
+      { status: 404 }
+    );
+  }
+
+  const { data: appData, error: appError } = await supabase
+    .from("Applications")
+    .insert({
+      student_id: studentData.id,
+      event_id,
+      company_id: postingInfo.company_id,
+      application_type: "event",
+      expectations: (formData.get("expectations") as string) || null,
+      comments: (formData.get("comments") as string) || null,
+      rsvp_status: formData.get("rsvp_status") === "true",
+      status: "rsvp_confirmed",
+    })
+    .select("id")
+    .single();
+
+  if (appError) {
+    return NextResponse.json(
+      { error: "Failed to submit RSVP." },
+      { status: 500 }
+    );
+  }
+
+  await createNotification({
+    supabase,
+    studentId: user.id,
+    title: "RSVP Confirmed!",
+    message: `You have successfully RSVP'd for "${postingInfo.title}".`,
+    type: "event",
+    referenceId: event_id,
+  });
+
+  await sendConfirmationEmail(
+    user.email,
+    studentData.full_name,
+    postingInfo.title,
+    "Event",
+    postingInfo.company_profiles?.company_name
+  );
+
+  return NextResponse.json(
+    { message: "RSVP submitted successfully!", applicationId: appData.id },
+    { status: 201 }
+  );
+};
+
+// --- Main Handler ---
+
 export async function POST(request: Request) {
   try {
-    // --- COMMON SETUP ---
-    const cookieStore = cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get: (name: string) => cookieStore.get(name)?.value,
-          set: (name: string, value: string, options) =>
-            cookieStore.set({ name, value, ...options }),
-          remove: (name: string, options) =>
-            cookieStore.set({
-              name,
-              value: "",
-              ...options,
-              expires: new Date(0),
-            }),
-        },
-      }
-    );
+    const supabase = await getSupabaseClient();
+    const authResult = await getAuthenticatedStudent(supabase);
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-    if (authError || !user) {
+    if (authResult.error) {
       return NextResponse.json(
-        { error: "Unauthorized. Please log in." },
-        { status: 401 }
+        { error: authResult.error },
+        { status: authResult.status }
       );
     }
 
+    const { user, studentData } = authResult;
     const formData = await request.formData();
-    const { data: studentData, error: studentError } = await supabase
-      .from("student_profiles")
-      .select("id")
-      .eq("user_id", user.id)
-      .single();
-    if (studentError || !studentData?.id) {
-      return NextResponse.json(
-        { error: "Student profile not found." },
-        { status: 404 }
-      );
-    }
-    const student_id = studentData.id;
 
-    // --- A) INTERNSHIP APPLICATION LOGIC ---
     if (formData.has("internship_id")) {
-      const internship_id = formData.get("internship_id") as string;
-      if (!isUUID(internship_id)) {
-        return NextResponse.json(
-          { error: "A valid Internship ID is required." },
-          { status: 400 }
-        );
-      }
-
-      // --- VALIDATION 1: Check for duplicate application ---
-      const { data: existingApp } = await supabase
-        .from("Applications")
-        .select("id")
-        .eq("student_id", student_id)
-        .eq("internship_id", internship_id)
-        .maybeSingle();
-
-      if (existingApp) {
-        return NextResponse.json(
-          { error: "You have already applied to this internship." },
-          { status: 409 } // 409 Conflict
-        );
-      }
-
-      const { data: postingInfo, error: postingError } = await supabase
-        .from("internships")
-        .select("company_id, title, deadline")
-        .eq("id", internship_id)
-        .single();
-
-      if (postingError || !postingInfo?.company_id) {
-        return NextResponse.json(
-          { error: "The internship you are applying for could not be found." },
-          { status: 404 }
-        );
-      }
-
-      // --- VALIDATION 2: Check if the internship is still active ---
-      if (new Date(postingInfo.deadline) < new Date()) {
-        return NextResponse.json(
-          { error: "The deadline for this internship has passed." },
-          { status: 400 }
-        );
-      }
-
-      const resume_file = formData.get("resume") as File | null;
-      if (!resume_file || resume_file.size === 0) {
-        return NextResponse.json(
-          { error: "A resume file is required." },
-          { status: 400 }
-        );
-      }
-
-      // --- VALIDATION 3: Check file type ---
-      const allowedTypes = [
-        "application/pdf",
-        "application/msword",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      ];
-      if (!allowedTypes.includes(resume_file.type)) {
-        return NextResponse.json(
-          { error: "Only PDF and Word (DOC, DOCX) documents are allowed." },
-          { status: 400 }
-        );
-      }
-
-      const safeExt = resume_file.name.split(".").pop() || "pdf";
-      const serverFileName = `resume_${uuidv4()}.${safeExt}`;
-      const filePath = `students/${user.id}/applications/${internship_id}/${serverFileName}`;
-      const { error: uploadError } = await supabase.storage
-        .from("student-assets")
-        .upload(filePath, resume_file);
-      if (uploadError) {
-        return NextResponse.json(
-          { error: "Failed to upload resume." },
-          { status: 500 }
-        );
-      }
-      const resumeUrl = supabase.storage
-        .from("student-assets")
-        .getPublicUrl(filePath).data.publicUrl;
-
-      const applicationData = {
-        student_id,
-        internship_id,
-        company_id: postingInfo.company_id,
-        application_type: "internship" as const,
-        resume_url: resumeUrl,
-        duration: (formData.get("duration") as string) || null,
-        department: (formData.get("department") as string) || null,
-        location: (formData.get("location") as string) || null,
-        expectations: (formData.get("expectations") as string) || null,
-        status: "pending",
-      };
-
-      const { data: appData, error: appError } = await supabase
-        .from("Applications")
-        .insert(applicationData)
-        .select("id")
-        .single();
-      if (appError) {
-        return NextResponse.json(
-          { error: "Failed to submit internship application." },
-          { status: 500 }
-        );
-      }
-
-      await createNotification(
-        supabase,
-        user.id,
-        "Application Submitted!",
-        `Your application for "${postingInfo.title}" is under review.`,
-        "internship",
-        internship_id
-      );
+      return await handleInternshipApplication(supabase, user, studentData, formData);
+    } else if (formData.has("program_id")) {
+      return await handleProgramApplication(supabase, user, studentData, formData);
+    } else if (formData.has("event_id")) {
+      return await handleEventRSVP(supabase, user, studentData, formData);
+    } else {
       return NextResponse.json(
         {
-          message: "Internship application submitted successfully!",
-          applicationId: appData.id,
-        },
-        { status: 201 }
-      );
-    }
-
-    // --- B) PROGRAM APPLICATION LOGIC ---
-    else if (formData.has("program_id")) {
-      const program_id = formData.get("program_id") as string;
-      if (!isUUID(program_id)) {
-        return NextResponse.json(
-          { error: "A valid Program ID is required." },
-          { status: 400 }
-        );
-      }
-
-      // --- VALIDATION: Check for duplicate application ---
-      const { data: existingApp } = await supabase
-        .from("Applications")
-        .select("id")
-        .eq("student_id", student_id)
-        .eq("program_id", program_id)
-        .maybeSingle();
-
-      if (existingApp) {
-        return NextResponse.json(
-          { error: "You have already applied to this program." },
-          { status: 409 }
-        );
-      }
-
-      const { data: postingInfo, error: postingError } = await supabase
-        .from("programs")
-        .select("company_id, title")
-        .eq("id", program_id)
-        .single();
-      if (postingError || !postingInfo?.company_id) {
-        return NextResponse.json(
-          { error: "The program you are applying for could not be found." },
-          { status: 404 }
-        );
-      }
-
-      const applicationData = {
-        student_id,
-        program_id,
-        company_id: postingInfo.company_id,
-        application_type: "program" as const,
-        level: (formData.get("level") as string)?.toLowerCase() || null,
-        expectations: (formData.get("expectations") as string) || null,
-        comments: (formData.get("comments") as string) || null,
-        status: "pending",
-      };
-
-      const { data: appData, error: appError } = await supabase
-        .from("Applications")
-        .insert(applicationData)
-        .select("id")
-        .single();
-      if (appError) {
-        return NextResponse.json(
-          { error: "Failed to submit program application." },
-          { status: 500 }
-        );
-      }
-
-      await createNotification(
-        supabase,
-        user.id,
-        "Application Submitted!",
-        `Your application for "${postingInfo.title}" is under review.`,
-        "program",
-        program_id
-      );
-      return NextResponse.json(
-        {
-          message: "Program application submitted successfully!",
-          applicationId: appData.id,
-        },
-        { status: 201 }
-      );
-    }
-
-    // --- C) EVENT APPLICATION (RSVP) LOGIC ---
-    else if (formData.has("event_id")) {
-      const event_id = formData.get("event_id") as string;
-      if (!isUUID(event_id)) {
-        return NextResponse.json(
-          { error: "A valid Event ID is required." },
-          { status: 400 }
-        );
-      }
-
-      // --- VALIDATION: Check for duplicate RSVP ---
-      const { data: existingRsvp } = await supabase
-        .from("Applications")
-        .select("id")
-        .eq("student_id", student_id)
-        .eq("event_id", event_id)
-        .maybeSingle();
-
-      if (existingRsvp) {
-        return NextResponse.json(
-          { error: "You have already RSVP'd to this event." },
-          { status: 409 }
-        );
-      }
-
-      const { data: postingInfo, error: postingError } = await supabase
-        .from("event")
-        .select("company_id, title")
-        .eq("id", event_id)
-        .single();
-      if (postingError || !postingInfo?.company_id) {
-        return NextResponse.json(
-          { error: "The event you are RSVPing to could not be found." },
-          { status: 404 }
-        );
-      }
-
-      const applicationData = {
-        student_id,
-        event_id,
-        company_id: postingInfo.company_id,
-        application_type: "event" as const,
-        expectations: (formData.get("expectations") as string) || null,
-        comments: (formData.get("comments") as string) || null,
-        rsvp_status: formData.get("rsvp_status") === "true",
-        status: "rsvp_confirmed",
-      };
-
-      const { data: appData, error: appError } = await supabase
-        .from("Applications")
-        .insert(applicationData)
-        .select("id")
-        .single();
-      if (appError) {
-        return NextResponse.json(
-          { error: "Failed to submit RSVP." },
-          { status: 500 }
-        );
-      }
-
-      await createNotification(
-        supabase,
-        user.id,
-        "RSVP Confirmed!",
-        `You have successfully RSVP'd for "${postingInfo.title}".`,
-        "event",
-        event_id
-      );
-      return NextResponse.json(
-        { message: "RSVP submitted successfully!", applicationId: appData.id },
-        { status: 201 }
-      );
-    }
-
-    // --- D) FALLBACK ERROR ---
-    else {
-      return NextResponse.json(
-        {
-          error:
-            "Invalid application type. Missing 'internship_id', 'program_id', or 'event_id'.",
+          error: "Invalid application type. Missing 'internship_id', 'program_id', or 'event_id'.",
         },
         { status: 400 }
       );
     }
   } catch (error: any) {
-    console.error(
-      "A critical error occurred in the application submission API:",
-      error.message
-    );
+    console.error("Critical error in application submission API:", error);
     return NextResponse.json(
       { error: "An unexpected server error occurred." },
       { status: 500 }
     );
   }
 }
+

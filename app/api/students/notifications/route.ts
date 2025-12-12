@@ -48,9 +48,15 @@ export async function GET(request: Request) {
     if (personalResult.error) throw personalResult.error;
     if (globalResult.error) throw globalResult.error;
 
+    const userCreatedAt = new Date(user.created_at).getTime();
+
+    const filteredGlobalNotifications = (globalResult.data || []).filter(
+      (n) => new Date(n.created_at).getTime() >= userCreatedAt
+    );
+
     const combinedNotifications = [
       ...(personalResult.data || []),
-      ...(globalResult.data || []),
+      ...filteredGlobalNotifications,
     ];
     combinedNotifications.sort(
       (a, b) =>

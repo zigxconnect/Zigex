@@ -6,6 +6,10 @@ export interface UserProfile {
   skills: string[];
   coverImageUrl: string;
   profile: Profile;
+  stats?: {
+    applications: number;
+    profileViews: number;
+  };
 }
 
 interface Profile {

@@ -22,11 +22,11 @@ import SimilarStudentsSidebar from "@/components/sections/dashboard/SimilarStude
 import { redirect } from "next/navigation";
 
 interface Props {
-  params: { id: string };
+  params: Promise<{ username: string }>;
 }
 
 export default async function ProfilePage({ params }: Props) {
-  const { id } = params;
+  const { username } = await params;
 
   // Get current authenticated user
   const supabase = await createServerActionClient();
@@ -37,11 +37,11 @@ export default async function ProfilePage({ params }: Props) {
     redirect("/sign-in");
   }
 
-  // Fetch the profile being viewed
+  // Fetch the profile being viewed by username
   const { data, error } = await supabaseAdmin
     .from("student_profiles")
     .select("*")
-    .eq("id", id)
+    .eq("username", username)
     .maybeSingle();
 
   if (error || !data) {
@@ -62,8 +62,8 @@ export default async function ProfilePage({ params }: Props) {
     .eq("user_id", authUser.id)
     .maybeSingle();
 
-  if (myProfile.error || !myProfile.data || myProfile.data.id !== id) {
-    redirect(`/dashboard/student/${id}`);
+  if (myProfile.error || !myProfile.data || myProfile.data.username !== username) {
+    redirect(`/dashboard/student/${username}`);
   }
 
   const skills = data.hard_skills || [];
@@ -100,8 +100,8 @@ export default async function ProfilePage({ params }: Props) {
   // Fetch similar students
   const { data: candidatesData } = await supabaseAdmin
     .from("student_profiles")
-    .select("id, full_name, avatar_url, university, linkedin_url, phone, email, hard_skills, soft_skills")
-    .neq("id", id)
+    .select("id, username, full_name, avatar_url, university, linkedin_url, phone, email, hard_skills, soft_skills")
+    .neq("username", username)
     .limit(10);
 
   const candidates = (candidatesData || []) as Array<any>;
@@ -130,6 +130,7 @@ export default async function ProfilePage({ params }: Props) {
 
   const similarStudents = similar.slice(0, 6).map((s) => ({
     id: s.id,
+    username: s.username,
     full_name: s.full_name,
     avatar_url: s.avatar_url,
     university: s.university,
@@ -196,7 +197,7 @@ export default async function ProfilePage({ params }: Props) {
             whatsappUrl={null}
             email={data.email}
             fullName={data.full_name}
-            profileUrl={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://zigex.vercel.app'}/profile/${id}`}
+            profileUrl={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://zigex.vercel.app'}/profile/${username}`}
             isOwner={true}
           />
         </div>
@@ -323,7 +324,7 @@ export default async function ProfilePage({ params }: Props) {
       <div className="max-w-4xl mx-auto px-4 lg:px-6 space-y-6 md:mb-0 mb-16">
         {/* Personalized Feed */}
         <PersonalizedFeed 
-          userId={id}
+          userId={data.id}
           userSkills={[...skills, ...soft]}
           university={data.university}
         />
