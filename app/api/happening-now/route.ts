@@ -5,20 +5,12 @@ import { createServerActionClient } from '@/lib/supabase/server';
 // Use Node.js runtime for this route because @supabase/supabase-js
 // relies on Node APIs that are not available in the Edge runtime.
 export const runtime = 'nodejs';
-import { HAPPENING_NOW_CONSTRAINTS } from '@/lib/types/happening-now';
 
-/**
- * Set API route to accept large payloads (500MB)
- * This allows uploading multiple images and videos
- */
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '500mb',
-    },
-  },
-  maxDuration: 300, // 5 minutes timeout for large uploads
-};
+// Note: In App Router, we use presigned URLs for file uploads to bypass payload limits
+// Files are uploaded directly to Supabase Storage from the client
+export const maxDuration = 300; // 5 minutes timeout for database operations
+
+import { HAPPENING_NOW_CONSTRAINTS } from '@/lib/types/happening-now';
 
 /**
  * Create Supabase client - use service role key if available, otherwise use anon key
@@ -60,50 +52,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    let formData;
-
-    // Parse form data with error handling
+    // Parse JSON body (much smaller payload - just URLs and metadata)
+    let body;
     try {
-      formData = await request.formData();
+      body = await request.json();
       if (process.env.NODE_ENV === 'development') {
-        console.log('✅ FormData parsed successfully');
+        console.log('✅ Request body parsed successfully');
       }
     } catch (parseError) {
       if (process.env.NODE_ENV === 'development') {
-        console.error('❌ FormData parsing error:', parseError);
+        console.error('❌ Body parsing error:', parseError);
       }
       return NextResponse.json(
-        { error: 'Failed to parse form data. Ensure all files are properly uploaded.' },
+        { error: 'Failed to parse request body' },
         { status: 400 }
       );
     }
 
     const supabase = createSupabaseClient();
 
-    const company = formData.get('company') as string;
-    const isLive = formData.get('is_live') === 'true';
-    let captions: string[] = [];
-
-    try {
-      const captionsStr = formData.get('captions') as string;
-      if (captionsStr) {
-        captions = JSON.parse(captionsStr);
-        if (!Array.isArray(captions)) {
-          captions = [];
-        }
-      }
-    } catch (e) {
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('Failed to parse captions:', e);
-      }
-      captions = [];
-    }
+    const { company, imageUrls, videoData, captions, isLive } = body;
 
     if (process.env.NODE_ENV === 'development') {
-      console.log(`📤 Received upload request:`);
+      console.log(`📤 Received save request:`);
       console.log(`  - Company: ${company}`);
       console.log(`  - Is Live: ${isLive}`);
-      console.log(`  - Captions count: ${captions.length}`);
+      console.log(`  - Image URLs: ${imageUrls?.length || 0}`);
+      console.log(`  - Video: ${videoData ? 'Yes' : 'No'}`);
+      console.log(`  - Captions count: ${captions?.length || 0}`);
     }
 
     if (!company) {
@@ -113,145 +89,36 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Process images
-    const imageUrls: string[] = [];
-    const imageFiles = formData.getAll('images') as File[];
-
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`📸 Processing ${imageFiles.length} images`);
-    }
-
-    if (imageFiles.length === 0) {
+    if (!imageUrls || !Array.isArray(imageUrls) || imageUrls.length === 0) {
       return NextResponse.json(
-        { error: 'At least one image is required' },
+        { error: 'At least one image URL is required' },
         { status: 400 }
       );
     }
 
-    if (imageFiles.length > HAPPENING_NOW_CONSTRAINTS.MAX_IMAGES) {
+    if (imageUrls.length > HAPPENING_NOW_CONSTRAINTS.MAX_IMAGES) {
       return NextResponse.json(
         { error: `Maximum ${HAPPENING_NOW_CONSTRAINTS.MAX_IMAGES} images allowed` },
         { status: 400 }
       );
     }
 
-    for (let i = 0; i < imageFiles.length; i++) {
-      const file = imageFiles[i];
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`  - Image ${i + 1}: ${file.name} (${file.type}, ${(file.size / 1024).toFixed(2)}KB)`);
-      }
-
-      if (!HAPPENING_NOW_CONSTRAINTS.ALLOWED_IMAGE_TYPES.includes(file.type)) {
+    // Validate URLs are from Supabase storage
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    for (const url of imageUrls) {
+      if (!url.startsWith(supabaseUrl!)) {
         return NextResponse.json(
-          { error: `Invalid image type: ${file.type}. Allowed: ${HAPPENING_NOW_CONSTRAINTS.ALLOWED_IMAGE_TYPES.join(', ')}` },
+          { error: 'Invalid image URL. Must be from Supabase storage' },
           { status: 400 }
         );
-      }
-
-      const fileName = `happening-now/images/${Date.now()}-${i}-${file.name}`;
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`  - Uploading to: ${fileName}`);
-      }
-
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('media')
-        .upload(fileName, file, { upsert: false });
-
-      if (uploadError) {
-        if (process.env.NODE_ENV === 'development') {
-          console.error(`❌ Image ${i + 1} upload failed:`, uploadError);
-        }
-        return NextResponse.json(
-          { error: `Image upload failed: ${uploadError.message}` },
-          { status: 500 }
-        );
-      }
-
-      if (!uploadData || !uploadData.path) {
-        if (process.env.NODE_ENV === 'development') {
-          console.error(`❌ Image ${i + 1} upload returned no path`);
-        }
-        return NextResponse.json(
-          { error: `Image ${i + 1} upload failed: No path returned` },
-          { status: 500 }
-        );
-      }
-
-      const { data: publicUrl } = supabase.storage
-        .from('media')
-        .getPublicUrl(uploadData.path);
-
-      imageUrls.push(publicUrl.publicUrl);
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`  ✅ Image ${i + 1} uploaded: ${publicUrl.publicUrl}`);
       }
     }
 
-    // Process video
-    let videoData = null;
-    const videoFile = formData.get('video') as File | null;
-
-    if (videoFile && videoFile instanceof File && videoFile.size > 0) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`🎥 Processing video: ${videoFile.name} (${(videoFile.size / (1024 * 1024)).toFixed(2)}MB)`);
-      }
-
-      if (videoFile.size > HAPPENING_NOW_CONSTRAINTS.MAX_VIDEO_SIZE_BYTES) {
-        return NextResponse.json(
-          {
-            error: `Video size exceeds ${HAPPENING_NOW_CONSTRAINTS.MAX_VIDEO_SIZE_MB}MB limit. Size: ${(videoFile.size / (1024 * 1024)).toFixed(2)}MB`,
-          },
-          { status: 400 }
-        );
-      }
-
-      if (!HAPPENING_NOW_CONSTRAINTS.ALLOWED_VIDEO_TYPES.includes(videoFile.type)) {
-        return NextResponse.json(
-          { error: `Invalid video type: ${videoFile.type}. Allowed: ${HAPPENING_NOW_CONSTRAINTS.ALLOWED_VIDEO_TYPES.join(', ')}` },
-          { status: 400 }
-        );
-      }
-
-      const videoFileName = `happening-now/videos/${Date.now()}-${videoFile.name}`;
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`  - Uploading to: ${videoFileName}`);
-      }
-
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('media')
-        .upload(videoFileName, videoFile, { upsert: false });
-
-      if (uploadError) {
-        if (process.env.NODE_ENV === 'development') {
-          console.error('❌ Video upload failed:', uploadError);
-        }
-        return NextResponse.json(
-          { error: `Video upload failed: ${uploadError.message}` },
-          { status: 500 }
-        );
-      }
-
-      if (!uploadData || !uploadData.path) {
-        if (process.env.NODE_ENV === 'development') {
-          console.error('❌ Video upload returned no path');
-        }
-        return NextResponse.json(
-          { error: 'Video upload failed: No path returned' },
-          { status: 500 }
-        );
-      }
-
-      const { data: publicUrl } = supabase.storage
-        .from('media')
-        .getPublicUrl(uploadData.path);
-
-      videoData = {
-        url: publicUrl.publicUrl,
-        size: videoFile.size,
-      };
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`  ✅ Video uploaded: ${publicUrl.publicUrl}`);
-      }
+    if (videoData && videoData.url && !videoData.url.startsWith(supabaseUrl!)) {
+      return NextResponse.json(
+        { error: 'Invalid video URL. Must be from Supabase storage' },
+        { status: 400 }
+      );
     }
 
     if (process.env.NODE_ENV === 'development') {
@@ -271,7 +138,7 @@ export async function POST(request: NextRequest) {
           company,
           images: imageUrls,
           video: videoData,
-          captions,
+          captions: captions || [],
           is_live: isLive,
           view_count: 0,
         },
