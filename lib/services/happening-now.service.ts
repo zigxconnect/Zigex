@@ -1,4 +1,28 @@
 import { HappeningNowUploadPayload, HAPPENING_NOW_CONSTRAINTS } from '@/lib/types/happening-now';
+import { createClient } from '@supabase/supabase-js';
+
+// Progress callback type
+export type UploadProgressCallback = (progress: {
+  stage: 'generating-urls' | 'uploading-files' | 'saving-metadata';
+  fileIndex?: number;
+  totalFiles?: number;
+  fileName?: string;
+  percentComplete?: number;
+}) => void;
+
+/**
+ * Create Supabase client for direct storage uploads
+ */
+function createSupabaseClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !anonKey) {
+    throw new Error('Missing Supabase credentials');
+  }
+
+  return createClient(url, anonKey);
+}
 
 export const happeningNowService = {
   /**
@@ -50,52 +74,139 @@ export const happeningNowService = {
   },
 
   /**
-   * Upload happening now content
+   * Upload happening now content using two-step process:
+   * 1. Get presigned URLs
+   * 2. Upload files directly to Supabase Storage
+   * 3. Save metadata to database
    */
   uploadContent: async (
-    payload: HappeningNowUploadPayload
+    payload: HappeningNowUploadPayload,
+    onProgress?: UploadProgressCallback
   ): Promise<{ success: boolean; data?: any; error?: string }> => {
-    // Validate images
-    const imageValidation = happeningNowService.validateImages(payload.images);
-    if (!imageValidation.valid) {
-      return { success: false, error: imageValidation.error };
-    }
-
-    // Validate video if provided
-    if (payload.video) {
-      const videoValidation = happeningNowService.validateVideo(payload.video);
-      if (!videoValidation.valid) {
-        return { success: false, error: videoValidation.error };
-      }
-    }
-
-    // Create FormData
-    const formData = new FormData();
-    formData.append('company', payload.company);
-    formData.append('is_live', String(payload.is_live));
-    formData.append('captions', JSON.stringify(payload.captions));
-
-    // Append images
-    payload.images.forEach((image) => {
-      formData.append('images', image);
-    });
-
-    // Append video if present
-    if (payload.video) {
-      formData.append('video', payload.video);
-    }
-
     try {
-      const response = await fetch('/api/happening-now', {
+      // Validate images
+      const imageValidation = happeningNowService.validateImages(payload.images);
+      if (!imageValidation.valid) {
+        return { success: false, error: imageValidation.error };
+      }
+
+      // Validate video if provided
+      if (payload.video) {
+        const videoValidation = happeningNowService.validateVideo(payload.video);
+        if (!videoValidation.valid) {
+          return { success: false, error: videoValidation.error };
+        }
+      }
+
+      // Step 1: Get presigned URLs
+      onProgress?.({ stage: 'generating-urls', percentComplete: 0 });
+
+      const urlResponse = await fetch('/api/happening-now/upload-urls', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageCount: payload.images.length,
+          hasVideo: !!payload.video,
+        }),
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        return { success: false, error: result.error || 'Upload failed' };
+      if (!urlResponse.ok) {
+        const error = await urlResponse.json();
+        return { success: false, error: error.error || 'Failed to generate upload URLs' };
       }
+
+      const { uploadUrls } = await urlResponse.json();
+
+      // Step 2: Upload files directly to Supabase Storage
+      onProgress?.({ stage: 'uploading-files', totalFiles: payload.images.length + (payload.video ? 1 : 0), percentComplete: 10 });
+
+      const supabase = createSupabaseClient();
+      const imageUrls: string[] = [];
+
+      // Upload images
+      for (let i = 0; i < payload.images.length; i++) {
+        const image = payload.images[i];
+        const uploadInfo = uploadUrls.images[i];
+
+        onProgress?.({
+          stage: 'uploading-files',
+          fileIndex: i + 1,
+          totalFiles: payload.images.length + (payload.video ? 1 : 0),
+          fileName: image.name,
+          percentComplete: 10 + ((i + 1) / (payload.images.length + (payload.video ? 1 : 0))) * 70,
+        });
+
+        // Upload using presigned URL with token from response
+        const { error: uploadError } = await supabase.storage
+          .from('media')
+          .uploadToSignedUrl(uploadInfo.path, uploadInfo.token, image);
+
+        if (uploadError) {
+          return { success: false, error: `Failed to upload image ${i + 1}: ${uploadError.message}` };
+        }
+
+        // Get public URL
+        const { data: publicUrlData } = supabase.storage
+          .from('media')
+          .getPublicUrl(uploadInfo.path);
+
+        imageUrls.push(publicUrlData.publicUrl);
+      }
+
+      // Upload video if present
+      let videoData = null;
+      if (payload.video && uploadUrls.video) {
+        onProgress?.({
+          stage: 'uploading-files',
+          fileIndex: payload.images.length + 1,
+          totalFiles: payload.images.length + 1,
+          fileName: payload.video.name,
+          percentComplete: 80,
+        });
+
+        // Upload using presigned URL with token from response
+        const { error: uploadError } = await supabase.storage
+          .from('media')
+          .uploadToSignedUrl(uploadUrls.video.path, uploadUrls.video.token, payload.video);
+
+        if (uploadError) {
+          return { success: false, error: `Failed to upload video: ${uploadError.message}` };
+        }
+
+        // Get public URL
+        const { data: publicUrlData } = supabase.storage
+          .from('media')
+          .getPublicUrl(uploadUrls.video.path);
+
+        videoData = {
+          url: publicUrlData.publicUrl,
+          size: payload.video.size,
+          type: payload.video.type,
+        };
+      }
+
+      // Step 3: Save metadata to database
+      onProgress?.({ stage: 'saving-metadata', percentComplete: 90 });
+
+      const saveResponse = await fetch('/api/happening-now', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          company: payload.company,
+          imageUrls,
+          videoData,
+          captions: payload.captions,
+          isLive: payload.is_live,
+        }),
+      });
+
+      const result = await saveResponse.json();
+
+      if (!saveResponse.ok) {
+        return { success: false, error: result.error || 'Failed to save metadata' };
+      }
+
+      onProgress?.({ stage: 'saving-metadata', percentComplete: 100 });
 
       return { success: true, data: result.data };
     } catch (error) {
