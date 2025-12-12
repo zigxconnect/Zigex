@@ -12,8 +12,11 @@ import {
   PieChart as RechartsPieChart,
   Cell,
   Pie,
+  Area,
+  AreaChart,
 } from "recharts";
-import { BarChart as ChartIcon, PieChart as PieIcon } from "lucide-react";
+import { BarChart as ChartIcon, PieChart as PieIcon, Calendar } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 /**
  * A helper function to filter chart data based on a selected time range.
@@ -44,10 +47,12 @@ const EmptyChartState = ({
   message: string;
   icon: React.ElementType;
 }) => (
-  <div className="flex flex-col items-center justify-center h-full text-center text-gray-500 py-10">
-    <Icon className="w-16 h-16 text-gray-300 mb-4" />
-    <h4 className="font-semibold text-gray-700">{title}</h4>
-    <p className="text-sm mt-1 max-w-xs mx-auto">{message}</p>
+  <div className="flex flex-col items-center justify-center h-full text-center text-gray-400 py-12">
+    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+      <Icon className="w-8 h-8 text-gray-300" />
+    </div>
+    <h4 className="font-semibold text-gray-900">{title}</h4>
+    <p className="text-sm mt-1 max-w-xs mx-auto text-gray-500">{message}</p>
   </div>
 );
 
@@ -55,6 +60,27 @@ type ChartData = {
   hasData: boolean;
   data?: any[];
   emptyState?: { title: string; message: string };
+};
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-4 border border-gray-100 shadow-xl rounded-xl">
+        <p className="text-sm font-medium text-gray-500 mb-2">{label}</p>
+        {payload.map((entry: any, index: number) => (
+          <div key={index} className="flex items-center gap-2 text-sm">
+            <div
+              className="w-2 h-2 rounded-full"
+              style={{ backgroundColor: entry.color }}
+            />
+            <span className="font-semibold text-gray-900">{entry.value}</span>
+            <span className="text-gray-500 capitalize">{entry.name}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return null;
 };
 
 export const ChartsSection = ({
@@ -75,123 +101,176 @@ export const ChartsSection = ({
         name: field.field,
         value: field.applications,
         color: [
-          "#3B82F6",
-          "#8B5CF6",
-          "#10B981",
-          "#F59E0B",
-          "#EF4444",
-          "#06B6D4",
+          "#3B82F6", // Blue
+          "#8B5CF6", // Violet
+          "#10B981", // Emerald
+          "#F59E0B", // Amber
+          "#EF4444", // Red
+          "#06B6D4", // Cyan
         ][index % 6],
       }))
     : [];
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <div className="grid grid-cols-1 gap-6 h-full">
       {/* Applications Trend Chart */}
-      <div className="bg-white rounded-xl p-4 sm:p-6 shadow-lg border border-gray-100 min-h-[400px] flex flex-col">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">
-            Applications Trend
-          </h3>
-          <select
-            value={timeFilter}
-            onChange={(e) => setTimeFilter(e.target.value)}
-            className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-            disabled={!trendChartData.hasData}
-          >
-            <option value="month">Last 30 Days</option>
-            <option value="week">Last 7 Days</option>
-            <option value="year">All Time</option>
-          </select>
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col h-full">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">
+              Applications Trend
+            </h3>
+            <p className="text-sm text-gray-500">Overview of application activity</p>
+          </div>
+          
+          <div className="flex items-center bg-gray-50 rounded-lg p-1 border border-gray-100">
+            {["week", "month", "year"].map((period) => (
+              <button
+                key={period}
+                onClick={() => setTimeFilter(period)}
+                className={cn(
+                  "px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 capitalize",
+                  timeFilter === period
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-500 hover:text-gray-900"
+                )}
+              >
+                {period === "year" ? "All Time" : period}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* This condition now correctly checks the filtered data length */}
-        {trendChartData.hasData && filteredTrendData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={filteredTrendData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="date" stroke="#6b7280" />
-              <YAxis stroke="#6b7280" allowDecimals={false} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "white",
-                  border: "1px solid #e5e7eb",
-                  borderRadius: "8px",
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey="applications"
-                name="Applications"
-                stroke="#f97316"
-                strokeWidth={3}
-              />
-              <Line
-                type="monotone"
-                dataKey="interns"
-                name="Hired"
-                stroke="#3b82f6"
-                strokeWidth={3}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        ) : (
-          <EmptyChartState
-            icon={ChartIcon}
-            title={
-              trendChartData.hasData
-                ? "No Data for this Period"
-                : (trendChartData.emptyState?.title ?? "No Data Available")
-            }
-            message={
-              trendChartData.hasData
-                ? "Try selecting a different time range, like 'All Time'."
-                : (trendChartData.emptyState?.message ??
-                  "There is no trend data to display.")
-            }
-          />
-        )}
+        <div className="flex-1 min-h-[300px]">
+          {trendChartData.hasData && filteredTrendData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={filteredTrendData}>
+                <defs>
+                  <linearGradient id="colorApps" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f97316" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorHired" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
+                <XAxis 
+                  dataKey="date" 
+                  stroke="#9ca3af" 
+                  fontSize={12} 
+                  tickLine={false}
+                  axisLine={false}
+                  dy={10}
+                />
+                <YAxis 
+                  stroke="#9ca3af" 
+                  fontSize={12} 
+                  tickLine={false}
+                  axisLine={false}
+                  allowDecimals={false}
+                  dx={-10}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Area
+                  type="monotone"
+                  dataKey="applications"
+                  name="Applications"
+                  stroke="#f97316"
+                  strokeWidth={3}
+                  fillOpacity={1}
+                  fill="url(#colorApps)"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="interns"
+                  name="Hired"
+                  stroke="#3b82f6"
+                  strokeWidth={3}
+                  fillOpacity={1}
+                  fill="url(#colorHired)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <EmptyChartState
+              icon={ChartIcon}
+              title={
+                trendChartData.hasData
+                  ? "No Data for this Period"
+                  : (trendChartData.emptyState?.title ?? "No Data Available")
+              }
+              message={
+                trendChartData.hasData
+                  ? "Try selecting a different time range."
+                  : (trendChartData.emptyState?.message ??
+                    "There is no trend data to display.")
+              }
+            />
+          )}
+        </div>
       </div>
 
       {/* Applications by Field Chart */}
-      <div className="bg-white rounded-xl p-4 sm:p-6 shadow-lg border border-gray-100 min-h-[400px] flex flex-col">
-        <h3 className="text-lg font-semibold text-gray-900 mb-6">
-          Applications by Field
-        </h3>
-        {breakdownChartData.hasData && pieChartData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={300}>
-            <RechartsPieChart>
-              <Pie
-                dataKey="value"
-                data={pieChartData}
-                cx="50%"
-                cy="50%"
-                outerRadius={110}
-                innerRadius={50}
-                paddingAngle={2}
-                labelLine={false}
-                label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
-              >
-                {pieChartData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={entry.color}
-                    stroke={entry.color}
-                  />
-                ))}
-              </Pie>
-              <Tooltip />
-            </RechartsPieChart>
-          </ResponsiveContainer>
-        ) : (
-          <EmptyChartState
-            icon={PieIcon}
-            title={breakdownChartData.emptyState?.title ?? "No Data Available"}
-            message={
-              breakdownChartData.emptyState?.message ??
-              "There is no breakdown data to display."
-            }
-          />
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col">
+        <div className="mb-6">
+          <h3 className="text-lg font-bold text-gray-900">
+            Applications by Field
+          </h3>
+          <p className="text-sm text-gray-500">Distribution across categories</p>
+        </div>
+        
+        <div className="flex-1 min-h-[300px]">
+          {breakdownChartData.hasData && pieChartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <RechartsPieChart>
+                <Pie
+                  dataKey="value"
+                  data={pieChartData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={80}
+                  outerRadius={110}
+                  paddingAngle={5}
+                  cornerRadius={5}
+                >
+                  {pieChartData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={entry.color}
+                      stroke="none"
+                    />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+              </RechartsPieChart>
+            </ResponsiveContainer>
+          ) : (
+            <EmptyChartState
+              icon={PieIcon}
+              title={breakdownChartData.emptyState?.title ?? "No Data Available"}
+              message={
+                breakdownChartData.emptyState?.message ??
+                "There is no breakdown data to display."
+              }
+            />
+          )}
+        </div>
+        
+        {/* Legend */}
+        {breakdownChartData.hasData && pieChartData.length > 0 && (
+          <div className="grid grid-cols-2 gap-3 mt-4">
+            {pieChartData.map((entry, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <div 
+                  className="w-3 h-3 rounded-full" 
+                  style={{ backgroundColor: entry.color }}
+                />
+                <span className="text-sm text-gray-600 truncate">{entry.name}</span>
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>

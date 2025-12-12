@@ -11,9 +11,11 @@ import {
   LogOut,
   FilePen,
   LayoutDashboard,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAdminSidebar } from "./AdminLayoutProvider";
+import { cn } from "@/lib/utils";
 
 // Define the type for the company profile, reusable across components
 export interface CompanyProfile {
@@ -39,8 +41,7 @@ const getInitials = (name: string = ""): string => {
 const navLinks = [
   { href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/admin/postings", icon: FileText, label: "Postings" },
-  { href: "/admin/applicants", icon: Users, label: "Applicants" },
-  { href: "/admin/accepted", icon: CheckCheck, label: "Accepted Interns" },
+  { href: "/admin/applications", icon: Users, label: "Applications" },
   { href: "/admin/profile", icon: FilePen, label: "Edit Profile" },
 ];
 
@@ -74,76 +75,86 @@ export const AdminSidebar = ({
       {/* Mobile Overlay: Dims the background when the sidebar is open on mobile */}
       {isOpen && isMobile && (
         <div
-          className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm transition-opacity duration-300"
           onClick={toggleSidebar}
         />
       )}
 
       <aside
-        className={`fixed left-0 w-72 bg-white shadow-lg border-r border-gray-200 z-40 flex flex-col transition-transform duration-300 ease-in-out
-          ${isOpen ? "translate-x-0" : "-translate-x-full"}
-          top-20 
-          h-[calc(100vh-5rem)]
-        `}
+        className={cn(
+          "fixed top-0 left-0 z-50 h-full w-72 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:p-4",
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        )}
       >
-        {/* Company Profile Section */}
-        <div className="p-5 text-center border-b border-gray-100">
-          <div className="relative inline-block">
-            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 text-3xl font-bold ring-4 ring-white shadow-inner">
-              {getInitials(companyProfile.company_name)}
+        <div className="h-full flex flex-col bg-white/80 backdrop-blur-xl border border-white/20 shadow-2xl lg:rounded-2xl overflow-hidden">
+          {/* Company Profile Section */}
+          <div className="p-6 text-center border-b border-gray-100/50 bg-gradient-to-b from-white/50 to-transparent">
+            <div className="relative inline-block group">
+              <div className="absolute inset-0 bg-blue-500 rounded-full blur opacity-20 group-hover:opacity-30 transition-opacity duration-500" />
+              <div className="relative w-20 h-20 bg-gradient-to-br from-blue-50 to-white rounded-full flex items-center justify-center text-blue-600 text-2xl font-bold ring-4 ring-white shadow-lg group-hover:scale-105 transition-transform duration-300">
+                {getInitials(companyProfile.company_name)}
+              </div>
             </div>
+            <h2 className="mt-4 text-lg font-bold text-gray-900 truncate px-2">
+              {companyProfile.company_name}
+            </h2>
+            {companyProfile.industry && (
+              <p className="text-sm font-medium text-blue-600/80 mt-1">
+                {companyProfile.industry}
+              </p>
+            )}
           </div>
-          <h2 className="mt-3 text-lg font-bold text-gray-900 truncate">
-            {companyProfile.company_name}
-          </h2>
-          {companyProfile.industry && (
-            <p className="text-sm font-medium text-blue-600">
-              {companyProfile.industry}
-            </p>
-          )}
-        </div>
 
-        {/* Navigation Links */}
-        <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
-          {navLinks.map((link) => {
-            const isActive =
-              pathname === link.href ||
-              (link.href !== "/admin/dashboard" &&
-                pathname.startsWith(link.href));
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  isActive
-                    ? "bg-blue-600 text-white shadow-sm"
-                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                }`}
-              >
-                <link.icon
-                  size={18}
-                  className={
+          {/* Navigation Links */}
+          <nav className="flex-1 p-4 space-y-2 overflow-y-auto custom-scrollbar">
+            {navLinks.map((link) => {
+              const isActive =
+                pathname === link.href ||
+                (link.href !== "/admin/dashboard" &&
+                  pathname.startsWith(link.href));
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={cn(
+                    "group relative flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 overflow-hidden",
                     isActive
-                      ? "text-white"
-                      : "text-gray-400 group-hover:text-blue-600"
-                  }
-                />
-                <span>{link.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
+                      ? "text-blue-700 bg-blue-50 shadow-sm ring-1 ring-blue-100"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50/80"
+                  )}
+                >
+                  {isActive && (
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600 rounded-r-full" />
+                  )}
+                  <link.icon
+                    size={20}
+                    className={cn(
+                      "transition-colors duration-300",
+                      isActive
+                        ? "text-blue-600"
+                        : "text-gray-400 group-hover:text-gray-600"
+                    )}
+                  />
+                  <span className="flex-1">{link.label}</span>
+                  {isActive && (
+                    <ChevronRight size={16} className="text-blue-400" />
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
 
-        {/* Footer - Sign Out Button */}
-        <div className="p-4 border-t border-gray-100">
-          <Button
-            variant="ghost"
-            className="w-full justify-start gap-3 text-gray-600 hover:bg-red-50 hover:text-red-600"
-            onClick={handleSignOut}
-          >
-            <LogOut size={18} />
-            <span className="font-medium">Sign Out</span>
-          </Button>
+          {/* Footer - Sign Out Button */}
+          <div className="p-4 border-t border-gray-100/50 bg-gray-50/30">
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-3 text-gray-500 hover:bg-red-50 hover:text-red-600 hover:shadow-sm transition-all duration-300 rounded-xl h-11"
+              onClick={handleSignOut}
+            >
+              <LogOut size={18} />
+              <span className="font-medium">Sign Out</span>
+            </Button>
+          </div>
         </div>
       </aside>
     </>

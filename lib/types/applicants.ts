@@ -25,5 +25,24 @@ export type Applicant = {
   appliedDate: string;
   status: ApplicantStatus;
   resumeUrl: string | null;
-  coverLetter: string | null; // This property holds the cover_letter_url
+  coverLetter: string | null;
+  // Extended profile fields
+  university?: string;
+  degree?: string;
+  fieldOfStudy?: string;
+  graduationYear?: number;
+  hardSkills?: string[];
+  softSkills?: string[];
+  languages?: string[];
+  location?: string;
+  about?: string;
+  // Application specific fields
+  applicationType?: "internship" | "program" | "event";
+  duration?: string;
+  department?: string;
+  workMode?: string;
+  level?: string;
+  expectations?: string;
+  comments?: string;
+  rsvpStatus?: boolean;
 };

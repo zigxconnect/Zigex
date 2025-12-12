@@ -51,6 +51,7 @@ type RecentApplication = {
   field: string;
   date: string;
   status: string;
+  statusColor?: string;
 };
 
 // PUBLIC-FACING API FUNCTIONS
@@ -170,7 +171,102 @@ export async function getDashboardAnalytics(companyId: string) {
   };
 }
 
-// --- PRIVATE HELPER FUNCTIONS (The fix is here) ---
+/**
+ * Fetches all applications for a company with detailed profile info.
+ * Used for the Kanban board.
+ */
+export async function getCompanyApplications(companyId: string) {
+  const supabase = await createSupabaseServerClient();
+  
+  // Note: Adjust the select query based on your actual schema relationships
+  const { data: applications, error } = await supabase
+    .from("Applications")
+    .select(`
+      *,
+      student_profiles (
+        full_name,
+        first_name,
+        last_name,
+        username,
+        avatar_url,
+        email,
+        phone,
+        university,
+        degree,
+        field_of_study,
+        graduation_year,
+        hard_skills,
+        soft_skills,
+        languages,
+        location,
+        about
+      ),
+      internships (
+        title
+      ),
+      programs (
+        title
+      )
+    `)
+    .eq("company_id", companyId);
+
+  if (error) {
+    console.error("Error fetching company applications:", error);
+    return [];
+  }
+
+  if (applications && applications.length > 0) {
+    console.log("DEBUG: First application profile:", JSON.stringify(applications[0].student_profiles, null, 2));
+  }
+
+  return (applications || []).map((app: any) => {
+    // Robust name resolution
+    let displayName = "Unknown Candidate";
+    if (app.student_profiles) {
+      if (app.student_profiles.full_name) {
+        displayName = app.student_profiles.full_name;
+      } else if (app.student_profiles.first_name) {
+        displayName = `${app.student_profiles.first_name} ${app.student_profiles.last_name || ''}`.trim();
+      } else if (app.student_profiles.username) {
+        displayName = app.student_profiles.username;
+      }
+    }
+
+    return {
+      id: app.id,
+      name: displayName,
+      avatarUrl: app.student_profiles?.avatar_url || "",
+      status: app.status || "applied",
+      appliedDate: app.created_at,
+      internshipTitle: app.internships?.title || app.programs?.title || "General Application",
+      email: app.student_profiles?.email || app.email,
+      phone: app.student_profiles?.phone || app.phone,
+      resumeUrl: app.resume_url,
+      coverLetter: app.cover_letter,
+      // Extended fields
+      university: app.student_profiles?.university,
+      degree: app.student_profiles?.degree,
+      fieldOfStudy: app.student_profiles?.field_of_study,
+      graduationYear: app.student_profiles?.graduation_year,
+      hardSkills: app.student_profiles?.hard_skills,
+      softSkills: app.student_profiles?.soft_skills,
+      languages: app.student_profiles?.languages,
+      location: app.student_profiles?.location,
+      about: app.student_profiles?.about,
+      // Application specific fields
+      applicationType: app.application_type,
+      duration: app.duration,
+      department: app.department,
+      workMode: app.work_mode,
+      level: app.level,
+      expectations: app.expectations,
+      comments: app.comments,
+      rsvpStatus: app.rsvp_status,
+    };
+  });
+}
+
+// --- PRIVATE HELPER FUNCTIONS ---
 
 async function _fetchAllPostings(
   supabase: any,
@@ -198,8 +294,6 @@ async function _fetchAllPostings(
 }
 
 async function _fetchAllAnalyticsData(supabase: any, companyId: string) {
-  // --- THE FIX IS HERE ---
-  // We now select the date columns needed for KPI calculations.
   const { internships, programs, events } = await _fetchAllPostings(
     supabase,
     companyId,
@@ -224,8 +318,6 @@ async function _fetchAllAnalyticsData(supabase: any, companyId: string) {
     applications: (applications || []) as Application[],
   };
 }
-
-// --- ALL FUNCTIONS BELOW HERE ARE CORRECT AND DO NOT NEED CHANGES ---
 
 function _combineAndSortPostings(
   internships: Internship[],

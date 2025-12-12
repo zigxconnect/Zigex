@@ -1,10 +1,11 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Menu, Plus } from "lucide-react";
+import { Menu, Plus, Bell } from "lucide-react";
 import Link from "next/link";
 import { useAdminSidebar } from "./AdminLayoutProvider";
 import { Logo } from "@/components/uiComponent/Logo";
+import { cn } from "@/lib/utils";
 
 type AdminHeaderProps = {
   stats: {
@@ -18,49 +19,62 @@ export const AdminHeader = ({ stats }: AdminHeaderProps) => {
   const { toggleSidebar } = useAdminSidebar();
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-sm border-b border-gray-200">
-      <div className="flex items-center justify-between gap-4 p-4 lg:px-6 h-20">
+    <header className="sticky top-0 z-30 w-full">
+      <div className="absolute inset-0 bg-white/80 backdrop-blur-md border-b border-gray-100/50 lg:hidden" />
+      
+      <div className="relative flex items-center justify-between gap-4 p-4 lg:px-8 h-20">
         {/* Left Side: Menu Toggle (Mobile) + Logo */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <button
             onClick={toggleSidebar}
-            className="lg:hidden p-2 text-gray-600 rounded-lg hover:bg-gray-100"
+            className="lg:hidden p-2 -ml-2 text-gray-600 rounded-xl hover:bg-gray-100/80 transition-colors"
             aria-label="Toggle sidebar"
           >
             <Menu size={24} />
           </button>
 
-          {/* Logo is now always visible */}
-          <Logo />
-        </div>
-
-        {/* Center: Stats (Hidden on screens smaller than 'md') */}
-        <div className="hidden md:flex items-center gap-6 text-sm text-gray-500">
-          <div className="text-center">
-            <p className="font-bold text-lg text-gray-800">{stats.total}</p>
-            <p className="text-xs">Total Postings</p>
+          {/* Logo is visible on mobile, hidden on desktop as it's in sidebar/layout */}
+          <div className="lg:hidden">
+            <Logo />
           </div>
-          <div className="text-center">
-            <p className="font-bold text-lg text-green-600">{stats.active}</p>
-            <p className="text-xs">Active</p>
-          </div>
-          <div className="text-center">
-            <p className="font-bold text-lg text-gray-800">
-              {stats.applications}
+          
+          {/* Desktop Title/Breadcrumb could go here */}
+          <div className="hidden lg:block">
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+              Overview
+            </h1>
+            <p className="text-sm text-gray-500 font-medium">
+              Welcome back to your dashboard
             </p>
-            <p className="text-xs">Applications</p>
           </div>
         </div>
 
-        {/* Right Side: Action Button */}
-        <div className="flex-shrink-0">
+        {/* Right Side: Stats & Actions */}
+        <div className="flex items-center gap-4 sm:gap-6">
+          {/* Quick Stats - Hidden on small mobile */}
+          <div className="hidden md:flex items-center gap-6 mr-4">
+            <div className="flex flex-col items-end">
+              <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Active Jobs</span>
+              <span className="text-lg font-bold text-gray-900 leading-none">{stats.active}</span>
+            </div>
+            <div className="w-px h-8 bg-gray-200" />
+            <div className="flex flex-col items-end">
+              <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Total Apps</span>
+              <span className="text-lg font-bold text-gray-900 leading-none">{stats.applications}</span>
+            </div>
+          </div>
+
+          <button className="relative p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-full hover:bg-gray-100/50">
+            <Bell size={20} />
+            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white" />
+          </button>
+
           <Link href="/admin/postings/new" passHref>
-            <Button variant="orange" className="flex items-center gap-2">
-              <Plus size={18} />
-              {/* Responsive Text: Shows full text on 'sm' screens and up */}
-              <span className="hidden sm:inline">Post New Program</span>
-              {/* Shows shorter text on screens smaller than 'sm' */}
-              <span className="sm:hidden">New</span>
+            <Button 
+              className="h-11 px-6 rounded-xl bg-gray-900 text-white hover:bg-gray-800 shadow-lg shadow-gray-900/20 hover:shadow-xl hover:shadow-gray-900/10 transition-all duration-300"
+            >
+              <Plus size={18} className="mr-2" />
+              <span className="font-medium">Post Job</span>
             </Button>
           </Link>
         </div>
