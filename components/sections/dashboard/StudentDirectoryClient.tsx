@@ -13,6 +13,7 @@ interface StudentStats {
 
 interface RawUserProfile {
   id: string;
+  username?: string;
   full_name?: string | null;
   avatar_url?: string | null;
   university?: string | null;

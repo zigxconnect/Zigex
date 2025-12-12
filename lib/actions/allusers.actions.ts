@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 export interface RawUserProfile {
   id: string;
   user_id: string;
+  username?: string;
   full_name?: string | null;
   first_name?: string | null;
   last_name?: string | null;
@@ -23,7 +24,7 @@ export async function getAllUsers(limit = 100, offset = 0) {
     const { data, error } = await supabaseAdmin
       .from("student_profiles")
       .select(
-        `id, user_id, full_name, first_name, last_name, avatar_url, university, hard_skills, soft_skills, linkedin_url, github_url, portfolio_url, created_at`
+        `id, user_id, username, full_name, first_name, last_name, avatar_url, university, hard_skills, soft_skills, linkedin_url, github_url, portfolio_url, created_at`
       )
       .order("created_at", { ascending: false })
       .range(offset, Math.max(offset, limit - 1 + offset));
