@@ -6,10 +6,14 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
- * Normalize image source URLs for next/image.
- * - If src is falsy, returns the provided fallback
- * - If src starts with '//' or missing protocol, prefix with 'https:'
- * - Otherwise returns src unchanged
+ * @description Normalize image source URLs for next/image.
+ * @param src - The image source URL
+ * @param fallback - The fallback image source URL
+ * @returns The normalized image source URL
+ * @example
+ * ```typescript
+ * const src = normalizeImageSrc("https://example.com/image.jpg");
+ * ```
  */
 export function normalizeImageSrc(src?: string | null, fallback = "/placeholder.png") {
   if (!src) return fallback;
