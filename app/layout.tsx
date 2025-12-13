@@ -26,50 +26,39 @@ export const metadata: Metadata = {
     template:
       "%s  ZiGex| SEED | ZiGex | skills enhancement and empowerment throgh digitalization, seed bamenda ",
   },
-  description: "Zone For Internship,Growth and Experience ",
-  formatDetection: {
-    telephone: false,
-  },
-
+  description:
+    "ZIGEX (Zone for Internship, Growth and Experience) is your gateway to career advancement. Connect with top tech internships, skill-building programs, and community events designed to empower the next generation of digital leaders.",
   keywords: [
-    "fonyuygita",
-    "seed Inc",
-    "cheko yohane",
-    "Fien dora",
-    "ShowRoad",
-    "search internship",
-    "hackertons",
-    "innovatewithseed.com",
-    "bamenda",
-    "Cameroon",
-    "fonyuy gita",
-    "fonyuy jude fomonyuy",
-    "find program",
-    "tech event ",
-    "tech program",
-    "tech tutor seed",
+    "ZIGEX",
+    "Zone for Internship Growth and Experience",
+    "Internships",
+    "Tech Programs",
+    "Events",
+    "Career Growth",
+    "Digital Skills",
+    "SEED Bamenda",
+    "Cameroon Tech",
   ],
   openGraph: {
     url: "https://zigex.vercel.app",
     type: "website",
-    title:
-      "ShowRoad |  Find any program - internship, hackertons in and around the country",
+    title: "ZIGEX | Zone for Internship, Growth and Experience",
     description:
-      "SEED (Skill Enhancement and Empowerment through Digitalisation) is a private tech startup based in Bamenda, Cameroon. Legally recognized under Cameroonian business regulations, SEED operates independently with a mission to foster technological innovation and provide hands-on training in various tech disciplines. Through its coding bootcamps, internships, and tech programs, SEED plays a pivotal role in equipping individuals with digital skills, empowering them to solve real-world problems..",
+      "ZIGEX (Zone for Internship, Growth and Experience) is the ultimate platform for discovering career-defining internships, specialized training programs, and impactful tech events. Empowering talent through digitalization.",
     images: [
       {
         url: "https://i.ibb.co/5WXQhq78/Whats-App-Image-2025-09-23-at-8-22-42-AM.jpg",
         width: 1200,
         height: 630,
-        alt: "SEED",
+        alt: "ZIGEX Community",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Skills Enhancement and Empowerment Through Digitalization",
+    title: "ZIGEX | Zone for Internship, Growth and Experience",
     description:
-      "SEED (Skill Enhancement and Empowerment through Digitalisation) is a private tech startup based in Bamenda, Cameroon.",
+      "ZIGEX (Zone for Internship, Growth and Experience) - Connecting aspiring talent with opportunities. Discover internships, programs, and events.",
     creator: "@fonyuygita",
     site: "@innovatewithseed",
     images: [
@@ -77,7 +66,7 @@ export const metadata: Metadata = {
         url: "https://i.ibb.co/5WXQhq78/Whats-App-Image-2025-09-23-at-8-22-42-AM.jpg",
         width: 1200,
         height: 630,
-        alt: "SEED",
+        alt: "ZIGEX Community",
       },
     ],
   },
