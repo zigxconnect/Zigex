@@ -9,6 +9,16 @@ const inter = Inter({
   display: "swap",
 });
 
+
+
+
+export const viewport = {
+  themeColor: "#2563EB",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://zigex.vercel.app"),
   title: {
@@ -17,6 +27,10 @@ export const metadata: Metadata = {
       "%s  ZiGex| SEED | ZiGex | skills enhancement and empowerment throgh digitalization, seed bamenda ",
   },
   description: "Zone For Internship,Growth and Experience ",
+  formatDetection: {
+    telephone: false,
+  },
+
   keywords: [
     "fonyuygita",
     "seed Inc",
