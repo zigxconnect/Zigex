@@ -16,19 +16,47 @@ export default function ProjectDetailMedia({ uploadedVideo, youtubeVideo, coverI
   if (youtubeVideo) videos.push({ type: "youtube", url: youtubeVideo });
 
   const [index, setIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false); // Default to false, let Observer handle it
+  const [isInView, setIsInView] = useState(false);
+  const containerRef = React.useRef<HTMLDivElement>(null);
   const current = videos.length > 0 ? videos[index] : null;
 
-  // Reset playing state when switching videos in carousel
+  // Optimimzation: Intersection Observer for Autoplay
   useEffect(() => {
-    setIsPlaying(false);
-  }, [index, uploadedVideo, youtubeVideo]);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          setIsInView(entry.isIntersecting);
+          if (entry.isIntersecting) {
+            setIsPlaying(true);
+          } else {
+            setIsPlaying(false);
+          }
+        });
+      },
+      { threshold: 0.6 } // Play when 60% visible
+    );
 
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => {
+      if (containerRef.current) {
+        observer.unobserve(containerRef.current);
+      }
+    };
+  }, [containerRef]);
+
+  // Reset playing state (handled by observer) but respecting manual override could be complex. 
+  // simplified: Auto-play when visible, auto-pause when hidden.
+  
   const getYouTubeEmbed = (url: string) => {
     try {
       const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
       const match = url.match(regExp);
-      return match && match[2].length === 11 ? `https://www.youtube.com/embed/${match[2]}?autoplay=1` : null;
+      // Added mute=1 for autoplay policy compliance
+      return match && match[2].length === 11 ? `https://www.youtube.com/embed/${match[2]}?autoplay=1&mute=1&enablejsapi=1` : null;
     } catch (e) {
       return null;
     }
@@ -62,7 +90,7 @@ export default function ProjectDetailMedia({ uploadedVideo, youtubeVideo, coverI
 
   // Active Video Rendering
   return (
-    <div className="w-full h-full relative group bg-black">
+    <div ref={containerRef} className="w-full h-full relative group bg-black">
       {!isPlaying ? (
         // Thumbnail / Click-to-Play State
         <div 
@@ -120,7 +148,10 @@ export default function ProjectDetailMedia({ uploadedVideo, youtubeVideo, coverI
                 src={current.url} 
                 className="w-full h-full" 
                 controls 
-                autoPlay 
+                autoPlay
+                muted
+                playsInline
+                loop
               />
            )}
         </div>

@@ -20,6 +20,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ProjectsIcon } from "@sanity/icons";
+import CreateProjectButton from "@/components/project/CreateProjectButton";
 
 interface MobileTabBarProps {
   user: any;
@@ -50,8 +51,15 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
   {
     href: "/dashboard/projects",
     icon: ProjectsIcon,
-    label: "projects",
+    label: "Projects",
     matchPaths: ["/dashboard/projects", "/dashboard/projects/", "/feed/projects/"],
+  },
+  {
+    href: "#",
+    icon: Upload, // Changed to Upload or Plus icon
+    label: "Post",
+    isSpecial: true,
+    isAction: true, // Marker for special handling
   },
   { 
     href: "/dashboard/student", 
@@ -59,8 +67,7 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
     label: "Zigx",
     matchPaths: ["/dashboard/student", "/dashboard/student/"]
   },
-
-   {
+  {
     href: `/profile/${user?.profile?.username || "username"}`,
     icon: PersonStandingIcon,
     label: "Profile",
@@ -84,6 +91,8 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
   const router = useRouter();
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // ... (existing helper functions) ...
 
   const isRouteActive = (href: string, matchPaths?: string[], excludePaths?: string[]) => {
     // Remove trailing slashes for comparison but preserve leading slash
@@ -126,7 +135,9 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
     return path === target;
   };
 
-  // Fetch unread notifications count
+  // ... (existing useEffects) ...
+
+  // Unconditionally call hooks for data fetching
   useEffect(() => {
     let mounted = true;
     const fetchCount = async () => {
@@ -143,29 +154,20 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
     return () => { mounted = false; clearInterval(iv); };
   }, []);
 
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
-    try {
-      const response = await fetch("/api/auth/logout", { method: "POST" });
-
-      if (!response.ok) throw new Error("Logout failed");
-
-      toast.success("Logged out successfully");
-      router.push("/sign-in");
-    } catch (error) {
-      console.error("Logout error:", error);
-      toast.error("Failed to logout. Please try again.");
-      setIsLoggingOut(false);
-    }
-  };
+  // ... (handleLogout) ...
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 lg:hidden z-50 safe-area-bottom">
       <div className="flex items-center justify-around px-2 py-2">
-        {tabItems.map((item) => {
+        {tabItems.map((item: any) => {
           const Icon = item.icon;
           const isActive = isRouteActive(item.href, item.matchPaths, item.excludePaths);
           const showBadge = item.href === "/notifications" && unreadCount > 0;
+
+          // Special handling for Create button
+          if (item.isAction) {
+             return <CreateProjectWrapper key="create-action" icon={Icon} label={item.label} isActive={isActive} />;
+          }
 
           return (
             <Link
@@ -200,7 +202,6 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
                   </div>
                 )}
 
-                {/* Beta Badge for ZAi */}
                 {item.label === "ZAi" && (
                    <div className="absolute -top-3 -right-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-sm z-10 tracking-wide">
                     BETA
@@ -221,5 +222,24 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
         })}
       </div>
     </div>
+  );
+}
+
+// Helper component for the Create Button functionality
+function CreateProjectWrapper({ icon: Icon, isActive, label }: any) {
+  return (
+    <CreateProjectButton 
+      variant="custom"
+      customTrigger={
+        <div className="flex flex-col items-center justify-center flex-1 py-2 px-1 relative group w-full">
+            <div className={`p-2 rounded-xl transition-all duration-200 bg-blue-600 text-white shadow-md transform hover:scale-110 active:scale-95`}>
+              <Icon size={24} className="text-white" />
+            </div>
+            <span className="text-[10px] font-medium mt-1 text-blue-600">
+               {label}
+            </span>
+        </div>
+      }
+    />
   );
 }

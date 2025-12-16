@@ -83,7 +83,8 @@ export default function MyMonthProject({
   // Get image URL with fallback
   const getImageUrl = (url: string | null) => {
     if (!url) return '/projects.png';
-    if (url.startsWith('http://') || url.startsWith('https://')) {
+    // Allow any non-empty string as a valid source (could be relative path or external URL)
+    if (url.trim().length > 0) {
       return url;
     }
     return '/projects.png';

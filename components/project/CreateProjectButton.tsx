@@ -5,10 +5,11 @@ import { Edit3, Plus } from "lucide-react";
 import CreateProjectModal, { ProjectFormData } from "./CreateProjectModal";
 
 interface CreateProjectButtonProps {
-  variant?: "floating" | "header";
+  variant?: "floating" | "header" | "custom";
+  customTrigger?: React.ReactNode;
 }
 
-export default function CreateProjectButton({ variant = "header" }: CreateProjectButtonProps) {
+export default function CreateProjectButton({ variant = "header", customTrigger }: CreateProjectButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleSubmit = async (projectData: ProjectFormData) => {
@@ -60,6 +61,21 @@ export default function CreateProjectButton({ variant = "header" }: CreateProjec
         </button>
 
         {/* Modal */}
+        <CreateProjectModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={handleSubmit}
+        />
+      </>
+    );
+  }
+
+  if (variant === "custom" && customTrigger) {
+    return (
+      <>
+        <div onClick={() => setIsModalOpen(true)} className="cursor-pointer">
+          {customTrigger}
+        </div>
         <CreateProjectModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
