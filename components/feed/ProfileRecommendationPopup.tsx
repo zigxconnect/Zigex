@@ -16,6 +16,7 @@ export default function ProfileRecommendationPopup({user}: WelcomeCardProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
     const coverImageUrl = user?.avatarUrl || "/ar.png";
+     const userName = user?.name || user?.profile?.name || "Guest User";
 
   useEffect(() => {
     // Check if user has seen the popup before
@@ -41,7 +42,7 @@ export default function ProfileRecommendationPopup({user}: WelcomeCardProps) {
   const handleViewProfile = () => {
     // Mark as seen and redirect
     localStorage.setItem('zigex_profile_popup_seen', 'true');
-    window.location.href = `/dashboard/student/${user?.profile?.id}`
+    window.location.href = `/profile/${user.profile.username}`
   };
 
   const handleDismiss = () => {

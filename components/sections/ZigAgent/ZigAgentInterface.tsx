@@ -14,6 +14,8 @@ import {
   Plus,
   Globe,
   Zap,
+  X,
+  StopCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -48,9 +50,10 @@ export function ZigAgentInterface({ user }: ZigAgentInterfaceProps) {
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const [loadingTool, setLoadingTool] = useState<string | null>(null);
   
-  // Artifact State
+  // Artifact Statex
   const [activeArtifact, setActiveArtifact] = useState<any | null>(null);
   const [isArtifactOpen, setIsArtifactOpen] = useState(false);
+  const [panelWidth, setPanelWidth] = useState(0); // Track panel width for responsive chat
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -106,6 +109,20 @@ export function ZigAgentInterface({ user }: ZigAgentInterfaceProps) {
     scrollToBottom();
   }, [messages, isThinking, hasStarted]);
 
+  // Stop response generation
+  const handleStopResponse = () => {
+    setIsThinking(false);
+    setLoadingTool(null);
+    // Add a system message indicating response was stopped
+    const stopMsg: Message = {
+      id: Date.now().toString(),
+      role: "ai",
+      content: "_Response stopped by user._",
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, stopMsg]);
+  };
+
   const handleSendMessage = async () => {
     if (!inputValue.trim() && !selectedTool) return;
 
@@ -126,8 +143,19 @@ export function ZigAgentInterface({ user }: ZigAgentInterfaceProps) {
 
     setMessages((prev) => [...prev, newUserMsg]);
     setInputValue("");
-    setSelectedTool(null);
+    // DON'T clear selectedTool - keep it persistent
+    // setSelectedTool(null); // REMOVED - tool stays selected
     setIsThinking(true);
+    
+    // Open panel immediately if tool is selected
+    if (activeTool) {
+      setActiveArtifact({
+        type: "general_content",
+        title: `${activeTool} - Discovering...`,
+        data: { loading: true, message: userMessage }
+      });
+      setIsArtifactOpen(true);
+    }
 
     try {
       const conversationHistory = messages.map(msg => ({
@@ -200,6 +228,9 @@ export function ZigAgentInterface({ user }: ZigAgentInterfaceProps) {
       if (data.artifact_data) {
           setActiveArtifact(data.artifact_data);
           setIsArtifactOpen(true);
+      } else if (activeTool) {
+          // Tool was used but no artifact data - close panel
+          setIsArtifactOpen(false);
       }
 
       setIsThinking(false);
@@ -232,16 +263,30 @@ export function ZigAgentInterface({ user }: ZigAgentInterfaceProps) {
   const handleToolSelect = (toolName: string) => {
     setIsToolsOpen(false);
     setSelectedTool(toolName);
+    
+    // For Upload CV tool, open panel immediately with upload interface
+    if (toolName === "Upload CV") {
+      setActiveArtifact({
+        type: "cv_upload",
+        title: "CV Upload & Editor",
+        data: { ready: true }
+      });
+      setIsArtifactOpen(true);
+    }
+    
     if(textareaRef.current) textareaRef.current.focus();
   };
 
   return (
     <div className="flex bg-white h-full relative isolate z-0 overflow-hidden">
         {/* Main Chat Area */}
-        <div className={cn(
-             "flex-1 flex flex-col h-full transition-all duration-300 relative",
-             isArtifactOpen ? "mr-0" : "mr-0"
-        )}>
+        <div 
+          className="flex-1 flex flex-col h-full transition-all duration-300 relative"
+          style={{ 
+            marginRight: isArtifactOpen && panelWidth > 0 ? `${panelWidth}px` : '0px',
+            maxWidth: isArtifactOpen && panelWidth > 0 ? `calc(100% - ${panelWidth}px)` : '100%'
+          }}
+        >
           {/* Background Gradients */}
           <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-blue-50/50 rounded-full blur-[120px] pointer-events-none -z-10" />
           <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-indigo-50/50 rounded-full blur-[120px] pointer-events-none -z-10" />
@@ -252,9 +297,9 @@ export function ZigAgentInterface({ user }: ZigAgentInterfaceProps) {
                  {/* Only show logo if started, but clean, no text */}
                  {hasStarted && (
                      <motion.div initial={{opacity:0}} animate={{opacity:1}}>
-                         <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 p-[1px]">
-                            <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
-                                <Image src="/zigagent-brain.png" alt="AI" width={32} height={32} className="object-cover scale-110"/>
+                         <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 p-[1px] shadow-sm">
+                            <div className="w-full h-full rounded-full bg-white flex items-center justify-center">
+                                <BrainCircuit size={18} className="text-blue-600" />
                             </div>
                          </div>
                      </motion.div>
@@ -280,7 +325,7 @@ export function ZigAgentInterface({ user }: ZigAgentInterfaceProps) {
              {/* Chat Messages */}
             {hasStarted && (
                  <div 
-                    className="flex-1 overflow-y-auto w-full max-w-4xl mx-auto px-4 sm:px-6 pb-6 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent"
+                    className="flex-1 overflow-y-auto w-full max-w-4xl mx-auto px-4 sm:px-6 pb-6 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-transparent hover:[&::-webkit-scrollbar-thumb]:bg-gray-200/50 transition-colors"
                     ref={scrollRef}
                 >
                     <div className="pt-8 pb-32">
@@ -295,8 +340,8 @@ export function ZigAgentInterface({ user }: ZigAgentInterfaceProps) {
                                 <div className={cn("flex gap-4 max-w-[95%] md:max-w-[85%]", msg.role === "user" ? "flex-row-reverse" : "flex-row")}>
                                     <div className="flex-shrink-0 mt-1">
                                         {msg.role === "ai" ? (
-                                            <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center overflow-hidden">
-                                                <Image src="/zigagent-brain.png" alt="AI" width={32} height={32} className="object-cover scale-110"/>
+                                            <div className="w-8 h-8 rounded-full bg-blue-50/50 border border-blue-100 flex items-center justify-center shadow-sm">
+                                                <BrainCircuit size={16} className="text-blue-600" />
                                             </div>
                                         ) : (
                                             <Avatar className="w-8 h-8">
@@ -318,9 +363,9 @@ export function ZigAgentInterface({ user }: ZigAgentInterfaceProps) {
                             {isThinking && (
                                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex w-full justify-start mb-6">
                                     <div className="flex gap-4">
-                                        <div className="flex-shrink-0 mt-1 w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
-                                             <Image src="/zigagent-brain.png" alt="AI" width={32} height={32} className="object-cover scale-110 animate-pulse"/>
-                                        </div>
+                                    <div className="flex-shrink-0 mt-1 w-8 h-8 rounded-full bg-blue-50/50 border border-blue-100 flex items-center justify-center shadow-sm">
+                                         <BrainCircuit size={16} className="text-blue-600 animate-pulse" />
+                                    </div>
                                         <div className="flex items-center h-10 pl-1">
                                             <AgentLoader toolName={loadingTool} />
                                         </div>
@@ -375,20 +420,56 @@ export function ZigAgentInterface({ user }: ZigAgentInterfaceProps) {
                                     value={inputValue}
                                     onChange={handleInput}
                                     onKeyDown={handleKeyDown}
+                                    disabled={isThinking}
                                     placeholder={selectedTool ? `Enter details for ${selectedTool}...` : "Type a message..."}
-                                    className="w-full bg-transparent border-none focus:ring-0 focus:outline-none text-gray-900 placeholder-gray-400 px-0 py-2.5 text-[16px] resize-none max-h-[200px] min-h-[50px] scrollbar-none font-medium"
+                                    className="w-full bg-transparent border-none focus:ring-0 focus:outline-none text-gray-900 placeholder-gray-400 px-0 py-2.5 text-[16px] resize-none max-h-[200px] min-h-[50px] scrollbar-none font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                                 {selectedTool && (
-                                    <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2 self-start bg-blue-50 text-blue-700 px-2.5 py-1 rounded-md mb-1.5">
-                                        <span className="text-xs font-semibold">Using {selectedTool}</span>
-                                        <button onClick={() => setSelectedTool(null)} className="hover:text-blue-900 transition-colors"><Plus size={14} className="rotate-45" /></button>
+                                    <motion.div 
+                                      initial={{ opacity: 0, y: -5 }} 
+                                      animate={{ opacity: 1, y: 0 }} 
+                                      className="flex items-center gap-2 self-start mb-1.5"
+                                    >
+                                      <button
+                                        onClick={() => setIsArtifactOpen(!isArtifactOpen)}
+                                        className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 px-2.5 py-1 rounded-md transition-colors cursor-pointer"
+                                        title="Click to toggle panel"
+                                      >
+                                        <span className="text-xs font-semibold">{selectedTool}</span>
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          setSelectedTool(null);
+                                          setIsArtifactOpen(false);
+                                          setActiveArtifact(null);
+                                        }}
+                                        className="p-1 hover:bg-red-50 rounded-full text-gray-400 hover:text-red-600 transition-colors"
+                                        title="Remove tool"
+                                      >
+                                        <X size={14} />
+                                      </button>
                                     </motion.div>
                                 )}
                              </div>
 
                             <div className="pb-1.5 flex gap-2">
-                                 {inputValue.trim() || selectedTool ? (
-                                    <motion.button initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} onClick={handleSendMessage} className="p-2.5 bg-blue-600 text-white hover:bg-blue-700 rounded-full transition-all duration-200 flex items-center justify-center shadow-lg shadow-blue-600/20">
+                                 {isThinking ? (
+                                    <motion.button 
+                                      initial={{ scale: 0.8, opacity: 0 }} 
+                                      animate={{ scale: 1, opacity: 1 }} 
+                                      onClick={handleStopResponse} 
+                                      className="p-2.5 bg-red-500 text-white hover:bg-red-600 rounded-full transition-all duration-200 flex items-center justify-center shadow-lg shadow-red-500/20"
+                                      title="Stop response"
+                                    >
+                                        <StopCircle size={18} className="stroke-[3px]" />
+                                    </motion.button>
+                                 ) : inputValue.trim() || selectedTool ? (
+                                    <motion.button 
+                                      initial={{ scale: 0.8, opacity: 0 }} 
+                                      animate={{ scale: 1, opacity: 1 }} 
+                                      onClick={handleSendMessage} 
+                                      className="p-2.5 bg-blue-600 text-white hover:bg-blue-700 rounded-full transition-all duration-200 flex items-center justify-center shadow-lg shadow-blue-600/20"
+                                    >
                                         <ArrowUp size={18} className="stroke-[3px]" />
                                     </motion.button>
                                  ) : (
@@ -405,7 +486,12 @@ export function ZigAgentInterface({ user }: ZigAgentInterfaceProps) {
         </div>
 
         {/* Artifact Panel - Slide Out */}
-        <ArtifactPanel isOpen={isArtifactOpen} onClose={() => setIsArtifactOpen(false)} artifact={activeArtifact} />
+        <ArtifactPanel 
+          isOpen={isArtifactOpen} 
+          onClose={() => setIsArtifactOpen(false)} 
+          artifact={activeArtifact}
+          onWidthChange={setPanelWidth}
+        />
     </div>
   );
 }
