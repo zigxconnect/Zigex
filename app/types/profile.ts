@@ -4,6 +4,7 @@ import { isValidPhoneNumber } from "react-phone-number-input";
 export const profileSchema = z.object({
   // --- Step 1 ---
   first_name: z.string().min(2, { message: "First name is required." }),
+  last_name: z.string().min(2, { message: "Last name is required." }),
   username: z.string().min(3, { message: "Username is required and must be at least 3 characters." }),
   phone: z
     .string()
@@ -26,7 +27,7 @@ export const profileSchema = z.object({
   graduation_year: z.preprocess(
     (val) => (val === "" ? null : val),
     z.coerce
-      .number({ invalid_type_error: "Please enter a valid year." })
+      .number()
       .int()
       .min(1950, { message: "Please enter a valid year." })
       .max(new Date().getFullYear() + 10, {
@@ -38,7 +39,7 @@ export const profileSchema = z.object({
   gpa: z.preprocess(
     (val) => (val === "" ? null : val),
     z.coerce
-      .number({ invalid_type_error: "GPA must be a number." })
+      .number()
       .min(0, { message: "GPA cannot be negative." })
       .max(5, { message: "GPA seems too high." })
       .nullable()
@@ -82,9 +83,7 @@ export const profileSchema = z.object({
   preferred_industries: z
     .array(z.string())
     .min(1, { message: "Select at least one industry." }),
-  work_mode: z.enum(["Remote", "On-site", "Hybrid"], {
-    required_error: "Please select your preferred work mode.",
-  }),
+  work_mode: z.enum(["Remote", "On-site", "Hybrid"]),
 
   // --- Step 5 ---
   interests: z.array(z.string()).optional(),

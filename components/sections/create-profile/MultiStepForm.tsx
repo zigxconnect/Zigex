@@ -37,7 +37,7 @@ const Step5Additional = dynamic(() => import("./Step5Additional").then(mod => mo
 });
 
 const stepsFields: (keyof ProfileFormData)[][] = [
-  ["first_name", "username", "phone", "location", "about"],
+  ["first_name", "last_name", "username", "phone", "location", "about"],
   ["avatar_url", "cover_image"],
   ["university", "degree", "field_of_study", "graduation_year", "gpa"],
   [
@@ -94,10 +94,11 @@ export const MultiStepForm = () => {
   const totalSteps = 6;
 
   const methods = useForm<ProfileFormData>({
-    resolver: zodResolver(profileSchema),
+    resolver: zodResolver(profileSchema) as any,
     mode: "onTouched",
     defaultValues: {
       first_name: "",
+      last_name: "",
       username: "",
       phone: "",
       location: "",
@@ -107,8 +108,8 @@ export const MultiStepForm = () => {
       university: "",
       degree: "",
       field_of_study: "",
-      graduation_year: undefined,
-      gpa: "",
+      graduation_year: null,
+      gpa: null,
       hard_skills: [],
       soft_skills: [],
       languages: [],
