@@ -175,6 +175,7 @@ export async function PUT(
         {
           user_id: id,
           ...filteredUpdates,
+          full_name: `${filteredUpdates.first_name || ""} ${filteredUpdates.last_name || ""}`.trim(),
           updated_at: new Date().toISOString(),
           profile_status: "complete",
         },

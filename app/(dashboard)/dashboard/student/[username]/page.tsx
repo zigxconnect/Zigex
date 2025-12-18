@@ -32,7 +32,9 @@ export default async function StudentDetailPage({ params }: Props) {
   // Check if the username param is a UUID (fallback for old links or users without usernames)
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(username);
 
-  let query = supabaseAdmin.from("student_profiles").select("*");
+  const supabase = await createServerActionClient();
+
+  let query = supabase.from("student_profiles").select("*");
 
   if (isUuid) {
     query = query.eq("id", username);
@@ -88,7 +90,6 @@ export default async function StudentDetailPage({ params }: Props) {
   let visitorProject: any = null;
 
   try {
-    const supabase = await createServerActionClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       const { data: _myProfile } = await supabase
@@ -110,7 +111,7 @@ export default async function StudentDetailPage({ params }: Props) {
   }
 
   // Fetch similar students
-  let similarQuery = supabaseAdmin
+  let similarQuery = supabase
     .from("student_profiles")
     .select("id, username, full_name, avatar_url, university, linkedin_url, phone, email, hard_skills, soft_skills")
     .neq("id", data.id);
@@ -226,7 +227,7 @@ Looking forward to hearing from you!`;
             whatsappUrl={whatsappUrl}
             email={data.email}
             fullName={data.full_name}
-            profileUrl={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://zigex.vercel.app'}/dashboard/student/${username}`}
+            profileUrl={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://zigex.vercel.app'}/dashboard/student/${data.username || username}`}
             isOwner={false}
           />
         </div>

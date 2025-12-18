@@ -50,6 +50,7 @@ export async function middleware(request: NextRequest) {
       "/api/auth/verify-otp-server",
       "/api/auth/resend-otp",
       "/api/auth/callback",
+      "/api/auth/company/register",
       // add more public API endpoints as needed
     ];
     if (!user) {

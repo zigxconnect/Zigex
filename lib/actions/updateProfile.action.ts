@@ -2,6 +2,19 @@
 
 import { createServerActionClient } from "@/lib/supabase/server";
 
+import { z } from "zod";
+
+const profileUpdateSchema = z.object({
+  full_name: z.string().optional(),
+  first_name: z.string().optional(),
+  last_name: z.string().optional(),
+  university: z.string().optional(),
+  linkedin_url: z.string().optional(),
+  github_url: z.string().optional(),
+  portfolio_url: z.string().optional(),
+  // Add other allowed fields here, but explicitly EXCLUDE sensitive fields like 'role', 'is_verified', etc.
+});
+
 export async function quickUpdateProfile(
   updates: Record<string, any>
 ) {
@@ -17,11 +30,20 @@ export async function quickUpdateProfile(
       return { success: false, error: "Not authenticated" };
     }
 
+    // Validate updates against the schema
+    const result = profileUpdateSchema.safeParse(updates);
+    
+    if (!result.success) {
+      return { success: false, error: "Invalid profile data provided." };
+    }
+
+    const validatedUpdates = result.data;
+
     // Update the profile
     const { data, error } = await supabase
       .from("student_profiles")
       .update({
-        ...updates,
+        ...validatedUpdates,
         updated_at: new Date().toISOString(),
       })
       .eq("user_id", user.id)

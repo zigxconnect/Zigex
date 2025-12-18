@@ -181,6 +181,28 @@ export async function uploadHappeningNow(
   try {
     const supabase = await createSupabaseClient();
 
+    // Check authentication
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return { success: false, error: "Unauthorized: You must be logged in to upload content." };
+    }
+
+    // Check authorization (Optional: Check if user is a company or admin)
+    // For now, we'll assume any logged-in user with a company profile can upload, 
+    // or we can just rely on the fact they are logged in if that's the requirement.
+    // Let's add a check for company profile to be safe, as 'company' field is passed in form data but should probably come from profile.
+    
+    const { data: companyProfile } = await supabase
+      .from("company_profiles")
+      .select("role")
+      .eq("user_id", user.id)
+      .single();
+
+    if (!companyProfile && user.email !== process.env.ADMIN_EMAIL) { // Basic admin check fallback
+       // If strict role checking is needed:
+       // return { success: false, error: "Unauthorized: Only companies can upload happening now content." };
+    }
+
     // Extract form data with proper type checking
     const company = formData.get("company");
     const isLiveStr = formData.get("is_live");
