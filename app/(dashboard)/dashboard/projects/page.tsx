@@ -29,13 +29,12 @@ export default async function DashboardProjectsPage() {
         .eq('student_id', profile!.id)
         .order('created_at', { ascending: false }),
 
-      // Public (valid) projects by other students
+      // Community projects: other students' projects (excluding user's own)
       supabaseAdmin
         .from('projects')
         .select('*, student_profiles(id, username, full_name, avatar_url, university, hard_skills)')
-        .eq('is_valid', true)
-        .gt('end_date', new Date().toISOString())
-        .neq('student_id', profile!.id)
+        .neq('student_id', profile!.id)  // Don't show user's own projects (already in "My Projects")
+        .or(`end_date.gte.${new Date().toISOString()},end_date.is.null`)  // Active or no end date
         .order('created_at', { ascending: false })
         .limit(50),
     ]);
@@ -51,6 +50,7 @@ export default async function DashboardProjectsPage() {
           .from('projects')
           .select('*, student_profiles(id, username, full_name, avatar_url, university, hard_skills)')
           .neq('student_id', profile!.id)
+          .or(`end_date.gte.${new Date().toISOString()},end_date.is.null`)
           .order('created_at', { ascending: false })
           .limit(50);
         if (fbData) displayedOtherProjects = fbData;
@@ -94,7 +94,7 @@ export default async function DashboardProjectsPage() {
                {myProjects.length > 0 && (
                    <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-slate-500 bg-white px-3 py-1.5 rounded-full border border-slate-200 shadow-sm">
                       <Sparkles className="w-3.5 h-3.5 text-amber-400 fill-current" />
-                      <span>{myProjects.filter((p: any) => p.is_valid === true).length} Active</span>
+                      <span>{myProjects.filter((p: any) => p.is_valid === true || p.status === 'valid').length} Active</span>
                    </div>
                )}
             </div>
@@ -106,6 +106,7 @@ export default async function DashboardProjectsPage() {
                     <MyMonthProject
                       user={{
                         id: profile!.id,
+                        user_id: profile!.user_id,
                         full_name: profile!.full_name || 'Unknown',
                         avatar_url: (profile as any).avatar_url || null,
                         university: (profile as any).university || null,
