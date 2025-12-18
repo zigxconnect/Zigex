@@ -27,6 +27,12 @@ export const Step1Personal = () => {
             {...register("first_name")}
           />
         </FormField>
+        <FormField label="Last Name" error={errors.last_name}>
+          <Input
+            placeholder="Enter your last name"
+            {...register("last_name")}
+          />
+        </FormField>
         <FormField label="Username (unique)" error={errors.username}>
           <Input
             placeholder="Choose a unique username"
