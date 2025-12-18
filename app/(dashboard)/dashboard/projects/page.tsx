@@ -29,9 +29,10 @@ export default async function DashboardProjectsPage() {
         .eq('student_id', profile!.id)
         .order('created_at', { ascending: false }),
 
-      // Public (valid) projects by other students
+      // Community projects: other students' projects (excluding user's own)
       supabaseAdmin
         .from('projects')
+<<<<<<< HEAD
 <<<<<<< HEAD
         .select('*, student_profiles(id, user_id, full_name, avatar_url, university, hard_skills)')
         .eq('status', 'valid')
@@ -41,6 +42,11 @@ export default async function DashboardProjectsPage() {
 >>>>>>> 25a39503833a3ef720221d30d9d81643243da404
         .gt('end_date', new Date().toISOString())
         .neq('student_id', profile!.id)
+=======
+        .select('*, student_profiles(id, username, full_name, avatar_url, university, hard_skills)')
+        .neq('student_id', profile!.id)  // Don't show user's own projects (already in "My Projects")
+        .or(`end_date.gte.${new Date().toISOString()},end_date.is.null`)  // Active or no end date
+>>>>>>> 2094dafc935a1ddd52a3d5e35d70aa89fa229105
         .order('created_at', { ascending: false })
         .limit(50),
     ]);
@@ -55,11 +61,16 @@ export default async function DashboardProjectsPage() {
         const { data: fbData } = await supabaseAdmin
           .from('projects')
 <<<<<<< HEAD
+<<<<<<< HEAD
           .select('*, student_profiles(id, user_id, full_name, avatar_url, university, hard_skills)')
 =======
           .select('*, student_profiles(id, username, full_name, avatar_url, university, hard_skills)')
 >>>>>>> 25a39503833a3ef720221d30d9d81643243da404
+=======
+          .select('*, student_profiles(id, username, full_name, avatar_url, university, hard_skills)')
+>>>>>>> 2094dafc935a1ddd52a3d5e35d70aa89fa229105
           .neq('student_id', profile!.id)
+          .or(`end_date.gte.${new Date().toISOString()},end_date.is.null`)
           .order('created_at', { ascending: false })
           .limit(50);
         if (fbData) displayedOtherProjects = fbData;
@@ -103,12 +114,15 @@ export default async function DashboardProjectsPage() {
                {myProjects.length > 0 && (
                    <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-slate-500 bg-white px-3 py-1.5 rounded-full border border-slate-200 shadow-sm">
                       <Sparkles className="w-3.5 h-3.5 text-amber-400 fill-current" />
-                      <span>{myProjects.filter((p: any) => p.status === 'valid').length} Active</span>
+                      <span>{myProjects.filter((p: any) => p.is_valid === true || p.status === 'valid').length} Active</span>
                    </div>
                )}
             </div>
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 2094dafc935a1ddd52a3d5e35d70aa89fa229105
             {myProjects.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
                 {myProjects.map((p: any) => (
@@ -116,16 +130,17 @@ export default async function DashboardProjectsPage() {
                     <MyMonthProject
                       user={{
                         id: profile!.id,
+                        user_id: profile!.user_id,
                         full_name: profile!.full_name || 'Unknown',
                         avatar_url: (profile as any).avatar_url || null,
                         university: (profile as any).university || null,
                         hard_skills: (profile as any).hard_skills || [],
-                        user_id: profile!.user_id
                       }}
                       project={p}
                       isVisitor={false}
                       isOwner={true}
                     />
+<<<<<<< HEAD
 =======
             {/* My Projects Content */}
             <div className="rounded-2xl p-6 sm:p-8 lg:p-10 border border-gray-200 bg-gradient-to-br from-blue-50 to-white shadow-md">
@@ -155,6 +170,8 @@ export default async function DashboardProjectsPage() {
                   <div className="inline-flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 bg-blue-100 rounded-full mb-5 border border-blue-200">
                     <Briefcase className="w-10 h-10 sm:w-12 sm:h-12 text-blue-600" />
 >>>>>>> 25a39503833a3ef720221d30d9d81643243da404
+=======
+>>>>>>> 2094dafc935a1ddd52a3d5e35d70aa89fa229105
                   </div>
                 ))}
               </div>
@@ -198,15 +215,18 @@ export default async function DashboardProjectsPage() {
                             id: p.student_id,
                             full_name: 'Unknown',
                             avatar_url: null,
-                            user_id: p.student_id // Fallback
                           }
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 2094dafc935a1ddd52a3d5e35d70aa89fa229105
                         }
                         project={p}
                         isVisitor={true}
                         isOwner={false}
                         profileOwnerId={p.student_id}
                       />
+<<<<<<< HEAD
 =======
                           project={p}
                           isVisitor={true}
@@ -214,12 +234,13 @@ export default async function DashboardProjectsPage() {
                           profileOwnerId={p.student_id}
                         />
                       </div>
+=======
+>>>>>>> 2094dafc935a1ddd52a3d5e35d70aa89fa229105
 
                       {/* Link to visit owner's profile */}
                       {p.student_profiles && (
                         <div className="mt-3 px-4">
-                          
-                            <a href={`/dashboard/student/${p.student_profiles.username || p.student_profiles.id}`}
+                          <a href={`/dashboard/student/${p.student_profiles.username || p.student_profiles.id}`}
                             className="inline-flex items-center gap-2 text-sm sm:text-base text-gray-700 hover:text-blue-600 font-semibold group/link transition-colors duration-200">
                             <span className="flex items-center gap-1.5">
                               View {p.student_profiles.full_name}&apos;s profile
@@ -228,6 +249,7 @@ export default async function DashboardProjectsPage() {
                           </a>
                         </div>
                       )}
+<<<<<<< HEAD
                     </div>
                   ))}
                 </div>
@@ -236,6 +258,8 @@ export default async function DashboardProjectsPage() {
                   <div className="inline-flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-full mb-5 border border-gray-200">
                     <Users className="w-10 h-10 sm:w-12 sm:h-12 text-gray-600" />
 >>>>>>> 25a39503833a3ef720221d30d9d81643243da404
+=======
+>>>>>>> 2094dafc935a1ddd52a3d5e35d70aa89fa229105
                   </div>
                 ))}
               </div>

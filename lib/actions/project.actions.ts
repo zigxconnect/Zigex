@@ -340,6 +340,7 @@ export async function createProjectAction(formData: FormData): Promise<CreatePro
 
     // Step 10: Revalidate relevant paths
     revalidatePath('/dashboard');
+    revalidatePath('/dashboard/projects');
     revalidatePath('/projects');
     revalidatePath(`/student/${studentId}`);
 
