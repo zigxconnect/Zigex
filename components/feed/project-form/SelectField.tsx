@@ -43,38 +43,38 @@ export const SelectField: React.FC<SelectFieldProps> = ({
 }) => {
   return (
     <div className="space-y-2 w-full">
-      <Label htmlFor={id} className="text-sm font-semibold flex items-center flex-wrap gap-x-2">
+      <Label htmlFor={id} className="text-[10px] font-black text-[#155DFC] uppercase tracking-widest ml-1 flex items-center gap-2">
         <span>{label}</span>
-        {required && <span className="text-red-500 text-base">*</span>}
+        {required && <span className="text-red-500">*</span>}
       </Label>
       <div className="relative w-full">
         {icon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none z-10 text-[#155DFC]">
             {icon}
           </div>
         )}
         <Select value={value} onValueChange={onChange}>
           <SelectTrigger 
             id={id}
-            className={`w-full ${icon ? "pl-10" : ""} ${
+            className={`w-full rounded-2xl bg-slate-50/50 border-blue-50 focus:border-[#155DFC] focus:ring-[#155DFC]/10 transition-all duration-300 ${icon ? "pl-11" : "px-4"} ${
               error && touched 
-                ? "border-red-500 focus:ring-red-500" 
+                ? "border-red-500/50 focus:ring-red-500/10" 
                 : ""
-            } text-sm sm:text-base h-10 sm:h-11`}
+            } text-sm font-bold h-12 shadow-sm`}
             onBlur={onBlur}
           >
             <SelectValue placeholder={placeholder} />
           </SelectTrigger>
           <SelectContent 
             position="popper"
-            sideOffset={5}
-            className="z-[9999] w-full max-h-[300px] overflow-y-auto"
+            sideOffset={8}
+            className="z-[9999] w-full rounded-2xl border-blue-50 shadow-2xl bg-white p-2"
           >
             {options.map((option) => (
               <SelectItem 
                 key={option.value} 
                 value={option.value}
-                className="text-sm sm:text-base cursor-pointer"
+                className="text-sm font-bold text-slate-700 cursor-pointer rounded-xl focus:bg-[#F6F8FF] focus:text-[#155DFC] transition-colors py-2.5"
               >
                 {option.label}
               </SelectItem>
@@ -82,7 +82,9 @@ export const SelectField: React.FC<SelectFieldProps> = ({
           </SelectContent>
         </Select>
       </div>
-      <FormFieldError error={error} touched={touched} />
+      <div className="px-1">
+        <FormFieldError error={error} touched={touched} />
+      </div>
     </div>
   );
 };

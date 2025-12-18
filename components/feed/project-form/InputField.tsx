@@ -37,16 +37,16 @@ export const InputField: React.FC<InputFieldProps> = ({
 }) => {
   return (
     <div className="space-y-2 w-full">
-      <Label htmlFor={id} className="text-sm font-semibold flex items-center flex-wrap gap-x-2">
+      <Label htmlFor={id} className="text-[10px] font-black text-[#155DFC] uppercase tracking-widest ml-1 flex items-center gap-2">
         <span>{label}</span>
-        {required && <span className="text-red-500 text-base">*</span>}
+        {required && <span className="text-red-500">*</span>}
         {!required && (
-          <span className="text-xs text-muted-foreground font-normal">(Optional)</span>
+          <span className="text-[8px] text-slate-400 normal-case tracking-normal font-medium">(Optional)</span>
         )}
       </Label>
       <div className="relative w-full">
         {icon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10 pointer-events-none">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10 pointer-events-none text-[#155DFC]">
             {icon}
           </div>
         )}
@@ -58,14 +58,14 @@ export const InputField: React.FC<InputFieldProps> = ({
           onBlur={onBlur}
           placeholder={placeholder}
           maxLength={maxLength}
-          className={`w-full ${icon ? "pl-10" : ""} ${
+          className={`w-full rounded-2xl bg-slate-50/50 border-blue-50 focus:border-[#155DFC] focus:ring-[#155DFC]/10 transition-all duration-300 ${icon ? "pl-11" : "px-4"} ${
             error && touched 
-              ? "border-red-500 focus-visible:ring-red-500" 
+              ? "border-red-500/50 focus-visible:ring-red-500/10" 
               : ""
-          } text-sm sm:text-base h-10 sm:h-11`}
+          } text-sm font-bold h-12 shadow-sm`}
         />
       </div>
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 px-1">
         <FormFieldError error={error} touched={touched} />
         {showCharCount && maxLength && (
           <CharacterCount current={value.length} max={maxLength} />

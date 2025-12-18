@@ -33,49 +33,49 @@ export function FeedDetailHeader({
   };
 
   return (
-    <div className="relative w-full overflow-hidden rounded-3xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+    <div className="relative w-full overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-[#155DFC] via-[#1A3CB9] to-[#155DFC] shadow-2xl shadow-blue-200/50">
       {/* Background Image with Overlay */}
       <div className="absolute inset-0">
         <Image
           src={normalizeImageSrc(imageUrl)}
           alt={title}
           fill
-          className="object-cover opacity-30"
+          className="object-cover opacity-20"
           priority
         />
-        {/* <div className="absolute inset-0 bg-gradient-to-t from-blue-100 via-blue-200 to-transparent" /> */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#155DFC]/90 via-[#1A3CB9]/70 to-transparent" />
       </div>
 
       {/* Content */}
       <div className="relative px-6 py-12 sm:px-8 sm:py-16 lg:px-12 lg:py-20">
         {/* Type Badge */}
-        <Badge className="mb-4 bg-blue-500/20 text-blue-400 border-blue-400/30 backdrop-blur-sm hover:bg-blue-500/30">
+        <Badge className="mb-4 bg-white/20 text-white border-white/30 backdrop-blur-md hover:bg-white/30 font-black uppercase tracking-widest text-xs shadow-lg">
           {type}
         </Badge>
 
         {/* Title */}
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white mb-6 leading-tight tracking-tight">
           {title}
         </h1>
 
         {/* Meta Info */}
-        <div className="flex flex-wrap gap-4 text-sm text-gray-300">
+        <div className="flex flex-wrap gap-3 text-sm text-white">
           {location && (
-            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
-              <MapPin size={16} />
-              <span>{location}</span>
+            <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/30 shadow-lg hover:bg-white/30 transition-all">
+              <MapPin size={16} className="flex-shrink-0" />
+              <span className="font-bold">{location}</span>
             </div>
           )}
           {startDate && (
-            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
-              <Calendar size={16} />
-              <span>{formatDate(startDate)}</span>
+            <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/30 shadow-lg hover:bg-white/30 transition-all">
+              <Calendar size={16} className="flex-shrink-0" />
+              <span className="font-bold">{formatDate(startDate)}</span>
             </div>
           )}
           {endDate && (
-            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
-              <Clock size={16} />
-              <span>Until {formatDate(endDate)}</span>
+            <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/30 shadow-lg hover:bg-white/30 transition-all">
+              <Clock size={16} className="flex-shrink-0" />
+              <span className="font-bold">Until {formatDate(endDate)}</span>
             </div>
           )}
         </div>

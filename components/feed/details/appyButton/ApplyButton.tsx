@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import ApplicationModal from "./Modal";
 import { SmartApplyPreview } from "./SmartApplyPreview";
 import { generateSmartApplicationDraft } from "@/lib/actions/feed/smart-apply.actions";
-import { MonetbilPaymentModal } from "@/components/payment/MonetbilPaymentModal";
+import { WaitingListModal } from "./WaitingListModal";
 import {
   Tooltip,
   TooltipContent,
@@ -46,7 +46,7 @@ export function ApplyButton({
 }: ApplyButtonProps) {
   const [showModal, setShowModal] = useState(false);
   const [showSmartPreview, setShowSmartPreview] = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false); // New state for payment
+  const [showWaitingList, setShowWaitingList] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingError, setGeneratingError] = useState<string | null>(null);
@@ -54,14 +54,7 @@ export function ApplyButton({
 
   // Triggered when user clicks "Smart Apply"
   const handleSmartApplyClick = () => {
-    setShowPaymentModal(true);
-  };
-
-  // Triggered after successful payment
-  const handlePaymentSuccess = async () => {
-    // For prototyping: Just confirm payment without generating
-    console.log("Payment successful for opportunity:", id);
-    // In a real app, you would verify the transaction here
+    setShowWaitingList(true);
   };
 
   if (!isOpen) {
@@ -200,12 +193,12 @@ export function ApplyButton({
         />
       )}
 
-      {/* Payment Modal */}
-      <MonetbilPaymentModal
-        isOpen={showPaymentModal}
-        onClose={() => setShowPaymentModal(false)}
-        onSuccess={handlePaymentSuccess}
-        amount={1000} // Set your price here (e.g., 1000 XAF)
+      {/* Waiting List Modal */}
+      <WaitingListModal
+        isOpen={showWaitingList}
+        onClose={() => setShowWaitingList(false)}
+        opportunityTitle={title}
+        opportunityType={type}
       />
 
       {/* Smart Apply Preview Modal */}
