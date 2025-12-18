@@ -179,21 +179,23 @@ export const EditProfileModal = ({
               </div>
 
               {/* Footer */}
-              <div className="sticky bottom-0 bg-white border-t border-gray-200 p-6 flex justify-between gap-4">
+              <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4 sm:p-6 flex gap-3 sm:justify-between sm:gap-4">
                 {currentStep > 1 && (
                   <Button
                     type="button"
                     variant="secondary"
                     onClick={handlePrevious}
+                    className="flex-1 sm:flex-none"
                   >
                     Previous
                   </Button>
                 )}
-                <div className="flex gap-4 ml-auto">
+                <div className="contents sm:flex sm:gap-4 sm:ml-auto">
                   <Button
                     type="button"
                     variant="secondary"
                     onClick={onClose}
+                    className="flex-1 sm:flex-none"
                   >
                     Cancel
                   </Button>
@@ -202,6 +204,7 @@ export const EditProfileModal = ({
                       type="button"
                       onClick={handleNext}
                       disabled={isSubmitting}
+                      className="flex-1 sm:flex-none"
                     >
                       Next
                     </Button>
@@ -209,13 +212,14 @@ export const EditProfileModal = ({
                     <Button
                       type="submit"
                       disabled={isSubmitting}
+                      className="flex-1 sm:flex-none"
                     >
                       {isSubmitting ? (
                         <>
                           <Spinner /> Saving...
                         </>
                       ) : (
-                        "Save Changes"
+                        "Save"
                       )}
                     </Button>
                   )}

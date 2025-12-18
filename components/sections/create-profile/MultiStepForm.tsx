@@ -234,7 +234,7 @@ export const MultiStepForm = () => {
             <FormStepper currentStep={currentStep} steps={stepsData} />
           </div>
           <div className="md:col-span-8 lg:col-span-9 flex flex-col">
-            <div className="bg-white md:rounded-2xl md:shadow-sm md:border md:border-gray-100 overflow-hidden flex flex-col min-h-[600px]">
+            <div className="bg-white md:rounded-2xl md:shadow-sm md:border md:border-gray-100 flex flex-col min-h-[600px]">
               {/* Desktop Header */}
               <div className="hidden md:block px-8 py-6 border-b border-gray-100 bg-gray-50/50">
                 <div className="flex items-center justify-between">
