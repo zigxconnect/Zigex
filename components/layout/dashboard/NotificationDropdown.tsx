@@ -81,7 +81,6 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
 
     // Optimistically update UI
     setNotifications(prev => prev.map(n => (n.id === notificationId ? { ...n, read: true } : n)));
-    
     // Only decrease count if it was unread
     if (wasUnread) {
       setUnreadCount((prev) => Math.max(0, prev - 1));
@@ -99,12 +98,9 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
     }
 
     setIsOpen(false);
-    
-    // Navigate to appropriate page
-    let route = "/";
-    if (type === "internship") route = `/internships/${referenceId}?from=notification`;
-    else if (type === "event") route = `/events/${referenceId}?from=notification`;
-    else route = `/programs/${referenceId}?from=notification`;
+
+    // Navigate to dynamic feed detail page for this notification
+    const route = `/feed/${referenceId}`;
     router.push(route);
   };
 
