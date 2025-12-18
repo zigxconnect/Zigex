@@ -32,8 +32,13 @@ export default async function DashboardProjectsPage() {
       // Public (valid) projects by other students
       supabaseAdmin
         .from('projects')
+<<<<<<< HEAD
         .select('*, student_profiles(id, user_id, full_name, avatar_url, university, hard_skills)')
         .eq('status', 'valid')
+=======
+        .select('*, student_profiles(id, username, full_name, avatar_url, university, hard_skills)')
+        .eq('is_valid', true)
+>>>>>>> development
         .gt('end_date', new Date().toISOString())
         .neq('student_id', profile!.id)
         .order('created_at', { ascending: false })
@@ -49,7 +54,11 @@ export default async function DashboardProjectsPage() {
        try {
         const { data: fbData } = await supabaseAdmin
           .from('projects')
+<<<<<<< HEAD
           .select('*, student_profiles(id, user_id, full_name, avatar_url, university, hard_skills)')
+=======
+          .select('*, student_profiles(id, username, full_name, avatar_url, university, hard_skills)')
+>>>>>>> development
           .neq('student_id', profile!.id)
           .order('created_at', { ascending: false })
           .limit(50);
@@ -99,6 +108,7 @@ export default async function DashboardProjectsPage() {
                )}
             </div>
 
+<<<<<<< HEAD
             {myProjects.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
                 {myProjects.map((p: any) => (
@@ -116,6 +126,35 @@ export default async function DashboardProjectsPage() {
                       isVisitor={false}
                       isOwner={true}
                     />
+=======
+            {/* My Projects Content */}
+            <div className="rounded-2xl p-6 sm:p-8 lg:p-10 border border-gray-200 bg-gradient-to-br from-blue-50 to-white shadow-md">
+              {myProjects && myProjects.length > 0 ? (
+                <div className="space-y-5 sm:space-y-6 lg:space-y-7">
+                  {myProjects.map((p: any) => (
+                    <div 
+                      key={p.id}
+                      className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-200 hover:border-blue-300 group overflow-hidden">
+                      <MyMonthProject
+                        user={{
+                          id: profile!.id,
+                          full_name: profile!.full_name || '',
+                          avatar_url: (profile as any).avatar_url || null,
+                          university: (profile as any).university || null,
+                          hard_skills: (profile as any).hard_skills || []
+                        }}
+                        project={p}
+                        isVisitor={false}
+                        isOwner={true}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-16 sm:py-20 lg:py-24">
+                  <div className="inline-flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 bg-blue-100 rounded-full mb-5 border border-blue-200">
+                    <Briefcase className="w-10 h-10 sm:w-12 sm:h-12 text-blue-600" />
+>>>>>>> development
                   </div>
                 ))}
               </div>
@@ -161,12 +200,42 @@ export default async function DashboardProjectsPage() {
                             avatar_url: null,
                             user_id: p.student_id // Fallback
                           }
+<<<<<<< HEAD
                         }
                         project={p}
                         isVisitor={true}
                         isOwner={false}
                         profileOwnerId={p.student_id}
                       />
+=======
+                          project={p}
+                          isVisitor={true}
+                          isOwner={false}
+                          profileOwnerId={p.student_id}
+                        />
+                      </div>
+
+                      {/* Link to visit owner's profile */}
+                      {p.student_profiles && (
+                        <div className="mt-3 px-4">
+                          
+                            <a href={`/dashboard/student/${p.student_profiles.username || p.student_profiles.id}`}
+                            className="inline-flex items-center gap-2 text-sm sm:text-base text-gray-700 hover:text-blue-600 font-semibold group/link transition-colors duration-200">
+                            <span className="flex items-center gap-1.5">
+                              View {p.student_profiles.full_name}&apos;s profile
+                              <ExternalLink className="w-4 h-4 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform duration-200" />
+                            </span>
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-16 sm:py-20 lg:py-24">
+                  <div className="inline-flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-full mb-5 border border-gray-200">
+                    <Users className="w-10 h-10 sm:w-12 sm:h-12 text-gray-600" />
+>>>>>>> development
                   </div>
                 ))}
               </div>

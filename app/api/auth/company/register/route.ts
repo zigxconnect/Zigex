@@ -1,6 +1,6 @@
 // app/api/company/register/route.ts
 
-import { supabaseAdmin } from "@/lib/supabase/server";
+import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -21,13 +21,26 @@ export async function POST(request: Request) {
     );
   }
 
-  // 1. Create the user and pass metadata to explicitly identify them as a company.
-  const { data: authData, error: authError } = await supabaseAdmin.auth.signUp({
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+  // 1. Create a LOCAL anonymous client for sign-up.
+  // This ensures we don't pollute a global instance with a user session.
+  const supabaseAnon = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+
+  // 2. Create the user using the anonymous client.
+  const { data: authData, error: authError } = await supabaseAnon.auth.signUp({
     email,
     password,
     options: {
       data: {
-        user_role: "company", // This ensures our student-specific trigger will ignore this user.
+        user_role: "company",
       },
     },
   });
@@ -42,7 +55,16 @@ export async function POST(request: Request) {
 
   const userId = authData.user.id;
 
-  // 2. Manually create the company profile. This is now safe and will not conflict with the trigger.
+  // 3. Create a LOCAL admin client for database operations.
+  // This client uses the service role key and is guaranteed to be clean (no user session).
+  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+
+  // 4. Manually create the company profile using the admin client.
   const { error: profileError } = await supabaseAdmin
     .from("company_profiles")
     .insert({
@@ -56,9 +78,10 @@ export async function POST(request: Request) {
       role: "company",
     });
 
-  // 3. If profile creation fails, we must delete the auth user to prevent orphaned users.
+  // 5. If profile creation fails, delete the auth user to prevent orphans.
   if (profileError) {
     console.error("Supabase Profile Creation Error:", profileError);
+    // Use the admin client to delete the user
     await supabaseAdmin.auth.admin.deleteUser(userId);
     return NextResponse.json(
       { error: "Failed to create company profile after authentication." },

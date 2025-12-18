@@ -6,6 +6,7 @@ import { Heart, MessageCircle, Share2, MapPin, Briefcase, CheckCircle2, MoreHori
 
 interface StudentProps {
   id: string;
+  username?: string;
   full_name?: string | null;
   avatar_url?: string | null;
   university?: string | null;
@@ -116,7 +117,7 @@ const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = (
                         (stats?.projectsCreated || 0);
 
   return (
-    <Link href={`/dashboard/student/${student.id}`} legacyBehavior>
+    <Link href={`/dashboard/student/${student.username || student.id}`} legacyBehavior>
       <a className="block no-underline">
         <div 
           ref={cardRef}

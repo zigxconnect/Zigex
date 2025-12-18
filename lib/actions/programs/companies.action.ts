@@ -1,7 +1,7 @@
 // lib/actions/company.ts
 "use server";
 
-import { supabaseAdmin } from "@/lib/supabase/server";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { baseCompanySchema } from "@/lib/validation/company";
 import { z } from "zod";
 
@@ -20,8 +20,9 @@ type CompanyActionResult = {
 export async function getAllCompanies(): Promise<CompanyActionResult> {
   try {
     console.log("🔍 Fetching all companies from database...");
+    const supabase = await createSupabaseServerClient();
 
-    const { data: companies, error, count } = await supabaseAdmin
+    const { data: companies, error, count } = await supabase
       .from("company_profiles")
       .select("*", { count: "exact" })
       .order("created_at", { ascending: false });
@@ -76,6 +77,7 @@ export async function getAllCompanies(): Promise<CompanyActionResult> {
 export async function getCompanyById(id: string): Promise<CompanyActionResult> {
   try {
     console.log(`🔍 Fetching company with ID: ${id}`);
+    const supabase = await createSupabaseServerClient();
 
     // Validate the ID format
     if (!id || typeof id !== 'string') {
@@ -85,7 +87,7 @@ export async function getCompanyById(id: string): Promise<CompanyActionResult> {
       };
     }
 
-    const { data: company, error } = await supabaseAdmin
+    const { data: company, error } = await supabase
       .from("company_profiles")
       .select("*")
       .eq("id", id)
@@ -140,8 +142,9 @@ export async function getCompanyById(id: string): Promise<CompanyActionResult> {
 export async function getCompaniesByIndustry(industry: string): Promise<CompanyActionResult> {
   try {
     console.log(`🔍 Fetching companies in industry: ${industry}`);
+    const supabase = await createSupabaseServerClient();
 
-    const { data: companies, error, count } = await supabaseAdmin
+    const { data: companies, error, count } = await supabase
       .from("company_profiles")
       .select("*", { count: "exact" })
       .eq("industry", industry)

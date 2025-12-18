@@ -16,9 +16,15 @@ export function verifyCSRFToken(secret: string, token: string | null | undefined
 export function withCSRFProtection(handler: Function) {
   return async function (req: NextRequest, ...args: any[]) {
     // Use a secret from env or fallback (should be long/random in production)
-    const secret = process.env.CSRF_SECRET || 'dev-secret-please-change';
+    const secret = process.env.CSRF_SECRET;
+    if (!secret) {
+      if (process.env.NODE_ENV === 'production') {
+        console.error("CRITICAL: CSRF_SECRET is not set in production environment!");
+      }
+    }
+    const effectiveSecret = secret || 'dev-secret-please-change';
     const csrfToken = req.headers.get('x-csrf-token');
-    if (!verifyCSRFToken(secret, csrfToken)) {
+    if (!verifyCSRFToken(effectiveSecret, csrfToken)) {
       return NextResponse.json({ error: 'Invalid or missing CSRF token.' }, { status: 403 });
     }
     return handler(req, ...args);
