@@ -11,14 +11,41 @@ import { EditCompanyProfileForm } from "@/components/sections/admin/EditCompanyP
  * 3. Passing the initial data as a prop to the interactive EditCompanyProfileForm client component.
  */
 export default async function EditProfilePage() {
-  const supabase = createServerActionClient();
+  // Use the latest SSR pattern for Supabase client
+  const { createServerClient } = await import('@supabase/ssr');
+  const { cookies } = await import('next/headers');
+  const cookieStore = cookies();
+  // Provide get, set, and remove methods as required by @supabase/ssr
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get: (name) => cookieStore.get(name)?.value,
+        set: async (name, value, options) => {
+          // next/headers cookies() does not support set on the server, so this is a no-op for SSR
+        },
+        remove: async (name, options) => {
+          // next/headers cookies() does not support remove on the server, so this is a no-op for SSR
+        },
+      },
+    }
+  );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Defensive: check if supabase.auth exists
+  if (!supabase.auth || typeof supabase.auth.getUser !== 'function') {
+    throw new Error("Supabase client does not have an auth.getUser() method. Check your SSR client setup.");
+  }
+
+  const { data: { user } } = await supabase.auth.getUser();
 
   // Safeguard: Although middleware protects this, it's good practice to check again.
   if (!user) {
+    return (
+      <p className="p-8 text-center text-red-500">
+        You must be logged in to edit your profile.
+      </p>
+    );
   }
 
   // Fetch the company profile linked to the authenticated user.
