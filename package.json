@@ -30,6 +30,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@react-email/components": "^0.5.2",
     "@react-email/render": "^1.2.2",
+    "@reduxjs/toolkit": "^2.11.2",
     "@sanity/code-input": "^6.0.3",
     "@sanity/icons": "^3.7.4",
     "@sanity/image-url": "^1.2.0",

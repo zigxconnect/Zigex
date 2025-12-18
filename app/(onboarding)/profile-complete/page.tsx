@@ -48,7 +48,7 @@ export default function ProfileCompletePage() {
           Profile Complete!
         </h1>
         <p className="mt-2 text-md text-gray-600 animate-in fade-in slide-in-from-bottom-3 duration-500 delay-300">
-          You&apos;re all set. Welcome to the FutureProspect community.
+          You&apos;re all set. Welcome to the ZIGEX community.
         </p>
 
         <div className="mt-8 animate-in fade-in slide-in-from-bottom-3 duration-500 delay-500">

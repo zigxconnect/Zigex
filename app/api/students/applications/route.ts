@@ -51,7 +51,7 @@ const sendConfirmationEmail = async (
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
     await resend.emails.send({
-      from: "FutureProspect <notifications@futureprospect.online>",
+      from: "ZIGEX <notifications@ZIGEX.online>",
       to: userEmail,
       subject: `Application Received: ${postTitle}`,
       react: ApplicationConfirmationEmail({
@@ -59,7 +59,7 @@ const sendConfirmationEmail = async (
         postTitle: postTitle,
         postType: postType as "Internship" | "Program" | "Event",
         companyName: companyName || "the company",
-        viewApplicationUrl: `https://futureprospect.online/applications`,
+        viewApplicationUrl: `https://ZIGEX.online/applications`,
         postedDate: new Date().toLocaleDateString("en-US", {
           year: "numeric",
           month: "short",

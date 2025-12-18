@@ -6,7 +6,7 @@ export const Footer: React.FC = () => {
     <footer className="bg-[#193CB8] text-[#E2E8F0] py-12 px-6 mt-0 mx-0">
       <div className="max-w-7xl flex flex-col md:flex-row gap-10 md:gap-[12rem] p-2">
         <div className="md:w-[26rem]">
-          <h3 className="text-2xl font-bold">FutureProspect</h3>
+          <h3 className="text-2xl font-bold">ZIGEX</h3>
           <p className="text-gray-300 mt-2 text-[14px]">
             Connecting talented individuals with amazing internship
             opportunities in Bamenda and beyond. Your future starts here.
@@ -70,7 +70,7 @@ export const Footer: React.FC = () => {
       </div>
 
       <div className="text-center text-sm text-[#E2E8F0] text-[14px] mt-8">
-        © 2025 FutureProspect. All rights reserved. Made with ❤ in Bamenda.
+        © 2025 ZIGEX. All rights reserved. Made with ❤ in Bamenda.
       </div>
     </footer>
   );

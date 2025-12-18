@@ -44,7 +44,7 @@ export const ApplicationRejectedEmail = ({
                 src="https://tmvipinvvhgklmqwvows.supabase.co/storage/v1/object/public/company-assets/Seed%20Company/events/SEED%20community%20Challenge-1757769838240.jpg"
                 width="120"
                 height="50"
-                alt="FutureProspect"
+                alt="ZIGEX"
                 className="my-0 mx-auto"
                 style={{ objectFit: "contain" }}
               />
@@ -70,11 +70,11 @@ export const ApplicationRejectedEmail = ({
               </Button>
             </Section>
             <Text className="text-black text-[14px] leading-[24px]">
-              We encourage you to apply for other opportunities on FutureProspect that match your skills and interests.
+              We encourage you to apply for other opportunities on ZIGEX that match your skills and interests.
             </Text>
             <Hr className="border border-solid border-[#eaeaea] my-[26px] mx-0 w-full" />
             <Text className="text-[#666666] text-[12px] leading-[24px]">
-              FutureProspect Team
+              ZIGEX Team
             </Text>
           </Container>
         </Body>

@@ -34,7 +34,7 @@ const features: Feature[] = [
 export const WhyChoose: React.FC = () => {
   return (
     <section className="bg-[#F8FAFC] py-10 px-4 text-center">
-      <h2 className="text-3xl font-bold text-[#193CB8]">Why Choose FutureProspect?</h2>
+      <h2 className="text-3xl font-bold text-[#193CB8]">Why Choose ZIGEX?</h2>
       <p className="text-[#64748B] mt-4">We connect talented individuals with amazing opportunities</p>
       <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
         {features.map((feature, index) => (

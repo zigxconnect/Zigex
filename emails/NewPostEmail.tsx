@@ -76,11 +76,11 @@ export const NewPostEmail = ({
             </Heading>
 
             <Text className="text-dark text-[16px] leading-[24px]">
-              {recipientName ? `Dear ${recipientName},` : "Dear FutureProspect Member,"}
+              {recipientName ? `Dear ${recipientName},` : "Dear ZIGEX Member,"}
             </Text>
             <Text className="text-dark text-[16px] leading-[24px]">
               We are excited to inform you that a new opportunity has just been
-              posted on <b>FutureProspect</b> — the platform dedicated to connecting
+              posted on <b>ZIGEX</b> — the platform dedicated to connecting
               ambitious individuals with top programs, internships, and events
               to accelerate your career journey.
             </Text>
@@ -182,7 +182,7 @@ export const NewPostEmail = ({
               <Text className="text-dark text-[15px] leading-[24px]">
                 Best regards,
                 <br />
-                <b>The FutureProspect Team</b>
+                <b>The ZIGEX Team</b>
                 <br />
                 <span className="text-gray text-[13px]">
                   Empowering your future, one opportunity at a time.
@@ -194,7 +194,7 @@ export const NewPostEmail = ({
             <Hr className="border border-solid border-[#eaeaea] my-[26px] mx-0 w-full" />
             <Text className="text-gray text-[12px] leading-[20px]">
               You are receiving this email because you opted in to notifications
-              from FutureProspect.
+              from ZIGEX.
               <br />
               <Link href={managePreferencesUrl} className="text-gray underline">
                 Manage your notification preferences
@@ -206,14 +206,14 @@ export const NewPostEmail = ({
               preferences or unsubscribe at any time.
               <br />
               <span className="text-gray">
-                FutureProspect, 123 Opportunity Lane, Innovation City, Country
+                ZIGEX, 123 Opportunity Lane, Innovation City, Country
               </span>
             </Text>
 
             {/* Social Media Links */}
             <Section className="text-center mt-[32px]">
               <Link
-                href="https://twitter.com/FutureProspect"
+                href="https://twitter.com/ZIGEX"
                 className="px-2"
               >
                 <Img
@@ -225,7 +225,7 @@ export const NewPostEmail = ({
                 />
               </Link>
               <Link
-                href="https://linkedin.com/company/FutureProspect"
+                href="https://linkedin.com/company/ZIGEX"
                 className="px-2"
               >
                 <Img

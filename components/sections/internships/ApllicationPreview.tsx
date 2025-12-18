@@ -114,7 +114,7 @@ export const ApplicationPreview = ({
         </PreviewSection>
 
         <PreviewSection title="Documents for This Application">
-          <DataField label="Resume / CV" value="Your FutureProspect Profile" />
+          <DataField label="Resume / CV" value="Your ZIGEX Profile" />
           <DocumentField
             label="Cover Letter"
             file={applicationData.cover_letter_file}

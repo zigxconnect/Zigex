@@ -22,7 +22,7 @@ export const sendApplicationAcceptedEmail = async (
 
   try {
     await resend.emails.send({
-      from: "FutureProspect <notifications@futureprospect.online>",
+      from: "ZIGEX <notifications@ZIGEX.online>",
       to: email,
       subject: "Congratulations! Your Application was Accepted",
       react: ApplicationAcceptedEmail({
