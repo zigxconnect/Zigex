@@ -126,9 +126,12 @@ export const HappeningNowGrid = () => {
                 {/* Image/Video Container */}
                 <div className="relative w-full h-full bg-linear-to-br from-gray-900 to-gray-800">
                   <img
-                    src={item.type === "video" ? item.thumbnail : item.src}
+                    src={item.type === "video" ? item.thumbnail : item.src || "/placeholder.png"}
                     alt={item.caption}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = "/placeholder.png";
+                    }}
                   />
 
                   {/* Gradient Overlay */}
@@ -261,9 +264,12 @@ export const HappeningNowGrid = () => {
               ) : (
                 <div className="relative">
                   <img
-                    src={selectedItem.src}
+                    src={selectedItem.src || "/placeholder.png"}
                     alt={selectedItem.caption}
                     className="w-full max-h-[70vh] object-contain"
+                    onError={(e) => {
+                      e.currentTarget.src = "/placeholder.png";
+                    }}
                   />
                   <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
                 </div>

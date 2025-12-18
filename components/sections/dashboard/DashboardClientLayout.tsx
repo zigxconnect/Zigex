@@ -5,6 +5,8 @@ import { Sidebar } from "@/components/layout/dashboard/Sidebar";
 import { MobileTabBar } from "@/components/layout/dashboard/MobileTabBar";
 import { useState, useEffect } from "react";
 import { UserProfile } from "@/app/types/type";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 interface DashboardClientLayoutProps {
   children: React.ReactNode;
@@ -19,6 +21,8 @@ export function DashboardClientLayout({
 }: DashboardClientLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const pathname = usePathname();
+  const isChatPage = pathname?.includes('/fupro-ai');
 
   // Handle window resize and detect mobile
   useEffect(() => {
@@ -77,19 +81,26 @@ export function DashboardClientLayout({
         )}
 
         {/* Main Content */}
-        <main className={`
-          flex-1 min-h-[calc(100vh-4rem)] w-full
-          transition-all duration-300 ease-in-out
-          ${!isMobile && isSidebarOpen ? 'lg:ml-80' : 'ml-0'}
-          pb-20 lg:pb-0
-        `}>
+        <main className={cn(
+          "flex-1 min-h-[calc(100vh-4rem)] w-full transition-all duration-300 ease-in-out",
+          !isMobile && isSidebarOpen ? 'lg:ml-80' : 'ml-0',
+          "pb-20 lg:pb-0" // Mobile tab bar padding
+        )}>
           {/* Content Container */}
-          <div className="w-full max-w-full overflow-x-hidden">
-            <div className="p-4 sm:p-6 lg:p-8">
-              <div className="max-w-7xl mx-auto">
-                {children}
-              </div>
-            </div>
+          <div className="w-full max-w-full overflow-x-hidden h-full">
+            {isChatPage ? (
+               // Full width/height for Chat
+               <div className="h-full w-full">
+                  {children}
+               </div>
+            ) : (
+                // Standard Dashboard Padding
+                <div className="p-4 sm:p-6 lg:p-8">
+                    <div className="max-w-7xl mx-auto">
+                        {children}
+                    </div>
+                </div>
+            )}
           </div>
         </main>
       </div>

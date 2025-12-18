@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import {
-    Calendar, Clock, MessageCircle, Send, Edit3, Save, X, Plus, Hash, ThumbsUp, ThumbsDown, AlertTriangle, TreePine, Leaf, Sparkles, Sun, Cloud, ChevronDown, CheckCircle, BrainCircuit, MessageSquare // <-- Added BrainCircuit & MessageSquare
+    Calendar, Clock, MessageCircle, Send, Edit3, Save, X, Plus, Hash, ThumbsUp, ThumbsDown, AlertTriangle, TreePine, Leaf, Sun, Cloud, ChevronDown, CheckCircle, BrainCircuit, MessageSquare // <-- Added BrainCircuit & MessageSquare
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -60,7 +60,7 @@ const treeStages = [
     { threshold: 50, name: "Sprout", trunkHeight: 30, branches: 0, leaves: 3, color: "bg-lime-600", sky: "bg-sky-200", icon: <Leaf className="text-lime-700" /> },
     { threshold: 150, name: "Sapling", trunkHeight: 60, branches: 2, leaves: 8, color: "bg-green-600", sky: "bg-cyan-200", icon: <TreePine className="text-green-700" /> },
     { threshold: 300, name: "Young Tree", trunkHeight: 90, branches: 4, leaves: 15, color: "bg-emerald-600", sky: "bg-blue-300", icon: <BrainCircuit className="text-emerald-700" /> },
-    { threshold: 500, name: "Flourishing Tree", trunkHeight: 120, branches: 6, leaves: 25, color: "bg-teal-600", sky: "bg-indigo-300", icon: <Sparkles className="text-teal-500" /> }
+    { threshold: 500, name: "Flourishing Tree", trunkHeight: 120, branches: 6, leaves: 25, color: "bg-teal-600", sky: "bg-indigo-300", icon: <CheckCircle className="text-teal-500" /> }
 ];
 const getStage = (points: number) => treeStages.slice().reverse().find(s => points >= s.threshold) || treeStages[0];
 const ProgressTreeVisual = ({ points }: { points: number }) => {

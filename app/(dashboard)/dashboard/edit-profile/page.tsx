@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, ChangeEvent } from 'react';
-import { ArrowLeft, Camera, Save, User, Mail, Phone, MapPin, Sparkles, Check, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Camera, Save, User, Mail, Phone, MapPin, Check, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Step1Personal } from '@/components/sections/create-profile/Step1Personal';
@@ -13,7 +13,7 @@ import { Step5Additional } from '@/components/sections/create-profile/Step5Addit
 const steps = [
   { label: 'Personal Info', component: Step1Personal, icon: User, color: 'from-blue-900 to-blue-800' },
   { label: 'Education', component: Step2Education, icon: Camera, color: 'from-blue-900 to-blue-800' },
-  { label: 'Skills', component: Step3Skills, icon: Sparkles, color: 'from-blue-900 to-blue-800' },
+  { label: 'Skills', component: Step3Skills, icon: Check, color: 'from-blue-900 to-blue-800' },
   { label: 'Experience', component: Step4Experience, icon: Save, color: 'from-orange-500 to-orange-600' },
   { label: 'Additional', component: Step5Additional, icon: Check, color: 'from-orange-500 to-orange-600' },
 ];
