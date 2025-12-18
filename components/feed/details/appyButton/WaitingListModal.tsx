@@ -37,8 +37,39 @@ export function WaitingListModal({
     setIsSubmitting(true);
 
     try {
-      // Simulate API call - replace with actual endpoint
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Send email directly from client using EmailJS
+      const EMAILJS_SERVICE_ID = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID;
+      const EMAILJS_TEMPLATE_ID = process.env.NEXT_PUBLIC_EMAILJS_WAITLIST_TEMPLATE_ID;
+      const EMAILJS_PUBLIC_KEY = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY;
+
+      if (!EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID || !EMAILJS_PUBLIC_KEY) {
+        throw new Error("EmailJS not configured");
+      }
+
+      const templateParams = {
+        to_email: email,
+        opportunity_title: opportunityTitle,
+        user_email: email,
+        year: new Date().getFullYear(),
+      };
+
+      const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          service_id: EMAILJS_SERVICE_ID,
+          template_id: EMAILJS_TEMPLATE_ID,
+          user_id: EMAILJS_PUBLIC_KEY,
+          template_params: templateParams,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to send email: ${errorText}`);
+      }
       
       setIsSuccess(true);
       setTimeout(() => {
@@ -47,7 +78,8 @@ export function WaitingListModal({
         setEmail("");
       }, 2000);
     } catch (err) {
-      setError("Something went wrong. Please try again.");
+      console.error("Email error:", err);
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

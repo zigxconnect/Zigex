@@ -395,16 +395,16 @@ export default function ApplicationModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-950 shrink-0">
-          <div className="flex items-center gap-4 min-w-0">
-            <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex items-center justify-center shrink-0 text-blue-600 dark:text-blue-400">
-              <FormIcon className="w-5 h-5" />
+        <div className="flex items-center justify-between px-5 sm:px-6 py-5 border-b-2 border-blue-50 bg-gradient-to-r from-[#155DFC] to-[#1A3CB9] shrink-0">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center shrink-0 text-white shadow-lg">
+              <FormIcon className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div className="min-w-0">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+              <h2 className="text-base sm:text-lg font-black text-white truncate uppercase tracking-wide">
                 {currentContent.title}
               </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+              <p className="text-xs sm:text-sm text-blue-100 truncate font-medium">
                 {title}
               </p>
             </div>
@@ -412,7 +412,7 @@ export default function ApplicationModal({
           <button
             onClick={handleClose}
             disabled={isSubmitting}
-            className="h-9 w-9 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 transition-colors"
+            className="h-9 w-9 sm:h-10 sm:w-10 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 text-white transition-all shadow-lg"
           >
             <X className="h-5 w-5" />
           </button>
@@ -422,9 +422,9 @@ export default function ApplicationModal({
         <div className="flex-1 overflow-y-auto overscroll-contain custom-scrollbar bg-white dark:bg-gray-950">
           <div className="px-6 py-8 space-y-8">
             {/* Info Alert */}
-            <div className="flex items-start gap-3 p-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
-              <Info className="w-5 h-5 text-gray-500 dark:text-gray-400 shrink-0 mt-0.5" />
-              <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+            <div className="flex items-start gap-3 p-4 rounded-2xl bg-[#F6F8FF] border-2 border-blue-100">
+              <Info className="w-5 h-5 text-[#155DFC] shrink-0 mt-0.5" />
+              <p className="text-sm text-slate-700 leading-relaxed font-medium">
                 {currentContent.subtitle}
               </p>
             </div>
@@ -445,7 +445,7 @@ export default function ApplicationModal({
                 if (field.type === "hidden") return null;
 
                 const commonLabel = (
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                  <label className="block text-xs sm:text-sm font-black text-[#155DFC] uppercase tracking-wider mb-2">
                     {field.label}
                     {field.required && (
                       <span className="text-red-500 ml-1">*</span>
@@ -464,7 +464,7 @@ export default function ApplicationModal({
                         }
                         placeholder={field.placeholder}
                         rows={4}
-                        className="w-full px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 focus:border-blue-500 dark:focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-500 transition-all duration-200 resize-none text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl border-2 border-blue-50 bg-slate-50/50 focus:border-[#155DFC] focus:ring-4 focus:ring-[#155DFC]/10 transition-all duration-200 resize-none text-sm text-slate-900 placeholder-slate-400 font-medium"
                       />
                     </div>
                   );
@@ -622,11 +622,11 @@ export default function ApplicationModal({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-5 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-950 shrink-0 space-y-3 z-10">
+        <div className="px-5 sm:px-6 py-5 border-t-2 border-blue-50 bg-gradient-to-br from-[#F6F8FF] to-blue-50/50 shrink-0 space-y-3 z-10">
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting || !checkFormValid()}
-            className="w-full py-2.5 rounded-lg font-semibold text-sm bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-3.5 sm:py-4 rounded-2xl font-black uppercase tracking-wider text-sm bg-gradient-to-r from-[#155DFC] to-[#1A3CB9] hover:from-[#1A3CB9] hover:to-[#155DFC] text-white shadow-2xl shadow-blue-200 transition-all duration-500 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
             {isSubmitting ? (
               <>
@@ -637,7 +637,7 @@ export default function ApplicationModal({
               currentContent.submitText
             )}
           </Button>
-          <p className="text-xs text-gray-400 dark:text-gray-500 text-center flex items-center justify-center gap-1">
+          <p className="text-xs text-slate-500 text-center flex items-center justify-center gap-1 font-medium">
             <span className="text-red-500">*</span> Required fields
           </p>
         </div>
