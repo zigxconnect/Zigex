@@ -159,7 +159,7 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={toggleDropdown}
-        className="relative p-2.5 text-gray-600 rounded-xl hover:bg-gray-100 hover:text-gray-900 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        className="relative p-2.5 text-muted-foreground rounded-xl hover:bg-muted hover:text-foreground transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         aria-label="Notifications"
         aria-expanded={isOpen}
       >
@@ -176,17 +176,17 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
         {/* Desktop: Bell Icon */}
         <Bell size={20} className="hidden lg:block" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold shadow-lg border-2 border-white">
+          <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold shadow-lg border-2 border-background">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 md:w-96 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden animate-fade-in-down">
-          <div className="flex justify-between items-center p-4 border-b border-gray-200">
+        <div className="absolute right-0 mt-2 w-80 md:w-96 bg-card border border-border rounded-xl shadow-lg z-50 overflow-hidden animate-fade-in-down">
+          <div className="flex justify-between items-center p-4 border-b border-border">
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-lg text-gray-800">Notifications</h3>
+              <h3 className="font-semibold text-lg text-foreground">Notifications</h3>
               {unreadCount > 0 && (
                 <span className="px-2 py-0.5 bg-red-500 text-white text-xs font-bold rounded-full">
                   {unreadCount}
@@ -204,7 +204,7 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
               )}
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-100"
+                className="text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-muted"
                 aria-label="Close notifications"
               >
                 <X size={18} />
@@ -215,19 +215,19 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
           <div className="max-h-80 overflow-y-auto">
             {notifications.length === 0 ? (
               <div className="p-8 text-center">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Bell className="w-8 h-8 text-gray-400" />
+                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Bell className="w-8 h-8 text-muted-foreground" />
                 </div>
-                <p className="text-gray-500 font-medium">No notifications yet</p>
-                <p className="text-gray-400 text-sm mt-1">We'll notify you when something arrives!</p>
+                <p className="text-muted-foreground font-medium">No notifications yet</p>
+                <p className="text-muted-foreground text-sm mt-1">We'll notify you when something arrives!</p>
               </div>
             ) : (
               <ul>
                 {notifications.map((notification) => (
                   <li
                     key={notification.id}
-                    className={`border-b border-gray-100 last:border-b-0 transition-colors ${
-                      !notification.read ? "bg-blue-50 hover:bg-blue-100" : "bg-white hover:bg-gray-50"
+                    className={`border-b border-border last:border-b-0 transition-colors ${
+                      !notification.read ? "bg-blue-50 hover:bg-blue-100" : "bg-card hover:bg-muted/50"
                     }`}
                   >
                     <button
@@ -235,17 +235,17 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
                       className="block p-4 w-full text-left"
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <p className={`font-medium text-sm ${!notification.read ? "text-blue-800" : "text-gray-800"}`}>
+                        <p className={`font-medium text-sm ${!notification.read ? "text-blue-800" : "text-foreground"}`}>
                           {notification.title}
                         </p>
                         {!notification.read && (
                           <span className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0 mt-1.5"></span>
                         )}
                       </div>
-                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                         {notification.content}
                       </p>
-                      <p className="text-xs text-gray-400 mt-2">
+                      <p className="text-xs text-muted-foreground mt-2">
                         {formatTime(notification.timestamp)}
                       </p>
                     </button>
@@ -256,7 +256,7 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
           </div>
 
           {notifications.length > 0 && (
-            <div className="p-4 border-t border-gray-200 text-center bg-gray-50">
+            <div className="p-4 border-t border-border text-center bg-muted/30">
               <Link 
                 href="/notifications" 
                 onClick={() => setIsOpen(false)}

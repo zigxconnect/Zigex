@@ -86,18 +86,18 @@ export default function ProjectCard({
   // --- CARD 1: UNDER REVIEW / PENDING ---
   if (project && project.status !== 'valid' && isVisitor) {
     return (
-      <div className="bg-[#F6F8FF] rounded-3xl border border-blue-100 shadow-sm overflow-hidden hover:shadow-md transition-all duration-300">
+      <div className="bg-muted rounded-3xl border border-border shadow-sm overflow-hidden hover:shadow-md transition-all duration-300">
         <div className="p-6">
             <div className="flex items-start gap-5">
                 <div className="flex-shrink-0">
-                    <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center border border-blue-100">
-                        <Clock className="w-6 h-6 text-[#155DFC]" />
+                    <div className="w-14 h-14 bg-card rounded-2xl flex items-center justify-center border border-border">
+                        <Clock className="w-6 h-6 text-primary" />
                     </div>
                 </div>
                 <div className="flex-1">
                     <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-base font-bold text-slate-900">Project Pending</h3>
-                        <Badge variant="outline" className="bg-blue-50 text-[#155DFC] border-blue-200">Reviewing</Badge>
+                        <h3 className="text-base font-bold text-foreground">Project Pending</h3>
+                        <Badge variant="outline" className="bg-muted text-primary border-border">Reviewing</Badge>
                     </div>
                     <p className="text-sm text-muted-foreground mb-4">
                         This project is currently under quality review by our team.
@@ -106,7 +106,7 @@ export default function ProjectCard({
                          {user.avatar_url ? (
                              <Image src={user.avatar_url} alt={user.full_name} width={28} height={28} className="rounded-full ring-2 ring-card shadow-sm" />
                          ) : (
-                             <div className="w-7 h-7 bg-blue-100 rounded-full flex items-center justify-center text-xs font-bold text-[#155DFC]">
+                             <div className="w-7 h-7 bg-muted rounded-full flex items-center justify-center text-xs font-bold text-primary">
                                  {user.full_name.charAt(0)}
                              </div>
                          )}
@@ -122,15 +122,15 @@ export default function ProjectCard({
   // --- CARD 2: EMPTY STATE ---
   if (!project) {
     return (
-      <div className="bg-white rounded-3xl border border-blue-50 shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 group h-full flex flex-col">
+      <div className="bg-card rounded-3xl border border-border shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 group h-full flex flex-col">
           <div className="p-8 flex flex-col items-center text-center justify-center flex-1">
-             <div className="w-16 h-16 bg-[#F6F8FF] rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                 <User className="w-8 h-8 text-blue-300" />
+             <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                 <User className="w-8 h-8 text-primary/50" />
              </div>
              <h3 className="text-lg font-bold text-foreground mb-1">{user.full_name}</h3>
              <p className="text-sm text-muted-foreground mb-6">No active project yet.</p>
              {isMyProject && (
-                 <Button asChild className="rounded-full bg-[#155DFC] hover:bg-[#1A3CB9] text-white">
+                 <Button asChild className="rounded-full bg-primary hover:bg-secondary text-primary-foreground">
                     <Link href="/dashboard/projects">Create Project</Link>
                  </Button>
              )}
@@ -141,10 +141,10 @@ export default function ProjectCard({
 
   // --- CARD 3: ACTIVE PROJECT (MAIN) ---
   return (
-    <div className="bg-white rounded-3xl border border-blue-50 shadow-sm hover:shadow-2xl hover:shadow-blue-200/40 transition-all duration-500 overflow-hidden flex flex-col h-full group relative">
+    <div className="bg-card rounded-3xl border border-border shadow-sm hover:shadow-2xl hover:shadow-primary/20 transition-all duration-500 overflow-hidden flex flex-col h-full group relative">
       
       {/* 1. Cover Media Section */}
-      <div className="relative aspect-[16/10] w-full bg-slate-50 overflow-hidden">
+      <div className="relative aspect-[16/10] w-full bg-muted/50 overflow-hidden">
         {!showVideo ? (
           <>
             {/* Image */}
@@ -159,11 +159,11 @@ export default function ProjectCard({
                     onError={() => setImageError(true)}
                   />
                 ) : (
-                   <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#F6F8FF] to-[#E0E7FF] p-6 text-center">
-                      <div className="w-14 h-14 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-3">
-                        <Calendar className="w-7 h-7 text-[#155DFC]" />
+                   <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-muted to-border p-6 text-center">
+                      <div className="w-14 h-14 bg-card rounded-2xl shadow-sm flex items-center justify-center mb-3">
+                        <Calendar className="w-7 h-7 text-primary" />
                       </div>
-                      <p className="text-[10px] font-bold text-[#155DFC] uppercase tracking-[0.2em]">Project Overview</p>
+                      <p className="text-[10px] font-bold text-primary uppercase tracking-[0.2em]">Project Overview</p>
                    </div>
                 )}
             </div>
@@ -175,12 +175,12 @@ export default function ProjectCard({
             <div className="absolute top-4 left-4 right-4 flex justify-between items-start z-10">
                <div className="flex gap-2">
                  {isVisitor && (
-                     <Badge className="bg-white/90 text-[#155DFC] hover:bg-white backdrop-blur-md shadow-sm border-none font-bold px-3 py-1 text-[10px] rounded-full">
+                     <Badge className="bg-muted/90 text-primary hover:bg-muted backdrop-blur-md shadow-sm border-none font-bold px-3 py-1 text-[10px] rounded-full">
                         VIEWING
                      </Badge>
                  )}
                  {project.status === 'valid' && (
-                    <div className="flex items-center gap-1.5 px-3 py-1 bg-[#155DFC]/90 backdrop-blur-md text-white rounded-full text-[10px] font-black shadow-lg">
+                    <div className="flex items-center gap-1.5 px-3 py-1 bg-primary/90 backdrop-blur-md text-primary-foreground rounded-full text-[10px] font-black shadow-lg">
                         <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
                         LIVE
                     </div>
@@ -196,7 +196,7 @@ export default function ProjectCard({
             {hasVideos && (
               <button 
                 onClick={(e) => { e.preventDefault(); setShowVideo(true); }}
-                className="absolute inset-0 m-auto w-16 h-16 bg-[#155DFC]/80 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-[#155DFC] transition-all duration-500 hover:scale-110 shadow-2xl z-20"
+                className="absolute inset-0 m-auto w-16 h-16 bg-primary/80 backdrop-blur-md rounded-full flex items-center justify-center text-primary-foreground hover:bg-primary transition-all duration-500 hover:scale-110 shadow-2xl z-20"
               >
                  <Play className="w-7 h-7 fill-current ml-1" />
               </button>
@@ -233,7 +233,7 @@ export default function ProjectCard({
       </div>
 
       {/* 2. Content Body */}
-      <div className="p-6 flex flex-col flex-1 relative bg-white">
+      <div className="p-6 flex flex-col flex-1 relative bg-card">
          {/* User Detail (Overlapping slightly) */}
          <div className="flex items-center gap-3 mb-4">
              <div className="relative">
@@ -253,38 +253,38 @@ export default function ProjectCard({
                  )}
              </div>
              <div className="min-w-0">
-                 <p className="text-sm font-black text-slate-900 truncate leading-none mb-1">{user.full_name}</p>
-                 <p className="text-[10px] text-[#155DFC] font-bold uppercase tracking-wider truncate">{user.university || "Zigex Scholar"}</p>
+                 <p className="text-sm font-black text-foreground truncate leading-none mb-1">{user.full_name}</p>
+                 <p className="text-[10px] text-primary font-bold uppercase tracking-wider truncate">{user.university || "Zigex Scholar"}</p>
              </div>
          </div>
 
          {/* Title & Desc */}
          <div className="mb-5">
              <Link href={`/feed/projects/${project.id}`} className="block group/title mb-2">
-                <h3 className="text-xl font-black text-slate-900 leading-tight group-hover/title:text-[#155DFC] transition-all duration-300 line-clamp-1">
+                <h3 className="text-xl font-black text-foreground leading-tight group-hover/title:text-primary transition-all duration-300 line-clamp-1">
                     {project.project_title}
                 </h3>
              </Link>
-             <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed h-[40px]">
+             <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed h-[40px]">
                  {project.description}
              </p>
          </div>
 
          {/* Meta Stats Row */}
          <div className="flex items-center gap-4 mb-6">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400">
-                <Clock className="w-3.5 h-3.5 text-blue-400" />
+            <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground">
+                <Clock className="w-3.5 h-3.5 text-primary/70" />
                 <span>{project.project_duration || 'Ongoing'}</span>
             </div>
-            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 border-l border-slate-100 pl-4">
-                <Calendar className="w-3.5 h-3.5 text-blue-400" />
+            <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground border-l border-border pl-4">
+                <Calendar className="w-3.5 h-3.5 text-primary/70" />
                 <span>{formatDate(project.created_at)}</span>
             </div>
          </div>
 
          {/* Action Buttons */}
-         <div className="mt-auto pt-5 border-t border-[#F6F8FF] flex items-center gap-3">
-             <Button asChild className="flex-1 bg-[#155DFC] hover:bg-[#1A3CB9] text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-200 hover:shadow-blue-300 transition-all duration-300 h-11">
+         <div className="mt-auto pt-5 border-t border-border flex items-center gap-3">
+             <Button asChild className="flex-1 bg-primary hover:bg-secondary text-primary-foreground rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all duration-300 h-11">
                  <Link href={`/feed/projects/${project.id}`}>
                      EXPLORE PROJECT
                  </Link>
@@ -295,7 +295,7 @@ export default function ProjectCard({
                     href={project.github_repository} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="h-11 w-11 flex items-center justify-center bg-[#F6F8FF] text-[#155DFC] rounded-xl hover:bg-[#155DFC] hover:text-white transition-all duration-300 shadow-sm"
+                    className="h-11 w-11 flex items-center justify-center bg-muted text-primary rounded-xl hover:bg-primary hover:text-primary-foreground transition-all duration-300 shadow-sm"
                  >
                      <Github className="w-5 h-5" />
                  </a>

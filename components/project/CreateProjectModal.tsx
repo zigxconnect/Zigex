@@ -261,20 +261,20 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header - Premium Brand Style */}
-          <div className="sticky top-0 z-50 flex items-center justify-between px-6 sm:px-8 py-5 border-b border-[#F6F8FF] bg-white/95 backdrop-blur-xl shrink-0 safe-area-top">
+          <div className="sticky top-0 z-50 flex items-center justify-between px-6 sm:px-8 py-5 border-b border-border bg-card/95 backdrop-blur-xl shrink-0 safe-area-top">
             <div className="flex items-center gap-4 min-w-0 flex-1">
               <button
                 onClick={handleClose}
                 disabled={isSubmitting}
-                className="h-10 w-10 rounded-full shrink-0 flex items-center justify-center bg-[#F6F8FF] hover:bg-blue-100 text-[#155DFC] transition-all duration-300"
+                className="h-10 w-10 rounded-full shrink-0 flex items-center justify-center bg-muted hover:bg-muted/80 text-primary transition-all duration-300"
               >
                 <X className="h-5 w-5" />
               </button>
               <div className="min-w-0">
-                <h2 className="text-xl sm:text-2xl font-black text-slate-900 truncate tracking-tight uppercase">
+                <h2 className="text-xl sm:text-2xl font-black text-foreground truncate tracking-tight uppercase">
                   New Project
                 </h2>
-                <p className="text-[10px] font-black text-[#155DFC] uppercase tracking-widest leading-none mt-1">
+                <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none mt-1">
                   Zigex Spotlight
                 </p>
               </div>
@@ -288,10 +288,10 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
                 px-8 sm:px-10 py-3
                 rounded-2xl font-black text-xs sm:text-sm 
                 h-12 shrink-0 ml-4
-                text-white uppercase tracking-[0.1em]
-                bg-[#155DFC] hover:bg-[#1A3CB9]
-                shadow-xl shadow-blue-200/50
-                hover:shadow-blue-300/60
+                text-primary-foreground uppercase tracking-[0.1em]
+                bg-primary hover:bg-secondary
+                shadow-xl shadow-primary/20
+                hover:shadow-primary/30
                 hover:scale-[1.02] active:scale-[0.98]
                 flex items-center justify-center
                 transition-all duration-500
@@ -316,26 +316,26 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
           {/* Draft Notification - Themed */}
           {hasDraft && (
             <div className="px-6 sm:px-8 pt-6 pb-2 shrink-0">
-              <div className="bg-[#F6F8FF] border border-blue-100 rounded-[1.5rem] p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="bg-muted border border-border rounded-[1.5rem] p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm border border-blue-50">
-                    <Save className="h-5 w-5 text-[#155DFC]" />
+                  <div className="w-10 h-10 bg-card rounded-xl flex items-center justify-center shadow-sm border border-border">
+                    <Save className="h-5 w-5 text-primary" />
                   </div>
                   <div className="text-left">
-                    <p className="text-xs font-black text-slate-900 uppercase">Saved Progress Found</p>
-                    <p className="text-[10px] text-slate-500 font-medium">Continue where you left off?</p>
+                    <p className="text-xs font-black text-foreground uppercase">Saved Progress Found</p>
+                    <p className="text-[10px] text-muted-foreground font-medium">Continue where you left off?</p>
                   </div>
                 </div>
                 <div className="flex gap-2 w-full sm:w-auto">
                   <button
                     onClick={loadDraft}
-                    className="flex-1 sm:flex-none h-10 px-6 rounded-xl bg-[#155DFC] text-white text-[10px] font-black uppercase tracking-widest hover:bg-[#1A3CB9] transition-all"
+                    className="flex-1 sm:flex-none h-10 px-6 rounded-xl bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest hover:bg-secondary transition-all"
                   >
                     Restore
                   </button>
                   <button
                     onClick={clearDraft}
-                    className="flex-1 sm:flex-none h-10 px-6 rounded-xl bg-white border border-blue-100 text-[#155DFC] text-[10px] font-black uppercase tracking-widest hover:bg-blue-50 transition-all"
+                    className="flex-1 sm:flex-none h-10 px-6 rounded-xl bg-card border border-border text-primary text-[10px] font-black uppercase tracking-widest hover:bg-muted transition-all"
                   >
                     Dismiss
                   </button>
@@ -359,12 +359,12 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
 
               {/* Info Alert - Premium Style */}
               <div className="relative group">
-                <div className="absolute inset-0 bg-[#F6F8FF] rounded-3xl -rotate-1 transition-transform group-hover:rotate-0" />
-                <div className="relative bg-[#155DFC] rounded-3xl p-6 text-white shadow-xl shadow-blue-200/50">
+                <div className="absolute inset-0 bg-muted rounded-3xl -rotate-1 transition-transform group-hover:rotate-0" />
+                <div className="relative bg-primary rounded-3xl p-6 text-primary-foreground shadow-xl shadow-primary/20">
                   <div className="flex items-center gap-4">
                     <div>
                       <h4 className="font-black uppercase tracking-widest text-xs mb-1">Elite Showcase</h4>
-                      <p className="text-sm text-blue-50 leading-relaxed font-medium">
+                      <p className="text-sm text-primary-foreground/90 leading-relaxed font-medium">
                         Your project will be featured in the Zigex community feed. Make it count! 🚀
                       </p>
                     </div>
@@ -402,7 +402,7 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
                   rows={4}
                 />
 
-                <div className="p-1 bg-[#F6F8FF] rounded-[2rem] border border-blue-50 overflow-hidden">
+                <div className="p-1 bg-muted rounded-[2rem] border border-border overflow-hidden">
                   <ImageUpload
                     previewUrl={previewUrl}
                     onImageChange={handleImageChange}
@@ -422,7 +422,7 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
                     placeholder="github.com/your/project"
                     error={errors.githubLink}
                     touched={touched.githubLink}
-                    icon={<Github className="h-4 w-4 text-[#155DFC]" />}
+                    icon={<Github className="h-4 w-4 text-primary" />}
                   />
 
                   <InputField
@@ -436,7 +436,7 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
                     required
                     error={errors.youtubeLink}
                     touched={touched.youtubeLink}
-                    icon={<Link className="h-4 w-4 text-[#155DFC]" />}
+                    icon={<Link className="h-4 w-4 text-primary" />}
                   />
                 </div>
 
@@ -451,10 +451,10 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
                   required
                   error={errors.duration}
                   touched={touched.duration}
-                  icon={<Calendar className="h-4 w-4 text-[#155DFC]" />}
+                  icon={<Calendar className="h-4 w-4 text-primary" />}
                 />
 
-                <div className="p-1 bg-[#F6F8FF] rounded-[2rem] border border-blue-50 overflow-hidden">
+                <div className="p-1 bg-muted rounded-[2rem] border border-border overflow-hidden">
                   <VideoUpload
                     videoPreviewUrl={videoPreviewUrl}
                     onVideoChange={handleVideoChange}
@@ -471,14 +471,14 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
           </form>
 
           {/* Footer - Premium Branding */}
-          <div className="px-8 py-4 border-t border-[#F6F8FF] bg-[#F6F8FF]/50 shrink-0">
+          <div className="px-8 py-4 border-t border-border bg-muted/50 shrink-0">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <p className="text-[10px] font-black text-[#155DFC] uppercase tracking-widest text-center sm:text-left">
+              <p className="text-[10px] font-black text-primary uppercase tracking-widest text-center sm:text-left">
                 Progress automatically secured
               </p>
               <div className="flex items-center gap-1">
                 <div className="w-1 h-1 bg-red-500 rounded-full animate-pulse" />
-                <span className="text-[10px] font-medium text-slate-400">All fields mandatory for elite status</span>
+                <span className="text-[10px] font-medium text-muted-foreground">All fields mandatory for elite status</span>
               </div>
             </div>
           </div>

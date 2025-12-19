@@ -230,31 +230,7 @@ const isRouteActive = (href: string, matchPaths?: string[], excludePaths?: strin
   return (
     <>
       {/* Custom Scrollbar Styles */}
-      <style jsx>{`
-        .custom-scrollbar {
-          scrollbar-width: thin;
-          scrollbar-color: var(--primary) transparent;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-          border-radius: 10px;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: var(--primary);
-          border-radius: 10px;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: var(--primary);
-          opacity: 0.8;
-        }
-      `}</style>
+
 
       {/* Sidebar */}
       <aside
@@ -332,24 +308,20 @@ const isRouteActive = (href: string, matchPaths?: string[], excludePaths?: strin
               </div>
 
               {/* AI Assistant Section - Always Visible */}
+              {/* AI Assistant Section */}
               <div className="mb-4">
                 <h4 className="text-xs font-semibold text-primary uppercase tracking-wider mb-3 px-1">
                   AI Assistant
                 </h4>
-                <div className="relative">
-                  <AnimatedNavLink
-                    href={aiChatItem.href}
-                    icon={aiChatItem.icon}
-                    label={aiChatItem.label}
-                    isActive={isRouteActive(aiChatItem.href)}
-                    onClick={handleNavClick}
-                    isSpecial={true}
-                  />
-                  {/* AI Badge */}
-                  <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full shadow-lg z-50 font-bold tracking-wide">
-                    Beta
-                  </div>
-                </div>
+                <AnimatedNavLink
+                  href={aiChatItem.href}
+                  icon={aiChatItem.icon}
+                  label={aiChatItem.label}
+                  isActive={isRouteActive(aiChatItem.href)}
+                  onClick={handleNavClick}
+                  isSpecial={true}
+                  badge="Beta"
+                />
               </div>
 
               {/* Quick Stats Card - Desktop Only */}

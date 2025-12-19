@@ -2,8 +2,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import {
-  Github,
-  Link2,
   User,
   User2,
   ChevronDown,
@@ -22,11 +20,14 @@ interface WelcomeCardProps {
 
 export const WelcomeCard = ({ user, onProfileUpdated, profile }: WelcomeCardProps) => {
   console.log("User in WelcomeCard:", user);
+  if (user?.profile) {
+    console.log("Profile keys:", Object.keys(user.profile));
+    console.log("LinkedIn URL:", user.profile.linkedin_url);
+    console.log("GitHub URL:", user.profile.github_url);
+  }
   const [isAboutExpanded, setIsAboutExpanded] = useState(false);
   const [isSkillsExpanded, setIsSkillsExpanded] = useState(false);
   const [isAvatarHovered, setIsAvatarHovered] = useState(false);
-
-  const [isProfileBtnHovered, setIsProfileBtnHovered] = useState(false);
 
   const truncateText = (text: string, maxLength: number) => {
     if (!text) return "";
@@ -45,7 +46,7 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile }: WelcomeCardProp
   const coverImageUrl = user.profile.cover_image || "https://i.ibb.co/vv3sgJwd/n8.jpg";
 
   return (
-    <div className="relative bg-white md:rounded-2xl md:w-full mx-auto shadow-lg md:border md:border-gray-200 overflow-hidden">
+    <div className="relative bg-white rounded-2xl w-full mx-auto shadow-lg border border-gray-200 overflow-hidden">
       {/* Cover Image */}
       <div className="relative h-32 md:h-36 lg:h-40 w-full">
         <Image
@@ -55,7 +56,7 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile }: WelcomeCardProp
           className="object-cover"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40" />
+        <div className="absolute inset-0" />
 
         {/* Skills and About Cards positioned over background */}
         <div className="absolute top-2 right-2 lg:top-4 lg:right-4 flex flex-col lg:flex-row gap-2 lg:gap-3 max-w-[320px] lg:max-w-none">
@@ -176,7 +177,7 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile }: WelcomeCardProp
       <div className="pt-12 md:pt-14 lg:pt-8 px-4 lg:px-6 pb-4 lg:pb-6">
         {/* User Info and Social Links */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 lg:gap-4">
-          <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex flex-col items-start gap-1">
             <div className="flex items-center gap-1.5">
               <p className="text-base lg:text-lg font-bold text-gray-900">
                 {user.name}
@@ -192,6 +193,7 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile }: WelcomeCardProp
               </div>
             </div>
             
+          <div className="flex flex-col gap-1 text-gray-600">
             <div className="flex items-center gap-1.5 text-gray-600">
               <MapPin size={16} className="lg:w-[18px] lg:h-[18px]" />
               <p className="text-sm lg:text-base font-medium">
@@ -199,147 +201,70 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile }: WelcomeCardProp
               </p>
             </div>
           </div>
+          </div>
 
           {/* Social Links & My Profile Button */}
           <div className="flex items-center gap-2 lg:gap-3 flex-wrap">
-            <Link
-              href={user.profile.linkedin_url || ""}
-              className="flex items-center gap-1.5 text-blue-600 hover:text-blue-800 hover:underline transition-colors"
-            >
-              <Link2 size={14} className="lg:w-4 lg:h-4" />
-              <p className="text-sm lg:text-base font-medium">
-                LinkedIn
-              </p>
-            </Link>
+            {(user?.profile?.linkedin_url || user?.linkedin_url) && (
+              <Link
+                href={user?.profile?.linkedin_url || user?.linkedin_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+              >
+                <div className="w-4 h-4 lg:w-5 lg:h-5">
+                  <svg fill="#000000" viewBox="0 0 32 32" version="1.1" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                    <path d="M28.778 1.004h-25.56c-0.008-0-0.017-0-0.027-0-1.199 0-2.172 0.964-2.186 2.159v25.672c0.014 1.196 0.987 2.161 2.186 2.161 0.010 0 0.019-0 0.029-0h25.555c0.008 0 0.018 0 0.028 0 1.2 0 2.175-0.963 2.194-2.159l0-0.002v-25.67c-0.019-1.197-0.994-2.161-2.195-2.161-0.010 0-0.019 0-0.029 0h0.001zM9.9 26.562h-4.454v-14.311h4.454zM7.674 10.293c-1.425 0-2.579-1.155-2.579-2.579s1.155-2.579 2.579-2.579c1.424 0 2.579 1.154 2.579 2.578v0c0 0.001 0 0.002 0 0.004 0 1.423-1.154 2.577-2.577 2.577-0.001 0-0.002 0-0.003 0h0zM26.556 26.562h-4.441v-6.959c0-1.66-0.034-3.795-2.314-3.795-2.316 0-2.669 1.806-2.669 3.673v7.082h-4.441v-14.311h4.266v1.951h0.058c0.828-1.395 2.326-2.315 4.039-2.315 0.061 0 0.121 0.001 0.181 0.003l-0.009-0c4.5 0 5.332 2.962 5.332 6.817v7.855z"></path>
+                  </svg>
+                </div>
+                <p className="text-sm lg:text-base font-medium">
+                  LinkedIn
+                </p>
+              </Link>
+            )}
 
-            <Link
-              href={user.profile.github_url || "#"}
-              target={user.profile.github_url ? "_blank" : undefined}
-              rel={user.profile.github_url ? "noopener noreferrer" : undefined}
-              className="flex items-center gap-1.5 text-blue-600 hover:text-blue-800 hover:underline transition-colors"
-            >
-              <Github size={14} className="lg:w-4 lg:h-4" />
-              <p className="text-sm lg:text-base font-medium">
-                Github
-              </p>
-            </Link>
+            {(user?.profile?.github_url || user?.github_url) && (
+              <Link
+                href={user?.profile?.github_url || user?.github_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+              >
+                <div className="w-4 h-4 lg:w-5 lg:h-5">
+                  <svg xmlns="http://www.w3.org/2000/svg" aria-label="GitHub" role="img" viewBox="0 0 512 512" className="w-full h-full">
+                    <rect width="512" height="512" rx="15%" fill="#1B1817"/><path fill="#ffffff" d="M335 499c14 0 12 17 12 17H165s-2-17 12-17c13 0 16-6 16-12l-1-50c-71 16-86-28-86-28-12-30-28-37-28-37-24-16 1-16 1-16 26 2 40 26 40 26 22 39 59 28 74 22 2-17 9-28 16-35-57-6-116-28-116-126 0-28 10-51 26-69-3-6-11-32 3-67 0 0 21-7 70 26 42-12 86-12 128 0 49-33 70-26 70-26 14 35 6 61 3 67 16 18 26 41 26 69 0 98-60 120-117 126 10 8 18 24 18 48l-1 70c0 6 3 12 16 12z"/>
+                  </svg>
+                </div>
+                <p className="text-sm lg:text-base font-medium">
+                  Github
+                </p>
+              </Link>
+            )}
 
             {/* My Profile Button - Enhanced Interactive Version */}
+            {/* My Profile Button - Clean Version */}
             <Link
               href={`/profile/${user.profile.username}`}
-              onMouseEnter={() => setIsProfileBtnHovered(true)}
-              onMouseLeave={() => setIsProfileBtnHovered(false)}
-              className={`
-                relative overflow-hidden flex items-center gap-1.5 lg:gap-2 px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg font-semibold text-xs lg:text-sm
-                transition-all duration-300 transform
-                bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg shadow-blue-500/30 
-                hover:shadow-xl hover:shadow-blue-500/40 hover:scale-105
+              className="
+                flex items-center gap-1.5 lg:gap-2 px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg font-semibold text-xs lg:text-sm
+                transition-all duration-300
+                bg-blue-600 text-white hover:bg-blue-700
+                shadow-sm hover:shadow-md
                 active:scale-95
-              `}
+              "
             >
-              {/* Animated background pulse */}
-              <span
-                className={`
-                  absolute inset-0 bg-blue-400
-                  ${isProfileBtnHovered ? "animate-ping opacity-20" : "opacity-0"}
-                `}
-              />
-
-              {/* Shimmer effect */}
-              <span
-                className={`
-                  absolute inset-0 -translate-x-full
-                  bg-gradient-to-r from-transparent via-white/30 to-transparent
-                  ${isProfileBtnHovered ? "animate-shimmer" : ""}
-                `}
-                style={{
-                  animation: isProfileBtnHovered ? "shimmer 2s infinite" : "none",
-                }}
-              />
-
-              {/* Content */}
-              <span className="relative z-10 flex items-center gap-1.5">
+              <span className="flex items-center gap-1.5">
                 <UserCircle2
                   size={16}
-                  className={`lg:w-[18px] lg:h-[18px] ${isProfileBtnHovered ? "animate-bounce" : ""}`}
+                  className="lg:w-[18px] lg:h-[18px]"
                 />
                 <span className="font-bold">My Profile</span>
               </span>
-
-              {/* Particle effect on hover */}
-              {isProfileBtnHovered && (
-                <>
-                  <span className="absolute top-0 left-1/4 w-1 h-1 bg-white rounded-full animate-particle-1" />
-                  <span className="absolute top-0 right-1/4 w-1 h-1 bg-white rounded-full animate-particle-2" />
-                  <span className="absolute bottom-0 left-1/3 w-1 h-1 bg-white rounded-full animate-particle-3" />
-                </>
-              )}
             </Link>
           </div>
         </div>
       </div>
 
-      <style jsx global>{`
-        @keyframes shimmer {
-          0% {
-            transform: translateX(-100%);
-          }
-          100% {
-            transform: translateX(100%);
-          }
-        }
-
-        @keyframes particle-1 {
-          0% {
-            transform: translate(0, 0) scale(1);
-            opacity: 1;
-          }
-          100% {
-            transform: translate(-10px, -20px) scale(0);
-            opacity: 0;
-          }
-        }
-
-        @keyframes particle-2 {
-          0% {
-            transform: translate(0, 0) scale(1);
-            opacity: 1;
-          }
-          100% {
-            transform: translate(10px, -20px) scale(0);
-            opacity: 0;
-          }
-        }
-
-        @keyframes particle-3 {
-          0% {
-            transform: translate(0, 0) scale(1);
-            opacity: 1;
-          }
-          100% {
-            transform: translate(5px, 20px) scale(0);
-            opacity: 0;
-          }
-        }
-
-        .animate-particle-1 {
-          animation: particle-1 0.8s ease-out forwards;
-        }
-
-        .animate-particle-2 {
-          animation: particle-2 0.8s ease-out forwards;
-          animation-delay: 0.1s;
-        }
-
-        .animate-particle-3 {
-          animation: particle-3 0.8s ease-out forwards;
-          animation-delay: 0.2s;
-        }
-
-        .animate-shimmer {
-          animation: shimmer 2s infinite;
-        }
-      `}</style>
     </div>
   );
 };

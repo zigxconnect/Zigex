@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Host_Grotesk } from "next/font/google";
 import "./globals.css";
 // import { Toaster } from "@/components/ui/sonner";
 import { Toaster } from "react-hot-toast";
@@ -7,6 +7,13 @@ import { Toaster } from "react-hot-toast";
 const inter = Inter({
   subsets: ["latin"],
   display: "swap",
+  variable: "--font-inter",
+});
+
+const hostGrotesk = Host_Grotesk({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-host-grotesk",
 });
 
 
@@ -82,7 +89,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${inter.variable} ${hostGrotesk.variable} antialiased`}>
         {children}
         <Toaster position="top-center" reverseOrder={false} />
         {/* <Toaster /> */}

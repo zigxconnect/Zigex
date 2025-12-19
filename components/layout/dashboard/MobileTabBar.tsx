@@ -151,7 +151,7 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 lg:hidden z-50 safe-area-bottom">
+      <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border lg:hidden z-50 safe-area-bottom">
         <div className="flex items-center justify-around px-2 py-2">
           {tabItems.map((item: any) => {
             const Icon = item.icon;
@@ -172,14 +172,14 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
                         ? item.isSpecial 
                           ? 'bg-blue-600 text-white shadow-md' 
                           : 'bg-blue-600 text-white shadow-md'
-                        : 'text-gray-600 group-active:bg-gray-100'
+                        : 'text-muted-foreground group-active:bg-muted'
                       }
                     `}
                   >
                     <Icon 
                       size={20} 
                       className={`
-                        ${isActive ? 'text-white' : 'text-gray-600 group-active:text-blue-600'}
+                        ${isActive ? 'text-white' : 'text-muted-foreground group-active:text-blue-600'}
                       `}
                     />
                   </div>
@@ -201,7 +201,7 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
                 <span
                   className={`
                     text-[10px] font-medium mt-1 transition-colors duration-200
-                    ${isActive ? 'text-blue-600' : 'text-gray-600 group-active:text-blue-600'}
+                    ${isActive ? 'text-blue-600' : 'text-muted-foreground group-active:text-blue-600'}
                   `}
                 >
                   {item.label}
