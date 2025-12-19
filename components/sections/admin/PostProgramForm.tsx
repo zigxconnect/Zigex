@@ -20,10 +20,11 @@ const FormSection = ({ title, children }: any) => (
   </div>
 );
 
-const FormField = ({ label, children, className }: any) => (
+const FormField = ({ label, children, className, required }: any) => (
   <div className={className}>
     <label className="block text-sm font-medium text-black mb-1.5">
       {label}
+      {required && <span className="text-red-500 ml-1">*</span>}
     </label>
     {children}
   </div>
@@ -128,14 +129,14 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
   return (
     <form className="space-y-8" onSubmit={handleSubmit}>
       <FormSection title="Program Information">
-        <FormField label="Program Title*" className="md:col-span-2">
+        <FormField label="Program Title" required className="md:col-span-2">
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
           />
         </FormField>
-        <FormField label="Program Category*">
+        <FormField label="Program Category" required>
           <Select
             value={programCategory}
             onChange={(e) => setProgramCategory(e.target.value)}
@@ -148,10 +149,11 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
             <option value="apprenticeship">Apprenticeship</option>
           </Select>
         </FormField>
-        <FormField label="Program Format">
+        <FormField label="Program Format" required>
           <Select
             value={programFormat}
             onChange={(e) => setProgramFormat(e.target.value)}
+            required
           >
             <option value="remote">Remote</option>
             <option value="in_person">In-Person</option>
@@ -161,7 +163,7 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
       </FormSection>
 
       <FormSection title="Program Schedule">
-        <FormField label="Start Date*">
+        <FormField label="Start Date" required>
           <Input
             type="date"
             value={startDate}
@@ -169,7 +171,7 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
             required
           />
         </FormField>
-        <FormField label="End Date*">
+        <FormField label="End Date" required>
           <Input
             type="date"
             value={endDate}
@@ -186,7 +188,7 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
           />
         </FormField>
 
-        <FormField label="Location*">
+        <FormField label="Location" required>
           <Input
             type="text"
             value={applicationLocation}
@@ -197,7 +199,7 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
       </FormSection>
 
       <FormSection title="Details & Branding">
-        <FormField label="Description & Activities*" className="md:col-span-2">
+        <FormField label="Description & Activities" required className="md:col-span-2">
           <Textarea
             rows={8}
             value={description}
@@ -215,7 +217,7 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
             placeholder="e.g., JavaScript,Project Management"
           />
         </FormField>
-        <FormField label="Program Picture" className="md:col-span-2">
+        <FormField label="Program Picture" className="md:col-span-2" required>
           {isEditMode && initialData.program_picture_url && !programPicture && (
             <div className="mb-4">
               <p className="text-sm text-gray-500 mb-2">Current Image:</p>

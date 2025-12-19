@@ -34,15 +34,15 @@ export const baseCompanySchema = z.object({
 // 2. THE FIX IS HERE:
 //    We create a NEW schema specifically for the edit form by "picking"
 //    only the fields that are actually editable on the page.
-export const editCompanySchema = baseCompanySchema.pick({
-  company_name: true,
-  description: true,
-  industry: true,
-  phone: true,
-  address: true,
-  website_url: true,
-  logo_url: true,
-  cover_image_url: true,
+export const editCompanySchema = z.object({
+  company_name: baseCompanySchema.shape.company_name,
+  description: baseCompanySchema.shape.description,
+  industry: baseCompanySchema.shape.industry,
+  phone: baseCompanySchema.shape.phone,
+  address: baseCompanySchema.shape.address,
+  website_url: baseCompanySchema.shape.website_url,
+  logo_url: baseCompanySchema.shape.logo_url.optional().or(z.literal("")).optional(),
+  cover_image_url: baseCompanySchema.shape.cover_image_url.optional().or(z.literal("")).optional(),
 });
 
 // 3. Create a TypeScript type from our new, specific edit schema.
