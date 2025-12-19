@@ -1,14 +1,6 @@
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // ESLint and TypeScript settings
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-
   // Server configuration for large file uploads
   experimental: {
     serverActions: {
@@ -44,6 +36,12 @@ const nextConfig = {
         hostname: 'tmvipinvvhgklmqwvows.supabase.co',
         port: '',
         pathname: '/storage/v1/object/public/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'tmvipinvvhgklmqwvows.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/sign/**',
       },
       {
         protocol: 'https',

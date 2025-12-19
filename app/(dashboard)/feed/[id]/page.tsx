@@ -159,15 +159,14 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50 pb-80 md:pb-0">
+    <div className="min-h-screen bg-gradient-to-br from-[#F6F8FF] via-white to-slate-50 pb-80 md:pb-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         {/* Back Button */}
-        <div className="flex justify-between p-6">
-        <BackButton />
-        {opportunityStatus.isOpen &&
-        <RegisterGoDown href="getStarted" />
-        
-        }
+        <div className="flex justify-between items-center mb-6">
+          <BackButton />
+          {opportunityStatus.isOpen && (
+            <RegisterGoDown href="getStarted" />
+          )}
         </div>
 
         {/* Header */}
@@ -188,15 +187,15 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
             {company && <CompanyCard company={company} />}
 
             {/* Description */}
-            <Card className="p-6 sm:p-8 border-0 shadow-lg">
+            <Card className="p-6 sm:p-8 border-2 border-blue-50 shadow-xl shadow-blue-100/50 rounded-[2rem] bg-white hover:shadow-2xl hover:shadow-blue-200/50 transition-all duration-500">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-1 h-8 bg-gradient-to-b from-blue-600 to-indigo-600 rounded-full" />
-                <h2 className="text-2xl font-bold text-gray-900">
+                <div className="w-1.5 h-10 bg-gradient-to-b from-[#155DFC] to-[#1A3CB9] rounded-full" />
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase">
                   About this {item._type.slice(0, -1)}
                 </h2>
               </div>
               <div className="prose prose-gray max-w-none">
-                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                <p className="text-slate-700 leading-relaxed whitespace-pre-wrap font-medium">
                   {item.description || "No description provided."}
                 </p>
               </div>
@@ -266,9 +265,9 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
               )}
 
               {/* Additional Info Card */}
-              <Card className="p-6 border-0 shadow-lg bg-gradient-to-br from-blue-50 to-indigo-50">
-                <h3 className="font-bold text-gray-900 mb-3">Need Help?</h3>
-                <p className="text-sm text-gray-700 leading-relaxed">
+              <Card className="p-6 border-2 border-blue-50 shadow-lg rounded-[2rem] bg-gradient-to-br from-[#F6F8FF] to-blue-50/50">
+                <h3 className="font-black text-slate-900 mb-3 text-sm uppercase tracking-wider">Need Help?</h3>
+                <p className="text-sm text-slate-700 leading-relaxed font-medium">
                   Have questions about this opportunity? Contact the company
                   directly or reach out to our support team.
                 </p>

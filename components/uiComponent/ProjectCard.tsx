@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Play, Calendar, Github, Clock, ExternalLink, AlertCircle, CheckCircle2, Eye, MoreHorizontal, User } from "lucide-react";
+import { Play, Calendar, Github, Clock, ExternalLink, Eye, User, Share2 } from "lucide-react";
 import ContributeModal from "./ContributeModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { normalizeImageSrc } from "@/lib/utils";
 
 interface Project {
   id: string;
@@ -33,7 +34,7 @@ interface User {
   hard_skills?: string[];
 }
 
-interface MyMonthProjectProps {
+interface ProjectCardProps {
   user: User;
   project: Project | null;
   isVisitor?: boolean;
@@ -41,13 +42,13 @@ interface MyMonthProjectProps {
   isOwner?: boolean;
 }
 
-export default function MyMonthProject({ 
+export default function ProjectCard({ 
   user, 
   project, 
   profileOwnerId, 
   isVisitor = false,
   isOwner
-}: MyMonthProjectProps) {
+}: ProjectCardProps) {
   const [showVideo, setShowVideo] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [showContributeModal, setShowContributeModal] = useState(false);
@@ -80,33 +81,23 @@ export default function MyMonthProject({
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
-  // Get image URL with fallback
-  const getImageUrl = (url: string | null) => {
-    if (!url) return '/projects.png';
-    // Allow any non-empty string as a valid source (could be relative path or external URL)
-    if (url.trim().length > 0) {
-      return url;
-    }
-    return '/projects.png';
-  };
-
-  const coverImageUrl = getImageUrl(project?.cover_image_url ?? null);
+  const coverImageUrl = normalizeImageSrc(project?.cover_image_url, '/projects.png');
 
   // --- CARD 1: UNDER REVIEW / PENDING ---
   if (project && project.status !== 'valid' && isVisitor) {
     return (
-      <div className="bg-card rounded-3xl border border-warning/20 shadow-sm overflow-hidden hover:shadow-md transition-all duration-300">
+      <div className="bg-[#F6F8FF] rounded-3xl border border-blue-100 shadow-sm overflow-hidden hover:shadow-md transition-all duration-300">
         <div className="p-6">
             <div className="flex items-start gap-5">
                 <div className="flex-shrink-0">
-                    <div className="w-14 h-14 bg-warning/10 rounded-2xl flex items-center justify-center border border-warning/20">
-                        <Clock className="w-6 h-6 text-warning" />
+                    <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center border border-blue-100">
+                        <Clock className="w-6 h-6 text-[#155DFC]" />
                     </div>
                 </div>
                 <div className="flex-1">
                     <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-base font-bold text-foreground">Project Pending</h3>
-                        <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">Reviewing</Badge>
+                        <h3 className="text-base font-bold text-slate-900">Project Pending</h3>
+                        <Badge variant="outline" className="bg-blue-50 text-[#155DFC] border-blue-200">Reviewing</Badge>
                     </div>
                     <p className="text-sm text-muted-foreground mb-4">
                         This project is currently under quality review by our team.
@@ -115,7 +106,7 @@ export default function MyMonthProject({
                          {user.avatar_url ? (
                              <Image src={user.avatar_url} alt={user.full_name} width={28} height={28} className="rounded-full ring-2 ring-card shadow-sm" />
                          ) : (
-                             <div className="w-7 h-7 bg-muted rounded-full flex items-center justify-center text-xs font-bold text-muted-foreground">
+                             <div className="w-7 h-7 bg-blue-100 rounded-full flex items-center justify-center text-xs font-bold text-[#155DFC]">
                                  {user.full_name.charAt(0)}
                              </div>
                          )}
@@ -131,16 +122,16 @@ export default function MyMonthProject({
   // --- CARD 2: EMPTY STATE ---
   if (!project) {
     return (
-      <div className="bg-card rounded-3xl border border-border shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 group h-full flex flex-col">
+      <div className="bg-white rounded-3xl border border-blue-50 shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 group h-full flex flex-col">
           <div className="p-8 flex flex-col items-center text-center justify-center flex-1">
-             <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                 <User className="w-8 h-8 text-muted-foreground" />
+             <div className="w-16 h-16 bg-[#F6F8FF] rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                 <User className="w-8 h-8 text-blue-300" />
              </div>
              <h3 className="text-lg font-bold text-foreground mb-1">{user.full_name}</h3>
              <p className="text-sm text-muted-foreground mb-6">No active project yet.</p>
              {isMyProject && (
-                 <Button variant="secondary-outline" className="rounded-full border-dashed border-border hover:border-primary hover:text-primary hover:bg-primary/10">
-                     Create Project
+                 <Button asChild className="rounded-full bg-[#155DFC] hover:bg-[#1A3CB9] text-white">
+                    <Link href="/dashboard/projects">Create Project</Link>
                  </Button>
              )}
           </div>
@@ -150,64 +141,66 @@ export default function MyMonthProject({
 
   // --- CARD 3: ACTIVE PROJECT (MAIN) ---
   return (
-    <div className="bg-card rounded-3xl border border-border shadow-sm hover:shadow-xl hover:shadow-muted/50 transition-all duration-300 overflow-hidden flex flex-col h-full group relative">
+    <div className="bg-white rounded-3xl border border-blue-50 shadow-sm hover:shadow-2xl hover:shadow-blue-200/40 transition-all duration-500 overflow-hidden flex flex-col h-full group relative">
       
       {/* 1. Cover Media Section */}
-      <div className="relative aspect-[4/3] w-full bg-muted overflow-hidden">
+      <div className="relative aspect-[16/10] w-full bg-slate-50 overflow-hidden">
         {!showVideo ? (
           <>
             {/* Image */}
-            <div className="absolute inset-0 transition-transform duration-700 group-hover:scale-105">
+            <div className="absolute inset-0 transition-transform duration-1000 group-hover:scale-110">
                 {!imageError && coverImageUrl && coverImageUrl !== '/projects.png' ? (
                   <Image
                     src={coverImageUrl} 
                     alt={project.project_title}
                     fill
                     className="object-cover"
+                    priority
                     onError={() => setImageError(true)}
                   />
                 ) : (
-                   <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-muted/50 to-muted p-6 text-center">
-                      <div className="w-12 h-12 bg-card rounded-xl shadow-sm flex items-center justify-center mb-3">
-                        <Calendar className="w-6 h-6 text-muted-foreground" />
+                   <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#F6F8FF] to-[#E0E7FF] p-6 text-center">
+                      <div className="w-14 h-14 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-3">
+                        <Calendar className="w-7 h-7 text-[#155DFC]" />
                       </div>
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">No Cover Image</p>
+                      <p className="text-[10px] font-bold text-[#155DFC] uppercase tracking-[0.2em]">Project Overview</p>
                    </div>
                 )}
             </div>
 
             {/* Overlays */}
-            <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
             {/* Top Badges */}
-            <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
-               {isVisitor && (
-                   <Badge className="bg-card/90 text-foreground hover:bg-card backdrop-blur-md shadow-sm border-none font-semibold px-2 py-1">
-                      Viewing
-                   </Badge>
-               )}
-               {/* Status Indicator */}
-               <div className="ml-auto">
-                   <div className="flex items-center gap-1.5 px-2.5 py-1 bg-success/90 backdrop-blur-md text-success-foreground rounded-full text-[10px] font-bold shadow-sm">
-                      <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
-                      LIVE
-                   </div>
+            <div className="absolute top-4 left-4 right-4 flex justify-between items-start z-10">
+               <div className="flex gap-2">
+                 {isVisitor && (
+                     <Badge className="bg-white/90 text-[#155DFC] hover:bg-white backdrop-blur-md shadow-sm border-none font-bold px-3 py-1 text-[10px] rounded-full">
+                        VIEWING
+                     </Badge>
+                 )}
+                 {project.status === 'valid' && (
+                    <div className="flex items-center gap-1.5 px-3 py-1 bg-[#155DFC]/90 backdrop-blur-md text-white rounded-full text-[10px] font-black shadow-lg">
+                        <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                        LIVE
+                    </div>
+                 )}
                </div>
+               
+               <button className="bg-white/20 hover:bg-white/40 backdrop-blur-md p-2 rounded-full text-white transition-all duration-300">
+                  <Share2 className="w-4 h-4" />
+               </button>
             </div>
 
             {/* Play Button (if video exists) */}
             {hasVideos && (
               <button 
                 onClick={(e) => { e.preventDefault(); setShowVideo(true); }}
-                className="absolute inset-0 m-auto w-14 h-14 bg-card/30 backdrop-blur-sm rounded-full flex items-center justify-center text-card-foreground hover:bg-card hover:text-primary transition-all duration-300 hover:scale-110 shadow-lg group/btn"
+                className="absolute inset-0 m-auto w-16 h-16 bg-[#155DFC]/80 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-[#155DFC] transition-all duration-500 hover:scale-110 shadow-2xl z-20"
               >
-                 <Play className="w-6 h-6 fill-current ml-1" />
+                 <Play className="w-7 h-7 fill-current ml-1" />
               </button>
             )}
-
-            {/* Bottom Info (Title on Image) */}
-            {/* Optional: We can put title over image like Instagram/TikTok style, but let's keep it below for cleaner read.
-                Instead, let's put the user avatar here overlapping the edge. */}
           </>
         ) : (
           /* Video Player Mode */
@@ -219,18 +212,18 @@ export default function MyMonthProject({
              )}
              <button 
                 onClick={(e) => { e.stopPropagation(); setShowVideo(false); }}
-                className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 backdrop-blur-md z-20"
+                className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 backdrop-blur-md z-30"
              >
-                <div className="w-4 h-4 flex items-center justify-center">✕</div>
+                <div className="w-4 h-4 flex items-center justify-center text-xs font-bold font-mono">X</div>
              </button>
 
              {/* Carousel Controls */}
              {videos.length > 1 && (
                  <>
-                    <button onClick={(e) => {e.stopPropagation(); prevVideo()}} className="absolute left-2 top-1/2 -translate-y-1/2 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-md">
+                    <button onClick={(e) => {e.stopPropagation(); prevVideo()}} className="absolute left-2 top-1/2 -translate-y-1/2 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-md z-30 transition-all">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                     </button>
-                    <button onClick={(e) => {e.stopPropagation(); nextVideo()}} className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-md">
+                    <button onClick={(e) => {e.stopPropagation(); nextVideo()}} className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-md z-30 transition-all">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                     </button>
                  </>
@@ -240,67 +233,72 @@ export default function MyMonthProject({
       </div>
 
       {/* 2. Content Body */}
-      <div className="p-5 flex flex-col flex-1">
-         {/* User & Meta */}
-         <div className="flex items-center gap-3 mb-3">
+      <div className="p-6 flex flex-col flex-1 relative bg-white">
+         {/* User Detail (Overlapping slightly) */}
+         <div className="flex items-center gap-3 mb-4">
              <div className="relative">
                  {user.avatar_url ? (
-                     <Image src={user.avatar_url} alt={user.full_name} width={40} height={40} className="rounded-full object-cover border border-border shadow-sm" />
+                     <div className="relative w-11 h-11">
+                        <Image src={user.avatar_url} alt={user.full_name} fill className="rounded-full object-cover border-2 border-white shadow-md" />
+                     </div>
                  ) : (
-                     <div className="w-10 h-10 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-full flex items-center justify-center text-primary font-bold text-sm border border-primary/20">
+                     <div className="w-11 h-11 bg-gradient-to-br from-[#155DFC] to-[#1A3CB9] rounded-full flex items-center justify-center text-white font-black text-sm border-2 border-white shadow-md">
                          {user.full_name.charAt(0)}
                      </div>
                  )}
                  {user.university && (
-                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-primary border-2 border-background rounded-full flex items-center justify-center" title={user.university}>
-                        <div className="w-1.5 h-1.5 bg-white rounded-full" />
+                    <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-[#155DFC] border-2 border-white rounded-full shadow-sm" title={user.university}>
+                        <div className="w-full h-full flex items-center justify-center text-[6px] text-white font-bold uppercase">Z</div>
                     </div>
                  )}
              </div>
              <div className="min-w-0">
-                 <p className="text-sm font-bold text-foreground truncate">{user.full_name}</p>
-                 <p className="text-xs text-muted-foreground truncate">{user.university || "Student"}</p>
+                 <p className="text-sm font-black text-slate-900 truncate leading-none mb-1">{user.full_name}</p>
+                 <p className="text-[10px] text-[#155DFC] font-bold uppercase tracking-wider truncate">{user.university || "Zigex Scholar"}</p>
              </div>
          </div>
 
          {/* Title & Desc */}
-         <div className="mb-4">
-             <Link href={`/feed/projects/${project.id}`} className="block group/title">
-                <h3 className="text-lg font-bold text-foreground leading-tight mb-2 group-hover/title:text-primary transition-colors line-clamp-1">
+         <div className="mb-5">
+             <Link href={`/feed/projects/${project.id}`} className="block group/title mb-2">
+                <h3 className="text-xl font-black text-slate-900 leading-tight group-hover/title:text-[#155DFC] transition-all duration-300 line-clamp-1">
                     {project.project_title}
                 </h3>
              </Link>
-             <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed h-[40px]">
+             <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed h-[40px]">
                  {project.description}
              </p>
          </div>
 
-         {/* Tags */}
-         {user.hard_skills && user.hard_skills.length > 0 && (
-             <div className="flex flex-wrap gap-1.5 mb-5 h-[26px] overflow-hidden">
-                 {user.hard_skills.slice(0, 3).map((skill, i) => (
-                     <span key={i} className="px-2 py-0.5 bg-muted text-muted-foreground text-[10px] uppercase tracking-wide font-bold rounded-md border border-border">
-                         {skill}
-                     </span>
-                 ))}
-                 {user.hard_skills.length > 3 && (
-                     <span className="px-2 py-0.5 bg-muted/50 text-muted-foreground text-[10px] font-bold rounded-md border border-muted">+{user.hard_skills.length - 3}</span>
-                 )}
-             </div>
-         )}
-         
-         <div className="mt-auto pt-4 border-t border-border flex items-center gap-3">
-             <Button asChild className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-semibold shadow-sm hover:shadow-primary/20 transition-all">
+         {/* Meta Stats Row */}
+         <div className="flex items-center gap-4 mb-6">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400">
+                <Clock className="w-3.5 h-3.5 text-blue-400" />
+                <span>{project.project_duration || 'Ongoing'}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 border-l border-slate-100 pl-4">
+                <Calendar className="w-3.5 h-3.5 text-blue-400" />
+                <span>{formatDate(project.created_at)}</span>
+            </div>
+         </div>
+
+         {/* Action Buttons */}
+         <div className="mt-auto pt-5 border-t border-[#F6F8FF] flex items-center gap-3">
+             <Button asChild className="flex-1 bg-[#155DFC] hover:bg-[#1A3CB9] text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-200 hover:shadow-blue-300 transition-all duration-300 h-11">
                  <Link href={`/feed/projects/${project.id}`}>
-                     View Details
+                     EXPLORE PROJECT
                  </Link>
              </Button>
+             
              {project.github_repository && (
-                 <Button asChild variant="secondary-outline" className="h-10 w-10 p-0 rounded-xl border-border hover:bg-muted hover:text-foreground text-muted-foreground">
-                     <a href={project.github_repository} target="_blank" rel="noopener noreferrer">
-                         <Github className="w-5 h-5" />
-                     </a>
-                 </Button>
+                 <a 
+                    href={project.github_repository} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="h-11 w-11 flex items-center justify-center bg-[#F6F8FF] text-[#155DFC] rounded-xl hover:bg-[#155DFC] hover:text-white transition-all duration-300 shadow-sm"
+                 >
+                     <Github className="w-5 h-5" />
+                 </a>
              )}
          </div>
 
