@@ -43,13 +43,11 @@ const Navbar: React.FC = () => {
             href="/"
             className="flex items-center gap-2 group transition-transform duration-300 hover:scale-105"
           >
-            <div className="relative w-28 h-8 lg:w-32 lg:h-9">
-              <Image
-                src="/zigex.svg"
+            <div className="flex items-center">
+              <img
+                src="https://i.ibb.co/Cp502Yby/logo.png"
                 alt="Zigex Logo"
-                fill
-                className="object-contain brightness-0 invert"
-                priority
+                className="h-10 w-auto object-contain brightness-0 invert"
               />
             </div>
           </Link>
