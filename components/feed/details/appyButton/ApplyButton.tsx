@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import ApplicationModal from "./Modal";
 import { SmartApplyPreview } from "./SmartApplyPreview";
 import { generateSmartApplicationDraft } from "@/lib/actions/feed/smart-apply.actions";
-import { MonetbilPaymentModal } from "@/components/payment/MonetbilPaymentModal";
+import { WaitingListModal } from "./WaitingListModal";
 import {
   Tooltip,
   TooltipContent,
@@ -46,7 +46,7 @@ export function ApplyButton({
 }: ApplyButtonProps) {
   const [showModal, setShowModal] = useState(false);
   const [showSmartPreview, setShowSmartPreview] = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false); // New state for payment
+  const [showWaitingList, setShowWaitingList] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingError, setGeneratingError] = useState<string | null>(null);
@@ -54,14 +54,7 @@ export function ApplyButton({
 
   // Triggered when user clicks "Smart Apply"
   const handleSmartApplyClick = () => {
-    setShowPaymentModal(true);
-  };
-
-  // Triggered after successful payment
-  const handlePaymentSuccess = async () => {
-    // For prototyping: Just confirm payment without generating
-    console.log("Payment successful for opportunity:", id);
-    // In a real app, you would verify the transaction here
+    setShowWaitingList(true);
   };
 
   if (!isOpen) {
@@ -110,17 +103,17 @@ export function ApplyButton({
             onMouseLeave={() => setIsHovered(false)}
             className="
               w-full relative overflow-hidden flex items-center justify-center gap-2 
-              px-6 py-4 rounded-lg font-semibold text-base 
-              transition-all duration-300 
-              bg-gradient-to-r from-blue-600 to-indigo-600
-              hover:from-blue-700 hover:to-indigo-700
+              px-6 py-4 rounded-2xl font-black text-sm uppercase tracking-wider
+              transition-all duration-500 
+              bg-gradient-to-r from-[#155DFC] to-[#1A3CB9]
+              hover:from-[#1A3CB9] hover:to-[#155DFC]
               text-white
-              shadow-lg hover:shadow-xl
+              shadow-2xl shadow-blue-200 hover:shadow-blue-300
               transform hover:scale-[1.02] active:scale-[0.98]
               group
             "
           >
-            {/* ... existing Apply Now button content ... */}
+            {/* Animated background */}
             <span
               className={`
                 absolute inset-0 bg-blue-400
@@ -148,19 +141,20 @@ export function ApplyButton({
             disabled={isGenerating}
             className="
               w-full relative overflow-hidden flex items-center justify-center gap-2 
-              px-6 py-4 rounded-lg font-semibold text-base 
-              transition-all duration-300 
-              bg-gradient-to-r from-orange-500 to-orange-600
-              hover:from-orange-600 hover:to-orange-700
-              disabled:from-orange-400 disabled:to-orange-500
-              text-white
-              shadow-md hover:shadow-lg
+              px-6 py-4 rounded-2xl font-black text-sm uppercase tracking-wider
+              transition-all duration-500 
+              bg-white border-2 border-[#155DFC]
+              hover:bg-[#F6F8FF]
+              disabled:bg-slate-100 disabled:border-slate-300
+              text-[#155DFC]
+              disabled:text-slate-400
+              shadow-xl shadow-blue-100 hover:shadow-2xl hover:shadow-blue-200
               transform hover:scale-[1.02] disabled:hover:scale-100 active:scale-[0.98]
               group
             "
           >
-            {/* ... existing Smart Apply button content ... */}
-            <span className="absolute inset-0 bg-gradient-to-r from-orange-400 to-orange-500 opacity-0 group-hover:opacity-20 transition-opacity" />
+            {/* Animated background */}
+            <span className="absolute inset-0 bg-gradient-to-r from-[#155DFC]/5 to-blue-100/5 opacity-0 group-hover:opacity-100 transition-opacity" />
 
             <span className="relative z-10 flex items-center justify-center gap-2">
               {isGenerating ? (
@@ -200,12 +194,12 @@ export function ApplyButton({
         />
       )}
 
-      {/* Payment Modal */}
-      <MonetbilPaymentModal
-        isOpen={showPaymentModal}
-        onClose={() => setShowPaymentModal(false)}
-        onSuccess={handlePaymentSuccess}
-        amount={1000} // Set your price here (e.g., 1000 XAF)
+      {/* Waiting List Modal */}
+      <WaitingListModal
+        isOpen={showWaitingList}
+        onClose={() => setShowWaitingList(false)}
+        opportunityTitle={title}
+        opportunityType={type}
       />
 
       {/* Smart Apply Preview Modal */}

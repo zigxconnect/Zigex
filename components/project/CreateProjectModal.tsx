@@ -249,7 +249,7 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
   const modalContent = (
     <>
       <div 
-        className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 safe-area-inset-bottom"
+        className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 safe-area-inset-bottom"
         onClick={(e) => {
           if (e.target === e.currentTarget && !isSubmitting) {
             handleClose();
@@ -257,90 +257,88 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
         }}
       >
         <div 
-          className="relative w-full sm:max-w-2xl bg-white dark:bg-gray-950 sm:rounded-2xl rounded-t-[2rem] shadow-2xl h-[95dvh] sm:h-[85vh] flex flex-col border-t sm:border border-gray-200 dark:border-gray-800 sm:m-4 overflow-hidden transition-all ease-out duration-300"
+          className="relative w-full sm:max-w-2xl bg-white sm:rounded-[2.5rem] rounded-t-[2.5rem] shadow-2xl h-[95dvh] sm:h-[85vh] flex flex-col border border-blue-50 sm:m-4 overflow-hidden transition-all ease-out duration-500"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header - Fully Responsive */}
-          <div className="sticky top-0 z-50 flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-950/95 backdrop-blur-md shrink-0 safe-area-top">
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-            <Button
-              variant="secondary"
-              onClick={handleClose}
-              disabled={isSubmitting}
-              className="h-9 w-9 rounded-full shrink-0 p-0 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
-            >
-              <X className="h-5 w-5 text-gray-600 dark:text-gray-300" />
-            </Button>
-              <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white truncate tracking-tight">
-                New Project
-              </h2>
+          {/* Header - Premium Brand Style */}
+          <div className="sticky top-0 z-50 flex items-center justify-between px-6 sm:px-8 py-5 border-b border-[#F6F8FF] bg-white/95 backdrop-blur-xl shrink-0 safe-area-top">
+            <div className="flex items-center gap-4 min-w-0 flex-1">
+              <button
+                onClick={handleClose}
+                disabled={isSubmitting}
+                className="h-10 w-10 rounded-full shrink-0 flex items-center justify-center bg-[#F6F8FF] hover:bg-blue-100 text-[#155DFC] transition-all duration-300"
+              >
+                <X className="h-5 w-5" />
+              </button>
+              <div className="min-w-0">
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900 truncate tracking-tight uppercase">
+                  New Project
+                </h2>
+                <p className="text-[10px] font-black text-[#155DFC] uppercase tracking-widest leading-none mt-1">
+                  Zigex Spotlight
+                </p>
+              </div>
             </div>
-            <Button
+            
+            <button
               onClick={handleSubmit}
               disabled={isSubmitting}
               className={`
                 relative overflow-hidden group
-                px-6 sm:px-8 py-2.5 
-                rounded-full font-bold text-sm sm:text-base 
-                h-10 sm:h-11 shrink-0 ml-3
-                text-white tracking-wide
-                bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600
-                hover:from-blue-500 hover:via-blue-400 hover:to-indigo-500
-                shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] 
-                hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] 
-                hover:scale-[1.02] active:scale-[0.97]
-                border border-blue-400/20
+                px-8 sm:px-10 py-3
+                rounded-2xl font-black text-xs sm:text-sm 
+                h-12 shrink-0 ml-4
+                text-white uppercase tracking-[0.1em]
+                bg-[#155DFC] hover:bg-[#1A3CB9]
+                shadow-xl shadow-blue-200/50
+                hover:shadow-blue-300/60
+                hover:scale-[1.02] active:scale-[0.98]
                 flex items-center justify-center
-                transition-all duration-300 ease-out
+                transition-all duration-500
                 ${isSubmitting ? 'opacity-80 cursor-wait' : ''}
               `}
             >
-              <div className="absolute inset-0 bg-white/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
-              <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-black/10 to-transparent" />
-              
-              <div className="relative flex items-center gap-2">
+              <div className="relative z-10 flex items-center gap-2">
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin text-white/90" />
-                    <span className="hidden sm:inline text-shadow-sm">Creating...</span>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Processing...</span>
                   </>
                 ) : (
                   <>
-                    <span className="text-shadow-sm">Create</span>
-                    <div className="bg-white/20 rounded-full p-0.5 ml-1 hidden sm:block">
-                      <Plus className="w-3 h-3 text-white" strokeWidth={3} />
-                    </div>
+                    <span>Publish</span>
                   </>
                 )}
               </div>
-            </Button>
+            </button>
           </div>
 
-          {/* Draft Notification */}
+          {/* Draft Notification - Themed */}
           {hasDraft && (
-            <div className="px-4 sm:px-6 pt-4 pb-2 shrink-0">
-              <div className="border border-amber-200 bg-amber-50 dark:bg-amber-950/20 rounded-lg p-3 sm:p-4">
-                <div className="text-sm text-amber-900 dark:text-amber-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <Save className="h-4 w-4 shrink-0" />
-                    <span>You have a saved draft</span>
+            <div className="px-6 sm:px-8 pt-6 pb-2 shrink-0">
+              <div className="bg-[#F6F8FF] border border-blue-100 rounded-[1.5rem] p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm border border-blue-50">
+                    <Save className="h-5 w-5 text-[#155DFC]" />
                   </div>
-                  <div className="flex gap-2 w-full sm:w-auto">
-                    <Button
-                      onClick={loadDraft}
-                      variant="secondary"
-                      className="flex-1 sm:flex-none h-8 text-xs px-3 py-1"
-                    >
-                      Load Draft
-                    </Button>
-                    <button
-                      onClick={clearDraft}
-                      className="flex-1 sm:flex-none h-8 text-xs px-3 py-1 bg-transparent text-amber-700 hover:bg-amber-100 rounded transition-colors"
-                    >
-                      Dismiss
-                    </button>
+                  <div className="text-left">
+                    <p className="text-xs font-black text-slate-900 uppercase">Saved Progress Found</p>
+                    <p className="text-[10px] text-slate-500 font-medium">Continue where you left off?</p>
                   </div>
+                </div>
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <button
+                    onClick={loadDraft}
+                    className="flex-1 sm:flex-none h-10 px-6 rounded-xl bg-[#155DFC] text-white text-[10px] font-black uppercase tracking-widest hover:bg-[#1A3CB9] transition-all"
+                  >
+                    Restore
+                  </button>
+                  <button
+                    onClick={clearDraft}
+                    className="flex-1 sm:flex-none h-10 px-6 rounded-xl bg-white border border-blue-100 text-[#155DFC] text-[10px] font-black uppercase tracking-widest hover:bg-blue-50 transition-all"
+                  >
+                    Dismiss
+                  </button>
                 </div>
               </div>
             </div>
@@ -348,125 +346,145 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
 
           {/* Content - Enhanced Scrolling */}
           <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto overscroll-contain">
-            <div className="px-4 sm:px-6 py-4 sm:py-6 space-y-5 sm:space-y-6">
+            <div className="px-6 sm:px-10 py-8 space-y-8">
               {/* Error Alert */}
               {submitError && (
-                <div className="border border-red-200 bg-red-50 dark:bg-red-950/20 rounded-lg p-3 sm:p-4">
-                  <p className="text-sm text-red-900 dark:text-red-100">{submitError}</p>
+                <div className="bg-red-50 border border-red-100 rounded-2xl p-4 animate-in fade-in slide-in-from-top-2">
+                  <p className="text-xs font-bold text-red-600 flex items-center gap-2">
+                    <X className="w-4 h-4" />
+                    {submitError}
+                  </p>
                 </div>
               )}
 
-              {/* Info Alert - Responsive */}
-              <div className="border border-blue-200 bg-blue-50 dark:bg-blue-950/20 rounded-lg p-3 sm:p-4">
-                <p className="text-sm text-blue-900 dark:text-blue-100 leading-relaxed">
-                  Share your project to find collaborators and get feedback! 🚀
-                </p>
+              {/* Info Alert - Premium Style */}
+              <div className="relative group">
+                <div className="absolute inset-0 bg-[#F6F8FF] rounded-3xl -rotate-1 transition-transform group-hover:rotate-0" />
+                <div className="relative bg-[#155DFC] rounded-3xl p-6 text-white shadow-xl shadow-blue-200/50">
+                  <div className="flex items-center gap-4">
+                    <div>
+                      <h4 className="font-black uppercase tracking-widest text-xs mb-1">Elite Showcase</h4>
+                      <p className="text-sm text-blue-50 leading-relaxed font-medium">
+                        Your project will be featured in the Zigex community feed. Make it count! 🚀
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              {/* Project Title */}
-              <InputField
-                id="title"
-                label="Project Title"
-                value={formData.title || ""}
-                onChange={(value) => handleInputChange("title", value)}
-                onBlur={() => handleBlur("title")}
-                placeholder="Give your project a name..."
-                required
-                error={errors.title}
-                touched={touched.title}
-                maxLength={100}
-                showCharCount
-              />
+              {/* Form Grid */}
+              <div className="space-y-6">
+                <InputField
+                  id="title"
+                  label="Project Title"
+                  value={formData.title || ""}
+                  onChange={(value) => handleInputChange("title", value)}
+                  onBlur={() => handleBlur("title")}
+                  placeholder="e.g. Next-Gen AI Workspace"
+                  required
+                  error={errors.title}
+                  touched={touched.title}
+                  maxLength={100}
+                  showCharCount
+                />
 
-              {/* Description */}
-              <TextareaField
-                id="description"
-                label="Description"
-                value={formData.description || ""}
-                onChange={(value) => handleInputChange("description", value)}
-                onBlur={() => handleBlur("description")}
-                placeholder="What's your project about? What problem does it solve?"
-                required
-                error={errors.description}
-                touched={touched.description}
-                maxLength={500}
-                rows={4}
-              />
+                <TextareaField
+                  id="description"
+                  label="Mission Description"
+                  value={formData.description || ""}
+                  onChange={(value) => handleInputChange("description", value)}
+                  onBlur={() => handleBlur("description")}
+                  placeholder="Tell the community about your breakthrough..."
+                  required
+                  error={errors.description}
+                  touched={touched.description}
+                  maxLength={500}
+                  rows={4}
+                />
 
-              {/* Cover Image */}
-              <ImageUpload
-                previewUrl={previewUrl}
-                onImageChange={handleImageChange}
-                onRemove={removeImage}
-                error={errors.coverImage}
-              />
+                <div className="p-1 bg-[#F6F8FF] rounded-[2rem] border border-blue-50 overflow-hidden">
+                  <ImageUpload
+                    previewUrl={previewUrl}
+                    onImageChange={handleImageChange}
+                    onRemove={removeImage}
+                    error={errors.coverImage}
+                  />
+                </div>
 
-              {/* GitHub Link */}
-              <InputField
-                id="github"
-                label="GitHub Repository"
-                type="url"
-                value={formData.githubLink || ""}
-                onChange={(value) => handleInputChange("githubLink", value)}
-                onBlur={() => handleBlur("githubLink")}
-                placeholder="https://github.com/username/repo"
-                error={errors.githubLink}
-                touched={touched.githubLink}
-                icon={<Github className="h-4 w-4 text-muted-foreground" />}
-              />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <InputField
+                    id="github"
+                    label="Repository"
+                    type="url"
+                    value={formData.githubLink || ""}
+                    onChange={(value) => handleInputChange("githubLink", value)}
+                    onBlur={() => handleBlur("githubLink")}
+                    placeholder="github.com/your/project"
+                    error={errors.githubLink}
+                    touched={touched.githubLink}
+                    icon={<Github className="h-4 w-4 text-[#155DFC]" />}
+                  />
 
-              {/* YouTube Link */}
-              <InputField
-                id="youtube"
-                label="YouTube Demo"
-                type="url"
-                value={formData.youtubeLink || ""}
-                onChange={(value) => handleInputChange("youtubeLink", value)}
-                onBlur={() => handleBlur("youtubeLink")}
-                placeholder="https://youtube.com/watch?v=..."
-                required
-                error={errors.youtubeLink}
-                touched={touched.youtubeLink}
-                icon={<Link className="h-4 w-4 text-muted-foreground" />}
-              />
+                  <InputField
+                    id="youtube"
+                    label="Video Demo"
+                    type="url"
+                    value={formData.youtubeLink || ""}
+                    onChange={(value) => handleInputChange("youtubeLink", value)}
+                    onBlur={() => handleBlur("youtubeLink")}
+                    placeholder="youtube.com/watch?v=..."
+                    required
+                    error={errors.youtubeLink}
+                    touched={touched.youtubeLink}
+                    icon={<Link className="h-4 w-4 text-[#155DFC]" />}
+                  />
+                </div>
 
-              {/* Duration */}
-              <SelectField
-                id="duration"
-                label="Project Duration"
-                value={formData.duration || ""}
-                onChange={(value) => handleInputChange("duration", value)}
-                onBlur={() => handleBlur("duration")}
-                options={PROJECT_DURATIONS}
-                placeholder="Select duration..."
-                required
-                error={errors.duration}
-                touched={touched.duration}
-                icon={<Calendar className="h-4 w-4 text-muted-foreground" />}
-              />
+                <SelectField
+                  id="duration"
+                  label="Project Timeline"
+                  value={formData.duration || ""}
+                  onChange={(value) => handleInputChange("duration", value)}
+                  onBlur={() => handleBlur("duration")}
+                  options={PROJECT_DURATIONS}
+                  placeholder="How long did it take?"
+                  required
+                  error={errors.duration}
+                  touched={touched.duration}
+                  icon={<Calendar className="h-4 w-4 text-[#155DFC]" />}
+                />
 
-              {/* Upload Short Video */}
-              <VideoUpload
-                videoPreviewUrl={videoPreviewUrl}
-                onVideoChange={handleVideoChange}
-                onRemove={removeVideo}
-                error={errors.uploadedVideo}
-                coverImageUrl={previewUrl}
-              />
+                <div className="p-1 bg-[#F6F8FF] rounded-[2rem] border border-blue-50 overflow-hidden">
+                  <VideoUpload
+                    videoPreviewUrl={videoPreviewUrl}
+                    onVideoChange={handleVideoChange}
+                    onRemove={removeVideo}
+                    error={errors.uploadedVideo}
+                    coverImageUrl={previewUrl}
+                  />
+                </div>
+              </div>
 
               {/* Bottom Spacing */}
               <div className="h-6 sm:h-4" />
             </div>
           </form>
 
-          {/* Footer - Enhanced */}
-          <div className="px-4 sm:px-6 py-3 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 shrink-0">
-            <p className="text-xs text-muted-foreground text-center">
-              <span className="text-red-500">*</span> Required fields • Your progress is automatically saved
-            </p>
+          {/* Footer - Premium Branding */}
+          <div className="px-8 py-4 border-t border-[#F6F8FF] bg-[#F6F8FF]/50 shrink-0">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-[10px] font-black text-[#155DFC] uppercase tracking-widest text-center sm:text-left">
+                Progress automatically secured
+              </p>
+              <div className="flex items-center gap-1">
+                <div className="w-1 h-1 bg-red-500 rounded-full animate-pulse" />
+                <span className="text-[10px] font-medium text-slate-400">All fields mandatory for elite status</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
     </>
   );
 

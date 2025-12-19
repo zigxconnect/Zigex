@@ -24,6 +24,7 @@ import { AgentLoader } from "./ui/AgentLoader";
 import { ToolCommandDock } from "./ui/ToolCommandDock";
 // @ts-ignore
 import { ArtifactPanel } from "./ui/ArtifactPanel";
+import { AIWaitingListModal } from "./AIWaitingListModal";
 
 // --- Types ---
 interface Message {
@@ -51,6 +52,10 @@ export function ZigAgentInterface({ user }: ZigAgentInterfaceProps) {
   // Artifact State
   const [activeArtifact, setActiveArtifact] = useState<any | null>(null);
   const [isArtifactOpen, setIsArtifactOpen] = useState(false);
+  
+  // Waiting List Modal State
+  const [showWaitingList, setShowWaitingList] = useState(false);
+  const [waitlistFeature, setWaitlistFeature] = useState("");
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -109,6 +114,14 @@ export function ZigAgentInterface({ user }: ZigAgentInterfaceProps) {
   const handleSendMessage = async () => {
     if (!inputValue.trim() && !selectedTool) return;
 
+    // Show waiting list modal instead of sending
+    const feature = selectedTool || "Fupro AI Chat";
+    setWaitlistFeature(feature);
+    setShowWaitingList(true);
+    return;
+
+    // Original code commented out - will be enabled when AI is ready
+    /*
     if (!hasStarted) setHasStarted(true);
 
     const activeTool = selectedTool; // Capture current tool
@@ -220,6 +233,7 @@ export function ZigAgentInterface({ user }: ZigAgentInterfaceProps) {
       };
       setMessages((prev) => [...prev, errorMsg]);
     }
+    */
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -231,8 +245,12 @@ export function ZigAgentInterface({ user }: ZigAgentInterfaceProps) {
 
   const handleToolSelect = (toolName: string) => {
     setIsToolsOpen(false);
-    setSelectedTool(toolName);
-    if(textareaRef.current) textareaRef.current.focus();
+    // Show waiting list modal when tool is selected
+    setWaitlistFeature(toolName);
+    setShowWaitingList(true);
+    // Original code commented out
+    // setSelectedTool(toolName);
+    // if(textareaRef.current) textareaRef.current.focus();
   };
 
   return (
@@ -406,6 +424,13 @@ export function ZigAgentInterface({ user }: ZigAgentInterfaceProps) {
 
         {/* Artifact Panel - Slide Out */}
         <ArtifactPanel isOpen={isArtifactOpen} onClose={() => setIsArtifactOpen(false)} artifact={activeArtifact} />
+        
+        {/* AI Waiting List Modal */}
+        <AIWaitingListModal 
+          isOpen={showWaitingList}
+          onClose={() => setShowWaitingList(false)}
+          featureName={waitlistFeature}
+        />
     </div>
   );
 }

@@ -1,4 +1,6 @@
 import React from "react";
+import Link from "next/link";
+import Image from "next/image";
 import { FaLinkedin, FaTwitter, FaFacebook } from "react-icons/fa";
 
 export const Footer: React.FC = () => {
@@ -6,7 +8,16 @@ export const Footer: React.FC = () => {
     <footer className="bg-[#193CB8] text-[#E2E8F0] py-12 px-6 mt-0 mx-0">
       <div className="max-w-7xl flex flex-col md:flex-row gap-10 md:gap-[12rem] p-2">
         <div className="md:w-[26rem]">
-          <h3 className="text-2xl font-bold">FutureProspect</h3>
+          <Link href="/" className="inline-block mb-4">
+            <div className="relative w-32 h-10">
+              <Image
+                src="/zigex.svg"
+                alt="Zigex Logo"
+                fill
+                className="object-contain brightness-0 invert"
+              />
+            </div>
+          </Link>
           <p className="text-gray-300 mt-2 text-[14px]">
             Connecting talented individuals with amazing internship
             opportunities in Bamenda and beyond. Your future starts here.
