@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Logo } from "@/components/layout/Logo";
 
 interface NavItem {
   name: string;
@@ -38,19 +39,12 @@ const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between">
           {/* Logo */}
-        <Link
-                    href="/"
-                    className="group flex items-center shadow-md p-2 rounded-lg transition-all duration-300 ease-in-out hover:shadow-xl hover:shadow-blue-500/25 hover:scale-105 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50"
-                  >
-                    <div className="text-white font-bold text-sm w-6 h-6 bg-gradient-to-br from-blue-600 to-blue-700 rounded-sm flex items-center justify-center shadow-md mr-1 transition-all duration-300 ease-in-out group-hover:shadow-lg group-hover:shadow-blue-500/50 group-hover:rotate-12 group-hover:scale-110 group-hover:bg-gradient-to-br group-hover:from-blue-500 group-hover:to-purple-600">
-                      <span className="transition-transform duration-300 ease-in-out group-hover:scale-125">
-                        Z
-                      </span>
-                    </div>
-                    <div className="sm:block font-bold text-blue-700 text-lg rounded flex items-center justify-center transition-all duration-300 ease-in-out group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-600 group-hover:to-purple-600 group-hover:scale-105">
-                      IGEX
-                    </div>
-                  </Link>
+          <Link
+            href="/"
+            className="group flex items-center shadow-md p-2 rounded-lg transition-all duration-300 ease-in-out hover:shadow-xl hover:shadow-blue-500/25 hover:scale-105 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50"
+          >
+           <Logo className="h-10 w-auto" />
+          </Link>
 
           {/* Desktop Navigation Links */}
           <div className="hidden lg:flex items-center space-x-6 xl:space-x-8">

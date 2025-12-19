@@ -4,6 +4,7 @@ import { Menu, Bell, LogOut } from "lucide-react";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { NotificationDropdown } from "./NotificationDropdown";
+import { Logo } from "@/components/layout/Logo";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -65,13 +66,7 @@ export const DashboardHeader = ({
             className="flex items-center group flex-shrink-0 p-1.2"
           >
             <div className="relative w-14 h-14 sm:w-11 sm:h-11 lg:w-12 lg:h-12 transition-transform group-hover:scale-105">
-              <Image
-                src="https://i.ibb.co/xKpXs0p3/z3.jpg"
-                alt="Zigex Logo"
-                fill
-                className="object-cover rounded-full"
-                priority
-              />
+              <Logo className="w-full h-full" />
             </div>
           </Link>
         </div>
