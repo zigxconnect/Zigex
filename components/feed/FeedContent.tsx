@@ -198,11 +198,11 @@ export function FeedContent({ initialData, error }: FeedContentProps) {
   if (error) {
     return (
       <div className="text-center py-20">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 mb-4">
-          <Search size={32} className="text-red-500" />
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-destructive/10 mb-4">
+          <Search size={32} className="text-destructive" />
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Feed</h3>
-        <p className="text-gray-600 text-sm">{error}</p>
+        <h3 className="text-lg font-semibold text-foreground mb-2">Error Loading Feed</h3>
+        <p className="text-muted-foreground text-sm">{error}</p>
       </div>
     );
   }
@@ -215,17 +215,17 @@ export function FeedContent({ initialData, error }: FeedContentProps) {
       {/* Content Grid */}
       {displayedData.length === 0 ? (
         <div className="text-center py-20 animate-fade-in">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-100 mb-4">
-            <Search size={40} className="text-gray-400" />
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-muted mb-4">
+            <Search size={40} className="text-muted-foreground" />
           </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">No Opportunities Found</h3>
-          <p className="text-gray-600">
+          <h3 className="text-xl font-bold text-foreground mb-2">No Opportunities Found</h3>
+          <p className="text-muted-foreground">
             {searchQuery ? "Try adjusting your search" : "Check back later for new opportunities"}
           </p>
           {searchQuery && (
             <button
               onClick={() => handleSearchChange("")}
-              className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all transform hover:scale-105 shadow-md hover:shadow-lg"
+              className="mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all transform hover:scale-105 shadow-md hover:shadow-lg"
             >
               Clear Search
             </button>
@@ -250,7 +250,7 @@ export function FeedContent({ initialData, error }: FeedContentProps) {
               <button
                 onClick={handleLoadMore}
                 disabled={isLoadingMore}
-                className="group px-8 py-3.5 bg-gradient-to-r from-blue-600 to-blue-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-blue-700 transition-all shadow-lg hover:shadow-2xl flex items-center gap-2 transform hover:scale-105 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
+                className="group px-8 py-3.5 bg-gradient-to-r from-primary to-primary text-primary-foreground font-semibold rounded-xl hover:from-primary/90 hover:to-primary/90 transition-all shadow-lg hover:shadow-2xl flex items-center gap-2 transform hover:scale-105 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
               >
                 {isLoadingMore ? (
                   <>
@@ -264,7 +264,7 @@ export function FeedContent({ initialData, error }: FeedContentProps) {
                   </>
                 )}
               </button>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 {remainingCount} more {remainingCount === 1 ? 'opportunity' : 'opportunities'} available
               </p>
             </div>
@@ -276,7 +276,7 @@ export function FeedContent({ initialData, error }: FeedContentProps) {
       {showScrollTop && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-8 right-8 p-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full shadow-2xl hover:shadow-3xl transition-all transform hover:scale-110 z-50 animate-bounce-in"
+          className="fixed bottom-8 right-8 p-3 bg-gradient-to-r from-primary to-secondary text-white rounded-full shadow-2xl hover:shadow-3xl transition-all transform hover:scale-110 z-50 animate-bounce-in"
           aria-label="Scroll to top"
         >
           <ArrowUp size={24} />

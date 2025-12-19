@@ -131,7 +131,7 @@ const BamendaHeroSection: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-secondary/10 relative overflow-hidden">
       {/* Modern Geometric Background */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Animated Grid Pattern */}
@@ -141,7 +141,7 @@ const BamendaHeroSection: React.FC = () => {
             {[...Array(144)].map((_, i) => (
               <div
                 key={i}
-                className="bg-blue-600 rounded-sm animate-pulse"
+                className="bg-primary rounded-sm animate-pulse"
                 style={gridStyles[i] || {}}
               />
             ))}
@@ -149,13 +149,13 @@ const BamendaHeroSection: React.FC = () => {
         </div>
 
         {/* Floating Elements */}
-        <div className="absolute top-20 left-10 w-24 h-24 bg-gradient-to-br from-orange-400 to-red-500 rounded-2xl opacity-10 animate-float"></div>
+        <div className="absolute top-20 left-10 w-24 h-24 bg-gradient-to-br from-warning to-destructive rounded-2xl opacity-10 animate-float"></div>
         <div
-          className="absolute top-40 right-20 w-16 h-16 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full opacity-10 animate-float"
+          className="absolute top-40 right-20 w-16 h-16 bg-gradient-to-br from-primary to-secondary rounded-full opacity-10 animate-float"
           style={{ animationDelay: "1s" }}
         ></div>
         <div
-          className="absolute bottom-40 left-20 w-32 h-32 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-3xl opacity-10 animate-float"
+          className="absolute bottom-40 left-20 w-32 h-32 bg-gradient-to-br from-success to-teal-500 rounded-3xl opacity-10 animate-float"
           style={{ animationDelay: "2s" }}
         ></div>
       </div>
@@ -174,8 +174,8 @@ const BamendaHeroSection: React.FC = () => {
                   : "translate-y-10 opacity-0"
               }`}
             >
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500/10 to-blue-500/10 rounded-full border border-blue-200">
-                <span className="text-sm font-semibold text-blue-700">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary/10 to-primary/10 rounded-full border border-primary/20">
+                <span className="text-sm font-semibold text-primary">
                   Your #1 Career Platform{" "}
                 </span>
               </div>
@@ -189,9 +189,9 @@ const BamendaHeroSection: React.FC = () => {
                   : "translate-y-10 opacity-0"
               }`}
             >
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-tight">
                 Launch Your
-                <span className="block bg-clip-text bg-gradient-to-r text-blue-600">
+                <span className="block bg-clip-text bg-gradient-to-r text-primary">
                   Dream Career
                 </span>
                 Here
@@ -206,7 +206,7 @@ const BamendaHeroSection: React.FC = () => {
                   : "translate-y-10 opacity-0"
               }`}
             >
-              <p className="text-lg sm:text-xl text-gray-700 leading-relaxed max-w-lg">
+              <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed max-w-lg">
                 Connect with top companies, gain real experience, and build the
                 professional network that will shape your future in Cameroon's
                 Silicon Valley.
@@ -223,13 +223,13 @@ const BamendaHeroSection: React.FC = () => {
             >
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="/sign-in">
-                  <button className="group cursor-pointer relative px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-800 text-white font-semibold rounded-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-orange-500/25">
+                  <button className="group cursor-pointer relative px-8 py-4 bg-gradient-to-r from-primary to-secondary text-primary-foreground font-semibold rounded-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-warning/25">
                     <span className="relative z-10 flex items-center justify-center gap-2">
                       <Users className="w-5 h-5" />
                       Get Started Now
                       <ArrowRight className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" />
                     </span>
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-700 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary to-secondary transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
                   </button>
                 </Link>
               </div>
@@ -248,7 +248,7 @@ const BamendaHeroSection: React.FC = () => {
                   {[1, 2, 3, 4, 5].map((i) => (
                     <div
                       key={i}
-                      className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-indigo-500 border-2 border-white flex items-center justify-center text-white text-xs font-bold"
+                      className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary border-2 border-background flex items-center justify-center text-primary-foreground text-xs font-bold"
                     >
                       {String.fromCharCode(64 + i)}
                     </div>
@@ -263,7 +263,7 @@ const BamendaHeroSection: React.FC = () => {
                       />
                     ))}
                   </div>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Trusted by 2,500+ students
                   </p>
                 </div>
@@ -281,16 +281,16 @@ const BamendaHeroSection: React.FC = () => {
           >
             <div className="relative">
               {/* Main Dashboard Mockup */}
-              <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
+              <div className="bg-card rounded-2xl shadow-2xl overflow-hidden border border-border">
                 {/* Header */}
-                <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
+                <div className="bg-gradient-to-r from-muted/50 to-muted px-6 py-4 border-b border-border">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-3 h-3 rounded-full bg-red-400"></div>
                       <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
                       <div className="w-3 h-3 rounded-full bg-green-400"></div>
                     </div>
-                    <div className="text-sm text-gray-600">
+                    <div className="text-sm text-muted-foreground">
                       Bamenda Internships Dashboard
                     </div>
                   </div>
@@ -324,20 +324,20 @@ const BamendaHeroSection: React.FC = () => {
                     ].map((job, i) => (
                       <div
                         key={i}
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                        className="flex items-center justify-between p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 to-blue-800"></div>
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary to-secondary"></div>
                           <div>
-                            <div className="font-medium text-gray-800 text-sm">
+                            <div className="font-medium text-foreground text-sm">
                               {job}
                             </div>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-muted-foreground">
                               Bamenda • Remote
                             </div>
                           </div>
                         </div>
-                        <div className="text-xs text-green-600 font-medium">
+                        <div className="text-xs text-success font-medium">
                           Active
                         </div>
                       </div>
@@ -347,7 +347,7 @@ const BamendaHeroSection: React.FC = () => {
               </div>
 
               {/* Floating Success Card */}
-              <div className="absolute -right-4 -bottom-4 bg-white rounded-xl shadow-xl p-6 border border-gray-200">
+              <div className="absolute -right-4 -bottom-4 bg-card rounded-xl shadow-xl p-6 border border-border">
                 <DeveloperAvatarOverlap
                   developers={[
                     {
@@ -397,13 +397,13 @@ const BamendaHeroSection: React.FC = () => {
               return (
                 <div
                   key={index}
-                  className="bg-white/80 backdrop-blur-sm rounded-xl p-4 text-center border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="bg-card/80 backdrop-blur-sm rounded-xl p-4 text-center border border-border/20 shadow-lg hover:shadow-xl transition-all duration-300"
                 >
                   <Icon className={`w-6 h-6 mx-auto mb-2 ${stat.color}`} />
-                  <div className="text-2xl font-bold text-gray-800">
+                  <div className="text-2xl font-bold text-foreground">
                     {stat.value}
                   </div>
-                  <div className="text-sm text-gray-600">{stat.label}</div>
+                  <div className="text-sm text-muted-foreground">{stat.label}</div>
                 </div>
               );
             })}
@@ -419,10 +419,10 @@ const BamendaHeroSection: React.FC = () => {
                 : "translate-y-10 opacity-0"
             }`}
           >
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl font-bold text-foreground mb-4">
               Why Choose Our Platform?
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               We've revolutionized the internship experience in Bamenda with
               cutting-edge technology and local expertise.
             </p>
@@ -444,7 +444,7 @@ const BamendaHeroSection: React.FC = () => {
                   onMouseLeave={() => setHoveredFeature(null)}
                 >
                   <div
-                    className={`group relative p-8 rounded-2xl bg-white/80 backdrop-blur-sm border border-white/20 shadow-lg hover:shadow-xl transition-all duration-500 hover:scale-105 ${
+                    className={`group relative p-8 rounded-2xl bg-card/80 backdrop-blur-sm border border-border/20 shadow-lg hover:shadow-xl transition-all duration-500 hover:scale-105 ${
                       hoveredFeature === index ? "shadow-2xl" : ""
                     }`}
                   >
@@ -460,10 +460,10 @@ const BamendaHeroSection: React.FC = () => {
                         </div>
                         {feature.metric && (
                           <div className="text-right">
-                            <div className="text-sm font-bold text-gray-800">
+                            <div className="text-sm font-bold text-foreground">
                               {feature.metric}
                             </div>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-muted-foreground">
                               Success Rate
                             </div>
                           </div>
@@ -471,10 +471,10 @@ const BamendaHeroSection: React.FC = () => {
                       </div>
                     </div>
                     <div className="relative z-10">
-                      <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-gray-700 transition-colors">
+                      <h3 className="text-xl font-bold text-foreground mb-3 group-hover:text-foreground/80 transition-colors">
                         {feature.title}
                       </h3>
-                      <p className="text-gray-600 leading-relaxed text-sm">
+                      <p className="text-muted-foreground leading-relaxed text-sm">
                         {feature.description}
                       </p>
                     </div>
@@ -503,10 +503,10 @@ const BamendaHeroSection: React.FC = () => {
           }`}
         >
           <div className="max-w-4xl mx-auto">
-            <h3 className="text-2xl font-bold text-gray-900 mb-8">
+            <h3 className="text-2xl font-bold text-foreground mb-8">
               Success Stories from Bamenda
             </h3>
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-white/20">
+            <div className="bg-card/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-border/20">
               <div className="flex items-center justify-center mb-4">
                 {[...Array(5)].map((_, i) => (
                   <Star
@@ -515,13 +515,13 @@ const BamendaHeroSection: React.FC = () => {
                   />
                 ))}
               </div>
-              <blockquote className="text-lg italic text-gray-700 mb-6">
+              <blockquote className="text-lg italic text-muted-foreground mb-6">
                 "{testimonials[currentSlide].quote}"
               </blockquote>
-              <div className="font-semibold text-gray-900">
+              <div className="font-semibold text-foreground">
                 {testimonials[currentSlide].name}
               </div>
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-muted-foreground">
                 {testimonials[currentSlide].role} at{" "}
                 {testimonials[currentSlide].company}
               </div>

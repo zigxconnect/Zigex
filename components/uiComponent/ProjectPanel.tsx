@@ -141,7 +141,7 @@ Looking forward to hearing from you 🚀`;
     return (
       <div>
         {/* Mobile Card for no project */}
-        <div className="md:hidden bg-linear-to-br from-white to-gray-50 rounded-2xl border-2 border-blue-100 shadow-lg overflow-hidden mb-6 relative">
+        <div className="md:hidden bg-linear-to-br from-white to-blue-50/30 rounded-2xl border-2 border-blue-100 shadow-lg overflow-hidden mb-6 relative">
           <div className="relative h-40 w-full bg-linear-to-br from-blue-400 via-purple-400 to-pink-400 overflow-hidden">
             <div className="absolute inset-0 opacity-10">
               <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
@@ -420,7 +420,7 @@ Looking forward to hearing from you 🚀`;
             </div>
           )}
 
-          <div className="relative h-56 w-full bg-gray-100 overflow-hidden group">
+          <div className="relative h-56 w-full bg-muted/30 overflow-hidden group">
             {coverImage ? (
               <Image 
                 src={coverImage} 
@@ -514,7 +514,7 @@ Looking forward to hearing from you 🚀`;
           </div>
         )}
 
-        <div className="relative h-40 w-full bg-gray-100 group overflow-hidden cursor-pointer">
+        <div className="relative h-40 w-full bg-muted/30 group overflow-hidden cursor-pointer">
           {coverImage ? (
             <Link href={youtubeVideoId ? `https://www.youtube.com/watch?v=${youtubeVideoId}` : project.github_repository || '#'} target="_blank">
               <Image 

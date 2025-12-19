@@ -63,10 +63,10 @@ export default function ProjectDetailCard({ project, owner }: { project: Project
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Title & Description Card */}
-          <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 backdrop-blur-sm border border-white/20">
+          <div className="bg-card rounded-2xl shadow-xl p-6 sm:p-8 backdrop-blur-sm border border-border/20">
             {/* Title Section */}
             <div className="mb-6">
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 leading-tight">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4 leading-tight">
                 {project.project_title}
               </h1>
               
@@ -82,7 +82,7 @@ export default function ProjectDetailCard({ project, owner }: { project: Project
       style={{ width: '40px', height: '40px' }}
     />
   ) : (
-    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-sm font-bold ring-2 ring-indigo-100">
+    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-primary-foreground text-sm font-bold ring-2 ring-primary/20">
       {owner?.full_name?.[0] || "U"}
     </div>
   )}
@@ -93,12 +93,12 @@ export default function ProjectDetailCard({ project, owner }: { project: Project
 </div>
 
               {/* Stats Bar */}
-              <div className="flex flex-wrap gap-4 sm:gap-6 pt-4 border-t border-gray-100">
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Calendar className="w-5 h-5 text-indigo-500" />
+              <div className="flex flex-wrap gap-4 sm:gap-6 pt-4 border-t border-border">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Calendar className="w-5 h-5 text-primary" />
                   <div>
-                    <span className="text-xs text-gray-500 block">Started</span>
-                    <span className="text-sm font-medium text-gray-900">
+                    <span className="text-xs text-muted-foreground block">Started</span>
+                    <span className="text-sm font-medium text-foreground">
                       {new Date(project.created_at).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
@@ -109,11 +109,11 @@ export default function ProjectDetailCard({ project, owner }: { project: Project
                 </div>
                 
                 {project.project_duration && (
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <Clock className="w-5 h-5 text-indigo-500" />
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Clock className="w-5 h-5 text-primary" />
                     <div>
-                      <span className="text-xs text-gray-500 block">Duration</span>
-                      <span className="text-sm font-medium text-gray-900">{project.project_duration}</span>
+                      <span className="text-xs text-muted-foreground block">Duration</span>
+                      <span className="text-sm font-medium text-foreground">{project.project_duration}</span>
                     </div>
                   </div>
                 )}
@@ -138,20 +138,20 @@ export default function ProjectDetailCard({ project, owner }: { project: Project
 
             {/* Description */}
             <div className="mb-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
-                <div className="w-1 h-6 bg-gradient-to-b from-blue-600 to-blue-500 rounded-full" />
+              <h2 className="text-xl font-bold text-foreground mb-3 flex items-center gap-2">
+                <div className="w-1 h-6 bg-gradient-to-b from-primary to-secondary rounded-full" />
                 About This Project
               </h2>
-              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+              <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
                 {project.description}
               </p>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-gray-100">
+            <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-border">
               <button 
                 onClick={() => setOpenContribute(true)} 
-                className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-blue-600 hover:to-blue-600 text-white rounded-xl font-medium transition-all duration-200 hover:shadow-lg hover:scale-105"
+                className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-primary-foreground rounded-xl font-medium transition-all duration-200 hover:shadow-lg hover:scale-105"
               >
                 <Heart className="w-5 h-5" />
                 Contribute to Project
@@ -171,7 +171,7 @@ export default function ProjectDetailCard({ project, owner }: { project: Project
 
               <Link 
                 href={`/dashboard/student/${project.student_id}`} 
-                className="flex items-center justify-center gap-2 px-6 py-3 bg-white hover:bg-gray-50 text-gray-900 border-2 border-gray-200 hover:border-indigo-300 rounded-xl font-medium transition-all duration-200 hover:shadow-lg"
+                className="flex items-center justify-center gap-2 px-6 py-3 bg-card hover:bg-muted text-foreground border-2 border-border hover:border-primary/50 rounded-xl font-medium transition-all duration-200 hover:shadow-lg"
               >
                 <User className="w-5 h-5" />
                 View Profile
@@ -181,16 +181,16 @@ export default function ProjectDetailCard({ project, owner }: { project: Project
 
           {/* Additional Info Card (if needed) */}
           {project.status !== 'valid' && (
-            <div className="bg-amber-50 border-l-4 border-amber-500 rounded-xl p-6 shadow-lg">
+            <div className="bg-warning/10 border-l-4 border-warning rounded-xl p-6 shadow-lg">
               <div className="flex items-start gap-3">
                 <div className="flex-shrink-0">
-                  <svg className="w-6 h-6 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-6 h-6 text-warning" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-amber-900">Pending Validation</h3>
-                  <p className="text-sm text-amber-800 mt-1">This project is currently under review and pending validation.</p>
+                  <h3 className="font-semibold text-warning">Pending Validation</h3>
+                  <p className="text-sm text-warning/80 mt-1">This project is currently under review and pending validation.</p>
                 </div>
               </div>
             </div>
@@ -214,7 +214,7 @@ export default function ProjectDetailCard({ project, owner }: { project: Project
                       className="rounded-full ring-4 ring-indigo-100"
                     />
                   ) : (
-                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-3xl font-bold ring-4 ring-indigo-100">
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-primary-foreground text-3xl font-bold ring-4 ring-primary/20">
                       {owner.full_name?.[0] || "U"}
                     </div>
                   )}
@@ -227,7 +227,7 @@ export default function ProjectDetailCard({ project, owner }: { project: Project
               </div>
               <Link
                 href={`/dashboard/student/${project.student_id}`}
-                className="block w-full px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-600 hover:to-blue-600 text-white rounded-xl font-medium transition-all duration-200 hover:shadow-lg text-center"
+                className="block w-full px-4 py-2.5 bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-primary-foreground rounded-xl font-medium transition-all duration-200 hover:shadow-lg text-center"
               >
                 View Full Profile
               </Link>
@@ -235,14 +235,14 @@ export default function ProjectDetailCard({ project, owner }: { project: Project
           )}
 
           {/* Call to Action Card */}
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl p-6 text-white">
+          <div className="bg-gradient-to-br from-primary to-primary/90 rounded-2xl shadow-xl p-6 text-primary-foreground">
             <h3 className="text-lg font-bold mb-3">Love this project?</h3>
-            <p className="text-indigo-100 text-sm mb-4 leading-relaxed">
+            <p className="text-primary-foreground/90 text-sm mb-4 leading-relaxed">
               Support the creator by contributing to this project or sharing it with others who might be interested.
             </p>
             <button 
               onClick={() => setOpenContribute(true)}
-              className="w-full px-4 py-2.5 bg-white text-indigo-600 hover:bg-indigo-50 rounded-xl font-medium transition-all duration-200 hover:shadow-lg flex items-center justify-center gap-2"
+              className="w-full px-4 py-2.5 bg-card text-foreground hover:bg-muted rounded-xl font-medium transition-all duration-200 hover:shadow-lg flex items-center justify-center gap-2"
             >
               <Heart className="w-4 h-4" />
               Contribute Now
@@ -250,23 +250,23 @@ export default function ProjectDetailCard({ project, owner }: { project: Project
           </div>
 
           {/* Project Stats Card */}
-          <div className="bg-white rounded-2xl shadow-xl p-6 backdrop-blur-sm border border-white/20">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Project Details</h3>
+          <div className="bg-card rounded-2xl shadow-xl p-6 backdrop-blur-sm border border-border/20">
+            <h3 className="text-lg font-bold text-foreground mb-4">Project Details</h3>
             <div className="space-y-4">
-              <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                <span className="text-sm text-gray-600">Status</span>
+              <div className="flex items-center justify-between py-3 border-b border-border">
+                <span className="text-sm text-muted-foreground">Status</span>
                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                   project.status === 'valid'
-                    ? 'bg-green-100 text-green-700' 
-                    : 'bg-amber-100 text-amber-700'
+                    ? 'bg-success/10 text-success' 
+                    : 'bg-warning/10 text-warning'
                 }`}>
                   {project.status === 'valid' ? 'Validated' : 'Pending'}
                 </span>
               </div>
               
-              <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                <span className="text-sm text-gray-600">Created</span>
-                <span className="text-sm font-medium text-gray-900">
+              <div className="flex items-center justify-between py-3 border-b border-border">
+                <span className="text-sm text-muted-foreground">Created</span>
+                <span className="text-sm font-medium text-foreground">
                   {new Date(project.created_at).toLocaleDateString('en-US', {
                     month: 'short',
                     year: 'numeric'
@@ -276,8 +276,8 @@ export default function ProjectDetailCard({ project, owner }: { project: Project
 
               {project.project_duration && (
                 <div className="flex items-center justify-between py-3">
-                  <span className="text-sm text-gray-600">Timeline</span>
-                  <span className="text-sm font-medium text-gray-900">{project.project_duration}</span>
+                  <span className="text-sm text-muted-foreground">Timeline</span>
+                  <span className="text-sm font-medium text-foreground">{project.project_duration}</span>
                 </div>
               )}
             </div>

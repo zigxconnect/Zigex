@@ -95,31 +95,31 @@ export default function MyMonthProject({
   // --- CARD 1: UNDER REVIEW / PENDING ---
   if (project && project.status !== 'valid' && isVisitor) {
     return (
-      <div className="bg-white rounded-3xl border border-amber-100 shadow-sm overflow-hidden hover:shadow-md transition-all duration-300">
+      <div className="bg-card rounded-3xl border border-warning/20 shadow-sm overflow-hidden hover:shadow-md transition-all duration-300">
         <div className="p-6">
             <div className="flex items-start gap-5">
                 <div className="flex-shrink-0">
-                    <div className="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center border border-amber-100">
-                        <Clock className="w-6 h-6 text-amber-500" />
+                    <div className="w-14 h-14 bg-warning/10 rounded-2xl flex items-center justify-center border border-warning/20">
+                        <Clock className="w-6 h-6 text-warning" />
                     </div>
                 </div>
                 <div className="flex-1">
                     <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-base font-bold text-slate-900">Project Pending</h3>
-                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">Reviewing</Badge>
+                        <h3 className="text-base font-bold text-foreground">Project Pending</h3>
+                        <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">Reviewing</Badge>
                     </div>
-                    <p className="text-sm text-slate-600 mb-4">
+                    <p className="text-sm text-muted-foreground mb-4">
                         This project is currently under quality review by our team.
                     </p>
                     <div className="flex items-center gap-3">
                          {user.avatar_url ? (
-                             <Image src={user.avatar_url} alt={user.full_name} width={28} height={28} className="rounded-full ring-2 ring-white shadow-sm" />
+                             <Image src={user.avatar_url} alt={user.full_name} width={28} height={28} className="rounded-full ring-2 ring-card shadow-sm" />
                          ) : (
-                             <div className="w-7 h-7 bg-slate-100 rounded-full flex items-center justify-center text-xs font-bold text-slate-500">
+                             <div className="w-7 h-7 bg-muted rounded-full flex items-center justify-center text-xs font-bold text-muted-foreground">
                                  {user.full_name.charAt(0)}
                              </div>
                          )}
-                         <span className="text-sm font-medium text-slate-700">{user.full_name}</span>
+                         <span className="text-sm font-medium text-foreground">{user.full_name}</span>
                     </div>
                 </div>
             </div>
@@ -131,15 +131,15 @@ export default function MyMonthProject({
   // --- CARD 2: EMPTY STATE ---
   if (!project) {
     return (
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 group h-full flex flex-col">
+      <div className="bg-card rounded-3xl border border-border shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 group h-full flex flex-col">
           <div className="p-8 flex flex-col items-center text-center justify-center flex-1">
-             <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                 <User className="w-8 h-8 text-slate-400" />
+             <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                 <User className="w-8 h-8 text-muted-foreground" />
              </div>
-             <h3 className="text-lg font-bold text-slate-900 mb-1">{user.full_name}</h3>
-             <p className="text-sm text-slate-500 mb-6">No active project yet.</p>
+             <h3 className="text-lg font-bold text-foreground mb-1">{user.full_name}</h3>
+             <p className="text-sm text-muted-foreground mb-6">No active project yet.</p>
              {isMyProject && (
-                 <Button variant="secondary-outline" className="rounded-full border-dashed border-slate-300 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50">
+                 <Button variant="secondary-outline" className="rounded-full border-dashed border-border hover:border-primary hover:text-primary hover:bg-primary/10">
                      Create Project
                  </Button>
              )}
@@ -150,10 +150,10 @@ export default function MyMonthProject({
 
   // --- CARD 3: ACTIVE PROJECT (MAIN) ---
   return (
-    <div className="bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 overflow-hidden flex flex-col h-full group relative">
+    <div className="bg-card rounded-3xl border border-border shadow-sm hover:shadow-xl hover:shadow-muted/50 transition-all duration-300 overflow-hidden flex flex-col h-full group relative">
       
       {/* 1. Cover Media Section */}
-      <div className="relative aspect-[4/3] w-full bg-slate-100 overflow-hidden">
+      <div className="relative aspect-[4/3] w-full bg-muted overflow-hidden">
         {!showVideo ? (
           <>
             {/* Image */}
@@ -167,28 +167,28 @@ export default function MyMonthProject({
                     onError={() => setImageError(true)}
                   />
                 ) : (
-                   <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-6 text-center">
-                      <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center mb-3">
-                        <Calendar className="w-6 h-6 text-slate-400" />
+                   <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-muted/50 to-muted p-6 text-center">
+                      <div className="w-12 h-12 bg-card rounded-xl shadow-sm flex items-center justify-center mb-3">
+                        <Calendar className="w-6 h-6 text-muted-foreground" />
                       </div>
-                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">No Cover Image</p>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">No Cover Image</p>
                    </div>
                 )}
             </div>
 
             {/* Overlays */}
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
+            <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
 
             {/* Top Badges */}
             <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
                {isVisitor && (
-                   <Badge className="bg-white/90 text-slate-800 hover:bg-white backdrop-blur-md shadow-sm border-none font-semibold px-2 py-1">
+                   <Badge className="bg-card/90 text-foreground hover:bg-card backdrop-blur-md shadow-sm border-none font-semibold px-2 py-1">
                       Viewing
                    </Badge>
                )}
                {/* Status Indicator */}
                <div className="ml-auto">
-                   <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-500/90 backdrop-blur-md text-white rounded-full text-[10px] font-bold shadow-sm">
+                   <div className="flex items-center gap-1.5 px-2.5 py-1 bg-success/90 backdrop-blur-md text-success-foreground rounded-full text-[10px] font-bold shadow-sm">
                       <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
                       LIVE
                    </div>
@@ -199,7 +199,7 @@ export default function MyMonthProject({
             {hasVideos && (
               <button 
                 onClick={(e) => { e.preventDefault(); setShowVideo(true); }}
-                className="absolute inset-0 m-auto w-14 h-14 bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white hover:text-blue-600 transition-all duration-300 hover:scale-110 shadow-lg group/btn"
+                className="absolute inset-0 m-auto w-14 h-14 bg-card/30 backdrop-blur-sm rounded-full flex items-center justify-center text-card-foreground hover:bg-card hover:text-primary transition-all duration-300 hover:scale-110 shadow-lg group/btn"
               >
                  <Play className="w-6 h-6 fill-current ml-1" />
               </button>
@@ -245,32 +245,32 @@ export default function MyMonthProject({
          <div className="flex items-center gap-3 mb-3">
              <div className="relative">
                  {user.avatar_url ? (
-                     <Image src={user.avatar_url} alt={user.full_name} width={40} height={40} className="rounded-full object-cover border border-slate-100 shadow-sm" />
+                     <Image src={user.avatar_url} alt={user.full_name} width={40} height={40} className="rounded-full object-cover border border-border shadow-sm" />
                  ) : (
-                     <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-sm border border-blue-50">
+                     <div className="w-10 h-10 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-full flex items-center justify-center text-primary font-bold text-sm border border-primary/20">
                          {user.full_name.charAt(0)}
                      </div>
                  )}
                  {user.university && (
-                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-blue-600 border-2 border-white rounded-full flex items-center justify-center" title={user.university}>
+                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-primary border-2 border-background rounded-full flex items-center justify-center" title={user.university}>
                         <div className="w-1.5 h-1.5 bg-white rounded-full" />
                     </div>
                  )}
              </div>
              <div className="min-w-0">
-                 <p className="text-sm font-bold text-slate-900 truncate">{user.full_name}</p>
-                 <p className="text-xs text-slate-500 truncate">{user.university || "Student"}</p>
+                 <p className="text-sm font-bold text-foreground truncate">{user.full_name}</p>
+                 <p className="text-xs text-muted-foreground truncate">{user.university || "Student"}</p>
              </div>
          </div>
 
          {/* Title & Desc */}
          <div className="mb-4">
              <Link href={`/feed/projects/${project.id}`} className="block group/title">
-                <h3 className="text-lg font-bold text-slate-900 leading-tight mb-2 group-hover/title:text-blue-600 transition-colors line-clamp-1">
+                <h3 className="text-lg font-bold text-foreground leading-tight mb-2 group-hover/title:text-primary transition-colors line-clamp-1">
                     {project.project_title}
                 </h3>
              </Link>
-             <p className="text-sm text-slate-600 line-clamp-2 leading-relaxed h-[40px]">
+             <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed h-[40px]">
                  {project.description}
              </p>
          </div>
@@ -279,24 +279,24 @@ export default function MyMonthProject({
          {user.hard_skills && user.hard_skills.length > 0 && (
              <div className="flex flex-wrap gap-1.5 mb-5 h-[26px] overflow-hidden">
                  {user.hard_skills.slice(0, 3).map((skill, i) => (
-                     <span key={i} className="px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] uppercase tracking-wide font-bold rounded-md border border-slate-200">
+                     <span key={i} className="px-2 py-0.5 bg-muted text-muted-foreground text-[10px] uppercase tracking-wide font-bold rounded-md border border-border">
                          {skill}
                      </span>
                  ))}
                  {user.hard_skills.length > 3 && (
-                     <span className="px-2 py-0.5 bg-slate-50 text-slate-400 text-[10px] font-bold rounded-md border border-slate-100">+{user.hard_skills.length - 3}</span>
+                     <span className="px-2 py-0.5 bg-muted/50 text-muted-foreground text-[10px] font-bold rounded-md border border-muted">+{user.hard_skills.length - 3}</span>
                  )}
              </div>
          )}
          
-         <div className="mt-auto pt-4 border-t border-slate-100 flex items-center gap-3">
-             <Button asChild className="flex-1 bg-slate-900 hover:bg-blue-600 text-white rounded-xl font-semibold shadow-sm hover:shadow-blue-200 transition-all">
+         <div className="mt-auto pt-4 border-t border-border flex items-center gap-3">
+             <Button asChild className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-semibold shadow-sm hover:shadow-primary/20 transition-all">
                  <Link href={`/feed/projects/${project.id}`}>
                      View Details
                  </Link>
              </Button>
              {project.github_repository && (
-                 <Button asChild variant="secondary-outline" className="h-10 w-10 p-0 rounded-xl border-slate-200 hover:bg-slate-50 hover:text-slate-900 text-slate-500">
+                 <Button asChild variant="secondary-outline" className="h-10 w-10 p-0 rounded-xl border-border hover:bg-muted hover:text-foreground text-muted-foreground">
                      <a href={project.github_repository} target="_blank" rel="noopener noreferrer">
                          <Github className="w-5 h-5" />
                      </a>

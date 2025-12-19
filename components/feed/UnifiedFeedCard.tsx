@@ -127,10 +127,10 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
         transitionDelay: `${index * 80}ms`,
       }}
     >
-      <Card className="group overflow-hidden border border-gray-200 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500 bg-white rounded-xl hover:-translate-y-2 h-full flex flex-col">
+      <Card className="group overflow-hidden border border-border hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 bg-card rounded-xl hover:-translate-y-2 h-full flex flex-col">
         <Link href={`/feed/${item.id}`} className="block h-full flex flex-col">
           {/* Image Section */}
-          <div className="relative h-48 flex-shrink-0 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-50">
+          <div className="relative h-48 flex-shrink-0 overflow-hidden bg-gradient-to-br from-muted to-muted/80">
             <Image
               src={getImageUrl()}
               alt={item.title}
@@ -142,17 +142,17 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
             />
             
             {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-blue-500/10 to-blue-600/5 opacity-60 group-hover:opacity-80 transition-opacity duration-500" />
+            <div className="absolute inset-0 bg-gradient-to-t from-primary/10 to-primary/5 opacity-60 group-hover:opacity-80 transition-opacity duration-500" />
             
             {/* Top Badges */}
             <div className="absolute top-3 left-3 flex flex-wrap gap-2 z-10">
-              <Badge className="bg-blue-50 text-blue-700 border-blue-200 border backdrop-blur-sm transform transition-transform duration-300 group-hover:scale-105">
+              <Badge className="bg-primary/10 text-primary border-primary/20 border backdrop-blur-sm transform transition-transform duration-300 group-hover:scale-105">
                 {item._type.charAt(0).toUpperCase() + item._type.slice(1, -1)}
               </Badge>
               
               {item.is_live && (
                 <Badge 
-                  className="bg-red-600 text-white border-red-700 backdrop-blur-sm cursor-pointer hover:bg-red-700 transition-all transform hover:scale-105"
+                  className="bg-destructive text-destructive-foreground border-destructive backdrop-blur-sm cursor-pointer hover:bg-destructive/90 transition-all transform hover:scale-105"
                   onClick={(e) => {
                     e.preventDefault();
                     onLiveClick?.();
@@ -169,7 +169,7 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
               <div className="absolute top-3 right-12 z-10 group/lock">
                 {isOpen ? (
                   <div 
-                    className="bg-gradient-to-br from-blue-600 to-blue-600 text-white   shadow-lg backdrop-blur-sm transform flex transition-all duration-300 hover:scale-110 hover:rotate-12 cursor-pointer p-2 align-center justify-center rounded-sm" 
+                    className="bg-gradient-to-br from-primary to-primary text-primary-foreground   shadow-lg backdrop-blur-sm transform flex transition-all duration-300 hover:scale-110 hover:rotate-12 cursor-pointer p-2 align-center justify-center rounded-sm" 
                     title={statusMessage}
                   >
                     <Unlock size={16} className="drop-shadow-md" />
@@ -177,7 +177,7 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
                   </div>
                 ) : (
                   <div 
-                    className="bg-gradient-to-br from-gray-500 to-gray-600 text-white p-2.5 rounded-full shadow-lg backdrop-blur-sm transform transition-all duration-300 hover:scale-110 hover:rotate-12 cursor-pointer" 
+                    className="bg-gradient-to-br from-muted-foreground/80 to-muted-foreground text-card-foreground p-2.5 rounded-full shadow-lg backdrop-blur-sm transform transition-all duration-300 hover:scale-110 hover:rotate-12 cursor-pointer" 
                     title={statusMessage}
                   >
                     <Lock size={16} className="drop-shadow-md" />
@@ -185,9 +185,9 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
                 )}
                 
                 {/* Tooltip */}
-                <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover/lock:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
+                <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-foreground text-background text-xs rounded-lg opacity-0 group-hover/lock:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
                   {statusMessage}
-                  <div className="absolute bottom-full right-4 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-900" />
+                  <div className="absolute bottom-full right-4 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-foreground" />
                 </div>
               </div>
             )}
@@ -205,13 +205,13 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
 
             {/* Bottom Stats - Enhanced */}
             <div className="absolute bottom-3 left-3 flex items-center gap-2 z-10">
-              <div className="bg-white/95 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 backdrop-blur-sm shadow-md transform transition-all duration-300 group-hover:scale-105">
-                <Star size={14} className="text-yellow-500 fill-yellow-500 animate-pulse" />
-                <span className="text-xs font-bold text-gray-900">{rating}</span>
+              <div className="bg-card/95 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 backdrop-blur-sm shadow-md transform transition-all duration-300 group-hover:scale-105">
+                <Star size={14} className="text-warning fill-warning animate-pulse" />
+                <span className="text-xs font-bold text-foreground">{rating}</span>
               </div>
-              <div className="bg-white/95 px-2.5 py-1.5 rounded-lg backdrop-blur-sm shadow-md transform transition-all duration-300 group-hover:scale-105">
-                <span className="text-xs font-semibold text-gray-700 flex items-center gap-1">
-                  <TrendingUp size={12} className="text-green-600" />
+              <div className="bg-card/95 px-2.5 py-1.5 rounded-lg backdrop-blur-sm shadow-md transform transition-all duration-300 group-hover:scale-105">
+                <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                  <TrendingUp size={12} className="text-success" />
                   {enrolled.toLocaleString()}
                 </span>
               </div>
@@ -222,7 +222,7 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
           <div className="p-5 space-y-3 flex-1 flex flex-col">
             {/* Company Info */}
             <div className="flex items-center gap-2.5 transform transition-transform duration-300 group-hover:translate-x-1">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0 ring-2 ring-gray-100 group-hover:ring-blue-200 transition-all duration-300">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-muted to-muted/80 flex items-center justify-center overflow-hidden flex-shrink-0 ring-2 ring-muted group-hover:ring-primary/20 transition-all duration-300">
                 <Image
                   src={normalizeImageSrc(item.company?.logo_url || "/seedLogo.png")}
                   alt={companyName}
@@ -232,45 +232,45 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
                 />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-gray-900 truncate">{companyName}</p>
+                <p className="text-sm font-bold text-foreground truncate">{companyName}</p>
               </div>
             </div>
 
             {/* Title */}
-            <h3 className="text-lg font-bold text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors duration-300 leading-snug min-h-[3.5rem]">
+            <h3 className="text-lg font-bold text-foreground line-clamp-2 group-hover:text-primary transition-colors duration-300 leading-snug min-h-[3.5rem]">
               {item.title}
             </h3>
 
             {/* Description */}
             {item.description && (
-              <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed min-h-[2.5rem]">
+              <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed min-h-[2.5rem]">
                 {item.description.replace(/<[^>]*>/g, "")}
               </p>
             )}
 
             {/* Meta Info */}
-            <div className="flex flex-wrap gap-3 text-xs text-gray-500 pt-2 border-t border-gray-100 flex-1 content-start">
-              <div className="flex items-center gap-1 transition-colors duration-300 hover:text-gray-700">
+            <div className="flex flex-wrap gap-3 text-xs text-muted-foreground pt-2 border-t border-border flex-1 content-start">
+              <div className="flex items-center gap-1 transition-colors duration-300 hover:text-foreground">
                 <MapPin size={13} className="flex-shrink-0" />
                 <span className="truncate">{item.location}</span>
               </div>
               
               {item._type === "programs" && (item as any).duration && (
-                <div className="flex items-center gap-1 transition-colors duration-300 hover:text-gray-700">
+                <div className="flex items-center gap-1 transition-colors duration-300 hover:text-foreground">
                   <Clock size={13} className="flex-shrink-0" />
                   <span>{(item as any).duration}</span>
                 </div>
               )}
               
               {item._type === "internships" && (item as any).department && (
-                <div className="flex items-center gap-1 transition-colors duration-300 hover:text-gray-700">
+                <div className="flex items-center gap-1 transition-colors duration-300 hover:text-foreground">
                   <Users size={13} className="flex-shrink-0" />
                   <span>{(item as any).department}</span>
                 </div>
               )}
 
               {item._type === "events" && (item as any).start_date && (
-                <div className="flex items-center gap-1 transition-colors duration-300 hover:text-gray-700">
+                <div className="flex items-center gap-1 transition-colors duration-300 hover:text-foreground">
                   <Calendar size={13} className="flex-shrink-0" />
                   <span>{formatDate((item as any).start_date)}</span>
                 </div>
@@ -282,7 +282,7 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
               <button 
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
-              className="relative cursor-pointer  overflow-hidden w-full py-2.5 px-4 bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold rounded-lg transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 transform hover:scale-[1.02]"
+              className="relative cursor-pointer  overflow-hidden w-full py-2.5 px-4 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold rounded-lg transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transform hover:scale-[1.02]"
             >
               {/* Shimmer effect */}
               <span
@@ -295,7 +295,7 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
 
               {/* Pulse background on hover */}
               {isHovered && (
-                <span className="absolute inset-0 bg-blue-400 animate-ping opacity-20" />
+                <span className="absolute inset-0 bg-primary/50 animate-ping opacity-20" />
               )}
 
               {/* Particle effects on hover */}

@@ -151,21 +151,21 @@ export const EditProfileModal = ({
 
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="relative bg-card rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
           {/* Header */}
-          <div className="sticky top-0 z-10 bg-white border-b border-gray-200 p-6 flex justify-between items-center">
+          <div className="sticky top-0 z-10 bg-card border-b border-border p-6 flex justify-between items-center">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Edit Profile</h2>
-              <p className="text-sm text-gray-500 mt-1">
+              <h2 className="text-2xl font-bold text-foreground">Edit Profile</h2>
+              <p className="text-sm text-muted-foreground mt-1">
                 Step {currentStep} of {totalSteps}
               </p>
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 hover:bg-muted rounded-lg transition-colors"
               type="button"
             >
-              <X size={24} className="text-gray-500" />
+              <X size={24} className="text-muted-foreground" />
             </button>
           </div>
 
@@ -179,7 +179,7 @@ export const EditProfileModal = ({
               </div>
 
               {/* Footer */}
-              <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4 sm:p-6 flex gap-3 sm:justify-between sm:gap-4">
+              <div className="sticky bottom-0 bg-card border-t border-border p-4 sm:p-6 flex gap-3 sm:justify-between sm:gap-4">
                 {currentStep > 1 && (
                   <Button
                     type="button"

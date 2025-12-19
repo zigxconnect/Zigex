@@ -35,13 +35,13 @@ const Navbar: React.FC = () => {
   };
 
   return (
-    <nav className="bg-blue-800 px-4 sm:px-6 lg:px-8 py-3 sticky top-0 z-50 shadow-md">
+    <nav className="bg-primary px-4 sm:px-6 lg:px-8 py-3 sticky top-0 z-50 shadow-md">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link
             href="/"
-            className="group flex items-center shadow-md p-2 rounded-lg transition-all duration-300 ease-in-out hover:shadow-xl hover:shadow-blue-500/25 hover:scale-105 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50"
+            className="group flex items-center shadow-md p-2 rounded-lg transition-all duration-300 ease-in-out hover:shadow-xl hover:shadow-primary/25 hover:scale-105 hover:bg-gradient-to-r hover:from-primary/10 hover:to-secondary/10"
           >
            <Logo className="h-10 w-auto" />
           </Link>
@@ -52,8 +52,8 @@ const Navbar: React.FC = () => {
               <Link
                 key={item.name}
                 href={item.href}
-                className={`text-white hover:text-blue-100 transition-colors duration-200 font-medium ${
-                  isActive(item.href) ? "border-b-2 border-white pb-1" : ""
+                className={`text-primary-foreground hover:text-primary-foreground/80 transition-colors duration-200 font-medium ${
+                  isActive(item.href) ? "border-b-2 border-primary-foreground pb-1" : ""
                 }`}
               >
                 {item.name}
@@ -65,13 +65,13 @@ const Navbar: React.FC = () => {
           <div className="hidden sm:flex items-center space-x-2 lg:space-x-3">
             <Link
               href="/sign-in"
-              className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 lg:px-4 lg:py-2 rounded-md transition-colors duration-200 font-medium text-sm lg:text-base"
+              className="bg-background text-primary hover:bg-background/90 px-3 py-2 lg:px-4 lg:py-2 rounded-md transition-colors duration-200 font-medium text-sm lg:text-base"
             >
               Sign In
             </Link>
             <Link
               href="/sign-up"
-              className="border border-white text-white hover:bg-white hover:text-blue-800 px-3 py-2 lg:px-4 lg:py-2 rounded-md transition-colors duration-200 font-medium text-sm lg:text-base"
+              className="border border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary px-3 py-2 lg:px-4 lg:py-2 rounded-md transition-colors duration-200 font-medium text-sm lg:text-base"
             >
               Sign Up
             </Link>
@@ -79,7 +79,7 @@ const Navbar: React.FC = () => {
 
           {/* Mobile Menu Button */}
           <button
-            className="lg:hidden text-white p-2 rounded-md hover:bg-blue-700 transition-colors duration-200"
+            className="lg:hidden text-primary-foreground p-2 rounded-md hover:bg-primary/90 transition-colors duration-200"
             onClick={toggleMobileMenu}
             aria-label="Toggle mobile menu"
           >
@@ -116,9 +116,9 @@ const Navbar: React.FC = () => {
                 key={item.name}
                 href={item.href}
                 onClick={closeMobileMenu}
-                className={`block text-white hover:text-blue-100 hover:bg-blue-700 py-3 px-4 rounded-md transition-colors duration-200 font-medium ${
+                className={`block text-primary-foreground hover:text-primary-foreground/80 hover:bg-primary/90 py-3 px-4 rounded-md transition-colors duration-200 font-medium ${
                   isActive(item.href)
-                    ? "bg-blue-700 border-l-4 border-white"
+                    ? "bg-primary-foreground/20 border-l-4 border-primary-foreground"
                     : ""
                 }`}
               >
@@ -131,14 +131,14 @@ const Navbar: React.FC = () => {
               <Link
                 href="/sign-in"
                 onClick={closeMobileMenu}
-                className="block w-full bg-orange-500 hover:bg-orange-600 text-white py-3 px-4 rounded-md transition-colors duration-200 font-medium text-center"
+                className="block w-full bg-background text-primary hover:bg-background/90 py-3 px-4 rounded-md transition-colors duration-200 font-medium text-center"
               >
                 Sign In
               </Link>
               <Link
                 href="/sign-up"
                 onClick={closeMobileMenu}
-                className="block w-full border border-white text-white hover:bg-white hover:text-blue-800 py-3 px-4 rounded-md transition-colors duration-200 font-medium text-center"
+                className="block w-full border border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary py-3 px-4 rounded-md transition-colors duration-200 font-medium text-center"
               >
                 Sign Up
               </Link>

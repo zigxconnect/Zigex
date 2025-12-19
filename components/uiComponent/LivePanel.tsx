@@ -168,7 +168,7 @@ export const LivePanel: React.FC<LivePanelProps> = ({
                 <p className="text-sm text-white/90 md:text-gray-600 mt-1">{postingType} • Live</p>
               </div>
               <div className="ml-2">
-                <Button className="bg-orange-500" onClick={() => { window.open(applyUrl || "#", "_blank"); }}>
+                <Button className="bg-warning text-primary-foreground hover:bg-warning/90" onClick={() => { window.open(applyUrl || "#", "_blank"); }}>
                   Apply
                 </Button>
               </div>
@@ -176,9 +176,9 @@ export const LivePanel: React.FC<LivePanelProps> = ({
           </div>
 
           {/* Right - description */}
-          <div className={`w-full md:w-1/2 bg-white p-6 max-h-[70vh] overflow-auto ${showDescription ? "" : "hidden md:block"}`}>
+          <div className={`w-full md:w-1/2 bg-card p-6 max-h-[70vh] overflow-auto ${showDescription ? "" : "hidden md:block"}`}>
             <h4 className="text-xl font-semibold mb-2">About this {postingType}</h4>
-            <div className="prose max-w-none text-sm text-gray-700" dangerouslySetInnerHTML={{ __html: description || "<p>No description</p>" }} />
+            <div className="prose max-w-none text-sm text-muted-foreground" dangerouslySetInnerHTML={{ __html: description || "<p>No description</p>" }} />
           </div>
 
           {/* Mobile Read more fixed button */}

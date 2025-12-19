@@ -134,26 +134,26 @@ export default function SimilarStudentsSidebar({
             </div>
 
             <div className="mt-4 text-center">
-              <button onClick={() => setOpen(false)} className="px-4 py-2 rounded-lg border">Close</button>
+              <button onClick={() => setOpen(false)} className="px-4 py-2 rounded-lg border border-border">Close</button>
             </div>
           </div>
         </div>
       )}
 
     
-      <aside className="hidden lg:block fixed top-28 right-6 w-80 lg:w-96 h-[calc(100vh-7rem)] overflow-y-auto p-4 bg-white rounded-l-3xl shadow-2xl border border-gray-100 custom-scroll">
+      <aside className="hidden lg:block fixed top-28 right-6 w-80 lg:w-96 h-[calc(100vh-7rem)] overflow-y-auto p-4 bg-card rounded-l-3xl shadow-2xl border border-border custom-scroll">
         <div className="flex items-center justify-between mb-3">
 
        
-          <h3 className="text-lg font-bold">Zigx with similar skills</h3>
-          <span className="text-xs text-gray-400">Connect • Explore</span>
+          <h3 className="text-lg font-bold text-foreground">Zigx with similar skills</h3>
+          <span className="text-xs text-muted-foreground">Connect • Explore</span>
         </div>
 
-        <p className="text-sm text-gray-500 mb-4">We found people who share at least a few of your skills. You can connect with them.</p>
+        <p className="text-sm text-muted-foreground mb-4">We found people who share at least a few of your skills. You can connect with them.</p>
 
         <div className="space-y-3">
           {students.length === 0 && (
-            <p className="text-sm text-gray-500">No matches right now.</p>
+            <p className="text-sm text-muted-foreground">No matches right now.</p>
           )}
 
           {students.map((s) => (
@@ -163,9 +163,9 @@ export default function SimilarStudentsSidebar({
               tabIndex={0}
               onClick={() => router.push(`/dashboard/student/${s.username || s.id}`)}
               onKeyDown={(e) => { if (e.key === 'Enter') router.push(`/dashboard/student/${s.username || s.id}`); }}
-              className="flex items-start gap-3 p-3 rounded-xl hover:bg-gray-100 transition cursor-pointer"
+              className="flex items-start gap-3 p-3 rounded-xl hover:bg-muted/50 transition cursor-pointer"
             >
-              <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold">
+              <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold">
                 {s.avatar_url ? (
                   <Image src={s.avatar_url} alt={s.full_name || "S"} width={48} height={48} className="object-cover" />
                 ) : (
@@ -176,8 +176,8 @@ export default function SimilarStudentsSidebar({
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="font-semibold">{s.username || s.full_name || 'Unnamed'}</div>
-                    <div className="text-xs text-gray-500">{s.university}</div>
+                    <div className="font-semibold text-foreground">{s.username || s.full_name || 'Unnamed'}</div>
+                    <div className="text-xs text-muted-foreground">{s.university}</div>
                   </div>
                   <div className="flex items-center gap-2">
                     {/* subtle social style buttons (external links are safe because outer element is not an <a>) */}
@@ -187,7 +187,7 @@ export default function SimilarStudentsSidebar({
                       </a>
                     )}
                     {s.email && (
-                      <a href={`mailto:${s.email}`} className="p-2 rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100">
+                      <a href={`mailto:${s.email}`} className="p-2 rounded-md bg-primary/10 text-primary hover:bg-primary/20">
                         <Mail size={16} />
                       </a>
                     )}
@@ -195,10 +195,10 @@ export default function SimilarStudentsSidebar({
                 </div>
 
                 <div className="mt-2 flex items-center justify-between">
-                  <div className="text-xs text-gray-500">{(s.hard_skills || []).slice(0,3).join(', ')}</div>
+                  <div className="text-xs text-muted-foreground">{(s.hard_skills || []).slice(0,3).join(', ')}</div>
                   <div className="flex items-center gap-2">
-                    <button className="px-3 py-1 bg-gradient-to-r from-blue-600 to-blue-600 text-white rounded-full text-xs font-semibold hover:scale-105">Message</button>
-                    <button className="px-2 py-1 border rounded-md text-xs">View</button>
+                    <button className="px-3 py-1 bg-gradient-to-r from-primary to-primary/90 text-primary-foreground rounded-full text-xs font-semibold hover:scale-105">Message</button>
+                    <button className="px-2 py-1 border border-border rounded-md text-xs hover:bg-muted">View</button>
                   </div>
                 </div>
               </div>
@@ -207,7 +207,7 @@ export default function SimilarStudentsSidebar({
         </div>
 
         <div className="mt-4 text-center">
-          <Link href="/dashboard/student" className="text-sm text-blue-600 font-semibold">See more recommendations</Link>
+          <Link href="/dashboard/student" className="text-sm text-primary font-semibold">See more recommendations</Link>
         </div>
 
         <style jsx>{`
@@ -228,7 +228,7 @@ export default function SimilarStudentsSidebar({
           }
           
           .custom-scroll::-webkit-scrollbar-thumb {
-            background: linear-gradient(180deg, rgba(59,130,246,0.9), rgba(99,102,241,0.9));
+            background: var(--primary);
             border-radius: 999px;
             border: 2px solid rgba(255,255,255,0.6);
           }
@@ -236,7 +236,7 @@ export default function SimilarStudentsSidebar({
           /* Firefox */
           .custom-scroll {
             scrollbar-width: thin;
-            scrollbar-color: rgba(99,102,241,0.9) transparent;
+            scrollbar-color: var(--primary) transparent;
           }
         `}</style>
       </aside>

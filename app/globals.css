@@ -41,51 +41,70 @@
 }
 
 :root {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
+  /* Cloud White Background */
+  --background: #F6F8FF;
+  /* Charcoal Foreground */
+  --foreground: #000000;
+  
+  /* Zigex Signal Blue */
+  --card: #ffffff;
+  --card-foreground: #000000;
+  --popover: #ffffff;
+  --popover-foreground: #000000;
+  
+  /* Zigex Signal Blue */
+  --primary: #155DFC;
+  --primary-foreground: #ffffff;
+  
+  /* Deep Signal Blue */
+  --secondary: #1A3CB9;
+  --secondary-foreground: #ffffff;
+  
+  /* Slate Gray - REPLACED with Cool Blue/Gray for "No Gray Backgrounds" rule */
+  --muted: #F0F4FF; /* Was #6B7280 (text) / #F1F5F9 (bg) - now Cloud White tint */
+  --muted-foreground: #64748B; /* Slate 500 - keeps text readable but cool toned */
+  
+  /* Slate Gray for accents roughly - REPLACED */
+  --accent: #E0EAFF; /* Light Periwinkle */
+  --accent-foreground: #155DFC;
+  
+  /* Error Red */
+  --destructive: #DC2626;
+  --destructive-foreground: #ffffff;
 
+  /* Custom Status Colors */
+  --success: #16A34A;
+  --warning: #F59E0B;
+  --info: #38BDF8;
+
+  --border: #E0E7FF; /* Cool Blue Border */
+  --input: #E0E7FF;
+  --ring: #155DFC;
+  
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
   --radius-lg: 1rem;
   --radius: 0.625rem;
-  /* Light Mode - Blue & White Theme */
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.205 0 0); /* Dark Blue */
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.205 0 0);
-  --primary: oklch(0.488 0.243 264.376); /* Brand Blue #2563EB */
-  --primary-foreground: oklch(1 0 0); /* White */
-  --secondary: oklch(0.95 0.02 264.376); /* Light Blue Tint */
-  --secondary-foreground: oklch(0.3 0.1 264.376);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.92 0.05 264.376); /* Light Blue Accent */
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.488 0.243 264.376); /* Primary Blue Ring */
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.205 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.95 0.02 264.376);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.488 0.243 264.376);
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.205 0 0); /* Dark Blue Text */
+
+  --chart-1: #155DFC;
+  --chart-2: #1A3CB9;
+  --chart-3: #16A34A;
+  --chart-4: #F59E0B;
+  --chart-5: #DC2626;
+  
+  --sidebar: #F6F8FF;
+  --sidebar-foreground: #000000;
+  --sidebar-primary: #155DFC;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #E0EAFF;
+  --sidebar-accent-foreground: #155DFC;
+  --sidebar-border: #E0E7FF;
+  --sidebar-ring: #155DFC;
+
+  /* Zigex Gradients */
+  --gradient-primary: linear-gradient(135deg, #155DFC 0%, #1A3CB9 100%);
+  --gradient-dark: linear-gradient(135deg, #0F172A 0%, #1A3CB9 100%);
+  --gradient-mesh: radial-gradient(at top left, #F6F8FF 0%, transparent 50%), radial-gradient(at bottom right, #155DFC 0%, transparent 50%), #F6F8FF;
 }
 
 @theme inline {
@@ -93,6 +112,7 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -124,41 +144,71 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+  
+  --image-gradient-primary: var(--gradient-primary);
+  --image-gradient-dark: var(--gradient-dark);
+  --image-gradient-mesh: var(--gradient-mesh);
 }
 
 .dark {
-  /* Dark Mode - Dark Blue Theme */
-  --background: oklch(0.15 0.05 264.376); /* Very Deep Blue */
-  --foreground: oklch(0.985 0 0); /* White Text */
-  --card: oklch(0.2 0.05 264.376); /* Deep Blue Card */
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.2 0.05 264.376);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.488 0.243 264.376); /* Brand Blue */
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.3 0.05 264.376);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.25 0.02 264.376);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.3 0.05 264.376);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.488 0.243 264.376);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.15 0.05 264.376);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.25 0.05 264.376);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.488 0.243 264.376);
+  /* Dark Mode Adaptation */
+  /* Main Background - Dark Charcoal */
+  --background: #0F172A; /* Slate 900 */
+  --foreground: #F6F8FF;
+  
+  --card: #1E293B; /* Slate 800 */
+  --card-foreground: #F6F8FF;
+  --popover: #1E293B;
+  --popover-foreground: #F6F8FF;
+  
+  /* Keep Signal Blue as Primary */
+  --primary: #155DFC;
+  --primary-foreground: #ffffff;
+  
+  --secondary: #1A3CB9;
+  --secondary-foreground: #ffffff;
+  
+  --muted: #1E293B;
+  --muted-foreground: #94A3B8;
+  
+  --accent: #1E293B;
+  --accent-foreground: #F6F8FF;
+  
+  --destructive: #DC2626;
+  --destructive-foreground: #ffffff;
+  
+  --border: #1E293B;
+  --input: #1E293B;
+  --ring: #155DFC;
+  
+  --chart-1: #155DFC;
+  --chart-2: #1A3CB9;
+  --chart-3: #16A34A;
+  --chart-4: #F59E0B;
+  --chart-5: #DC2626;
+  
+  --sidebar: #0F172A;
+  --sidebar-foreground: #F6F8FF;
+  --sidebar-primary: #155DFC;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1E293B;
+  --sidebar-accent-foreground: #F6F8FF;
+  --sidebar-border: #1E293B;
+  --sidebar-ring: #155DFC;
+
+  /* Custom Status Colors - Slightly lighter for dark mode visibility if needed, but keeping brand consistent for now */
+  --success: #16A34A;
+  --warning: #F59E0B;
+  --info: #38BDF8;
+
+  /* Gradients for Dark Mode */
+  --gradient-primary: linear-gradient(135deg, #155DFC 0%, #1A3CB9 100%);
+  --gradient-dark: linear-gradient(135deg, #0F172A 0%, #1A3CB9 100%);
+  --gradient-mesh: radial-gradient(at top left, #0F172A 0%, transparent 50%), radial-gradient(at bottom right, #155DFC 0%, transparent 50%), #0F172A;
 }
 
 @layer base {
