@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { normalizeImageSrc } from "@/lib/utils";
-import { Calendar, Clock, ArrowRight, Sparkles } from "lucide-react";
+import { Calendar, Clock, ArrowRight, LayoutGrid } from "lucide-react";
 import { Badge } from "@/components/uiComponent/Badge";
 // import { Badge } from "@/components/ui/badge";
 
@@ -56,7 +56,7 @@ export function RelatedItems({ items, type, companyName }: RelatedItemsProps) {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-            <Sparkles size={20} className="text-white" />
+            <LayoutGrid size={20} className="text-white" />
           </div>
           <div>
             <h2 className="text-2xl font-bold text-gray-900">

@@ -1,7 +1,7 @@
 // lib/actions/company.ts
 "use server";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseServerClient, supabaseAdmin } from "@/lib/supabase/server";
 import { baseCompanySchema } from "@/lib/validation/company";
 import { z } from "zod";
 
@@ -45,7 +45,7 @@ export async function getAllCompanies(): Promise<CompanyActionResult> {
     }
 
     console.log(`✅ Found ${companies.length} companies`);
-    
+
     // Validate each company against the schema (optional but good practice)
     const validatedCompanies = companies.map((company, index) => {
       try {
@@ -77,7 +77,7 @@ export async function getAllCompanies(): Promise<CompanyActionResult> {
 export async function getCompanyById(id: string): Promise<CompanyActionResult> {
   try {
     console.log(`🔍 Fetching company with ID: ${id}`);
-    const supabase = await createSupabaseServerClient();
+    const supabase = supabaseAdmin;
 
     // Validate the ID format
     if (!id || typeof id !== 'string') {
@@ -101,7 +101,7 @@ export async function getCompanyById(id: string): Promise<CompanyActionResult> {
           error: "Company not found",
         };
       }
-      
+
       console.error("❌ Supabase error:", error);
       return {
         success: false,
