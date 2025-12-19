@@ -233,8 +233,8 @@ const BamendaHeroSection = () => {
                             <TrendingUp size={20} />
                         </div>
                         <div>
-                            <p className="text-xs text-gray-500 font-medium">Growth Rate</p>
-                            <p className="text-lg font-bold text-gray-900">+128%</p>
+                            <p className="text-xs text-gray-500 font-medium">Active Services</p>
+                            <p className="text-lg font-bold text-gray-900">50+</p>
                         </div>
                     </div>
                </div>
@@ -242,11 +242,11 @@ const BamendaHeroSection = () => {
                 <div className="absolute -left-8 bottom-24 bg-white p-4 rounded-2xl shadow-xl animate-float border border-gray-100" style={{ animationDelay: '1s' }}>
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-blue-100 rounded-full text-blue-600">
-                            <Globe size={20} />
+                            <Users size={20} />
                         </div>
                         <div>
-                            <p className="text-xs text-gray-500 font-medium">Global Reach</p>
-                            <p className="text-lg font-bold text-gray-900">20+ Countries</p>
+                            <p className="text-xs text-gray-500 font-medium">Student Community</p>
+                            <p className="text-lg font-bold text-gray-900">2,000+ Students</p>
                         </div>
                     </div>
                </div>
