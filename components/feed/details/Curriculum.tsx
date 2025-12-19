@@ -525,23 +525,26 @@ const CurriculumSection: React.FC<CurriculumProps> = ({
 
   return (
     <div className="w-full">
-      <Card className="border-2 border-blue-50 shadow-2xl shadow-blue-100/50 overflow-hidden bg-white rounded-[2rem]">
+      <Card className="border border-border shadow-xl overflow-hidden bg-card rounded-[2rem]">
         {/* Header */}
-        <div className="bg-gradient-to-br from-[#155DFC] to-[#1A3CB9] px-6 py-8 sm:py-10 text-white relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16" />
+        <div className="px-6 py-8 sm:py-10 border-b border-border text-foreground relative overflow-hidden bg-muted/20">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16" />
           <div className="relative z-10">
-            <h2 className="text-2xl sm:text-3xl font-black mb-2 tracking-tight uppercase">{programTitle}</h2>
-            <p className="text-blue-100 mb-4 sm:mb-6 font-medium">Year-Long Comprehensive Learning Program</p>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-1.5 h-8 bg-primary rounded-full shadow-[0_0_8px_rgba(21,93,252,0.4)]" />
+              <h2 className="text-2xl sm:text-3xl font-black tracking-tight uppercase">{programTitle}</h2>
+            </div>
+            <p className="text-muted-foreground mb-6 font-medium">Year-Long Comprehensive Learning Program</p>
             <div className="flex flex-wrap gap-4 sm:gap-6">
-              <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full">
+              <div className="flex items-center gap-2 bg-primary/5 text-primary border border-primary/10 px-4 py-2 rounded-full shadow-sm">
                 <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span className="text-sm sm:text-base font-bold">{totalHours.toFixed(0)} Hours</span>
               </div>
-              <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full">
+              <div className="flex items-center gap-2 bg-primary/5 text-primary border border-primary/10 px-4 py-2 rounded-full shadow-sm">
                 <Award className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span className="text-sm sm:text-base font-bold">{CURRICULUM_DATA.length} Modules</span>
               </div>
-              <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full">
+              <div className="flex items-center gap-2 bg-primary/5 text-primary border border-primary/10 px-4 py-2 rounded-full shadow-sm">
                 <Target className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span className="text-sm sm:text-base font-bold">52 Projects</span>
               </div>
@@ -556,25 +559,25 @@ const CurriculumSection: React.FC<CurriculumProps> = ({
               {/* Section Header */}
               <button
                 onClick={() => toggleSection(section.id)}
-                className="cursor-pointer w-full px-4 sm:px-6 py-4 sm:py-5 flex items-center justify-between hover:bg-[#F6F8FF] transition-all duration-300 group"
+                className="cursor-pointer w-full px-4 sm:px-6 py-4 sm:py-5 flex items-center justify-between hover:bg-muted/50 transition-all duration-300 group"
               >
                 <div className="flex items-center gap-3 sm:gap-4 flex-1 text-left">
                   <div
-                    className="bg-gradient-to-br from-[#155DFC] to-[#1A3CB9] p-2.5 sm:p-3 rounded-xl text-white shadow-lg"
+                    className="bg-primary p-2.5 sm:p-3 rounded-xl text-white shadow-md"
                   >
                     <section.icon className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                   <div>
-                    <h3 className="font-black text-slate-900 text-sm sm:text-base group-hover:text-[#155DFC] transition-colors uppercase tracking-wide">
+                    <h3 className="font-black text-foreground text-sm sm:text-base group-hover:text-primary transition-colors uppercase tracking-wide">
                       {section.title}
                     </h3>
-                    <p className="text-xs sm:text-sm text-slate-600 font-medium mt-0.5">
+                    <p className="text-xs sm:text-sm text-muted-foreground font-medium mt-0.5">
                       {section.duration} • {section.lessons.length} lessons
                     </p>
                   </div>
                 </div>
                 <ChevronDown
-                  className={`w-5 h-5 text-[#155DFC] transition-transform ${
+                  className={`w-5 h-5 text-primary transition-transform ${
                     expandedSection === section.id ? "rotate-180" : ""
                   }`}
                 />
@@ -669,22 +672,22 @@ const CurriculumSection: React.FC<CurriculumProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="bg-gradient-to-br from-[#F6F8FF] to-blue-50/50 px-6 py-6 border-t-2 border-blue-50">
+        <div className="bg-muted/30 px-6 py-6 border-t border-border">
           <div className="grid grid-cols-3 gap-4 text-center mb-5">
             <div>
-              <div className="text-2xl sm:text-3xl font-black text-[#155DFC]">
+              <div className="text-2xl sm:text-3xl font-black text-primary">
                 {CURRICULUM_DATA.length}
               </div>
-              <p className="text-xs sm:text-sm text-slate-600 font-bold uppercase tracking-wider mt-1">Modules</p>
+              <p className="text-xs sm:text-sm text-muted-foreground font-bold uppercase tracking-wider mt-1">Modules</p>
             </div>
             <div>
-              <div className="text-2xl sm:text-3xl font-black text-[#155DFC]">
+              <div className="text-2xl sm:text-3xl font-black text-primary">
                 {CURRICULUM_DATA.reduce((acc, s) => acc + s.lessons.length, 0)}
               </div>
-              <p className="text-xs sm:text-sm text-slate-600 font-bold uppercase tracking-wider mt-1">Lessons</p>
+              <p className="text-xs sm:text-sm text-muted-foreground font-bold uppercase tracking-wider mt-1">Lessons</p>
             </div>
             <div>
-              <div className="text-2xl sm:text-3xl font-black text-[#155DFC]">
+              <div className="text-2xl sm:text-3xl font-black text-primary">
                 {CURRICULUM_DATA.reduce(
                   (acc, s) =>
                     acc +
@@ -692,10 +695,10 @@ const CurriculumSection: React.FC<CurriculumProps> = ({
                   0
                 )}
               </div>
-              <p className="text-xs sm:text-sm text-slate-600 font-bold uppercase tracking-wider mt-1">Projects</p>
+              <p className="text-xs sm:text-sm text-muted-foreground font-bold uppercase tracking-wider mt-1">Projects</p>
             </div>
           </div>
-          <button className="w-full py-3.5 sm:py-4 bg-gradient-to-r from-[#155DFC] to-[#1A3CB9] text-white font-black uppercase tracking-wider text-sm rounded-2xl hover:shadow-2xl hover:shadow-blue-200 transition-all duration-500 hover:scale-[1.02] active:scale-[0.98]">
+          <button className="w-full py-3.5 sm:py-4 bg-primary text-white font-black uppercase tracking-wider text-sm rounded-2xl hover:bg-secondary transition-all duration-300 shadow-lg shadow-blue-200/50 hover:scale-[1.01] active:scale-[0.99]">
             Get Started Now
           </button>
         </div>

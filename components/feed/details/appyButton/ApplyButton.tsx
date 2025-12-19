@@ -104,31 +104,15 @@ export function ApplyButton({
             className="
               w-full relative overflow-hidden flex items-center justify-center gap-2 
               px-6 py-4 rounded-2xl font-black text-sm uppercase tracking-wider
-              transition-all duration-500 
-              bg-gradient-to-r from-[#155DFC] to-[#1A3CB9]
-              hover:from-[#1A3CB9] hover:to-[#155DFC]
+              transition-all duration-300
+              bg-primary
+              hover:bg-secondary
               text-white
-              shadow-2xl shadow-blue-200 hover:shadow-blue-300
-              transform hover:scale-[1.02] active:scale-[0.98]
+              shadow-lg shadow-blue-200/50 hover:shadow-xl
+              transform hover:scale-[1.01] active:scale-[0.99]
               group
             "
           >
-            {/* Animated background */}
-            <span
-              className={`
-                absolute inset-0 bg-blue-400
-                ${isHovered ? "animate-ping opacity-20" : "opacity-0"}
-              `}
-            />
-
-            <span
-              className={`
-                absolute inset-0 -translate-x-full
-                bg-gradient-to-r from-transparent via-white/30 to-transparent
-                ${isHovered ? "animate-shimmer" : ""}
-              `}
-            />
-
             <span className="relative z-10 flex items-center justify-center gap-2">
               Apply Now
               <ExternalLink size={18} className="group-hover:translate-x-1 transition-transform" />
@@ -142,20 +126,17 @@ export function ApplyButton({
             className="
               w-full relative overflow-hidden flex items-center justify-center gap-2 
               px-6 py-4 rounded-2xl font-black text-sm uppercase tracking-wider
-              transition-all duration-500 
-              bg-white border-2 border-[#155DFC]
-              hover:bg-[#F6F8FF]
-              disabled:bg-slate-100 disabled:border-slate-300
-              text-[#155DFC]
-              disabled:text-slate-400
-              shadow-xl shadow-blue-100 hover:shadow-2xl hover:shadow-blue-200
-              transform hover:scale-[1.02] disabled:hover:scale-100 active:scale-[0.98]
+              transition-all duration-300
+              bg-card border-2 border-primary
+              hover:bg-primary/5
+              disabled:bg-muted disabled:border-muted-foreground/30
+              text-primary
+              disabled:text-muted-foreground
+              shadow-md hover:shadow-lg
+              transform hover:scale-[1.01] disabled:hover:scale-100 active:scale-[0.99]
               group
             "
           >
-            {/* Animated background */}
-            <span className="absolute inset-0 bg-gradient-to-r from-[#155DFC]/5 to-blue-100/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-
             <span className="relative z-10 flex items-center justify-center gap-2">
               {isGenerating ? (
                 <>
@@ -164,7 +145,7 @@ export function ApplyButton({
                 </>
               ) : (
                 <>
-                  <Zap size={18} className="group-hover:animate-pulse" />
+                  <Zap size={18} />
                   Smart Apply with AI
                 </>
               )}
