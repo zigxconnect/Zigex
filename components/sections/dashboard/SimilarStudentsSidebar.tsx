@@ -100,7 +100,7 @@ export default function SimilarStudentsSidebar({
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="font-semibold text-sm">{s.full_name || 'Unnamed'}</div>
+                        <div className="font-semibold text-sm">{s.username || s.full_name || 'Unnamed'}</div>
                         <div className="text-xs text-gray-500">{s.university}</div>
                       </div>
                       <div className="text-xs text-gray-400">{(s.hard_skills || []).slice(0,2).join(', ')}</div>
@@ -176,7 +176,7 @@ export default function SimilarStudentsSidebar({
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="font-semibold">{s.full_name || 'Unnamed'}</div>
+                    <div className="font-semibold">{s.username || s.full_name || 'Unnamed'}</div>
                     <div className="text-xs text-gray-500">{s.university}</div>
                   </div>
                   <div className="flex items-center gap-2">

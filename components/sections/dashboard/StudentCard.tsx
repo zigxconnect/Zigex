@@ -154,7 +154,7 @@ const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = (
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1 flex-wrap">
                   <h3 className="font-bold text-gray-900 group-hover:text-blue-600 text-[15px] transition-colors">
-                    {student.full_name || "Unnamed Student"}
+                    {student.username || student.full_name || "Unnamed Student"}
                   </h3>
                   <div className="shrink-0">
                     <CheckCircle2 size={18} className="text-blue-500" />

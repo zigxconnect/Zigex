@@ -107,7 +107,7 @@ export const EditProfileModal = ({
     }
 
     try {
-      const response = await fetch(`/api/students/student/by-username/${formData.username}`, {
+      const response = await fetch(`/api/students/student/${userId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
