@@ -19,7 +19,7 @@ interface Project {
   created_at: string;
   end_date: string | null;
   student_id: string;
-  is_valid: boolean;
+  status: string;
 }
 
 interface Owner {
@@ -180,7 +180,7 @@ export default function ProjectDetailCard({ project, owner }: { project: Project
           </div>
 
           {/* Additional Info Card (if needed) */}
-          {!project.is_valid && (
+          {project.status !== 'valid' && (
             <div className="bg-amber-50 border-l-4 border-amber-500 rounded-xl p-6 shadow-lg">
               <div className="flex items-start gap-3">
                 <div className="flex-shrink-0">
@@ -256,11 +256,11 @@ export default function ProjectDetailCard({ project, owner }: { project: Project
               <div className="flex items-center justify-between py-3 border-b border-gray-100">
                 <span className="text-sm text-gray-600">Status</span>
                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  project.is_valid 
+                  project.status === 'valid'
                     ? 'bg-green-100 text-green-700' 
                     : 'bg-amber-100 text-amber-700'
                 }`}>
-                  {project.is_valid ? 'Validated' : 'Pending'}
+                  {project.status === 'valid' ? 'Validated' : 'Pending'}
                 </span>
               </div>
               

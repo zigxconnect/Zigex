@@ -18,7 +18,8 @@ interface Project {
   created_at: string;
   end_date: string | null;
   student_id: string;
-  is_valid: boolean;
+  student_id: string;
+  status: string;
 }
 
 interface User {
@@ -75,7 +76,7 @@ export default function MyMonthProject({
 
   // Handle 48-hour review card expiration
   useEffect(() => {
-    if (!project || project.is_valid || !isVisitor) {
+    if (!project || project.status === 'valid' || !isVisitor) {
       setShowReviewCard(false);
       return;
     }
@@ -91,7 +92,7 @@ export default function MyMonthProject({
     }, fortyEightHours);
 
     return () => clearTimeout(timer);
-  }, [project?.is_valid, project?.id, isVisitor]);
+  }, [project?.status, project?.id, isVisitor]);
 
   // Lock body scroll when open on mobile
   useEffect(() => {
@@ -138,7 +139,7 @@ export default function MyMonthProject({
   const coverImageUrl = getImageUrl(project?.cover_image_url ?? null);
 
   // CASE 1: Project exists but NOT VALID - show review card for 48 hours (ONLY for visitors)
-  if (project && !project.is_valid && isVisitor) {
+  if (project && project.status !== 'valid' && isVisitor) {
     if (reviewCardExpired) {
       return null; // Don't show anything after 48 hours
     }

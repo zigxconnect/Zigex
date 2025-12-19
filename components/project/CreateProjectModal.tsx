@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
-import { X, Github, Calendar, Link, Loader2, Save } from "lucide-react";
+import { X, Github, Calendar, Link, Loader2, Save, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -249,7 +249,7 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
   const modalContent = (
     <>
       <div 
-        className="fixed inset-0 z-9999 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+        className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 safe-area-inset-bottom"
         onClick={(e) => {
           if (e.target === e.currentTarget && !isSubmitting) {
             handleClose();
@@ -257,41 +257,63 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
         }}
       >
         <div 
-          className="relative w-full sm:max-w-2xl bg-white dark:bg-gray-950 sm:rounded-2xl rounded-t-3xl shadow-2xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col border-t sm:border border-gray-200 dark:border-gray-800 sm:m-4"
+          className="relative w-full sm:max-w-2xl bg-white dark:bg-gray-950 sm:rounded-2xl rounded-t-[2rem] shadow-2xl h-[95dvh] sm:h-[85vh] flex flex-col border-t sm:border border-gray-200 dark:border-gray-800 sm:m-4 overflow-hidden transition-all ease-out duration-300"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header - Fully Responsive */}
-          <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 shrink-0">
+          <div className="sticky top-0 z-50 flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-950/95 backdrop-blur-md shrink-0 safe-area-top">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
             <Button
               variant="secondary"
               onClick={handleClose}
               disabled={isSubmitting}
-              className="h-9 w-9 rounded-full shrink-0 p-0"
+              className="h-9 w-9 rounded-full shrink-0 p-0 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
             >
-              <X className="h-5 w-5" />
+              <X className="h-5 w-5 text-gray-600 dark:text-gray-300" />
             </Button>
-              <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white truncate">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white truncate tracking-tight">
                 New Project
               </h2>
             </div>
             <Button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="px-4 sm:px-6 py-2 rounded-full font-semibold text-sm sm:text-base h-9 sm:h-10 shrink-0 ml-2"
+              className={`
+                relative overflow-hidden group
+                px-6 sm:px-8 py-2.5 
+                rounded-full font-bold text-sm sm:text-base 
+                h-10 sm:h-11 shrink-0 ml-3
+                text-white tracking-wide
+                bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600
+                hover:from-blue-500 hover:via-blue-400 hover:to-indigo-500
+                shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] 
+                hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] 
+                hover:scale-[1.02] active:scale-[0.97]
+                border border-blue-400/20
+                flex items-center justify-center
+                transition-all duration-300 ease-out
+                ${isSubmitting ? 'opacity-80 cursor-wait' : ''}
+              `}
             >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  <span className="hidden sm:inline">Creating...</span>
-                  <span className="sm:hidden">...</span>
-                </>
-              ) : (
-                <>
-                  <span className="hidden sm:inline">Create Project</span>
-                  <span className="sm:hidden">Create</span>
-                </>
-              )}
+              <div className="absolute inset-0 bg-white/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+              <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-black/10 to-transparent" />
+              
+              <div className="relative flex items-center gap-2">
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin text-white/90" />
+                    <span className="hidden sm:inline text-shadow-sm">Creating...</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-shadow-sm">Create</span>
+                    <div className="bg-white/20 rounded-full p-0.5 ml-1 hidden sm:block">
+                      <Plus className="w-3 h-3 text-white" strokeWidth={3} />
+                    </div>
+                  </>
+                )}
+              </div>
             </Button>
           </div>
 

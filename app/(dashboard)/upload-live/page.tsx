@@ -2,9 +2,10 @@
 
 import React, { useState, useRef } from "react";
 import { Upload, X, Play, Image as ImageIcon } from "lucide-react";
+import { happeningNowService } from "@/lib/services/happening-now.service";
 
 const MAX_IMAGES = 6;
-const MAX_VIDEO_SIZE_MB = 100; // Increased from 30MB to 100MB
+const MAX_VIDEO_SIZE_MB = 30; // Back to 30MB as per constraints
 const MAX_TOTAL_UPLOAD_MB = 500; // Maximum total upload size
 
 export default function UploadLivePage() {
@@ -14,6 +15,11 @@ export default function UploadLivePage() {
   const [captions, setCaptions] = useState<string[]>([]);
   const [isLive, setIsLive] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{
+    stage: string;
+    percent: number;
+    fileName?: string;
+  } | null>(null);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -79,9 +85,23 @@ export default function UploadLivePage() {
     return calculateTotalSize() / (1024 * 1024);
   };
 
+  const getProgressMessage = (stage: string, fileName?: string): string => {
+    switch (stage) {
+      case 'generating-urls':
+        return 'Preparing upload...';
+      case 'uploading-files':
+        return fileName ? `Uploading ${fileName}...` : 'Uploading files...';
+      case 'saving-metadata':
+        return 'Saving to database...';
+      default:
+        return 'Processing...';
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);
+    setUploadProgress(null);
 
     // Validation
     if (!company.trim()) {
@@ -107,91 +127,35 @@ export default function UploadLivePage() {
     setLoading(true);
 
     try {
-      // Build FormData
-      const formData = new FormData();
-      formData.append("company", company);
-      formData.append("is_live", isLive ? "true" : "false");
-      formData.append("captions", JSON.stringify(captions));
-
       if (process.env.NODE_ENV === 'development') {
-        console.log("📋 Form Data Before Upload:");
+        console.log("📋 Starting upload with new service:");
         console.log("  - Company:", company);
         console.log("  - Is Live:", isLive);
         console.log("  - Images:", images.length);
         console.log("  - Captions:", captions);
-        console.log("  - Captions JSON:", JSON.stringify(captions));
+        console.log("  - Video:", video ? 'Yes' : 'No');
       }
 
-      // Add images - ensure they are properly appended
-      for (const img of images) {
-        formData.append("images", img, img.name);
-      }
-
-      // Add video if present
-      if (video) {
-        formData.append("video", video, video.name);
-      }
-
-      if (process.env.NODE_ENV === 'development') {
-        console.log("FormData ready - calling API endpoint");
-      }
-
-      // Call API endpoint instead of server action
-      const response = await fetch("/api/happening-now", {
-        method: "POST",
-        body: formData,
-        headers: {
-          // Don't set Content-Type header - let browser set it with boundary for FormData
+      // Use the new two-step upload service
+      const result = await happeningNowService.uploadContent(
+        {
+          company,
+          images,
+          video: video || undefined,
+          captions,
+          is_live: isLive,
         },
-      });
-
-      if (process.env.NODE_ENV === 'development') {
-        console.log("Response status:", response.status);
-        console.log("Response headers:", {
-          contentType: response.headers.get("content-type"),
-        });
-      }
-      
-      // Clone response to read as text first for debugging
-      const responseClone = response.clone();
-      const responseText = await responseClone.text();
-      if (process.env.NODE_ENV === 'development') {
-        console.log("Response text length:", responseText.length);
-        console.log("Response text preview:", responseText.substring(0, 300));
-      }
-      
-      let data;
-      try {
-        // Try to parse JSON from the original response
-        const contentType = response.headers.get("content-type");
-        if (!contentType?.includes("application/json")) {
-          throw new Error(`Expected JSON response but got: ${contentType}`);
+        (progress) => {
+          // Update progress indicator
+          setUploadProgress({
+            stage: getProgressMessage(progress.stage, progress.fileName),
+            percent: progress.percentComplete || 0,
+            fileName: progress.fileName,
+          });
         }
-        data = await response.json();
-      } catch (parseError) {
-        if (process.env.NODE_ENV === 'development') {
-          console.error("Failed to parse response as JSON:", parseError);
-          console.error("Response was:", responseText);
-        }
-        
-        // Check for specific error patterns
-        if (responseText.includes('FUNCTIONAL_PAYLOAD_TOO_LARGE') || 
-            responseText.includes('PayloadTooLarge') ||
-            responseText.includes('413')) {
-          throw new Error(`Upload too large (${getTotalSizeMB().toFixed(2)}MB). Maximum is ${MAX_TOTAL_UPLOAD_MB}MB. Try reducing images, videos, or compression.`);
-        }
-        
-        throw new Error(`Invalid response format: ${responseText.substring(0, 200)}`);
-      }
-      if (process.env.NODE_ENV === 'development') {
-        console.log("Response data:", data);
-      }
+      );
 
-      if (!response.ok) {
-        throw new Error(data.error || `HTTP error! status: ${response.status}`);
-      }
-
-      if (data.success || response.status === 201) {
+      if (result.success) {
         setMessage({
           type: "success",
           text: "Content uploaded successfully!",
@@ -207,7 +171,7 @@ export default function UploadLivePage() {
       } else {
         setMessage({
           type: "error",
-          text: data.error || data.message || "Upload failed",
+          text: result.error || "Upload failed",
         });
       }
     } catch (error) {
@@ -218,6 +182,7 @@ export default function UploadLivePage() {
       });
     } finally {
       setLoading(false);
+      setUploadProgress(null);
     }
   };
 
@@ -248,6 +213,22 @@ export default function UploadLivePage() {
             >
               ×
             </button>
+          </div>
+        )}
+
+        {/* Upload Progress Indicator */}
+        {uploadProgress && (
+          <div className="mb-6 p-4 rounded-lg bg-blue-50 border border-blue-300">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-blue-900">{uploadProgress.stage}</span>
+              <span className="text-sm font-bold text-blue-900">{uploadProgress.percent.toFixed(0)}%</span>
+            </div>
+            <div className="w-full bg-blue-200 rounded-full h-2">
+              <div
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${uploadProgress.percent}%` }}
+              />
+            </div>
           </div>
         )}
 

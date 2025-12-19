@@ -355,8 +355,8 @@ const isRouteActive = (href: string, matchPaths?: string[], excludePaths?: strin
                     isSpecial={true}
                   />
                   {/* AI Badge */}
-                  <div className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs px-2 py-1 rounded-full shadow-lg z-50">
-                    AI
+                  <div className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full shadow-lg z-50 font-bold tracking-wide">
+                    Beta
                   </div>
                 </div>
               </div>

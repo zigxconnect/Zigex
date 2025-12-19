@@ -15,25 +15,47 @@ import { Redis } from "@upstash/redis";
 import { withCSRFProtection } from "@/lib/utils/csrf";
 
 // Upstash rate limiter: 5 login attempts per 15 minutes per email
-const ratelimit = new Ratelimit({
-  redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(5, "15 m"),
-  analytics: true,
-});
+// Only initialize if Upstash credentials are configured
+let ratelimit: Ratelimit | null = null;
+
+try {
+  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+    ratelimit = new Ratelimit({
+      redis: Redis.fromEnv(),
+      limiter: Ratelimit.slidingWindow(5, "15 m"),
+      analytics: true,
+    });
+  } else {
+    console.warn("⚠️  Upstash Redis credentials not configured. Rate limiting is disabled.");
+  }
+} catch (error) {
+  console.error("Failed to initialize rate limiter:", error);
+}
 
 async function checkRateLimit(identifier: string) {
-  const { success, reset } = await ratelimit.limit(identifier);
-  if (!success) {
-    return {
-      blocked: true,
-      reset: Math.ceil((reset - Date.now()) / 1000),
-    };
+  // Skip rate limiting if not configured
+  if (!ratelimit) {
+    return { blocked: false, reset: 0 };
   }
-  return { blocked: false, reset: 0 };
+
+  try {
+    const { success, reset } = await ratelimit.limit(identifier);
+    if (!success) {
+      return {
+        blocked: true,
+        reset: Math.ceil((reset - Date.now()) / 1000),
+      };
+    }
+    return { blocked: false, reset: 0 };
+  } catch (error) {
+    console.error("Rate limit check failed:", error);
+    // On error, allow the request to proceed
+    return { blocked: false, reset: 0 };
+  }
 }
 
 
-const _POST = async function(request: Request) {
+const _POST = async function (request: Request) {
   const { email, password } = await request.json();
   console.log("Login attempt for email:", email);
 
@@ -110,7 +132,7 @@ const _POST = async function(request: Request) {
             /after\s+(\d+)\s+seconds?/i
           );
           if (m) retryAfter = Number(m[1]);
-        } catch (e) {}
+        } catch (e) { }
 
         return NextResponse.json(
           {

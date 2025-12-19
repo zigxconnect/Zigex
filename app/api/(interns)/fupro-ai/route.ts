@@ -6,12 +6,16 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { TavilySearchAPIRetriever } from "@langchain/community/retrievers/tavily_search_api";
 import { createServerActionClient } from "@/lib/supabase/server";
 
-// --- SETUP & VALIDATION ---
-// Fail fast if essential API keys are missing.
-if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY environment variable not set.");
-if (!process.env.TAVILY_API_KEY) throw new Error("TAVILY_API_KEY environment variable not set.");
+// --- CONFIGURATION ---
+// Initialize these lazily to avoid build-time errors if env vars are missing
+const getGenAI = () => {
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) throw new Error("GEMINI_API_KEY environment variable not set.");
+  return new GoogleGenerativeAI(key);
+};
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// Tavily is used inside searchWithTavily, check key there
+
 
 // --- TYPE DEFINITIONS ---
 interface UserProfile {
@@ -40,22 +44,22 @@ interface AggregatedData {
 // ━━━━━━ 👤 USER PROFILE FETCHER ━━━━━━
 // Encapsulates fetching the user's profile for personalization.
 async function getUserProfile(): Promise<UserProfile | null> {
-    try {
-        const supabase = await createServerActionClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return null;
+  try {
+    const supabase = await createServerActionClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
 
-        const { data: profile } = await supabase
-            .from("student_profiles")
-            .select("full_name, university, hard_skills")
-            .eq("user_id", user.id)
-            .single();
-            
-        return profile as UserProfile | null;
-    } catch (error) {
-        console.error("[AGENT ERROR] Could not fetch user profile:", error);
-        return null;
-    }
+    const { data: profile } = await supabase
+      .from("student_profiles")
+      .select("full_name, university, hard_skills")
+      .eq("user_id", user.id)
+      .single();
+
+    return profile as UserProfile | null;
+  } catch (error) {
+    console.error("[AGENT ERROR] Could not fetch user profile:", error);
+    return null;
+  }
 }
 
 
@@ -66,59 +70,59 @@ let cacheTimestamp: number = 0;
 const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
 
 async function getAggregatedData(): Promise<AggregatedData> {
-    const now = Date.now();
-    if (cachedAggregatedData && (now - cacheTimestamp) < CACHE_DURATION_MS) {
-        return cachedAggregatedData;
-    }
-    try {
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-        const response = await fetch(`${baseUrl}/api/students/aggregated-data`, { cache: 'no-store' });
-        if (!response.ok) throw new Error(`Failed to fetch aggregated data. Status: ${response.status}`);
-        const result = await response.json();
-        cachedAggregatedData = result.data;
-        cacheTimestamp = now;
-        return cachedAggregatedData;
-    } catch (error) {
-        console.error('[AGENT ERROR] Failed to fetch platform data:', error);
-        return { internships: [], events: [], programs: [], metadata: {} };
-    }
+  const now = Date.now();
+  if (cachedAggregatedData && (now - cacheTimestamp) < CACHE_DURATION_MS) {
+    return cachedAggregatedData;
+  }
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const response = await fetch(`${baseUrl}/api/students/aggregated-data`, { cache: 'no-store' });
+    if (!response.ok) throw new Error(`Failed to fetch aggregated data. Status: ${response.status}`);
+    const result = await response.json();
+    cachedAggregatedData = result.data;
+    cacheTimestamp = now;
+    return cachedAggregatedData;
+  } catch (error) {
+    console.error('[AGENT ERROR] Failed to fetch platform data:', error);
+    return { internships: [], events: [], programs: [], metadata: {} };
+  }
 }
 
 
 // ━━━━━━ 🌐 TAVILY WEB SEARCH AGENT ━━━━━━
 // This is the core of the new online search capability.
 async function searchWithTavily(query: string, userProfile: UserProfile | null): Promise<SourceData[]> {
-    console.log('[AGENT TAVILY] Initiating external web search.');
+  console.log('[AGENT TAVILY] Initiating external web search.');
 
-    // 1. Construct a highly specific, profile-driven search query for better results.
-    let enhancedQuery = `Find job or internship opportunities related to: "${query}"`;
-    if (userProfile?.hard_skills?.length) {
-        enhancedQuery += ` for a candidate with skills in ${userProfile.hard_skills.join(', ')}.`;
-    }
-    enhancedQuery += " The results should include the company name, location (including 'Remote'), and a direct URL to the application page.";
+  // 1. Construct a highly specific, profile-driven search query for better results.
+  let enhancedQuery = `Find job or internship opportunities related to: "${query}"`;
+  if (userProfile?.hard_skills?.length) {
+    enhancedQuery += ` for a candidate with skills in ${userProfile.hard_skills.join(', ')}.`;
+  }
+  enhancedQuery += " The results should include the company name, location (including 'Remote'), and a direct URL to the application page.";
 
-    console.log(`[AGENT TAVILY] Enhanced Query: "${enhancedQuery}"`);
+  console.log(`[AGENT TAVILY] Enhanced Query: "${enhancedQuery}"`);
 
-    // 2. Initialize the Tavily retriever. `k: 4` fetches the top 4 most relevant results.
-    const retriever = new TavilySearchAPIRetriever({ k: 4 });
+  // 2. Initialize the Tavily retriever. `k: 4` fetches the top 4 most relevant results.
+  const retriever = new TavilySearchAPIRetriever({ k: 4 });
 
-    try {
-        // 3. Perform the search.
-        const docs = await retriever.getRelevantDocuments(enhancedQuery);
-        
-        // 4. Format the raw results into our standardized SourceData structure.
-        return docs.map(doc => ({
-            type: 'web',
-            title: doc.metadata.title || 'Untitled Web Result',
-            url: doc.metadata.source || '#',
-            company: doc.metadata.author || 'Unknown Company',
-            location: 'Web / Remote', // Default location for web results
-        }));
-    } catch (error) {
-        console.error("[AGENT TAVILY ERROR] Tavily search failed:", error);
-        // 5. Reliability: Return an empty array on failure so the app doesn't crash.
-        return [];
-    }
+  try {
+    // 3. Perform the search.
+    const docs = await retriever.getRelevantDocuments(enhancedQuery);
+
+    // 4. Format the raw results into our standardized SourceData structure.
+    return docs.map(doc => ({
+      type: 'web',
+      title: doc.metadata.title || 'Untitled Web Result',
+      url: doc.metadata.source || '#',
+      company: doc.metadata.author || 'Unknown Company',
+      location: 'Web / Remote', // Default location for web results
+    }));
+  } catch (error) {
+    console.error("[AGENT TAVILY ERROR] Tavily search failed:", error);
+    // 5. Reliability: Return an empty array on failure so the app doesn't crash.
+    return [];
+  }
 }
 
 
@@ -145,7 +149,7 @@ function analyzeQuery(query: string): QueryAnalysis {
 
 // ━━━━━━ ✨ DYNAMIC SYSTEM PROMPT ━━━━━━
 const createSystemPrompt = () => {
-    return `You are "Zigex Career Agent," an expert AI assistant for the Zigex platform in Bamenda, Cameroon. Your primary goal is to help users find internships and career opportunities.
+  return `You are "Zigex Career Agent," an expert AI assistant for the Zigex platform in Bamenda, Cameroon. Your primary goal is to help users find internships and career opportunities.
 
     Your personality: Professional, encouraging, and an expert on the tech/job market.
 
@@ -170,18 +174,18 @@ export async function POST(req: NextRequest) {
     // --- Step 1: Analyze Intent & Fetch Profile ---
     const queryAnalysis = analyzeQuery(query);
     const [userProfile, platformData] = await Promise.all([
-        getUserProfile(),
-        getAggregatedData() // Fetches from cache if available
+      getUserProfile(),
+      getAggregatedData() // Fetches from cache if available
     ]);
 
     console.log(`[AGENT] Analysis: Conversational=${queryAnalysis.isConversational}, ExternalSearch=${queryAnalysis.needsExternalSearch}`);
-    
+
     const stream = new ReadableStream({
       async start(controller) {
         const encoder = new TextEncoder();
-        
+
         try {
-          const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash', systemInstruction: createSystemPrompt() });
+          const model = getGenAI().getGenerativeModel({ model: 'gemini-2.5-flash', systemInstruction: createSystemPrompt() });
           const chat = model.startChat({ history });
 
           let finalAnswer: string;
@@ -189,33 +193,35 @@ export async function POST(req: NextRequest) {
 
           // --- Route 1: Fast Path for Conversational Queries ---
           if (queryAnalysis.isConversational) {
-              const result = await chat.sendMessage(query);
-              finalAnswer = result.response.text();
-          
-          // --- Route 2: Comprehensive Path for Opportunity Searches ---
+            const result = await chat.sendMessage(query);
+            finalAnswer = result.response.text();
+
+            // --- Route 2: Comprehensive Path for Opportunity Searches ---
           } else {
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'thinking_start', steps: [
-                  "Analyzing your profile and request...",
-                  "Querying Zigex platform database...",
-                  ...(queryAnalysis.needsExternalSearch ? ["Searching the web for external opportunities..."] : []),
-                  "Synthesizing the best matches for you...",
-              ] })}\n\n`));
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+              type: 'thinking_start', steps: [
+                "Analyzing your profile and request...",
+                "Querying Zigex platform database...",
+                ...(queryAnalysis.needsExternalSearch ? ["Searching the web for external opportunities..."] : []),
+                "Synthesizing the best matches for you...",
+              ]
+            })}\n\n`));
 
-              let externalSources: SourceData[] = [];
-              if (queryAnalysis.needsExternalSearch) {
-                  externalSources = await searchWithTavily(query, userProfile);
-              }
-              
-              // Prepare internal sources for display
-              const platformSources: SourceData[] = [
-                  ...platformData.internships.slice(0, 3).map(i => ({ type: 'internship', title: i.title, company: i.company, location: i.location, url: `/internships/${i.id}` })),
-                  ...platformData.events.slice(0, 2).map(e => ({ type: 'event', title: e.title, company: e.company, date: e.start_date, url: `/events/${e.id}` })),
-              ];
+            let externalSources: SourceData[] = [];
+            if (queryAnalysis.needsExternalSearch) {
+              externalSources = await searchWithTavily(query, userProfile);
+            }
 
-              allSources = [...platformSources, ...externalSources];
+            // Prepare internal sources for display
+            const platformSources: SourceData[] = [
+              ...(platformData.internships || []).slice(0, 3).map((i: any) => ({ type: 'internship' as const, title: i.title, company: i.company, location: i.location, url: `/internships/${i.id}` })),
+              ...(platformData.events || []).slice(0, 2).map((e: any) => ({ type: 'event' as const, title: e.title, company: e.company, date: e.start_date, url: `/events/${e.id}` })),
+            ];
 
-              // Construct the final, rich prompt for the AI
-              const finalPrompt = `
+            allSources = [...platformSources, ...externalSources];
+
+            // Construct the final, rich prompt for the AI
+            const finalPrompt = `
                 User Profile: ${JSON.stringify(userProfile, null, 2) || "Not available."}
                 Original Query: "${query}"
 
@@ -238,16 +244,16 @@ export async function POST(req: NextRequest) {
                 Now, acting as an expert career agent, synthesize all the information above to provide a helpful, personalized, and consolidated response to the user's original query.
               `;
 
-              const result = await chat.sendMessage(finalPrompt);
-              finalAnswer = result.response.text();
+            const result = await chat.sendMessage(finalPrompt);
+            finalAnswer = result.response.text();
           }
 
           // --- Step 4: Stream the Final Response ---
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
-            type: 'response', 
-            answer: finalAnswer, 
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+            type: 'response',
+            answer: finalAnswer,
             // Send the combined sources to the frontend for display
-            platformData: { topInternships: allSources.filter(s => s.type === 'internship' || s.type === 'web') } 
+            platformData: { topInternships: allSources.filter(s => s.type === 'internship' || s.type === 'web') }
           })}\n\n`));
 
           console.log("[AGENT] Successfully streamed response.");

@@ -15,9 +15,9 @@ export async function GET(req: Request) {
 
     const { data, error } = await supabaseAdmin
       .from('projects')
-      .select('id, project_title, cover_image_url, student_id, student_profiles(id, full_name, avatar_url)')
+      .select('id, project_title, cover_image_url, student_id, status, student_profiles(id, full_name, avatar_url)')
       .ilike('project_title', `%${q}%`)
-      .eq('is_valid', true)
+      .eq('status', 'valid')
       .order('created_at', { ascending: false })
       .limit(limit);
 

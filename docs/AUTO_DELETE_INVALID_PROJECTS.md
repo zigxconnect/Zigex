@@ -1,7 +1,7 @@
 # Auto-Delete Invalid Projects After 48 Hours
 
 ## Overview
-Invalid projects (those with `is_valid = false`) are automatically removed from student profiles after 48 hours. This ensures that rejected or pending projects don't clutter the profile indefinitely.
+Invalid projects (those with `status != 'valid'`) are automatically removed from student profiles after 48 hours. This ensures that rejected or pending projects don't clutter the profile indefinitely.
 
 ## Implementation
 
@@ -13,7 +13,8 @@ Invalid projects (those with `is_valid = false`) are automatically removed from 
 #### 1. **fetchActiveProject()** - Current User's Project
 ```typescript
 // Check if project is invalid and older than 48 hours
-if (activeProject && !activeProject.is_valid) {
+// Check if project is pending and older than 48 hours
+if (activeProject && activeProject.status === 'pending') {
   const createdAt = new Date(activeProject.created_at);
   const now = new Date();
   const fortyEightHoursInMs = 48 * 60 * 60 * 1000;
@@ -104,24 +105,24 @@ If timeDifference > 172,800,000 ms: Hide project
    - limit 1
 
 2. Check if project exists:
-   - If !is_valid AND created_at < 48h ago → Show
-   - If !is_valid AND created_at > 48h ago → Return null
-   - If is_valid → Show
+   - If status !== 'valid' AND created_at < 48h ago → Show
+   - If status !== 'valid' AND created_at > 48h ago → Return null
+   - If status === 'valid' → Show
 ```
 
 ## Testing
 
 ### Test Case 1: Valid Project
-- Create project with `is_valid = true`
+- Create project with `status = 'valid'`
 - ✅ Should display permanently
 
 ### Test Case 2: Invalid Project <48h Old
-- Create project with `is_valid = false`
+- Create project with `status = 'pending'` (or `cancel`)
 - ✅ Should display with review card
 - ✅ Show timeline indicator
 
 ### Test Case 3: Invalid Project >48h Old
-- Update project to `is_valid = false` and backdate `created_at` by 48+ hours
+- Update project to `status = 'pending'` and backdate `created_at` by 48+ hours
 - ✅ Should return null
 - ✅ Should show `NoProjectMessage`
 
@@ -130,7 +131,7 @@ If timeDifference > 172,800,000 ms: Hide project
 projects table:
 - id (primary key)
 - student_id (foreign key)
-- is_valid (boolean)
+- is_valid (replaced by status: 'valid' | 'pending' | 'cancel')
 - created_at (timestamp) -- Used for 48h calculation
 - end_date (timestamp)
 - ... other fields
@@ -145,7 +146,7 @@ await supabase
   .from('projects')
   .delete()
   .eq('student_id', id)
-  .eq('is_valid', false)
+  .eq('status', 'cancel') // or pending
   .lt('created_at', cutoffTime);
 ```
 
@@ -156,7 +157,7 @@ await supabase
   .from('projects')
   .update({ archived: true })
   .eq('student_id', id)
-  .eq('is_valid', false)
+  .eq('status', 'cancel') // or pending
   .lt('created_at', cutoffTime);
 ```
 
