@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, Bell, LogOut } from "lucide-react";
+import { Menu, Bell } from "lucide-react";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { NotificationDropdown } from "./NotificationDropdown";
@@ -29,22 +29,7 @@ export const DashboardHeader = ({
     user?.avatarUrl ||
     "/default-avatar.png";
 
-  const handleLogout = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch("/api/auth/logout", { method: "POST" });
 
-      if (!response.ok) throw new Error("Logout failed");
-
-      toast.success("Logged out successfully");
-      router.push("/sign-in");
-    } catch (error) {
-      console.error("Logout error:", error);
-      toast.error("Failed to logout. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border shadow-sm transition-all duration-300">
@@ -63,9 +48,9 @@ export const DashboardHeader = ({
           {/* Logo/Brand */}
           <Link
             href="/"
-            className="hidden lg:flex items-center gap-2 group flex-shrink-0"
+            className="flex items-center gap-2 group flex-shrink-0"
           >
-            <div className="relative w-14 h-14 sm:w-11 sm:h-11 lg:w-12 lg:h-12 transition-transform group-hover:scale-105">
+            <div className="relative w-10 h-10 lg:w-12 lg:h-12 transition-transform group-hover:scale-105">
               <Logo className="w-full h-full" />
             </div>
           </Link>
@@ -99,29 +84,7 @@ export const DashboardHeader = ({
             </div>
           </Link>
 
-          {/* Logout Button */}
-          <button
-            onClick={handleLogout}
-            disabled={isLoading}
-            className={`
-              relative overflow-hidden flex items-center gap-2 px-3 lg:px-4 py-2 rounded-xl font-bold text-sm 
-              transition-all duration-300 shrink-0 transform
-              bg-card border-2 border-border text-muted-foreground hover:text-red-600 hover:border-red-100 hover:bg-red-50
-              shadow-sm hover:shadow-md
-              ${isLoading ? "opacity-70 cursor-not-allowed scale-95" : "cursor-pointer"}
-              active:scale-95
-            `}
-            aria-label="Logout"
-            title="Sign Out"
-          >
-            <LogOut
-              size={18}
-              className="shrink-0"
-            />
-            <span className="hidden lg:inline">
-              {isLoading ? "..." : "Logout"}
-            </span>
-          </button>
+
         </div>
       </div>
     </header>

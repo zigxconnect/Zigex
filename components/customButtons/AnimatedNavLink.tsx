@@ -28,39 +28,44 @@ export default function AnimatedNavLink({
       href={href}
       onClick={onClick}
       className={cn(
-        "group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
+        "group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-300",
         isActive
-          ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
+          ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-sidebar-primary/25 active:scale-95"
           : isSpecial
-            ? "bg-gradient-to-r from-primary/10 to-transparent border border-primary/20 text-primary hover:bg-primary hover:text-primary-foreground hover:shadow-md hover:border-primary transition-all duration-300"
-            : "text-muted-foreground hover:bg-muted hover:text-foreground hover:shadow-sm"
+            ? "bg-sidebar-accent/50 border border-sidebar-border text-sidebar-primary hover:bg-sidebar-primary hover:text-sidebar-primary-foreground hover:shadow-lg hover:border-transparent transition-all duration-300 active:scale-95"
+            : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground hover:shadow-sm"
       )}
     >
       {/* Icon Container */}
       <div
         className={cn(
-          "relative flex items-center justify-center p-1.5 rounded-lg transition-colors duration-200",
+          "relative flex items-center justify-center p-2 rounded-lg transition-all duration-300",
           isActive
-            ? "bg-white/20 text-white"
+            ? "bg-white/10 text-white backdrop-blur-md shadow-inner"
             : isSpecial
-              ? "bg-primary/10 text-primary group-hover:bg-white/20 group-hover:text-white"
-              : "bg-transparent text-muted-foreground group-hover:text-primary group-hover:bg-background"
+              ? "bg-sidebar-primary/10 text-sidebar-primary group-hover:bg-white/20 group-hover:text-white group-hover:scale-110"
+              : "bg-sidebar-accent/50 text-sidebar-foreground/60 group-hover:text-sidebar-primary group-hover:bg-sidebar-primary/10 group-hover:scale-110"
         )}
       >
-        <Icon size={18} strokeWidth={2} />
+        <Icon size={19} strokeWidth={isActive ? 2.5 : 2} />
       </div>
 
       {/* Label */}
-      <span className="flex-1 truncate font-medium">{label}</span>
+      <span className={cn(
+        "flex-1 truncate font-semibold tracking-tight transition-colors duration-200",
+        isActive ? "text-sidebar-primary-foreground" : "text-sidebar-foreground/70 group-hover:text-sidebar-foreground"
+      )}>
+        {label}
+      </span>
 
       {/* Badge */}
       {badge && (
         <span
           className={cn(
-            "px-2 py-0.5 text-[10px] font-bold rounded-full",
+            "px-2 py-0.5 text-[10px] font-bold rounded-full transition-colors duration-200",
             isActive
               ? "bg-white/20 text-white"
-              : "bg-muted text-primary"
+              : "bg-sidebar-accent text-sidebar-primary"
           )}
         >
           {typeof badge === 'number' && badge > 99 ? '99+' : badge}

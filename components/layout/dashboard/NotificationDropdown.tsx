@@ -163,18 +163,7 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
         aria-label="Notifications"
         aria-expanded={isOpen}
       >
-        {/* Mobile: Zigex Logo */}
-        <div className="lg:hidden relative w-6 h-6">
-          <Image 
-            src="/zigex.svg" 
-            alt="Notifications" 
-            fill 
-            className="object-contain" 
-          />
-        </div>
-        
-        {/* Desktop: Bell Icon */}
-        <Bell size={20} className="hidden lg:block" />
+        <Bell size={20} />
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold shadow-lg border-2 border-background">
             {unreadCount > 99 ? "99+" : unreadCount}

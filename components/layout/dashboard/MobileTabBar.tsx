@@ -9,17 +9,14 @@ import {
   Users,
   Bell,
   Home,
-  SearchCode,
-  PersonStanding,
+  Globe,
   LogOut,
-  PersonStandingIcon,
   BrainCircuit,
 } from "lucide-react";
 import { AiOutlineWechat } from "react-icons/ai";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ProjectsIcon } from "@sanity/icons";
 import CreateProjectButton from "@/components/project/CreateProjectButton";
 
 interface MobileTabBarProps {
@@ -40,46 +37,39 @@ interface TabItem {
 export function MobileTabBar({ user }: MobileTabBarProps) {
 
   const tabItems = [
-  // { href: "/dashboard/student/id", icon: PersonStanding, label: "Me" },
-  { 
-    href: "/feed", 
-    icon: SearchCode, 
-    label: "Browse",
-    matchPaths: ["/feed", "/feed/"],
-    excludePaths: ["/feed/projects"]
-  },
-  {
-    href: "/dashboard/projects",
-    icon: ProjectsIcon,
-    label: "Projects",
-    matchPaths: ["/dashboard/projects", "/dashboard/projects/", "/feed/projects/"],
-  },
-  { 
-    href: "/dashboard/student", 
-    icon: Users, 
-    label: "Zigx",
-    matchPaths: ["/dashboard/student", "/dashboard/student/"]
-  },
-  {
-    href: `/profile/${user?.profile?.username || "username"}`,
-    icon: PersonStandingIcon,
-    label: "Profile",
-    matchPaths: ["/profile/"],
-  },
-  {
-    href: "/dashboard/fupro-ai",
-    icon: BrainCircuit,
-    label: "ZAi",
-    matchPaths: ["/dashboard/fupro-ai", "/dashboard/fupro-ai/"],
-    isSpecial: true
-  },
-  // { 
-  //   href: "/notifications", 
-  //   icon: Bell, 
-  //   label: "Alerts",
-  //   matchPaths: ["/notifications", "/notifications/"]
-  // },
-];
+    { 
+      href: "/feed", 
+      icon: Globe, 
+      label: "Browse",
+      matchPaths: ["/feed", "/feed/"],
+      excludePaths: ["/feed/projects"]
+    },
+    {
+      href: "/dashboard/projects",
+      icon: Briefcase,
+      label: "Projects",
+      matchPaths: ["/dashboard/projects", "/dashboard/projects/", "/feed/projects/"],
+    },
+    { 
+      href: "/dashboard/student", 
+      icon: Users, 
+      label: "Zigx",
+      matchPaths: ["/dashboard/student", "/dashboard/student/"]
+    },
+    {
+      href: `/profile/${user?.profile?.username || "username"}`,
+      icon: User,
+      label: "Profile",
+      matchPaths: ["/profile/"],
+    },
+    {
+      href: "/dashboard/fupro-ai",
+      icon: BrainCircuit,
+      label: "ZAi",
+      matchPaths: ["/dashboard/fupro-ai", "/dashboard/fupro-ai/"],
+      isSpecial: true
+    },
+  ];
   const pathname = usePathname();
   const router = useRouter();
   const [unreadCount, setUnreadCount] = useState<number>(0);
@@ -167,32 +157,30 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
                 <div className="relative">
                   <div
                     className={`
-                      p-2 rounded-xl transition-all duration-200
+                      p-2 rounded-xl transition-all duration-300 active:scale-95
                       ${isActive 
-                        ? item.isSpecial 
-                          ? 'bg-blue-600 text-white shadow-md' 
-                          : 'bg-blue-600 text-white shadow-md'
-                        : 'text-muted-foreground group-active:bg-muted'
+                        ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-sidebar-primary/25' 
+                        : 'text-sidebar-foreground/60 group-active:bg-sidebar-accent/50'
                       }
                     `}
                   >
                     <Icon 
                       size={20} 
                       className={`
-                        ${isActive ? 'text-white' : 'text-muted-foreground group-active:text-blue-600'}
+                        ${isActive ? 'text-sidebar-primary-foreground' : 'text-sidebar-foreground/60 group-active:text-sidebar-primary'}
                       `}
                     />
                   </div>
                   
                   {/* Notification Badge */}
                   {showBadge && (
-                    <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 shadow-md">
+                    <div className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 shadow-md">
                       {unreadCount > 99 ? '99+' : unreadCount}
                     </div>
                   )}
 
                   {item.label === "ZAi" && (
-                     <div className="absolute -top-3 -right-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-sm z-10 tracking-wide">
+                     <div className="absolute -top-3 -right-4 bg-sidebar-primary text-sidebar-primary-foreground text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-sm z-10 tracking-wide">
                       BETA
                     </div>
                   )}
@@ -200,8 +188,8 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
                 
                 <span
                   className={`
-                    text-[10px] font-medium mt-1 transition-colors duration-200
-                    ${isActive ? 'text-blue-600' : 'text-muted-foreground group-active:text-blue-600'}
+                    text-[10px] font-semibold tracking-tight mt-1 transition-colors duration-200
+                    ${isActive ? 'text-sidebar-primary' : 'text-sidebar-foreground/60 group-active:text-sidebar-primary'}
                   `}
                 >
                   {item.label}
