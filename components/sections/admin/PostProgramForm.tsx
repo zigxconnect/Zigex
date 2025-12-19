@@ -13,7 +13,7 @@ import { Textarea } from "@/components/uiComponent/Textarea";
 // Reusable layout components
 const FormSection = ({ title, children }: any) => (
   <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-    <h2 className="text-lg font-semibold text-blue-700 mb-6">{title}</h2>
+    <h2 className="text-lg font-semibold text-black mb-6">{title}</h2>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 ">
       {children}
     </div>
@@ -22,7 +22,7 @@ const FormSection = ({ title, children }: any) => (
 
 const FormField = ({ label, children, className }: any) => (
   <div className={className}>
-    <label className="block text-sm font-medium text-blue-700 mb-1.5">
+    <label className="block text-sm font-medium text-black mb-1.5">
       {label}
     </label>
     {children}
@@ -40,6 +40,8 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
     if (!dateString) return "";
     return new Date(dateString).toISOString().split("T")[0];
   };
+
+  const [applicationLocation, setApplicationLocation] = useState(initialData?.location|| "")
 
   // State initialization for all form fields
   const [title, setTitle] = useState(initialData?.title || "");
@@ -83,6 +85,7 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
     formData.append("program_category", programCategory);
     formData.append("start_date", new Date(startDate).toISOString());
     formData.append("end_date", new Date(endDate).toISOString());
+    formData.append("location", applicationLocation);
     if (applicationDeadline)
       formData.append(
         "application_deadline",
@@ -179,6 +182,16 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
             type="date"
             value={applicationDeadline}
             onChange={(e) => setApplicationDeadline(e.target.value)}
+            
+          />
+        </FormField>
+
+        <FormField label="Location*">
+          <Input
+            type="text"
+            value={applicationLocation}
+            onChange={(e) => setApplicationLocation(e.target.value)}
+            required
           />
         </FormField>
       </FormSection>
@@ -233,7 +246,7 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
         >
           Cancel
         </Button>
-        <Button type="submit" variant="orange" disabled={isSubmitting}>
+        <Button type="submit" variant="primary" disabled={isSubmitting}>
           {isSubmitting
             ? isEditMode
               ? "Saving Changes..."

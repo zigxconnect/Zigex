@@ -55,6 +55,9 @@
   /* Zigex Signal Blue */
   --primary: #155DFC;
   --primary-foreground: #ffffff;
+
+  /* Light Signal Blue Accent */
+  --light-blue: #5d8df5;
   
   /* Deep Signal Blue */
   --secondary: #1A3CB9;

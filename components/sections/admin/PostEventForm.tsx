@@ -12,7 +12,7 @@ import { Textarea } from "@/components/uiComponent/Textarea";
 
 const FormSection = ({ title, children }: any) => (
   <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-    <h2 className="text-lg font-semibold text-blue-700 mb-6">{title}</h2>
+    <h2 className="text-lg font-semibold text-black mb-6">{title}</h2>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 ">
       {children}
     </div>
@@ -21,7 +21,7 @@ const FormSection = ({ title, children }: any) => (
 
 const FormField = ({ label, children, className }: any) => (
   <div className={className}>
-    <label className="block text-sm font-medium text-blue-700 mb-1.5">
+    <label className="block text-sm font-medium text-black mb-1.5">
       {label}
     </label>
     {children}
@@ -204,7 +204,7 @@ export const PostEventForm = ({ initialData }: { initialData?: any }) => {
         >
           Cancel
         </Button>
-        <Button type="submit" variant="orange" disabled={isSubmitting}>
+        <Button type="submit" variant="primary" disabled={isSubmitting}>
           {isEditMode
             ? isSubmitting
               ? "Saving Changes..."

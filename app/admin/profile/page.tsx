@@ -11,7 +11,7 @@ import { EditCompanyProfileForm } from "@/components/sections/admin/EditCompanyP
  * 3. Passing the initial data as a prop to the interactive EditCompanyProfileForm client component.
  */
 export default async function EditProfilePage() {
-  const supabase = createServerActionClient();
+  const supabase = await createServerActionClient();
 
   const {
     data: { user },
