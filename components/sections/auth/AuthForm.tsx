@@ -53,7 +53,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
   const [rateLimitError, setRateLimitError] = useState<string | null>(null);
   const [csrfToken, setCsrfToken] = useState<string | null>(null);
 
-  const supabase = createClient();
+  const [supabase] = useState(() => createClient());
   // Fetch CSRF token on mount (for sign-in only)
   useEffect(() => {
     if (!isSignUp) {
@@ -79,7 +79,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
       let decoded = replaced;
       try {
         decoded = decodeURIComponent(replaced);
-      } catch {}
+      } catch { }
       toast.error(decoded);
     }
   }, [searchParams]);
