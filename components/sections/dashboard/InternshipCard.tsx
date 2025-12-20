@@ -1,3 +1,4 @@
+import Link from "next/link";
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -441,7 +442,7 @@ export const InternshipCard = ({
               </div>
             </div>
             
-            <Link href={`/internships/${id}`} onClick={(e) => e.stopPropagation()}>
+            <Link href={`/internships/${id}`} onClick={(e: React.MouseEvent<HTMLAnchorElement>) => e.stopPropagation()}>
               <button
                 className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 shadow-2xl transition-all duration-300 hover:shadow-blue-500/50 active:scale-98 group/btn"
               >
