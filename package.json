@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "node --max-http-header-size=128000 node_modules/next/dist/bin/next dev --webpack",
-    "build": "next build --webpack",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
@@ -52,6 +52,7 @@
     "framer-motion": "^12.23.6",
     "google-auth-library": "^10.3.0",
     "google-spreadsheet": "^5.0.2",
+    "hls.js": "^1.6.15",
     "html2pdf.js": "^0.12.1",
     "libphonenumber-js": "^1.12.26",
     "lucide-react": "^0.525.0",
