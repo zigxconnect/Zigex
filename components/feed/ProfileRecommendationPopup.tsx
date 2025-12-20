@@ -41,7 +41,7 @@ export default function ProfileRecommendationPopup({user}: WelcomeCardProps) {
   const handleViewProfile = () => {
     // Mark as seen and redirect
     localStorage.setItem('zigex_profile_popup_seen', 'true');
-    window.location.href = `/dashboard/student/${user?.profile?.id}`
+    window.location.href = `/profile/${user?.profile?.username || ""}`;
   };
 
   const handleDismiss = () => {

@@ -83,43 +83,44 @@ export const DeveloperAvatarOverlap: React.FC<DeveloperAvatarOverlapProps> = ({
   return (
     <div className="space-y-4">
       {/* Title and Subtitle */}
-      <div>
-        <h3 className="text-lg font-bold text-foreground">{title}</h3>
-        <p className="text-sm text-muted-foreground">{subtitle}</p>
+      <div className="space-y-1">
+        <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">{title}</h3>
+        <p className="text-xs text-gray-500 font-medium">{subtitle}</p>
       </div>
 
       {/* Avatar Overlap Container */}
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-3">
         {/* Avatars */}
-        <div className="flex items-center -space-x-3">
+        <div className="flex items-center -space-x-4">
           {displayedDevelopers.map((dev, index) => (
             <div
               key={dev.id}
-              className="relative group"
+              className="relative group first:ml-0"
               style={{
                 zIndex: displayedDevelopers.length - index,
               }}
             >
-              {/* Avatar */}
-              {dev.avatar ? (
-                <img
-                  src={dev.avatar}
-                  alt={dev.name}
-                  className={`${sizeClasses[size]} rounded-full border-2 border-background object-cover shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 hover:z-50 cursor-pointer flex-shrink-0`}
-                  style={{ aspectRatio: '1 / 1' }}
-                />
-              ) : (
-                <div
-                  className={`${sizeClasses[size]} ${dev.color || 'bg-gradient-to-br from-muted-foreground to-muted-foreground/80'} rounded-full border-2 border-background flex items-center justify-center text-primary-foreground font-bold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 hover:z-50 cursor-pointer flex-shrink-0`}
-                >
-                  {dev.initials}
-                </div>
-              )}
+              {/* Avatar Holder to ensure perfect circle */}
+              <div className={`${sizeClasses[size]} rounded-full border-2 border-white bg-white shadow-md overflow-hidden hover:z-50 transition-all duration-300 hover:scale-110 cursor-pointer flex-shrink-0 aspect-square`}>
+                {dev.avatar ? (
+                  <img
+                    src={dev.avatar}
+                    alt={dev.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div
+                    className={`w-full h-full ${dev.color || 'bg-gradient-to-br from-blue-600 to-blue-500'} flex items-center justify-center text-white font-bold`}
+                  >
+                    {dev.initials}
+                  </div>
+                )}
+              </div>
 
               {/* Tooltip */}
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-popover text-popover-foreground text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap pointer-events-none shadow-lg z-50">
-                <div className="font-semibold">{dev.name}</div>
-                <div className="text-muted-foreground">{dev.role}</div>
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 px-3 py-1.5 bg-gray-900 text-white text-[10px] rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap pointer-events-none shadow-xl z-[60] font-medium translate-y-2 group-hover:translate-y-0">
+                <div className="font-bold">{dev.name}</div>
+                <div className="opacity-80">{dev.role}</div>
               </div>
             </div>
           ))}
@@ -127,17 +128,22 @@ export const DeveloperAvatarOverlap: React.FC<DeveloperAvatarOverlapProps> = ({
           {/* Remaining Count */}
           {remainingCount > 0 && (
             <div
-              className={`${sizeClasses[size]} bg-gradient-to-br from-muted-foreground to-muted-foreground/80 rounded-full border-background border-2 flex items-center justify-center text-primary-foreground font-bold shadow-lg text-xs`}
+              className={`${sizeClasses[size]} bg-gray-100 rounded-full border-white border-2 flex items-center justify-center text-gray-600 font-bold shadow-md text-xs relative z-0`}
             >
               +{remainingCount}
             </div>
           )}
         </div>
 
-        {/* Optional: Total Count */}
-        <span className="text-sm font-medium text-muted-foreground">
-          {developers.length} {developers.length === 1 ? 'Developer' : 'Developers'}
-        </span>
+        {/* Total Count Label */}
+        <div className="flex flex-col">
+          <span className="text-sm font-bold text-gray-900 leading-none">
+            {developers.length}
+          </span>
+          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+            {developers.length === 1 ? 'Expert' : 'Experts'}
+          </span>
+        </div>
       </div>
 
       {/* Detailed Labels (Optional) */}
@@ -156,6 +162,7 @@ export const DeveloperAvatarOverlap: React.FC<DeveloperAvatarOverlapProps> = ({
       )}
     </div>
   );
+
 };
 
 export default DeveloperAvatarOverlap;

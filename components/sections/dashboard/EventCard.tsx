@@ -14,7 +14,6 @@ import {
   Play,
   Eye,
   Heart,
-  ChevronRight,
   Share2,
   ArrowRight,
   CheckCircle,
@@ -23,7 +22,6 @@ import {
 import { useState } from "react";
 import { Event } from "@/lib/types/dashoard";
 import { SharePopover } from "@/components/SharePopover";
-import LiveBadge from "@/components/uiComponent/LiveBadge";
 import LivePanel from "@/components/uiComponent/LivePanel";
 
 
@@ -34,6 +32,7 @@ interface EventCardProps {
 }
 
 const formatDate = (dateString: string) => {
+  if (!dateString) return "Date TBD";
   return new Date(dateString).toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
@@ -47,6 +46,7 @@ export const EventCard = ({
   onLiveClick 
 }: EventCardProps) => {
   const router = useRouter();
+  const router = useRouter();
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [openLive, setOpenLive] = useState(false);
@@ -56,7 +56,7 @@ export const EventCard = ({
   const coverImage = event.event_picture_url || "/events-placeholder.jpg";
   const isLive = (event as any).is_live || /live/i.test(event.title || "");
   const viewerCount = (event as any).viewerCount || 0;
-  const logoColor = "#10b981"; // Green theme for events
+  const logoColor = "#10b981"; 
 
   const handleBookmark = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -89,38 +89,37 @@ export const EventCard = ({
         onClick={() => router.push(`/events/${event.id}`)}
         className={`bg-white rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer`}
       >
-          <div className="flex">
-            {/* Image Section */}
-            <div className="relative w-48 h-full flex-shrink-0">
-              <Image
-                src={coverImage}
-                alt={`Cover image for ${event.title}`}
-                fill
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
-              
-              {isLive && (
-                <>
-                  <div className="absolute top-3 left-3 z-10">
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-red-600 rounded-full shadow-lg">
-                      <div className="relative flex items-center justify-center">
-                        <div className="w-2 h-2 bg-white rounded-full animate-ping absolute" />
-                        <div className="w-2 h-2 bg-white rounded-full" />
-                      </div>
-                      <span className="text-white text-xs font-bold uppercase tracking-wide">
-                        Live
-                      </span>
+        <div className="flex">
+          <div className="relative w-48 h-full flex-shrink-0">
+            <Image
+              src={coverImage}
+              alt={`Cover image for ${event.title}`}
+              fill
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
+            
+            {isLive && (
+              <>
+                <div className="absolute top-3 left-3 z-10">
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-red-600 rounded-full shadow-lg">
+                    <div className="relative flex items-center justify-center">
+                      <div className="w-2 h-2 bg-white rounded-full animate-ping absolute" />
+                      <div className="w-2 h-2 bg-white rounded-full" />
                     </div>
+                    <span className="text-white text-xs font-bold uppercase tracking-wide">
+                      Live
+                    </span>
                   </div>
-                  <div className="absolute inset-0 flex items-center justify-center z-10">
-                    <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-xl transform transition-transform duration-300 group-hover:scale-110">
-                      <Play className="w-5 h-5 text-green-700 fill-green-700 ml-0.5" />
-                    </div>
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center z-10">
+                  <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-xl transform transition-transform duration-300 group-hover:scale-110">
+                    <Play className="w-5 h-5 text-green-700 fill-green-700 ml-0.5" />
                   </div>
-                </>
-              )}
-            </div>
+                </div>
+              </>
+            )}
+          </div>
 
             {/* Content Section */}
             <div className="flex-1 p-6 flex items-center justify-between">
@@ -171,7 +170,6 @@ export const EventCard = ({
     );
   }
 
-  // Grid View - Full Image Card with Overlay (TikTok/Instagram Style)
   return (
     <>
       <div 
@@ -186,7 +184,6 @@ export const EventCard = ({
             : '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
         }}
       >
-        {/* Full Background Image */}
         <div className="absolute inset-0">
           <Image
             src={coverImage}
@@ -194,38 +191,32 @@ export const EventCard = ({
             fill
             className="object-cover transition-transform duration-700 group-hover:scale-110"
           />
-          
-          {/* Gradient Overlay - Simplified */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10 transition-opacity duration-300 opacity-60 group-hover:opacity-80" />
         </div>
 
-        {/* Top Section - Floating Elements */}
         <div className="absolute top-0 left-0 right-0 p-4 z-20">
           <div className="flex items-start justify-between">
             <div className="flex flex-col items-start gap-2">
-            {/* Live Badge or Event Label */}
-            {isLive ? (
-              <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-600 to-pink-600 rounded-full shadow-2xl animate-pulse-glow">
-                <div className="relative flex items-center justify-center">
-                  <div className="w-2.5 h-2.5 bg-white rounded-full animate-ping absolute" />
-                  <div className="w-2.5 h-2.5 bg-white rounded-full" />
+              {isLive ? (
+                <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-600 to-pink-600 rounded-full shadow-2xl animate-pulse-glow">
+                  <div className="relative flex items-center justify-center">
+                    <div className="w-2.5 h-2.5 bg-white rounded-full animate-ping absolute" />
+                    <div className="w-2.5 h-2.5 bg-white rounded-full" />
+                  </div>
+                  <span className="text-white text-sm font-black uppercase tracking-wider">
+                    Live Now
+                  </span>
                 </div>
-                <span className="text-white text-sm font-black uppercase tracking-wider">
-                  Live Now
-                </span>
-              </div>
-            ) : (
-              <div className="px-4 py-2 bg-white rounded-full shadow-lg border border-gray-100">
-                <span className="text-black text-xs font-bold uppercase tracking-wide">
-                  Event
-                </span>
-              </div>
-            )}
+              ) : (
+                <div className="px-4 py-2 bg-white rounded-full shadow-lg border border-gray-100">
+                  <span className="text-black text-xs font-bold uppercase tracking-wide">
+                    Event
+                  </span>
+                </div>
+              )}
             </div>
             
-            {/* Action Buttons - Right Side */}
             <div className="flex flex-col gap-3">
-              {/* Bookmark */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -240,7 +231,6 @@ export const EventCard = ({
                 )}
               </button>
 
-              {/* Like Button (Instagram-style) */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -258,7 +248,6 @@ export const EventCard = ({
                 />
               </button>
 
-              {/* Share Button */}
               <div onClick={(e) => e.stopPropagation()}>
                 <SharePopover 
                   title={event.title} 
@@ -268,7 +257,6 @@ export const EventCard = ({
             </div>
           </div>
 
-          {/* Viewer Count for Live */}
           {isLive && viewerCount > 0 && (
             <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-black/70 backdrop-blur-xl rounded-full">
               <Eye className="w-4 h-4 text-white" />
@@ -279,27 +267,21 @@ export const EventCard = ({
           )}
         </div>
 
-        {/* Center Play Button for Live Content */}
         {isLive && (
           <div className="absolute inset-0 flex items-center justify-center z-10">
             <div 
               className="relative transition-all duration-500"
-              style={{
-                transform: isHovered ? 'scale(1.1)' : 'scale(1)',
-              }}
+              style={{ transform: isHovered ? 'scale(1.1)' : 'scale(1)' }}
             >
               <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-2xl">
                 <Play className="w-9 h-9 text-green-600 fill-green-600 ml-1" />
               </div>
-              {/* Pulsing Ring */}
               <div className="absolute inset-0 w-20 h-20 bg-white rounded-full animate-ping-slow opacity-40" />
             </div>
           </div>
         )}
 
-        {/* Bottom Content - Always Visible */}
         <div className="absolute bottom-0 left-0 right-0 p-5 z-20">
-          {/* Company/Organizer Logo Badge */}
           <div className="flex items-center gap-3 mb-3">
             <div
               className="w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-2xl border-2 border-white/30"
@@ -317,7 +299,6 @@ export const EventCard = ({
             </div>
           </div>
 
-          {/* Date & Location - Compact */}
           <div className="flex items-center gap-3 mb-4 text-white/90">
             <div className="flex items-center gap-1.5 text-sm font-medium">
               <div className="w-6 h-6 bg-white/20 backdrop-blur-xl rounded-full flex items-center justify-center">
@@ -334,9 +315,6 @@ export const EventCard = ({
             </div>
           </div>
           
-          {/* Status Badge - Moved to Top (if logic added later) */}
-
-          {/* CTA Button - Full Width, Instagram Story Style */}
           <Link href={`/events/${event.id}`} onClick={(e) => e.stopPropagation()}>
             <button
               className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 shadow-2xl transition-all duration-300 hover:shadow-green-500/50 active:scale-98 group/btn"
@@ -353,13 +331,10 @@ export const EventCard = ({
           </Link>
         </div>
 
-        {/* Hover Glow Effect */}
         {isHovered && (
           <div 
             className="absolute inset-0 pointer-events-none"
-            style={{
-              boxShadow: 'inset 0 0 60px rgba(16, 185, 129, 0.3)',
-            }}
+            style={{ boxShadow: 'inset 0 0 60px rgba(16, 185, 129, 0.3)' }}
           />
         )}
       </div>
@@ -377,60 +352,24 @@ export const EventCard = ({
 
       <style jsx>{`
         @keyframes ping {
-          75%, 100% {
-            transform: scale(2);
-            opacity: 0;
-          }
+          75%, 100% { transform: scale(2); opacity: 0; }
         }
         @keyframes ping-slow {
-          0% {
-            transform: scale(1);
-            opacity: 0.6;
-          }
-          100% {
-            transform: scale(1.5);
-            opacity: 0;
-          }
-        }
-        @keyframes shimmer {
-          0% {
-            background-position: -200% center;
-          }
-          100% {
-            background-position: 200% center;
-          }
+          0% { transform: scale(1); opacity: 0.6; }
+          100% { transform: scale(1.5); opacity: 0; }
         }
         @keyframes like-bounce {
-          0%, 100% {
-            transform: scale(1);
-          }
-          50% {
-            transform: scale(1.3);
-          }
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.3); }
         }
         @keyframes pulse-glow {
-          0%, 100% {
-            box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
-          }
-          50% {
-            box-shadow: 0 0 40px rgba(239, 68, 68, 0.8);
-          }
+          0%, 100% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.5); }
+          50% { box-shadow: 0 0 40px rgba(239, 68, 68, 0.8); }
         }
-        .animate-ping {
-          animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
-        }
-        .animate-ping-slow {
-          animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
-        }
-        .animate-like-bounce {
-          animation: like-bounce 0.4s ease-in-out;
-        }
-        .animate-pulse-glow {
-          animation: pulse-glow 2s ease-in-out infinite;
-        }
-        .active\\:scale-98:active {
-          transform: scale(0.98);
-        }
+        .animate-ping { animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite; }
+        .animate-ping-slow { animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite; }
+        .animate-like-bounce { animation: like-bounce 0.4s ease-in-out; }
+        .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
       `}</style>
     </>
   );

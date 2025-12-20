@@ -1,4 +1,26 @@
 
+import withPWAInit from "@ducanh2912/next-pwa";
+
+const withPWA = withPWAInit({
+  dest: "public",
+  disable: false, // Enable in development for testing
+
+  register: true,
+  skipWaiting: true,
+  cacheOnFrontEndNav: true,
+  aggressiveFrontEndNavCaching: true,
+  reloadOnOnline: true,
+  swMinify: true,
+  workboxOptions: {
+    disableDevLogs: true,
+    maximumFileSizeToCacheInBytes: 5000000, // 5MB limit for precaching
+  },
+
+  fallbacks: {
+    document: "/offline", // Redirect to /offline when offline
+  },
+});
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // TypeScript settings
@@ -104,4 +126,6 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+
+
+export default withPWA(nextConfig);

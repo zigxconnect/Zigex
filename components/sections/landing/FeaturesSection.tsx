@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import Image from 'next/image';
 import { ArrowRight, CheckCircle2, Briefcase, GraduationCap, Users } from 'lucide-react';
 import Link from 'next/link';
 
@@ -14,15 +13,15 @@ const ActivitiesSection: React.FC = () => {
     internship: {
       title: 'Internships',
       headline: 'Launch Your Career',
-      description: 'Our internship,BOOTCAMP, EVENTS, program is designed to bridge the gap between academic learning and professional ecosystem. We partner with top-tier companies to offer roles that provide real-world experience, mentorship, and the chance to work on impactful projects.',
+      description: 'Our internship program is designed to bridge the gap between academic learning and professional ecosystem. We partner with top-tier companies to offer roles that provide real-world experience, mentorship, and the chance to work on impactful projects.',
       benefits: [
         'Access to exclusive paid and unpaid roles',
         'Mentorship from industry veterans',
         'Certificate of completion and recommendation letters',
         'Potential for full-time employment offers'
       ],
-      image: 'https://i.ibb.co/C4tg26k/woc.jpg', // Using user provided image
-      ctaLink: '/internships',
+      image: 'https://i.ibb.co/C4tg26k/woc.jpg',
+      ctaLink: '/feed',
       ctaText: 'Find Internships'
     },
     program: {
@@ -36,7 +35,7 @@ const ActivitiesSection: React.FC = () => {
         'Career support and resume reviews'
       ],
       image: 'https://i.ibb.co/C4tg26k/woc.jpg', 
-      ctaLink: '/programs',
+      ctaLink: '/feed',
       ctaText: 'Explore Programs'
     },
     event: {
@@ -50,7 +49,7 @@ const ActivitiesSection: React.FC = () => {
         'Community meetups and mixers'
       ],
       image: 'https://i.ibb.co/4ZFCPV5W/n5-2.jpg',
-      ctaLink: '/events',
+      ctaLink: '/feed',
       ctaText: 'Upcoming Events'
     }
   };
@@ -98,7 +97,7 @@ const ActivitiesSection: React.FC = () => {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             
             {/* Text Content */}
-            <div className="space-y-8 animate-in slide-in-from-left-4 duration-500 fade-in order-2 lg:order-1">
+            <div className="space-y-8 order-2 lg:order-1">
               <div>
                 <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
                   {activeContent.headline}
@@ -129,7 +128,7 @@ const ActivitiesSection: React.FC = () => {
 
             {/* Visual */}
             <div className="relative order-1 lg:order-2">
-              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl border-4 border-white bg-gray-100 animate-in zoom-in-95 duration-500 fade-in">
+              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl border-4 border-white bg-gray-100">
                  <img 
                     src={activeContent.image} 
                     alt={activeContent.title} 
@@ -155,7 +154,6 @@ const ActivitiesSection: React.FC = () => {
 
           </div>
         </div>
-
       </div>
     </section>
   );
