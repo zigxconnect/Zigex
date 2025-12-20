@@ -2,7 +2,9 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { Logo } from "@/components/layout/Logo";
 
 interface NavItem {
   name: string;
@@ -34,23 +36,16 @@ const Navbar: React.FC = () => {
   };
 
   return (
-    <nav className="bg-blue-800 px-4 sm:px-6 lg:px-8 py-3 sticky top-0 z-50 shadow-md">
+    <nav className="bg-primary px-4 sm:px-6 lg:px-8 py-3 sticky top-0 z-50 shadow-md">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between">
           {/* Logo */}
-        <Link
-                    href="/"
-                    className="group flex items-center shadow-md p-2 rounded-lg transition-all duration-300 ease-in-out hover:shadow-xl hover:shadow-blue-500/25 hover:scale-105 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50"
-                  >
-                    <div className="text-white font-bold text-sm w-6 h-6 bg-gradient-to-br from-blue-600 to-blue-700 rounded-sm flex items-center justify-center shadow-md mr-1 transition-all duration-300 ease-in-out group-hover:shadow-lg group-hover:shadow-blue-500/50 group-hover:rotate-12 group-hover:scale-110 group-hover:bg-gradient-to-br group-hover:from-blue-500 group-hover:to-purple-600">
-                      <span className="transition-transform duration-300 ease-in-out group-hover:scale-125">
-                        Z
-                      </span>
-                    </div>
-                    <div className="sm:block font-bold text-blue-700 text-lg rounded flex items-center justify-center transition-all duration-300 ease-in-out group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-600 group-hover:to-purple-600 group-hover:scale-105">
-                      IGEX
-                    </div>
-                  </Link>
+          <Link
+            href="/"
+            className="group flex items-center shadow-md p-2 rounded-lg transition-all duration-300 ease-in-out hover:shadow-xl hover:shadow-primary/25 hover:scale-105 hover:bg-gradient-to-r hover:from-primary/10 hover:to-secondary/10"
+          >
+           <Logo className="h-10 w-auto" />
+          </Link>
 
           {/* Desktop Navigation Links */}
           <div className="hidden lg:flex items-center space-x-6 xl:space-x-8">
@@ -58,8 +53,8 @@ const Navbar: React.FC = () => {
               <Link
                 key={item.name}
                 href={item.href}
-                className={`text-white hover:text-blue-100 transition-colors duration-200 font-medium ${
-                  isActive(item.href) ? "border-b-2 border-white pb-1" : ""
+                className={`text-primary-foreground hover:text-primary-foreground/80 transition-colors duration-200 font-medium ${
+                  isActive(item.href) ? "border-b-2 border-primary-foreground pb-1" : ""
                 }`}
               >
                 {item.name}
@@ -71,13 +66,13 @@ const Navbar: React.FC = () => {
           <div className="hidden sm:flex items-center space-x-2 lg:space-x-3">
             <Link
               href="/sign-in"
-              className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 lg:px-4 lg:py-2 rounded-md transition-colors duration-200 font-medium text-sm lg:text-base"
+              className="bg-background text-primary hover:bg-background/90 px-3 py-2 lg:px-4 lg:py-2 rounded-md transition-colors duration-200 font-medium text-sm lg:text-base"
             >
               Sign In
             </Link>
             <Link
               href="/sign-up"
-              className="border border-white text-white hover:bg-white hover:text-blue-800 px-3 py-2 lg:px-4 lg:py-2 rounded-md transition-colors duration-200 font-medium text-sm lg:text-base"
+              className="border border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary px-3 py-2 lg:px-4 lg:py-2 rounded-md transition-colors duration-200 font-medium text-sm lg:text-base"
             >
               Sign Up
             </Link>
@@ -85,7 +80,7 @@ const Navbar: React.FC = () => {
 
           {/* Mobile Menu Button */}
           <button
-            className="lg:hidden text-white p-2 rounded-md hover:bg-blue-700 transition-colors duration-200"
+            className="lg:hidden text-primary-foreground p-2 rounded-md hover:bg-primary/90 transition-colors duration-200"
             onClick={toggleMobileMenu}
             aria-label="Toggle mobile menu"
           >
@@ -122,9 +117,9 @@ const Navbar: React.FC = () => {
                 key={item.name}
                 href={item.href}
                 onClick={closeMobileMenu}
-                className={`block text-white hover:text-blue-100 hover:bg-blue-700 py-3 px-4 rounded-md transition-colors duration-200 font-medium ${
+                className={`block text-primary-foreground hover:text-primary-foreground/80 hover:bg-primary/90 py-3 px-4 rounded-md transition-colors duration-200 font-medium ${
                   isActive(item.href)
-                    ? "bg-blue-700 border-l-4 border-white"
+                    ? "bg-primary-foreground/20 border-l-4 border-primary-foreground"
                     : ""
                 }`}
               >
@@ -137,14 +132,14 @@ const Navbar: React.FC = () => {
               <Link
                 href="/sign-in"
                 onClick={closeMobileMenu}
-                className="block w-full bg-orange-500 hover:bg-orange-600 text-white py-3 px-4 rounded-md transition-colors duration-200 font-medium text-center"
+                className="block w-full bg-background text-primary hover:bg-background/90 py-3 px-4 rounded-md transition-colors duration-200 font-medium text-center"
               >
                 Sign In
               </Link>
               <Link
                 href="/sign-up"
                 onClick={closeMobileMenu}
-                className="block w-full border border-white text-white hover:bg-white hover:text-blue-800 py-3 px-4 rounded-md transition-colors duration-200 font-medium text-center"
+                className="block w-full border border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary py-3 px-4 rounded-md transition-colors duration-200 font-medium text-center"
               >
                 Sign Up
               </Link>

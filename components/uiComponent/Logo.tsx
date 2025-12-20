@@ -9,9 +9,9 @@ interface LogoProps {
 export const Logo = ({ className }: LogoProps) => {
   return (
     <Link href="/" className={cn("flex items-center gap-2 group", className)}>
-      <div className="relative w-20 h-20 transition-transform duration-300 group-hover:scale-110">
+      <div className="relative w-32 h-10 transition-transform duration-300 group-hover:scale-105">
         <Image
-          src="/z3.png"
+          src="/zigex.svg"
           alt="Zigex Logo"
           fill
           className="object-contain"

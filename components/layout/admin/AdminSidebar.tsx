@@ -80,24 +80,24 @@ export const AdminSidebar = ({
       )}
 
       <aside
-        className={`fixed left-0 w-72 bg-white shadow-lg border-r border-gray-200 z-40 flex flex-col transition-transform duration-300 ease-in-out
+        className={`fixed left-0 w-72 bg-sidebar shadow-lg border-r border-sidebar-border z-40 flex flex-col transition-transform duration-300 ease-in-out
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
           top-20 
           h-[calc(100vh-5rem)]
         `}
       >
         {/* Company Profile Section */}
-        <div className="p-5 text-center border-b border-gray-100">
+        <div className="p-5 text-center border-b border-sidebar-border">
           <div className="relative inline-block">
-            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 text-3xl font-bold ring-4 ring-white shadow-inner">
+            <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center text-primary text-3xl font-bold ring-4 ring-sidebar shadow-inner">
               {getInitials(companyProfile.company_name)}
             </div>
           </div>
-          <h2 className="mt-3 text-lg font-bold text-gray-900 truncate">
+          <h2 className="mt-3 text-lg font-bold text-sidebar-foreground truncate">
             {companyProfile.company_name}
           </h2>
           {companyProfile.industry && (
-            <p className="text-sm font-medium text-blue-600">
+            <p className="text-sm font-medium text-primary">
               {companyProfile.industry}
             </p>
           )}
@@ -116,16 +116,16 @@ export const AdminSidebar = ({
                 href={link.href}
                 className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                   isActive
-                    ? "bg-blue-600 text-white shadow-sm"
-                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
                 }`}
               >
                 <link.icon
                   size={18}
                   className={
                     isActive
-                      ? "text-white"
-                      : "text-gray-400 group-hover:text-blue-600"
+                      ? "text-primary-foreground"
+                      : "text-muted-foreground group-hover:text-primary"
                   }
                 />
                 <span>{link.label}</span>
@@ -135,10 +135,10 @@ export const AdminSidebar = ({
         </nav>
 
         {/* Footer - Sign Out Button */}
-        <div className="p-4 border-t border-gray-100">
+        <div className="p-4 border-t border-sidebar-border">
           <Button
             variant="ghost"
-            className="w-full justify-start gap-3 text-gray-600 hover:bg-red-50 hover:text-red-600"
+            className="w-full justify-start gap-3 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
             onClick={handleSignOut}
           >
             <LogOut size={18} />

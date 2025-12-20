@@ -64,13 +64,13 @@ export const QuickEditField = ({
   if (isEditing) {
     return (
       <div className="space-y-2">
-        <label className="text-sm font-medium text-gray-700">{label}</label>
+        <label className="text-sm font-medium text-foreground">{label}</label>
         {multiline ? (
           <textarea
             value={editValue}
             onChange={(e) => setEditValue(e.target.value.slice(0, maxLength))}
             maxLength={maxLength}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            className="w-full p-3 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent resize-none"
             rows={4}
             disabled={isLoading}
           />
@@ -80,26 +80,26 @@ export const QuickEditField = ({
             value={editValue}
             onChange={(e) => setEditValue(e.target.value.slice(0, maxLength))}
             maxLength={maxLength}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full p-3 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
             disabled={isLoading}
           />
         )}
-        <div className="flex items-center justify-between text-xs text-gray-500">
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>{editValue.length}/{maxLength}</span>
           <div className="flex gap-2">
             <button
               onClick={handleCancel}
               disabled={isLoading}
-              className="p-2 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+              className="p-2 hover:bg-destructive/10 rounded-lg transition-colors disabled:opacity-50"
             >
-              <X size={16} className="text-red-600" />
+              <X size={16} className="text-destructive" />
             </button>
             <button
               onClick={handleSave}
               disabled={isLoading}
-              className="p-2 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
+              className="p-2 hover:bg-success/10 rounded-lg transition-colors disabled:opacity-50"
             >
-              <Check size={16} className="text-green-600" />
+              <Check size={16} className="text-success" />
             </button>
           </div>
         </div>
@@ -110,16 +110,16 @@ export const QuickEditField = ({
   return (
     <div className="group flex items-start justify-between gap-3">
       <div className="flex-1">
-        <p className="text-xs font-medium text-gray-600 mb-1">{label}</p>
-        <p className="text-sm text-gray-900 break-words">
-          {value || <span className="text-gray-400 italic">Not set</span>}
+        <p className="text-xs font-medium text-muted-foreground mb-1">{label}</p>
+        <p className="text-sm text-foreground break-words">
+          {value || <span className="text-muted-foreground/50 italic">Not set</span>}
         </p>
       </div>
       <button
         onClick={() => setIsEditing(true)}
-        className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-blue-50 rounded-lg"
+        className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-primary/10 rounded-lg"
       >
-        <Pencil size={16} className="text-blue-600" />
+        <Pencil size={16} className="text-primary" />
       </button>
     </div>
   );

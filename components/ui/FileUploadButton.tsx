@@ -51,18 +51,18 @@ export const FileUploadButton = ({
       />
 
       {file ? (
-        <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-gray-50">
+        <div className="flex items-center justify-between p-3 border border-border rounded-lg bg-muted">
           <div className="flex items-center gap-3">
-            <File className="w-5 h-5 text-gray-500 flex-shrink-0" />
+            <File className="w-5 h-5 text-muted-foreground flex-shrink-0" />
             <div className="text-sm">
-              <p className="font-medium text-gray-800 truncate">{file.name}</p>
-              <p className="text-gray-500">{formatBytes(file.size)}</p>
+              <p className="font-medium text-foreground truncate">{file.name}</p>
+              <p className="text-muted-foreground">{formatBytes(file.size)}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={handleRemoveFile}
-            className="p-1 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full"
+            className="p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full"
             aria-label="Remove file"
           >
             <X size={16} />

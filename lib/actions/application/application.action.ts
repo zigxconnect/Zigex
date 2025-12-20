@@ -405,6 +405,26 @@ export async function submitInternshipApplication(
       internship_id
     );
 
+    // Send confirmation email
+    const { data: companyData } = await supabase
+      .from("internships")
+      .select("company_id, company_profiles(company_name)")
+      .eq("id", internship_id)
+      .single();
+
+    const companyName = companyData?.company_profiles?.company_name || "The Company";
+    
+    if (user.email) {
+      const { sendApplicationConfirmationEmail } = await import("@/lib/mail");
+      await sendApplicationConfirmationEmail(
+        user.email,
+        user.user_metadata?.full_name || "Student",
+        title,
+        "Internship",
+        companyName
+      );
+    }
+
     // Revalidate relevant paths
     revalidatePath("/dashboard/applications");
     revalidatePath("/opportunities/internships");
@@ -513,6 +533,26 @@ export async function submitProgramApplication(
       program_id
     );
 
+    // Send confirmation email
+    const { data: companyData } = await supabase
+      .from("programs")
+      .select("company_id, company_profiles(company_name)")
+      .eq("id", program_id)
+      .single();
+
+    const companyName = companyData?.company_profiles?.company_name || "The Company";
+    
+    if (user.email) {
+      const { sendApplicationConfirmationEmail } = await import("@/lib/mail");
+      await sendApplicationConfirmationEmail(
+        user.email,
+        user.user_metadata?.full_name || "Student",
+        title,
+        "Program",
+        companyName
+      );
+    }
+
     // Revalidate relevant paths
     revalidatePath("/dashboard/applications");
     revalidatePath("/opportunities/programs");
@@ -616,6 +656,26 @@ export async function submitEventRSVP(
       "event",
       event_id
     );
+
+    // Send confirmation email
+    const { data: companyData } = await supabase
+      .from("event")
+      .select("company_id, company_profiles(company_name)")
+      .eq("id", event_id)
+      .single();
+
+    const companyName = companyData?.company_profiles?.company_name || "The Company";
+    
+    if (user.email) {
+      const { sendApplicationConfirmationEmail } = await import("@/lib/mail");
+      await sendApplicationConfirmationEmail(
+        user.email,
+        user.user_metadata?.full_name || "Student",
+        title,
+        "Event",
+        companyName
+      );
+    }
 
     // Revalidate relevant paths
     revalidatePath("/dashboard/events");

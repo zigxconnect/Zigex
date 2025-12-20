@@ -9,17 +9,17 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
+        primary: "bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-ring",
         secondary:
-          "border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 focus:ring-gray-500",
+          "border border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-ring",
         orange:
-          "bg-[#EA580C] text-white hover:bg-orange-600 focus:ring-[#EA580C]",
+          "bg-warning text-primary-foreground hover:bg-warning/90 focus:ring-warning",
         premium:
-          "relative bg-white text-orange-500 border border-orange-500 hover:bg-orange-50 focus:ring-orange-500 overflow-hidden",
+          "relative bg-background text-warning border border-warning hover:bg-warning/10 focus:ring-warning overflow-hidden",
         "primary-dark":
-          "bg-[#1E3A8A] text-white hover:bg-blue-900 focus:ring-[#1E3A8A]",
+          "bg-secondary text-secondary-foreground hover:bg-secondary/90 focus:ring-secondary",
         "secondary-outline":
-          "border border-[#EA580C] bg-white text-[#EA580C] hover:bg-orange-50 focus:ring-[#EA580C]",
+          "border border-warning bg-background text-warning hover:bg-warning/10 focus:ring-warning",
       },
       size: {
         default: "h-auto",

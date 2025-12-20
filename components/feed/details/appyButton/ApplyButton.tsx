@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import ApplicationModal from "./Modal";
 import { SmartApplyPreview } from "./SmartApplyPreview";
 import { generateSmartApplicationDraft } from "@/lib/actions/feed/smart-apply.actions";
-import { MonetbilPaymentModal } from "@/components/payment/MonetbilPaymentModal";
+import { WaitingListModal } from "./WaitingListModal";
 import {
   Tooltip,
   TooltipContent,
@@ -46,7 +46,7 @@ export function ApplyButton({
 }: ApplyButtonProps) {
   const [showModal, setShowModal] = useState(false);
   const [showSmartPreview, setShowSmartPreview] = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false); // New state for payment
+  const [showWaitingList, setShowWaitingList] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingError, setGeneratingError] = useState<string | null>(null);
@@ -54,14 +54,7 @@ export function ApplyButton({
 
   // Triggered when user clicks "Smart Apply"
   const handleSmartApplyClick = () => {
-    setShowPaymentModal(true);
-  };
-
-  // Triggered after successful payment
-  const handlePaymentSuccess = async () => {
-    // For prototyping: Just confirm payment without generating
-    console.log("Payment successful for opportunity:", id);
-    // In a real app, you would verify the transaction here
+    setShowWaitingList(true);
   };
 
   if (!isOpen) {
@@ -110,32 +103,16 @@ export function ApplyButton({
             onMouseLeave={() => setIsHovered(false)}
             className="
               w-full relative overflow-hidden flex items-center justify-center gap-2 
-              px-6 py-4 rounded-lg font-semibold text-base 
-              transition-all duration-300 
-              bg-gradient-to-r from-blue-600 to-indigo-600
-              hover:from-blue-700 hover:to-indigo-700
+              px-6 py-4 rounded-2xl font-black text-sm uppercase tracking-wider
+              transition-all duration-300
+              bg-primary
+              hover:bg-secondary
               text-white
-              shadow-lg hover:shadow-xl
-              transform hover:scale-[1.02] active:scale-[0.98]
+              shadow-lg shadow-blue-200/50 hover:shadow-xl
+              transform hover:scale-[1.01] active:scale-[0.99]
               group
             "
           >
-            {/* ... existing Apply Now button content ... */}
-            <span
-              className={`
-                absolute inset-0 bg-blue-400
-                ${isHovered ? "animate-ping opacity-20" : "opacity-0"}
-              `}
-            />
-
-            <span
-              className={`
-                absolute inset-0 -translate-x-full
-                bg-gradient-to-r from-transparent via-white/30 to-transparent
-                ${isHovered ? "animate-shimmer" : ""}
-              `}
-            />
-
             <span className="relative z-10 flex items-center justify-center gap-2">
               Apply Now
               <ExternalLink size={18} className="group-hover:translate-x-1 transition-transform" />
@@ -148,20 +125,18 @@ export function ApplyButton({
             disabled={isGenerating}
             className="
               w-full relative overflow-hidden flex items-center justify-center gap-2 
-              px-6 py-4 rounded-lg font-semibold text-base 
-              transition-all duration-300 
-              bg-gradient-to-r from-orange-500 to-orange-600
-              hover:from-orange-600 hover:to-orange-700
-              disabled:from-orange-400 disabled:to-orange-500
-              text-white
+              px-6 py-4 rounded-2xl font-black text-sm uppercase tracking-wider
+              transition-all duration-300
+              bg-card border-2 border-primary
+              hover:bg-primary/5
+              disabled:bg-muted disabled:border-muted-foreground/30
+              text-primary
+              disabled:text-muted-foreground
               shadow-md hover:shadow-lg
-              transform hover:scale-[1.02] disabled:hover:scale-100 active:scale-[0.98]
+              transform hover:scale-[1.01] disabled:hover:scale-100 active:scale-[0.99]
               group
             "
           >
-            {/* ... existing Smart Apply button content ... */}
-            <span className="absolute inset-0 bg-gradient-to-r from-orange-400 to-orange-500 opacity-0 group-hover:opacity-20 transition-opacity" />
-
             <span className="relative z-10 flex items-center justify-center gap-2">
               {isGenerating ? (
                 <>
@@ -170,7 +145,7 @@ export function ApplyButton({
                 </>
               ) : (
                 <>
-                  <Zap size={18} className="group-hover:animate-pulse" />
+                  <Zap size={18} />
                   Smart Apply with AI
                 </>
               )}
@@ -200,12 +175,12 @@ export function ApplyButton({
         />
       )}
 
-      {/* Payment Modal */}
-      <MonetbilPaymentModal
-        isOpen={showPaymentModal}
-        onClose={() => setShowPaymentModal(false)}
-        onSuccess={handlePaymentSuccess}
-        amount={1000} // Set your price here (e.g., 1000 XAF)
+      {/* Waiting List Modal */}
+      <WaitingListModal
+        isOpen={showWaitingList}
+        onClose={() => setShowWaitingList(false)}
+        opportunityTitle={title}
+        opportunityType={type}
       />
 
       {/* Smart Apply Preview Modal */}

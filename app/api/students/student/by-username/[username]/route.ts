@@ -125,7 +125,7 @@ export async function PUT(
             updated_at: new Date().toISOString(),
             profile_status: "complete",
           })
-          .eq("username", username)
+          .eq("user_id", user.id)
           .select()
           .single();
         console.log("[API] Update result:", result);

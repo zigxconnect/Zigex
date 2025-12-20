@@ -30,8 +30,8 @@ const FeaturedInternships: React.FC = () => {
       description: 'Join our dynamic team and work on cutting-edge projects',
       location: 'Bamenda',
       logoText: 'TC',
-      logoColor: 'bg-blue-800',
-      badgeColor: 'bg-orange-500',
+      logoColor: 'bg-primary',
+      badgeColor: 'bg-warning',
       applyLink: '/apply/software-dev',
       office: "https://i.ibb.co/VchKJd69/seedLogo.webp" 
     },
@@ -42,8 +42,8 @@ const FeaturedInternships: React.FC = () => {
       description: 'Help develop marketing strategies for local businesses',
       location: 'Bamenda',
       logoText: 'CS',
-      logoColor: 'bg-orange-600',
-      badgeColor: 'bg-orange-500',
+      logoColor: 'bg-warning',
+      badgeColor: 'bg-warning',
       applyLink: '/apply/marketing',
       office: "https://i.ibb.co/bMcCwpSp/nervtech.png",
     },
@@ -54,8 +54,8 @@ const FeaturedInternships: React.FC = () => {
       description: 'Learn financial analysis and banking operations',
       location: 'Bamenda',
       logoText: 'BP',
-      logoColor: 'bg-blue-800',
-      badgeColor: 'bg-orange-500',
+      logoColor: 'bg-primary',
+      badgeColor: 'bg-warning',
       applyLink: '/apply/finance',
       office: "https://i.ibb.co/yF80L7jc/ccc.png"
     },
@@ -66,8 +66,8 @@ const FeaturedInternships: React.FC = () => {
       description: 'Work with big data and analytics tools',
       location: 'Bamenda',
       logoText: 'DF',
-      logoColor: 'bg-orange-600',
-      badgeColor: 'bg-orange-500',
+      logoColor: 'bg-warning',
+      badgeColor: 'bg-warning',
       applyLink: '/apply/data-analyst',
       office: "https://i.ibb.co/qSQTbpk/unib.png"
     },
@@ -78,8 +78,8 @@ const FeaturedInternships: React.FC = () => {
       description: 'Support recruitment and employee relations',
       location: 'Bamenda',
       logoText: 'PF',
-      logoColor: 'bg-blue-800',
-      badgeColor: 'bg-orange-500',
+      logoColor: 'bg-primary',
+      badgeColor: 'bg-warning',
       applyLink: '/apply/hr',
       office: "https://i.ibb.co/MkXDZsfx/Civil-Salt.jpg"
     },
@@ -90,8 +90,8 @@ const FeaturedInternships: React.FC = () => {
       description: 'Create visual content for various media platforms',
       location: 'Bamenda',
       logoText: 'VA',
-      logoColor: 'bg-orange-600',
-      badgeColor: 'bg-orange-500',
+      logoColor: 'bg-warning',
+      badgeColor: 'bg-warning',
       applyLink: '/apply/graphic-design',
       office: "https://i.ibb.co/Fk55D4CJ/skye8-internship.jpg"
     }
@@ -195,14 +195,14 @@ const FeaturedInternships: React.FC = () => {
         }
       `}</style>
       
-      <section className="py-12 sm:py-16 lg:py-20 bg-gray-50">
+      <section className="py-12 sm:py-16 lg:py-20 bg-muted/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="text-center mb-8 sm:mb-12 lg:mb-16">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-blue-800 mb-4 sm:mb-6 animate-fade-in-up">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary mb-4 sm:mb-6 animate-fade-in-up">
               Featured Internships
             </h2>
-            <p className="text-gray-600 text-sm sm:text-base lg:text-lg max-w-2xl mx-auto leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+            <p className="text-muted-foreground text-sm sm:text-base lg:text-lg max-w-2xl mx-auto leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
               Discover hand-picked internship opportunities from top companies in Bamenda
             </p>
           </div>
@@ -214,7 +214,7 @@ const FeaturedInternships: React.FC = () => {
                 key={internship.id}
                 ref={setCardRef(internship.id)}
                 data-card-id={internship.id}
-                className={`bg-white rounded-lg md:w-80 w-90 mx-auto shadow-lg md:p-0 sm:p-6 relative group cursor-pointer transition-all duration-500 hover:shadow-2xl hover:scale-105 hover:-translate-y-2 ${
+                className={`bg-card rounded-lg md:w-80 w-90 mx-auto shadow-lg md:p-0 sm:p-6 relative group cursor-pointer transition-all duration-500 hover:shadow-2xl hover:scale-105 hover:-translate-y-2 ${
                   visibleCards.has(internship.id) 
                     ? 'card-visible' 
                     : 'card-hidden'
@@ -224,7 +224,7 @@ const FeaturedInternships: React.FC = () => {
                 }}
               >
                 {/* Hover overlay */}
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-orange-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-warning/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 
                 {/* Badge */}
                 <div className={`absolute top-4 right-4 ${internship.badgeColor} text-white px-2 py-1 rounded-full text-xs font-medium transition-all duration-300 group-hover:scale-110 group-hover:rotate-12`}>
@@ -232,7 +232,7 @@ const FeaturedInternships: React.FC = () => {
                 </div>
 
                 {/* office picture */}
-                <div className="md:w-80 md:h-40 h-45 bg-gray-200 rounded-md overflow-hidden mb-3 ">
+                <div className="md:w-80 md:h-40 h-45 bg-muted rounded-md overflow-hidden mb-3 ">
                   <img 
                     src={internship.office} 
                     alt={internship.title} 
@@ -243,33 +243,33 @@ const FeaturedInternships: React.FC = () => {
 
                 {/* Logo and Title */}
                 <div className="flex items-start mb-3 sm:mb-4 relative z-10 px-7 ">
-                  <div className={`${internship.logoColor} text-white rounded-lg w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center font-bold text-sm sm:text-base mr-3 sm:mr-4 flex-shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6`}>
+                  <div className={`${internship.logoColor} text-primary-foreground rounded-lg w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center font-bold text-sm sm:text-base mr-3 sm:mr-4 flex-shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6`}>
                     {internship.logoText}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-blue-800 text-sm sm:text-base lg:text-lg leading-tight mb-1 transition-colors duration-300 group-hover:text-blue-600">
+                    <h3 className="font-semibold text-primary text-sm sm:text-base lg:text-lg leading-tight mb-1 transition-colors duration-300 group-hover:text-primary/80">
                       {internship.title}
                     </h3>
-                    <p className="text-gray-600 text-xs sm:text-sm font-medium transition-colors duration-300 group-hover:text-gray-800">
+                    <p className="text-muted-foreground text-xs sm:text-sm font-medium transition-colors duration-300 group-hover:text-foreground">
                       {internship.company}
                     </p>
                   </div>
                 </div>
 
                 {/* Description */}
-                <p className="text-gray-700 px-7   text-xs sm:text-sm leading-relaxed mb-4 sm:mb-6 line-clamp-2 transition-colors duration-300 group-hover:text-gray-900 relative z-10">
+                <p className="text-muted-foreground px-7   text-xs sm:text-sm leading-relaxed mb-4 sm:mb-6 line-clamp-2 transition-colors duration-300 group-hover:text-foreground relative z-10">
                   {internship.description}
                 </p>
 
                 {/* Footer */}
                 <div className="flex items-center justify-between relative z-10 px-7 pb-5">
-                  <div className="flex items-center text-gray-600 text-xs sm:text-sm transition-colors duration-300 group-hover:text-gray-800">
-                    <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-1 flex-shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:text-blue-600" />
+                  <div className="flex items-center text-muted-foreground text-xs sm:text-sm transition-colors duration-300 group-hover:text-foreground">
+                    <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-1 flex-shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:text-primary" />
                     <span className="truncate">{internship.location}</span>
                   </div>
                   <Link
                     href={internship.applyLink}
-                    className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-all duration-300 flex-shrink-0 transform hover:scale-105 hover:shadow-lg active:scale-95"
+                    className="bg-warning hover:bg-warning/90 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-all duration-300 flex-shrink-0 transform hover:scale-105 hover:shadow-lg active:scale-95"
                     onClick={(e) => e.stopPropagation()}
                   >
                     Apply Now
@@ -283,7 +283,7 @@ const FeaturedInternships: React.FC = () => {
           <div className="text-center">
             <Link
               href="/internships"
-              className="inline-block bg-blue-800 hover:bg-blue-900 text-white px-6 py-3 sm:px-8 sm:py-4 rounded-md font-semibold text-sm sm:text-base transition-all duration-300 shadow-md hover:shadow-xl transform hover:scale-105 hover:-translate-y-1 active:scale-95"
+              className="inline-block bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 sm:px-8 sm:py-4 rounded-md font-semibold text-sm sm:text-base transition-all duration-300 shadow-md hover:shadow-xl transform hover:scale-105 hover:-translate-y-1 active:scale-95"
             >
               View All Internships
             </Link>

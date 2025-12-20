@@ -33,9 +33,9 @@ export const TextareaField: React.FC<TextareaFieldProps> = ({
 }) => {
   return (
     <div className="space-y-2 w-full">
-      <Label htmlFor={id} className="text-sm font-semibold flex items-center flex-wrap gap-x-2">
+      <Label htmlFor={id} className="text-[10px] font-black text-[#155DFC] uppercase tracking-widest ml-1 flex items-center gap-2">
         <span>{label}</span>
-        {required && <span className="text-red-500 text-base">*</span>}
+        {required && <span className="text-red-500">*</span>}
       </Label>
       <Textarea
         id={id}
@@ -45,13 +45,13 @@ export const TextareaField: React.FC<TextareaFieldProps> = ({
         placeholder={placeholder}
         rows={rows}
         maxLength={maxLength}
-        className={`resize-none w-full ${
+        className={`resize-none w-full rounded-2xl bg-slate-50/50 border-blue-50 focus:border-[#155DFC] focus:ring-[#155DFC]/10 px-4 py-3 transition-all duration-300 ${
           error && touched 
-            ? "border-red-500 focus-visible:ring-red-500" 
+            ? "border-red-500/50 focus-visible:ring-red-500/10" 
             : ""
-        } text-sm sm:text-base min-h-[100px]`}
+        } text-sm font-medium leading-relaxed min-h-[120px] shadow-sm`}
       />
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 px-1">
         <FormFieldError error={error} touched={touched} />
         {maxLength && (
           <CharacterCount current={value.length} max={maxLength} />

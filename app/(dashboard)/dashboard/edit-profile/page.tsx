@@ -9,6 +9,7 @@ import { Step2Education } from '@/components/sections/create-profile/Step2Educat
 import { Step3Skills } from '@/components/sections/create-profile/Step3Skills';
 import { Step4Experience } from '@/components/sections/create-profile/Step4Experience';
 import { Step5Additional } from '@/components/sections/create-profile/Step5Additional';
+import { createClient } from '@/lib/supabase/client';
 
 const steps = [
   { label: 'Personal Info', component: Step1Personal, icon: User, color: 'from-blue-900 to-blue-800' },
@@ -51,14 +52,45 @@ export default function EditProfilePage() {
     if (activeStep > 0) handleStepChange(activeStep - 1);
   };
 
-  const onSubmit = (data: any) => {
-    setCompletedSteps([...completedSteps, activeStep]);
-    setShowSuccessAnimation(true);
-    setTimeout(() => {
+  // Data fetching to populate form (optional but recommended for "Edit" page) would go here
+  // For now, we focus on the Submit logic.
+
+  const onSubmit = async (data: any) => {
+    try {
+      setCompletedSteps([...completedSteps, activeStep]);
+      
+      // Get current user
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.user) {
+        alert("You must be logged in to update your profile.");
+        return;
+      }
+
+      // Show success animation immediately for better UX, then save
+      setShowSuccessAnimation(true);
+
+      const response = await fetch(`/api/students/student/${session.user.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update profile");
+      }
+
+      setTimeout(() => {
+        setShowSuccessAnimation(false);
+        router.refresh(); // Refresh to show optimized data if needed
+      }, 2000);
+
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      alert("Failed to save changes. Please try again.");
       setShowSuccessAnimation(false);
-      // TODO: Implement save/update logic (API call)
-      alert('Profile updated!' + JSON.stringify(data, null, 2));
-    }, 2000);
+    }
   };
 
   return (
@@ -82,7 +114,7 @@ export default function EditProfilePage() {
         </div>
       )}
 
-      <div className="relative z-10 max-w-4xl mx-auto p-6 py-10">
+      <div className="relative z-10 max-w-4xl mx-auto p-4 sm:p-6 py-6 sm:py-10">
         {/* Header */}
         <div className="flex items-center mb-8 transform hover:scale-105 transition-transform duration-300">
           <button 
@@ -92,7 +124,7 @@ export default function EditProfilePage() {
             <ArrowLeft size={24} className="text-slate-600 group-hover:text-blue-900 transition-colors" />
           </button>
           <div className="ml-4">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
               Edit Profile
             </h1>
             <p className="text-gray-500 mt-1">Make your profile shine ✨</p>
@@ -101,7 +133,7 @@ export default function EditProfilePage() {
 
         {/* Step Navigation - ONLY blue and orange */}
         <div className="flex justify-center mb-10">
-          <div className="flex items-center bg-white/70 backdrop-blur-sm rounded-2xl p-2 shadow-lg overflow-x-auto">
+          <div className="flex items-center bg-white/70 backdrop-blur-sm rounded-2xl p-2 shadow-lg overflow-x-auto max-w-full">
             {steps.map((step, idx) => {
               const Icon = step.icon;
               const isActive = activeStep === idx;
@@ -110,7 +142,7 @@ export default function EditProfilePage() {
               return (
                 <div key={step.label} className="flex items-center flex-shrink-0">
                   <button
-                    className={`group relative flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all duration-300 whitespace-nowrap ${
+                    className={`group relative flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-xl font-semibold transition-all duration-300 whitespace-nowrap ${
                       isActive 
                         ? 'bg-gradient-to-r ' + step.color + ' text-white shadow-lg transform scale-105' 
                         : isCompleted
@@ -144,8 +176,8 @@ export default function EditProfilePage() {
         </div>
 
         {/* Main Content */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/50 overflow-hidden">
-          <div className={`p-8 transition-all duration-300 ${isAnimating ? 'opacity-50 transform scale-95' : 'opacity-100 transform scale-100'}`}>
+        <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/50">
+          <div className={`p-4 sm:p-8 transition-all duration-300 ${isAnimating ? 'opacity-50 transform scale-95' : 'opacity-100 transform scale-100'}`}>
             <div className="mb-6">
               <div className={`w-full h-1 bg-gray-200 rounded-full overflow-hidden`}>
                 <div 
@@ -159,7 +191,7 @@ export default function EditProfilePage() {
               </div>
             </div>
 
-            <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
               <div className={`p-2 rounded-xl bg-gradient-to-r ${steps[activeStep].color}`}>
                 {React.createElement(steps[activeStep].icon, { size: 24, className: "text-white" })}
               </div>
@@ -174,12 +206,12 @@ export default function EditProfilePage() {
                 </div>
                 
                 {/* Navigation Buttons - ONLY blue and orange */}
-                <div className="flex justify-between">
+                <div className="flex flex-row justify-between gap-3 sm:gap-4">
                   <button
                     type="button"
                     onClick={handleBack}
                     disabled={activeStep === 0}
-                    className="group px-8 py-4 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl font-semibold text-gray-700 transition-all duration-300 hover:bg-white hover:shadow-lg hover:shadow-gray-100 disabled:opacity-50 disabled:cursor-not-allowed hover:transform hover:scale-105"
+                    className="group flex-1 sm:flex-none sm:w-auto px-4 sm:px-8 py-3 sm:py-4 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl font-semibold text-gray-700 transition-all duration-300 hover:bg-white hover:shadow-lg hover:shadow-gray-100 disabled:opacity-50 disabled:cursor-not-allowed hover:transform hover:scale-105 flex justify-center whitespace-nowrap"
                   >
                     <div className="flex items-center gap-2">
                       <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
@@ -191,7 +223,7 @@ export default function EditProfilePage() {
                     <button
                       type="button"
                       onClick={handleNext}
-                      className="group px-8 py-4 bg-gradient-to-r from-blue-900 to-blue-800 text-white rounded-2xl font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-blue-200 hover:transform hover:scale-105"
+                      className="group flex-1 sm:flex-none sm:w-auto px-4 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-blue-900 to-blue-800 text-white rounded-2xl font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-blue-200 hover:transform hover:scale-105 flex justify-center whitespace-nowrap"
                     >
                       <div className="flex items-center gap-2">
                         Next
@@ -201,11 +233,11 @@ export default function EditProfilePage() {
                   ) : (
                     <button
                       type="submit"
-                      className="group px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-2xl font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-orange-200 hover:transform hover:scale-105"
+                      className="group flex-1 sm:flex-none sm:w-auto px-4 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-2xl font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-orange-200 hover:transform hover:scale-105 flex justify-center whitespace-nowrap"
                     >
                       <div className="flex items-center gap-2">
                         <Save size={18} className="group-hover:rotate-12 transition-transform" />
-                        Save Changes
+                        Save
                       </div>
                     </button>
                   )}

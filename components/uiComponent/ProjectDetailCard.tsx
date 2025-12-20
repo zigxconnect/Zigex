@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import ProjectDetailMedia from "./ProjectDetailMedia";
 import ContributeModal from "./ContributeModal";
 import Link from "next/link";
-import { ExternalLink, Github, Calendar, Clock, User, Heart, Share2, Eye } from "lucide-react";
+import { ExternalLink, Github, Calendar, Clock, User, Heart, Share2, Eye, Sparkles, MessageSquare, ShieldCheck } from "lucide-react";
 import Image from "next/image";
 
 interface Project {
@@ -32,255 +32,185 @@ export default function ProjectDetailCard({ project, owner }: { project: Project
   const [openContribute, setOpenContribute] = useState(false);
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
       {/* Hero Section with Media */}
-      <div className="relative mb-8 lg:mb-12">
-        <div className="relative rounded-3xl overflow-hidden shadow-2xl bg-black">
-          <ProjectDetailMedia
-            uploadedVideo={project.uploaded_video_url}
-            youtubeVideo={project.project_video_url}
-            coverImage={project.cover_image_url ?? undefined}
-            title={project.project_title}
-          />
-          
-          {/* Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+      <div className="relative mb-12 lg:mb-16">
+        <div className="relative rounded-[2.5rem] overflow-hidden shadow-[0_32px_64px_-16px_rgba(21,93,252,0.2)] bg-card border border-border group">
+          <div className="aspect-[21/9] min-h-[400px] sm:min-h-[500px]">
+            <ProjectDetailMedia
+              uploadedVideo={project.uploaded_video_url}
+              youtubeVideo={project.project_video_url}
+              coverImage={project.cover_image_url ?? undefined}
+              title={project.project_title}
+            />
+          </div>
           
           {/* Floating Action Buttons */}
-          <div className="absolute top-4 right-4 sm:top-6 sm:right-6 flex gap-2 z-10">
-            <button className="backdrop-blur-xl bg-white/20 hover:bg-white/30 text-white p-2.5 sm:p-3 rounded-full transition-all duration-300 hover:scale-110 border border-white/30 shadow-lg">
-              <Heart className="w-4 h-4 sm:w-5 sm:h-5" />
+          <div className="absolute top-8 right-8 flex gap-3 z-10">
+            <button className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 text-white hover:bg-primary hover:scale-110 transition-all duration-500 group shadow-2xl">
+              <Heart className="w-5 h-5 group-hover:fill-current" />
             </button>
-            <button className="backdrop-blur-xl bg-white/20 hover:bg-white/30 text-white p-2.5 sm:p-3 rounded-full transition-all duration-300 hover:scale-110 border border-white/30 shadow-lg">
-              <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
+            <button className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 text-white hover:bg-primary hover:scale-110 transition-all duration-500 shadow-2xl">
+              <Share2 className="w-5 h-5" />
             </button>
+          </div>
+
+          <div className="absolute bottom-8 left-8 right-8 flex flex-col md:flex-row md:items-end justify-between gap-6 pointer-events-none">
+             <div className="space-y-4">
+                <div className="flex gap-2">
+                   <span className="px-4 py-1.5 bg-primary text-primary-foreground text-[10px] font-black rounded-full uppercase tracking-[0.2em] shadow-xl shadow-primary/40">
+                      Featured Build
+                   </span>
+                   {project.status === 'valid' && (
+                     <span className="px-4 py-1.5 bg-green-500 text-white text-[10px] font-black rounded-full uppercase tracking-[0.2em] shadow-xl shadow-green-500/40 flex items-center gap-1.5">
+                        <ShieldCheck size={12} /> Verified
+                     </span>
+                   )}
+                </div>
+                <h1 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-none drop-shadow-2xl">
+                   {project.project_title}
+                </h1>
+             </div>
           </div>
         </div>
       </div>
 
       {/* Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
         {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Title & Description Card */}
-          <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 backdrop-blur-sm border border-white/20">
-            {/* Title Section */}
-            <div className="mb-6">
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 leading-tight">
-                {project.project_title}
-              </h1>
-              
-              {/* Author Info - Mobile */}
-              <div className="flex items-center gap-3 lg:hidden mb-4">
-  {owner?.avatar_url ? (
-    <Image
-      src={owner.avatar_url}
-      alt={owner.full_name}
-      width={40}
-      height={40}
-      className="rounded-full ring-2 ring-indigo-100 object-cover"
-      style={{ width: '40px', height: '40px' }}
-    />
-  ) : (
-    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-sm font-bold ring-2 ring-indigo-100">
-      {owner?.full_name?.[0] || "U"}
-    </div>
-  )}
-  <div>
-    <p className="text-sm text-gray-600">Created by</p>
-    <p className="font-semibold text-gray-900">{owner?.full_name || 'Contributor'}</p>
-  </div>
-</div>
+        <div className="lg:col-span-8 space-y-8">
+          {/* Stats Bar */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+             {[
+               { label: 'STARTED', value: new Date(project.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), icon: Calendar, color: 'text-blue-600' },
+               { label: 'DURATION', value: project.project_duration || 'Open', icon: Clock, color: 'text-purple-600' },
+               { label: 'COMMUNITY', value: 'Active', icon: MessageSquare, color: 'text-green-600' },
+               { label: 'IMPACT', value: 'High', icon: Sparkles, color: 'text-amber-600' },
+             ].map((stat, i) => (
+               <div key={i} className="bg-card rounded-3xl p-6 border border-border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                  <stat.icon size={20} className={`${stat.color} mb-3`} />
+                  <p className="text-[10px] font-black text-muted-foreground tracking-widest mb-1">{stat.label}</p>
+                  <p className="text-sm font-black text-foreground">{stat.value}</p>
+               </div>
+             ))}
+          </div>
 
-              {/* Stats Bar */}
-              <div className="flex flex-wrap gap-4 sm:gap-6 pt-4 border-t border-gray-100">
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Calendar className="w-5 h-5 text-indigo-500" />
-                  <div>
-                    <span className="text-xs text-gray-500 block">Started</span>
-                    <span className="text-sm font-medium text-gray-900">
-                      {new Date(project.created_at).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric'
-                      })}
-                    </span>
-                  </div>
-                </div>
-                
-                {project.project_duration && (
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <Clock className="w-5 h-5 text-indigo-500" />
-                    <div>
-                      <span className="text-xs text-gray-500 block">Duration</span>
-                      <span className="text-sm font-medium text-gray-900">{project.project_duration}</span>
-                    </div>
-                  </div>
-                )}
-
-                {project.end_date && (
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <Calendar className="w-5 h-5 text-indigo-500" />
-                    <div>
-                      <span className="text-xs text-gray-500 block">End Date</span>
-                      <span className="text-sm font-medium text-gray-900">
-                        {new Date(project.end_date).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric'
-                        })}
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
+          {/* About Section */}
+          <div className="bg-card rounded-[2.5rem] border border-border p-8 md:p-12 shadow-sm relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none">
+               <Sparkles size={120} className="text-primary" />
             </div>
-
-            {/* Description */}
-            <div className="mb-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
-                <div className="w-1 h-6 bg-gradient-to-b from-blue-600 to-blue-500 rounded-full" />
-                About This Project
-              </h2>
-              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+            
+            <h2 className="text-2xl font-black text-foreground mb-8 flex items-center gap-3">
+              <span className="w-10 h-10 bg-muted rounded-xl flex items-center justify-center">
+                 <div className="w-2 h-2 bg-primary rounded-full animate-ping" />
+              </span>
+              The Project Vision
+            </h2>
+            
+            <div className="prose prose-blue max-w-none">
+              <p className="text-lg text-muted-foreground leading-relaxed font-medium whitespace-pre-wrap">
                 {project.description}
               </p>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-gray-100">
+            <div className="mt-12 flex flex-wrap gap-4">
               <button 
                 onClick={() => setOpenContribute(true)} 
-                className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-blue-600 hover:to-blue-600 text-white rounded-xl font-medium transition-all duration-200 hover:shadow-lg hover:scale-105"
+                className="group flex items-center gap-3 px-8 py-4 bg-primary text-primary-foreground rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-secondary hover:scale-105 transition-all shadow-xl shadow-primary/20"
               >
-                <Heart className="w-5 h-5" />
-                Contribute to Project
+                <Heart className="w-4 h-4 group-hover:fill-current" />
+                Support Creator
               </button>
-
-              {/* {project.github_repository && (
-                <a 
-                  href={project.github_repository} 
-                  target="_blank" 
-                  rel="noreferrer" 
-                  className="flex items-center justify-center gap-2 px-6 py-3 bg-gray-900 hover:bg-gray-800 text-white rounded-xl font-medium transition-all duration-200 hover:shadow-lg hover:scale-105"
-                >
-                  <Github className="w-5 h-5" />
-                  View Repository
-                </a>
-              )} */}
 
               <Link 
                 href={`/dashboard/student/${project.student_id}`} 
-                className="flex items-center justify-center gap-2 px-6 py-3 bg-white hover:bg-gray-50 text-gray-900 border-2 border-gray-200 hover:border-indigo-300 rounded-xl font-medium transition-all duration-200 hover:shadow-lg"
+                className="flex items-center gap-3 px-8 py-4 bg-muted text-primary rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-muted/80 transition-all border border-border"
               >
-                <User className="w-5 h-5" />
-                View Profile
+                <User className="w-4 h-4" />
+                Creator Profile
               </Link>
             </div>
           </div>
 
-          {/* Additional Info Card (if needed) */}
           {project.status !== 'valid' && (
-            <div className="bg-amber-50 border-l-4 border-amber-500 rounded-xl p-6 shadow-lg">
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0">
-                  <svg className="w-6 h-6 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-amber-900">Pending Validation</h3>
-                  <p className="text-sm text-amber-800 mt-1">This project is currently under review and pending validation.</p>
-                </div>
+            <div className="bg-amber-50 rounded-[2rem] p-8 border border-amber-100 flex items-start gap-6">
+              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm text-amber-500 shrink-0">
+                <Clock size={24} className="animate-pulse" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-amber-900 mb-1">Under Quality Review</h3>
+                <p className="text-sm text-amber-800/80 leading-relaxed">
+                  This project is currently being verified by our elite curating team. This usually takes less than 48 hours.
+                </p>
               </div>
             </div>
           )}
         </div>
 
         {/* Sidebar */}
-        <div className="lg:col-span-1 space-y-6">
-          {/* Author Card - Desktop */}
+        <div className="lg:col-span-4 space-y-8">
+          {/* Creator Profile Card */}
           {owner && (
-            <div className="hidden lg:block bg-white rounded-2xl shadow-xl p-6 backdrop-blur-sm border border-white/20 sticky top-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Project Creator</h3>
-              <div className="flex flex-col items-center text-center mb-6">
-                <div className="relative mb-4">
-                  {owner.avatar_url ? (
-                    <Image
-                      src={owner.avatar_url}
-                      alt={owner.full_name}
-                      width={80}
-                      height={80}
-                      className="rounded-full ring-4 ring-indigo-100"
-                    />
-                  ) : (
-                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-3xl font-bold ring-4 ring-indigo-100">
-                      {owner.full_name?.[0] || "U"}
+            <div className="bg-card rounded-[2.5rem] border border-border p-8 shadow-sm group">
+               <div className="flex flex-col items-center text-center">
+                  <div className="relative mb-6">
+                    <div className="absolute inset-0 bg-primary rounded-full blur-2xl opacity-10 group-hover:opacity-20 transition-opacity" />
+                    {owner.avatar_url ? (
+                      <Image
+                        src={owner.avatar_url}
+                        alt={owner.full_name}
+                        width={100}
+                        height={100}
+                        className="rounded-full ring-8 ring-muted relative z-10 grayscale-[30%] group-hover:grayscale-0 transition-all duration-500"
+                      />
+                    ) : (
+                      <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-primary-foreground text-3xl font-black relative z-10 shadow-xl">
+                        {owner.full_name?.[0] || "U"}
+                      </div>
+                    )}
+                    <div className="absolute -bottom-2 right-2 w-8 h-8 bg-card rounded-full flex items-center justify-center shadow-lg z-20 border-2 border-muted">
+                       <Sparkles size={14} className="text-primary" />
                     </div>
-                  )}
-                  <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-4 border-white" />
-                </div>
-                <h4 className="font-semibold text-gray-900 text-lg mb-1">
-                  {owner.full_name || "Anonymous"}
-                </h4>
-                <p className="text-sm text-gray-500">Project Owner</p>
-              </div>
-              <Link
-                href={`/dashboard/student/${project.student_id}`}
-                className="block w-full px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-600 hover:to-blue-600 text-white rounded-xl font-medium transition-all duration-200 hover:shadow-lg text-center"
-              >
-                View Full Profile
-              </Link>
+                  </div>
+                  
+                  <h4 className="text-xl font-black text-foreground mb-1">{owner.full_name}</h4>
+                  <p className="text-xs font-black text-primary uppercase tracking-widest mb-6">Innovative Builder</p>
+                  
+                  <Link
+                    href={`/dashboard/student/${project.student_id}`}
+                    className="w-full flex items-center justify-center h-12 bg-primary text-primary-foreground rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-secondary transition-all shadow-xl"
+                  >
+                    View Network
+                  </Link>
+               </div>
             </div>
           )}
 
-          {/* Call to Action Card */}
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl p-6 text-white">
-            <h3 className="text-lg font-bold mb-3">Love this project?</h3>
-            <p className="text-indigo-100 text-sm mb-4 leading-relaxed">
-              Support the creator by contributing to this project or sharing it with others who might be interested.
-            </p>
-            <button 
-              onClick={() => setOpenContribute(true)}
-              className="w-full px-4 py-2.5 bg-white text-indigo-600 hover:bg-indigo-50 rounded-xl font-medium transition-all duration-200 hover:shadow-lg flex items-center justify-center gap-2"
-            >
-              <Heart className="w-4 h-4" />
-              Contribute Now
-            </button>
-          </div>
-
-          {/* Project Stats Card */}
-          <div className="bg-white rounded-2xl shadow-xl p-6 backdrop-blur-sm border border-white/20">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Project Details</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                <span className="text-sm text-gray-600">Status</span>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  project.status === 'valid'
-                    ? 'bg-green-100 text-green-700' 
-                    : 'bg-amber-100 text-amber-700'
-                }`}>
-                  {project.status === 'valid' ? 'Validated' : 'Pending'}
-                </span>
-              </div>
-              
-              <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                <span className="text-sm text-gray-600">Created</span>
-                <span className="text-sm font-medium text-gray-900">
-                  {new Date(project.created_at).toLocaleDateString('en-US', {
-                    month: 'short',
-                    year: 'numeric'
-                  })}
-                </span>
-              </div>
-
-              {project.project_duration && (
-                <div className="flex items-center justify-between py-3">
-                  <span className="text-sm text-gray-600">Timeline</span>
-                  <span className="text-sm font-medium text-gray-900">{project.project_duration}</span>
+          {/* Social Proof / Stats */}
+          <div className="bg-primary rounded-[2.5rem] p-8 text-primary-foreground relative overflow-hidden">
+             <div className="absolute top-0 right-0 w-32 h-32 bg-primary-foreground blur-[80px] opacity-20" />
+             <h3 className="text-lg font-black mb-6 flex items-center gap-2">
+                <Heart size={20} className="text-primary-foreground" />
+                Join the Mission
+             </h3>
+             <div className="space-y-6 mb-8">
+                <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/10">
+                   <span className="text-xs font-bold text-primary-foreground/70">Collaboration</span>
+                   <span className="text-xs font-black text-green-400">Available</span>
                 </div>
-              )}
-            </div>
+                <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/10">
+                   <span className="text-xs font-bold text-primary-foreground/70">Project Type</span>
+                   <span className="text-xs font-black uppercase tracking-widest">{project.project_duration || 'Ongoing'}</span>
+                </div>
+             </div>
+             <button 
+               onClick={() => setOpenContribute(true)}
+               className="w-full h-14 bg-card/10 hover:bg-card/20 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl shadow-black/10 transition-all flex items-center justify-center gap-3 border border-white/10"
+             >
+               Contribute Today
+               <ExternalLink size={14} />
+             </button>
           </div>
         </div>
       </div>

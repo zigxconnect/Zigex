@@ -35,10 +35,10 @@ type AuthFormProps = { type: "signIn" | "signUp" };
 const Divider = () => (
   <div className="relative my-6">
     <div className="absolute inset-0 flex items-center">
-      <span className="w-full border-t border-gray-200" />
+      <span className="w-full border-t border-border" />
     </div>
     <div className="relative flex justify-center text-sm uppercase">
-      <span className="bg-white px-3 text-gray-400 font-medium">Or</span>
+      <span className="bg-card px-3 text-muted-foreground font-medium">Or</span>
     </div>
   </div>
 );
@@ -197,18 +197,18 @@ export const AuthForm = ({ type }: AuthFormProps) => {
 
   if (isSignUp && emailSent) {
     return (
-      <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl flex flex-col justify-center items-center text-center min-h-[650px]">
-        <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-          <MailCheck className="w-9 h-9 text-green-600" />
+      <div className="w-full max-w-md p-8 bg-card rounded-xl shadow-2xl flex flex-col justify-center items-center text-center min-h-[650px]">
+        <div className="mx-auto w-16 h-16 bg-success/10 rounded-full flex items-center justify-center">
+          <MailCheck className="w-9 h-9 text-success" />
         </div>
-        <h1 className="mt-6 text-2xl font-bold text-gray-900">
+        <h1 className="mt-6 text-2xl font-bold text-foreground">
           Confirm your email
         </h1>
-        <p className="mt-2 text-gray-600">
+        <p className="mt-2 text-muted-foreground">
           We&lsquo;ve sent a verification link to your email address. Please
           click the link to continue.
         </p>
-        <p className="mt-4 text-sm text-gray-500">
+        <p className="mt-4 text-sm text-muted-foreground">
           Didn&lsquo;t receive it? Check your spam folder.
         </p>
       </div>
@@ -216,15 +216,15 @@ export const AuthForm = ({ type }: AuthFormProps) => {
   }
 
   return (
-    <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl flex flex-col justify-center min-h-[650px]">
+    <div className="w-full max-w-md p-8 bg-card rounded-xl shadow-2xl flex flex-col justify-center min-h-[650px]">
       <div className="text-center">
-        <div className="mx-auto w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
-          <currentContent.Icon className="w-7 h-7 text-white" />
+        <div className="mx-auto w-12 h-12 bg-primary rounded-full flex items-center justify-center">
+          <currentContent.Icon className="w-7 h-7 text-primary-foreground" />
         </div>
-        <h1 className="mt-4 text-2xl font-bold text-gray-900">
+        <h1 className="mt-4 text-2xl font-bold text-foreground">
           {currentContent.title}
         </h1>
-        <p className="mt-1 text-sm text-gray-600">{currentContent.subtitle}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{currentContent.subtitle}</p>
       </div>
       <div className="mt-5 space-y-3">
         <SocialButton
@@ -237,14 +237,14 @@ export const AuthForm = ({ type }: AuthFormProps) => {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {isSignUp && (
           <div>
-            <label className="text-sm font-medium text-gray-700">
+            <label className="text-sm font-medium text-foreground">
               Full Name
             </label>
             <Input
               id="fullName"
               type="text"
               placeholder="Enter your full name"
-              className="mt-1 text-gray-900 focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
+              className="mt-1 text-foreground focus:border-primary focus:ring-2 focus:ring-ring"
               {...register("fullName")}
               disabled={isSubmitting}
             />
@@ -256,13 +256,13 @@ export const AuthForm = ({ type }: AuthFormProps) => {
           </div>
         )}
         <div>
-          <label className="text-sm font-medium text-gray-700">Email</label>
+          <label className="text-sm font-medium text-foreground">Email</label>
           <Input
             id="email"
             type="email"
             autoComplete="email"
             placeholder="Enter your email address"
-            className="mt-1 text-gray-900 focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
+            className="mt-1 text-foreground focus:border-primary focus:ring-2 focus:ring-ring"
             {...register("email")}
             disabled={isSubmitting}
           />
@@ -272,13 +272,13 @@ export const AuthForm = ({ type }: AuthFormProps) => {
         </div>
         <div>
           <div className="flex justify-between items-center">
-            <label className="text-sm font-medium text-gray-700">
+            <label className="text-sm font-medium text-foreground">
               Password
             </label>
             {!isSignUp && (
               <Link
                 href="/forgot-password"
-                className="text-sm text-blue-600 hover:underline cursor-pointer"
+                className="text-sm text-primary hover:underline cursor-pointer"
               >
                 Forgot Password?
               </Link>
@@ -290,14 +290,14 @@ export const AuthForm = ({ type }: AuthFormProps) => {
               type={showPassword ? "text" : "password"}
               autoComplete={isSignUp ? "new-password" : "current-password"}
               placeholder="Enter your password"
-              className="focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
+              className="focus:border-primary focus:ring-2 focus:ring-ring"
               {...register("password")}
               disabled={isSubmitting}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer text-gray-500 hover:text-gray-700 transition-colors"
+              className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
               disabled={isSubmitting}
               aria-label={showPassword ? "Hide password" : "Show password"}
             >
@@ -317,7 +317,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
         </div>
         <Button
           type="submit"
-          className="w-full !mt-6 text-base py-2.5 flex items-center justify-center gap-2 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+          className="w-full !mt-6 text-base py-2.5 flex items-center justify-center gap-2 bg-primary text-primary-foreground font-semibold rounded-lg shadow-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring transition-all duration-200"
           disabled={isSubmitting || signInCooldown > 0}
         >
           {isSubmitting ? (
@@ -340,27 +340,27 @@ export const AuthForm = ({ type }: AuthFormProps) => {
       )}
       <div className="space-y-4 text-center mt-5">
         {isSignUp && (
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             Looking to hire?{" "}
             <Link
               href="/company/sign-up"
-              className="font-semibold text-blue-600 hover:underline"
+              className="font-semibold text-primary hover:underline"
             >
               Sign up as a company
             </Link>
           </p>
         )}
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted-foreground">
           {currentContent.linkText}{" "}
           <Link
             href={currentContent.linkHref}
-            className="font-semibold text-blue-600 hover:underline cursor-pointer"
+            className="font-semibold text-primary hover:underline cursor-pointer"
           >
             {currentContent.linkActionText}
           </Link>
         </p>
       </div>
-      <p className="text-center text-xs text-gray-400 pt-4 mt-2">{finePrint}</p>
+      <p className="text-center text-xs text-muted-foreground/60 pt-4 mt-2">{finePrint}</p>
     </div>
   );
 };
