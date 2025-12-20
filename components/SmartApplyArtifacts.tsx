@@ -223,7 +223,7 @@ export default function SmartApplyArtifact({
       {mode === 'display' && (
         <>
           <div className="p-4 pl-8 border-t bg-white">
-            <label className="text-xs font-semibold text-gray-600 flex items-center gap-1.5 mb-2"><Sparkles className="w-4 h-4 text-blue-500"/> Ask AI to Revise</label>
+            <label className="text-xs font-semibold text-foreground flex items-center gap-1.5 mb-2"><Sparkles className="w-4 h-4 text-blue-500"/> Ask AI to Revise</label>
             <div className="flex items-center gap-2">
               <input ref={correctionInputRef} type="text" value={correctionQuery} onChange={(e) => setCorrectionQuery(e.target.value)} onKeyDown={handleCorrectionKeyPress} placeholder="e.g., 'Make it more professional'" className="w-full px-3 py-2 text-sm border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" disabled={isCorrecting} />
               <button onClick={handleCorrection} disabled={!correctionQuery.trim() || isCorrecting} className="p-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400" title="Apply Correction">

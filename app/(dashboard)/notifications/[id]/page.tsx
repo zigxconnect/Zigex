@@ -1,4 +1,5 @@
 "use client";
+import { use } from "react";
 import { BookOpen, MapPin, TriangleAlert, Bell } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -27,8 +28,10 @@ const mockPrograms = {
   // Add more mock programs here if needed
 };
 
-export default function NotificationProgramPage({ params }: { params: { id: string } }) {
-  const displayProgram = mockPrograms[params.id] || mockPrograms["ai-fundamentals"];
+export default function NotificationProgramPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
+  const params = use(paramsPromise);
+  const { id } = params;
+  const displayProgram = (mockPrograms as any)[id] || mockPrograms["ai-fundamentals"];
   const company = displayProgram.company;
   const deadline = displayProgram.application_deadline
     ? new Date(displayProgram.application_deadline).toLocaleDateString("en-US", {

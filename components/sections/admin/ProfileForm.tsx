@@ -30,7 +30,7 @@ const FormField = ({
   children: React.ReactNode;
 }) => (
   <div>
-    <label className="block text-sm font-medium text-blue-700 mb-1.5">
+    <label className="block text-sm font-medium text-foreground mb-1.5">
       {label}
     </label>
     {children}

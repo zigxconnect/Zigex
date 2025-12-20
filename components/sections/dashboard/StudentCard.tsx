@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Heart, MessageCircle, Share2, MapPin, Briefcase, CheckCircle2, MoreHorizontal, Linkedin, Zap } from "lucide-react";
+import { Heart, MessageCircle, Share2, MapPin, Briefcase, CheckCircle2, MoreHorizontal, Linkedin, Zap, AtSign } from "lucide-react";
 
 interface StudentProps {
   id: string;
@@ -29,7 +29,7 @@ const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = (
 
   const [isLiked, setIsLiked] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
-  const [likeCount, setLikeCount] = useState(Math.floor(Math.random() * 50) + 10);
+  const [likeCount, setLikeCount] = useState(0);
   const [stats, setStats] = useState<StudentStats>(initialStats || {});
   const [isLoadingStats, setIsLoadingStats] = useState(!initialStats);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -42,7 +42,7 @@ const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = (
       .toUpperCase() || "ST";
 
   const primarySkills = (student.hard_skills || []).slice(0, 3);
-  const timeAgo = ["2m", "5m", "12m", "1h", "3h", "5h"][Math.floor(Math.random() * 6)];
+  const timeAgo = "Active";
 
   // Fetch stats from API only if not provided by server
   useEffect(() => {
@@ -117,12 +117,11 @@ const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = (
                         (stats?.projectsCreated || 0);
 
   return (
-    <Link href={`/dashboard/student/${student.username || student.id}`} legacyBehavior>
-      <a className="block no-underline">
+    <Link href={`/dashboard/student/${student.username || student.id}`} className="block no-underline">
         <div 
           ref={cardRef}
           className={`
-            w-full bg-white border-b border-gray-200 hover:bg-linear-to-r hover:from-blue-50 hover:to-transparent transition-all duration-300 cursor-pointer group
+            w-full bg-card border-b border-border hover:bg-muted/30 transition-all duration-300 cursor-pointer group
             ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
           `}
         >
@@ -135,16 +134,11 @@ const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = (
                   <img 
                     src={student.avatar_url} 
                     alt={student.full_name || "Student"} 
-                    className="w-12 h-12 rounded-full object-cover hover:shadow-lg transition-shadow" 
+                    className="w-12 h-12 rounded-full object-cover transition-opacity hover:opacity-90" 
                   />
                 ) : (
-                  <div className="w-12 h-12 rounded-full bg-linear-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-base shadow-md group-hover:shadow-lg transition-shadow">
+                  <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center font-bold text-base transition-colors group-hover:bg-primary/80">
                     {initials}
-                  </div>
-                )}
-                {totalActivity > 5 && (
-                  <div className="absolute -bottom-1 -right-1 bg-linear-to-r from-orange-400 to-red-500 rounded-full p-0.5 shadow-md">
-                    <Zap size={14} className="text-white" />
                   </div>
                 )}
               </div>
@@ -153,54 +147,49 @@ const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = (
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1 flex-wrap">
-                  <h3 className="font-bold text-gray-900 group-hover:text-blue-600 text-[15px] transition-colors">
+                  <h3 className="font-heading font-bold text-foreground group-hover:text-primary text-[15px] transition-colors leading-tight">
                     {student.username || student.full_name || "Unnamed Student"}
                   </h3>
                   <div className="shrink-0">
-                    <CheckCircle2 size={18} className="text-blue-500" />
+                    <CheckCircle2 size={16} className="text-primary" />
                   </div>
-                  <span className="text-gray-400 text-[15px]">·</span>
-                  <span className="text-gray-500 text-[13px]">{timeAgo}</span>
+                  <span className="text-muted-foreground text-[15px]">·</span>
+                  <span className="text-muted-foreground text-[13px]">{timeAgo}</span>
                 </div>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <MapPin size={14} className="text-gray-400 shrink-0" />
-                  <p className="text-[13px] text-gray-600 truncate">
+                  <MapPin size={14} className="text-muted-foreground shrink-0" />
+                  <p className="text-[13px] text-muted-foreground truncate">
                     {student.university || "University not specified"}
                   </p>
                 </div>
               </div>
 
               {/* Connect Button & More */}
-              <div className="flex items-center gap-1" onClick={(e) => e.preventDefault()}>
+              <div className="flex items-center gap-2" onClick={(e) => e.preventDefault()}>
                 {student.linkedin_url ? (
                   <Link
                     href={student.linkedin_url}
                     target="_blank"
                     rel="noreferrer"
-                    legacyBehavior
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-foreground hover:bg-primary hover:text-white transition-all duration-300 border border-border"
+                    title="Connect on LinkedIn"
                   >
-                    <a 
-                      onClick={(e) => e.stopPropagation()}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-[13px] bg-[#0A66C2] text-white hover:bg-[#004182] transition-all duration-200 shadow-sm hover:shadow-md"
-                    >
-                      <Linkedin size={14} />
-                      <span>Connect</span>
-                    </a>
+                    <AtSign size={14} />
                   </Link>
                 ) : (
                   <button
                     disabled
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-[13px] bg-gray-100 text-gray-400 cursor-not-allowed"
+                    className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-muted-foreground/30 border border-border cursor-not-allowed"
                   >
                     <Linkedin size={14} />
-                    <span>Connect</span>
                   </button>
                 )}
                 <button
                   onClick={handleMoreOptions}
-                  className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+                  className="p-2 hover:bg-muted rounded-full transition-colors"
                 >
-                  <MoreHorizontal size={16} className="text-gray-500" />
+                  <MoreHorizontal size={16} className="text-muted-foreground" />
                 </button>
               </div>
             </div>
@@ -210,9 +199,9 @@ const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = (
         {/* Post Content */}
         <div className="mt-3 ml-[60px]">
           {/* Bio/Status */}
-          <p className="text-[14px] text-gray-800 leading-relaxed mb-3">
-            🎓 Passionate about technology and innovation. Currently exploring opportunities in {primarySkills[0] || 'tech'}. 
-            {stats && totalActivity > 0 && ` Active across internships, programs, and events.`}
+          <p className="text-[14px] text-foreground leading-relaxed mb-3 opacity-90">
+            📊 Passionate about growth and impact. Currently focusing on {primarySkills[0] || 'projects'}. 
+            {stats && totalActivity > 0 && ` Active contributor to the community.`}
           </p>
 
           {/* Skills Container */}
@@ -222,17 +211,17 @@ const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = (
                 <span 
                   key={i} 
                   onClick={(e) => e.preventDefault()}
-                  className="text-[12px] bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full font-medium hover:bg-blue-200 transition-colors"
+                  className="text-[12px] bg-muted text-primary px-2.5 py-1 rounded-full font-semibold border border-transparent hover:border-primary transition-colors uppercase tracking-wider"
                 >
-                  #{skill.replace(/\s+/g, '')}
+                  {skill}
                 </span>
               ))}
               {student.soft_skills && student.soft_skills.length > 0 && (
                 <span 
                   onClick={(e) => e.preventDefault()}
-                  className="text-[12px] bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full font-medium hover:bg-purple-200 transition-colors"
+                  className="text-[12px] bg-muted text-primary px-2.5 py-1 rounded-full font-semibold border border-transparent hover:border-primary transition-colors uppercase tracking-wider"
                 >
-                  #{student.soft_skills[0].replace(/\s+/g, '')}
+                  {student.soft_skills[0]}
                 </span>
               )}
             </div>
@@ -240,21 +229,18 @@ const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = (
         </div>
 
         {/* Action Bar */}
-        <div className="mt-3 ml-[60px] flex items-center justify-between max-w-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        <div className="mt-3 ml-[60px] flex items-center justify-between max-w-[200px] opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <button
             onClick={handleLike}
-            className="flex items-center gap-1.5 group/btn hover:bg-pink-50 px-2 py-1.5 rounded-full transition-all"
+            className="flex items-center gap-1.5 group/btn hover:bg-muted px-2 py-1.5 rounded-full transition-all"
           >
             <Heart 
               size={16} 
               className={`transition-all ${isLiked 
-                ? 'fill-pink-600 text-pink-600' 
-                : 'text-gray-400 group-hover/btn:text-pink-600'
+                ? 'fill-destructive text-destructive' 
+                : 'text-muted-foreground group-hover/btn:text-destructive'
               }`}
             />
-            <span className={`text-[12px] ${isLiked ? 'text-pink-600 font-medium' : 'text-gray-500'}`}>
-              {likeCount}
-            </span>
           </button>
 
           <button
@@ -262,24 +248,20 @@ const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = (
               e.preventDefault();
               e.stopPropagation();
             }}
-            className="flex items-center gap-1.5 group/btn hover:bg-blue-50 px-2 py-1.5 rounded-full transition-all"
+            className="flex items-center gap-1.5 group/btn hover:bg-muted px-2 py-1.5 rounded-full transition-all"
           >
-            <MessageCircle size={16} className="text-gray-400 group-hover/btn:text-blue-600 transition-colors" />
-            <span className="text-[12px] text-gray-500">
-              {Math.floor(Math.random() * 20)}
-            </span>
+            <MessageCircle size={16} className="text-muted-foreground group-hover/btn:text-primary transition-colors" />
           </button>
 
           <button
             onClick={handleShare}
-            className="flex items-center gap-1.5 group/btn hover:bg-green-50 px-2 py-1.5 rounded-full transition-all"
+            className="flex items-center gap-1.5 group/btn hover:bg-muted px-2 py-1.5 rounded-full transition-all"
           >
-            <Share2 size={16} className="text-gray-400 group-hover/btn:text-green-600 transition-colors" />
+            <Share2 size={16} className="text-muted-foreground group-hover/btn:text-foreground transition-colors" />
           </button>
         </div>
       </div>
     </div>
-  </a>
     </Link>
   );
 };

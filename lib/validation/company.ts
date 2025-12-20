@@ -17,6 +17,12 @@ export const baseCompanySchema = z.object({
     .url({ message: "Please enter a valid URL." })
     .optional()
     .or(z.literal("")),
+  website: z.string().optional().or(z.literal("")), // Added for UI compatibility
+  contact_email: z.string().email().optional().or(z.literal("")), // Added for UI compatibility
+  tagline: z.string().optional().or(z.literal("")),
+  verified: z.boolean().optional(),
+  size: z.string().optional().or(z.literal("")),
+  location: z.string().optional().or(z.literal("")), // Added for UI compatibility
   logo_url: z
     .string()
     .url({ message: "Please enter a valid URL." })
@@ -34,15 +40,15 @@ export const baseCompanySchema = z.object({
 // 2. THE FIX IS HERE:
 //    We create a NEW schema specifically for the edit form by "picking"
 //    only the fields that are actually editable on the page.
-export const editCompanySchema = baseCompanySchema.pick({
-  company_name: true,
-  description: true,
-  industry: true,
-  phone: true,
-  address: true,
-  website_url: true,
-  logo_url: true,
-  cover_image_url: true,
+export const editCompanySchema = z.object({
+  company_name: baseCompanySchema.shape.company_name,
+  description: baseCompanySchema.shape.description,
+  industry: baseCompanySchema.shape.industry,
+  phone: baseCompanySchema.shape.phone,
+  address: baseCompanySchema.shape.address,
+  website_url: baseCompanySchema.shape.website_url,
+  logo_url: baseCompanySchema.shape.logo_url.optional().or(z.literal("")).optional(),
+  cover_image_url: baseCompanySchema.shape.cover_image_url.optional().or(z.literal("")).optional(),
 });
 
 // 3. Create a TypeScript type from our new, specific edit schema.

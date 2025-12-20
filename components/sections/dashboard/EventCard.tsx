@@ -289,7 +289,7 @@ export const EventCard = ({
               <p className="text-green-300 text-xs font-bold uppercase tracking-wider mb-1">
                 {companyName}
               </p>
-              <h3 className="text-white text-xl font-black leading-tight line-clamp-2 drop-shadow-md">
+              <h3 className="text-white text-xl font-bold leading-tight line-clamp-2 drop-shadow-md">
                 {event.title}
               </h3>
             </div>

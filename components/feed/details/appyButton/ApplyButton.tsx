@@ -125,14 +125,13 @@ export function ApplyButton({
             disabled={isGenerating}
             className="
               w-full relative overflow-hidden flex items-center justify-center gap-2 
-              px-6 py-4 rounded-2xl font-black text-sm uppercase tracking-wider
+              px-6 py-4 rounded-2xl font-black text-sm uppercase tracking-widest
               transition-all duration-300
-              bg-card border-2 border-primary
+              bg-white border border-primary text-primary
               hover:bg-primary/5
               disabled:bg-muted disabled:border-muted-foreground/30
-              text-primary
               disabled:text-muted-foreground
-              shadow-md hover:shadow-lg
+              shadow-sm hover:shadow-md
               transform hover:scale-[1.01] disabled:hover:scale-100 active:scale-[0.99]
               group
             "
@@ -141,12 +140,12 @@ export function ApplyButton({
               {isGenerating ? (
                 <>
                   <Loader size={18} className="animate-spin" />
-                  Generating Draft...
+                  Generating...
                 </>
               ) : (
                 <>
-                  <Zap size={18} />
-                  Smart Apply with AI
+                  <Zap size={18} className="text-secondary" />
+                  Smart Apply
                 </>
               )}
             </span>

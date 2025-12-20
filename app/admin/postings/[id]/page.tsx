@@ -153,10 +153,11 @@ const DetailsSidebar = ({ posting }: { posting: Posting }) => {
 export default async function PostingDetailsPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   // A single, simple call to our new service function
-  const posting = await getPostingById(params.id);
+  const posting = await getPostingById(id);
 
   if (!posting) {
     notFound();

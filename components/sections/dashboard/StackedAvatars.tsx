@@ -31,7 +31,7 @@ export default function StackedAvatars({
       {visibleAvatars.map((avatar, i) => (
         <div
           key={i}
-          className="w-8 h-8 rounded-full border-2 border-white bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold overflow-hidden transform transition-transform group-hover:scale-110"
+          className="w-8 h-8 rounded-full border-2 border-card bg-primary flex items-center justify-center text-white text-[10px] font-bold overflow-hidden transform transition-transform group-hover:scale-110"
           style={{ zIndex: visibleAvatars.length - i }}
         >
           {avatar.src ? (
@@ -50,14 +50,14 @@ export default function StackedAvatars({
       
       {remainingCount > 0 && (
         <div 
-          className="w-8 h-8 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-xs font-semibold text-gray-600 transform transition-transform group-hover:scale-110"
+          className="w-8 h-8 rounded-full border-2 border-card bg-muted flex items-center justify-center text-[10px] font-semibold text-muted-foreground transform transition-transform group-hover:scale-110"
           style={{ zIndex: 0 }}
         >
           +{remainingCount}
         </div>
       )}
       
-      <span className="ml-6 text-[12px] font-medium text-gray-600 group-hover:text-blue-600">
+      <span className="ml-6 text-[12px] font-semibold text-muted-foreground group-hover:text-primary uppercase tracking-wider transition-colors">
         Useful Connections
       </span>
     </button>

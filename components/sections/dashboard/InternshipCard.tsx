@@ -319,16 +319,16 @@ export const InternshipCard = ({
                 )}
                 
                 {openStatusComputed ? (
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/90 backdrop-blur-md rounded-full border border-emerald-400/30">
-                      <CheckCircle size={12} className="text-white" />
-                      <span className="text-white text-xs font-bold uppercase tracking-wide">Open</span>
-                    </div>
-                  ) : (
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-500/90 backdrop-blur-md rounded-full border border-rose-400/30">
-                      <XCircle size={12} className="text-white" />
-                      <span className="text-white text-xs font-bold uppercase tracking-wide">Closed</span>
-                    </div>
-                  )}
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/90 backdrop-blur-md rounded-full border border-emerald-400/30">
+                    <CheckCircle size={12} className="text-white" />
+                    <span className="text-white text-xs font-bold uppercase tracking-wide">Open</span>
+                  </div>
+                ) : (
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-500/90 backdrop-blur-md rounded-full border border-rose-400/30">
+                    <XCircle size={12} className="text-white" />
+                    <span className="text-white text-xs font-bold uppercase tracking-wide">Closed</span>
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-col gap-3">
@@ -410,7 +410,7 @@ export const InternshipCard = ({
                 <p className="text-blue-300 text-xs font-bold uppercase tracking-wider mb-1">
                   {company}
                 </p>
-                <h3 className="text-white text-xl font-black leading-tight line-clamp-2 drop-shadow-md">
+                <h3 className="text-white text-xl font-bold leading-tight line-clamp-2 drop-shadow-md">
                   {title}
                 </h3>
               </div>

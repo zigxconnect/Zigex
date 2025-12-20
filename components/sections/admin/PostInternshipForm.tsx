@@ -34,7 +34,7 @@ const Checkbox: React.FC<CheckboxProps> = ({ id, className, ...props }) => (
   <input
     id={id}
     type="checkbox"
-    className={`h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 ${
+    className={`h-4 w-4 rounded border-gray-300 text-black focus:ring-blue-500 ${
       className ?? ""
     }`}
     {...props}
@@ -51,7 +51,7 @@ const FormSection: React.FC<FormSectionProps> = ({
       className ?? ""
     }`}
   >
-    <h2 className="text-lg font-semibold text-blue-700 mb-6">{title}</h2>
+    <h2 className="text-lg font-semibold text-black mb-6">{title}</h2>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 ">
       {children}
     </div>
@@ -68,7 +68,7 @@ const FormField: React.FC<FormFieldProps> = ({
 }) => (
   <div className={className}>
     <label
-      className="block text-sm font-medium text-blue-700 mb-1.5"
+      className="block text-sm font-medium text-foreground mb-1.5"
       htmlFor={name}
     >
       {label}
@@ -321,7 +321,7 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
         >
           Cancel
         </Button>
-        <Button type="submit" variant="orange" disabled={isSubmitting}>
+        <Button type="submit" variant="primary" disabled={isSubmitting}>
           {isSubmitting
             ? isEditMode
               ? "Saving Changes..."

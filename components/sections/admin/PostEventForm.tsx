@@ -12,17 +12,18 @@ import { Textarea } from "@/components/uiComponent/Textarea";
 
 const FormSection = ({ title, children }: any) => (
   <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-    <h2 className="text-lg font-semibold text-blue-700 mb-6">{title}</h2>
+    <h2 className="text-lg font-semibold text-black mb-6">{title}</h2>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 ">
       {children}
     </div>
   </div>
 );
 
-const FormField = ({ label, children, className }: any) => (
+const FormField = ({ label, children, className, required }: any) => (
   <div className={className}>
-    <label className="block text-sm font-medium text-blue-700 mb-1.5">
+    <label className="block text-sm font-medium text-foreground mb-1.5">
       {label}
+      {required && <span className="text-red-500 ml-1">*</span>}
     </label>
     {children}
   </div>
@@ -116,14 +117,14 @@ export const PostEventForm = ({ initialData }: { initialData?: any }) => {
   return (
     <form className="space-y-8" onSubmit={handleSubmit}>
       <FormSection title="Event Information">
-        <FormField label="Event Title*" className="md:col-span-2">
+        <FormField label="Event Title" required className="md:col-span-2">
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
           />
         </FormField>
-        <FormField label="Event Type*">
+        <FormField label="Event Type" required>
           <Select
             value={eventType}
             onChange={(e) => setEventType(e.target.value)}
@@ -136,7 +137,7 @@ export const PostEventForm = ({ initialData }: { initialData?: any }) => {
             <option value="hackathon">Hackathon</option>
           </Select>
         </FormField>
-        <FormField label="Location* (Online or Physical Address)">
+        <FormField label="Location (Online or Physical Address)" required>
           <Input
             value={location}
             onChange={(e) => setLocation(e.target.value)}
@@ -146,7 +147,7 @@ export const PostEventForm = ({ initialData }: { initialData?: any }) => {
       </FormSection>
 
       <FormSection title="Event Schedule">
-        <FormField label="Start Date*">
+        <FormField label="Start Date" required>
           <Input
             type="date"
             value={startDate}
@@ -154,7 +155,7 @@ export const PostEventForm = ({ initialData }: { initialData?: any }) => {
             required
           />
         </FormField>
-        <FormField label="End Date*">
+        <FormField label="End Date" required>
           <Input
             type="date"
             value={endDate}
@@ -165,7 +166,7 @@ export const PostEventForm = ({ initialData }: { initialData?: any }) => {
       </FormSection>
 
       <FormSection title="Details & Branding">
-        <FormField label="Event Description*" className="md:col-span-2">
+        <FormField label="Event Description" required className="md:col-span-2">
           <Textarea
             rows={8}
             value={description}
@@ -204,7 +205,7 @@ export const PostEventForm = ({ initialData }: { initialData?: any }) => {
         >
           Cancel
         </Button>
-        <Button type="submit" variant="orange" disabled={isSubmitting}>
+        <Button type="submit" variant="primary" disabled={isSubmitting}>
           {isEditMode
             ? isSubmitting
               ? "Saving Changes..."

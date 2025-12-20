@@ -85,7 +85,7 @@ export async function PUT(
       console.error("[API] Error fetching profile:", myProfileError);
     }
     const allowedFields = [
-      "first_name", "username", "phone", "location", "about",
+      "first_name", "last_name", "username", "phone", "location", "about",
       "avatar_url", "cover_image",
       "university", "degree", "field_of_study", "graduation_year", "gpa",
       "hard_skills", "soft_skills", "languages", "portfolio_url", "github_url", "linkedin_url",
@@ -98,8 +98,8 @@ export async function PUT(
         filteredUpdates[key] = updates[key];
       }
     });
-    // Patch: Always set full_name to first_name (since last_name is removed)
-    filteredUpdates.full_name = updates.first_name || "";
+    // Construct full_name
+    filteredUpdates.full_name = `${filteredUpdates.first_name || ""} ${filteredUpdates.last_name || ""}`.trim();
     let result;
     try {
       if (!myProfile) {

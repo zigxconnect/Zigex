@@ -186,7 +186,7 @@ export default function PersonalizedFeed({ userId, userSkills = [], university }
 
   if (isLoading) {
     return (
-      <div className="max-w-2xl mx-auto border-x border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 min-h-screen">
+      <div className="w-full min-h-[400px] flex items-center justify-center">
         <div className="flex flex-col items-center justify-center py-20">
           <div className="relative">
             <Loader2 size={40} className="animate-spin text-blue-600" />
@@ -201,27 +201,27 @@ export default function PersonalizedFeed({ userId, userSkills = [], university }
   }
 
   return (
-    <div className="max-w-2xl mx-auto border-x border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+    <div className="w-full">
       {/* Header */}
-      <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-200 dark:border-gray-700 sticky top-0 z-20 shadow-sm">
+      <div className="bg-card/95 backdrop-blur-xl border-b border-border sticky top-0 z-20">
         <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg">
+                <div className="w-9 h-9 bg-primary rounded-full flex items-center justify-center shadow-lg">
                   <Smile size={18} className="text-white" />
                 </div>
                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-900"></div>
               </div>
               <div>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">Here We Go...</h2>
-                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{feedItems.length} opportunities</p>
+                <h2 className="text-xl font-heading font-bold text-foreground tracking-tight">Here We Go...</h2>
+                <p className="text-xs text-muted-foreground font-medium">{feedItems.length} opportunities</p>
               </div>
             </div>
         </div>
       </div>
 
       {/* Feed Items */}
-      <div className="divide-y divide-gray-100 dark:divide-gray-800">
+      <div className="divide-y divide-border">
         {feedItems.slice(0, visibleItems).map((item, index) => {
           const CardWrapper = item.isOpen ? Link : 'div';
           const wrapperProps = item.isOpen ? { href: `/feed/${item.id}` } : {};
@@ -236,9 +236,9 @@ export default function PersonalizedFeed({ userId, userSkills = [], university }
             >
               <div
                 className={`
-                  bg-white dark:bg-gray-900 transition-all duration-300 relative
-                  ${item.isOpen ? 'hover:bg-gray-50 dark:hover:bg-gray-800/50' : 'bg-gray-50/50 dark:bg-gray-800/20'}
-                  ${item.isPinned ? 'border-l-4 border-amber-500' : ''}
+                  bg-card transition-all duration-300 relative
+                  ${item.isOpen ? 'hover:bg-muted/50' : 'bg-muted/20'}
+                  ${item.isPinned ? 'border-l-4 border-primary' : ''}
                 `}
                 style={{
                   animation: `slideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) ${index * 0.08}s both`,
@@ -252,7 +252,7 @@ export default function PersonalizedFeed({ userId, userSkills = [], university }
                     </div>
                     
                     {item.isPinned && item.isOpen && (
-                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-gradient-to-br from-blue-400 to-blue-500 rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-gray-900">
+                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-gray-900">
                         <Flame size={12} className="text-white" />
                       </div>
                     )}
@@ -269,7 +269,7 @@ export default function PersonalizedFeed({ userId, userSkills = [], university }
                       <span className={`font-bold text-sm transition-colors ${item.isOpen ? 'text-gray-900 dark:text-white hover:text-blue-600' : 'text-gray-500 dark:text-gray-400'}`}>{item.companyName}</span>
                       
                       {item.isPinned && (
-                        <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-blue-500 to-blue-700 text-white shadow-sm flex items-center gap-1"><Star size={10} fill="currentColor" />PINNED</span>
+                        <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-primary text-white shadow-sm flex items-center gap-1"><Star size={10} fill="currentColor" />PINNED</span>
                       )}
                       
                       <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${getTypeBadgeColor(item.type, item.isOpen)}`}>{getTypeLabel(item.type)}</span>
@@ -281,7 +281,7 @@ export default function PersonalizedFeed({ userId, userSkills = [], university }
                       {item.category && (<span className={`text-xs font-medium ${item.isOpen ? 'text-gray-500 dark:text-gray-400' : 'text-gray-400 dark:text-gray-500'}`}>• {item.category}</span>)}
                     </div>
 
-                    <h3 className={`font-bold text-[15px] mb-2 leading-snug transition-all duration-300 ${item.isOpen ? 'text-gray-900 dark:text-white hover:bg-gradient-to-r hover:from-blue-600 hover:to-purple-600 hover:bg-clip-text hover:text-transparent' : 'text-gray-500 dark:text-gray-400'}`}>{item.title}</h3>
+                    <h3 className={`font-bold text-[15px] mb-2 leading-snug transition-all duration-300 ${item.isOpen ? 'text-foreground hover:text-primary' : 'text-muted-foreground'}`}>{item.title}</h3>
                     
                     {!item.isOpen && item.closedReason && (
                         <div className="mb-3 px-3 py-2 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2 dark:bg-red-900/20 dark:border-red-800/50">
@@ -321,7 +321,7 @@ export default function PersonalizedFeed({ userId, userSkills = [], university }
                     )}
 
                     {item.isOpen ? (
-                      <button className={`w-full py-3 rounded-xl font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 group relative overflow-hidden ${item.isPinned ? 'bg-gradient-to-r from-blue-600 via-blue-500 to-blue-500 text-white shadow-lg hover:shadow-xl hover:scale-[1.02]' : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:shadow-lg hover:scale-[1.02]'}`} onClick={(e) => { e.preventDefault(); window.location.href = `/feed/${item.id}`; }}>
+                      <button className={`w-full py-3 rounded-xl font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 group relative overflow-hidden ${item.isPinned ? 'bg-primary text-white shadow-lg hover:shadow-xl hover:scale-[1.02]' : 'bg-primary text-white shadow-md hover:shadow-lg hover:scale-[1.02]'}`} onClick={(e) => { e.preventDefault(); window.location.href = `/feed/${item.id}`; }}>
                         <span className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent"></span>
                         <span className="relative flex items-center gap-2">{item.isPinned && <Zap size={16} fill="currentColor" />}<span>{item.type === 'event' ? 'Register Now' : 'Learn More'}</span><ArrowRight size={16} className={`transition-transform duration-300 ${hoveredCard === item.id ? 'translate-x-1' : ''}`} /></span>
                       </button>

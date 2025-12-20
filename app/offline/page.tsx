@@ -32,7 +32,7 @@ export default function OfflinePage() {
         <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
           <Button 
             asChild
-            variant="default"
+            variant="primary"
             className="h-12 px-8 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20 active:scale-95 transition-transform"
           >
             <Link href="/" className="flex items-center gap-2">
@@ -42,7 +42,7 @@ export default function OfflinePage() {
           </Button>
 
           <Button 
-            variant="outline"
+            variant="secondary"
             className="h-12 px-8 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 active:scale-95 transition-transform"
             onClick={() => window.location.reload()}
           >

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import { Button } from "@/components/ui/button";
 
 interface Application {
@@ -17,19 +17,21 @@ const statusOptions = [
   { value: "rejected", label: "Rejected" },
 ];
 
-export default function ApplicationsPage({ params }: { params: { opportunityId: string } }) {
+export default function ApplicationsPage({ params: paramsPromise }: { params: Promise<{ opportunityId: string }> }) {
+  const params = use(paramsPromise);
+  const opportunityId = params.opportunityId;
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`/api/companies/applications?opportunityId=${params.opportunityId}`)
+    fetch(`/api/companies/applications?opportunityId=${opportunityId}`)
       .then(res => res.json())
       .then(data => {
         setApplications(data.applications || []);
         setLoading(false);
       });
-  }, [params.opportunityId]);
+  }, [opportunityId]);
 
   const handleStatusChange = async (appId: string, newStatus: string) => {
     setUpdating(appId);

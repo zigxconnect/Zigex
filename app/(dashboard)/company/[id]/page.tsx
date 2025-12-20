@@ -9,11 +9,11 @@ import { Badge } from "@/components/uiComponent/Badge";
 import { ExternalLink, MapPin, Globe, Mail, Users } from "lucide-react";
 
 type Props = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
 export default async function CompanyProfilePage({ params }: Props) {
-  const id = params.id;
+  const { id } = await params;
 
   // Fetch company and company-specific data in parallel
   const [companyResult, postingsResult, headerStats] = await Promise.all([
