@@ -42,8 +42,8 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile }: WelcomeCardProp
     return skillsText.substring(0, maxLength) + "...";
   };
 
-  const avatarUrl = user.profile.avatar_url || "/https://i.ibb.co/CpS0wpjC/z3.jpg";
-  const coverImageUrl = user.profile.cover_image || "https://i.ibb.co/vv3sgJwd/n8.jpg";
+  const avatarUrl = user?.profile?.avatar_url || "https://i.ibb.co/CpS0wpjC/z3.jpg";
+  const coverImageUrl = user?.profile?.cover_image || "https://i.ibb.co/vv3sgJwd/n8.jpg";
 
   return (
     <div className="relative bg-white rounded-2xl w-full mx-auto shadow-lg border border-gray-200 overflow-hidden">
@@ -205,6 +205,7 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile }: WelcomeCardProp
 
           {/* Social Links & My Profile Button */}
           <div className="flex items-center gap-2 lg:gap-3 flex-wrap">
+            {(user?.profile?.linkedin_url || user?.linkedin_url) && (
               <Link
                 href={user?.profile?.linkedin_url || user?.linkedin_url}
                 target="_blank"
@@ -218,7 +219,9 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile }: WelcomeCardProp
                   </svg>
                 </div>
               </Link>
+            )}
 
+            {(user?.profile?.github_url || user?.github_url) && (
               <Link
                 href={user?.profile?.github_url || user?.github_url}
                 target="_blank"
@@ -232,11 +235,12 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile }: WelcomeCardProp
                   </svg>
                 </div>
               </Link>
+            )}
 
             {/* My Profile Button - Enhanced Interactive Version */}
             {/* My Profile Button - Clean Version */}
             <Link
-              href={`/profile/${user.profile.username}`}
+              href={`/profile/${user?.profile?.username || user?.username || "username"}`}
               className="
                 flex items-center gap-1.5 lg:gap-2 px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg font-semibold text-xs lg:text-sm
                 transition-all duration-300
