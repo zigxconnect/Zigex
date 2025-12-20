@@ -4,26 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import {
-  MapPin,
-  Clock,
-  Building2,
-  ExternalLink,
-  Bookmark,
-  BookmarkCheck,
-  Play,
-  Eye,
-  Heart,
-  ChevronRight,
-  Share2,
-  CheckCircle,
-  XCircle,
-  ArrowRight,
-} from "lucide-react";
-import { useState, useRef, useEffect } from "react";
-// SharePopover removed in favour of native Web Share API fallback
-import LiveBadge from "@/components/uiComponent/LiveBadge";
-import LivePanel from "@/components/uiComponent/LivePanel";
+// ...existing code...
 import {
   MapPin,
   Clock,
@@ -259,8 +240,8 @@ export const InternshipCard = ({
               </div>
               <div className="flex items-center gap-2 ml-4">
                 <Button
-                  variant="outline"
-                  size="icon"
+                  variant="secondary"
+                  size="default"
                   onClick={handleBookmark}
                   className="rounded-lg"
                 >
@@ -291,7 +272,7 @@ export const InternshipCard = ({
                     </div>
                   )}
                 </div>
-                <Button className="bg-blue-700 hover:bg-blue-600 text-white px-5 py-2 rounded-lg flex items-center gap-2 h-10">
+                <Button className="bg-blue-700 hover:bg-blue-600 text-white px-5 py-2 rounded-lg flex items-center gap-2 h-10" variant="primary" size="default">
                   View
                   <ExternalLink size={14} />
                 </Button>

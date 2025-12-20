@@ -21,7 +21,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { Program } from "@/lib/types/dashboard";
+import { Program } from "@/lib/types/dashoard";
 import LiveBadge from "@/components/uiComponent/LiveBadge";
 import LivePanel from "@/components/uiComponent/LivePanel";
 
@@ -261,7 +261,7 @@ export const ProgramCard = ({
 
                 {/* Open/Closed status */}
                 <div className="ml-2">
-                  {isOpen ? (
+                  {openStatusComputed ? (
                     <div className="inline-flex items-center gap-1 px-2 py-1 bg-[#16A34A]/10 text-[#16A34A] rounded-full text-xs font-semibold border border-[#16A34A]/20">
                       <CheckCircle size={14} className="text-[#16A34A]" />
                       <span>Open</span>

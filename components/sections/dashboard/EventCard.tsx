@@ -21,7 +21,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { useState } from "react";
-import { Event } from "@/lib/types/dashboard";
+import { Event } from "@/lib/types/dashoard";
 import { SharePopover } from "@/components/SharePopover";
 import LiveBadge from "@/components/uiComponent/LiveBadge";
 import LivePanel from "@/components/uiComponent/LivePanel";
@@ -148,8 +148,8 @@ export const EventCard = ({
               </div>
               <div className="flex items-center gap-2 ml-4">
                 <Button
-                  variant="outline"
-                  size="icon"
+                  variant="secondary"
+                  size="default"
                   onClick={handleBookmark}
                   className="rounded-lg"
                 >
@@ -160,14 +160,13 @@ export const EventCard = ({
                   )}
                 </Button>
                 <SharePopover title={event.title} urlPath={`/events/${event.id}`} />
-                <Button className="bg-green-700 hover:bg-green-600 text-white px-5 py-2 rounded-lg flex items-center gap-2 h-10">
+                <Button className="bg-green-700 hover:bg-green-600 text-white px-5 py-2 rounded-lg flex items-center gap-2 h-10" variant="primary" size="default">
                   View
                   <ExternalLink size={14} />
                 </Button>
               </div>
             </div>
           </div>
-        </div>
       </div>
     );
   }
