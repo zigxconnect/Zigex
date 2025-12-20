@@ -13,17 +13,18 @@ import { Textarea } from "@/components/uiComponent/Textarea";
 // Reusable layout components
 const FormSection = ({ title, children }: any) => (
   <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-    <h2 className="text-lg font-semibold text-blue-700 mb-6">{title}</h2>
+    <h2 className="text-lg font-semibold text-black mb-6">{title}</h2>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 ">
       {children}
     </div>
   </div>
 );
 
-const FormField = ({ label, children, className }: any) => (
+const FormField = ({ label, children, className, required }: any) => (
   <div className={className}>
-    <label className="block text-sm font-medium text-blue-700 mb-1.5">
+    <label className="block text-sm font-medium text-black mb-1.5">
       {label}
+      {required && <span className="text-red-500 ml-1">*</span>}
     </label>
     {children}
   </div>
@@ -40,6 +41,8 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
     if (!dateString) return "";
     return new Date(dateString).toISOString().split("T")[0];
   };
+
+  const [applicationLocation, setApplicationLocation] = useState(initialData?.location|| "")
 
   // State initialization for all form fields
   const [title, setTitle] = useState(initialData?.title || "");
@@ -83,6 +86,7 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
     formData.append("program_category", programCategory);
     formData.append("start_date", new Date(startDate).toISOString());
     formData.append("end_date", new Date(endDate).toISOString());
+    formData.append("location", applicationLocation);
     if (applicationDeadline)
       formData.append(
         "application_deadline",
@@ -125,14 +129,14 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
   return (
     <form className="space-y-8" onSubmit={handleSubmit}>
       <FormSection title="Program Information">
-        <FormField label="Program Title*" className="md:col-span-2">
+        <FormField label="Program Title" required className="md:col-span-2">
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
           />
         </FormField>
-        <FormField label="Program Category*">
+        <FormField label="Program Category" required>
           <Select
             value={programCategory}
             onChange={(e) => setProgramCategory(e.target.value)}
@@ -145,10 +149,11 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
             <option value="apprenticeship">Apprenticeship</option>
           </Select>
         </FormField>
-        <FormField label="Program Format">
+        <FormField label="Program Format" required>
           <Select
             value={programFormat}
             onChange={(e) => setProgramFormat(e.target.value)}
+            required
           >
             <option value="remote">Remote</option>
             <option value="in_person">In-Person</option>
@@ -158,7 +163,7 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
       </FormSection>
 
       <FormSection title="Program Schedule">
-        <FormField label="Start Date*">
+        <FormField label="Start Date" required>
           <Input
             type="date"
             value={startDate}
@@ -166,7 +171,7 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
             required
           />
         </FormField>
-        <FormField label="End Date*">
+        <FormField label="End Date" required>
           <Input
             type="date"
             value={endDate}
@@ -179,12 +184,22 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
             type="date"
             value={applicationDeadline}
             onChange={(e) => setApplicationDeadline(e.target.value)}
+            
+          />
+        </FormField>
+
+        <FormField label="Location" required>
+          <Input
+            type="text"
+            value={applicationLocation}
+            onChange={(e) => setApplicationLocation(e.target.value)}
+            required
           />
         </FormField>
       </FormSection>
 
       <FormSection title="Details & Branding">
-        <FormField label="Description & Activities*" className="md:col-span-2">
+        <FormField label="Description & Activities" required className="md:col-span-2">
           <Textarea
             rows={8}
             value={description}
@@ -202,7 +217,7 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
             placeholder="e.g., JavaScript,Project Management"
           />
         </FormField>
-        <FormField label="Program Picture" className="md:col-span-2">
+        <FormField label="Program Picture" className="md:col-span-2" required>
           {isEditMode && initialData.program_picture_url && !programPicture && (
             <div className="mb-4">
               <p className="text-sm text-gray-500 mb-2">Current Image:</p>
@@ -233,7 +248,7 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
         >
           Cancel
         </Button>
-        <Button type="submit" variant="orange" disabled={isSubmitting}>
+        <Button type="submit" variant="primary" disabled={isSubmitting}>
           {isSubmitting
             ? isEditMode
               ? "Saving Changes..."

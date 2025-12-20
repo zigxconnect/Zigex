@@ -31,7 +31,10 @@ export const AdminHeader = ({ stats }: AdminHeaderProps) => {
           </button>
 
           {/* Logo is now always visible */}
-          <Logo />
+          <div className="w-10 h-full">
+            <Logo />
+          </div>
+          
         </div>
 
         {/* Center: Stats (Hidden on screens smaller than 'md') */}
@@ -55,7 +58,7 @@ export const AdminHeader = ({ stats }: AdminHeaderProps) => {
         {/* Right Side: Action Button */}
         <div className="flex-shrink-0">
           <Link href="/admin/postings/new" passHref>
-            <Button variant="orange" className="flex items-center gap-2">
+            <Button variant="primary" className="flex items-center gap-2">
               <Plus size={18} />
               {/* Responsive Text: Shows full text on 'sm' screens and up */}
               <span className="hidden sm:inline">Post New Program</span>

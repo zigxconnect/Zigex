@@ -90,7 +90,11 @@ export const AdminSidebar = ({
         <div className="p-5 text-center border-b border-sidebar-border">
           <div className="relative inline-block">
             <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center text-primary text-3xl font-bold ring-4 ring-sidebar shadow-inner">
-              {getInitials(companyProfile.company_name)}
+              { companyProfile.logo_url ? (
+                <img src={companyProfile.logo_url} alt="Company Logo" className="w-full h-full object-cover rounded-full" />
+              ) : (
+                getInitials(companyProfile.company_name)
+              )}
             </div>
           </div>
           <h2 className="mt-3 text-lg font-bold text-sidebar-foreground truncate">
