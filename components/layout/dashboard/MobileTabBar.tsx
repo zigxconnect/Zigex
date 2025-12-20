@@ -17,7 +17,6 @@ import { AiOutlineWechat } from "react-icons/ai";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import CreateProjectButton from "@/components/project/CreateProjectButton";
 
 interface MobileTabBarProps {
   user: any;
@@ -199,9 +198,6 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
           })}
         </div>
       </div>
-      
-      {/* Search/Post FAB */}
-      <CreateProjectButton variant="floating" />
     </>
   );
 }
