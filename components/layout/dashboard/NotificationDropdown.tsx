@@ -55,7 +55,7 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
 
   useEffect(() => {
     fetchNotifications();
-    
+
     // Refresh notifications every 30 seconds
     const interval = setInterval(() => {
       fetchNotifications();
@@ -68,7 +68,7 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    
+
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       clearInterval(interval);
@@ -111,14 +111,14 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
 
   const markAllAsRead = async () => {
     const unreadNotifications = notifications.filter(n => !n.read);
-    
+
     // Only proceed if there are unread notifications
     if (unreadNotifications.length === 0) return;
-    
+
     // Optimistically update UI
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     setUnreadCount(0);
-    
+
     // Send to backend
     try {
       await fetch("/api/students/notifications", {
@@ -137,17 +137,17 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
     const date = new Date(timestamp);
     const now = new Date();
     const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-    
+
     if (diffInMinutes < 1) return "Just now";
     if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    
+
     const diffInHours = Math.floor(diffInMinutes / 60);
     if (diffInHours < 24) return `${diffInHours}h ago`;
-    
+
     const diffInDays = Math.floor(diffInHours / 24);
     if (diffInDays === 1) return "Yesterday";
     if (diffInDays < 7) return `${diffInDays}d ago`;
-    
+
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
@@ -168,7 +168,7 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 md:w-96 bg-card border border-border rounded-xl shadow-lg z-50 overflow-hidden animate-fade-in-down">
+        <div className="fixed inset-x-0 top-[72px] mx-auto w-[calc(100vw-2rem)] max-w-sm md:absolute md:right-0 md:left-auto md:top-full md:mt-2 md:w-96 md:mx-0 md:inset-x-auto bg-card border border-border rounded-xl shadow-lg z-50 overflow-hidden animate-fade-in-down">
           <div className="flex justify-between items-center p-4 border-b border-border">
             <div className="flex items-center gap-2">
               <h3 className="font-semibold text-lg text-foreground">Notifications</h3>
@@ -211,9 +211,8 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
                 {notifications.map((notification) => (
                   <li
                     key={notification.id}
-                    className={`border-b border-border last:border-b-0 transition-colors ${
-                      !notification.read ? "bg-blue-50 hover:bg-blue-100" : "bg-card hover:bg-muted/50"
-                    }`}
+                    className={`border-b border-border last:border-b-0 transition-colors ${!notification.read ? "bg-blue-50 hover:bg-blue-100" : "bg-card hover:bg-muted/50"
+                      }`}
                   >
                     <button
                       onClick={() => handleNotificationClick(notification.id, notification.referenceId, notification.type)}
@@ -242,8 +241,8 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
 
           {notifications.length > 0 && (
             <div className="p-4 border-t border-border text-center bg-muted/30">
-              <Link 
-                href="/notifications" 
+              <Link
+                href="/notifications"
                 onClick={() => setIsOpen(false)}
                 className="text-blue-600 text-sm hover:underline font-medium"
               >
