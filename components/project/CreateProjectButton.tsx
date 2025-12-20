@@ -5,10 +5,11 @@ import { Edit3, Plus } from "lucide-react";
 import CreateProjectModal, { ProjectFormData } from "./CreateProjectModal";
 
 interface CreateProjectButtonProps {
-  variant?: "floating" | "header";
+  variant?: "floating" | "header" | "custom";
+  customTrigger?: React.ReactNode;
 }
 
-export default function CreateProjectButton({ variant = "header" }: CreateProjectButtonProps) {
+export default function CreateProjectButton({ variant = "header", customTrigger }: CreateProjectButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleSubmit = async (projectData: ProjectFormData) => {
@@ -42,9 +43,9 @@ export default function CreateProjectButton({ variant = "header" }: CreateProjec
         >
           {/* Tooltip */}
           <div className="absolute bottom-full right-0 mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-            <div className="bg-gray-900 text-white text-sm font-medium px-3 py-2 rounded-lg whitespace-nowrap shadow-lg">
+            <div className="bg-secondary text-white text-sm font-medium px-3 py-2 rounded-lg whitespace-nowrap shadow-lg">
               Share your project
-              <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+              <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-secondary"></div>
             </div>
           </div>
 
@@ -60,6 +61,21 @@ export default function CreateProjectButton({ variant = "header" }: CreateProjec
         </button>
 
         {/* Modal */}
+        <CreateProjectModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={handleSubmit}
+        />
+      </>
+    );
+  }
+
+  if (variant === "custom" && customTrigger) {
+    return (
+      <>
+        <div onClick={() => setIsModalOpen(true)} className="cursor-pointer">
+          {customTrigger}
+        </div>
         <CreateProjectModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}

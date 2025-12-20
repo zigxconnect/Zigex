@@ -365,7 +365,7 @@ Looking forward to hearing from you!`;
 
         {/* Quick Connect Card - Visitor View */}
         <div className="bg-linear-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100 shadow-sm">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Connect with {data.full_name?.split(' ')[0]}</h3>
+          <h3 className="text-lg font-bold text-gray-900 mb-4">Connect with {data.username || data.full_name?.split(' ')[0]}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {/* LinkedIn */}
             {linkedinUrl && (

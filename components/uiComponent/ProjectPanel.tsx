@@ -9,10 +9,16 @@ import {
   MessageCircle, 
   Linkedin, 
   ChevronRight,
-  Sparkles,
   MapPin,
-  AlertCircle
+  AlertCircle,
+  Sparkles,
+  Play,
+  Share2,
+  Calendar,
+  Clock,
+  ExternalLink
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface Project {
   id: string;
@@ -25,7 +31,7 @@ interface Project {
   project_duration: string;
   end_date: string;
   created_at: string;
-  is_valid: boolean;
+  status: string;
 }
 
 interface UserData {
@@ -48,12 +54,10 @@ interface ProjectPanelProps {
 // Extract YouTube video ID from various YouTube URL formats
 const getYoutubeVideoId = (url: string): string | null => {
   if (!url) return null;
-  
   const patterns = [
     /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
     /^([a-zA-Z0-9_-]{11})$/
   ];
-
   for (const pattern of patterns) {
     const match = url.match(pattern);
     if (match && match[1]) return match[1];
@@ -61,42 +65,26 @@ const getYoutubeVideoId = (url: string): string | null => {
   return null;
 };
 
-// Extract thumbnail from YouTube URL
-const getYoutubeThumbnail = (videoId: string): string => {
-  return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
-};
-
 // Format date nicely
 const formatDate = (dateString: string): string => {
   try {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
-    });
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   } catch {
     return dateString;
   }
 };
 
-export default function ProjectPanel({ 
-  project, 
-  user, 
-  isOwner 
-}: ProjectPanelProps) {
+export default function ProjectPanel({ project, user, isOwner }: ProjectPanelProps) {
   const [open, setOpen] = useState(false);
   const [showIndicator, setShowIndicator] = useState(true);
+  const [imageError, setImageError] = useState(false);
 
-  // Hide indicator after 4 seconds
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowIndicator(false);
-    }, 4000);
+    const timer = setTimeout(() => setShowIndicator(false), 4000);
     return () => clearTimeout(timer);
   }, []);
 
-  // Lock body scroll when panel open on mobile
   useEffect(() => {
     if (typeof window === "undefined") return;
     const original = document.body.style.overflow;
@@ -105,504 +93,192 @@ export default function ProjectPanel({
     } else {
       document.body.style.overflow = original;
     }
-    return () => {
-      document.body.style.overflow = original;
-    };
+    return () => { document.body.style.overflow = original; };
   }, [open]);
 
-  const youtubeVideoId = project?.project_video_url 
-    ? getYoutubeVideoId(project.project_video_url) 
-    : null;
+  const youtubeVideoId = project?.project_video_url ? getYoutubeVideoId(project.project_video_url) : null;
   
-  const youtubeThumbnail = youtubeVideoId 
-    ? getYoutubeThumbnail(youtubeVideoId) 
-    : null;
+  const getImageUrl = (url: string | null) => {
+    if (!url || url.length < 5) return '/projects.png';
+    if (url.includes('supabase.co')) return url;
+    if (url.startsWith('http')) return url;
+    if (url.startsWith('/')) return url;
+    return '/projects.png';
+  };
 
-  const coverImage = project?.cover_image_url || youtubeThumbnail;
-  
-  // Determine if there's a video (uploaded or YouTube)
-  const hasUploadedVideo = !!project?.uploaded_video_url;
-  const hasYoutubeVideo = !!youtubeVideoId;
+  const coverImageUrl = getImageUrl(project?.cover_image_url ?? null);
 
-  // Prepare WhatsApp message
-  const whatsappMessage = `Hi ${user.full_name || 'there'}! 👋
+  const whatsappMessage = `Hi ${user.full_name || 'there'}! 👋\n\nI saw your profile on ZigX and I'm impressed by your work${project ? ` on "${project.project_title}"` : ''}. I'd love to connect and chat!`;
+  const whatsappUrl = user.phone ? `https://wa.me/${user.phone.replace(/\D/g, '')}?text=${encodeURIComponent(whatsappMessage)}` : null;
 
-I saw your profile on ZigX and I'm impressed by your work${project ? ` on "${project.project_title}"` : ''}. ${project?.hard_skills?.[0] ? `Your skills in ${user.hard_skills?.[0]} caught my attention.` : ''}
-
-I'd love to connect and chat!
-
-Looking forward to hearing from you 🚀`;
-
-  const whatsappUrl = user.phone 
-    ? `https://wa.me/${user.phone.replace(/\D/g, '')}?text=${encodeURIComponent(whatsappMessage)}`
-    : null;
-
-  // EMPTY STATE: User has no project
+  // CASE 1: EMPTY STATE
   if (!project) {
     return (
-      <div>
-        {/* Mobile Card for no project */}
-        <div className="md:hidden bg-linear-to-br from-white to-gray-50 rounded-2xl border-2 border-blue-100 shadow-lg overflow-hidden mb-6 relative">
-          <div className="relative h-40 w-full bg-linear-to-br from-blue-400 via-purple-400 to-pink-400 overflow-hidden">
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-              <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-white rounded-full blur-3xl"></div>
-            </div>
-            
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-              <div className="mb-2">
-                <AlertCircle className="w-10 h-10 text-white mx-auto drop-shadow-lg" strokeWidth={1.5} />
-              </div>
-              <h3 className="text-white font-bold text-lg drop-shadow-md">No Project Yet</h3>
-              <p className="text-white/90 text-xs drop-shadow-md">Let's connect instead!</p>
-            </div>
-          </div>
-
-          <div className="p-6">
-            <div className="mb-6">
-              <h4 className="text-gray-900 font-bold mb-1">Hey there! 👋</h4>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                {user.full_name ? `${user.full_name} hasn't posted a project yet` : 'This user hasn\'t posted a project yet'}, but you can still reach out and connect!
-              </p>
-            </div>
-
-            {user.university && (
-              <div className="flex items-center gap-2 mb-4 text-sm text-gray-700">
-                <MapPin className="w-4 h-4 text-blue-600" />
-                <span>{user.university}</span>
-              </div>
+      <aside className="md:fixed md:right-6 md:top-32 w-full md:w-72 lg:w-80 bg-[#F6F8FF] rounded-[2.5rem] border border-blue-100 shadow-xl overflow-hidden p-8 text-center border-dashed border-2">
+         <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-blue-50">
+            <Calendar size={28} className="text-blue-200" />
+         </div>
+         <h4 className="text-lg font-black text-slate-800 mb-2">Build in Progress</h4>
+         <p className="text-xs text-slate-500 mb-6 leading-relaxed">
+           {user.full_name?.split(' ')[0] || 'This user'} is currently brewing their next big idea. Check back soon for the reveal!
+         </p>
+         
+         <div className="space-y-3">
+            {whatsappUrl && (
+              <Button asChild className="w-full h-11 bg-[#155DFC] hover:bg-[#1A3CB9] text-white rounded-xl font-bold shadow-lg shadow-blue-200">
+                 <Link href={whatsappUrl} target="_blank"><MessageCircle size={16} className="mr-2" /> Message</Link>
+              </Button>
             )}
-
-            {user.hard_skills && user.hard_skills.length > 0 && (
-              <div className="mb-4">
-                <div className="text-xs font-semibold text-gray-700 mb-2">Skills:</div>
-                <div className="flex flex-wrap gap-2">
-                  {user.hard_skills.slice(0, 3).map((skill, idx) => (
-                    <span 
-                      key={idx}
-                      className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              </div>
+            {user.linkedin_url && (
+              <Button asChild variant="outline" className="w-full h-11 border-blue-100 text-[#155DFC] hover:bg-blue-50 rounded-xl font-bold">
+                 <Link href={user.linkedin_url} target="_blank"><Linkedin size={16} className="mr-2" /> LinkedIn</Link>
+              </Button>
             )}
-
-            <div className="space-y-2">
-              {whatsappUrl && (
-                <Link 
-                  href={whatsappUrl} 
-                  target="_blank"
-                  className="w-full inline-flex cursor-pointer items-center justify-center gap-2 px-4 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl transition-all hover:shadow-md font-semibold text-sm"
-                >
-                  <MessageCircle className="w-5 h-5" />
-                  Message on WhatsApp
-                </Link>
-              )}
-              
-              {user.linkedin_url && (
-                <Link 
-                  href={user.linkedin_url}
-                  target="_blank"
-                  className="w-full inline-flex cursor-pointer items-center justify-center gap-2 px-4 py-3 bg-blue-700 hover:bg-blue-800 text-white rounded-xl transition-all hover:shadow-md font-semibold text-sm"
-                >
-                  <Linkedin className="w-5 h-5" />
-                  Connect on LinkedIn
-                </Link>
-              )}
-
-              {!whatsappUrl && !user.linkedin_url && (
-                <div className="text-center py-2 text-gray-500 text-xs">
-                  No contact methods available
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Desktop Empty State Panel */}
-        <aside className="hidden md:block fixed right-6 top-32 w-72 lg:w-80 bg-linear-to-br from-white to-gray-50 rounded-2xl border-2 border-blue-100 shadow-xl overflow-hidden">
-          <div className="relative h-28 w-full bg-linear-to-br from-blue-400 via-purple-400 to-pink-400 overflow-hidden">
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-              <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-white rounded-full blur-3xl"></div>
-            </div>
-            
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-              <AlertCircle className="w-8 h-8 text-white mb-1 drop-shadow-lg" strokeWidth={1.5} />
-              <p className="text-white/90 text-xs drop-shadow-md font-medium">No Project Posted</p>
-            </div>
-          </div>
-
-          <div className="p-4">
-            <h5 className="text-sm font-bold text-gray-900 mb-2">Connect with {user.full_name?.split(' ')[0] || 'them'}</h5>
-            <p className="text-xs text-gray-600 mb-4 leading-relaxed">
-              No project yet, but {user.full_name?.split(' ')[0] || 'they'}'s ready to collaborate!
-            </p>
-
-            {user.university && (
-              <div className="flex items-center gap-2 mb-3 text-xs text-gray-700">
-                <MapPin className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                <span>{user.university}</span>
-              </div>
-            )}
-
-            {user.hard_skills && user.hard_skills.length > 0 && (
-              <div className="mb-4">
-                <div className="text-xs font-semibold text-gray-700 mb-2">Top Skills:</div>
-                <div className="flex flex-wrap gap-1">
-                  {user.hard_skills.slice(0, 2).map((skill, idx) => (
-                    <span 
-                      key={idx}
-                      className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              {whatsappUrl && (
-                <Link 
-                  href={whatsappUrl} 
-                  target="_blank"
-                  className="w-full inline-flex cursor-pointer items-center justify-center gap-1.5 px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all hover:shadow-md font-medium text-xs"
-                >
-                  <MessageCircle className="w-4 h-4" />
-                  WhatsApp
-                </Link>
-              )}
-              
-              {user.linkedin_url && (
-                <Link 
-                  href={user.linkedin_url}
-                  target="_blank"
-                  className="w-full inline-flex cursor-pointer items-center justify-center gap-1.5 px-3 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg transition-all hover:shadow-md font-medium text-xs"
-                >
-                  <Linkedin className="w-4 h-4" />
-                  LinkedIn
-                </Link>
-              )}
-            </div>
-          </div>
-        </aside>
-
-        {/* Mobile: floating toggle button (only if NOT owner) */}
-        {!isOwner && (
-          <div className="relative">
-            {showIndicator && (
-              <div className="md:hidden fixed left-4 bottom-20 z-50 animate-bounce">
-                <div className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-lg border-2 border-white flex items-center gap-2">
-                  <AlertCircle className="w-3.5 h-3.5" strokeWidth={2.5} />
-                  NO PROJECT YET
-                </div>
-              </div>
-            )}
-
-            <button
-              aria-expanded={open}
-              aria-controls="no-project-panel"
-              onClick={() => setOpen(true)}
-              className="cursor-pointer md:hidden fixed left-4 bottom-6 z-50 inline-flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-full shadow-lg border border-blue-700 hover:bg-blue-700 focus:outline-none transition-all"
-            >
-              <AlertCircle className="w-4 h-4" strokeWidth={2} />
-              <span className="text-sm font-medium">Connect</span>
-            </button>
-          </div>
-        )}
-
-        {/* Overlay for mobile */}
-        {open && <div onClick={() => setOpen(false)} className="md:hidden fixed inset-0 bg-black/40 z-40" />}
-
-        {/* Mobile sliding panel */}
-        <aside
-          className={
-            "md:hidden fixed top-0 left-0 h-full z-50 w-72 bg-white border-r-2 border-blue-100 shadow-xl transform transition-transform duration-300 " + 
-            (open ? "translate-x-0" : "-translate-x-full")
-          }
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-linear-to-r from-blue-50 to-purple-50">
-            <h3 className="text-sm font-bold text-gray-900">Connect Now</h3>
-            <button 
-              onClick={() => setOpen(false)} 
-              className="inline-flex cursor-pointer items-center justify-center w-8 h-8 rounded-md text-gray-600 hover:bg-gray-100"
-              aria-label="Close panel"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          <div className="p-4 overflow-y-auto h-full pb-20">
-            <div className="relative h-32 w-full bg-linear-to-br from-blue-400 via-purple-400 to-pink-400 rounded-lg overflow-hidden mb-4">
-              <div className="absolute inset-0 opacity-10">
-                <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-              </div>
-              
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <AlertCircle className="w-8 h-8 text-white mb-1 drop-shadow-lg" strokeWidth={1.5} />
-                <p className="text-white text-sm font-bold drop-shadow-md">No Project Yet</p>
-              </div>
-            </div>
-
-            <h4 className="text-sm font-bold text-gray-900 mb-1">{user.full_name || 'User'}</h4>
-            <p className="text-xs text-gray-600 mb-4">Haven't posted a project yet? Let's connect!</p>
-
-            {user.university && (
-              <div className="flex items-center gap-2 mb-3 text-xs text-gray-700">
-                <MapPin className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                <span>{user.university}</span>
-              </div>
-            )}
-
-            {user.hard_skills && user.hard_skills.length > 0 && (
-              <div className="mb-4">
-                <div className="text-xs font-semibold text-gray-700 mb-2">Skills:</div>
-                <div className="flex flex-wrap gap-1">
-                  {user.hard_skills.map((skill, idx) => (
-                    <span 
-                      key={idx}
-                      className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-2 mt-6">
-              {whatsappUrl && (
-                <Link 
-                  href={whatsappUrl} 
-                  target="_blank"
-                  className="w-full inline-flex cursor-pointer items-center justify-center gap-2 px-4 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all hover:shadow-md font-semibold text-sm"
-                >
-                  <MessageCircle className="w-5 h-5" />
-                  Message on WhatsApp
-                </Link>
-              )}
-              
-              {user.linkedin_url && (
-                <Link 
-                  href={user.linkedin_url}
-                  target="_blank"
-                  className="w-full inline-flex cursor-pointer items-center justify-center gap-2 px-4 py-3 bg-blue-700 hover:bg-blue-800 text-white rounded-lg transition-all hover:shadow-md font-semibold text-sm"
-                >
-                  <Linkedin className="w-5 h-5" />
-                  Connect on LinkedIn
-                </Link>
-              )}
-            </div>
-          </div>
-        </aside>
-      </div>
+         </div>
+      </aside>
     );
   }
 
-  // PROJECT EXISTS: Show project panel
+  // CASE 2: PROJECT EXISTS
   return (
-    <div>
-      {/* Mobile: Show as main card component for visitors */}
-      {!isOwner && (
-        <div className="md:hidden bg-white rounded-2xl border-2 border-gradient-to-r from-blue-200 to-purple-200 shadow-lg overflow-hidden mb-6 relative">
-          {/* First-time Project Indicator - Mobile */}
-          {showIndicator && (
-            <div className="absolute -top-1 left-1/2 -translate-x-1/2 z-10 animate-bounce">
-              <div className="bg-linear-to-r from-blue-600 to-purple-600 text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-lg border-2 border-white flex items-center gap-2">
-                <Sparkles className="w-4 h-4" />
-                ACTIVE PROJECT
-              </div>
+    <>
+      <aside className="hidden md:block fixed right-6 top-32 w-72 lg:w-80 bg-white rounded-[2.5rem] border border-blue-100 shadow-2xl shadow-blue-200/40 overflow-hidden group hover:scale-[1.02] transition-all duration-500">
+        <div className="relative aspect-[4/3] bg-slate-100 overflow-hidden">
+          {!imageError && coverImageUrl && coverImageUrl !== '/projects.png' ? (
+            <Image 
+              src={coverImageUrl} 
+              alt={project.project_title} 
+              fill 
+              className="object-cover group-hover:scale-110 transition-transform duration-1000"
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-[#155DFC] to-[#1A3CB9] flex items-center justify-center">
+              <Calendar size={48} className="text-white opacity-20" />
             </div>
           )}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent" />
+          
+          <div className="absolute top-4 left-4">
+             <div className="flex items-center gap-1.5 px-3 py-1 bg-[#155DFC] text-white rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg">
+                <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                ACTIVE PROJECT
+             </div>
+          </div>
 
-          <div className="relative h-56 w-full bg-gray-100 overflow-hidden group">
-            {coverImage ? (
-              <Image 
-                src={coverImage} 
-                alt={project.project_title} 
-                fill 
-                className="object-cover group-hover:scale-105 transition-transform duration-500" 
-              />
-            ) : (
-              <div className="w-full h-full bg-linear-to-br from-blue-500 to-purple-600" />
-            )}
-            <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-black/50" />
-            
-            {/* Video Badge - Mobile */}
-            {youtubeVideoId && (
-              <div className="absolute top-3 right-3 z-20">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white rounded-full shadow-lg border border-red-700/50 backdrop-blur-sm group-hover:bg-red-700 transition-colors">
-                  <Youtube className="w-4 h-4" />
-                  <span className="text-xs font-bold">VIDEO</span>
+          {youtubeVideoId && (
+            <Link 
+              href={`https://www.youtube.com/watch?v=${youtubeVideoId}`}
+              target="_blank"
+              className="absolute inset-0 m-auto w-14 h-14 bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white hover:text-[#155DFC] transition-all duration-300 shadow-2xl z-10 border border-white/30"
+            >
+               <Play className="ml-1 fill-current" />
+            </Link>
+          )}
+        </div>
+
+        <div className="p-6">
+          <h3 className="text-xl font-black text-slate-900 mb-2 leading-tight line-clamp-2">{project.project_title}</h3>
+          <p className="text-xs text-slate-500 mb-6 leading-relaxed line-clamp-3">{project.description}</p>
+
+          <div className="grid grid-cols-2 gap-4 mb-8 pt-6 border-t border-[#F6F8FF]">
+             <div className="space-y-1">
+                <p className="text-[9px] font-black text-[#155DFC] uppercase tracking-wider">PROJECT ERA</p>
+                <div className="flex items-center gap-1.5">
+                   <Calendar size={12} className="text-slate-400" />
+                   <span className="text-xs font-bold text-slate-700">{formatDate(project.created_at)}</span>
                 </div>
-              </div>
-            )}
-
-            {/* Project Type Badge - Mobile */}
-            <div className="absolute top-3 left-3">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/95 backdrop-blur-sm text-blue-600 rounded-lg shadow-md border border-blue-100">
-                <Sparkles className="w-4 h-4" />
-                <span className="text-xs font-bold">PROJECT</span>
-              </div>
-            </div>
-            
-            <div className="absolute left-4 bottom-4">
-              <h4 className="text-white text-base font-bold drop-shadow-lg">{project.project_title}</h4>
-              <p className="text-xs text-white/90 drop-shadow-lg">Ends: {formatDate(project.end_date)}</p>
-            </div>
+             </div>
+             <div className="space-y-1">
+                <p className="text-[9px] font-black text-[#155DFC] uppercase tracking-wider">TIMELINE</p>
+                <div className="flex items-center gap-1.5">
+                   <Clock size={12} className="text-slate-400" />
+                   <span className="text-xs font-bold text-slate-700">{project.project_duration || 'Ongoing'}</span>
+                </div>
+             </div>
           </div>
 
-          <div className="p-5">
-            <div className="flex items-start gap-3 mb-4">
-              <div className="flex-1">
-                <h5 className="text-base font-bold text-gray-900">{project.project_title}</h5>
-                <p className="mt-2 text-sm text-gray-600 leading-relaxed line-clamp-3">{project.description}</p>
-              </div>
-
-              <div className="flex gap-2 shrink-0">
+          <div className="space-y-3">
+             <Button asChild className="w-full h-12 bg-[#155DFC] hover:bg-[#1A3CB9] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-200/50 transition-all">
+                <Link href={`/feed/projects/${project.id}`}>EXPLORE PROJECT</Link>
+             </Button>
+             
+             <div className="grid grid-cols-2 gap-3">
                 {project.github_repository && (
-                  <Link 
-                    href={project.github_repository} 
-                    target="_blank" 
-                    className="inline-flex items-center justify-center w-10 h-10 bg-gray-900 hover:bg-gray-800 text-white rounded-lg border border-gray-700 transition-all hover:scale-105"
-                  >
-                    <Github className="w-5 h-5" />
-                  </Link>
+                   <Button asChild variant="outline" className="h-11 border-slate-100 hover:border-slate-300 text-slate-700 rounded-xl font-bold">
+                      <a href={project.github_repository} target="_blank" rel="noopener noreferrer">
+                         <Github size={16} className="mr-2" /> Code
+                      </a>
+                   </Button>
                 )}
-                {youtubeVideoId && (
-                  <Link 
-                    href={`https://www.youtube.com/watch?v=${youtubeVideoId}`}
-                    target="_blank" 
-                    className="inline-flex items-center justify-center w-10 h-10 bg-red-600 hover:bg-red-700 text-white rounded-lg border border-red-700 transition-all hover:scale-105"
-                  >
-                    <Youtube className="w-5 h-5" />
-                  </Link>
-                )}
-              </div>
-            </div>
-
-            {/* Duration Badge */}
-            <div className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold border border-blue-200 mb-4">
-              <span>📅 {project.project_duration}</span>
-            </div>
-
-            <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100">
-              <Link 
-                href={`https://www.youtube.com/watch?v=${youtubeVideoId}`}
-                target="_blank"
-                className="flex-1 inline-flex cursor-pointer items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all hover:shadow-md font-semibold text-sm"
-              >
-                <Sparkles className="w-5 h-5" />
-                View Project
-              </Link>
-            </div>
+                <Button variant="outline" className={`${!project.github_repository ? 'col-span-2' : ''} h-11 border-slate-100 hover:border-slate-300 text-slate-700 rounded-xl font-bold`}>
+                   <Share2 size={16} className="mr-2" /> Share
+                </Button>
+             </div>
           </div>
+        </div>
+      </aside>
+
+      {/* Mobile Trigger */}
+      {!isOwner && (
+        <div className="md:hidden fixed bottom-6 left-6 z-50">
+           <button onClick={() => setOpen(true)} className="flex items-center justify-center w-14 h-14 bg-[#155DFC] text-white rounded-full shadow-2xl shadow-blue-400/50 active:scale-90 transition-transform">
+              <Sparkles className="animate-pulse" />
+           </button>
         </div>
       )}
 
-      {/* Desktop aside (visible on md+) */}
-      <aside className="hidden md:block fixed right-6 top-32 w-72 lg:w-80 bg-white rounded-2xl border-2 border-blue-200 shadow-xl overflow-hidden hover:shadow-2xl transition-shadow">
-        {/* First-time Project Indicator - Desktop */}
-        {showIndicator && !isOwner && (
-          <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 animate-bounce">
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-lg border-2 border-white flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5" />
-              ACTIVE PROJECT
-            </div>
-          </div>
-        )}
-
-        <div className="relative h-40 w-full bg-gray-100 group overflow-hidden cursor-pointer">
-          {coverImage ? (
-            <Link href={youtubeVideoId ? `https://www.youtube.com/watch?v=${youtubeVideoId}` : project.github_repository || '#'} target="_blank">
-              <Image 
-                src={coverImage} 
-                alt={project.project_title} 
-                fill 
-                className="object-cover group-hover:scale-110 transition-transform duration-500" 
-              />
-            </Link>
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500" />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/40" />
-          
-          {/* Video Badge - Desktop */}
-          {youtubeVideoId && (
-            <div className="absolute top-3 right-3 z-20">
-              <div className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-600 text-white rounded-full shadow-lg border border-red-700/50 backdrop-blur-sm">
-                <Youtube className="w-3.5 h-3.5" />
-                <span className="text-xs font-bold">VIDEO</span>
+      {/* Mobile Sliding Panel */}
+      {open && (
+        <div className="md:hidden fixed inset-0 z-[60] animate-in fade-in duration-300">
+           <div onClick={() => setOpen(false)} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" />
+           <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-[3rem] p-8 max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom-full duration-500">
+              <div className="w-12 h-1.5 bg-slate-100 rounded-full mx-auto mb-8" />
+              
+              <div className="relative aspect-video rounded-[2rem] overflow-hidden mb-6 border border-blue-50 shadow-xl">
+                 {!imageError && coverImageUrl && coverImageUrl !== '/projects.png' ? (
+                    <Image src={coverImageUrl} alt={project.project_title} fill className="object-cover" onError={() => setImageError(true)} />
+                 ) : (
+                    <div className="w-full h-full bg-slate-900 flex items-center justify-center">
+                       <Play className="text-white opacity-20" size={48} />
+                    </div>
+                 )}
+                 {youtubeVideoId && (
+                   <Link href={`https://www.youtube.com/watch?v=${youtubeVideoId}`} target="_blank" className="absolute inset-0 m-auto w-16 h-16 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white border border-white/40">
+                      <Play fill="currentColor" />
+                   </Link>
+                 )}
               </div>
-            </div>
-          )}
 
-          {/* Project Type Badge - Desktop */}
-          <div className="absolute top-3 left-3">
-            <div className="inline-flex items-center gap-1 px-2 py-1 bg-white/95 backdrop-blur-sm text-blue-600 rounded-md shadow-md border border-blue-100">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span className="text-xs font-bold">PROJECT</span>
-            </div>
-          </div>
-          
-          <div className="absolute left-3 bottom-2">
-            <h4 className="text-white text-sm font-bold drop-shadow-lg">{project.project_title}</h4>
-            <p className="text-xs text-white/90 drop-shadow-lg">Ends {formatDate(project.end_date)}</p>
-          </div>
+              <div className="mb-8">
+                 <h2 className="text-2xl font-black text-slate-900 mb-2 leading-tight tracking-tight">{project.project_title}</h2>
+                 <p className="text-sm text-slate-500 leading-relaxed line-clamp-4">{project.description}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mb-8">
+                 <div className="p-4 bg-[#F6F8FF] rounded-2xl border border-blue-50">
+                    <p className="text-[9px] font-black text-[#155DFC] uppercase mb-1">STARTED</p>
+                    <p className="text-sm font-bold text-slate-800">{formatDate(project.created_at)}</p>
+                 </div>
+                 <div className="p-4 bg-[#F6F8FF] rounded-2xl border border-blue-50">
+                    <p className="text-[9px] font-black text-[#155DFC] uppercase mb-1">TIMELINE</p>
+                    <p className="text-sm font-bold text-slate-800">{project.project_duration || 'Ongoing'}</p>
+                 </div>
+              </div>
+
+              <div className="space-y-3 pb-8">
+                 <Button asChild className="w-full h-14 bg-[#155DFC] text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-200">
+                    <Link href={`/feed/projects/${project.id}`}>VIEW FULL PROJECT</Link>
+                 </Button>
+                 {whatsappUrl && (
+                   <Button asChild variant="outline" className="w-full h-14 border-blue-100 text-[#155DFC] rounded-2xl font-bold">
+                      <Link href={whatsappUrl} target="_blank"><MessageCircle size={16} className="mr-2" /> Message Creator</Link>
+                   </Button>
+                 )}
+              </div>
+           </div>
         </div>
-
-        <div className="p-4">
-          <div className="flex items-start gap-3 mb-3">
-            <div className="flex-1">
-              <h5 className="text-sm font-bold text-gray-900">{project.project_title}</h5>
-              <p className="mt-1 text-xs text-gray-600 line-clamp-2">{project.description}</p>
-            </div>
-
-            <div className="flex gap-1.5 flex-shrink-0">
-              {project.github_repository && (
-                <Link 
-                  href={project.github_repository} 
-                  target="_blank" 
-                  className="inline-flex items-center justify-center w-8 h-8 bg-gray-900 hover:bg-gray-800 text-white rounded-lg border border-gray-700 transition-all hover:scale-110"
-                >
-                  <Github className="w-4 h-4" />
-                </Link>
-              )}
-              {youtubeVideoId && (
-                <Link 
-                  href={`https://www.youtube.com/watch?v=${youtubeVideoId}`}
-                  target="_blank" 
-                  className="inline-flex items-center justify-center w-8 h-8 bg-red-600 hover:bg-red-700 text-white rounded-lg border border-red-700 transition-all hover:scale-110"
-                >
-                  <Youtube className="w-4 h-4" />
-                </Link>
-              )}
-            </div>
-          </div>
-
-          {/* Duration Badge - Desktop */}
-          <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs font-semibold border border-blue-200 mb-3">
-            <span>📅 {project.project_duration}</span>
-          </div>
-
-          <p className="text-xs text-gray-500 mb-3">Created {formatDate(project.created_at)}</p>
-
-          <button
-            onClick={() => youtubeVideoId && window.open(`https://www.youtube.com/watch?v=${youtubeVideoId}`, '_blank')}
-            className="cursor-pointer w-full inline-flex items-center justify-center gap-1.5 px-3 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all hover:shadow-md font-medium text-sm"
-          >
-            <Sparkles className="w-4 h-4" />
-            {youtubeVideoId ? 'Watch on YouTube' : 'View Project'}
-          </button>
-        </div>
-      </aside>
-    </div>
+      )}
+    </>
   );
 }

@@ -87,20 +87,44 @@ export const Step3Skills = () => {
         >
           <Input
             placeholder="https://your-portfolio.com"
-            {...register("portfolio_url")}
+            {...register("portfolio_url", {
+              pattern: {
+                value: /^https:\/\//,
+                message: "URL must start with https://",
+              },
+            })}
           />
+          <p className="text-xs text-gray-500 mt-1">
+            Must start with https://
+          </p>
         </FormField>
         <FormField label="GitHub URL (Optional)" error={errors.github_url}>
           <Input
             placeholder="https://github.com/your-username"
-            {...register("github_url")}
+            {...register("github_url", {
+              pattern: {
+                value: /^https:\/\//,
+                message: "URL must start with https://",
+              },
+            })}
           />
+          <p className="text-xs text-gray-500 mt-1">
+            Must start with https://
+          </p>
         </FormField>
         <FormField label="LinkedIn URL (Optional)" error={errors.linkedin_url}>
           <Input
             placeholder="https://linkedin.com/in/your-profile"
-            {...register("linkedin_url")}
+            {...register("linkedin_url", {
+              pattern: {
+                value: /^https:\/\//,
+                message: "URL must start with https://",
+              },
+            })}
           />
+          <p className="text-xs text-gray-500 mt-1">
+            Must start with https://
+          </p>
         </FormField>
       </div>
     </div>

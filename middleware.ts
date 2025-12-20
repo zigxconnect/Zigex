@@ -38,6 +38,7 @@ export async function middleware(request: NextRequest) {
     "/verify-otp",
     "/forgot-password",
     "/update-password",
+    "/demo",
   ];
 
   // --- 1. Handle Unauthenticated Users ---
@@ -133,7 +134,7 @@ export async function middleware(request: NextRequest) {
   // --- THE FIX ---
   // Create a list of all pages an authenticated and fully set-up user should NOT be able to access.
   const authRedirectPaths = [
-    ...publicPaths,
+    ...publicPaths.filter((path) => path !== "/demo"),
     "/create-profile",
     "/profile-complete", // Added the new page here
   ];

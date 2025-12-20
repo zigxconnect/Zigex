@@ -9,16 +9,15 @@ import {
   Users,
   Bell,
   Home,
-  SearchCode,
-  PersonStanding,
+  Globe,
   LogOut,
-  PersonStandingIcon,
+  BrainCircuit,
 } from "lucide-react";
 import { AiOutlineWechat } from "react-icons/ai";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ProjectsIcon } from "@sanity/icons";
+import CreateProjectButton from "@/components/project/CreateProjectButton";
 
 interface MobileTabBarProps {
   user: any;
@@ -38,44 +37,45 @@ interface TabItem {
 export function MobileTabBar({ user }: MobileTabBarProps) {
 
   const tabItems = [
-  // { href: "/dashboard/student/id", icon: PersonStanding, label: "Me" },
-  { 
-    href: "/feed", 
-    icon: SearchCode, 
-    label: "Browse",
-    matchPaths: ["/feed", "/feed/"],
-    excludePaths: ["/feed/projects"]
-  },
-  {
-    href: "/dashboard/projects",
-    icon: ProjectsIcon,
-    label: "projects",
-    matchPaths: ["/dashboard/projects", "/dashboard/projects/", "/feed/projects/"],
-  },
-  { 
-    href: "/dashboard/student", 
-    icon: Users, 
-    label: "Zigx",
-    matchPaths: ["/dashboard/student", "/dashboard/student/"]
-  },
-
-   {
-    href: `/profile/${user?.profile?.username || "username"}`,
-    icon: PersonStandingIcon,
-    label: "Profile",
-    matchPaths: ["/profile/"],
-  },
-  // { 
-  //   href: "/notifications", 
-  //   icon: Bell, 
-  //   label: "Alerts",
-  //   matchPaths: ["/notifications", "/notifications/"]
-  // },
-];
+    { 
+      href: "/feed", 
+      icon: Globe, 
+      label: "Browse",
+      matchPaths: ["/feed", "/feed/"],
+      excludePaths: ["/feed/projects"]
+    },
+    {
+      href: "/dashboard/projects",
+      icon: Briefcase,
+      label: "Projects",
+      matchPaths: ["/dashboard/projects", "/dashboard/projects/", "/feed/projects/"],
+    },
+    { 
+      href: "/dashboard/student", 
+      icon: Users, 
+      label: "Zigx",
+      matchPaths: ["/dashboard/student", "/dashboard/student/"]
+    },
+    {
+      href: `/profile/${user?.profile?.username || "username"}`,
+      icon: User,
+      label: "Profile",
+      matchPaths: ["/profile/"],
+    },
+    {
+      href: "/dashboard/fupro-ai",
+      icon: BrainCircuit,
+      label: "ZAi",
+      matchPaths: ["/dashboard/fupro-ai", "/dashboard/fupro-ai/"],
+      isSpecial: true
+    },
+  ];
   const pathname = usePathname();
   const router = useRouter();
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // ... (existing helper functions) ...
 
   const isRouteActive = (href: string, matchPaths?: string[], excludePaths?: string[]) => {
     // Remove trailing slashes for comparison but preserve leading slash
@@ -118,7 +118,9 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
     return path === target;
   };
 
-  // Fetch unread notifications count
+  // ... (existing useEffects) ...
+
+  // Unconditionally call hooks for data fetching
   useEffect(() => {
     let mounted = true;
     const fetchCount = async () => {
@@ -135,111 +137,72 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
     return () => { mounted = false; clearInterval(iv); };
   }, []);
 
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
-    try {
-      const response = await fetch("/api/auth/logout", { method: "POST" });
-
-      if (!response.ok) throw new Error("Logout failed");
-
-      toast.success("Logged out successfully");
-      router.push("/sign-in");
-    } catch (error) {
-      console.error("Logout error:", error);
-      toast.error("Failed to logout. Please try again.");
-      setIsLoggingOut(false);
-    }
-  };
+  // ... (handleLogout) ...
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 lg:hidden z-50 safe-area-bottom">
-      <div className="flex items-center justify-around px-2 py-2">
-        {tabItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = isRouteActive(item.href, item.matchPaths, item.excludePaths);
-          const showBadge = item.href === "/notifications" && unreadCount > 0;
+    <>
+      <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border lg:hidden z-50 safe-area-bottom">
+        <div className="flex items-center justify-around px-2 py-2">
+          {tabItems.map((item: any) => {
+            const Icon = item.icon;
+            const isActive = isRouteActive(item.href, item.matchPaths, item.excludePaths);
+            const showBadge = item.href === "/notifications" && unreadCount > 0;
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="flex flex-col items-center justify-center flex-1 py-2 px-1 relative group"
-            >
-              <div className="relative">
-                <div
-                  className={`
-                    p-2 rounded-xl transition-all duration-200
-                    ${isActive 
-                      ? item.isSpecial 
-                        ? 'bg-blue-600 text-white shadow-md' 
-                        : 'bg-blue-600 text-white shadow-md'
-                      : 'text-gray-600 group-active:bg-gray-100'
-                    }
-                  `}
-                >
-                  <Icon 
-                    size={20} 
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="flex flex-col items-center justify-center flex-1 py-2 px-1 relative group"
+              >
+                <div className="relative">
+                  <div
                     className={`
-                      ${isActive ? 'text-white' : 'text-gray-600 group-active:text-blue-600'}
+                      p-2 rounded-xl transition-all duration-300 active:scale-95
+                      ${isActive 
+                        ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-sidebar-primary/25' 
+                        : 'text-sidebar-foreground/60 group-active:bg-sidebar-accent/50'
+                      }
                     `}
-                  />
+                  >
+                    <Icon 
+                      size={20} 
+                      className={`
+                        ${isActive ? 'text-sidebar-primary-foreground' : 'text-sidebar-foreground/60 group-active:text-sidebar-primary'}
+                      `}
+                    />
+                  </div>
+                  
+                  {/* Notification Badge */}
+                  {showBadge && (
+                    <div className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 shadow-md">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </div>
+                  )}
+
+                  {item.label === "ZAi" && (
+                     <div className="absolute -top-3 -right-4 bg-sidebar-primary text-sidebar-primary-foreground text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-sm z-10 tracking-wide">
+                      BETA
+                    </div>
+                  )}
                 </div>
                 
-                {/* Notification Badge */}
-                {showBadge && (
-                  <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 shadow-md">
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </div>
-                )}
-              </div>
-              
-              <span
-                className={`
-                  text-[10px] font-medium mt-1 transition-colors duration-200
-                  ${isActive ? 'text-blue-600' : 'text-gray-600 group-active:text-blue-600'}
-                `}
-              >
-                {item.label}
-              </span>
-            </Link>
-          );
-        })}
-
-        {/* Logout Button on Mobile */}
-        <button
-          onClick={handleLogout}
-          disabled={isLoggingOut}
-          className="flex flex-col items-center justify-center flex-1 py-2 px-1 group"
-        >
-          <div className="relative">
-            <div
-              className={`
-                p-2 rounded-xl transition-all duration-200
-                ${isLoggingOut 
-                  ? 'bg-red-300 text-white' 
-                  : 'text-gray-600 group-active:bg-red-100 hover:bg-red-50'
-                }
-              `}
-            >
-              <LogOut 
-                size={20} 
-                className={`
-                  ${isLoggingOut ? 'text-white' : 'text-red-600 group-active:text-red-700'}
-                `}
-              />
-            </div>
-          </div>
-          
-          <span
-            className={`
-              text-[10px] font-medium mt-1 transition-colors duration-200
-              ${isLoggingOut ? 'text-red-600' : 'text-gray-600 group-active:text-red-600'}
-            `}
-          >
-            Logout
-          </span>
-        </button>
+                <span
+                  className={`
+                    text-[10px] font-semibold tracking-tight mt-1 transition-colors duration-200
+                    ${isActive ? 'text-sidebar-primary' : 'text-sidebar-foreground/60 group-active:text-sidebar-primary'}
+                  `}
+                >
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
       </div>
-    </div>
+      
+      {/* Search/Post FAB */}
+      <CreateProjectButton variant="floating" />
+    </>
   );
 }
+

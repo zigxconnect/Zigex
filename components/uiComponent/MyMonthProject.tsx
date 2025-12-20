@@ -3,8 +3,11 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Play, Calendar, Github, Clock, ExternalLink, Edit, Clock as ClockIcon } from "lucide-react";
+import { Play, Calendar, Github, Clock as ClockIcon, ExternalLink, Edit, Share2, Sparkles } from "lucide-react";
 import ContributeModal from "./ContributeModal";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { normalizeImageSrc } from "@/lib/utils";
 
 interface Project {
   id: string;
@@ -18,7 +21,7 @@ interface Project {
   created_at: string;
   end_date: string | null;
   student_id: string;
-  is_valid: boolean;
+  status: string;
 }
 
 interface User {
@@ -27,9 +30,8 @@ interface User {
   avatar_url: string | null;
   user_id: string;
   github_url?: string | null;
+  university?: string | null;
 }
-
-// const isMyProject=true
 
 interface MyMonthProjectProps {
   user: User;
@@ -53,10 +55,10 @@ export default function MyMonthProject({
   const [showContributeModal, setShowContributeModal] = useState(false);
   const [showReviewCard, setShowReviewCard] = useState(true);
   const [reviewCardExpired, setReviewCardExpired] = useState(false);
-  // Determine if this is the owner viewing their own project
+
   const isMyProject = isOwner;
 
-  // Video carousel: prioritize uploaded video first, then youtube link
+  // Video carousel
   const videos: Array<{ type: "uploaded" | "youtube"; url: string }> = [];
   if (project?.uploaded_video_url) videos.push({ type: "uploaded", url: project.uploaded_video_url });
   if (project?.project_video_url) videos.push({ type: "youtube", url: project.project_video_url });
@@ -67,33 +69,25 @@ export default function MyMonthProject({
   const prevVideo = () => setCurrentVideoIndex((i) => (i - 1 + videos.length) % videos.length);
   const nextVideo = () => setCurrentVideoIndex((i) => (i + 1) % videos.length);
 
-  // Hide indicator after 3 seconds
   useEffect(() => {
     const timer = setTimeout(() => setShowIndicator(false), 3000);
     return () => clearTimeout(timer);
   }, []);
 
-  // Handle 48-hour review card expiration
   useEffect(() => {
-    if (!project || project.is_valid || !isVisitor) {
+    if (!project || project.status === 'valid' || !isVisitor) {
       setShowReviewCard(false);
       return;
     }
-
-    // If project is not valid, show the review card
     setShowReviewCard(true);
-
-    // Auto-hide review card after 48 hours
-    const fortyEightHours = 48 * 60 * 60 * 1000; // 48 hours in milliseconds
+    const fortyEightHours = 48 * 60 * 60 * 1000;
     const timer = setTimeout(() => {
       setReviewCardExpired(true);
       setShowReviewCard(false);
     }, fortyEightHours);
-
     return () => clearTimeout(timer);
-  }, [project?.is_valid, project?.id, isVisitor]);
+  }, [project?.status, project?.id, isVisitor]);
 
-  // Lock body scroll when open on mobile
   useEffect(() => {
     if (typeof window === "undefined") return;
     const original = document.body.style.overflow;
@@ -102,12 +96,9 @@ export default function MyMonthProject({
     } else {
       document.body.style.overflow = original;
     }
-    return () => {
-      document.body.style.overflow = original;
-    };
+    return () => { document.body.style.overflow = original; };
   }, [open]);
 
-  // Extract YouTube video ID
   const getYouTubeEmbedUrl = (url: string) => {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
@@ -116,803 +107,252 @@ export default function MyMonthProject({
 
   const currentYouTubeEmbed = currentVideo && currentVideo.type === "youtube" ? getYouTubeEmbedUrl(currentVideo.url) : null;
 
-  // Format date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
-  // Get image URL with fallback
-  const getImageUrl = (url: string | null) => {
-    if (!url) return '/projects.png';
-    
-    // If it's already a full URL (signed URL with token or http/https), return it directly
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url;
-    }
-    
-    // Otherwise, return fallback
-    return '/projects.png';
-  };
+  const coverImageUrl = normalizeImageSrc(project?.cover_image_url, '/projects.png');
 
-  const coverImageUrl = getImageUrl(project?.cover_image_url ?? null);
-
-  // CASE 1: Project exists but NOT VALID - show review card for 48 hours (ONLY for visitors)
-  if (project && !project.is_valid && isVisitor) {
-    if (reviewCardExpired) {
-      return null; // Don't show anything after 48 hours
-    }
+  // CASE 1: Project Submitted & Under Review
+  if (project && project.status !== 'valid' && isVisitor) {
+    if (reviewCardExpired) return null;
 
     return (
-      <div>
-        {/* Mobile Review Card */}
-        <div className="md:hidden bg-white rounded-2xl border-2 border-blue-200 shadow-lg overflow-hidden mb-6">
-          <div className="p-6 text-center">
-            {/* Icon */}
-            <div className="flex justify-center mb-4">
-              <div className="relative">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-                  <ClockIcon size={32} className="text-blue-600 animate-spin" />
-                </div>
-                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            {/* Title and Description */}
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">
-              🎉 Project Submitted!
-            </h3>
-            {isMyProject ? (
-              <p className="text-gray-600 mb-6">
-                Your project is <span className="font-semibold text-blue-600">submitted and under review</span>
-              </p>
-            ) : (
-              <p className="text-gray-600 mb-6">
-                <span className="font-semibold text-blue-600">{user.full_name}'s project</span> has been <span className="font-semibold text-blue-600">submitted and is under review</span>
-              </p>
-            )}
-
-            {/* Timeline Info */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-              <div className="flex items-center gap-3">
-                <div className="flex-shrink-0">
-                  <ClockIcon size={20} className="text-blue-600" />
-                </div>
-                <div className="text-left">
-                  <p className="text-sm font-semibold text-gray-900">Review Timeline</p>
-                  <p className="text-sm text-gray-600">
-                    We'll review the project within <span className="font-bold">48 hours</span>
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* What's Next */}
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-              <h4 className="font-semibold text-gray-900 mb-3 text-left text-sm">WHAT'S NEXT?</h4>
-              <ul className="text-left space-y-2">
-                {isMyProject ? (
-                  <>
-                    <li className="flex items-center gap-2 text-xs text-gray-600">
-                      <div className="w-4 h-4 rounded-full border-2 border-green-500 flex items-center justify-center flex-shrink-0">
-                        <div className="w-2 h-2 bg-green-500 rounded-full" />
-                      </div>
-                      We'll review your project details
-                    </li>
-                    <li className="flex items-center gap-2 text-xs text-gray-600">
-                      <div className="w-4 h-4 rounded-full border-2 border-green-500 flex items-center justify-center flex-shrink-0">
-                        <div className="w-2 h-2 bg-green-500 rounded-full" />
-                      </div>
-                      Check for quality and guidelines compliance
-                    </li>
-                    <li className="flex items-center gap-2 text-xs text-gray-600">
-                      <div className="w-4 h-4 rounded-full border-2 border-green-500 flex items-center justify-center flex-shrink-0">
-                        <div className="w-2 h-2 bg-green-500 rounded-full" />
-                      </div>
-                      You'll receive a notification via email
-                    </li>
-                  </>
-                ) : (
-                  <>
-                    <li className="flex items-center gap-2 text-xs text-gray-600">
-                      <div className="w-4 h-4 rounded-full border-2 border-green-500 flex items-center justify-center flex-shrink-0">
-                        <div className="w-2 h-2 bg-green-500 rounded-full" />
-                      </div>
-                      The team will review <span className="font-semibold text-gray-900">{user.full_name}'s</span> project details
-                    </li>
-                    <li className="flex items-center gap-2 text-xs text-gray-600">
-                      <div className="w-4 h-4 rounded-full border-2 border-green-500 flex items-center justify-center flex-shrink-0">
-                        <div className="w-2 h-2 bg-green-500 rounded-full" />
-                      </div>
-                      We'll check for quality and guidelines compliance
-                    </li>
-                    <li className="flex items-center gap-2 text-xs text-gray-600">
-                      <div className="w-4 h-4 rounded-full border-2 border-green-500 flex items-center justify-center flex-shrink-0">
-                        <div className="w-2 h-2 bg-green-500 rounded-full" />
-                      </div>
-                      <span className="font-semibold text-gray-900">{user.full_name}</span> will be notified once it's approved
-                    </li>
-                  </>
-                )}
-              </ul>
-            </div>
-
-            {/* Message */}
-            {isMyProject && (
-              <p className="text-sm text-gray-600 mb-6">
-                Once approved, your project will be visible to the community and you can start receiving contributions!
-              </p>
-            )}
-
-            {/* Action Button */}
-            <button
-              onClick={() => setShowReviewCard(false)}
-              className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-md"
-            >
-              Got it! 👍
-            </button>
+      <aside className="md:fixed md:right-6 md:top-32 w-full md:w-72 lg:w-80 bg-white rounded-[2rem] border border-blue-100 shadow-2xl overflow-hidden p-6 text-center animate-in fade-in slide-in-from-right-4 duration-500">
+        <div className="relative mb-6">
+          <div className="w-20 h-20 bg-[#F6F8FF] rounded-3xl flex items-center justify-center mx-auto border border-blue-100 shadow-inner">
+            <ClockIcon size={40} className="text-[#155DFC] animate-pulse" />
+          </div>
+          <div className="absolute -bottom-2 right-1/2 translate-x-12 w-8 h-8 bg-[#155DFC] rounded-full border-4 border-white flex items-center justify-center shadow-lg">
+             <Sparkles size={14} className="text-white" />
           </div>
         </div>
 
-        {/* Desktop Sidebar Review Card */}
-        <aside className="fixed right-6 top-32 w-72 lg:w-80 bg-white rounded-2xl border-2 border-blue-200 shadow-xl overflow-hidden hidden md:block">
-          <div className="p-6 text-center">
-            {/* Icon */}
-            <div className="flex justify-center mb-4">
-              <div className="relative">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-                  <ClockIcon size={32} className="text-blue-600 animate-spin" />
-                </div>
-                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                  </svg>
-                </div>
+        <h3 className="text-2xl font-black text-slate-900 mb-3 tracking-tight leading-tight">Project Under Review</h3>
+        <p className="text-sm text-slate-500 mb-6 px-4">
+          Great works take time! {user.full_name}'s project is being verified by our curators.
+        </p>
+
+        <div className="bg-[#F6F8FF] rounded-2xl p-4 mb-6 text-left border border-blue-50">
+           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#155DFC] mb-2">ETA APPROVAL</p>
+           <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                 <ClockIcon size={14} className="text-[#155DFC]" />
               </div>
-            </div>
+              <span className="text-sm font-bold text-slate-800">Within 48 Hours</span>
+           </div>
+        </div>
 
-            {/* Title */}
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
-              🎉 Project Submitted!
-            </h3>
-              {isMyProject ? (
-              <p className="text-gray-600 mb-6">
-                Your project is <span className="font-semibold text-blue-600">submitted and under review</span>
-              </p>
-            ) : (
-              <p className="text-gray-600 mb-6">
-                <span className="font-semibold text-blue-600">{user.full_name}'s project</span> has been <span className="font-semibold text-blue-600">submitted and is under review</span>
-              </p>
-            )}
-
-            {/* Timeline */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-              <div className="flex items-center gap-2">
-                <ClockIcon size={18} className="text-blue-600 flex-shrink-0" />
-                <div className="text-left">
-                  <p className="text-xs font-semibold text-gray-900">Review Timeline</p>
-                  <p className="text-xs text-gray-600">Within <span className="font-bold">48 hours</span></p>
-                </div>
-              </div>
-            </div>
-
-            {/* Message */}
-            <p className="text-xs text-gray-600 mb-4">
-              Once approved, your project will be visible to the community!
-            </p>
-
-            {/* Button */}
-            <button
-              onClick={() => setShowReviewCard(false)}
-              className="w-full px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all"
-            >
-              Got it! 👍
-            </button>
-          </div>
-        </aside>
-      </div>
+        <Button onClick={() => setShowReviewCard(false)} className="w-full h-12 bg-[#155DFC] hover:bg-[#1A3CB9] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-200 transition-all">
+          GOT IT! 👍
+        </Button>
+      </aside>
     );
   }
 
-  // CASE 2: NO project exists - show empty state
+  // CASE 2: No active project
   if (!project) {
     return (
-      <div>
-        {/* Mobile */}
-        {isVisitor && (
-          <div className="hidden bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border-2 border-gray-200 shadow-lg overflow-hidden mb-6 relative">
-            <div className="p-8 text-center">
-              <div className="w-20 h-20 bg-gradient-to-br from-gray-300 to-gray-400 rounded-full flex items-center justify-center mx-auto mb-4 shadow-md">
-                <Calendar size={40} className="text-gray-600" />
-              </div>
-              
-              {user.avatar_url ? (
-                <div className="relative w-14 h-14 mx-auto mb-3">
-                  <Image
-                    src={user.avatar_url}
-                    alt={user.full_name}
-                    width={56}
-                    height={56}
-                    className="rounded-full border-4 border-white shadow-lg"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                    }}
-                  />
-                </div>
-              ) : (
-                <div className="w-14 h-14 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg mx-auto mb-3 border-4 border-white shadow-lg">
-                  {user.full_name.split(" ").map(n => n[0]).join("").toUpperCase()}
-                </div>
-              )}
-              
-              <h3 className="text-lg font-bold text-gray-800 mb-2">{user.full_name}</h3>
-              <h4 className="text-xl font-bold text-gray-700 mb-3">No Active Project Yet</h4>
-              <p className="text-sm text-gray-600 leading-relaxed max-w-xs mx-auto">
-                This user hasn't posted a monthly project yet. Check back later for updates!
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Desktop Sidebar */}
-        <aside className="fixed right-6 top-32 w-72 lg:w-80 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border-2 border-gray-200 shadow-xl overflow-hidden hidden md:block">
-          <div className="p-6 text-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-gray-300 to-gray-400 rounded-full flex items-center justify-center mx-auto mb-4 shadow-md">
-              <Calendar size={32} className="text-gray-600" />
-            </div>
-            
-            {user.avatar_url ? (
-              <div className="relative w-12 h-12 mx-auto mb-3">
-                <Image
-                  src={user.avatar_url}
-                  alt={user.full_name}
-                  width={48}
-                  height={48}
-                  className="rounded-full border-4 border-white shadow-lg"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                  }}
-                />
-              </div>
-            ) : (
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold mx-auto mb-3 border-4 border-white shadow-lg">
-                {user.full_name.split(" ").map(n => n[0]).join("").toUpperCase()}
-              </div>
-            )}
-            
-            <h3 className="text-base font-bold text-gray-800 mb-2">{user.full_name}</h3>
-            <h4 className="text-lg font-bold text-gray-700 mb-2">No Active Project Yet</h4>
-            <p className="text-xs text-gray-600 leading-relaxed">
-              {isVisitor 
-                ? "This user hasn't posted a project yet."
-                : "You haven't posted a project yet. Share what you're working on!"}
-            </p>
-          </div>
-        </aside>
-      </div>
+      <aside className="md:fixed md:right-6 md:top-32 w-full md:w-72 lg:w-80 bg-[#F6F8FF] rounded-[2rem] border border-blue-100 shadow-xl overflow-hidden p-8 text-center border-dashed border-2">
+         <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-blue-50">
+            <Calendar size={28} className="text-blue-200" />
+         </div>
+         <h4 className="text-lg font-black text-slate-800 mb-2">Quiet Before the Storm</h4>
+         <p className="text-xs text-slate-500 mb-6 leading-relaxed">
+           {isVisitor 
+             ? `${user.full_name} is currently brewing their next big idea. Check back soon!` 
+             : "You haven't showcased a project this month. Ready to inspire the community?"}
+         </p>
+         {!isVisitor && (
+            <Button asChild className="w-full h-11 bg-white text-[#155DFC] hover:bg-blue-50 border border-blue-100 rounded-xl font-bold shadow-sm">
+               <Link href="/dashboard/projects">Launch Project</Link>
+            </Button>
+         )}
+      </aside>
     );
   }
 
-  // CASE 3: Project exists AND IS VALID - show full project card
-
-
-  
-
-  // Has project - render full component
+  // CASE 3: Active & Valid Project
   return (
-    <div>
-      {/* Mobile: Show as main card for visitors */}
-      {isVisitor && (
-        <div className="md:hidden bg-white rounded-2xl border-2 border-blue-200 shadow-lg overflow-hidden mb-6 relative">
-          {/* First-time Indicator */}
-          {showIndicator && !isMyProject && (
-            <div className="absolute -top-1 left-1/2 -translate-x-1/2 z-10 animate-bounce">
-              <div className="bg-blue-600 text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-lg border-2 border-white flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                  <polyline points="22 4 12 14.01 9 11.01" />
-                </svg>
-                ACTIVE PROJECT
-              </div>
-            </div>
-          )}
-
-          {/* Video Section with Cover Image */}
-          <div className="relative aspect-video bg-gradient-to-br from-blue-400 to-blue-600 overflow-hidden">
-            {!showVideo ? (
-              <>
+    <>
+      {/* Desktop Sidebar Showcase */}
+      <aside className="hidden md:block fixed right-6 top-32 w-72 lg:w-80 bg-white rounded-[2.5rem] border border-blue-100 shadow-2xl shadow-blue-200/40 overflow-hidden transform hover:scale-[1.02] transition-all duration-500">
+        {/* Media Block */}
+        <div className="relative aspect-[4/3] bg-slate-100 overflow-hidden">
+           {!showVideo ? (
+             <div className="w-full h-full relative group">
                 {!imageError && coverImageUrl && coverImageUrl !== '/projects.png' ? (
-                  <img 
+                  <Image 
                     src={coverImageUrl} 
-                    alt={project.project_title}
-                    className="w-full h-full object-cover"
+                    alt={project.project_title} 
+                    fill 
+                    className="object-cover group-hover:scale-110 transition-transform duration-1000"
                     onError={() => setImageError(true)}
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-indigo-600">
-                    <div className="text-center text-white p-6">
-                      <Calendar size={48} className="mx-auto mb-3 opacity-80" />
-                      <h3 className="text-lg font-bold line-clamp-2">{project.project_title}</h3>
-                    </div>
+                  <div className="w-full h-full bg-gradient-to-br from-[#155DFC] to-[#1A3CB9] flex items-center justify-center">
+                    <Calendar size={48} className="text-white opacity-20" />
                   </div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/40" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 
-                {/* Play Button Overlay / Carousel controls */}
                 {hasVideos && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <button
-                      onClick={() => setShowVideo(true)}
-                      className="absolute inset-0 flex items-center justify-center group"
-                    >
-                      <div className="w-16 h-16 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
-                        <Play size={28} className="text-[#1a8cd8] ml-1" fill="currentColor" />
-                      </div>
-                    </button>
-
-                    {videos.length > 1 && (
-                      <>
-                        <button onClick={(e) => { e.stopPropagation(); prevVideo(); }} className="absolute left-3 p-2 rounded-full bg-white/80 hover:bg-white shadow">◀</button>
-                        <button onClick={(e) => { e.stopPropagation(); nextVideo(); }} className="absolute right-3 p-2 rounded-full bg-white/80 hover:bg-white shadow">▶</button>
-                        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
-                          {videos.map((v, idx) => (
-                            <button key={idx} onClick={(e) => { e.stopPropagation(); setCurrentVideoIndex(idx); }} className={`w-2 h-2 rounded-full ${idx === currentVideoIndex ? 'bg-white' : 'bg-white/40'}`} />
-                          ))}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )}
-
-                {/* Active Badge */}
-                <div className="absolute top-3 right-3">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-full shadow-lg border border-blue-700/50 backdrop-blur-sm">
-                    <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                    <span className="text-xs font-semibold">Active Project</span>
-                  </div>
-                </div>
-              </>
-            ) : showVideo && currentVideo ? (
-              currentVideo.type === 'youtube' && currentYouTubeEmbed ? (
-                <iframe
-                  src={currentYouTubeEmbed}
-                  className="w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              ) : (
-                <video src={currentVideo.url} className="w-full h-full" controls autoPlay />
-              )
-            ) : null}
-          </div>
-
-          {/* Project Info */}
-          <div className="p-5">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex-1">
-                <h5 className="text-lg font-bold text-gray-900 mb-1">{project.project_title}</h5>
-                <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">{project.description}</p>
-              </div>
-            </div>
-
-            {/* Meta Info Grid */}
-            <div className="grid grid-cols-2 gap-3 mb-4 pt-3 border-t border-gray-100">
-              <div className="flex items-center gap-2 text-xs text-gray-600">
-                <Calendar size={14} className="text-blue-500" />
-                <div>
-                  <div className="font-semibold text-gray-900">Started</div>
-                  <div>{formatDate(project.created_at)}</div>
-                </div>
-              </div>
-              
-              {project.project_duration && (
-                <div className="flex items-center gap-2 text-xs text-gray-600">
-                  <Clock size={14} className="text-purple-500" />
-                  <div>
-                    <div className="font-semibold text-gray-900">Duration</div>
-                    <div className="capitalize">{project.project_duration.replace('-', ' ')}</div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Action Buttons */}
-            {isMyProject ? (
-              <Link
-                href={`/feed/projects/edit/${project.id}`}
-                className="w-full flex items-center justify-center gap-2 px-3 py-2.5 sm:px-4 sm:py-3 bg-linear-to-r from-blue-600 to-indigo-600 text-white rounded-lg sm:rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all hover:shadow-md font-semibold text-xs sm:text-sm"
-              >
-                <Edit size={16} />
-                <span>Edit Project</span>
-              </Link>
-            ) : (
-              <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                {project.github_repository && (
-                  <a
-                    href={project.github_repository}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2.5 sm:py-3 bg-gray-900 text-white rounded-lg sm:rounded-xl hover:bg-gray-800 transition-colors shadow-md text-xs sm:text-sm font-medium"
-                  >
-                    <Github size={14} className="sm:w-4 sm:h-4" />
-                    <span>GitHub</span>
-                  </a>
+                  <button onClick={() => setShowVideo(true)} className="absolute inset-0 m-auto w-14 h-14 bg-white/40 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white hover:text-[#155DFC] transition-all duration-300 shadow-2xl z-10 border border-white/30">
+                    <Play className="ml-1 fill-current" />
+                  </button>
                 )}
                 
-                <Link 
-                  href={`/feed/projects/${project.id}`}
-                  className="flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2.5 sm:py-3 bg-linear-to-r from-blue-500 to-blue-600 text-white rounded-lg sm:rounded-xl hover:shadow-lg transition-all duration-200 text-xs sm:text-sm font-medium"
-                >
-                  <ExternalLink size={14} className="sm:w-4 sm:h-4" />
-                  <span>View Details</span>
-                </Link>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Mobile Floating Button (for non-visitors) - WITH INTRO TEXT */}
-      {!isVisitor && (
-        <div className="relative">
-          {/* Introduction Text Banner - Only on Mobile */}
-          <div className="md:hidden mb-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 shadow-sm">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Calendar size={20} className="text-white" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-sm font-bold text-gray-900 mb-1">
-                  📌 Your Active Monthly Project
-                </h3>
-                <p className="text-xs text-gray-600 leading-relaxed">
-                  This is your current project showcase. Click the <span className="font-semibold text-blue-600">"My Project"</span> button below to view details, edit, or manage your project.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {showIndicator && (
-            <div className="md:hidden fixed left-4 bottom-20 z-50 animate-bounce">
-              <div className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-lg border-2 border-white flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                  <polyline points="22 4 12 14.01 9 11.01" />
-                </svg>
-                YOUR PROJECT
-              </div>
-            </div>
-          )}
-
-          <button
-            onClick={() => setOpen(true)}
-            className="cursor-pointer md:hidden fixed left-4 bottom-6 z-50 inline-flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 bg-blue-600 text-white rounded-full shadow-lg border border-blue-700 hover:bg-blue-700 transition-colors text-xs sm:text-sm font-medium"
-          >
-            <Calendar size={14} className="sm:w-4 sm:h-4" />
-            <span>My Project</span>
-          </button>
-        </div>
-      )}
-
-      {/* Mobile Overlay */}
-      {open && <div onClick={() => setOpen(false)} className="md:hidden fixed inset-0 bg-black/40 z-40" />}
-
-      {/* Desktop Sidebar */}
-      <aside className="fixed right-6 top-32 w-72 lg:w-80 bg-white rounded-2xl border-2 border-blue-200 shadow-xl overflow-hidden hidden md:block">
-        {showIndicator && !isMyProject && (
-          <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 animate-bounce">
-            <div className="bg-blue-600 text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-lg border-2 border-white flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                <polyline points="22 4 12 14.01 9 11.01" />
-              </svg>
-              ACTIVE PROJECT
-            </div>
-          </div>
-        )}
-
-        {/* Video Section */}
-        <div className="relative aspect-video bg-gradient-to-br from-blue-400 to-blue-600 overflow-hidden">
-          {!showVideo ? (
-            <>
-              {!imageError && coverImageUrl && coverImageUrl !== '/projects.png' ? (
-                <img 
-                  src={coverImageUrl} 
-                  alt={project.project_title}
-                  className="w-full h-full object-cover"
-                  onError={() => setImageError(true)}
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-indigo-600">
-                  <div className="text-center text-white p-4">
-                    <Calendar size={40} className="mx-auto mb-2 opacity-80" />
-                    <h3 className="text-sm font-bold line-clamp-2">{project.project_title}</h3>
-                  </div>
+                <div className="absolute top-4 left-4">
+                   <div className="flex items-center gap-1.5 px-3 py-1 bg-[#155DFC] text-white rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg">
+                      <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                      MONTHLY HIGHLIGHT
+                   </div>
                 </div>
-              )}
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/40" />
-              
-              {hasVideos && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <button
-                    onClick={() => setShowVideo(true)}
-                    className="absolute inset-0 flex items-center justify-center group"
-                  >
-                    <div className="w-14 h-14 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
-                      <Play size={24} className="text-[#1a8cd8] ml-1" fill="currentColor" />
-                    </div>
-                  </button>
+             </div>
+           ) : (
+             <div className="relative w-full h-full bg-black">
+                {currentVideo?.type === 'youtube' && currentYouTubeEmbed ? (
+                  <iframe src={currentYouTubeEmbed} className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen />
+                ) : (
+                  <video src={currentVideo?.url} className="w-full h-full" controls autoPlay />
+                )}
+                <button onClick={() => setShowVideo(false)} className="absolute top-4 right-4 bg-white/20 hover:bg-white/40 backdrop-blur-md text-white rounded-lg p-1.5 z-20 transition-all">
+                  <div className="w-3 h-3 flex items-center justify-center text-[10px] font-bold">X</div>
+                </button>
+             </div>
+           )}
+        </div>
 
-                  {videos.length > 1 && (
+        {/* Content Block */}
+        <div className="p-6">
+           <h3 className="text-xl font-black text-slate-900 mb-2 leading-tight tracking-tight line-clamp-2">
+             {project.project_title}
+           </h3>
+           <p className="text-xs text-slate-500 mb-6 leading-relaxed line-clamp-3">
+             {project.description}
+           </p>
+
+           <div className="grid grid-cols-2 gap-4 mb-8 pt-6 border-t border-[#F6F8FF]">
+              <div className="space-y-1">
+                 <p className="text-[9px] font-black text-[#155DFC] uppercase tracking-wider">PROJECT ERA</p>
+                 <div className="flex items-center gap-1.5">
+                    <Calendar size={12} className="text-slate-400" />
+                    <span className="text-xs font-bold text-slate-700">{formatDate(project.created_at)}</span>
+                 </div>
+              </div>
+              <div className="space-y-1">
+                 <p className="text-[9px] font-black text-[#155DFC] uppercase tracking-wider">LIFESPAN</p>
+                 <div className="flex items-center gap-1.5">
+                    <ClockIcon size={12} className="text-slate-400" />
+                    <span className="text-xs font-bold text-slate-700 capitalize">{project.project_duration?.replace('-', ' ') || 'Ongoing'}</span>
+                 </div>
+              </div>
+           </div>
+
+           <div className="space-y-3">
+              <Button asChild className="w-full h-12 bg-[#155DFC] hover:bg-[#1A3CB9] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-200/50 transition-all border-none">
+                 <Link href={`/feed/projects/${project.id}`}>
+                    EXPLORE FULL STORY
+                 </Link>
+              </Button>
+              
+              <div className="grid grid-cols-2 gap-3">
+                 {isMyProject ? (
+                    <Button asChild variant="outline" className="col-span-2 h-11 border-blue-100 hover:bg-blue-50 text-[#155DFC] rounded-xl font-bold">
+                       <Link href={`/dashboard/projects/edit/${project.id}`}>
+                          <Edit size={14} className="mr-2" /> Modify Project
+                       </Link>
+                    </Button>
+                 ) : (
                     <>
-                      <button onClick={(e) => { e.stopPropagation(); prevVideo(); }} className="absolute left-2 p-2 rounded-full bg-white/80 hover:bg-white shadow">◀</button>
-                      <button onClick={(e) => { e.stopPropagation(); nextVideo(); }} className="absolute right-2 p-2 rounded-full bg-white/80 hover:bg-white shadow">▶</button>
-                      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
-                        {videos.map((v, idx) => (
-                          <button key={idx} onClick={(e) => { e.stopPropagation(); setCurrentVideoIndex(idx); }} className={`w-2 h-2 rounded-full ${idx === currentVideoIndex ? 'bg-white' : 'bg-white/40'}`} />
-                        ))}
-                      </div>
+                       {project.github_repository && (
+                         <Button asChild variant="outline" className="h-11 border-slate-100 hover:border-slate-300 text-slate-700 rounded-xl font-bold">
+                            <a href={project.github_repository} target="_blank" rel="noopener noreferrer">
+                               <Github size={16} className="mr-2" /> Code
+                            </a>
+                         </Button>
+                       )}
+                       <Button variant="outline" className="h-11 border-slate-100 hover:border-slate-300 text-slate-700 rounded-xl font-bold">
+                          <Share2 size={16} className="mr-2" /> Share
+                       </Button>
                     </>
-                  )}
-                </div>
-              )}
-
-              <div className="absolute top-3 right-3">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-600 text-white rounded-full shadow-lg border border-blue-700/50 backdrop-blur-sm">
-                  <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
-                  <span className="text-xs font-semibold">Active</span>
-                </div>
+                 )}
               </div>
-            </>
-            ) : showVideo && currentVideo ? (
-              currentVideo.type === 'youtube' && currentYouTubeEmbed ? (
-                <iframe
-                  src={currentYouTubeEmbed}
-                  className="w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              ) : (
-                <video src={currentVideo.url} className="w-full h-full" controls autoPlay />
-              )
-            ) : null}
-        </div>
-
-        {/* Project Details */}
-        <div className="p-4 space-y-3">
-          <div>
-            <h5 className="text-base font-bold text-gray-900 mb-1">{project.project_title}</h5>
-            <p className="text-xs text-gray-600 leading-relaxed line-clamp-3">{project.description}</p>
-          </div>
-
-          {/* Meta Info */}
-          <div className="grid grid-cols-2 gap-2 py-3 border-t border-b border-gray-100">
-            <div className="flex items-start gap-2 text-xs">
-              <Calendar size={14} className="text-blue-500 mt-0.5 flex-shrink-0" />
-              <div>
-                <div className="font-semibold text-gray-900">Started</div>
-                <div className="text-gray-600">{formatDate(project.created_at)}</div>
-              </div>
-            </div>
-            
-            {project.project_duration && (
-              <div className="flex items-start gap-2 text-xs">
-                <Clock size={14} className="text-purple-500 mt-0.5 flex-shrink-0" />
-                <div>
-                  <div className="font-semibold text-gray-900">Duration</div>
-                  <div className="text-gray-600 capitalize">{project.project_duration.replace('-', ' ')}</div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Action Buttons */}
-          {isMyProject ? (
-            <Link
-              href={`/dashboard/projects/edit/${project.id}`}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all hover:shadow-md font-medium text-sm"
-            >
-              <Edit size={16} />
-              Edit Project
-            </Link>
-          ) : (
-            <div className="space-y-2">
-              {project.github_repository && (
-                <a
-                  href={project.github_repository}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium"
-                >
-                  <Github size={16} />
-                  View Repository
-                </a>
-              )}
-              
-              <Link 
-                href={`/feed/projects/${project.id}`}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:shadow-lg transition-all duration-200 text-sm font-medium"
-              >
-                <ExternalLink size={16} />
-                View Details
-              </Link>
-            </div>
-          )}
+           </div>
         </div>
       </aside>
 
-      {/* Mobile Sliding Panel (for non-visitors) */}
-      {!isVisitor && (
-        <aside
-          className={
-            "md:hidden fixed top-0 left-0 h-full z-50 w-72 bg-white border-r-2 border-blue-200 shadow-xl transform transition-transform duration-300 " + 
-            (open ? "translate-x-0" : "-translate-x-full")
-          }
-        >
-          <div className="flex items-center justify-between p-3 border-b border-gray-100 bg-blue-50">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-md overflow-hidden bg-gray-100 ring-2 ring-blue-200">
-                {!imageError ? (
-                  <img 
-                    src={coverImageUrl} 
-                    alt={project.project_title}
-                    className="w-full h-full object-cover"
-                    onError={() => setImageError(true)}
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-                    <Calendar size={20} className="text-white" />
-                  </div>
-                )}
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                  {project.project_title}
-                  <span className="inline-flex items-center px-1.5 py-0.5 bg-blue-600 text-white rounded text-xs font-bold">PROJECT</span>
-                </div>
-                <div className="text-xs text-gray-500">Monthly Highlight</div>
-              </div>
-            </div>
+      {/* Mobile Floating Trigger */}
+      <div className="md:hidden fixed bottom-6 left-6 z-50">
+         <button onClick={() => setOpen(true)} className="group relative flex items-center justify-center w-14 h-14 bg-[#155DFC] text-white rounded-full shadow-2xl shadow-blue-400/50 active:scale-90 transition-transform">
+            <Sparkles className="animate-pulse" />
+            <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 border-2 border-white rounded-full animate-bounce" />
+         </button>
+      </div>
 
-            <button 
-              onClick={() => setOpen(false)} 
-              className="inline-flex cursor-pointer items-center justify-center w-8 h-8 rounded-md text-gray-600 hover:bg-gray-100"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          <div className="p-4 overflow-y-auto h-full pb-20">
-            <div className="relative aspect-video bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg overflow-hidden mb-4">
-              {!showVideo ? (
-                <>
-                  {!imageError && coverImageUrl && coverImageUrl !== '/projects.png' ? (
-                    <img 
-                      src={coverImageUrl} 
-                      alt={project.project_title}
-                      className="w-full h-full object-cover"
-                      onError={() => setImageError(true)}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-indigo-600">
-                      <div className="text-center text-white">
-                        <Calendar size={40} className="mx-auto opacity-80 mb-2" />
-                        <h3 className="text-sm font-bold line-clamp-2 px-4">{project.project_title}</h3>
-                      </div>
-                    </div>
-                  )}
-                  {hasVideos && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <button
-                        onClick={() => setShowVideo(true)}
-                        className="absolute inset-0 flex items-center justify-center group cursor-pointer"
-                      >
-                        <div className="w-14 h-14 bg-white/95 rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
-                          <Play size={24} className="text-[#1a8cd8] ml-1" fill="currentColor" />
-                        </div>
-                      </button>
-
-                      {videos.length > 1 && (
-                        <>
-                          <button onClick={(e) => { e.stopPropagation(); prevVideo(); }} className="absolute left-3 p-2 rounded-full bg-white/80 hover:bg-white shadow">◀</button>
-                          <button onClick={(e) => { e.stopPropagation(); nextVideo(); }} className="absolute right-3 p-2 rounded-full bg-white/80 hover:bg-white shadow">▶</button>
-                          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
-                            {videos.map((v, idx) => (
-                              <button key={idx} onClick={(e) => { e.stopPropagation(); setCurrentVideoIndex(idx); }} className={`w-2 h-2 rounded-full ${idx === currentVideoIndex ? 'bg-white' : 'bg-white/40'}`} />
-                            ))}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </>
-              ) : showVideo && currentVideo ? (
-                currentVideo.type === 'youtube' && currentYouTubeEmbed ? (
-                  <iframe
-                    src={currentYouTubeEmbed}
-                    className="w-full h-full"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                ) : (
-                  <video src={currentVideo.url} className="w-full h-full" controls autoPlay />
-                )
-              ) : null}
-            </div>
-
-            <h5 className="text-sm font-bold text-gray-900 mb-2">{project.project_title}</h5>
-            <p className="text-xs text-gray-600 mb-4">{project.description}</p>
-
-            <div className="grid grid-cols-2 gap-3 mb-4 py-3 border-y border-gray-100">
-              <div className="flex items-start gap-2 text-xs">
-                <Calendar size={14} className="text-blue-500 mt-0.5" />
-                <div>
-                  <div className="font-semibold text-gray-900">Started</div>
-                  <div className="text-gray-600">{formatDate(project.created_at)}</div>
-                </div>
-              </div>
+      {/* Mobile Sliding Showcase Overlay */}
+      {open && (
+        <div className="md:hidden fixed inset-0 z-[60] animate-in fade-in duration-300">
+           <div onClick={() => setOpen(false)} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" />
+           <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-[3rem] p-8 max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom-full duration-500">
+              <div className="w-12 h-1.5 bg-slate-100 rounded-full mx-auto mb-8" />
               
-              {project.project_duration && (
-                <div className="flex items-start gap-2 text-xs">
-                  <Clock size={14} className="text-purple-500 mt-0.5" />
-                  <div>
-                    <div className="font-semibold text-gray-900">Duration</div>
-                    <div className="text-gray-600 capitalize">{project.project_duration.replace('-', ' ')}</div>
-                  </div>
-                </div>
-              )}
-            </div>
+              <div className="relative aspect-video rounded-[2rem] overflow-hidden mb-6 border border-blue-50 shadow-xl">
+                 {!showVideo ? (
+                    <div className="w-full h-full relative">
+                       <Image src={coverImageUrl} alt={project.project_title} fill className="object-cover" />
+                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                       {hasVideos && (
+                         <button onClick={() => setShowVideo(true)} className="absolute inset-0 m-auto w-16 h-16 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white border border-white/40">
+                            <Play fill="currentColor" />
+                         </button>
+                       )}
+                    </div>
+                 ) : (
+                    <div className="w-full h-full bg-black">
+                       {currentVideo?.type === 'youtube' ? (
+                          <iframe src={currentYouTubeEmbed!} className="w-full h-full" allow="autoplay" />
+                       ) : (
+                          <video src={currentVideo?.url} className="w-full h-full" controls autoPlay />
+                       )}
+                    </div>
+                 )}
+              </div>
 
-            {isMyProject ? (
-              <Link
-                href={`/dashboard/projects/edit/${project.id}`}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all hover:shadow-md font-medium text-sm mb-3"
-              >
-                <Edit size={16} />
-                Edit Project
-              </Link>
-            ) : (
-              <>
-                {project.github_repository && (
-                  <a
-                    href={project.github_repository}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800transition-colors mb-3 text-sm font-medium"
-                  >
-                    <Github size={16} />
-                    View Repository
-                  </a>
-                )}
+              <div className="mb-8">
+                 <h2 className="text-2xl font-black text-slate-900 mb-2 leading-tight tracking-tight">
+                    {project.project_title}
+                 </h2>
+                 <p className="text-sm text-slate-500 leading-relaxed line-clamp-4">
+                    {project.description}
+                 </p>
+              </div>
 
-                <Link 
-                  href={`/projects/${project.id}`}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
-                >
-                  <ExternalLink size={16} />
-                  View Project Details
-                </Link>
-              </>
-            )}
-          </div>
-        </aside>
+              <div className="grid grid-cols-2 gap-4 mb-8">
+                 <div className="p-4 bg-[#F6F8FF] rounded-2xl border border-blue-50">
+                    <p className="text-[9px] font-black text-[#155DFC] uppercase mb-1">STARTED</p>
+                    <p className="text-sm font-bold text-slate-800">{formatDate(project.created_at)}</p>
+                 </div>
+                 <div className="p-4 bg-[#F6F8FF] rounded-2xl border border-blue-50">
+                    <p className="text-[9px] font-black text-[#155DFC] uppercase mb-1">DURATION</p>
+                    <p className="text-sm font-bold text-slate-800 capitalize">{project.project_duration || 'Ongoing'}</p>
+                 </div>
+              </div>
+
+              <div className="space-y-3 pb-8">
+                 <Button asChild className="w-full h-14 bg-[#155DFC] text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-200">
+                    <Link href={`/feed/projects/${project.id}`}>VIEW FULL PROJECT</Link>
+                 </Button>
+                 {isMyProject && (
+                    <Button asChild variant="outline" className="w-full h-14 rounded-2xl font-bold border-blue-100 text-[#155DFC] hover:bg-blue-50">
+                       <Link href={`/dashboard/projects/edit/${project.id}`}><Edit size={16} className="mr-2" /> EDIT DETAILS</Link>
+                    </Button>
+                 )}
+              </div>
+           </div>
+        </div>
       )}
-
-      {/* Contribute Modal */}
-      <ContributeModal 
-        isOpen={showContributeModal} 
-        onClose={() => setShowContributeModal(false)}
-        projectTitle={project?.project_title || ''}
-        githubUrl={project?.github_repository || ''}
-      />
-    </div>
+    </>
   );
 }

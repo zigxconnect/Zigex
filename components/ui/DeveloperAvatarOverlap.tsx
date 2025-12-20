@@ -26,28 +26,28 @@ const defaultDevelopers: Developer[] = [
     name: 'Alex Johnson',
     role: 'Lead Developer',
     initials: 'AJ',
-    color: 'bg-gradient-to-br from-blue-500 to-blue-600',
+    color: 'bg-gradient-to-br from-primary to-primary/80',
   },
   {
     id: '2',
     name: 'Sarah Smith',
     role: 'Full Stack',
     initials: 'SS',
-    color: 'bg-gradient-to-br from-purple-500 to-purple-600',
+    color: 'bg-gradient-to-br from-secondary to-secondary/80',
   },
   {
     id: '3',
     name: 'Mike Chen',
     role: 'Backend Dev',
     initials: 'MC',
-    color: 'bg-gradient-to-br from-emerald-500 to-emerald-600',
+    color: 'bg-gradient-to-br from-success to-success/80',
   },
   {
     id: '4',
     name: 'Emma Davis',
     role: 'Frontend Dev',
     initials: 'ED',
-    color: 'bg-gradient-to-br from-orange-500 to-orange-600',
+    color: 'bg-gradient-to-br from-warning to-warning/80',
   },
 ];
 
@@ -84,8 +84,8 @@ export const DeveloperAvatarOverlap: React.FC<DeveloperAvatarOverlapProps> = ({
     <div className="space-y-4">
       {/* Title and Subtitle */}
       <div>
-        <h3 className="text-lg font-bold text-gray-900">{title}</h3>
-        <p className="text-sm text-gray-600">{subtitle}</p>
+        <h3 className="text-lg font-bold text-foreground">{title}</h3>
+        <p className="text-sm text-muted-foreground">{subtitle}</p>
       </div>
 
       {/* Avatar Overlap Container */}
@@ -105,21 +105,21 @@ export const DeveloperAvatarOverlap: React.FC<DeveloperAvatarOverlapProps> = ({
                 <img
                   src={dev.avatar}
                   alt={dev.name}
-                  className={`${sizeClasses[size]} rounded-full border-2 border-white object-cover shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 hover:z-50 cursor-pointer flex-shrink-0`}
+                  className={`${sizeClasses[size]} rounded-full border-2 border-background object-cover shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 hover:z-50 cursor-pointer flex-shrink-0`}
                   style={{ aspectRatio: '1 / 1' }}
                 />
               ) : (
                 <div
-                  className={`${sizeClasses[size]} ${dev.color || 'bg-gradient-to-br from-gray-400 to-gray-500'} rounded-full border-2 border-white flex items-center justify-center text-white font-bold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 hover:z-50 cursor-pointer flex-shrink-0`}
+                  className={`${sizeClasses[size]} ${dev.color || 'bg-gradient-to-br from-muted-foreground to-muted-foreground/80'} rounded-full border-2 border-background flex items-center justify-center text-primary-foreground font-bold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 hover:z-50 cursor-pointer flex-shrink-0`}
                 >
                   {dev.initials}
                 </div>
               )}
 
               {/* Tooltip */}
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap pointer-events-none shadow-lg z-50">
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-popover text-popover-foreground text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap pointer-events-none shadow-lg z-50">
                 <div className="font-semibold">{dev.name}</div>
-                <div className="text-gray-300">{dev.role}</div>
+                <div className="text-muted-foreground">{dev.role}</div>
               </div>
             </div>
           ))}
@@ -127,7 +127,7 @@ export const DeveloperAvatarOverlap: React.FC<DeveloperAvatarOverlapProps> = ({
           {/* Remaining Count */}
           {remainingCount > 0 && (
             <div
-              className={`${sizeClasses[size]} bg-gradient-to-br from-gray-400 to-gray-500 rounded-full border-2 border-white flex items-center justify-center text-white font-bold shadow-lg text-xs`}
+              className={`${sizeClasses[size]} bg-gradient-to-br from-muted-foreground to-muted-foreground/80 rounded-full border-background border-2 flex items-center justify-center text-primary-foreground font-bold shadow-lg text-xs`}
             >
               +{remainingCount}
             </div>
@@ -135,7 +135,7 @@ export const DeveloperAvatarOverlap: React.FC<DeveloperAvatarOverlapProps> = ({
         </div>
 
         {/* Optional: Total Count */}
-        <span className="text-sm font-medium text-gray-700">
+        <span className="text-sm font-medium text-muted-foreground">
           {developers.length} {developers.length === 1 ? 'Developer' : 'Developers'}
         </span>
       </div>
@@ -146,10 +146,10 @@ export const DeveloperAvatarOverlap: React.FC<DeveloperAvatarOverlapProps> = ({
           {displayedDevelopers.map((dev) => (
             <div
               key={dev.id}
-              className="text-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+              className="text-center p-3 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
             >
-              <div className="font-semibold text-sm text-gray-900">{dev.name}</div>
-              <div className="text-xs text-gray-600">{dev.role}</div>
+              <div className="font-semibold text-sm text-foreground">{dev.name}</div>
+              <div className="text-xs text-muted-foreground">{dev.role}</div>
             </div>
           ))}
         </div>

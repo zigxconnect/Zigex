@@ -11,11 +11,11 @@ export const projectFormSchema = z.object({
     .min(3, "Title must be at least 3 characters")
     .max(100, "Title must not exceed 100 characters")
     .regex(/^[a-zA-Z0-9\s\-_,.!?&():'"]+$/, "Title contains invalid characters"),
-  
+
   description: z.string()
     .min(50, "Description must be at least 50 characters")
     .max(500, "Description must not exceed 500 characters"),
-  
+
   githubLink: z.union([
     z.string().regex(
       /^https:\/\/(www\.)?github\.com\/[\w-]+\/[\w.-]+\/?$/,
@@ -23,17 +23,16 @@ export const projectFormSchema = z.object({
     ),
     z.literal("")
   ]).optional(),
-  
-youtubeLink: z.string()
-  .min(1, "YouTube URL is required")
-  .regex(
-    /^https:\/\/youtube\.com\/.+$/,
-    "Must be a valid YouTube URL starting with https://youtube.com"
-  ),
 
-  
+  youtubeLink: z.string()
+    .min(1, "YouTube URL is required")
+    .refine(
+      (url) => url.toLowerCase().includes("youtube.com") || url.toLowerCase().includes("youtu.be"),
+      "Link must contain 'youtube.com'"
+    ),
+
   duration: z.string().min(1, "Please select a duration"),
-  
+
   coverImage: z.union([
     z.instanceof(File)
       .refine((file) => file.size > 0, "Please select an image")
@@ -45,7 +44,7 @@ youtubeLink: z.string()
     z.null(),
     z.undefined()
   ]).optional(),
-    
+
   uploadedVideo: z.union([
     z.instanceof(File)
       .refine((file) => file.size > 0, "Please select a video file")

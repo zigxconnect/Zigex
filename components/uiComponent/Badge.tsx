@@ -11,8 +11,8 @@ export const Badge = ({
   ...props
 }: BadgeProps) => {
   const variantStyles = {
-    paid: "bg-orange-100 text-orange-600 border-orange-200",
-    unpaid: "bg-gray-100 text-gray-600 border-gray-200",
+    paid: "bg-warning/10 text-warning border-warning/20",
+    unpaid: "bg-muted text-muted-foreground border-border",
   };
 
   const mergedClasses = twMerge(

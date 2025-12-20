@@ -4,7 +4,7 @@ import { z } from 'zod';
 export const programSchema = z.object({
     id: z.string().uuid().optional(),
     title: z.string().min(3).max(100),
-    description: z.string().min(10).max(1000),
+    description: z.string().min(10).max(5000),
     company_id: z.string().uuid(),
     program_category: z.enum(['bootcamp', 'hackathon', 'volunteer', 'mentorship', 'apprenticeship']),
     start_date: z.string().datetime(),

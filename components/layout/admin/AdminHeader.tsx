@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, Plus } from "lucide-react";
 import Link from "next/link";
 import { useAdminSidebar } from "./AdminLayoutProvider";
-import { Logo } from "@/components/uiComponent/Logo";
+import { Logo } from "@/components/layout/Logo";
 
 type AdminHeaderProps = {
   stats: {

@@ -22,25 +22,24 @@ export function LocationMap({ location, title }: LocationMapProps) {
   )}&output=embed`;
 
   return (
-    <Card className="overflow-hidden border-0 shadow-lg">
+    <Card className="overflow-hidden border border-border shadow-lg">
       {/* Header */}
-      <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b">
+      <div className="px-6 py-4 bg-muted/30 border-b border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-              <MapPin size={20} className="text-blue-600" />
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <MapPin size={20} className="text-primary" />
             </div>
             <div>
-              <h3 className="font-bold text-gray-900">Location</h3>
-              <p className="text-sm text-gray-600">{location}</p>
+              <h3 className="font-bold text-foreground">Location</h3>
+              <p className="text-sm text-muted-foreground">{location}</p>
             </div>
           </div>
           
           <Button
             asChild
-            variant="outline"
-            size="sm"
-            className="rounded-full hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 transition-all"
+            variant="secondary"
+            className="rounded-full border-primary/20 hover:bg-primary/5 hover:border-primary/40 hover:text-primary transition-all transition-colors"
           >
             <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer">
               <Navigation size={14} className="mr-2" />
@@ -51,13 +50,13 @@ export function LocationMap({ location, title }: LocationMapProps) {
       </div>
 
       {/* Map */}
-      <div className="relative w-full h-72 md:h-96 bg-gray-100">
+      <div className="relative w-full h-72 md:h-96 bg-muted">
         {/* Loading State */}
         {!isLoaded && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="flex flex-col items-center gap-3">
-              <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-              <p className="text-sm text-gray-600">Loading map...</p>
+              <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+              <p className="text-sm text-muted-foreground">Loading map...</p>
             </div>
           </div>
         )}

@@ -18,8 +18,8 @@ import { FeedDetailHeader } from "@/components/feed/details/FeedDetailHeader";
 import { ApplyButton } from "@/components/feed/details/appyButton/ApplyButton";
 import { LocationMap } from "@/components/feed/details/LocationMap";
 import { RelatedItems } from "@/components/feed/details/RelatedItems";
-import { CompanyCard } from "@/components/feed/details/DetailsSidebar";
-import { DetailsSidebar } from "@/components/feed/details/CompanyCard";
+import { CompanyCard } from "@/components/feed/details/DetailsSidebar"; // This file actually exports CompanyCard
+import { DetailsSidebar } from "@/components/feed/details/CompanyCard"; // This file actually exports DetailsSidebar
 import { BackButton } from "@/components/feed/details/BackButton";
 import { RegisterGoDown } from "@/components/feed/details/RegisterDown";
 import CurriculumSection from "@/components/feed/details/Curriculum";
@@ -97,13 +97,13 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
       });
     }
 
-    // Type-specific details
+    // Type-specific details - using Calendar for all date/time related items
     if (item._type === "internships") {
       if ((item as any).duration) {
         details.push({
           label: "Duration",
           value: (item as any).duration,
-          icon: "Clock",
+          icon: "Calendar",
         });
       }
       if ((item as any).department) {
@@ -141,7 +141,7 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
         details.push({
           label: "Duration",
           value: (item as any).duration,
-          icon: "Clock",
+          icon: "Calendar",
         });
       }
     }
@@ -159,15 +159,14 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50">
+    <div className="min-h-screen bg-background pb-80 md:pb-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         {/* Back Button */}
-        <div className="flex justify-between p-6">
-        <BackButton />
-        {opportunityStatus.isOpen &&
-        <RegisterGoDown href="getStarted" />
-        
-        }
+        <div className="flex justify-between items-center mb-6">
+          <BackButton />
+          {opportunityStatus.isOpen && (
+            <RegisterGoDown href="getStarted" />
+          )}
         </div>
 
         {/* Header */}
@@ -188,15 +187,15 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
             {company && <CompanyCard company={company} />}
 
             {/* Description */}
-            <Card className="p-6 sm:p-8 border-0 shadow-lg">
+            <Card className="p-6 sm:p-8 border border-border shadow-lg rounded-[2rem] bg-card hover:shadow-xl transition-all duration-300">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-1 h-8 bg-gradient-to-b from-blue-600 to-indigo-600 rounded-full" />
-                <h2 className="text-2xl font-bold text-gray-900">
+                <div className="w-1.5 h-8 bg-primary rounded-full" />
+                <h2 className="text-2xl font-black text-foreground tracking-tight uppercase">
                   About this {item._type.slice(0, -1)}
                 </h2>
               </div>
               <div className="prose prose-gray max-w-none">
-                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                <p className="text-foreground/80 leading-relaxed whitespace-pre-wrap font-medium">
                   {item.description || "No description provided."}
                 </p>
               </div>
@@ -237,6 +236,15 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
                   title={item.title}
                   fullWidth={true}
                   buttonText="Get Started"
+                  opportunityData={{
+                    title: item.title,
+                    description: item.description,
+                    type: item._type.slice(0, -1),
+                    company_profiles: company,
+                    location: item.location,
+                    duration: (item as any).duration,
+                    department: (item as any).department,
+                  }}
                 />
               </section>
             )}
@@ -257,9 +265,9 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
               )}
 
               {/* Additional Info Card */}
-              <Card className="p-6 border-0 shadow-lg bg-gradient-to-br from-blue-50 to-indigo-50">
-                <h3 className="font-bold text-gray-900 mb-3">Need Help?</h3>
-                <p className="text-sm text-gray-700 leading-relaxed">
+              <Card className="p-6 border border-border shadow-lg rounded-[2rem] bg-card">
+                <h3 className="font-black text-foreground mb-3 text-sm uppercase tracking-wider">Need Help?</h3>
+                <p className="text-sm text-foreground/70 leading-relaxed font-medium">
                   Have questions about this opportunity? Contact the company
                   directly or reach out to our support team.
                 </p>

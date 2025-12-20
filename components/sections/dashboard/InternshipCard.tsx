@@ -1,6 +1,16 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+// ... existing imports ...
+
+export const InternshipCard = ({
+  id,
+  // ... props
+  onLiveClick,
+}: InternshipCardProps) => {
+  const router = useRouter();
+  // ... rest
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +27,7 @@ import {
   Share2,
   CheckCircle,
   XCircle,
+  ArrowRight,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 // SharePopover removed in favour of native Web Share API fallback
@@ -163,10 +174,9 @@ export const InternshipCard = ({
         ref={cardRef}
         className={`${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'} transition-all duration-700`}
       >
-        <Link href={`/internships/${id}`}>
         <div 
-          onClick={handleCardClick}
-          className={`bg-white rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300 overflow-hidden group ${is_live ? 'cursor-pointer' : ''}`}
+          onClick={() => router.push(`/internships/${id}`)}
+          className={`bg-white rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer`}
         >
           <div className="flex">
             {/* Image Section */}
@@ -258,13 +268,13 @@ export const InternshipCard = ({
                 </button>
                 <div className="ml-2">
                   {openStatusComputed ? (
-                    <div className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold border border-emerald-100">
-                      <CheckCircle size={14} className="text-emerald-600" />
+                    <div className="inline-flex items-center gap-1 px-2 py-1 bg-[#16A34A]/10 text-[#16A34A] rounded-full text-xs font-semibold border border-[#16A34A]/20">
+                      <CheckCircle size={14} className="text-[#16A34A]" />
                       <span>Open</span>
                     </div>
                   ) : (
-                    <div className="inline-flex items-center gap-1 px-2 py-1 bg-red-50 text-red-700 rounded-full text-xs font-semibold border border-red-100">
-                      <XCircle size={14} className="text-red-600" />
+                    <div className="inline-flex items-center gap-1 px-2 py-1 bg-[#DC2626]/10 text-[#DC2626] rounded-full text-xs font-semibold border border-[#DC2626]/20">
+                      <XCircle size={14} className="text-[#DC2626]" />
                       <span>Closed</span>
                     </div>
                   )}
@@ -277,8 +287,8 @@ export const InternshipCard = ({
             </div>
           </div>
         </div>
-        </Link>
       </div>
+    );
     );
   }
 
@@ -307,23 +317,14 @@ export const InternshipCard = ({
             className="object-cover transition-transform duration-700 group-hover:scale-110"
           />
           
-          {/* Dynamic Gradient Overlay - Darker at bottom */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/20" />
-          
-          {/* Animated Shimmer Effect on Hover */}
-          <div 
-            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-            style={{
-              background: 'linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%)',
-              backgroundSize: '200% 200%',
-              animation: isHovered ? 'shimmer 2s infinite' : 'none',
-            }}
-          />
+          {/* Gradient Overlay - Simplified */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10 transition-opacity duration-300 opacity-60 group-hover:opacity-80" />
         </div>
 
         {/* Top Section - Floating Elements */}
         <div className="absolute top-0 left-0 right-0 p-4 z-20">
           <div className="flex items-start justify-between">
+            <div className="flex flex-col items-start gap-2">
             {/* Live Badge or Category */}
             {is_live ? (
               <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-600 to-pink-600 rounded-full shadow-2xl animate-pulse-glow">
@@ -336,22 +337,39 @@ export const InternshipCard = ({
                 </span>
               </div>
             ) : (
-              <div className="px-4 py-2 bg-blue-600/90 backdrop-blur-xl rounded-full shadow-lg border border-white/20">
-                <span className="text-white text-xs font-bold uppercase tracking-wide">
+              <div className="px-4 py-2 bg-white rounded-full shadow-lg border border-gray-100">
+                <span className="text-black text-xs font-bold uppercase tracking-wide">
                   {category}
                 </span>
               </div>
             )}
+            
+            {/* Status Badge */}
+            {openStatusComputed ? (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/90 backdrop-blur-md rounded-full border border-emerald-400/30">
+                  <CheckCircle size={12} className="text-white" />
+                  <span className="text-white text-xs font-bold uppercase tracking-wide">Open</span>
+                </div>
+              ) : (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-500/90 backdrop-blur-md rounded-full border border-rose-400/30">
+                  <XCircle size={12} className="text-white" />
+                  <span className="text-white text-xs font-bold uppercase tracking-wide">Closed</span>
+                </div>
+              )}
+            </div>
 
             {/* Action Buttons - Right Side */}
               <div className="flex flex-col gap-3">
               {/* Bookmark */}
               <button
-                onClick={handleBookmark}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleBookmark(e);
+                }}
                 className="w-11 h-11 bg-white/95 backdrop-blur-xl hover:bg-white shadow-2xl rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95"
               >
                 {isBookmarked ? (
-                  <BookmarkCheck size={18} className="text-blue-600" />
+                  <BookmarkCheck size={18} className="text-primary" />
                 ) : (
                   <Bookmark size={18} className="text-gray-700" />
                 )}
@@ -359,7 +377,10 @@ export const InternshipCard = ({
 
               {/* Like Button (Instagram-style) */}
               <button
-                onClick={handleLike}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleLike(e);
+                }}
                 className="w-11 h-11 bg-white/95 backdrop-blur-xl hover:bg-white shadow-2xl rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95"
               >
                 <Heart 
@@ -374,28 +395,17 @@ export const InternshipCard = ({
 
               {/* Share Button - Styled same as Like and Bookmark */}
               <button
-                onClick={handleShare}
-                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleShare(e);
+                }}
                 className="w-11 h-11 bg-white/95 backdrop-blur-xl hover:bg-white shadow-2xl rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95"
                 aria-label="Share"
               >
                 <Share2 size={18} className="text-gray-700" />
               </button>
 
-              {/* Open/Closed status */}
-              <div className="flex items-center justify-center">
-                {openStatusComputed ? (
-                  <div className="flex flex-col items-center gap-1">
-                    <CheckCircle size={18} className="text-emerald-500" />
-                    <span className="text-xs text-emerald-600">Open</span>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-1">
-                    <XCircle size={18} className="text-red-500" />
-                    <span className="text-xs text-red-600">Closed</span>
-                  </div>
-                )}
-              </div>
+              {/* Open/Closed status moved to bottom */}
             </div>
           </div>
 
@@ -441,10 +451,10 @@ export const InternshipCard = ({
               />
             </div>
             <div className="flex-1">
-              <p className="text-white/80 text-xs font-semibold uppercase tracking-wider mb-0.5">
+              <p className="text-blue-300 text-xs font-bold uppercase tracking-wider mb-1">
                 {company}
               </p>
-              <h3 className="text-white text-lg font-black leading-tight line-clamp-2 drop-shadow-2xl">
+              <h3 className="text-white text-xl font-black leading-tight line-clamp-2 drop-shadow-md">
                 {title}
               </h3>
             </div>
@@ -454,9 +464,9 @@ export const InternshipCard = ({
           <div className="flex items-center gap-3 mb-4 text-white/90">
             <div className="flex items-center gap-1.5 text-sm font-medium">
               <div className="w-6 h-6 bg-white/20 backdrop-blur-xl rounded-full flex items-center justify-center">
-                <MapPin size={13} />
+                <MapPin size={15} />
               </div>
-              <span className="drop-shadow-lg">{location}</span>
+              <span className="drop-shadow-lg text-base font-bold">{location}</span>
             </div>
             <span className="text-white/60">•</span>
             <div className="flex items-center gap-1.5 text-sm font-medium">
@@ -466,6 +476,8 @@ export const InternshipCard = ({
               <span className="drop-shadow-lg">{type}</span>
             </div>
           </div>
+          
+          {/* Status Badge - Moved to Top */}
 
           {/* CTA Button - Full Width, Instagram Story Style */}
           <Link href={`/internships/${id}`} onClick={(e) => e.stopPropagation()}>
@@ -478,21 +490,13 @@ export const InternshipCard = ({
               {is_live ? (
                 <Play size={18} className="fill-white transition-transform group-hover/btn:scale-110" />
               ) : (
-                <ChevronRight size={20} className="transition-transform group-hover/btn:translate-x-1" />
+                <ArrowRight size={18} className="transition-transform group-hover/btn:translate-x-1" />
               )}
             </button>
           </Link>
         </div>
 
-        {/* Hover Glow Effect */}
-        {isHovered && (
-          <div 
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              boxShadow: 'inset 0 0 60px rgba(59, 130, 246, 0.3)',
-            }}
-          />
-        )}
+        {/* Hover Glow Effect Removed */}
         </div>
       </div>
 

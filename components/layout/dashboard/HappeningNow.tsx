@@ -46,14 +46,14 @@ export const HappeningNowGrid = () => {
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center gap-3 mb-6">
             <div className="relative">
-              <Zap className="w-8 h-8 text-blue-500 fill-blue-500 animate-pulse" />
+              <Zap className="w-8 h-8 text-primary fill-primary animate-pulse" />
             </div>
-            <h2 className="text-3xl font-bold text-blue-600">Happening Now</h2>
+            <h2 className="text-3xl font-bold text-foreground">Happening Now</h2>
           </div>
-          <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">
+          <div className="flex items-center justify-center h-64 bg-muted/30 rounded-lg">
             <div className="flex flex-col items-center gap-2">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-              <p className="text-gray-600">Loading happening now...</p>
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <p className="text-muted-foreground">Loading happening now...</p>
             </div>
           </div>
         </div>
@@ -68,14 +68,14 @@ export const HappeningNowGrid = () => {
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center gap-3 mb-6">
             <div className="relative">
-              <Zap className="w-8 h-8 text-blue-500 fill-blue-500 animate-pulse" />
+              <Zap className="w-8 h-8 text-primary fill-primary animate-pulse" />
             </div>
-            <h2 className="text-3xl font-bold text-blue-600">Happening Now</h2>
+            <h2 className="text-3xl font-bold text-foreground">Happening Now</h2>
           </div>
-          <div className="flex items-center justify-center h-64 bg-red-50 rounded-lg border border-red-200">
+          <div className="flex items-center justify-center h-64 bg-destructive/10 rounded-lg border border-destructive/20">
             <div className="flex flex-col items-center gap-2 text-center">
-              <AlertCircle className="w-8 h-8 text-red-500" />
-              <p className="text-red-600">
+              <AlertCircle className="w-8 h-8 text-destructive" />
+              <p className="text-destructive">
                 {error || "No happening now content available"}
               </p>
             </div>
@@ -91,14 +91,13 @@ export const HappeningNowGrid = () => {
         {/* Section Header */}
         <div className="flex items-center gap-3 mb-6">
           <div className="relative">
-            <Zap className="w-8 h-8 text-blue-500 fill-blue-500 animate-pulse" />
-            <div className="absolute inset-0 w-8 h-8 bg-blue-500 blur-xl opacity-50 animate-pulse" />
+            <Zap className="w-8 h-8 text-primary fill-primary" />
           </div>
           <div>
-            <h2 className="text-3xl font-bold text-blue-600 bg-clip-text ">
+            <h2 className="text-3xl font-bold text-foreground">
               Happening Now
             </h2>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Don't miss out on what's live right now
             </p>
           </div>
@@ -124,20 +123,23 @@ export const HappeningNowGrid = () => {
                 onClick={() => setSelectedItem(item)}
               >
                 {/* Image/Video Container */}
-                <div className="relative w-full h-full bg-linear-to-br from-gray-900 to-gray-800">
+                <div className="relative w-full h-full bg-muted">
                   <img
-                    src={item.type === "video" ? item.thumbnail : item.src}
+                    src={item.type === "video" ? item.thumbnail : item.src || "/placeholder.png"}
                     alt={item.caption}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = "/placeholder.png";
+                    }}
                   />
 
-                  {/* Gradient Overlay */}
-                  <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
+                  {/* Gradient Overlay - Kept for text readability but standard black */}
+                  <div className="absolute bottom-0 left-0 right-0 h-[35%] bg-gradient-to-t from-black/80 to-transparent" />
 
                   {/* Live Badge (for live items) */}
                   {item.isLive && (
-                    <div className="absolute top-3 left-3 flex items-center gap-2 px-3 py-1.5 bg-red-600 rounded-full shadow-lg animate-pulse">
-                      <div className="w-2 h-2 bg-white rounded-full animate-ping" />
+                    <div className="absolute top-3 left-3 flex items-center gap-2 px-3 py-1.5 bg-destructive rounded-full shadow-lg">
+                      <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
                       <span className="text-white text-xs font-bold uppercase tracking-wide">
                         Live
                       </span>
@@ -154,18 +156,15 @@ export const HappeningNowGrid = () => {
                     `}
                     >
                       <div className="relative">
-                        <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-2xl transform transition-transform duration-300 group-hover:scale-110">
-                          <Play className="w-7 h-7 text-red-600 fill-red-600 ml-1" />
+                        <div className="w-16 h-16 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg transform transition-transform duration-300 group-hover:scale-110">
+                          <Play className="w-7 h-7 text-primary fill-primary ml-1" />
                         </div>
-                        {item.isLive && (
-                          <div className="absolute inset-0 w-16 h-16 bg-red-500 rounded-full blur-xl opacity-50 animate-pulse" />
-                        )}
                       </div>
                     </div>
                   )}
 
                   {/* View Count */}
-                  <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 bg-blue-600 backdrop-blur-sm rounded-full">
+                  <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-full border border-white/10">
                     <Eye className="w-3.5 h-3.5 text-white" />
                     <span className="text-white text-xs font-semibold">
                       {formatSimpleViewCount(viewCounts[item.id] || 0)}
@@ -184,15 +183,15 @@ export const HappeningNowGrid = () => {
                         {item.caption}
                       </p>
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-300 text-xs font-medium">
+                        <span className="text-gray-200 text-xs font-medium">
                           {item.company}
                         </span>
                         {!item.isLive && (
                           <>
-                            <span className="text-gray-500">•</span>
+                            <span className="text-gray-400">•</span>
                             <div className="flex items-center gap-1">
                               <Clock className="w-3 h-3 text-gray-400" />
-                              <span className="text-gray-400 text-xs">Now</span>
+                              <span className="text-gray-300 text-xs">Now</span>
                             </div>
                           </>
                         )}
@@ -207,9 +206,7 @@ export const HappeningNowGrid = () => {
                     transition-all duration-300 pointer-events-none
                     ${
                       isHovered
-                        ? item.isLive
-                          ? "border-red-500 shadow-2xl shadow-red-500/50"
-                          : "border-purple-500 shadow-2xl shadow-purple-500/30"
+                        ? "border-primary/50"
                         : ""
                     }
                   `}
@@ -219,38 +216,30 @@ export const HappeningNowGrid = () => {
             );
           })}
         </div>
-
-        {/* See All Button */}
-        {/* <div className="mt-6 text-center">
-          <button className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-200">
-            Explore All Live Events
-          </button>
-        </div> */}
       </div>
 
-      {/* Modal for expanded view (optional) */}
-     {/* Modal for expanded view with slideshow */}
+      {/* Modal for expanded view */}
       {selectedItem && (
         <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           onClick={() => setSelectedItem(null)}
         >
           <div
             className="relative w-full max-w-5xl mx-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close Button - Centered and Responsive */}
+            {/* Close Button */}
             <button
               onClick={() => setSelectedItem(null)}
-              className="absolute top-4 right-4 sm:top-6 sm:right-6 z-10 w-10 h-10 sm:w-12 sm:h-12 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center text-white transition-all duration-300 hover:rotate-90 border border-white/30 flex-shrink-0"
+              className="absolute top-4 right-4 sm:top-6 sm:right-6 z-10 w-10 h-10 sm:w-12 sm:h-12 bg-black/50 hover:bg-black/70 backdrop-blur-md rounded-full flex items-center justify-center text-white transition-all duration-300 hover:rotate-90 border border-white/10 flex-shrink-0"
             >
               <span className="text-xl sm:text-2xl font-light">✕</span>
             </button>
 
             {/* Content Container */}
-            <div className="relative bg-linear-to-br from-blue-600/40 to-blue-800/40 backdrop-blur-xl rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
+            <div className="relative bg-card rounded-3xl overflow-hidden border border-border shadow-2xl">
               {selectedItem.type === "video" ? (
-                <div className="aspect-video">
+                <div className="aspect-video bg-black">
                   <iframe
                     src={selectedItem.src}
                     className="w-full h-full"
@@ -259,41 +248,43 @@ export const HappeningNowGrid = () => {
                   />
                 </div>
               ) : (
-                <div className="relative">
+                <div className="relative bg-black">
                   <img
-                    src={selectedItem.src}
+                    src={selectedItem.src || "/placeholder.png"}
                     alt={selectedItem.caption}
-                    className="w-full max-h-[70vh] object-contain"
+                    className="w-full max-h-[70vh] object-contain mx-auto"
+                    onError={(e) => {
+                      e.currentTarget.src = "/placeholder.png";
+                    }}
                   />
-                  <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
                 </div>
               )}
 
-              {/* Info Overlay */}
-              <div className="relative bg-linear-to-t from-black/80 to-transparent p-8">
+              {/* Info Overlay Panel */}
+              <div className="p-6 bg-card border-t border-border">
                 <div className="max-w-3xl">
                   {selectedItem.isLive && (
                     <div className="flex items-center gap-2 mb-3">
-                      <div className="flex items-center gap-2 px-3 py-1.5 bg-red-600 rounded-full">
-                        <div className="w-2 h-2 bg-white rounded-full animate-ping" />
+                      <div className="flex items-center gap-2 px-3 py-1.5 bg-destructive rounded-full">
+                        <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
                         <span className="text-white text-xs font-bold uppercase tracking-wide">
                           Live
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 px-3 py-1.5 bg-white/10 backdrop-blur-sm rounded-full">
-                        <Eye className="w-4 h-4 text-white" />
-                        <span className="text-white text-sm font-semibold">
+                      <div className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-full">
+                        <Eye className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-muted-foreground text-sm font-semibold">
                           {formatSimpleViewCount(viewCounts[selectedItem.id] || 0)} watching
                         </span>
                       </div>
                     </div>
                   )}
-                  <h3 className="text-3xl font-bold text-white mb-3 drop-shadow-lg">
+                  <h3 className="text-2xl font-bold text-foreground mb-2">
                     {selectedItem.caption}
                   </h3>
-                  <div className="flex items-center gap-3 text-gray-300">
-                    <span className="text-lg font-medium">{selectedItem.company}</span>
-                    <span className="text-gray-500">•</span>
+                  <div className="flex items-center gap-3 text-muted-foreground">
+                    <span className="text-lg font-medium text-foreground">{selectedItem.company}</span>
+                    <span>•</span>
                     <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4" />
                       <span>Happening Now</span>
@@ -310,7 +301,7 @@ export const HappeningNowGrid = () => {
                   const prevIndex = currentIndex === 0 ? data.length - 1 : currentIndex - 1;
                   setSelectedItem(data[prevIndex]);
                 }}
-                className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all duration-300 border border-white/20 hover:scale-110"
+                className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-black/70 transition-all duration-300 border border-white/10 hover:scale-110"
               >
                 ‹
               </button>
@@ -321,28 +312,10 @@ export const HappeningNowGrid = () => {
                   const nextIndex = currentIndex === data.length - 1 ? 0 : currentIndex + 1;
                   setSelectedItem(data[nextIndex]);
                 }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all duration-300 border border-white/20 hover:scale-110"
+                className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-black/70 transition-all duration-300 border border-white/10 hover:scale-110"
               >
                 ›
               </button>
-
-              {/* Slideshow Indicators */}
-              <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex items-center gap-2">
-                {data.map((item: HappeningNowItem) => (
-                  <button
-                    key={item.id}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedItem(item);
-                    }}
-                    className={`h-1.5 rounded-full transition-all duration-300 ${
-                      item.id === selectedItem.id
-                        ? 'w-8 bg-white'
-                        : 'w-1.5 bg-white/30 hover:bg-white/50'
-                    }`}
-                  />
-                ))}
-              </div>
             </div>
           </div>
         </div>

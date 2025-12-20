@@ -348,7 +348,7 @@ export default function PersonalizedFeed({ userId, userSkills = [], university }
       {/* End of feed */}
       {visibleItems >= feedItems.length && feedItems.length > 0 && (
         <div className="text-center py-12 bg-gradient-to-b from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-900 border-t border-gray-100 dark:border-gray-800">
-            <div className="relative inline-block"><Sparkles size={40} className="text-blue-500 mx-auto mb-3 animate-pulse" /><div className="absolute inset-0 blur-xl opacity-50"><Sparkles size={40} className="text-blue-400" /></div></div>
+            {/* <div className="relative inline-block"><Sparkles size={40} className="text-blue-500 mx-auto mb-3 animate-pulse" /><div className="absolute inset-0 blur-xl opacity-50"><Sparkles size={40} className="text-blue-400" /></div></div> */}
             <p className="text-gray-800 dark:text-white font-bold text-lg mb-1">You're all caught up!</p>
             <p className="text-sm text-gray-500 dark:text-gray-400">Check back soon for fresh opportunities</p>
         </div>

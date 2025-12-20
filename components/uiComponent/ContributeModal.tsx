@@ -45,29 +45,29 @@ export default function ContributeModal({
 
       {/* Modal - More Square & Mobile Optimized */}
       <div 
-        className={`relative bg-white rounded-2xl sm:rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden transform transition-all duration-300 ${
+        className={`relative bg-card rounded-2xl sm:rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden transform transition-all duration-300 ${
           isAnimating ? 'animate-in zoom-in-95 slide-in-from-bottom-4' : ''
         }`}
       >
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-gray-100/80 hover:bg-gray-200 transition-colors backdrop-blur-sm"
+          className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-muted/80 hover:bg-muted transition-colors backdrop-blur-sm"
           aria-label="Close"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
 
         {/* Animated Emoji Header - Much Bigger! */}
-        <div className="relative bg-gradient-to-br from-blue-700 via-blue-600 to-blue-500 px-6 py-12 sm:py-16 text-center">
+        <div className="relative bg-gradient-to-br from-primary via-primary/90 to-primary/80 px-6 py-12 sm:py-16 text-center">
           <div className="inline-block animate-bounce-slow">
             <div className="text-[120px] sm:text-[140px] leading-none mb-4 animate-wiggle filter drop-shadow-2xl">
               😏
             </div>
           </div>
-          <h3 className="text-lg sm:text-xl font-bold text-white drop-shadow-lg px-4">
+          <h3 className="text-lg sm:text-xl font-bold text-primary-foreground drop-shadow-lg px-4">
             You Sure Say You Get The Skills?
           </h3>
           <div className="flex items-center justify-center gap-2 mt-2">
@@ -95,7 +95,7 @@ export default function ContributeModal({
               onClick={onClose}
               onMouseEnter={() => setHoveredButton('blue')}
               onMouseLeave={() => setHoveredButton(null)}
-              className="relative overflow-hidden w-full inline-flex items-center justify-center gap-3 px-6 py-3 md:py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl sm:rounded-2xl font-bold text-base sm:text-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg shadow-blue-500/40 hover:shadow-xl hover:shadow-blue-500/50 hover:-translate-y-1 active:scale-95 group"
+              className="relative overflow-hidden w-full inline-flex items-center justify-center gap-3 px-6 py-3 md:py-2 bg-gradient-to-r from-primary to-primary/90 text-primary-foreground rounded-xl sm:rounded-2xl font-bold text-base sm:text-lg hover:from-primary/90 hover:to-primary transition-all shadow-lg shadow-primary/40 hover:shadow-xl hover:shadow-primary/50 hover:-translate-y-1 active:scale-95 group"
             >
               {/* Animated background pulse */}
               <span
@@ -136,12 +136,12 @@ export default function ContributeModal({
               onClick={onClose}
               onMouseEnter={() => setHoveredButton('white')}
               onMouseLeave={() => setHoveredButton(null)}
-              className="relative overflow-hidden w-full inline-flex items-center justify-center gap-3 px-4 py-2 md:py-2 bg-white text-gray-800 border-2 border-gray-200 rounded-xl sm:rounded-2xl font-bold text-base sm:text-lg hover:bg-gray-50 hover:border-gray-300 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 active:scale-95 group"
+              className="relative overflow-hidden w-full inline-flex items-center justify-center gap-3 px-4 py-2 md:py-2 bg-white text-foreground border-2 border-border rounded-xl sm:rounded-2xl font-bold text-base sm:text-lg hover:bg-blue-50/20 hover:border-blue-200 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 active:scale-95 group"
             >
               {/* Animated background pulse */}
               <span
                 className={`
-                  absolute inset-0 bg-gray-100
+                  absolute inset-0 bg-blue-50/10
                   ${hoveredButton === 'white' ? "animate-ping opacity-20" : "opacity-0"}
                 `}
               />
@@ -150,7 +150,7 @@ export default function ContributeModal({
               <span
                 className={`
                   absolute inset-0 -translate-x-full
-                  bg-gradient-to-r from-transparent via-gray-400/30 to-transparent
+                  bg-gradient-to-r from-transparent via-blue-100/30 to-transparent
                   ${hoveredButton === 'white' ? "animate-shimmer" : ""}
                 `}
               />
@@ -173,7 +173,7 @@ export default function ContributeModal({
 
             <button
               onClick={onClose}
-              className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-gray-100 text-gray-700 rounded-xl sm:rounded-2xl font-semibold text-sm sm:text-base hover:bg-gray-200 transition-all active:scale-95"
+              className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-muted text-muted-foreground rounded-xl sm:rounded-2xl font-semibold text-sm sm:text-base hover:bg-muted/80 transition-all active:scale-95"
             >
               Make I Think Am
             </button>
