@@ -46,7 +46,6 @@ export const EventCard = ({
   onLiveClick 
 }: EventCardProps) => {
   const router = useRouter();
-  const router = useRouter();
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [openLive, setOpenLive] = useState(false);

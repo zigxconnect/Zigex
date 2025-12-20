@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import Link from "next/link";
+// ...existing code...
 import { Button } from "@/components/ui/button";
 // ...existing code...
 import {
@@ -23,7 +23,7 @@ import {
 import { useState, useRef, useEffect } from "react";
 import LiveBadge from "@/components/uiComponent/LiveBadge";
 import LivePanel from "@/components/uiComponent/LivePanel";
-import Link from "next/link";
+// ...existing code...
 
 interface InternshipCardProps {
   id: string;
