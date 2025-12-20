@@ -27,7 +27,7 @@ export const EditProfileButton = ({
     <>
       <Button
         onClick={() => setIsModalOpen(true)}
-        className="px-4 py-2 flex items-center gap-2 rounded-lg bg-card border border-border shadow-sm text-sm font-medium text-muted-foreground hover:bg-muted"
+        className="px-4 py-2 flex items-center gap-2 rounded-lg bg-card border border-border text-sm font-medium text-muted-foreground hover:bg-muted"
         variant="secondary"
       >
         <Edit2 size={18} />

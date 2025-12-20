@@ -5,6 +5,7 @@ import "./globals.css";
 import { Toaster } from "react-hot-toast";
 
 const inter = Inter({
+
   subsets: ["latin"],
   display: "swap",
   variable: "--font-inter",
@@ -27,17 +28,24 @@ export const viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://zigex.vercel.app"),
+  metadataBase: new URL("https://zigexconnect.com"),
   title: {
-    default: "ZIGEX",
-    template:
-      "%s  ZiGex| SEED | ZiGex | skills enhancement and empowerment throgh digitalization, seed bamenda ",
+    default: "Zigex | Internship, Growth & Professional Experience",
+    template: "%s | Zigex",
   },
   description:
-    "ZIGEX (Zone for Internship, Growth and Experience) is your gateway to career advancement. Connect with top tech internships, skill-building programs, and community events designed to empower the next generation of digital leaders.",
+    "Zigex (Zone for Internship, Growth and Experience) is Africa's premier gateway to career advancement. Discover tech internships, masterclasses, and community events designed to empower the next generation of digital leaders through digitalization and SEED Bamenda.",
   keywords: [
     "ZIGEX",
     "Zone for Internship Growth and Experience",
+    "fonyuygita",
+    "fonyuy gita",
+    "mazhewo John brindi",
+    "abdul fadiga",
+    "fien dora",
+    "tayuh favour",
+    "Ngwa Frank",
+    "cheko yohane",
     "Internships",
     "Tech Programs",
     "Events",
@@ -46,39 +54,67 @@ export const metadata: Metadata = {
     "SEED Bamenda",
     "Cameroon Tech",
   ],
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "ZIGEX",
+  },
+  icons: {
+
+    icon: [
+      { url: "/icons/icon-48x48.png", sizes: "48x48", type: "image/png" },
+      { url: "/icons/icon-96x96.png", sizes: "96x96", type: "image/png" },
+      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+    ],
+    shortcut: "/icons/icon-192x192.png",
+    apple: [
+      { url: "/icons/icon-152x152.png", sizes: "152x152", type: "image/png" },
+      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+    ],
+  },
+
+  formatDetection: {
+
+    telephone: false,
+  },
   openGraph: {
-    url: "https://zigex.vercel.app",
+
+    url: "https://zigexconnect.com",
     type: "website",
     title: "ZIGEX | Zone for Internship, Growth and Experience",
     description:
       "ZIGEX (Zone for Internship, Growth and Experience) is the ultimate platform for discovering career-defining internships, specialized training programs, and impactful tech events. Empowering talent through digitalization.",
     images: [
       {
-        url: "https://i.ibb.co/5WXQhq78/Whats-App-Image-2025-09-23-at-8-22-42-AM.jpg",
+        url: "https://i.ibb.co/k2Rpz2jQ/og-image-2x-100.jpg",
         width: 1200,
         height: 630,
-        alt: "ZIGEX Community",
+        alt: "Zigex - Zone for Internship, Growth and Experience",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "ZIGEX | Zone for Internship, Growth and Experience",
+    title: "Zigex | Connect with Elite Opportunities",
     description:
-      "ZIGEX (Zone for Internship, Growth and Experience) - Connecting aspiring talent with opportunities. Discover internships, programs, and events.",
-    creator: "@fonyuygita",
-    site: "@innovatewithseed",
-    images: [
-      {
-        url: "https://i.ibb.co/5WXQhq78/Whats-App-Image-2025-09-23-at-8-22-42-AM.jpg",
-        width: 1200,
-        height: 630,
-        alt: "ZIGEX Community",
-      },
-    ],
+      "Africa's gateway to career-defining internships and professional growth. Discover your potential with Zigex.",
+    creator: "@zigex_platform",
+    images: ["https://i.ibb.co/k2Rpz2jQ/og-image-2x-100.jpg"],
   },
   alternates: {
-    canonical: "https://zigex.vercel.app",
+    canonical: "https://zigexconnect.com",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
 };
 
@@ -91,9 +127,13 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.variable} ${hostGrotesk.variable} antialiased`}>
         {children}
+        <InstallPwaPopup />
         <Toaster position="top-center" reverseOrder={false} />
+        <Analytics />
+        <SpeedInsights />
         {/* <Toaster /> */}
       </body>
+
     </html>
   );
 }

@@ -19,6 +19,11 @@ export default async function EditProfilePage() {
 
   // Safeguard: Although middleware protects this, it's good practice to check again.
   if (!user) {
+    return (
+      <p className="p-8 text-center text-red-500">
+        You must be logged in to edit your profile.
+      </p>
+    );
   }
 
   // Fetch the company profile linked to the authenticated user.

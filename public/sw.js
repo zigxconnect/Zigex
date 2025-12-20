@@ -67,9 +67,9 @@ if (!self.define) {
     });
   };
 }
-define(['./workbox-c008c882'], (function (workbox) { 'use strict';
+define(['./workbox-1e54d6fe'], (function (workbox) { 'use strict';
 
-  importScripts();
+  importScripts("/fallback-development.js");
   self.skipWaiting();
   workbox.clientsClaim();
 
@@ -79,89 +79,36 @@ define(['./workbox-c008c882'], (function (workbox) { 'use strict';
    * See https://goo.gl/S9QRab
    */
   workbox.precacheAndRoute([{
-    "url": "/_next/build-manifest.json",
-    "revision": "001ab71131e4a21158a8517cb06264e7"
-  }, {
-    "url": "/_next/react-loadable-manifest.json",
-    "revision": "ee49746709e0aaf034139c45261d3af4"
-  }, {
-    "url": "/_next/server/middleware-build-manifest.js",
-    "revision": "c1bdb3b6b2ddfa577860930fb73d87de"
-  }, {
-    "url": "/_next/server/middleware-react-loadable-manifest.js",
-    "revision": "2b1d467ac3f71048767efaf03a8e634a"
-  }, {
-    "url": "/_next/server/next-font-manifest.js",
-    "revision": "f7097bf7c93c1cbb4c118491ca6d2b04"
-  }, {
-    "url": "/_next/server/next-font-manifest.json",
-    "revision": "d51420cd4aa5d37d6719849cf36d0d6f"
-  }, {
-    "url": "/_next/static/chunks/_app-pages-browser_node_modules_next_dist_client_dev_noop-turbopack-hmr_js.js",
-    "revision": "80e63b796f69389ce193786a5ad73b8f"
-  }, {
-    "url": "/_next/static/chunks/app-pages-internals.js",
-    "revision": "733ed3a3807aa689e64cc97a021bdff7"
-  }, {
-    "url": "/_next/static/chunks/app/(auth)/layout.js",
-    "revision": "ee0db20c929aa6124067df511589d874"
-  }, {
-    "url": "/_next/static/chunks/app/(dashboard)/dashboard/page.js",
-    "revision": "5db45ce0840f34df6861f7aa2bcaf1fd"
-  }, {
-    "url": "/_next/static/chunks/app/(dashboard)/feed/layout.js",
-    "revision": "ed07f982d4c6590e300b3290a583c545"
-  }, {
-    "url": "/_next/static/chunks/app/api/auth/login/route.js",
-    "revision": "1be0cc4fe73627ee2facf79926e6493a"
-  }, {
-    "url": "/_next/static/chunks/app/layout.js",
-    "revision": "ad86134d98ec453a803ae8864b408faa"
-  }, {
-    "url": "/_next/static/chunks/polyfills.js",
-    "revision": "846118c33b2c0e922d7b3a7676f81f6f"
-  }, {
-    "url": "/_next/static/chunks/webpack.js",
-    "revision": "cdb53ec689ae88cf215064b27bbd6095"
-  }, {
-    "url": "/_next/static/css/app/layout.css",
-    "revision": "d8e32543b10cea2104ca35ef86d3b48e"
-  }, {
-    "url": "/_next/static/webpack/209049292222e2b2.webpack.hot-update.json",
-    "revision": "development"
-  }, {
-    "url": "/_next/static/webpack/app/layout.209049292222e2b2.hot-update.js",
-    "revision": "development"
-  }, {
-    "url": "/_next/static/webpack/webpack.209049292222e2b2.hot-update.js",
+    "url": "/offline",
     "revision": "development"
   }], {
-    "ignoreURLParametersMatching": [/ts/]
+    "ignoreURLParametersMatching": [/^utm_/, /^fbclid$/, /ts/]
   });
   workbox.cleanupOutdatedCaches();
   workbox.registerRoute("/", new workbox.NetworkFirst({
     "cacheName": "start-url",
     plugins: [{
       cacheWillUpdate: async ({
-        request,
-        response,
-        event,
-        state
-      }) => {
-        if (response && response.type === 'opaqueredirect') {
-          return new Response(response.body, {
-            status: 200,
-            statusText: 'OK',
-            headers: response.headers
-          });
-        }
-        return response;
-      }
+        response: e
+      }) => e && "opaqueredirect" === e.type ? new Response(e.body, {
+        status: 200,
+        statusText: "OK",
+        headers: e.headers
+      }) : e
+    }, {
+      handlerDidError: async ({
+        request: e
+      }) => "undefined" != typeof self ? self.fallback(e) : Response.error()
     }]
   }), 'GET');
   workbox.registerRoute(/.*/i, new workbox.NetworkOnly({
     "cacheName": "dev",
-    plugins: []
+    plugins: [{
+      handlerDidError: async ({
+        request: e
+      }) => "undefined" != typeof self ? self.fallback(e) : Response.error()
+    }]
   }), 'GET');
+  self.__WB_DISABLE_DEV_LOGS = true;
 
 }));

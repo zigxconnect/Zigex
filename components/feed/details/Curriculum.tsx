@@ -528,23 +528,23 @@ const CurriculumSection: React.FC<CurriculumProps> = ({
       <Card className="border border-border shadow-xl overflow-hidden bg-card rounded-[2rem]">
         {/* Header */}
         <div className="px-6 py-8 sm:py-10 border-b border-border text-foreground relative overflow-hidden bg-muted/20">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16" />
+          <div className="absolute top-0 right-0 w-32 h-32 bg-success/5 rounded-full -mr-16 -mt-16" />
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-1.5 h-8 bg-primary rounded-full shadow-[0_0_8px_rgba(21,93,252,0.4)]" />
-              <h2 className="text-2xl sm:text-3xl font-black tracking-tight uppercase">{programTitle}</h2>
+              <div className="w-1.5 h-8 bg-success rounded-full shadow-[0_0_8px_rgba(22,163,74,0.4)]" />
+              <h2 className="text-2xl sm:text-3xl font-black tracking-tight uppercase text-foreground">{programTitle}</h2>
             </div>
             <p className="text-muted-foreground mb-6 font-medium">Year-Long Comprehensive Learning Program</p>
             <div className="flex flex-wrap gap-4 sm:gap-6">
-              <div className="flex items-center gap-2 bg-primary/5 text-primary border border-primary/10 px-4 py-2 rounded-full shadow-sm">
+              <div className="flex items-center gap-2 bg-white text-success border border-success/10 px-4 py-2 rounded-full shadow-sm">
                 <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span className="text-sm sm:text-base font-bold">{totalHours.toFixed(0)} Hours</span>
               </div>
-              <div className="flex items-center gap-2 bg-primary/5 text-primary border border-primary/10 px-4 py-2 rounded-full shadow-sm">
+              <div className="flex items-center gap-2 bg-white text-success border border-success/10 px-4 py-2 rounded-full shadow-sm">
                 <Award className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span className="text-sm sm:text-base font-bold">{CURRICULUM_DATA.length} Modules</span>
               </div>
-              <div className="flex items-center gap-2 bg-primary/5 text-primary border border-primary/10 px-4 py-2 rounded-full shadow-sm">
+              <div className="flex items-center gap-2 bg-white text-success border border-success/10 px-4 py-2 rounded-full shadow-sm">
                 <Target className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span className="text-sm sm:text-base font-bold">52 Projects</span>
               </div>
@@ -563,12 +563,12 @@ const CurriculumSection: React.FC<CurriculumProps> = ({
               >
                 <div className="flex items-center gap-3 sm:gap-4 flex-1 text-left">
                   <div
-                    className="bg-primary p-2.5 sm:p-3 rounded-xl text-white shadow-md"
+                    className="bg-success p-2.5 sm:p-3 rounded-xl text-white shadow-md"
                   >
                     <section.icon className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                   <div>
-                    <h3 className="font-black text-foreground text-sm sm:text-base group-hover:text-primary transition-colors uppercase tracking-wide">
+                    <h3 className="font-black text-foreground text-sm sm:text-base group-hover:text-success transition-colors uppercase tracking-wide">
                       {section.title}
                     </h3>
                     <p className="text-xs sm:text-sm text-muted-foreground font-medium mt-0.5">
@@ -577,7 +577,7 @@ const CurriculumSection: React.FC<CurriculumProps> = ({
                   </div>
                 </div>
                 <ChevronDown
-                  className={`w-5 h-5 text-primary transition-transform ${
+                  className={`w-5 h-5 text-success transition-transform ${
                     expandedSection === section.id ? "rotate-180" : ""
                   }`}
                 />
@@ -597,10 +597,10 @@ const CurriculumSection: React.FC<CurriculumProps> = ({
                         >
                           <button
                             onClick={() => toggleLesson(lessonId)}
-                            className="w-full px-4 py-3 flex items-center justify-between hover:bg-blue-50 transition-colors"
+                            className="w-full px-4 py-3 flex items-center justify-between hover:bg-success/5 transition-colors"
                           >
                             <div className="flex items-center gap-3 flex-1 text-left">
-                              <span className="flex-shrink-0 w-7 h-7 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-semibold">
+                              <span className="flex-shrink-0 w-7 h-7 rounded-full bg-success/10 text-success flex items-center justify-center text-sm font-semibold">
                                 {lesson.lessonNum}
                               </span>
                               <div>
@@ -629,7 +629,7 @@ const CurriculumSection: React.FC<CurriculumProps> = ({
                                     key={idx}
                                     className="flex items-start gap-3 text-sm"
                                   >
-                                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-600 mt-2 flex-shrink-0" />
+                                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-success mt-2 flex-shrink-0" />
                                     <span className="text-gray-700">{topic}</span>
                                   </li>
                                 ))}
@@ -675,19 +675,19 @@ const CurriculumSection: React.FC<CurriculumProps> = ({
         <div className="bg-muted/30 px-6 py-6 border-t border-border">
           <div className="grid grid-cols-3 gap-4 text-center mb-5">
             <div>
-              <div className="text-2xl sm:text-3xl font-black text-primary">
+              <div className="text-2xl sm:text-3xl font-black text-success">
                 {CURRICULUM_DATA.length}
               </div>
               <p className="text-xs sm:text-sm text-muted-foreground font-bold uppercase tracking-wider mt-1">Modules</p>
             </div>
             <div>
-              <div className="text-2xl sm:text-3xl font-black text-primary">
+              <div className="text-2xl sm:text-3xl font-black text-success">
                 {CURRICULUM_DATA.reduce((acc, s) => acc + s.lessons.length, 0)}
               </div>
               <p className="text-xs sm:text-sm text-muted-foreground font-bold uppercase tracking-wider mt-1">Lessons</p>
             </div>
             <div>
-              <div className="text-2xl sm:text-3xl font-black text-primary">
+              <div className="text-2xl sm:text-3xl font-black text-success">
                 {CURRICULUM_DATA.reduce(
                   (acc, s) =>
                     acc +
@@ -698,8 +698,8 @@ const CurriculumSection: React.FC<CurriculumProps> = ({
               <p className="text-xs sm:text-sm text-muted-foreground font-bold uppercase tracking-wider mt-1">Projects</p>
             </div>
           </div>
-          <button className="w-full py-3.5 sm:py-4 bg-primary text-white font-black uppercase tracking-wider text-sm rounded-2xl hover:bg-secondary transition-all duration-300 shadow-lg shadow-blue-200/50 hover:scale-[1.01] active:scale-[0.99]">
-            Get Started Now
+          <button className="w-full py-3.5 sm:py-4 bg-primary text-white font-black uppercase tracking-wider text-sm rounded-2xl hover:bg-primary/90 transition-all duration-300 shadow-lg shadow-green-200/50 hover:scale-[1.01] active:scale-[0.99]">
+            Register Now
           </button>
         </div>
       </Card>

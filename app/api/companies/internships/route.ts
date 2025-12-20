@@ -141,19 +141,19 @@ export async function POST(request: Request) {
                     const resend = new Resend(process.env.RESEND_API_KEY);
                     const { NewPostEmail } = await import("@/emails/NewPostEmail");
 
-                    // Send to "notifications@futureprospect.online" (ourselves) and BCC everyone else
+                    // Send to "notifications@ZIGEX.online" (ourselves) and BCC everyone else
                     await resend.emails.send({
-                        from: "FutureProspect <notifications@futureprospect.online>",
-                        to: "notifications@futureprospect.online", 
+                        from: "ZIGEX <notifications@ZIGEX.online>",
+                        to: "notifications@ZIGEX.online", 
                         bcc: recipientEmails, // Everyone goes to BCC
                         subject: `New Internship Posted: ${internship.title}`,
                         react: NewPostEmail({
                             postTitle: internship.title,
                             postType: "Internship",
                             postLocation: internship.location,
-                            viewPostUrl: `https://futureprospect.online/internships/${internship.id}`,
+                            viewPostUrl: `https://ZIGEX.online/internships/${internship.id}`,
                             companyLogoUrl: "https://tmvipinvvhgklmqwvows.supabase.co/storage/v1/object/public/company-assets/Seed%20Company/events/SEED%20community%20Challenge-1757769838240.jpg", 
-                            managePreferencesUrl: "https://futureprospect.online/profile/notifications",
+                            managePreferencesUrl: "https://ZIGEX.online/profile/notifications",
                             postedDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
                         }),
                     });

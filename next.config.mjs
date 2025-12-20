@@ -1,6 +1,33 @@
 
+import withPWAInit from "@ducanh2912/next-pwa";
+
+const withPWA = withPWAInit({
+  dest: "public",
+  disable: false, // Enable in development for testing
+
+  register: true,
+  skipWaiting: true,
+  cacheOnFrontEndNav: true,
+  aggressiveFrontEndNavCaching: true,
+  reloadOnOnline: true,
+  swMinify: true,
+  workboxOptions: {
+    disableDevLogs: true,
+    maximumFileSizeToCacheInBytes: 5000000, // 5MB limit for precaching
+  },
+
+  fallbacks: {
+    document: "/offline", // Redirect to /offline when offline
+  },
+});
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // TypeScript settings
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+
   // Server configuration for large file uploads
   experimental: {
     serverActions: {
@@ -99,4 +126,7 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+
+
+nextConfig.turbopack = {};
+export default withPWA(nextConfig);

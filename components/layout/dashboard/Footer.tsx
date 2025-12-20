@@ -200,10 +200,10 @@ export const DashboardFooter = () => {
               <div className="flex items-center gap-3">
                 <Mail size={16} className="text-blue-600 flex-shrink-0" />
                 <a 
-                  href="mailto:support@futureprospect.com" 
+                  href="mailto:support@ZIGEX.com" 
                   className="text-gray-600 hover:text-blue-600 transition-colors duration-200 text-sm"
                 >
-                  support@futureprospect.com
+                  support@ZIGEX.com
                 </a>
               </div>
             </div>

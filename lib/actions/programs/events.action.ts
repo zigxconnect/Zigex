@@ -1,6 +1,6 @@
 "use server";
 
-import { Event } from "@/lib/types/dashoard/index";
+import { Event } from "@/lib/types/dashboard/index";
 
 /**
  * Fetches the details for a specific event by its ID.

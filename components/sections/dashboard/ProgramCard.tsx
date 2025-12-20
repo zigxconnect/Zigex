@@ -261,7 +261,7 @@ export const ProgramCard = ({
 
                 {/* Open/Closed status */}
                 <div className="ml-2">
-                  {isOpen ? (
+                  {openStatusComputed ? (
                     <div className="inline-flex items-center gap-1 px-2 py-1 bg-[#16A34A]/10 text-[#16A34A] rounded-full text-xs font-semibold border border-[#16A34A]/20">
                       <CheckCircle size={14} className="text-[#16A34A]" />
                       <span>Open</span>
@@ -331,7 +331,7 @@ export const ProgramCard = ({
                   <div className="w-2.5 h-2.5 bg-white rounded-full animate-ping absolute" />
                   <div className="w-2.5 h-2.5 bg-white rounded-full" />
                 </div>
-                <span className="text-white text-sm font-black uppercase tracking-wider">
+                <span className="text-white text-sm font-bold uppercase tracking-wider">
                   Live Now
                 </span>
               </div>
@@ -453,7 +453,7 @@ export const ProgramCard = ({
               <p className="text-blue-300 text-xs font-bold uppercase tracking-wider mb-1">
                 {companyName}
               </p>
-              <h3 className="text-white text-xl font-black leading-tight line-clamp-2 drop-shadow-md">
+              <h3 className="text-white text-xl font-bold leading-tight line-clamp-2 drop-shadow-md">
                 {program.title}
               </h3>
             </div>

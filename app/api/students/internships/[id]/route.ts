@@ -4,10 +4,10 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   request: Request,
-  paramsPromise: Promise<{ params: { id: string } }>
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { params } = await paramsPromise;
-  const { id } = params;
+  const { id } = await params;
+
 
   if (!id) {
     return NextResponse.json(
@@ -72,9 +72,9 @@ export async function GET(
       isProd
         ? { error: "Failed to fetch internship details" }
         : {
-            error: "Failed to fetch internship details",
-            details: error instanceof Error ? error.message : String(error),
-          },
+          error: "Failed to fetch internship details",
+          details: error instanceof Error ? error.message : String(error),
+        },
       { status: 500 }
     );
   }

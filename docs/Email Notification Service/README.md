@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-This document provides instructions on how to configure and deploy the email notification service for the FutureProspect platform.
+This document provides instructions on how to configure and deploy the email notification service for the ZIGEX platform.
 
 This service automatically sends an email notification to subscribed users whenever a new Program, Internship, or Event is posted. It is built using a Supabase Edge Function (Deno runtime) and the Resend API for email delivery. The email templates are built with React Email.
 
@@ -35,7 +35,7 @@ Configuration involves getting an API key from Resend and setting it up securely
 1.  Log in to your **Resend Dashboard**.
 2.  Navigate to the **API Keys** section from the left-hand menu.
 3.  Click **"Create API Key"**.
-4.  Give it a descriptive name (e.g., `FutureProspect Dev Key`).
+4.  Give it a descriptive name (e.g., `ZIGEX Dev Key`).
 5.  Set the permission to **"Sending access"**.
 6.  Click **"Create"**.
 7.  **Immediately copy the API key** and store it somewhere safe. You will only see it once.
@@ -118,7 +118,7 @@ Before deploying to a live audience, you must complete these steps.
 #### Step 1: Verify Your Domain in Resend
 
 1.  In the Resend Dashboard, go to the **Domains** tab.
-2.  Add your application's domain (e.g., `futureprospect.com`).
+2.  Add your application's domain (e.g., `ZIGEX.com`).
 3.  Follow the instructions to add the provided DNS records to your domain provider (Vercel, GoDaddy, etc.).
 
 #### Step 2: Update Production Values in the Code
@@ -128,16 +128,16 @@ In the file `supabase/functions/send-new-post-notification/index.ts`, update the
 1.  **Update the "From" Address:** Change the `from` field to use your newly verified domain.
     ```typescript
     // Change from:
-    from: 'FutureProspect <onboarding@resend.dev>',
+    from: 'ZIGEX <onboarding@resend.dev>',
     // Change to:
-    from: 'FutureProspect <notifications@your-verified-domain.com>',
+    from: 'ZIGEX <notifications@your-verified-domain.com>',
     ```
 2.  **Update the Application URL:** Change the `postUrl` variable to point to your live website.
     ```typescript
     // Change from:
     const postUrl = `http://localhost:3000/${tableName}/${postId}`;
     // Change to:
-    const postUrl = `https://www.futureprospect.com/${tableName}/${postId}`;
+    const postUrl = `https://www.ZIGEX.com/${tableName}/${postId}`;
     ```
 3.  **(Optional) Update the Company Logo URL** for long-term stability.
 

@@ -1,4 +1,4 @@
-This is  the documentation for futureProspect and how it endpoints works.
+This is  the documentation for ZIGEX and how it endpoints works.
 
 ## Getting Started
 

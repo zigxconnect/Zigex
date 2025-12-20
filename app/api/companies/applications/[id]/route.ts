@@ -215,7 +215,7 @@ export async function PATCH(
             const { ApplicationAcceptedEmail } = await import("@/emails/ApplicationAccepted");
             
             await resend.emails.send({
-                from: "FutureProspect <notifications@futureprospect.online>",
+                from: "ZIGEX <notifications@ZIGEX.online>",
                 to: studentEmail,
                 subject: `Congratulations! Application Accepted: ${opportunityTitle}`,
                 react: ApplicationAcceptedEmail({
@@ -246,7 +246,7 @@ export async function PATCH(
             const { ApplicationRejectedEmail } = await import("@/emails/ApplicationRejected");
 
             await resend.emails.send({
-                from: "FutureProspect <notifications@futureprospect.online>",
+                from: "ZIGEX <notifications@ZIGEX.online>",
                 to: studentEmail,
                 subject: `Update on your application: ${opportunityTitle}`,
                 react: ApplicationRejectedEmail({
@@ -254,7 +254,7 @@ export async function PATCH(
                     postTitle: opportunityTitle,
                     postType: application.application_type.charAt(0).toUpperCase() + application.application_type.slice(1) as any,
                     companyName: companyName,
-                    viewApplicationUrl: "https://futureprospect.online/applications",
+                    viewApplicationUrl: "https://ZIGEX.online/applications",
                 }),
             });
         } catch (err) {

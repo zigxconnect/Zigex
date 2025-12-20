@@ -62,8 +62,8 @@ Deno.serve(async (req) => {
     const recipientEmails = users.map((u) => u.email).filter(Boolean);
 
     // Define URLs for the template
-    const postUrl = `https://futureprospect.online/${tableName}/${postId}`;
-    const managePreferencesUrl = `https://futureprospect.online/profile/notifications`;
+    const postUrl = `https://ZIGEX.online/${tableName}/${postId}`;
+    const managePreferencesUrl = `https://ZIGEX.online/profile/notifications`;
 
     // Format the posted date (e.g., 'Sep 22, 2025')
     const postedDate = new Date().toLocaleDateString("en-US", {
@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
     const templatePath = new URL("./email-template.html", import.meta.url);
     let template = await readTextFileStr(templatePath);
 
-    const recipientGreeting = `Dear ${"recipientName" in newPost ? newPost.recipientName : "FutureProspect Member"},`;
+    const recipientGreeting = `Dear ${"recipientName" in newPost ? newPost.recipientName : "ZIGEX Member"},`;
 
     const replacements: { [k: string]: string } = {
       "{{postType}}": postType,
@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
       "{{companyLogoUrl}}":
         "https://tmvipinvvhgklmqwvows.supabase.co/storage/v1/object/public/company-assets/Seed%20Company/events/SEED%20community%20Challenge-1757769838240.jpg",
       "{{postedDate}}": postedDate,
-      "{{recipientGreeting}}": recipientName ? `Dear ${recipientName},` : "Dear FutureProspect Member,",
+      "{{recipientGreeting}}": recipientName ? `Dear ${recipientName},` : "Dear ZIGEX Member,",
     };
 
     for (const key of Object.keys(replacements)) {
@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
 
     // Send the email
     await resend.emails.send({
-      from: "FutureProspect <notifications@futureprospect.online>",
+      from: "ZIGEX <notifications@ZIGEX.online>",
       to: "delivered@resend.dev",
       bcc: recipientEmails,
       subject: `New ${postType} Posted: ${postTitle}`,

@@ -198,19 +198,19 @@ export async function POST(request: Request) {
                 const resend = new Resend(process.env.RESEND_API_KEY);
                 const { NewPostEmail } = await import("@/emails/NewPostEmail");
 
-                // Use "notifications@futureprospect.online" as 'to' and everyone else as 'bcc'
+                // Use "notifications@ZIGEX.online" as 'to' and everyone else as 'bcc'
                 await resend.emails.send({
-                    from: "FutureProspect <notifications@futureprospect.online>",
-                    to: "notifications@futureprospect.online", 
+                    from: "ZIGEX <notifications@ZIGEX.online>",
+                    to: "notifications@ZIGEX.online", 
                     bcc: recipientEmails,
                     subject: `New Program Posted: ${data.title}`,
                     react: NewPostEmail({
                         postTitle: data.title,
                         postType: "Program",
                         postLocation: data.location || "Online", // Fallback
-                        viewPostUrl: `https://futureprospect.online/programs/${data.id}`,
+                        viewPostUrl: `https://ZIGEX.online/programs/${data.id}`,
                         companyLogoUrl: "https://tmvipinvvhgklmqwvows.supabase.co/storage/v1/object/public/company-assets/Seed%20Company/events/SEED%20community%20Challenge-1757769838240.jpg", 
-                        managePreferencesUrl: "https://futureprospect.online/profile/notifications",
+                        managePreferencesUrl: "https://ZIGEX.online/profile/notifications",
                         postedDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
                     }),
                 });

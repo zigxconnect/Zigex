@@ -218,17 +218,17 @@ export default function DynamicForm({ type, id }: DynamicFormProps) {
   }
 
   return (
-    <div className="z-9999 relative p-6 sm:p-8 lg:p-12 bg-white rounded-3xl shadow-2xl border-0">
+    <div className="z-50 relative p-6 sm:p-8 lg:p-12 bg-card rounded-3xl border border-border shadow-sm">
       {/* Header */}
-      <div className="text-center mb-8">
-        <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mb-4 mx-auto shadow-lg">
+      <div className="text-center mb-10">
+        <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mb-5 mx-auto">
           <FormIcon className="w-8 h-8 text-white" />
         </div>
-        <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">
+        <h1 className="text-3xl sm:text-4xl font-bold text-foreground uppercase tracking-tight mb-3">
           {currentContent.title}
         </h1>
         {currentContent.subtitle && (
-          <p className="text-gray-600 text-base">{currentContent.subtitle}</p>
+          <p className="text-muted-foreground text-sm font-medium uppercase tracking-widest opacity-70">{currentContent.subtitle}</p>
         )}
       </div>
 
@@ -245,38 +245,41 @@ export default function DynamicForm({ type, id }: DynamicFormProps) {
               />
             );
           }
+
+          const commonLabel = (
+            <label className="text-[10px] font-bold text-foreground uppercase tracking-widest ml-1">
+              {field.label}
+              {field.required && <span className="text-destructive ml-1">*</span>}
+            </label>
+          );
+
           if (field.type === "textarea") {
             return (
-              <div key={field.name} className="group">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  {field.label}
-                  {field.required && <span className="text-red-500 ml-1">*</span>}
-                </label>
+              <div key={field.name} className="space-y-2">
+                {commonLabel}
                 <textarea
                   name={field.name}
                   placeholder={field.placeholder}
                   required={field.required}
                   rows={4}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 resize-none text-gray-800 placeholder-gray-400 group-hover:border-gray-300"
+                  className="w-full px-5 py-4 rounded-2xl border border-border focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-200 resize-none text-foreground bg-muted/20 font-medium placeholder:text-muted-foreground/50"
                 />
               </div>
             );
           }
+
           if (field.type === "select") {
             return (
-              <div key={field.name} className="group">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  {field.label}
-                  {field.required && <span className="text-red-500 ml-1">*</span>}
-                </label>
+              <div key={field.name} className="space-y-2">
+                {commonLabel}
                 <select
                   name={field.name}
                   required={field.required}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-white text-gray-800 cursor-pointer appearance-none group-hover:border-gray-300 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNNCA2TDggMTBMMTIgNiIgc3Ryb2tlPSIjNkI3MjgwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg==')] bg-no-repeat bg-[center_right_1rem]"
+                  className="w-full px-5 py-4 rounded-2xl border border-border focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-200 bg-muted/20 text-foreground cursor-pointer appearance-none font-medium"
                 >
-                  <option value="">Select an option</option>
+                  <option value="" className="bg-card">Select Option</option>
                   {field.options?.map((option) => (
-                    <option key={option} value={option}>
+                    <option key={option} value={option} className="bg-card">
                       {option}
                     </option>
                   ))}
@@ -284,96 +287,90 @@ export default function DynamicForm({ type, id }: DynamicFormProps) {
               </div>
             );
           }
+
           if (field.type === "checkbox") {
             return (
               <div
                 key={field.name}
-                className="flex items-start gap-3 p-4 border-2 border-gray-200 rounded-xl bg-gray-50/50 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200"
+                className="flex items-center gap-4 p-5 border border-border rounded-2xl bg-muted/10 hover:bg-muted/20 transition-all duration-200"
               >
-                <input
-                  type="checkbox"
-                  id={field.name}
-                  name={field.name}
-                  required={field.required}
-                  className="mt-0.5 h-5 w-5 rounded-md border-2 border-gray-300 text-blue-600 focus:ring-4 focus:ring-blue-100 transition-all duration-200 cursor-pointer"
-                />
+                <div className="relative flex items-center">
+                  <input
+                    type="checkbox"
+                    id={field.name}
+                    name={field.name}
+                    required={field.required}
+                    className="h-5 w-5 rounded-lg border border-border text-primary focus:ring-4 focus:ring-primary/10 transition-all duration-200 cursor-pointer bg-card"
+                  />
+                </div>
                 <label
                   htmlFor={field.name}
-                  className="text-sm text-gray-700 leading-relaxed cursor-pointer select-none flex-1"
+                  className="text-xs font-bold text-foreground leading-tight cursor-pointer select-none flex-1 uppercase tracking-tight"
                 >
                   {field.label}
                 </label>
               </div>
             );
           }
+
           if (field.type === "file") {
             return (
-              <div key={field.name} className="group">
-                <label
-                  htmlFor={field.name}
-                  className="block text-sm font-semibold text-gray-700 mb-2"
-                >
-                  {field.label}
-                  {field.required && <span className="text-red-500 ml-1">*</span>}
-                </label>
+              <div key={field.name} className="space-y-2">
+                {commonLabel}
                 <input
                   type="file"
                   id={field.name}
                   name={field.name}
                   accept=".pdf,.doc,.docx"
                   required={field.required}
-                  className="block w-full text-sm text-gray-600 
-                    file:mr-4 file:py-3 file:px-6 
+                  className="block w-full text-xs text-muted-foreground 
+                    file:mr-4 file:py-2.5 file:px-5 
                     file:rounded-xl file:border-0 
-                    file:text-sm file:font-semibold 
-                    file:bg-gradient-to-r file:from-blue-600 file:to-indigo-600 
-                    file:text-white hover:file:from-blue-700 
-                    hover:file:to-indigo-700 file:transition-all 
-                    file:duration-200 file:cursor-pointer file:shadow-md
-                    focus:outline-none focus:ring-4 focus:ring-blue-100
-                    border-2 border-gray-200 rounded-xl p-3 group-hover:border-gray-300 transition-all duration-200"
+                    file:text-[10px] file:font-bold file:uppercase file:tracking-widest
+                    file:bg-primary file:text-white 
+                    hover:file:bg-primary/90 file:transition-all 
+                    file:duration-200 file:cursor-pointer
+                    focus:outline-none focus:ring-4 focus:ring-primary/10
+                    border border-border rounded-2xl p-3 bg-muted/20"
                 />
                 {field.helperText && (
-                  <p className="mt-2 text-xs text-gray-500">{field.helperText}</p>
+                  <p className="mt-2 text-[10px] font-bold text-muted-foreground uppercase tracking-tight ml-1 opacity-60">{field.helperText}</p>
                 )}
               </div>
             );
           }
+
           // Default to text input
           return (
-            <div key={field.name} className="group">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                {field.label}
-                {field.required && <span className="text-red-500 ml-1">*</span>}
-              </label>
+            <div key={field.name} className="space-y-2">
+              {commonLabel}
               <input
                 type={field.type || "text"}
                 name={field.name}
                 placeholder={field.placeholder}
                 required={field.required}
-                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 
-                  focus:border-blue-500 focus:ring-4 focus:ring-blue-100 
-                  transition-all duration-200 text-gray-800 
-                  placeholder-gray-400 bg-white group-hover:border-gray-300"
+                className="w-full px-5 py-4 rounded-2xl border border-border 
+                  focus:border-primary focus:ring-4 focus:ring-primary/10 
+                  transition-all duration-200 text-foreground 
+                  font-medium placeholder:text-muted-foreground/50 bg-muted/20"
               />
             </div>
           );
         })}
 
         {error && (
-          <div className="p-4 text-sm text-red-800 bg-red-50 border-2 border-red-200 rounded-xl animate-in fade-in slide-in-from-top-2">
-            <strong className="font-semibold">Error:</strong> {error}
+          <div className="p-4 text-[10px] font-bold text-destructive bg-destructive/10 border border-destructive/20 rounded-2xl animate-in fade-in slide-in-from-top-2 uppercase tracking-tight">
+            Submission Error: {error}
           </div>
         )}
 
         <Button 
           type="submit" 
-          className="w-full mt-8 py-4 text-base font-semibold
-            bg-gradient-to-r from-blue-600 to-indigo-600
-            hover:from-blue-700 hover:to-indigo-700 text-white
-            rounded-xl shadow-lg hover:shadow-xl 
+          className="w-full mt-10 py-7 text-xs font-bold uppercase tracking-[0.2em]
+            bg-primary hover:bg-primary/90 text-white
+            rounded-2xl shadow-xl shadow-primary/20
             transition-all duration-300 ease-in-out 
-            transform hover:scale-[1.02]
+            transform hover:scale-[1.01] active:scale-[0.99]
             disabled:opacity-50 disabled:cursor-not-allowed
             disabled:hover:scale-100 border-0" 
           disabled={isSubmitting}

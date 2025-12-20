@@ -5,10 +5,12 @@ import { supabaseAdmin } from "@/lib/supabase/server";
  * Function to get a unique program posted by the authenticated company
  * GET /api/companies/programs/:id (Authenticated: returns a single program for the authenticated company)
  */
-export async function getAuthenticatedCompanyProgramById(
+export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
+
   const auth = await authMiddleware(request);
   if (auth instanceof NextResponse) {
     return auth;
@@ -25,7 +27,6 @@ export async function getAuthenticatedCompanyProgramById(
       { status: 404 }
     );
   }
-  const id = (await params)?.id;
   const { data, error } = await supabaseAdmin
     .from("programs")
     .select("*")

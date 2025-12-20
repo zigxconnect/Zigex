@@ -19,7 +19,7 @@ const mockPrograms = {
     program_picture_url: "/ccc.png",
     required_skills: ["Python", "Machine Learning", "Data Analysis"],
     company: {
-      company_name: "FutureProspect Academy",
+      company_name: "ZIGEX Academy",
       logo_url: "/ccc.png",
       cover_image_url: "/ccc.png"
     }
