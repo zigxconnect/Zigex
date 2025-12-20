@@ -19,7 +19,7 @@ interface CompanyCardProps {
 
 export function CompanyCard({ company }: CompanyCardProps) {
   return (
-    <Card className="p-6 hover:shadow-lg transition-all duration-300 border-0 bg-card/80 backdrop-blur-sm">
+    <Card className="p-6 hover:shadow-xl transition-all duration-300 border border-border bg-card/80 backdrop-blur-md">
       <Link
         href={`/company/${company.id}`}
         className="flex items-center gap-4 group"

@@ -18,6 +18,7 @@ import {
   XCircle,
   LockIcon,
   LockOpen,
+  ArrowRight,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { Program } from "@/lib/types/dashoard";
@@ -260,14 +261,14 @@ export const ProgramCard = ({
 
                 {/* Open/Closed status */}
                 <div className="ml-2">
-                  {openStatusComputed ? (
-                    <div className="px-2 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold inline-flex items-center gap-1 border border-emerald-100">
-                      <CheckCircle size={14} className="text-emerald-600" />
+                  {isOpen ? (
+                    <div className="inline-flex items-center gap-1 px-2 py-1 bg-[#16A34A]/10 text-[#16A34A] rounded-full text-xs font-semibold border border-[#16A34A]/20">
+                      <CheckCircle size={14} className="text-[#16A34A]" />
                       <span>Open</span>
                     </div>
                   ) : (
-                    <div className="px-2 py-1 bg-red-50 text-red-700 rounded-full text-xs font-semibold inline-flex items-center gap-1 border border-red-100">
-                      <XCircle size={14} className="text-red-600" />
+                    <div className="inline-flex items-center gap-1 px-2 py-1 bg-[#DC2626]/10 text-[#DC2626] rounded-full text-xs font-semibold border border-[#DC2626]/20">
+                      <XCircle size={14} className="text-[#DC2626]" />
                       <span>Closed</span>
                     </div>
                   )}
@@ -315,23 +316,14 @@ export const ProgramCard = ({
             className="object-cover transition-transform duration-700 group-hover:scale-110"
           />
           
-          {/* Dynamic Gradient Overlay - Darker at bottom */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/20" />
-          
-          {/* Animated Shimmer Effect on Hover */}
-          <div 
-            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-            style={{
-              background: 'linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%)',
-              backgroundSize: '200% 200%',
-              animation: isHovered ? 'shimmer 2s infinite' : 'none',
-            }}
-          />
+          {/* Gradient Overlay - Simplified */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10 transition-opacity duration-300 opacity-60 group-hover:opacity-80" />
         </div>
 
         {/* Top Section - Floating Elements */}
         <div className="absolute top-0 left-0 right-0 p-4 z-20">
           <div className="flex items-start justify-between">
+            <div className="flex flex-col items-start gap-2">
             {/* Live Badge or Category */}
             {isLive ? (
               <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-600 to-pink-600 rounded-full shadow-2xl animate-pulse-glow">
@@ -344,22 +336,39 @@ export const ProgramCard = ({
                 </span>
               </div>
             ) : (
-              <div className="px-4 py-2 bg-blue-600/90 backdrop-blur-xl rounded-full shadow-lg border border-white/20">
-                <span className="text-white text-xs font-bold uppercase tracking-wide">
+              <div className="px-4 py-2 bg-white rounded-full shadow-lg border border-gray-100">
+                <span className="text-black text-xs font-bold uppercase tracking-wide">
                   {category}
                 </span>
               </div>
             )}
+            
+            {/* Status Badge */}
+             {openStatusComputed ? (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-500/90 backdrop-blur-md rounded-full border border-blue-400/30">
+                  <LockOpen size={12} className="text-white" />
+                  <span className="text-white text-xs font-bold uppercase tracking-wide">Open</span>
+                </div>
+              ) : (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-500/90 backdrop-blur-md rounded-full border border-rose-400/30">
+                  <LockIcon size={12} className="text-white" />
+                  <span className="text-white text-xs font-bold uppercase tracking-wide">Closed</span>
+                </div>
+              )}
+            </div>
 
             {/* Action Buttons - Right Side */}
             <div className="flex flex-col gap-3">
               {/* Bookmark */}
               <button
-                onClick={handleBookmark}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleBookmark(e);
+                }}
                 className="w-11 h-11 bg-white/95 backdrop-blur-xl hover:bg-white shadow-2xl rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95"
               >
                 {isBookmarked ? (
-                  <BookmarkCheck size={18} className="text-blue-600" />
+                  <BookmarkCheck size={18} className="text-primary" />
                 ) : (
                   <Bookmark size={18} className="text-gray-700" />
                 )}
@@ -367,7 +376,10 @@ export const ProgramCard = ({
 
               {/* Like Button (Instagram-style) */}
               <button
-                onClick={handleLike}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleLike(e);
+                }}
                 className="w-11 h-11 bg-white/95 backdrop-blur-xl hover:bg-white shadow-2xl rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95"
               >
                 <Heart 
@@ -382,28 +394,17 @@ export const ProgramCard = ({
 
               {/* Share Button (native) */}
               <button
-                onClick={handleShare}
-                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleShare(e);
+                }}
                 className="w-11 h-11 bg-white/95 backdrop-blur-xl hover:bg-white shadow-2xl rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95"
                 aria-label="Share"
               >
                 <Share2 size={18} className="text-gray-700" />
               </button>
 
-              {/* Open/Closed status */}
-              <div className="flex items-center justify-center b">
-                {openStatusComputed ? (
-                  <div className="flex flex-col items-center gap-1 bg-blue-600/90 backdrop-blur-xl rounded-full shadow-lg border border-white/20 p-2">
-                    <LockOpen size={18} className="text-white" />
-                    {/* <span className="text-xs text-white">Open</span> */}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-1 bg-red-600/90 backdrop-blur-xl rounded-full shadow-lg border border-white/20 p-2">
-                    <LockIcon size={18} className="text-white" />
-                    {/* <span className="text-xs text-white">Closed</span> */}
-                  </div>
-                )}
-              </div>
+              {/* Open/Closed status moved to bottom */}
             </div>
           </div>
 
@@ -449,10 +450,10 @@ export const ProgramCard = ({
               />
             </div>
             <div className="flex-1">
-              <p className="text-white/80 text-xs font-semibold uppercase tracking-wider mb-0.5">
+              <p className="text-blue-300 text-xs font-bold uppercase tracking-wider mb-1">
                 {companyName}
               </p>
-              <h3 className="text-white text-lg font-black leading-tight line-clamp-2 drop-shadow-2xl">
+              <h3 className="text-white text-xl font-black leading-tight line-clamp-2 drop-shadow-md">
                 {program.title}
               </h3>
             </div>
@@ -462,9 +463,9 @@ export const ProgramCard = ({
           <div className="flex items-center gap-3 mb-4 text-white/90">
             <div className="flex items-center gap-1.5 text-sm font-medium">
               <div className="w-6 h-6 bg-white/20 backdrop-blur-xl rounded-full flex items-center justify-center">
-                <MapPin size={13} />
+                <MapPin size={15} />
               </div>
-              <span className="drop-shadow-lg capitalize">{locationType}</span>
+              <span className="drop-shadow-lg capitalize text-base font-bold">{locationType}</span>
             </div>
             <span className="text-white/60">•</span>
             <div className="flex items-center gap-1.5 text-sm font-medium">
@@ -474,6 +475,8 @@ export const ProgramCard = ({
               <span className="drop-shadow-lg">{formatDate(program.start_date)}</span>
             </div>
           </div>
+          
+          {/* Status Badge - Moved to Top */}
 
           {/* CTA Button - Full Width, Instagram Story Style */}
           <Link href={`/programs/${program.id}`} onClick={(e) => e.stopPropagation()}>
@@ -486,21 +489,13 @@ export const ProgramCard = ({
               {isLive ? (
                 <Play size={18} className="fill-white transition-transform group-hover/btn:scale-110" />
               ) : (
-                <ChevronRight size={20} className="transition-transform group-hover/btn:translate-x-1" />
+                <ArrowRight size={18} className="transition-transform group-hover/btn:translate-x-1" />
               )}
             </button>
           </Link>
         </div>
 
-        {/* Hover Glow Effect */}
-        {isHovered && (
-          <div 
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              boxShadow: 'inset 0 0 60px rgba(168, 85, 247, 0.3)',
-            }}
-          />
-        )}
+        {/* Hover Glow Effect Removed */}
       </div>
       </div>
 

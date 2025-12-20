@@ -250,7 +250,7 @@ export function FeedContent({ initialData, error }: FeedContentProps) {
               <button
                 onClick={handleLoadMore}
                 disabled={isLoadingMore}
-                className="group px-8 py-3.5 bg-gradient-to-r from-primary to-primary text-primary-foreground font-semibold rounded-xl hover:from-primary/90 hover:to-primary/90 transition-all shadow-lg hover:shadow-2xl flex items-center gap-2 transform hover:scale-105 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
+                className="group px-8 py-3.5 bg-primary text-primary-foreground font-semibold rounded-xl hover:bg-primary/90 transition-all shadow-lg hover:shadow-xl flex items-center gap-2 transform hover:scale-105 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
               >
                 {isLoadingMore ? (
                   <>
@@ -276,7 +276,7 @@ export function FeedContent({ initialData, error }: FeedContentProps) {
       {showScrollTop && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-8 right-8 p-3 bg-gradient-to-r from-primary to-secondary text-white rounded-full shadow-2xl hover:shadow-3xl transition-all transform hover:scale-110 z-50 animate-bounce-in"
+          className="fixed bottom-8 right-8 p-3 bg-primary text-primary-foreground rounded-full shadow-2xl hover:shadow-3xl transition-all transform hover:scale-110 z-50 animate-bounce-in"
           aria-label="Scroll to top"
         >
           <ArrowUp size={24} />

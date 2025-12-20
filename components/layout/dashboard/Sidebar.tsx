@@ -5,22 +5,20 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 
 import {
-  LogOut,
-  X,
+  Newspaper,
+  Briefcase,
+  Globe,
+  Zap,
   Users,
   TrendingUp,
   User,
   Bell,
-  NewspaperIcon,
-  PersonStanding,
-  IceCreamCone,
-  PersonStandingIcon,
-  Zap,
+  X,
+  LogOut,
 } from "lucide-react";
 import { AiOutlineWechat } from "react-icons/ai";
 import { Button } from "@/components/ui/button";
 import AnimatedNavLink from "@/components/customButtons/AnimatedNavLink";
-import { ProjectsIcon } from "@sanity/icons";
 // import AnimatedNavLink from "@/components/sections/dashboard/AnimatedNavLink";
 
 interface SidebarProps {
@@ -90,45 +88,38 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const navItems = [
-  { 
-    href: "/feed", 
-    icon: IceCreamCone, 
-    label: "Browse",
-    matchPaths: ["/feed", "/feed/"],
-    excludePaths: ["/feed/projects"]
-  },
-  {
-    href: "/dashboard/student",
-    icon: Users,
-    label: "zigx",
-    matchPaths: ["/dashboard/student", "/dashboard/student/"],
-  },
-   {
-    href: `/profile/${user?.profile?.username || "username"}`,
-    icon: PersonStandingIcon,
-    label: "My Profile",
-    matchPaths: ["/profile/"],
-  },
-  // {
-  //   href: "/dashboard/track-progress",
-  //   icon: TrendingUp,
-  //   label: "Track Progress",
-  //   matchPaths: ["/dashboard/track-progress", "/dashboard/track-progress/"],
-  // },
-{
-    href: "/dashboard/projects",
-    icon: ProjectsIcon,
-    label: "projects",
-    matchPaths: ["/dashboard/projects", "/dashboard/projects/", "/feed/projects/"],
-  },
-  {
-    href: "/dashboard/blog",
-    icon: NewspaperIcon,
-    label: "News",
-    matchPaths: ["/dashboard/blog", "/dashboard/blog/"],
-  },
-  // Upload Live item is intentionally omitted above; add it here when allowed
-];
+    { 
+      href: "/feed", 
+      icon: Globe, 
+      label: "Browse",
+      matchPaths: ["/feed", "/feed/"],
+      excludePaths: ["/feed/projects"]
+    },
+    {
+      href: "/dashboard/student",
+      icon: Users,
+      label: "Zigx",
+      matchPaths: ["/dashboard/student", "/dashboard/student/"],
+    },
+    {
+      href: `/profile/${user?.profile?.username || "username"}`,
+      icon: User,
+      label: "My Profile",
+      matchPaths: ["/profile/"],
+    },
+    {
+      href: "/dashboard/projects",
+      icon: Briefcase,
+      label: "Projects",
+      matchPaths: ["/dashboard/projects", "/dashboard/projects/", "/feed/projects/"],
+    },
+    {
+      href: "/dashboard/blog",
+      icon: Newspaper,
+      label: "News",
+      matchPaths: ["/dashboard/blog", "/dashboard/blog/"],
+    },
+  ];
 
   if (showUploadLive) {
     navItems.push({
@@ -230,31 +221,7 @@ const isRouteActive = (href: string, matchPaths?: string[], excludePaths?: strin
   return (
     <>
       {/* Custom Scrollbar Styles */}
-      <style jsx>{`
-        .custom-scrollbar {
-          scrollbar-width: thin;
-          scrollbar-color: var(--primary) transparent;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-          border-radius: 10px;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: var(--primary);
-          border-radius: 10px;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: var(--primary);
-          opacity: 0.8;
-        }
-      `}</style>
+
 
       {/* Sidebar */}
       <aside
@@ -332,24 +299,20 @@ const isRouteActive = (href: string, matchPaths?: string[], excludePaths?: strin
               </div>
 
               {/* AI Assistant Section - Always Visible */}
+              {/* AI Assistant Section */}
               <div className="mb-4">
                 <h4 className="text-xs font-semibold text-primary uppercase tracking-wider mb-3 px-1">
                   AI Assistant
                 </h4>
-                <div className="relative">
-                  <AnimatedNavLink
-                    href={aiChatItem.href}
-                    icon={aiChatItem.icon}
-                    label={aiChatItem.label}
-                    isActive={isRouteActive(aiChatItem.href)}
-                    onClick={handleNavClick}
-                    isSpecial={true}
-                  />
-                  {/* AI Badge */}
-                  <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full shadow-lg z-50 font-bold tracking-wide">
-                    Beta
-                  </div>
-                </div>
+                <AnimatedNavLink
+                  href={aiChatItem.href}
+                  icon={aiChatItem.icon}
+                  label={aiChatItem.label}
+                  isActive={isRouteActive(aiChatItem.href)}
+                  onClick={handleNavClick}
+                  isSpecial={true}
+                  badge="Beta"
+                />
               </div>
 
               {/* Quick Stats Card - Desktop Only */}

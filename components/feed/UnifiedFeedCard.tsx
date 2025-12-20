@@ -2,11 +2,12 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { 
   MapPin, Calendar, Clock, Users, 
-  Lock, Unlock, ChevronRight, Star, TrendingUp 
+  Lock, Unlock, ArrowRight 
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/uiComponent/Badge";
@@ -21,6 +22,7 @@ interface UnifiedFeedCardProps {
 }
 
 export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCardProps) {
+  const router = useRouter();
   const [imageError, setImageError] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -111,9 +113,9 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
     });
   };
 
-  // Mock rating/enrollment data - replace with actual data from your database
-  const rating = (4 + Math.random()).toFixed(1);
-  const enrolled = Math.floor(Math.random() * 5000) + 500;
+  const handleCardClick = () => {
+    router.push(`/feed/${item.id}`);
+  };
 
   return (
     <div
@@ -127,10 +129,13 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
         transitionDelay: `${index * 80}ms`,
       }}
     >
-      <Card className="group overflow-hidden border border-border hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 bg-card rounded-xl hover:-translate-y-2 h-full flex flex-col">
-        <Link href={`/feed/${item.id}`} className="block h-full flex flex-col">
+      <Card 
+        onClick={handleCardClick}
+        className="group overflow-hidden border border-border hover:shadow-xl transition-all duration-500 bg-card rounded-xl hover:-translate-y-2 h-full flex flex-col cursor-pointer"
+      >
+        <div className="block h-full flex flex-col">
           {/* Image Section */}
-          <div className="relative h-48 flex-shrink-0 overflow-hidden bg-gradient-to-br from-muted to-muted/80">
+          <div className="relative h-48 flex-shrink-0 overflow-hidden bg-muted">
             <Image
               src={getImageUrl()}
               alt={item.title}
@@ -141,12 +146,12 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
               priority={index < 3}
             />
             
-            {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-primary/10 to-primary/5 opacity-60 group-hover:opacity-80 transition-opacity duration-500" />
+            {/* Gradient Overlay - Simplified */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-60 transition-opacity duration-500" />
             
             {/* Top Badges */}
-            <div className="absolute top-3 left-3 flex flex-wrap gap-2 z-10">
-              <Badge className="bg-primary/10 text-primary border-primary/20 border backdrop-blur-sm transform transition-transform duration-300 group-hover:scale-105">
+            <div className="absolute top-3 left-3 flex flex-col gap-2 z-10 items-start">
+              <Badge className="bg-white text-black border-gray-100 border backdrop-blur-sm transform transition-transform duration-300 group-hover:scale-105">
                 {item._type.charAt(0).toUpperCase() + item._type.slice(1, -1)}
               </Badge>
               
@@ -155,6 +160,7 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
                   className="bg-destructive text-destructive-foreground border-destructive backdrop-blur-sm cursor-pointer hover:bg-destructive/90 transition-all transform hover:scale-105"
                   onClick={(e) => {
                     e.preventDefault();
+                    e.stopPropagation();
                     onLiveClick?.();
                   }}
                 >
@@ -162,58 +168,39 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
                   LIVE
                 </Badge>
               )}
-            </div>
 
-            {/* Lock Status for Programs - Enhanced */}
-            {item._type === "programs" && (
-              <div className="absolute top-3 right-12 z-10 group/lock">
-                {isOpen ? (
-                  <div 
-                    className="bg-gradient-to-br from-primary to-primary text-primary-foreground   shadow-lg backdrop-blur-sm transform flex transition-all duration-300 hover:scale-110 hover:rotate-12 cursor-pointer p-2 align-center justify-center rounded-sm" 
-                    title={statusMessage}
-                  >
-                    <Unlock size={16} className="drop-shadow-md" />
-                    <span className="text-white text-sm">Open</span>
+              {/* Status Badge */}
+              {item._type === "programs" && (
+                isOpen ? (
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-success backdrop-blur-md rounded-full border border-success/30 shadow-sm">
+                    <Unlock size={12} className="text-success-foreground" />
+                    <span className="text-success-foreground text-xs font-bold uppercase tracking-wide">Open</span>
                   </div>
                 ) : (
-                  <div 
-                    className="bg-gradient-to-br from-muted-foreground/80 to-muted-foreground text-card-foreground p-2.5 rounded-full shadow-lg backdrop-blur-sm transform transition-all duration-300 hover:scale-110 hover:rotate-12 cursor-pointer" 
-                    title={statusMessage}
-                  >
-                    <Lock size={16} className="drop-shadow-md" />
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-destructive backdrop-blur-md rounded-full border border-destructive/30 shadow-sm">
+                    <Lock size={12} className="text-destructive-foreground" />
+                    <span className="text-destructive-foreground text-xs font-bold uppercase tracking-wide">Closed</span>
                   </div>
-                )}
-                
-                {/* Tooltip */}
-                <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-foreground text-background text-xs rounded-lg opacity-0 group-hover/lock:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
-                  {statusMessage}
-                  <div className="absolute bottom-full right-4 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-foreground" />
-                </div>
-              </div>
-            )}
+                )
+              )}
+            </div>
 
             {/* Share Button - Top Right */}
             <div className="absolute top-3 right-3 z-10">
-              <ShareButton
-                title={item.title}
-                description={item.description || `Check out this ${item._type.slice(0, -1)}`}
-                url={`/feed/${item.id}`}
-                imageUrl={getImageUrl()}
-                type={item._type === "internships" ? "internship" : item._type === "events" ? "event" : "program"}
-              />
-            </div>
-
-            {/* Bottom Stats - Enhanced */}
-            <div className="absolute bottom-3 left-3 flex items-center gap-2 z-10">
-              <div className="bg-card/95 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 backdrop-blur-sm shadow-md transform transition-all duration-300 group-hover:scale-105">
-                <Star size={14} className="text-warning fill-warning animate-pulse" />
-                <span className="text-xs font-bold text-foreground">{rating}</span>
-              </div>
-              <div className="bg-card/95 px-2.5 py-1.5 rounded-lg backdrop-blur-sm shadow-md transform transition-all duration-300 group-hover:scale-105">
-                <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                  <TrendingUp size={12} className="text-success" />
-                  {enrolled.toLocaleString()}
-                </span>
+              <div 
+                className="bg-white/95 backdrop-blur-sm rounded-lg shadow-sm hover:shadow-md transition-all"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+              >
+                <ShareButton
+                  title={item.title}
+                  description={item.description || `Check out this ${item._type.slice(0, -1)}`}
+                  url={`/feed/${item.id}`}
+                  imageUrl={getImageUrl()}
+                  type={item._type === "internships" ? "internship" : item._type === "events" ? "event" : "program"}
+                />
               </div>
             </div>
           </div>
@@ -222,7 +209,7 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
           <div className="p-5 space-y-3 flex-1 flex flex-col">
             {/* Company Info */}
             <div className="flex items-center gap-2.5 transform transition-transform duration-300 group-hover:translate-x-1">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-muted to-muted/80 flex items-center justify-center overflow-hidden flex-shrink-0 ring-2 ring-muted group-hover:ring-primary/20 transition-all duration-300">
+              <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center overflow-hidden flex-shrink-0 ring-2 ring-muted group-hover:ring-primary/20 transition-all duration-300">
                 <Image
                   src={normalizeImageSrc(item.company?.logo_url || "/seedLogo.png")}
                   alt={companyName}
@@ -232,18 +219,18 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
                 />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-foreground truncate">{companyName}</p>
+                <p className="text-xs font-bold text-primary uppercase tracking-wide truncate">{companyName}</p>
               </div>
             </div>
 
             {/* Title */}
-            <h3 className="text-lg font-bold text-foreground line-clamp-2 group-hover:text-primary transition-colors duration-300 leading-snug min-h-[3.5rem]">
+            <h3 className="text-xl font-black text-foreground line-clamp-2 group-hover:text-primary transition-colors duration-300 leading-tight min-h-[3.5rem] mb-1">
               {item.title}
             </h3>
 
             {/* Description */}
             {item.description && (
-              <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed min-h-[2.5rem]">
+              <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed">
                 {item.description.replace(/<[^>]*>/g, "")}
               </p>
             )}
@@ -251,8 +238,8 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
             {/* Meta Info */}
             <div className="flex flex-wrap gap-3 text-xs text-muted-foreground pt-2 border-t border-border flex-1 content-start">
               <div className="flex items-center gap-1 transition-colors duration-300 hover:text-foreground">
-                <MapPin size={13} className="flex-shrink-0" />
-                <span className="truncate">{item.location}</span>
+                <MapPin size={16} className="flex-shrink-0 text-primary" />
+                <span className="truncate text-sm font-medium text-gray-700">{item.location}</span>
               </div>
               
               {item._type === "programs" && (item as any).duration && (
@@ -277,105 +264,24 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
               )}
             </div>
 
-            {/* CTA Button with Sparkle Effects */}
+            {/* CTA Button */}
             <div className="mt-auto pt-3">
               <button 
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
-              className="relative cursor-pointer  overflow-hidden w-full py-2.5 px-4 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold rounded-lg transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transform hover:scale-[1.02]"
-            >
-              {/* Shimmer effect */}
-              <span
-                className={`
-                  absolute inset-0 -translate-x-full
-                  bg-gradient-to-r from-transparent via-white/30 to-transparent
-                  ${isHovered ? "animate-shimmer" : ""}
-                `}
-              />
-
-              {/* Pulse background on hover */}
-              {isHovered && (
-                <span className="absolute inset-0 bg-primary/50 animate-ping opacity-20" />
-              )}
-
-              {/* Particle effects on hover */}
-              {isHovered && (
-                <>
-                  <span className="absolute top-0 left-1/4 w-1 h-1 bg-white rounded-full animate-particle-1" />
-                  <span className="absolute top-0 right-1/4 w-1 h-1 bg-white rounded-full animate-particle-2" />
-                  <span className="absolute bottom-0 left-1/3 w-1 h-1 bg-white rounded-full animate-particle-3" />
-                </>
-              )}
-
-              {/* Button content */}
-              <span className="relative z-10">{isOpen ? "View Details" : "Learn More"}</span>
-              <ChevronRight size={16} className="relative z-10 group-hover:translate-x-1 transition-transform duration-300" />
-            </button>
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+                className="relative cursor-pointer overflow-hidden w-full py-2.5 px-4 bg-primary text-primary-foreground font-semibold rounded-lg transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transform hover:scale-[1.02]"
+              >
+                {/* Button content */}
+                <span className="relative z-10">{isOpen ? "View Details" : "Learn More"}</span>
+                <ArrowRight size={16} className="relative z-10 group-hover:translate-x-1 transition-transform duration-300" />
+              </button>
             </div>
           </div>
-        </Link>
+        </div>
       </Card>
 
       <style jsx>{`
-        @keyframes shimmer {
-          0% {
-            transform: translateX(-100%);
-          }
-          100% {
-            transform: translateX(100%);
-          }
-        }
-
-        @keyframes particle-1 {
-          0% {
-            transform: translate(0, 0) scale(1);
-            opacity: 1;
-          }
-          100% {
-            transform: translate(-10px, -20px) scale(0);
-            opacity: 0;
-          }
-        }
-
-        @keyframes particle-2 {
-          0% {
-            transform: translate(0, 0) scale(1);
-            opacity: 1;
-          }
-          100% {
-            transform: translate(10px, -20px) scale(0);
-            opacity: 0;
-          }
-        }
-
-        @keyframes particle-3 {
-          0% {
-            transform: translate(0, 0) scale(1);
-            opacity: 1;
-          }
-          100% {
-            transform: translate(5px, 20px) scale(0);
-            opacity: 0;
-          }
-        }
-
-        .animate-shimmer {
-          animation: shimmer 2s infinite;
-        }
-
-        .animate-particle-1 {
-          animation: particle-1 0.8s ease-out forwards;
-        }
-
-        .animate-particle-2 {
-          animation: particle-2 0.8s ease-out forwards;
-          animation-delay: 0.1s;
-        }
-
-        .animate-particle-3 {
-          animation: particle-3 0.8s ease-out forwards;
-          animation-delay: 0.2s;
-        }
+        /* AI Animations Removed */
       `}</style>
     </div>
   );
