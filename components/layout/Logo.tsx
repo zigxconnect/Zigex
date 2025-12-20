@@ -8,10 +8,10 @@ interface LogoProps {
 export const Logo = ({ className }: LogoProps) => {
   return (
     <div className={cn("relative flex items-center", className)}>
-       <img
+      <img
         src="https://i.ibb.co/Cp502Yby/logo.png"
         alt="Zigex Logo"
-        className="h-full w-auto object-contain brightness-0 invert"
+        className="h-full w-auto object-contain dark:brightness-0 dark:invert"
       />
     </div>
   );
