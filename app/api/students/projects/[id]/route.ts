@@ -4,10 +4,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { validate as isUUID } from 'uuid';
 
 // UPDATE PROJECT - USING PUT
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = params;
-    
+    const { id } = await params;
+
     console.log('🔄 Updating project ID:', id);
 
     // Validate UUID
@@ -37,7 +37,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
     const jwt = authHeader.split(' ')[1];
     const { data: { user }, error: authError } = await supabase.auth.getUser(jwt);
-    
+
     if (authError || !user) {
       return NextResponse.json({ error: 'Invalid user' }, { status: 401 });
     }
@@ -135,10 +135,10 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 }
 
 // DELETE PROJECT
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = params;
-    
+    const { id } = await params;
+
     console.log('🗑️ Deleting project ID:', id);
 
     if (!id || !isUUID(id)) {

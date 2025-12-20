@@ -5,7 +5,7 @@ import { WelcomeCard } from '@/components/sections/dashboard/WelcomeCard';
 import { getProfileInfo } from '@/lib/actions/profile.actions';
 
 interface FeedPageProps {
-  searchParams: { q?: string };
+  searchParams: Promise<{ q?: string }>;
 }
 
 /**
@@ -29,6 +29,7 @@ export const metadata = {
 };
 
 export default async function FeedPage({ searchParams }: FeedPageProps) {
+  const resolvedParams = await searchParams;
   // Fetch user profile
   const userData = await getProfileInfo();
   console.log("User Data in FeedPage:", userData);
@@ -37,7 +38,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
     <>
     <ProfileRecommendationPopup user={userData}/>
       <WelcomeCard user={userData} />
-      <MainFeedPage searchQuery={searchParams.q} />
+      <MainFeedPage searchQuery={resolvedParams.q} />
     </>
   );
 }

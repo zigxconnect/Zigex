@@ -166,41 +166,59 @@ const BamendaHeroSection = () => {
                 </button>
               </div>
 
-              <div className="pt-4 flex items-center justify-center lg:justify-start gap-4">
-                 <DeveloperAvatarOverlap 
-                   developers={[
-                    {
-                      id: '1',
-                      name: 'Abdul Fadiga',
-                      role: 'AI Research Scientist',
-                      avatar: 'https://i.ibb.co/wFVCrg5K/Whats-App-Image-2025-11-23-at-11-14-41-AM.jpg',
-                    },
-                    {
-                      id: '2',
-                      name: 'John Brindi',
-                      role: 'Cybersecurity & Backend',
-                      avatar: 'https://i.ibb.co/xqWXw548/Whats-App-Image-2025-11-23-at-12-38-01-PM.jpg',
-                    },
-                    {
-                      id: '3',
-                      name: 'Tayuh Favour',
-                      role: 'Frontend & ML',
-                      avatar: 'https://i.ibb.co/JFpCHS9h/Whats-App-Image-2025-11-23-at-11-12-52-AM.jpg',
-                    },
-                    {
-                      id: '4',
-                      name: 'Tracy Jacy',
-                      role: 'Cybersecurity Specialist',
-                      avatar: 'https://i.ibb.co/zH2c0MhN/Whats-App-Image-2025-11-23-at-2-56-03-PM.jpg',
-                    },
-                  ]}
-                  maxDisplay={4}
-                  size="md"
-                 />
-                 <div className="text-sm text-gray-500">
-                    Join <span className="font-bold text-gray-900">2,000+</span> talented individuals
+              <div className="pt-6 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-8">
+                 <div className="flex flex-col items-center lg:items-start">
+                    <DeveloperAvatarOverlap 
+                      developers={[
+                        {
+                          id: '1',
+                          name: 'Abdul Fadiga',
+                          role: 'AI Research Scientist',
+                          avatar: 'https://i.ibb.co/wFVCrg5K/Whats-App-Image-2025-11-23-at-11-14-41-AM.jpg',
+                        },
+                        {
+                          id: '2',
+                          name: 'John Brindi',
+                          role: 'Cybersecurity & Backend',
+                          avatar: 'https://i.ibb.co/xqWXw548/Whats-App-Image-2025-11-23-at-12-38-01-PM.jpg',
+                        },
+                        {
+                          id: '3',
+                          name: 'Tayuh Favour',
+                          role: 'Frontend & ML',
+                          avatar: 'https://i.ibb.co/JFpCHS9h/Whats-App-Image-2025-11-23-at-11-12-52-AM.jpg',
+                        },
+                        {
+                          id: '4',
+                          name: 'Tracy Jacy',
+                          role: 'Cybersecurity Specialist',
+                          avatar: 'https://i.ibb.co/zH2c0MhN/Whats-App-Image-2025-11-23-at-2-56-03-PM.jpg',
+                        },
+                      ]}
+                      maxDisplay={4}
+                      size="md"
+                      title="World Class Team"
+                      subtitle="Building the future of talent"
+                    />
+                 </div>
+                 
+                 <div className="hidden sm:block h-12 w-px bg-gray-100" />
+
+                 <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
+                    <div className="flex -space-x-1 mb-2">
+                        {[1,2,3,4,5].map(i => (
+                            <CheckCircle2 key={i} className="w-4 h-4 text-green-500 fill-green-50" />
+                        ))}
+                    </div>
+                    <div className="text-sm font-semibold text-gray-900">
+                        2,000+ Students Joined
+                    </div>
+                    <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">
+                        Active Professionals
+                    </div>
                  </div>
               </div>
+
             </div>
 
             {/* Right Column: Visuals (MacBook Inspiration / Floating Dashboard) */}

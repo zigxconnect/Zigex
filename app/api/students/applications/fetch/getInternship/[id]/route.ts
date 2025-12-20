@@ -6,8 +6,10 @@ import { v4 as uuidv4 } from "uuid";
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id: applicationId } = await params;
+
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -28,7 +30,6 @@ export async function PUT(
   );
 
   try {
-    const { id: applicationId } = params;
 
     // Validate application ID
     if (!applicationId || !isUUID(applicationId)) {
@@ -75,13 +76,13 @@ export async function PUT(
 
     // Get update data from FormData
     const formData = await request.formData();
-    
+
     // Text fields
     const duration_months = formData.get("duration_months") as string;
     const department = formData.get("department") as string;
     const location = formData.get("location") as string;
     const work_mode = formData.get("work_mode") as string;
-    
+
     // Files
     const cover_letter_file = formData.get("cover_letter_file") as File | null;
     const support_letter_file = formData.get("support_letter_file") as File | null;
@@ -145,7 +146,7 @@ export async function PUT(
 
     // Remove updated_at from count check since it's always added
     const updateFieldsCount = Object.keys(allowedUpdates).filter(key => key !== 'updated_at').length;
-    
+
     if (updateFieldsCount === 0) {
       return NextResponse.json({ error: "No valid fields to update." }, { status: 400 });
     }
@@ -188,8 +189,10 @@ export async function PUT(
 // DELETE method remains the same as before
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id: applicationId } = await params;
+
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -210,7 +213,6 @@ export async function DELETE(
   );
 
   try {
-    const { id: applicationId } = params;
 
     // Validate application ID
     if (!applicationId || !isUUID(applicationId)) {

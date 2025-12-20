@@ -5,8 +5,10 @@ import { validate as isUUID } from "uuid";
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id: applicationId } = await params;
+
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -27,7 +29,6 @@ export async function PUT(
   );
 
   try {
-    const { id: applicationId } = params;
 
     // Validate application ID
     if (!applicationId || !isUUID(applicationId)) {
@@ -69,7 +70,7 @@ export async function PUT(
 
     // Get update data from FormData
     const formData = await request.formData();
-    
+
     const expectations = formData.get("expectations") as string;
     const comments = formData.get("comments") as string;
     const rsvp_status = formData.get("rsvp_status") as string;
@@ -86,7 +87,7 @@ export async function PUT(
 
     // Remove updated_at from count check since it's always added
     const updateFieldsCount = Object.keys(allowedUpdates).filter(key => key !== 'updated_at').length;
-    
+
     if (updateFieldsCount === 0) {
       return NextResponse.json({ error: "No valid fields to update." }, { status: 400 });
     }
@@ -129,7 +130,9 @@ export async function PUT(
 // DELETE method remains the same
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id: applicationId } = await params;
+
   // ... (same DELETE implementation as before)
 }

@@ -25,15 +25,16 @@ import { internshipSchema } from "@/lib/validation/internship";
  */
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
+
   // Authenticate the user
   const auth = await authMiddleware(request);
   if (auth instanceof NextResponse) {
     return auth;
   }
 
-  const id = (await params)?.id;
 
   const { type } = auth;
   if (type !== "company") {
@@ -91,8 +92,10 @@ export async function PATCH(
  */
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
+
   // Authenticate the user
   const auth = await authMiddleware(request);
   if (auth instanceof NextResponse) {
@@ -116,7 +119,7 @@ export async function DELETE(
   const { data: existingInternship, error: fetchError } = await supabaseAdmin
     .from("internships")
     .select("*")
-    .eq("id", (await params)?.id)
+    .eq("id", id)
     .eq("company_id", company.id)
     .single();
   if (fetchError || !existingInternship) {
@@ -129,7 +132,7 @@ export async function DELETE(
   const { data, error } = await supabaseAdmin
     .from("internships")
     .delete()
-    .eq("id", (await params)?.id);
+    .eq("id", id);
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -147,8 +150,10 @@ export async function DELETE(
  */
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
+
   // Authenticate the user
   const auth = await authMiddleware(request);
   if (auth instanceof NextResponse) {
@@ -168,7 +173,6 @@ export async function GET(
     );
   }
 
-  const id = (await params)?.id;
 
   // Fetch the single internship that matches the ID and is owned by the requesting company.
   const { data: internship, error } = await supabaseAdmin

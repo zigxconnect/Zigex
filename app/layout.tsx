@@ -3,8 +3,10 @@ import { Inter, Host_Grotesk } from "next/font/google";
 import "./globals.css";
 // import { Toaster } from "@/components/ui/sonner";
 import { Toaster } from "react-hot-toast";
+import { InstallPwaPopup } from "@/components/pwa/InstallPwaPopup";
 
 const inter = Inter({
+
   subsets: ["latin"],
   display: "swap",
   variable: "--font-inter",
@@ -27,7 +29,7 @@ export const viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://zigex.vercel.app"),
+  metadataBase: new URL("https://zigexconnect.com"),
   title: {
     default: "Zigex | Internship, Growth & Professional Experience",
     template: "%s | Zigex",
@@ -37,6 +39,14 @@ export const metadata: Metadata = {
   keywords: [
     "ZIGEX",
     "Zone for Internship Growth and Experience",
+    "fonyuygita",
+    "fonyuy gita",
+    "mazhewo John brindi",
+    "abdul fadiga",
+    "fien dora",
+    "tayuh favour",
+    "Ngwa Frank",
+    "cheko yohane",
     "Internships",
     "Tech Programs",
     "Events",
@@ -45,8 +55,33 @@ export const metadata: Metadata = {
     "SEED Bamenda",
     "Cameroon Tech",
   ],
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "ZIGEX",
+  },
+  icons: {
+
+    icon: [
+      { url: "/icons/icon-48x48.png", sizes: "48x48", type: "image/png" },
+      { url: "/icons/icon-96x96.png", sizes: "96x96", type: "image/png" },
+      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+    ],
+    shortcut: "/icons/icon-192x192.png",
+    apple: [
+      { url: "/icons/icon-152x152.png", sizes: "152x152", type: "image/png" },
+      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+    ],
+  },
+
+  formatDetection: {
+
+    telephone: false,
+  },
   openGraph: {
-    url: "https://zigex.vercel.app",
+
+    url: "https://zigexconnect.com",
     type: "website",
     title: "ZIGEX | Zone for Internship, Growth and Experience",
     description:
@@ -69,7 +104,7 @@ export const metadata: Metadata = {
     images: ["https://i.ibb.co/k2Rpz2jQ/og-image-2x-100.jpg"],
   },
   alternates: {
-    canonical: "https://zigex.vercel.app",
+    canonical: "https://zigexconnect.com",
   },
   robots: {
     index: true,
@@ -93,9 +128,11 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.variable} ${hostGrotesk.variable} antialiased`}>
         {children}
+        <InstallPwaPopup />
         <Toaster position="top-center" reverseOrder={false} />
         {/* <Toaster /> */}
       </body>
+
     </html>
   );
 }

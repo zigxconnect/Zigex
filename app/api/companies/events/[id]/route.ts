@@ -5,8 +5,10 @@ import { eventSchema } from "@/lib/validation/event";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
+
   const auth = await authMiddleware(request);
   if (auth instanceof NextResponse) return auth;
 
@@ -14,7 +16,6 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
   }
 
-  const { id } = params;
 
   const { data: event, error } = await supabaseAdmin
     .from("event")
@@ -35,12 +36,13 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
+
   const auth = await authMiddleware(request);
   if (auth instanceof NextResponse) return auth;
 
-  const { id } = params;
   const { type, company } = auth;
 
   if (type !== "company" || !company) {
@@ -72,9 +74,8 @@ export async function PATCH(
     // 2. If a new image is provided, upload it and update the URL
     if (eventImage) {
       const imageExt = eventImage.name.split(".").pop();
-      const imageName = `${
-        dataObject.title || "event"
-      }-${Date.now()}.${imageExt}`;
+      const imageName = `${dataObject.title || "event"
+        }-${Date.now()}.${imageExt}`;
       const imagePath = `${company.company_name}/events/${imageName}`;
 
       const { error: uploadError } = await supabaseAdmin.storage
@@ -131,12 +132,13 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
+
   const auth = await authMiddleware(request);
   if (auth instanceof NextResponse) return auth;
 
-  const { id } = params;
   const { type, company } = auth;
 
   if (type !== "company" || !company) {
