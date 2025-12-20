@@ -21,6 +21,7 @@ import MyMonthProject from "@/components/uiComponent/MyMonthProject";
 import AnimatedConnectButtons from "@/components/customButtons/AnimatedConnectButtons";
 import NoProjectMessage from "@/components/sections/dashboard/NoProjectMessage";
 import { fetchUserActiveProject } from "@/lib/actions/getProjects.action";
+import CreateProjectButton from "@/components/project/CreateProjectButton";
 
 interface Props {
   params: Promise<{ username: string }>;
@@ -539,6 +540,11 @@ Looking forward to hearing from you!`;
         x={data.twitter_url || data.x_url} 
         email={data.email} 
       />
+
+      {/* Floating Create Project Button - Only for Owner */}
+      {myProfile?.id === data.id && (
+        <CreateProjectButton variant="floating" />
+      )}
     </div>
   );
 }

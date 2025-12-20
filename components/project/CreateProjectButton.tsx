@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { Edit3, Plus } from "lucide-react";
-import CreateProjectModal, { ProjectFormData } from "./CreateProjectModal";
+import { Plus } from "lucide-react";
+import CreateProjectModal from "./CreateProjectModal";
 
 interface CreateProjectButtonProps {
   variant?: "floating" | "header" | "custom";
@@ -12,51 +12,35 @@ interface CreateProjectButtonProps {
 export default function CreateProjectButton({ variant = "header", customTrigger }: CreateProjectButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleSubmit = async (projectData: ProjectFormData) => {
-    // TODO: Implement your API call here to save the project
-    console.log("Project data:", projectData);
-    
-    // Example API call structure:
-    // const formData = new FormData();
-    // formData.append('title', projectData.title);
-    // formData.append('description', projectData.description);
-    // if (projectData.coverImage) {
-    //   formData.append('coverImage', projectData.coverImage);
-    // }
-    // formData.append('githubLink', projectData.githubLink);
-    // formData.append('duration', projectData.duration);
-    
-    // await fetch('/api/projects', {
-    //   method: 'POST',
-    //   body: formData,
-    // });
-  };
-
   if (variant === "floating") {
     return (
       <>
         {/* Floating Action Button */}
         <button
           onClick={() => setIsModalOpen(true)}
-          className="fixed bottom-30 right-6 lg:bottom-8 lg:right-8 z-40 group cursor-pointer"
+          className="fixed bottom-24 right-6 lg:bottom-12 lg:right-12 z-50 group cursor-pointer flex items-center gap-3 transition-all duration-500"
           aria-label="Create project post"
         >
-          {/* Tooltip */}
-          <div className="absolute bottom-full right-0 mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-            <div className="bg-secondary text-white text-sm font-medium px-3 py-2 rounded-lg whitespace-nowrap shadow-lg">
-              Share your project
-              <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-secondary"></div>
-            </div>
+          {/* Label that expands on hover */}
+          <div className="bg-blue-600 text-white font-bold py-3 px-6 rounded-2xl shadow-2xl overflow-hidden max-w-0 group-hover:max-w-xs transition-all duration-500 ease-in-out opacity-0 group-hover:opacity-100 whitespace-nowrap hidden lg:block border border-blue-400">
+            Post a Project
           </div>
 
-          {/* Button */}
+          {/* Button Core */}
           <div className="relative">
-            <div className="w-14 h-14 bg-blue-500 rounded-full shadow-lg hover:shadow-xl hover:bg-blue-600 flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95">
-              <Edit3 size={24} className="text-white" />
+            {/* Background Glow */}
+            <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full blur opacity-40 group-hover:opacity-100 transition duration-1000 group-hover:duration-200" />
+            
+            <div className="relative w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-700 rounded-2xl shadow-2xl flex items-center justify-center transition-all duration-300 group-hover:rotate-12 group-hover:scale-110 active:scale-95 border-2 border-white/20">
+              <Plus size={32} className="text-white group-hover:scale-110 transition-transform duration-300" />
             </div>
             
-            {/* Pulse Animation */}
-            <div className="absolute inset-0 rounded-full bg-blue-500 animate-ping opacity-20"></div>
+            {/* Pulse Animation - Multi-layer */}
+            <div className="absolute inset-0 rounded-2xl bg-blue-500 animate-ping opacity-20" />
+            <div className="absolute inset-0 rounded-2xl bg-indigo-500 animate-pulse opacity-10" />
+            
+            {/* Notification Badge-style dot for extra eye-catch */}
+            <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white hidden group-hover:block animate-bounce" />
           </div>
         </button>
 
@@ -64,7 +48,6 @@ export default function CreateProjectButton({ variant = "header", customTrigger 
         <CreateProjectModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          onSubmit={handleSubmit}
         />
       </>
     );
@@ -79,7 +62,6 @@ export default function CreateProjectButton({ variant = "header", customTrigger 
         <CreateProjectModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          onSubmit={handleSubmit}
         />
       </>
     );
@@ -101,7 +83,6 @@ export default function CreateProjectButton({ variant = "header", customTrigger 
       <CreateProjectModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSubmit={handleSubmit}
       />
     </>
   );

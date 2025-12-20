@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Heart, MessageCircle, Share2, MapPin, Briefcase, CheckCircle2, MoreHorizontal, Linkedin, Zap, AtSign } from "lucide-react";
+import { Heart, MapPin, CheckCircle2, Linkedin } from "lucide-react";
 
 interface StudentProps {
   id: string;
@@ -42,9 +42,7 @@ const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = (
       .toUpperCase() || "ST";
 
   const primarySkills = (student.hard_skills || []).slice(0, 3);
-  const timeAgo = "Active";
 
-  // Fetch stats from API only if not provided by server
   useEffect(() => {
     if (initialStats) {
       setStats(initialStats);
@@ -74,7 +72,6 @@ const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = (
     fetchStats();
   }, [student.id, initialStats]);
 
-  // Intersection Observer for scroll animations
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -101,167 +98,129 @@ const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = (
     setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
   };
 
-  const handleShare = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
-  const handleMoreOptions = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
-  const totalActivity = (stats?.internshipsApplied || 0) + 
-                        (stats?.programsApplied || 0) + 
-                        (stats?.eventsApplied || 0) + 
-                        (stats?.projectsCreated || 0);
-
   return (
-    <Link href={`/dashboard/student/${student.username || student.id}`} className="block no-underline">
-        <div 
-          ref={cardRef}
-          className={`
-            w-full bg-card border-b border-border hover:bg-muted/30 transition-all duration-300 cursor-pointer group
-            ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
-          `}
-        >
-          <div className="w-full px-4 py-4">
-            {/* Header - Profile Info */}
-            <div className="flex items-start gap-3">
-              {/* Avatar */}
-              <div className="relative shrink-0">
-                {student.avatar_url ? (
-                  <img 
-                    src={student.avatar_url} 
-                    alt={student.full_name || "Student"} 
-                    className="w-12 h-12 rounded-full object-cover transition-opacity hover:opacity-90" 
-                  />
-                ) : (
-                  <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center font-bold text-base transition-colors group-hover:bg-primary/80">
-                    {initials}
-                  </div>
-                )}
-              </div>
-
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1 flex-wrap">
-                  <h3 className="font-heading font-bold text-foreground group-hover:text-primary text-[15px] transition-colors leading-tight">
-                    {student.username || student.full_name || "Unnamed Student"}
-                  </h3>
-                  <div className="shrink-0">
-                    <CheckCircle2 size={16} className="text-primary" />
-                  </div>
-                  <span className="text-muted-foreground text-[15px]">·</span>
-                  <span className="text-muted-foreground text-[13px]">{timeAgo}</span>
+    <Link href={`/dashboard/student/${student.username || student.id}`} className="block no-underline mb-6 last:mb-0">
+      <div 
+        ref={cardRef}
+        className={`
+          relative w-full bg-white rounded-2xl shadow-md border border-gray-100 hover:shadow-xl hover:border-blue-200 transition-all duration-500 overflow-hidden group
+          ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}
+        `}
+      >
+        {/* Decorative Background Element */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-full -mr-16 -mt-16 transition-all duration-500 group-hover:scale-150 group-hover:bg-blue-100 opacity-50" />
+        
+        <div className="flex flex-col md:flex-row items-center md:items-stretch gap-6 p-6">
+          {/* Avatar Section - Larger and with nice border */}
+          <div className="relative shrink-0">
+            <div className="relative w-28 h-28 md:w-32 md:h-32 rounded-2xl overflow-hidden border-4 border-white shadow-lg ring-1 ring-gray-100 group-hover:ring-blue-400 transition-all duration-300">
+              {student.avatar_url ? (
+                <img 
+                  src={student.avatar_url} 
+                  alt={student.full_name || "Student"} 
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center font-bold text-3xl">
+                  {initials}
                 </div>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <MapPin size={14} className="text-muted-foreground shrink-0" />
-                  <p className="text-[13px] text-muted-foreground truncate">
+              )}
+            </div>
+            {/* Status Indicator */}
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 border-4 border-white rounded-full shadow-sm" />
+          </div>
+
+          {/* Content Section */}
+          <div className="flex-1 flex flex-col min-w-0 text-center md:text-left">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="min-w-0">
+                <div className="flex items-center justify-center md:justify-start gap-2 mb-1">
+                  <h3 className="text-xl md:text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors truncate">
+                    {student.full_name || student.username || "Unnamed Student"}
+                  </h3>
+                  <CheckCircle2 size={20} className="text-blue-500 shrink-0" />
+                </div>
+                
+                <div className="flex items-center justify-center md:justify-start gap-1.5 text-gray-500 mb-2">
+                  <MapPin size={16} className="shrink-0 text-blue-400" />
+                  <p className="text-sm md:text-base font-medium truncate">
                     {student.university || "University not specified"}
                   </p>
                 </div>
               </div>
 
-              {/* Connect Button & More */}
-              <div className="flex items-center gap-2" onClick={(e) => e.preventDefault()}>
-                {student.linkedin_url ? (
+              {/* Socials & Connect */}
+              <div className="flex items-center justify-center md:justify-end gap-3" onClick={(e) => e.preventDefault()}>
+                {student.linkedin_url && (
                   <Link
                     href={student.linkedin_url}
                     target="_blank"
                     rel="noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-foreground hover:bg-primary hover:text-white transition-all duration-300 border border-border"
+                    className="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all duration-300 border border-blue-100 hover:border-blue-600 hover:-translate-y-1 shadow-sm"
                     title="Connect on LinkedIn"
                   >
-                    <AtSign size={14} />
+                    <Linkedin size={20} />
                   </Link>
-                ) : (
-                  <button
-                    disabled
-                    className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-muted-foreground/30 border border-border cursor-not-allowed"
-                  >
-                    <Linkedin size={14} />
-                  </button>
                 )}
                 <button
-                  onClick={handleMoreOptions}
-                  className="p-2 hover:bg-muted rounded-full transition-colors"
+                  onClick={handleLike}
+                  className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 border hover:-translate-y-1 shadow-sm ${
+                    isLiked 
+                    ? 'bg-red-50 text-red-600 border-red-100 hover:bg-red-600 hover:text-white hover:border-red-600' 
+                    : 'bg-gray-50 text-gray-400 border-gray-100 hover:bg-red-50 hover:text-red-600 hover:border-red-100'
+                  }`}
                 >
-                  <MoreHorizontal size={16} className="text-muted-foreground" />
+                  <Heart size={20} className={isLiked ? "fill-current" : ""} />
                 </button>
+              </div>
+            </div>
+
+            {/* Bio Snippet */}
+            <p className="text-sm md:text-base text-gray-600 mt-3 leading-relaxed max-w-2xl line-clamp-2 italic">
+              "Passionate innovator from {student.university?.split(' ')[0] || 'the academy'}. Building a career in {primarySkills[0] || 'modern technology'} and making an impact."
+            </p>
+
+            {/* Bottom Meta Bar */}
+            <div className="mt-auto pt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-t border-gray-50 mt-6">
+              {/* Skills container */}
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
+                {primarySkills.map((skill, i) => (
+                  <span 
+                    key={i} 
+                    className="px-3 py-1 bg-blue-50/50 text-blue-700 text-[11px] font-bold rounded-lg border border-blue-100/50 uppercase tracking-wider"
+                  >
+                    {skill}
+                  </span>
+                ))}
+                {student.soft_skills?.[0] && (
+                  <span className="px-3 py-1 bg-indigo-50/50 text-indigo-700 text-[11px] font-bold rounded-lg border border-indigo-100/50 uppercase tracking-wider">
+                    {student.soft_skills[0]}
+                  </span>
+                )}
+              </div>
+
+              {/* Stats Highlights */}
+              <div className="flex items-center justify-center gap-4 sm:gap-6 flex-wrap">
+                <div className="text-center min-w-[60px]">
+                  <p className="text-base sm:text-lg font-bold text-gray-900 leading-none">{stats?.projectsCreated || 0}</p>
+                  <p className="text-[9px] sm:text-[10px] font-semibold text-gray-400 uppercase tracking-widest mt-1">Projects</p>
+                </div>
+                <div className="hidden sm:block w-px h-8 bg-gray-100" />
+                <div className="text-center min-w-[60px]">
+                  <p className="text-base sm:text-lg font-bold text-gray-900 leading-none">{stats?.internshipsApplied || 0}</p>
+                  <p className="text-[9px] sm:text-[10px] font-semibold text-gray-400 uppercase tracking-widest mt-1">Exp</p>
+                </div>
+                <div className="hidden sm:block w-px h-8 bg-gray-100" />
+                <div className="text-center min-w-[60px]">
+                  <p className="text-base sm:text-lg font-bold text-gray-900 leading-none">{stats?.eventsApplied || 0}</p>
+                  <p className="text-[9px] sm:text-[10px] font-semibold text-gray-400 uppercase tracking-widest mt-1">Events</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
-
-        {/* Post Content */}
-        <div className="mt-3 ml-[60px]">
-          {/* Bio/Status */}
-          <p className="text-[14px] text-foreground leading-relaxed mb-3 opacity-90">
-            📊 Passionate about growth and impact. Currently focusing on {primarySkills[0] || 'projects'}. 
-            {stats && totalActivity > 0 && ` Active contributor to the community.`}
-          </p>
-
-          {/* Skills Container */}
-          {(primarySkills.length > 0 || (student.soft_skills && student.soft_skills.length > 0)) && (
-            <div className="flex flex-wrap gap-2 mb-4">
-              {primarySkills.map((skill, i) => (
-                <span 
-                  key={i} 
-                  onClick={(e) => e.preventDefault()}
-                  className="text-[12px] bg-muted text-primary px-2.5 py-1 rounded-full font-semibold border border-transparent hover:border-primary transition-colors uppercase tracking-wider"
-                >
-                  {skill}
-                </span>
-              ))}
-              {student.soft_skills && student.soft_skills.length > 0 && (
-                <span 
-                  onClick={(e) => e.preventDefault()}
-                  className="text-[12px] bg-muted text-primary px-2.5 py-1 rounded-full font-semibold border border-transparent hover:border-primary transition-colors uppercase tracking-wider"
-                >
-                  {student.soft_skills[0]}
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Action Bar */}
-        <div className="mt-3 ml-[60px] flex items-center justify-between max-w-[200px] opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          <button
-            onClick={handleLike}
-            className="flex items-center gap-1.5 group/btn hover:bg-muted px-2 py-1.5 rounded-full transition-all"
-          >
-            <Heart 
-              size={16} 
-              className={`transition-all ${isLiked 
-                ? 'fill-destructive text-destructive' 
-                : 'text-muted-foreground group-hover/btn:text-destructive'
-              }`}
-            />
-          </button>
-
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-            className="flex items-center gap-1.5 group/btn hover:bg-muted px-2 py-1.5 rounded-full transition-all"
-          >
-            <MessageCircle size={16} className="text-muted-foreground group-hover/btn:text-primary transition-colors" />
-          </button>
-
-          <button
-            onClick={handleShare}
-            className="flex items-center gap-1.5 group/btn hover:bg-muted px-2 py-1.5 rounded-full transition-all"
-          >
-            <Share2 size={16} className="text-muted-foreground group-hover/btn:text-foreground transition-colors" />
-          </button>
-        </div>
       </div>
-    </div>
     </Link>
   );
 };
