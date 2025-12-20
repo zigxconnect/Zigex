@@ -341,12 +341,12 @@ export const AuthForm = ({ type }: AuthFormProps) => {
       <div className="space-y-4 text-center mt-5">
         {isSignUp && (
           <p className="text-sm text-muted-foreground">
-            Looking to hire?{" "}
+            {/* Looking to hire?{" "} */}
             <Link
               href="/company/sign-up"
               className="font-semibold text-primary hover:underline"
             >
-              Sign up as a company
+              {/* Sign up as a company */}
             </Link>
           </p>
         )}
