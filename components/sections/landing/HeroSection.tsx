@@ -1,355 +1,174 @@
-// app/page.tsx or components/HeroSection.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
-import {
-  Building2,
-  ArrowRight,
-  Users,
-  TrendingUp,
-  MapPin,
-  Star,
-  Play,
-} from "lucide-react";
 import Link from "next/link";
-import DeveloperAvatarOverlap from "@/components/ui/DeveloperAvatarOverlap";
+import {
+  ArrowRight,
+  Menu,
+  Play,
+  X,
+  Search,
+  CheckCircle2,
+  TrendingUp,
+  Globe,
+  Briefcase,
+  Users
+} from "lucide-react";
+// Use relative path to ensure no alias resolution issues
+import DeveloperAvatarOverlap from "../../ui/DeveloperAvatarOverlap";
 
-interface Feature {
-  icon: React.ElementType;
-  title: string;
-  description: string;
-  color: string;
-  metric?: string;
-}
-
-interface StatCard {
-  icon: React.ElementType;
-  value: string;
-  label: string;
-  color: string;
-}
-
-const BamendaHeroSection: React.FC = () => {
-  const [isVisible, setIsVisible] = useState<boolean>(false);
-  const [hoveredFeature, setHoveredFeature] = useState<number | null>(null);
-  const [currentSlide, setCurrentSlide] = useState<number>(0);
-
-  // --- NEW STATE: To hold client-side-only values ---
-  const [gridStyles, setGridStyles] = useState<React.CSSProperties[]>([]);
+const BamendaHeroSection = () => {
+  const [isVisible, setIsVisible] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     setIsVisible(true);
-
-    // --- NEW LOGIC: Generate random values only on the client ---
-    // This code runs once after the component mounts, preventing hydration errors.
-    const styles = Array.from({ length: 144 }, () => ({
-      animationDelay: `${Math.random() * 5}s`,
-      animationDuration: `${2 + Math.random() * 3}s`,
-    }));
-    setGridStyles(styles);
-
-    // Auto-rotate testimonials
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % testimonials.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, []); // Empty dependency array [] ensures this runs only once on mount
-
-  const features: Feature[] = [
-    {
-      icon: Users,
-      title: "500+ Active Internships",
-      description:
-        "Live opportunities updated daily across Bamenda's growing business ecosystem",
-      color: "from-emerald-400 to-teal-500",
-      metric: "95% Match Rate",
-    },
-    {
-      icon: Building2,
-      title: "150+ Partner Companies",
-      description:
-        "From startups to established enterprises, connect with Bamenda's top employers",
-      color: "from-blue-400 to-indigo-500",
-      metric: "4.8/5 Rating",
-    },
-    {
-      icon: TrendingUp,
-      title: "2x Faster Placement",
-      description:
-        "Our AI-powered matching system gets you hired 50% faster than traditional methods",
-      color: "from-orange-400 to-red-500",
-      metric: "14 Days Avg",
-    },
-  ];
-
-  const stats: StatCard[] = [
-    {
-      icon: Users,
-      value: "2,500+",
-      label: "Students Placed",
-      color: "text-emerald-500",
-    },
-    {
-      icon: Building2,
-      value: "85%",
-      label: "Job Success Rate",
-      color: "text-blue-500",
-    },
-    {
-      icon: MapPin,
-      value: "50+",
-      label: "Locations Covered",
-      color: "text-orange-500",
-    },
-    {
-      icon: Star,
-      value: "4.9",
-      label: "Average Rating",
-      color: "text-yellow-500",
-    },
-  ];
-
-  const testimonials = [
-    {
-      name: "Adeline Fomukong",
-      role: "Software Engineering Intern",
-      company: "TechBam Solutions",
-      quote: "Found my dream internship in just 5 days!",
-    },
-    {
-      name: "Boris Ngwa",
-      role: "Marketing Intern",
-      company: "Bamenda Digital",
-      quote: "The platform made networking so much easier.",
-    },
-    {
-      name: "Grace Nkeng",
-      role: "Finance Intern",
-      company: "Northwest Bank",
-      quote: "Professional growth beyond my expectations.",
-    },
-  ];
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-secondary/10 relative overflow-hidden">
-      {/* Modern Geometric Background */}
-      <div className="absolute inset-0 overflow-hidden">
-        {/* Animated Grid Pattern */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="grid grid-cols-12 gap-4 h-full">
-            {/* MODIFIED: Use state-driven styles to avoid hydration error */}
-            {[...Array(144)].map((_, i) => (
-              <div
-                key={i}
-                className="bg-primary rounded-sm animate-pulse"
-                style={gridStyles[i] || {}}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Floating Elements */}
-        <div className="absolute top-20 left-10 w-24 h-24 bg-gradient-to-br from-warning to-destructive rounded-2xl opacity-10 animate-float"></div>
-        <div
-          className="absolute top-40 right-20 w-16 h-16 bg-gradient-to-br from-primary to-secondary rounded-full opacity-10 animate-float"
-          style={{ animationDelay: "1s" }}
-        ></div>
-        <div
-          className="absolute bottom-40 left-20 w-32 h-32 bg-gradient-to-br from-success to-teal-500 rounded-3xl opacity-10 animate-float"
-          style={{ animationDelay: "2s" }}
-        ></div>
+    <div className="relative min-h-screen bg-white overflow-hidden selection:bg-blue-100 selection:text-blue-900">
+      {/* Background Gradients */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-blue-50/80 rounded-full blur-3xl opacity-70" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-50/80 rounded-full blur-3xl opacity-70" />
       </div>
 
-      {/* Main Container */}
-      <div className="relative z-10 container mx-auto px-4 py-8 sm:py-12 lg:py-16">
-        {/* Main Hero Content */}
-        <div className="grid lg:grid-cols-2 gap-12 items-center max-w-7xl mx-auto">
-          {/* Left Column - Content */}
-          <div className="space-y-8">
-            {/* Badge */}
-            <div
-              className={`transform transition-all duration-1000 ${
-                isVisible
-                  ? "translate-y-0 opacity-100"
-                  : "translate-y-10 opacity-0"
-              }`}
-            >
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary/10 to-primary/10 rounded-full border border-primary/20">
-                <span className="text-sm font-semibold text-primary">
-                  Your #1 Career Platform{" "}
-                </span>
-              </div>
-            </div>
+       {/* Navigation Header */}
+       <nav
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          scrolled ? "bg-white/90 backdrop-blur-md shadow-sm py-3" : "bg-transparent py-5"
+        }`}
+      >
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between">
+            {/* Logo */}
+            <Link href="/" className="flex items-center gap-2 group cursor-pointer hover:opacity-80 transition-opacity">
+               <div className="w-10 h-10 flex items-center justify-center">
+                   <img
+                    src="https://i.ibb.co/Cp502Yby/logo.png"
+                    alt="Zigex Logo"
+                    width="40"
+                    height="40"
+                    className="object-contain"
+                  />
+               </div>
+              <span className={`text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-blue-600`}>
+                Zigex
+              </span>
+            </Link>
 
-            {/* Main Headline */}
-            <div
-              className={`transform transition-all duration-1000 delay-200 ${
-                isVisible
-                  ? "translate-y-0 opacity-100"
-                  : "translate-y-10 opacity-0"
-              }`}
-            >
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-tight">
-                Launch Your
-                <span className="block bg-clip-text bg-gradient-to-r text-primary">
-                  Dream Career
-                </span>
-                Here
-              </h1>
-            </div>
-
-            {/* Subtitle */}
-            <div
-              className={`transform transition-all duration-1000 delay-300 ${
-                isVisible
-                  ? "translate-y-0 opacity-100"
-                  : "translate-y-10 opacity-0"
-              }`}
-            >
-              <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed max-w-lg">
-                Connect with top companies, gain real experience, and build the
-                professional network that will shape your future in Cameroon's
-                Silicon Valley.
-              </p>
+            {/* Desktop Menu */}
+            <div className="hidden md:flex items-center gap-8">
+              {['Features', 'Mission', 'Services', 'Community'].map((item) => (
+                <Link
+                  key={item}
+                  href={`#${item.toLowerCase()}`}
+                  className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors relative group cursor-pointer"
+                >
+                  {item}
+                  <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
+                </Link>
+              ))}
             </div>
 
             {/* CTA Buttons */}
-            <div
-              className={`transform transition-all duration-1000 delay-400 ${
-                isVisible
-                  ? "translate-y-0 opacity-100"
-                  : "translate-y-10 opacity-0"
-              }`}
+            <div className="hidden md:flex items-center gap-4">
+              <Link
+                href="/sign-in"
+                className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors"
+                style={{ cursor: 'pointer' }}
+              >
+                Sign In
+              </Link>
+              <Link href="/sign-up">
+                <button className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-full shadow-lg hover:shadow-blue-500/30 transition-all hover:-translate-y-0.5 active:translate-y-0 cursor-pointer">
+                  Get Started
+                </button>
+              </Link>
+            </div>
+
+            {/* Mobile Menu Button */}
+            <button 
+              className="md:hidden p-2 text-gray-600 cursor-pointer"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/sign-in">
-                  <button className="group cursor-pointer relative px-8 py-4 bg-gradient-to-r from-primary to-secondary text-primary-foreground font-semibold rounded-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-warning/25">
-                    <span className="relative z-10 flex items-center justify-center gap-2">
-                      <Users className="w-5 h-5" />
-                      Get Started Now
-                      <ArrowRight className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" />
-                    </span>
-                    <div className="absolute inset-0 bg-gradient-to-r from-primary to-secondary transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
+              {mobileMenuOpen ? <X /> : <Menu />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Menu Overlay */}
+        {mobileMenuOpen && (
+          <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-gray-100 shadow-xl p-4 flex flex-col gap-4 animate-slide-down">
+             {['Features', 'Mission', 'Services', 'Community'].map((item) => (
+                <Link
+                  key={item}
+                  href={`#${item.toLowerCase()}`}
+                  className="text-base font-medium text-gray-800 py-2 hover:text-blue-600 cursor-pointer"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {item}
+                </Link>
+              ))}
+              <div className="h-px bg-gray-100 my-2" />
+               <Link href="/sign-in" className="text-base font-medium text-gray-600 py-2 hover:text-blue-600 cursor-pointer" onClick={() => setMobileMenuOpen(false)}>
+                Sign In
+              </Link>
+              <Link href="/sign-up" onClick={() => setMobileMenuOpen(false)}>
+                <button className="w-full px-6 py-3 bg-blue-600 text-white text-base font-semibold rounded-xl shadow-md cursor-pointer">
+                  Get Started
+                </button>
+              </Link>
+          </div>
+        )}
+      </nav>
+
+      {/* Hero Content */}
+      <div className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+            
+            {/* Left Column: Text */}
+            <div className={`space-y-8 max-w-2xl mx-auto lg:mx-0 text-center lg:text-left transition-all duration-1000 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 border border-blue-100 rounded-full text-blue-700 text-xs font-semibold uppercase tracking-wide">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                </span>
+                The Future of Work is Here
+              </div>
+
+              <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold text-gray-900 leading-[1.1] tracking-tight">
+                Unlock Your <br className="hidden lg:block" />
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-700">
+                  True Potential
+                </span>
+              </h1>
+
+              <p className="text-lg text-gray-600 leading-relaxed max-w-lg mx-auto lg:mx-0">
+                Connect with world-class opportunities, build your professional identity, and accelerate your career growth with Zigex’s AI-powered ecosystem.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                <Link href="/sign-up">
+                  <button className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold text-lg shadow-xl shadow-blue-500/20 hover:shadow-2xl hover:shadow-blue-500/30 transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2 cursor-pointer">
+                    Get Started
+                    <ArrowRight className="w-5 h-5" />
                   </button>
                 </Link>
-              </div>
-            </div>
-
-            {/* Trust Indicators */}
-            <div
-              className={`transform transition-all duration-1000 delay-500 ${
-                isVisible
-                  ? "translate-y-0 opacity-100"
-                  : "translate-y-10 opacity-0"
-              }`}
-            >
-              <div className="flex items-center gap-6 pt-4">
-                <div className="flex -space-x-2">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <div
-                      key={i}
-                      className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary border-2 border-background flex items-center justify-center text-primary-foreground text-xs font-bold"
-                    >
-                      {String.fromCharCode(64 + i)}
-                    </div>
-                  ))}
-                </div>
-                <div>
-                  <div className="flex items-center gap-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className="w-4 h-4 fill-yellow-400 text-yellow-400"
-                      />
-                    ))}
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Trusted by 2,500+ students
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column - Interactive Visual */}
-          <div
-            className={`transform transition-all duration-1000 delay-600 ${
-              isVisible
-                ? "translate-y-0 opacity-100"
-                : "translate-y-10 opacity-0"
-            }`}
-          >
-            <div className="relative">
-              {/* Main Dashboard Mockup */}
-              <div className="bg-card rounded-2xl shadow-2xl overflow-hidden border border-border">
-                {/* Header */}
-                <div className="bg-gradient-to-r from-muted/50 to-muted px-6 py-4 border-b border-border">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-3 h-3 rounded-full bg-red-400"></div>
-                      <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
-                      <div className="w-3 h-3 rounded-full bg-green-400"></div>
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      Bamenda Internships Dashboard
-                    </div>
-                  </div>
-                </div>
-
-                {/* Content Area */}
-                <div className="p-6 space-y-6">
-                  {/* Chart Area */}
-                  <div className="h-32 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg relative overflow-hidden">
-                    <div className="absolute inset-0 flex items-end justify-around p-4">
-                      {[65, 80, 45, 90, 70, 85, 95].map((height, i) => (
-                        <div
-                          key={i}
-                          className="bg-gradient-to-t from-blue-600 to-blue-800 rounded-t-sm animate-grow"
-                          style={{
-                            width: "12px",
-                            height: `${height}%`,
-                            animationDelay: `${i * 200}ms`,
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Job Cards */}
-                  <div className="space-y-3">
-                    {[
-                      "Software Developer",
-                      "Digital Marketing",
-                      "Data Analyst",
-                    ].map((job, i) => (
-                      <div
-                        key={i}
-                        className="flex items-center justify-between p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary to-secondary"></div>
-                          <div>
-                            <div className="font-medium text-foreground text-sm">
-                              {job}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              Bamenda • Remote
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-xs text-success font-medium">
-                          Active
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <button className="w-full sm:w-auto px-8 py-4 bg-white border-2 border-gray-100 hover:border-blue-100 text-gray-700 hover:text-blue-700 rounded-2xl font-bold text-lg shadow-sm hover:shadow-lg transition-all flex items-center justify-center gap-2 group cursor-pointer">
+                  <Play className="w-5 h-5 fill-current" />
+                  Watch Demo
+                </button>
               </div>
 
-              {/* Floating Success Card */}
-              <div className="absolute -right-4 -bottom-4 bg-card rounded-xl shadow-xl p-6 border border-border">
-                <DeveloperAvatarOverlap
-                  developers={[
+              <div className="pt-4 flex items-center justify-center lg:justify-start gap-4">
+                 <DeveloperAvatarOverlap 
+                   developers={[
                     {
                       id: '1',
                       name: 'Abdul Fadiga',
@@ -377,186 +196,128 @@ const BamendaHeroSection: React.FC = () => {
                   ]}
                   maxDisplay={4}
                   size="md"
-                  title="Our Expert Mentors"
-                  subtitle="Leading the tech revolution in Africa"
-                />
+                 />
+                 <div className="text-sm text-gray-500">
+                    Join <span className="font-bold text-gray-900">2,000+</span> talented individuals
+                 </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Stats Section */}
-        <div
-          className={`transform transition-all duration-1000 ${
-            isVisible ? "translate-y-0 opacity-100" : "translate-y-5 opacity-0"
-          }`}
-        >
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12 max-w-4xl mx-auto">
-            {stats.map((stat, index) => {
-              const Icon = stat.icon;
-              return (
-                <div
-                  key={index}
-                  className="bg-card/80 backdrop-blur-sm rounded-xl p-4 text-center border border-border/20 shadow-lg hover:shadow-xl transition-all duration-300"
-                >
-                  <Icon className={`w-6 h-6 mx-auto mb-2 ${stat.color}`} />
-                  <div className="text-2xl font-bold text-foreground">
-                    {stat.value}
-                  </div>
-                  <div className="text-sm text-muted-foreground">{stat.label}</div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+            {/* Right Column: Visuals (MacBook Inspiration / Floating Dashboard) */}
+            <div className={`relative mt-16 lg:mt-0 perspective-1000 transition-all duration-1000 delay-300 ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-10 opacity-0'}`}>
+               {/* Main Dashboard Window */}
+               <div className="relative rounded-[1.5rem] bg-white border border-gray-100 shadow-2xl transform rotate-[-2deg] hover:rotate-0 transition-transform duration-700 overflow-hidden max-w-lg mx-auto">
+                   
+                   {/* Browser Bar */}
+                   <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex items-center gap-2">
+                       <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                       <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                       <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                       <div className="ml-4 bg-white border border-gray-200 rounded-full px-3 py-1 flex items-center gap-2 w-full max-w-[200px]">
+                           <div className="w-3 h-3 text-gray-400"><Search size={12} /></div>
+                           <div className="h-2 w-20 bg-gray-100 rounded-full"></div>
+                       </div>
+                   </div>
 
-        {/* Feature Cards Section */}
-        <div className="mt-20 max-w-6xl mx-auto">
-          <div
-            className={`text-center mb-12 transform transition-all duration-1000 delay-700 ${
-              isVisible
-                ? "translate-y-0 opacity-100"
-                : "translate-y-10 opacity-0"
-            }`}
-          >
-            <h2 className="text-3xl font-bold text-foreground mb-4">
-              Why Choose Our Platform?
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              We've revolutionized the internship experience in Bamenda with
-              cutting-edge technology and local expertise.
-            </p>
-          </div>
+                   {/* Dashboard Content */}
+                   <div className="p-6 bg-white min-h-[300px]">
+                       <div className="flex gap-6 mb-8">
+                           {/* Sidebar Mock */}
+                           <div className="w-12 flex flex-col gap-4">
+                               <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold">Z</div>
+                               <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center"><Briefcase size={20} /></div>
+                               <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center"><Users size={20} /></div>
+                           </div>
+                           
+                           {/* Main Area Mock */}
+                           <div className="flex-1 space-y-4">
+                               <div className="h-8 w-3/4 bg-gray-100 rounded-lg"></div>
+                               <div className="grid grid-cols-2 gap-4">
+                                   <div className="h-32 bg-blue-50 rounded-2xl border border-blue-100 p-4">
+                                       <div className="w-8 h-8 bg-blue-100 rounded-lg mb-2"></div>
+                                       <div className="h-4 w-16 bg-blue-200 rounded-full mb-2"></div>
+                                       <div className="h-3 w-24 bg-blue-100 rounded-full"></div>
+                                   </div>
+                                   <div className="h-32 bg-gray-50 rounded-2xl border border-gray-100 p-4">
+                                       <div className="w-8 h-8 bg-purple-100 rounded-lg mb-2"></div>
+                                       <div className="h-4 w-16 bg-gray-200 rounded-full mb-2"></div>
+                                       <div className="h-3 w-24 bg-gray-200 rounded-full"></div>
+                                   </div>
+                               </div>
+                               <div className="h-24 bg-gray-50 rounded-2xl border border-gray-100"></div>
+                           </div>
+                       </div>
+                   </div>
+                   
+                   {/* Watermark Logo */}
+                   <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-[0.03] pointer-events-none">
+                       <img src="https://i.ibb.co/Cp502Yby/logo.png" width={200} height={200} alt="Watermark" />
+                   </div>
+               </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {features.map((feature, index) => {
-              const Icon = feature.icon;
-              return (
-                <div
-                  key={index}
-                  className={`transform transition-all duration-1000 ${
-                    isVisible
-                      ? "translate-y-0 opacity-100"
-                      : "translate-y-10 opacity-0"
-                  }`}
-                  style={{ transitionDelay: `${800 + index * 200}ms` }}
-                  onMouseEnter={() => setHoveredFeature(index)}
-                  onMouseLeave={() => setHoveredFeature(null)}
-                >
-                  <div
-                    className={`group relative p-8 rounded-2xl bg-card/80 backdrop-blur-sm border border-border/20 shadow-lg hover:shadow-xl transition-all duration-500 hover:scale-105 ${
-                      hoveredFeature === index ? "shadow-2xl" : ""
-                    }`}
-                  >
-                    <div
-                      className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500`}
-                    ></div>
-                    <div className="relative z-10 mb-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <div
-                          className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}
-                        >
-                          <Icon className="w-8 h-8 text-white" />
+               {/* Floating Elements */}
+               <div className="absolute -right-8 top-12 bg-white p-4 rounded-2xl shadow-xl animate-float-slow border border-gray-100">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-green-100 rounded-full text-green-600">
+                            <TrendingUp size={20} />
                         </div>
-                        {feature.metric && (
-                          <div className="text-right">
-                            <div className="text-sm font-bold text-foreground">
-                              {feature.metric}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              Success Rate
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                        <div>
+                            <p className="text-xs text-gray-500 font-medium">Active Services</p>
+                            <p className="text-lg font-bold text-gray-900">50+</p>
+                        </div>
                     </div>
-                    <div className="relative z-10">
-                      <h3 className="text-xl font-bold text-foreground mb-3 group-hover:text-foreground/80 transition-colors">
-                        {feature.title}
-                      </h3>
-                      <p className="text-muted-foreground leading-relaxed text-sm">
-                        {feature.description}
-                      </p>
-                    </div>
-                    <div
-                      className={`absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-gradient transition-all duration-300`}
-                      style={{
-                        borderImage:
-                          hoveredFeature === index
-                            ? `linear-gradient(135deg, ${feature.color
-                                .replace("from-", "")
-                                .replace("to-", ", ")}) 1`
-                            : "none",
-                      }}
-                    ></div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+               </div>
 
-        {/* Testimonial Carousel */}
-        <div
-          className={`mt-20 text-center transform transition-all duration-1000 delay-1000 ${
-            isVisible ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
-          }`}
-        >
-          <div className="max-w-4xl mx-auto">
-            <h3 className="text-2xl font-bold text-foreground mb-8">
-              Success Stories from Bamenda
-            </h3>
-            <div className="bg-card/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-border/20">
-              <div className="flex items-center justify-center mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className="w-5 h-5 fill-yellow-400 text-yellow-400 mx-1"
-                  />
-                ))}
-              </div>
-              <blockquote className="text-lg italic text-muted-foreground mb-6">
-                "{testimonials[currentSlide].quote}"
-              </blockquote>
-              <div className="font-semibold text-foreground">
-                {testimonials[currentSlide].name}
-              </div>
-              <div className="text-sm text-muted-foreground">
-                {testimonials[currentSlide].role} at{" "}
-                {testimonials[currentSlide].company}
-              </div>
+                <div className="absolute -left-8 bottom-24 bg-white p-4 rounded-2xl shadow-xl animate-float border border-gray-100" style={{ animationDelay: '1s' }}>
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-100 rounded-full text-blue-600">
+                            <Users size={20} />
+                        </div>
+                        <div>
+                            <p className="text-xs text-gray-500 font-medium">Student Community</p>
+                            <p className="text-lg font-bold text-gray-900">2,000+ Students</p>
+                        </div>
+                    </div>
+               </div>
+               
+               <div className="absolute -bottom-6 right-12 bg-white px-5 py-3 rounded-full shadow-lg border border-gray-100 flex items-center gap-2 animate-bounce-slow">
+                   <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                   <span className="text-sm font-bold text-gray-700">Verified Company</span>
+                   <CheckCircle2 size={16} className="text-blue-500 ml-1" />
+               </div>
+
+               {/* Background Decorative Blur */}
+               <div className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-blue-100/40 to-indigo-100/40 blur-3xl rounded-full" />
             </div>
+
           </div>
         </div>
       </div>
 
-      {/* Custom Animations */}
       <style jsx>{`
-        @keyframes float {
-          0%,
-          100% {
-            transform: translateY(0px) rotate(0deg);
-          }
-          50% {
-            transform: translateY(-20px) rotate(5deg);
-          }
+        @keyframes float-slow {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-10px); }
         }
-
-        @keyframes grow {
-          0% {
-            height: 0%;
-          }
-          100% {
-            height: var(--final-height, 80%);
-          }
+        @keyframes slide-down {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
         }
-
-        .animate-float {
-          animation: float 6s ease-in-out infinite;
+        @keyframes bounce-slow {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-5px); }
         }
-
-        .animate-grow {
-          animation: grow 1s ease-out forwards;
+        .animate-float-slow {
+          animation: float-slow 4s ease-in-out infinite;
+        }
+        .animate-slide-down {
+          animation: slide-down 0.3s ease-out forwards;
+        }
+        .animate-bounce-slow {
+          animation: bounce-slow 3s ease-in-out infinite;
+        }
+        .perspective-1000 {
+          perspective: 1000px;
         }
       `}</style>
     </div>

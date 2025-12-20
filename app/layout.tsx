@@ -29,12 +29,11 @@ export const viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL("https://zigex.vercel.app"),
   title: {
-    default: "ZIGEX",
-    template:
-      "%s  ZiGex| SEED | ZiGex | skills enhancement and empowerment throgh digitalization, seed bamenda ",
+    default: "Zigex | Internship, Growth & Professional Experience",
+    template: "%s | Zigex",
   },
   description:
-    "ZIGEX (Zone for Internship, Growth and Experience) is your gateway to career advancement. Connect with top tech internships, skill-building programs, and community events designed to empower the next generation of digital leaders.",
+    "Zigex (Zone for Internship, Growth and Experience) is Africa's premier gateway to career advancement. Discover tech internships, masterclasses, and community events designed to empower the next generation of digital leaders through digitalization and SEED Bamenda.",
   keywords: [
     "ZIGEX",
     "Zone for Internship Growth and Experience",
@@ -54,31 +53,34 @@ export const metadata: Metadata = {
       "ZIGEX (Zone for Internship, Growth and Experience) is the ultimate platform for discovering career-defining internships, specialized training programs, and impactful tech events. Empowering talent through digitalization.",
     images: [
       {
-        url: "https://i.ibb.co/5WXQhq78/Whats-App-Image-2025-09-23-at-8-22-42-AM.jpg",
+        url: "https://i.ibb.co/k2Rpz2jQ/og-image-2x-100.jpg",
         width: 1200,
         height: 630,
-        alt: "ZIGEX Community",
+        alt: "Zigex - Zone for Internship, Growth and Experience",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "ZIGEX | Zone for Internship, Growth and Experience",
+    title: "Zigex | Connect with Elite Opportunities",
     description:
-      "ZIGEX (Zone for Internship, Growth and Experience) - Connecting aspiring talent with opportunities. Discover internships, programs, and events.",
-    creator: "@fonyuygita",
-    site: "@innovatewithseed",
-    images: [
-      {
-        url: "https://i.ibb.co/5WXQhq78/Whats-App-Image-2025-09-23-at-8-22-42-AM.jpg",
-        width: 1200,
-        height: 630,
-        alt: "ZIGEX Community",
-      },
-    ],
+      "Africa's gateway to career-defining internships and professional growth. Discover your potential with Zigex.",
+    creator: "@zigex_platform",
+    images: ["https://i.ibb.co/k2Rpz2jQ/og-image-2x-100.jpg"],
   },
   alternates: {
     canonical: "https://zigex.vercel.app",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
 };
 

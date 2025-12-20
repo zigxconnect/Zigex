@@ -5,6 +5,47 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft, Calendar, User, Tag, Clock } from 'lucide-react'
+import { Metadata } from 'next'
+
+// Query for metadata
+const METADATA_QUERY = `*[_type == "post" && slug.current == $slug][0]{
+  title,
+  excerpt,
+  mainImage,
+  author->{name}
+}`
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params
+  const post = await sanityFetch({
+    query: METADATA_QUERY,
+    params: { slug },
+  })
+
+  if (!post) return { title: 'Post Not Found' }
+
+  const title = `${post.title} | Zigex News`
+  const description = post.excerpt || `Read ${post.title} on Zigex News.`
+  const image = post.mainImage ? urlFor(post.mainImage).width(1200).height(630).url() : "https://i.ibb.co/k2Rpz2jQ/og-image-2x-100.jpg"
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'article',
+      url: `https://zigex.vercel.app/dashboard/blog/${slug}`,
+      images: [{ url: image }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [image],
+    },
+  }
+}
 
 const POST_QUERY = `*[_type == "post" && slug.current == $slug][0]{
   _id,

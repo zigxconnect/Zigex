@@ -10,12 +10,13 @@ export const Logo = ({ className }: LogoProps) => {
   return (
     <Link href="/" className={cn("flex items-center gap-2 group", className)}>
       <div className="relative w-32 h-10 transition-transform duration-300 group-hover:scale-105">
-        <Image
-          src="/zigex.svg"
+        <img
+          src="https://i.ibb.co/Cp502Yby/logo.png"
           alt="Zigex Logo"
-          fill
-          className="object-contain"
-          priority
+          className="h-full w-auto object-contain"
+          onError={(e) => {
+            e.currentTarget.style.display = 'none';
+          }}
         />
       </div>
     </Link>

@@ -1,297 +1,161 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
+import { ArrowRight, CheckCircle2, Briefcase, GraduationCap, Users } from 'lucide-react';
 import Link from 'next/link';
-import { MapPin } from 'lucide-react';
 
-interface Internship {
-  id: string;
-  title: string;
-  company: string;
-  description: string;
-  location: string;
-  logoText: string;
-  logoColor: string;
-  badgeColor: string;
-  applyLink: string;
-  office: string;
-}
+type ActivityType = 'internship' | 'program' | 'event';
 
-const FeaturedInternships: React.FC = () => {
-  const [visibleCards, setVisibleCards] = useState<Set<string>>(new Set());
-  const cardRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
-  const observerRef = useRef<IntersectionObserver | null>(null);
+const ActivitiesSection: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<ActivityType>('internship');
 
-  const internships: Internship[] = [
-    {
-      id: '1',
-      title: 'Software Development Intern',
-      company: 'TechCorp Inc',
-      description: 'Join our dynamic team and work on cutting-edge projects',
-      location: 'Bamenda',
-      logoText: 'TC',
-      logoColor: 'bg-primary',
-      badgeColor: 'bg-warning',
-      applyLink: '/apply/software-dev',
-      office: "https://i.ibb.co/VchKJd69/seedLogo.webp" 
+  const content = {
+    internship: {
+      title: 'Internships',
+      headline: 'Launch Your Career',
+      description: 'Our internship program is designed to bridge the gap between academic learning and professional ecosystem. We partner with top-tier companies to offer roles that provide real-world experience, mentorship, and the chance to work on impactful projects.',
+      benefits: [
+        'Access to exclusive paid and unpaid roles',
+        'Mentorship from industry veterans',
+        'Certificate of completion and recommendation letters',
+        'Potential for full-time employment offers'
+      ],
+      image: 'https://i.ibb.co/C4tg26k/woc.jpg',
+      ctaLink: '/feed',
+      ctaText: 'Find Internships'
     },
-    {
-      id: '2',
-      title: 'Marketing Assistant',
-      company: 'Creative Solutions',
-      description: 'Help develop marketing strategies for local businesses',
-      location: 'Bamenda',
-      logoText: 'CS',
-      logoColor: 'bg-warning',
-      badgeColor: 'bg-warning',
-      applyLink: '/apply/marketing',
-      office: "https://i.ibb.co/bMcCwpSp/nervtech.png",
+    program: {
+      title: 'Programs',
+      headline: 'Accelerate Your Growth',
+      description: 'Join our intensive bootcamps, fellowships, and skill-building cohorts. Whether you are looking to master Data Science, Web Development, or Entrepreneurship, our programs are curated to fast-track your mastery.',
+      benefits: [
+        'Structured curriculum designed by experts',
+        'Peer-to-peer learning environment',
+        'Hands-on capstone projects',
+        'Career support and resume reviews'
+      ],
+      image: 'https://i.ibb.co/C4tg26k/woc.jpg', 
+      ctaLink: '/feed',
+      ctaText: 'Explore Programs'
     },
-    {
-      id: '3',
-      title: 'Finance Intern',
-      company: 'BankPlus',
-      description: 'Learn financial analysis and banking operations',
-      location: 'Bamenda',
-      logoText: 'BP',
-      logoColor: 'bg-primary',
-      badgeColor: 'bg-warning',
-      applyLink: '/apply/finance',
-      office: "https://i.ibb.co/yF80L7jc/ccc.png"
-    },
-    {
-      id: '4',
-      title: 'Data Analyst Trainee',
-      company: 'DataFlow Inc',
-      description: 'Work with big data and analytics tools',
-      location: 'Bamenda',
-      logoText: 'DF',
-      logoColor: 'bg-warning',
-      badgeColor: 'bg-warning',
-      applyLink: '/apply/data-analyst',
-      office: "https://i.ibb.co/qSQTbpk/unib.png"
-    },
-    {
-      id: '5',
-      title: 'HR Assistant',
-      company: 'People First',
-      description: 'Support recruitment and employee relations',
-      location: 'Bamenda',
-      logoText: 'PF',
-      logoColor: 'bg-primary',
-      badgeColor: 'bg-warning',
-      applyLink: '/apply/hr',
-      office: "https://i.ibb.co/MkXDZsfx/Civil-Salt.jpg"
-    },
-    {
-      id: '6',
-      title: 'Graphic Design Intern',
-      company: 'Visual Arts Studio',
-      description: 'Create visual content for various media platforms',
-      location: 'Bamenda',
-      logoText: 'VA',
-      logoColor: 'bg-warning',
-      badgeColor: 'bg-warning',
-      applyLink: '/apply/graphic-design',
-      office: "https://i.ibb.co/Fk55D4CJ/skye8-internship.jpg"
+    event: {
+      title: 'Events',
+      headline: 'Connect and Inspire',
+      description: 'Immerse yourself in our vibrant community through hackathons, career fairs, and tech talks. Our events are the heartbeat of Zigex, bringing together talent, recruiters, and innovators.',
+      benefits: [
+        'Networking with potential employers',
+        'Workshops and live coding sessions',
+        'Panel discussions with tech leaders',
+        'Community meetups and mixers'
+      ],
+      image: 'https://i.ibb.co/4ZFCPV5W/n5-2.jpg',
+      ctaLink: '/feed',
+      ctaText: 'Upcoming Events'
     }
-  ];
-
-  useEffect(() => {
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          const cardId = entry.target.getAttribute('data-card-id');
-          if (cardId && entry.isIntersecting) {
-            setVisibleCards(prev => new Set([...prev, cardId]));
-          }
-        });
-      },
-      {
-        threshold: 0.1,
-        rootMargin: '50px 0px -50px 0px'
-      }
-    );
-
-    // Observe all cards
-    Object.values(cardRefs.current).forEach((ref) => {
-      if (ref && observerRef.current) {
-        observerRef.current.observe(ref);
-      }
-    });
-
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-    };
-  }, []);
-
-  const setCardRef = (id: string) => (el: HTMLDivElement | null) => {
-    cardRefs.current[id] = el;
   };
 
+  const activeContent = content[activeTab];
+
   return (
-    <>
-      <style jsx global>{`
-        @keyframes slideInUp {
-          from {
-            opacity: 0;
-            transform: translateY(60px) scale(0.9);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
-        }
+    <section id="services" className="py-20 bg-white relative overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
-        @keyframes bounceIn {
-          0% {
-            opacity: 0;
-            transform: translateY(50px) scale(0.8);
-          }
-          50% {
-            opacity: 0.8;
-            transform: translateY(-10px) scale(1.05);
-          }
-          100% {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
-        }
-        
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        .animate-slide-in-up {
-          animation: slideInUp 0.8s ease-out forwards;
-        }
-        
-        .animate-bounce-in {
-          animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
-        }
-        
-        .animate-fade-in-up {
-          animation: fadeInUp 0.8s ease-out forwards;
-        }
-        
-        .card-hidden {
-          opacity: 0;
-          transform: translateY(50px) scale(0.9);
-        }
-        
-        .card-visible {
-          opacity: 1;
-          transform: translateY(0) scale(1);
-          transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-        }
-      `}</style>
-      
-      <section className="py-12 sm:py-16 lg:py-20 bg-muted/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header */}
-          <div className="text-center mb-8 sm:mb-12 lg:mb-16">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary mb-4 sm:mb-6 animate-fade-in-up">
-              Featured Internships
-            </h2>
-            <p className="text-muted-foreground text-sm sm:text-base lg:text-lg max-w-2xl mx-auto leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-              Discover hand-picked internship opportunities from top companies in Bamenda
-            </p>
-          </div>
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            Our <span className="text-blue-600">Services</span>
+          </h2>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Everything you need to grow, connect, and succeed in your professional journey.
+          </p>
+        </div>
 
-          {/* Internships Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-12 lg:mb-16">
-            {internships.map((internship, index) => (
-              <div
-                key={internship.id}
-                ref={setCardRef(internship.id)}
-                data-card-id={internship.id}
-                className={`bg-card rounded-lg md:w-80 w-90 mx-auto shadow-lg md:p-0 sm:p-6 relative group cursor-pointer transition-all duration-500 hover:shadow-2xl hover:scale-105 hover:-translate-y-2 ${
-                  visibleCards.has(internship.id) 
-                    ? 'card-visible' 
-                    : 'card-hidden'
+        {/* Tab Navigation */}
+        <div className="flex justify-center mb-12">
+          <div className="inline-flex p-1.5 bg-gray-100 rounded-full border border-gray-200 shadow-inner">
+            {(['internship', 'program', 'event'] as ActivityType[]).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-8 py-3 rounded-full text-sm hover:cursor-pointer font-bold transition-all duration-300 capitalize flex items-center gap-2 ${
+                  activeTab === tab
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
+                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-200'
                 }`}
-                style={{
-                  transitionDelay: `${index * 100}ms`
-                }}
-              >
-                {/* Hover overlay */}
-                <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-warning/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                
-                {/* Badge */}
-                <div className={`absolute top-4 right-4 ${internship.badgeColor} text-white px-2 py-1 rounded-full text-xs font-medium transition-all duration-300 group-hover:scale-110 group-hover:rotate-12`}>
-                  NEW
-                </div>
-
-                {/* office picture */}
-                <div className="md:w-80 md:h-40 h-45 bg-muted rounded-md overflow-hidden mb-3 ">
-                  <img 
-                    src={internship.office} 
-                    alt={internship.title} 
-                    className=" w-90 h-45 md:w-80 md:h-40 " 
-                  />
-                </div>
-
-
-                {/* Logo and Title */}
-                <div className="flex items-start mb-3 sm:mb-4 relative z-10 px-7 ">
-                  <div className={`${internship.logoColor} text-primary-foreground rounded-lg w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center font-bold text-sm sm:text-base mr-3 sm:mr-4 flex-shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6`}>
-                    {internship.logoText}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-primary text-sm sm:text-base lg:text-lg leading-tight mb-1 transition-colors duration-300 group-hover:text-primary/80">
-                      {internship.title}
-                    </h3>
-                    <p className="text-muted-foreground text-xs sm:text-sm font-medium transition-colors duration-300 group-hover:text-foreground">
-                      {internship.company}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Description */}
-                <p className="text-muted-foreground px-7   text-xs sm:text-sm leading-relaxed mb-4 sm:mb-6 line-clamp-2 transition-colors duration-300 group-hover:text-foreground relative z-10">
-                  {internship.description}
-                </p>
-
-                {/* Footer */}
-                <div className="flex items-center justify-between relative z-10 px-7 pb-5">
-                  <div className="flex items-center text-muted-foreground text-xs sm:text-sm transition-colors duration-300 group-hover:text-foreground">
-                    <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-1 flex-shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:text-primary" />
-                    <span className="truncate">{internship.location}</span>
-                  </div>
-                  <Link
-                    href={internship.applyLink}
-                    className="bg-warning hover:bg-warning/90 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-all duration-300 flex-shrink-0 transform hover:scale-105 hover:shadow-lg active:scale-95"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    Apply Now
-                  </Link>
-                </div>
-              </div>
+              > 
+                {tab === 'internship' && <Briefcase className="w-4 h-4" />}
+                {tab === 'program' && <GraduationCap className="w-4 h-4" />}
+                {tab === 'event' && <Users className="w-4 h-4" />}
+                {tab}s
+              </button>
             ))}
           </div>
+        </div>
 
-          {/* View All Button */}
-          <div className="text-center">
-            <Link
-              href="/internships"
-              className="inline-block bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 sm:px-8 sm:py-4 rounded-md font-semibold text-sm sm:text-base transition-all duration-300 shadow-md hover:shadow-xl transform hover:scale-105 hover:-translate-y-1 active:scale-95"
-            >
-              View All Internships
-            </Link>
+        {/* Content Display */}
+        <div className="bg-white rounded-3xl border border-gray-200 p-8 md:p-12 shadow-2xl shadow-gray-100/50 transition-all duration-500">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            
+            {/* Text Content */}
+            <div className="space-y-8 order-2 lg:order-1">
+              <div>
+                <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+                  {activeContent.headline}
+                </h3>
+                <p className="text-gray-600 text-lg leading-relaxed">
+                  {activeContent.description}
+                </p>
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-4">
+                {activeContent.benefits.map((benefit, idx) => (
+                  <div key={idx} className="flex items-start gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
+                    <span className="text-gray-700 text-sm font-medium">{benefit}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="pt-4">
+                <Link href={activeContent.ctaLink}>
+                  <button className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-xl shadow-blue-500/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2 cursor-pointer">
+                    {activeContent.ctaText}
+                    <ArrowRight className="w-5 h-5" />
+                  </button>
+                </Link>
+              </div>
+            </div>
+
+            {/* Visual */}
+            <div className="relative order-1 lg:order-2">
+              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl border-4 border-white bg-gray-100">
+                 <img 
+                    src={activeContent.image} 
+                    alt={activeContent.title} 
+                    className="w-full h-full object-cover"
+                 />
+                 <div className="absolute inset-0 bg-gradient-to-t from-blue-900/40 to-transparent" />
+                 
+                 {/* Floating Badge */}
+                 <div className="absolute bottom-6 left-6 right-6">
+                    <div className="bg-white/95 backdrop-blur-sm p-4 rounded-xl border border-white/20 shadow-lg flex items-center justify-between">
+                       <span className="font-bold text-gray-900">{activeContent.title}</span>
+                       <div className="h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center p-1">
+                          <img src="https://i.ibb.co/Cp502Yby/logo.png" alt="Zigex" className="w-full h-full object-contain" />
+                       </div>
+                    </div>
+                 </div>
+              </div>
+              
+              {/* Decorative Elements */}
+              <div className="absolute -top-10 -right-10 w-64 h-64 bg-blue-100 rounded-full blur-3xl opacity-50 -z-10" />
+              <div className="absolute -bottom-10 -left-10 w-64 h-64 bg-indigo-100 rounded-full blur-3xl opacity-50 -z-10" />
+            </div>
           </div>
         </div>
-      </section>
-    </>
+      </div>
+    </section>
   );
 };
 
-export default FeaturedInternships;
+export default ActivitiesSection;
