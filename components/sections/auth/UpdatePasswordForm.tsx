@@ -190,7 +190,7 @@ export const UpdatePasswordForm = () => {
       </div>
       <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-4">
         <div>
-          <label className="text-sm font-medium text-gray-700">
+          <label className="text-sm font-medium text-foreground">
             New Password
           </label>
           <div className="relative mt-1">
@@ -221,7 +221,7 @@ export const UpdatePasswordForm = () => {
         <PasswordStrengthIndicator password={passwordValue} />
 
         <div>
-          <label className="text-sm font-medium text-gray-700">
+          <label className="text-sm font-medium text-foreground">
             Confirm New Password
           </label>
           <div className="relative mt-1">

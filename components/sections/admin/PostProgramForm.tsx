@@ -22,7 +22,7 @@ const FormSection = ({ title, children }: any) => (
 
 const FormField = ({ label, children, className, required }: any) => (
   <div className={className}>
-    <label className="block text-sm font-medium text-black mb-1.5">
+    <label className="block text-sm font-medium text-foreground mb-1.5">
       {label}
       {required && <span className="text-red-500 ml-1">*</span>}
     </label>

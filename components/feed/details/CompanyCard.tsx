@@ -51,7 +51,7 @@ export function DetailsSidebar({ details }: DetailsSidebarProps) {
       {/* Header */}
       <div className="px-6 py-5 border-b border-border flex items-center gap-3 bg-muted/20">
         <div className="w-1.5 h-6 bg-primary rounded-full shadow-[0_0_8px_rgba(21,93,252,0.4)]" />
-        <h3 className="font-black text-lg text-foreground uppercase tracking-tight">Details</h3>
+        <h3 className="font-bold text-lg text-foreground uppercase tracking-tight">Details</h3>
       </div>
 
       {/* Content */}
@@ -69,7 +69,7 @@ export function DetailsSidebar({ details }: DetailsSidebarProps) {
                 <IconComponent size={20} className={`transition-colors group-hover:text-white ${styles.icon}`} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-1 opacity-70">
+                <p className="text-xs font-bold text-foreground uppercase tracking-widest mb-1 opacity-70">
                   {detail.label}
                 </p>
                 <p className="text-sm font-bold text-foreground leading-tight">

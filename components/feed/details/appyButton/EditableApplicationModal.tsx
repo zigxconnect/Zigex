@@ -106,12 +106,12 @@ export function EditableApplicationModal({
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[93vh] flex flex-col overflow-hidden">
         
         {/* Header - Elegant gradient background */}
-        <div className="flex items-start justify-between p-4 sm:p-5 md:p-7 border-b-2 border-gray-100 bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 flex-shrink-0">
+        <div className="flex items-start justify-between p-4 sm:p-5 md:p-7 border-b border-border bg-primary flex-shrink-0">
           <div className="flex-1 pr-4">
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white">
-              ✏️ Edit Application
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white uppercase tracking-tight">
+              Edit Application
             </h2>
-            <p className="text-blue-100 text-xs sm:text-sm md:text-base mt-1">
+            <p className="text-white/80 text-xs sm:text-sm md:text-base mt-2 font-medium uppercase tracking-widest opacity-80">
               {companyName} • {opportunityTitle}
             </p>
           </div>
@@ -131,14 +131,14 @@ export function EditableApplicationModal({
             <div className="lg:col-span-2 flex flex-col h-full">
               <div className="flex flex-col flex-1">
                 <div className="flex items-center justify-between mb-2.5 sm:mb-3">
-                  <label className="text-sm sm:text-base md:text-lg font-bold text-gray-900">
-                    📝 Application Content
+                  <label className="text-xs font-bold text-foreground uppercase tracking-widest">
+                    Application Content
                   </label>
                   <div className="flex items-center gap-2">
-                    <span className={`text-xs sm:text-sm px-2.5 py-1 rounded-full font-semibold ${
-                      charCount < 300 ? 'bg-yellow-100 text-yellow-700' :
-                      charCount > 400 ? 'bg-orange-100 text-orange-700' :
-                      'bg-green-100 text-green-700'
+                    <span className={`text-xs sm:text-sm px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${
+                      charCount < 300 ? 'bg-warning/10 text-warning' :
+                      charCount > 400 ? 'bg-destructive/10 text-destructive' :
+                      'bg-success/10 text-success'
                     }`}>
                       {charCount} chars
                     </span>
@@ -148,7 +148,7 @@ export function EditableApplicationModal({
                 <textarea
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  className="w-full p-3 sm:p-4 md:p-5 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none resize-none font-mono text-xs sm:text-sm md:text-base leading-relaxed transition-all"
+                  className="w-full p-3 sm:p-4 md:p-5 border border-border rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none resize-none font-mono text-xs sm:text-sm md:text-base leading-relaxed transition-all bg-muted/5 font-medium"
                   style={{ height: `${editorHeight}px` }}
                   placeholder="Edit your application content here..."
                 />
@@ -162,10 +162,10 @@ export function EditableApplicationModal({
                     dragStartHeight.current = editorHeight;
                     setIsDragging(true);
                   }}
-                  className="lg:hidden flex items-center justify-center h-5 bg-gradient-to-r from-blue-100 to-indigo-100 hover:from-blue-200 hover:to-indigo-200 border-t-2 border-gray-200 cursor-ns-resize transition-colors group select-none"
+                  className="lg:hidden flex items-center justify-center h-5 bg-muted/50 hover:bg-muted border-t border-border cursor-ns-resize transition-colors group select-none"
                   title="Drag to resize"
                 >
-                  <GripHorizontal size={16} className="text-blue-600 group-hover:text-blue-700 opacity-60 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                  <GripHorizontal size={16} className="text-primary group-hover:scale-110 opacity-60 group-hover:opacity-100 transition-all pointer-events-none" />
                 </div>
 
                 {/* Word count progress bar */}
@@ -181,9 +181,9 @@ export function EditableApplicationModal({
                   <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
                     <div 
                       className={`h-1.5 rounded-full transition-all duration-300 pointer-events-none ${
-                        charCount < 300 ? 'bg-yellow-500 w-1/2' :
-                        charCount > 400 ? 'bg-orange-500 w-full' :
-                        'bg-gradient-to-r from-blue-500 to-indigo-500 w-full'
+                        charCount < 300 ? 'bg-warning w-1/2' :
+                        charCount > 400 ? 'bg-destructive w-full' :
+                        'bg-primary w-full'
                       }`}
                       style={{ width: `${Math.min((charCount / 400) * 100, 100)}%` }}
                     />
@@ -197,8 +197,8 @@ export function EditableApplicationModal({
               
               {/* Live Preview */}
               <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl border-2 border-gray-200 p-3 sm:p-4 md:p-5 shadow-sm flex-1 flex flex-col min-h-0">
-                <h3 className="text-xs sm:text-sm md:text-base font-bold text-gray-900 mb-2.5 flex items-center gap-2">
-                  👁️ Preview
+                <h3 className="text-xs font-bold text-foreground uppercase tracking-widest mb-3">
+                  Preview
                 </h3>
                 <div className="flex-1 bg-white rounded-lg p-2.5 sm:p-3 md:p-4 border border-gray-200 overflow-y-auto min-h-0">
                   <p className="text-xs sm:text-xs md:text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
@@ -218,14 +218,14 @@ export function EditableApplicationModal({
                 <p className={`text-xs sm:text-sm md:text-base font-bold ${
                   isContentGood ? 'text-green-900' : charCount < 300 ? 'text-yellow-900' : 'text-orange-900'
                 }`}>
-                  {isContentGood ? '✅ Content looks great!' : charCount < 300 ? '⏳ Add more details' : '⚠️ A bit too long'}
+                  {isContentGood ? 'Perfect length' : charCount < 300 ? 'Add more details' : 'Content too long'}
                 </p>
               </div>
 
               {/* Error Message */}
               {submitError && (
-                <div className="bg-red-50 rounded-xl border-2 border-red-300 p-3 sm:p-4">
-                  <p className="text-xs sm:text-sm font-bold text-red-900">❌ {submitError}</p>
+                <div className="bg-destructive/10 rounded-xl border border-destructive/20 p-4">
+                  <p className="text-xs sm:text-sm font-bold text-destructive uppercase tracking-tight">Error: {submitError}</p>
                 </div>
               )}
             </div>
@@ -233,33 +233,33 @@ export function EditableApplicationModal({
         </div>
 
         {/* Footer - Action Buttons */}
-        <div className="flex flex-col gap-2 sm:gap-3 p-4 sm:p-5 md:p-7 border-t-2 border-gray-100 bg-gradient-to-r from-gray-50 to-gray-100 flex-shrink-0">
+        <div className="flex flex-col gap-2 sm:gap-3 p-4 sm:p-5 md:p-7 border-t border-border bg-muted/20 flex-shrink-0">
           
           {/* Download Button - Full Width */}
           <button
             onClick={handleDownloadPDF}
             disabled={isDownloading}
-            className="w-full flex items-center justify-center gap-2.5 px-4 sm:px-5 md:px-6 py-2.5 sm:py-3 md:py-4 bg-white border-2 border-gray-300 text-gray-900 rounded-xl hover:bg-gray-50 hover:border-gray-400 hover:shadow-md disabled:opacity-50 transition-all font-bold text-sm sm:text-base md:text-lg"
+            className="w-full flex items-center justify-center gap-2.5 px-4 sm:px-5 md:px-6 py-3.5 sm:py-4 bg-white border border-border text-foreground rounded-xl hover:bg-muted disabled:opacity-50 transition-all font-bold uppercase tracking-widest text-xs sm:text-sm"
           >
-            <Download size={18} className="sm:w-5 sm:h-5 md:w-6 md:h-6" />
-            <span>{isDownloading ? "⏳ Downloading..." : "📄 Download PDF"}</span>
+            <Download size={18} className="sm:w-5 sm:h-5" />
+            <span>{isDownloading ? "Wait..." : "Download PDF"}</span>
           </button>
 
           {/* Submit Buttons - Grid */}
           <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4">
             <button
               onClick={onClose}
-              className="flex items-center justify-center px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 md:py-4 bg-gray-400 hover:bg-gray-500 text-white rounded-xl transition-all font-bold text-sm sm:text-base md:text-lg shadow-md hover:shadow-lg"
+              className="flex items-center justify-center px-3 sm:px-4 md:px-6 py-3.5 sm:py-4 bg-muted text-foreground rounded-xl transition-all font-bold uppercase tracking-widest text-xs sm:text-sm border border-border"
             >
-              ✕ Cancel
+              Cancel
             </button>
             <button
               onClick={handleSaveAndSubmit}
               disabled={isSubmitting}
-              className="flex items-center justify-center gap-2 px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 md:py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 text-white rounded-xl transition-all font-bold text-sm sm:text-base md:text-lg shadow-lg hover:shadow-xl"
+              className="flex items-center justify-center gap-2 px-3 sm:px-4 md:px-6 py-3.5 sm:py-4 bg-primary text-white rounded-xl transition-all font-bold uppercase tracking-widest text-xs sm:text-sm shadow-lg shadow-primary/20"
             >
-              <Send size={18} className="sm:w-5 sm:h-5 md:w-6 md:h-6" />
-              <span>{isSubmitting ? "Sending..." : "Submit"}</span>
+              <Send size={18} className="sm:w-5 sm:h-5" />
+              <span>{isSubmitting ? "Wait..." : "Submit"}</span>
             </button>
           </div>
         </div>

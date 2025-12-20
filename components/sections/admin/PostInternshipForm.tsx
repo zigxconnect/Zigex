@@ -68,7 +68,7 @@ const FormField: React.FC<FormFieldProps> = ({
 }) => (
   <div className={className}>
     <label
-      className="block text-sm font-medium text-blue-700 mb-1.5"
+      className="block text-sm font-medium text-foreground mb-1.5"
       htmlFor={name}
     >
       {label}

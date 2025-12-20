@@ -1,17 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-
-// ... existing imports ...
-
-export const InternshipCard = ({
-  id,
-  // ... props
-  onLiveClick,
-}: InternshipCardProps) => {
-  const router = useRouter();
-  // ... rest
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   MapPin,
@@ -30,7 +21,6 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-// SharePopover removed in favour of native Web Share API fallback
 import LiveBadge from "@/components/uiComponent/LiveBadge";
 import LivePanel from "@/components/uiComponent/LivePanel";
 
@@ -71,6 +61,7 @@ export const InternshipCard = ({
   viewerCount = 0,
   onLiveClick,
 }: InternshipCardProps) => {
+  const router = useRouter();
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [openLive, setOpenLive] = useState(false);
@@ -289,7 +280,6 @@ export const InternshipCard = ({
         </div>
       </div>
     );
-    );
   }
 
   // Grid View - Full Image Card with Overlay (TikTok/Instagram Style)
@@ -332,7 +322,7 @@ export const InternshipCard = ({
                   <div className="w-2.5 h-2.5 bg-white rounded-full animate-ping absolute" />
                   <div className="w-2.5 h-2.5 bg-white rounded-full" />
                 </div>
-                <span className="text-white text-sm font-black uppercase tracking-wider">
+                <span className="text-white text-sm font-bold uppercase tracking-wider">
                   Live Now
                 </span>
               </div>
@@ -454,7 +444,7 @@ export const InternshipCard = ({
               <p className="text-blue-300 text-xs font-bold uppercase tracking-wider mb-1">
                 {company}
               </p>
-              <h3 className="text-white text-xl font-black leading-tight line-clamp-2 drop-shadow-md">
+              <h3 className="text-white text-xl font-bold leading-tight line-clamp-2 drop-shadow-md">
                 {title}
               </h3>
             </div>

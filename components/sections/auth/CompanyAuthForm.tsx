@@ -186,7 +186,7 @@ export const CompanyAuthForm = () => {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* --- Form fields (no structural changes) --- */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Company Name *
               </label>
               <div className="relative">
@@ -205,7 +205,7 @@ export const CompanyAuthForm = () => {
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Email Address *
               </label>
               <div className="relative">
@@ -224,7 +224,7 @@ export const CompanyAuthForm = () => {
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Company Description *
               </label>
               <div className="relative">
@@ -242,7 +242,7 @@ export const CompanyAuthForm = () => {
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Phone Number
               </label>
               <div className="relative">
@@ -261,7 +261,7 @@ export const CompanyAuthForm = () => {
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Address
               </label>
               <div className="relative">
@@ -280,7 +280,7 @@ export const CompanyAuthForm = () => {
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Website
               </label>
               <div className="relative">
@@ -299,7 +299,7 @@ export const CompanyAuthForm = () => {
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Password *
               </label>
               <div className="relative">

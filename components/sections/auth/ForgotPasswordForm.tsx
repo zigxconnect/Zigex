@@ -105,7 +105,7 @@ export const ForgotPasswordForm = () => {
       </div>
       <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-4">
         <div>
-          <label className="text-sm font-medium text-gray-700">Email</label>
+          <label className="text-sm font-medium text-foreground">Email</label>
           <Input
             id="email"
             type="email"
