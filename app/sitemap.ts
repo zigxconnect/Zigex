@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-    const baseUrl = 'https://zigex.vercel.app';
+    const baseUrl = 'https://zigexconnect.com';
 
     // Static routes
     const staticRoutes = [

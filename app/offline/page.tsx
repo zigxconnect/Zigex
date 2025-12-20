@@ -7,6 +7,7 @@ export const metadata = {
   title: 'Offline | ZIGEX',
   description: 'You are currently offline. Please check your internet connection.',
 };
+// trying to push....
 
 export default function OfflinePage() {
   return (

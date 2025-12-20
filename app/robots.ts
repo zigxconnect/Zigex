@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
             allow: '/',
             disallow: ['/api/', '/admin/', '/dashboard/'],
         },
-        sitemap: 'https://zigex.vercel.app/sitemap.xml',
+        sitemap: 'https://zigexconnect.com/sitemap.xml',
     };
 }
