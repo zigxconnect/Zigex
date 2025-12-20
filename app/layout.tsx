@@ -4,6 +4,7 @@ import "./globals.css";
 // import { Toaster } from "@/components/ui/sonner";
 import { Toaster } from "react-hot-toast";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -94,6 +95,7 @@ export default function RootLayout({
         {children}
         <Toaster position="top-center" reverseOrder={false} />
         <Analytics />
+        <SpeedInsights />
         {/* <Toaster /> */}
       </body>
     </html>
