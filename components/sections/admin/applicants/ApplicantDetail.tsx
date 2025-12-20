@@ -31,13 +31,14 @@ export const ApplicantDetail = ({
   applicant,
   onUpdateStatus,
 }: ApplicantDetailProps) => {
+  
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-5">
           {/* This Image component is now configured to work */}
           <Image
-            src={applicant.avatarUrl}
+            src={applicant.avatarUrl }
             alt={applicant.name}
             width={80}
             height={80}

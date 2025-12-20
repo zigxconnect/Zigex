@@ -138,7 +138,7 @@ export async function GET(request: Request) {
         id: app.id,
         name: app.student?.full_name || "N/A",
         avatarUrl:
-          app.student?.avatar_url || `https://i.pravatar.cc/150?u=${app.id}`,
+          app.student?.avatar_url || `/default-avatar.svg`,
         email: app.student?.email || "No email",
         phone: app.student?.phone || "No phone",
         internshipTitle: opportunity?.title || app.application_type,

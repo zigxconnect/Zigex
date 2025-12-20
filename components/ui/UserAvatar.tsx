@@ -21,7 +21,7 @@ export const UserAvatar = ({
   className,
 }: UserAvatarProps) => {
   // Determine the image source, falling back to the default SVG if src is falsy.
-  const imageUrl = src || "/default-avatar.svg";
+  const imageUrl =  src || `/default-avatar.svg`;
 
   return (
     <Image

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { UserProfile } from "@/app/types/type";
 import { useState } from "react";
+import NameInitials from "@/components/NameInitials";
 
 interface WelcomeCardProps {
   user: UserProfile | any;
@@ -42,7 +43,7 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile }: WelcomeCardProp
     return skillsText.substring(0, maxLength) + "...";
   };
 
-  const avatarUrl = user.profile.avatar_url || "/https://i.ibb.co/CpS0wpjC/z3.jpg";
+  const avatarUrl = user.profile.avatar_url || "/default-avatar.svg";
   const coverImageUrl = user.profile.cover_image || "https://i.ibb.co/vv3sgJwd/n8.jpg";
 
   return (
@@ -154,14 +155,15 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile }: WelcomeCardProp
           onMouseLeave={() => setIsAvatarHovered(false)}
         >
           <div className="w-20 h-20 md:w-24 md:h-24 lg:w-20 lg:h-20 rounded-full border-3 lg:border-4 border-white shadow-lg overflow-hidden bg-white transition-all duration-300 group-hover:shadow-2xl group-hover:scale-105">
-            <Image
+            {user.profile?.avatarUrl? <Image
               src={avatarUrl}
               alt={`${user.name}'s profile picture`}
               width={112}
               height={112}
               className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-75"
               priority
-            />
+            /> :
+            <NameInitials name={user.name} />}
           </div>
 
           {/* Animated Ring */}
@@ -197,7 +199,7 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile }: WelcomeCardProp
             <div className="flex items-center gap-1.5 text-gray-600">
               <MapPin size={16} className="lg:w-[18px] lg:h-[18px]" />
               <p className="text-sm lg:text-base font-medium">
-                {user.university}
+                {user.university} 
               </p>
             </div>
           </div>
