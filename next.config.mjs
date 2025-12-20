@@ -128,4 +128,5 @@ const nextConfig = {
 
 
 
+nextConfig.turbopack = {};
 export default withPWA(nextConfig);
