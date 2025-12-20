@@ -61,13 +61,13 @@ export default function SimilarStudentsSidebar({
           onClick={() => setOpen(false)}
         >
           <div
-            className="w-full max-w-md h-full bg-white shadow-2xl p-4 overflow-y-auto animate-slideRight custom-scroll"
+            className="w-full max-w-md h-full bg-card p-4 overflow-y-auto animate-slideRight custom-scroll"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold">People you may know</h3>
-              <button onClick={() => setOpen(false)} className="p-2">
-                <X size={18} />
+              <h3 className="text-lg font-heading font-bold text-foreground">People you may know</h3>
+              <button onClick={() => setOpen(false)} className="p-2 hover:bg-muted rounded-full">
+                <X size={18} className="text-foreground" />
               </button>
             </div>
 
@@ -77,10 +77,10 @@ export default function SimilarStudentsSidebar({
               )}
 
               {students.map((s) => (
-                <article key={s.id} className="flex items-center gap-3 p-3 cursor-pointer rounded-lg hover:bg-gray-50 transition"
+                <article key={s.id} className="flex items-center gap-3 p-3 cursor-pointer rounded-xl hover:bg-muted transition"
                  onClick={() => router.push(`/dashboard/student/${s.username || s.id}`)}
                 >
-                  <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br cursor-pointer from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold">
+                  <div className="w-12 h-12 rounded-full overflow-hidden bg-primary flex items-center justify-center text-white font-bold">
                     {(() => {
                       const src = pickAvatar(s);
                       return src ? (
@@ -100,27 +100,27 @@ export default function SimilarStudentsSidebar({
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="font-semibold text-sm">{s.username || s.full_name || 'Unnamed'}</div>
-                        <div className="text-xs text-gray-500">{s.university}</div>
+                        <div className="font-semibold text-sm text-foreground">{s.username || s.full_name || 'Unnamed'}</div>
+                        <div className="text-xs text-muted-foreground">{s.university}</div>
                       </div>
-                      <div className="text-xs text-gray-400">{(s.hard_skills || []).slice(0,2).join(', ')}</div>
+                      <div className="text-xs text-muted-foreground">{(s.hard_skills || []).slice(0,2).join(', ')}</div>
                     </div>
 
                     <div className="mt-2 flex gap-2">
                       {s.linkedin_url && (
-                        <Link href={s.linkedin_url} target="_blank" rel="noreferrer" className="px-2 py-1 bg-[#0A66C2]/10 text-[#0A66C2] rounded-md text-xs font-semibold hover:bg-[#0A66C2]/20"> 
-                          <Linkedin size={14} />
+                        <Link href={s.linkedin_url} target="_blank" rel="noreferrer" className="px-2 py-1 bg-muted text-foreground rounded-md text-xs font-semibold hover:bg-primary hover:text-white transition-colors"> 
+                          <AtSign size={14} />
                         </Link>
                       )}
 
                       {s.phone && (
-                        <Link href={`https://wa.me/${s.phone.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="px-2 py-1 bg-[#25D366]/10 text-[#25D366] rounded-md text-xs font-semibold hover:bg-[#25D366]/20"> 
+                        <Link href={`https://wa.me/${s.phone.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="px-2 py-1 bg-muted text-foreground rounded-md text-xs font-semibold hover:bg-green-500 hover:text-white transition-colors"> 
                           <MessageCircle size={14} />
                         </Link>
                       )}
 
                       {s.email && (
-                        <Link href={`mailto:${s.email}`} className="px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-xs font-semibold hover:bg-blue-100"> 
+                        <Link href={`mailto:${s.email}`} className="px-2 py-1 bg-muted text-foreground rounded-md text-xs font-semibold hover:bg-primary hover:text-white transition-colors"> 
                           <Mail size={14} />
                         </Link>
                       )}
@@ -141,11 +141,11 @@ export default function SimilarStudentsSidebar({
       )}
 
     
-      <aside className="hidden lg:block fixed top-28 right-6 w-80 lg:w-96 h-[calc(100vh-7rem)] overflow-y-auto p-4 bg-card rounded-l-3xl shadow-2xl border border-border custom-scroll">
+      <aside className="hidden lg:block fixed top-28 right-6 w-80 lg:w-96 h-[calc(100vh-7rem)] overflow-y-auto p-4 bg-card rounded-3xl border border-border custom-scroll">
         <div className="flex items-center justify-between mb-3">
 
        
-          <h3 className="text-lg font-bold text-foreground">Zigx with similar skills</h3>
+          <h3 className="text-lg font-heading font-bold text-foreground">Recommendations</h3>
           <span className="text-xs text-muted-foreground">Connect • Explore</span>
         </div>
 
@@ -163,9 +163,9 @@ export default function SimilarStudentsSidebar({
               tabIndex={0}
               onClick={() => router.push(`/dashboard/student/${s.username || s.id}`)}
               onKeyDown={(e) => { if (e.key === 'Enter') router.push(`/dashboard/student/${s.username || s.id}`); }}
-              className="flex items-start gap-3 p-3 rounded-xl hover:bg-muted/50 transition cursor-pointer"
+              className="flex items-start gap-3 p-3 rounded-xl hover:bg-muted/50 transition cursor-pointer border border-transparent hover:border-border"
             >
-              <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold">
+              <div className="w-12 h-12 rounded-full overflow-hidden bg-primary flex items-center justify-center text-white font-bold shrink-0">
                 {s.avatar_url ? (
                   <Image src={s.avatar_url} alt={s.full_name || "S"} width={48} height={48} className="object-cover" />
                 ) : (
@@ -182,13 +182,23 @@ export default function SimilarStudentsSidebar({
                   <div className="flex items-center gap-2">
                     {/* subtle social style buttons (external links are safe because outer element is not an <a>) */}
                     {s.linkedin_url && (
-                      <a href={s.linkedin_url} target="_blank" rel="noreferrer" className="p-2 rounded-md bg-[#0A66C2]/10 text-[#0A66C2] hover:bg-[#0A66C2]/20">
-                        <Linkedin size={16} />
+                      <a 
+                        href={s.linkedin_url} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="p-1.5 rounded-lg bg-muted text-foreground hover:bg-primary hover:text-white transition-all"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <AtSign size={15} />
                       </a>
                     )}
                     {s.email && (
-                      <a href={`mailto:${s.email}`} className="p-2 rounded-md bg-primary/10 text-primary hover:bg-primary/20">
-                        <Mail size={16} />
+                      <a 
+                        href={`mailto:${s.email}`} 
+                        className="p-1.5 rounded-lg bg-muted text-foreground hover:bg-primary hover:text-white transition-all"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Mail size={15} />
                       </a>
                     )}
                   </div>
@@ -197,7 +207,7 @@ export default function SimilarStudentsSidebar({
                 <div className="mt-2 flex items-center justify-between">
                   <div className="text-xs text-muted-foreground">{(s.hard_skills || []).slice(0,3).join(', ')}</div>
                   <div className="flex items-center gap-2">
-                    <button className="px-3 py-1 bg-gradient-to-r from-primary to-primary/90 text-primary-foreground rounded-full text-xs font-semibold hover:scale-105">Message</button>
+                    <button className="px-3 py-1 bg-primary text-primary-foreground rounded-full text-xs font-semibold hover:scale-105">Message</button>
                     <button className="px-2 py-1 border border-border rounded-md text-xs hover:bg-muted">View</button>
                   </div>
                 </div>

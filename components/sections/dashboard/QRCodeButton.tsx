@@ -84,15 +84,12 @@ export default function QRCodeButton({
       {/* QR Code Button */}
       <button
         onClick={() => isOwner && setIsOpen(true)}
-        className={`w-12 h-12 md:w-14 md:h-14 bg-white rounded-xl shadow-xl border-2 border-gray-200 flex items-center justify-center transition-all duration-300 group relative z-10 ${isOwner ? 'hover:border-blue-500 hover:scale-110 cursor-pointer' : 'opacity-70 cursor-not-allowed'}`}
+        className={`w-12 h-12 md:w-14 md:h-14 bg-white rounded-xl border border-border flex items-center justify-center transition-all duration-300 group relative z-10 ${isOwner ? 'hover:border-primary hover:bg-muted cursor-pointer' : 'opacity-70 cursor-not-allowed'}`}
         aria-label="Show QR Code"
         aria-disabled={!isOwner}
         title={!isOwner ? 'Only the profile owner can open and share this QR code' : 'Show QR Code'}
       >
-        <QrCode size={24} className="text-gray-700 group-hover:text-blue-600 transition-colors" />
-        
-        {/* Pulse effect */}
-        <span className="absolute inset-0 rounded-xl bg-blue-500 opacity-0 group-hover:opacity-20 group-hover:animate-ping"></span>
+        <QrCode size={24} className="text-foreground group-hover:text-primary transition-colors" />
       </button>
 
       {/* Modal Overlay - HIGHEST Z-INDEX */}
@@ -104,20 +101,20 @@ export default function QRCodeButton({
         >
           {/* Modal Content */}
           <div 
-            className="bg-white rounded-3xl max-w-md w-full shadow-2xl transform transition-all duration-300 animate-scaleIn overflow-hidden"
+            className="bg-card rounded-3xl max-w-md w-full border border-border transform transition-all duration-300 animate-scaleIn overflow-hidden"
             style={{ zIndex: 10000 }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="relative p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+            <div className="relative p-6 border-b border-border bg-card">
               <div className="text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg animate-pulse">
+                <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-3">
                   <QrCode size={32} className="text-white" />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-1">
+                <h2 className="text-2xl font-bold text-foreground mb-1">
                   Quick Connect
                 </h2>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   Scan to connect with {fullName?.split(' ')[0] || 'me'}
                 </p>
               </div>
@@ -134,13 +131,13 @@ export default function QRCodeButton({
 
             {/* QR Code Display */}
             <div className="p-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border-2 border-blue-200 mb-6 relative overflow-hidden">
+              <div className="bg-muted rounded-2xl p-6 border-2 border-border mb-6 relative overflow-hidden">
                 {qrCodeDataUrl ? (
                   <div className="relative">
                     <img 
                       src={qrCodeDataUrl} 
                       alt="QR Code" 
-                      className="w-full h-auto rounded-xl shadow-lg"
+                      className="w-full h-auto rounded-xl"
                     />
                     {/* Decorative corners */}
                     <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-blue-600 rounded-tl-xl"></div>
@@ -166,7 +163,7 @@ export default function QRCodeButton({
                 <button
                   onClick={handleDownload}
                   disabled={!isOwner}
-                  className={`w-full flex items-center justify-center gap-3 px-6 py-3 text-white font-semibold rounded-xl shadow-lg transition-all duration-200 transform active:scale-95 ${isOwner ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:scale-105' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
+                  className={`w-full flex items-center justify-center gap-3 px-6 py-3 text-white font-semibold rounded-xl transition-all duration-200 transform active:scale-95 ${isOwner ? 'bg-primary hover:bg-primary/90' : 'bg-muted text-muted-foreground cursor-not-allowed'}`}
                 >
                   <Download size={20} />
                   <span>Download QR Code</span>
@@ -194,12 +191,12 @@ export default function QRCodeButton({
                       href={linkedinUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex flex-col items-center gap-2 p-3 bg-[#0A66C2]/10 rounded-xl hover:bg-[#0A66C2]/20 transition-all duration-200 group transform hover:scale-105"
+                      className="flex flex-col items-center gap-2 p-3 bg-muted rounded-xl hover:bg-muted/80 transition-all duration-200 group border border-transparent hover:border-primary"
                     >
-                      <div className="w-10 h-10 bg-[#0A66C2] rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform shadow-md">
+                      <div className="w-10 h-10 bg-[#0A66C2] rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
                         <Linkedin size={20} className="text-white" />
                       </div>
-                      <span className="text-xs font-medium text-gray-700">LinkedIn</span>
+                      <span className="text-xs font-medium text-foreground">LinkedIn</span>
                     </Link>
                   )}
 
@@ -209,12 +206,12 @@ export default function QRCodeButton({
                       href={whatsappUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex flex-col items-center gap-2 p-3 bg-[#25D366]/10 rounded-xl hover:bg-[#25D366]/20 transition-all duration-200 group transform hover:scale-105"
+                      className="flex flex-col items-center gap-2 p-3 bg-muted rounded-xl hover:bg-muted/80 transition-all duration-200 group border border-transparent hover:border-primary"
                     >
-                      <div className="w-10 h-10 bg-[#25D366] rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform shadow-md">
+                      <div className="w-10 h-10 bg-[#25D366] rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
                         <MessageCircle size={20} className="text-white" />
                       </div>
-                      <span className="text-xs font-medium text-gray-700">WhatsApp</span>
+                      <span className="text-xs font-medium text-foreground">WhatsApp</span>
                     </Link>
                   )}
 
@@ -222,12 +219,12 @@ export default function QRCodeButton({
                   {email && (
                     <Link
                       href={`mailto:${email}`}
-                      className="flex flex-col items-center gap-2 p-3 bg-blue-500/10 rounded-xl hover:bg-blue-500/20 transition-all duration-200 group transform hover:scale-105"
+                      className="flex flex-col items-center gap-2 p-3 bg-muted rounded-xl hover:bg-muted/80 transition-all duration-200 group border border-transparent hover:border-primary"
                     >
-                      <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform shadow-md">
+                      <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
                         <Mail size={20} className="text-white" />
                       </div>
-                      <span className="text-xs font-medium text-gray-700">Email</span>
+                      <span className="text-xs font-medium text-foreground">Email</span>
                     </Link>
                   )}
                 </div>

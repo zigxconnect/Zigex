@@ -401,7 +401,7 @@ export default function ApplicationModal({
               <FormIcon className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div className="min-w-0">
-              <h2 className="text-base sm:text-lg font-black text-white truncate uppercase tracking-wide">
+              <h2 className="text-base sm:text-lg font-bold text-white truncate uppercase tracking-wide">
                 {currentContent.title}
               </h2>
               <p className="text-xs sm:text-sm text-blue-100 truncate font-medium">
@@ -445,7 +445,7 @@ export default function ApplicationModal({
                 if (field.type === "hidden") return null;
 
                 const commonLabel = (
-                  <label className="block text-xs sm:text-sm font-black text-[#155DFC] uppercase tracking-wider mb-2">
+                  <label className="block text-xs sm:text-sm font-bold text-foreground uppercase tracking-wider mb-2">
                     {field.label}
                     {field.required && (
                       <span className="text-red-500 ml-1">*</span>
@@ -626,7 +626,7 @@ export default function ApplicationModal({
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting || !checkFormValid()}
-            className="w-full py-3.5 sm:py-4 rounded-2xl font-black uppercase tracking-wider text-sm bg-gradient-to-r from-[#155DFC] to-[#1A3CB9] hover:from-[#1A3CB9] hover:to-[#155DFC] text-white shadow-2xl shadow-blue-200 transition-all duration-500 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            className="w-full py-3.5 sm:py-4 rounded-2xl font-bold uppercase tracking-wider text-sm bg-gradient-to-r from-[#155DFC] to-[#1A3CB9] hover:from-[#1A3CB9] hover:to-[#155DFC] text-white shadow-2xl shadow-blue-200 transition-all duration-500 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
             {isSubmitting ? (
               <>

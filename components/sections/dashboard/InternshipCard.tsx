@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 // ...existing code...
 import {
@@ -21,6 +21,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
+import LiveBadge from "@/components/uiComponent/LiveBadge";
 import LivePanel from "@/components/uiComponent/LivePanel";
 import Link from "next/link";
 
@@ -61,7 +62,6 @@ export const InternshipCard = ({
   viewerCount = 0,
   onLiveClick,
 }: InternshipCardProps) => {
-  const router = useRouter();
   const router = useRouter();
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
@@ -301,39 +301,42 @@ export const InternshipCard = ({
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10 transition-opacity duration-300 opacity-60 group-hover:opacity-80" />
           </div>
 
-          <div className="absolute top-0 left-0 right-0 p-4 z-20">
-            <div className="flex items-start justify-between">
-              <div className="flex flex-col items-start gap-2">
-                {is_live ? (
-                  <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-600 to-pink-600 rounded-full shadow-2xl animate-pulse-glow">
-                    <div className="relative flex items-center justify-center">
-                      <div className="w-2.5 h-2.5 bg-white rounded-full animate-ping absolute" />
-                      <div className="w-2.5 h-2.5 bg-white rounded-full" />
-                    </div>
-                    <span className="text-white text-sm font-black uppercase tracking-wider">
-                      Live Now
-                    </span>
-                  </div>
-                ) : (
-                  <div className="px-4 py-2 bg-white rounded-full shadow-lg border border-gray-100">
-                    <span className="text-black text-xs font-bold uppercase tracking-wide">
-                      {category}
-                    </span>
-                  </div>
-                )}
-                
-                {openStatusComputed ? (
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/90 backdrop-blur-md rounded-full border border-emerald-400/30">
-                      <CheckCircle size={12} className="text-white" />
-                      <span className="text-white text-xs font-bold uppercase tracking-wide">Open</span>
-                    </div>
-                  ) : (
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-500/90 backdrop-blur-md rounded-full border border-rose-400/30">
-                      <XCircle size={12} className="text-white" />
-                      <span className="text-white text-xs font-bold uppercase tracking-wide">Closed</span>
-                    </div>
-                  )}
+        {/* Top Section - Floating Elements */}
+        <div className="absolute top-0 left-0 right-0 p-4 z-20">
+          <div className="flex items-start justify-between">
+            <div className="flex flex-col items-start gap-2">
+            {/* Live Badge or Category */}
+            {is_live ? (
+              <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-600 to-pink-600 rounded-full shadow-2xl animate-pulse-glow">
+                <div className="relative flex items-center justify-center">
+                  <div className="w-2.5 h-2.5 bg-white rounded-full animate-ping absolute" />
+                  <div className="w-2.5 h-2.5 bg-white rounded-full" />
+                </div>
+                <span className="text-white text-sm font-bold uppercase tracking-wider">
+                  Live Now
+                </span>
               </div>
+            ) : (
+              <div className="px-4 py-2 bg-white rounded-full shadow-lg border border-gray-100">
+                <span className="text-black text-xs font-bold uppercase tracking-wide">
+                  {category}
+                </span>
+              </div>
+            )}
+            
+            {/* Status Badge */}
+            {openStatusComputed ? (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/90 backdrop-blur-md rounded-full border border-emerald-400/30">
+                  <CheckCircle size={12} className="text-white" />
+                  <span className="text-white text-xs font-bold uppercase tracking-wide">Open</span>
+                </div>
+              ) : (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-500/90 backdrop-blur-md rounded-full border border-rose-400/30">
+                  <XCircle size={12} className="text-white" />
+                  <span className="text-white text-xs font-bold uppercase tracking-wide">Closed</span>
+                </div>
+              )}
+            </div>
 
               <div className="flex flex-col gap-3">
                 <button
@@ -400,25 +403,27 @@ export const InternshipCard = ({
             </div>
           )}
 
-          <div className="absolute bottom-0 left-0 right-0 p-5 z-20">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="relative w-14 h-14 rounded-2xl overflow-hidden shadow-2xl border-2 border-white/30">
-                <Image
-                  src={company_logo_url || "/seedLogo.png"}
-                  alt={`${company} logo`}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <div className="flex-1">
-                <p className="text-blue-300 text-xs font-bold uppercase tracking-wider mb-1">
-                  {company}
-                </p>
-                <h3 className="text-white text-xl font-black leading-tight line-clamp-2 drop-shadow-md">
-                  {title}
-                </h3>
-              </div>
+        {/* Bottom Content - Always Visible */}
+        <div className="absolute bottom-0 left-0 right-0 p-5 z-20">
+          {/* Company Logo Badge */}
+          <div className="flex items-center gap-3 mb-3">
+            <div className="relative w-14 h-14 rounded-2xl overflow-hidden shadow-2xl border-2 border-white/30">
+              <Image
+                src={company_logo_url || "/seedLogo.png"}
+                alt={`${company} logo`}
+                fill
+                className="object-cover"
+              />
             </div>
+            <div className="flex-1">
+              <p className="text-blue-300 text-xs font-bold uppercase tracking-wider mb-1">
+                {company}
+              </p>
+              <h3 className="text-white text-xl font-bold leading-tight line-clamp-2 drop-shadow-md">
+                {title}
+              </h3>
+            </div>
+          </div>
 
             <div className="flex items-center gap-3 mb-4 text-white/90">
               <div className="flex items-center gap-1.5 text-sm font-medium">

@@ -197,23 +197,24 @@ export const EventCard = ({
         <div className="absolute top-0 left-0 right-0 p-4 z-20">
           <div className="flex items-start justify-between">
             <div className="flex flex-col items-start gap-2">
-              {isLive ? (
-                <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-600 to-pink-600 rounded-full shadow-2xl animate-pulse-glow">
-                  <div className="relative flex items-center justify-center">
-                    <div className="w-2.5 h-2.5 bg-white rounded-full animate-ping absolute" />
-                    <div className="w-2.5 h-2.5 bg-white rounded-full" />
-                  </div>
-                  <span className="text-white text-sm font-black uppercase tracking-wider">
-                    Live Now
-                  </span>
+            {/* Live Badge or Event Label */}
+            {isLive ? (
+              <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-600 to-pink-600 rounded-full shadow-2xl animate-pulse-glow">
+                <div className="relative flex items-center justify-center">
+                  <div className="w-2.5 h-2.5 bg-white rounded-full animate-ping absolute" />
+                  <div className="w-2.5 h-2.5 bg-white rounded-full" />
                 </div>
-              ) : (
-                <div className="px-4 py-2 bg-white rounded-full shadow-lg border border-gray-100">
-                  <span className="text-black text-xs font-bold uppercase tracking-wide">
-                    Event
-                  </span>
-                </div>
-              )}
+                <span className="text-white text-sm font-bold uppercase tracking-wider">
+                  Live Now
+                </span>
+              </div>
+            ) : (
+              <div className="px-4 py-2 bg-white rounded-full shadow-lg border border-gray-100">
+                <span className="text-black text-xs font-bold uppercase tracking-wide">
+                  Event
+                </span>
+              </div>
+            )}
             </div>
             
             <div className="flex flex-col gap-3">
@@ -293,7 +294,7 @@ export const EventCard = ({
               <p className="text-green-300 text-xs font-bold uppercase tracking-wider mb-1">
                 {companyName}
               </p>
-              <h3 className="text-white text-xl font-black leading-tight line-clamp-2 drop-shadow-md">
+              <h3 className="text-white text-xl font-bold leading-tight line-clamp-2 drop-shadow-md">
                 {event.title}
               </h3>
             </div>

@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowDown } from "lucide-react";
 
-export function RegisterGoDown({ href }: { href: string }) {
+export function RegisterGoDown({ href, label }: { href: string; label?: string }) {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -26,7 +26,7 @@ export function RegisterGoDown({ href }: { href: string }) {
     >
       {/* Content */}
       <span className="relative z-10 flex items-center gap-2">
-        <span className="font-semibold">Register</span>
+        <span className="font-semibold">{label || "Register"}</span>
         <ArrowDown
           size={16}
           className={`

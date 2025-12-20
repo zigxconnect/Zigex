@@ -33,58 +33,60 @@ export function FeedDetailHeader({
   };
 
   return (
-    <div className="relative w-full overflow-hidden rounded-2xl sm:rounded-[2rem] bg-[#1A3CB9] shadow-2xl">
+    <div className="relative w-full overflow-hidden rounded-2xl sm:rounded-[2rem] bg-card border border-border shadow-md min-h-[400px] sm:min-h-[500px] flex flex-col justify-end">
       {/* Background Image with Minimal Overlay */}
       <div className="absolute inset-0">
         <Image
           src={normalizeImageSrc(imageUrl)}
           alt={title}
           fill
-          className="object-cover opacity-60"
+          className="object-cover"
           priority
         />
-        {/* Blue Mesh Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-tr from-[#1A3CB9] via-[#1A3CB9]/80 to-transparent" />
+        {/* White Fade Overlay - Bottom 20% only */}
+        <div className="absolute bottom-0 left-0 right-0 h-[20%] bg-gradient-to-t from-card to-transparent" />
       </div>
 
-      {/* Content */}
-      <div className="relative px-6 py-10 sm:px-12 sm:py-16 lg:px-16 lg:py-20 flex flex-col items-start">
-        {/* Type Badge - Focal Point */}
-        <Badge className="mb-6 bg-[#155DFC] text-white border-0 px-4 py-1.5 rounded-lg shadow-[0_0_15px_rgba(21,93,252,0.5)] font-black uppercase tracking-widest text-xs">
-          {type}
-        </Badge>
+      {/* Content Container */}
+      <div className="absolute bottom-2 left-2 right-2 sm:bottom-8 sm:left-8 sm:right-8 lg:bottom-10 lg:left-10 lg:right-10 flex justify-center">
+        <div className="bg-white/90 backdrop-blur-md rounded-xl sm:rounded-3xl border border-white/50 shadow-lg p-4 sm:p-8 max-w-4xl w-full">
+          {/* Type Badge - White with Black Text */}
+          <Badge className="mb-2 bg-white text-foreground border border-border px-3 py-1 rounded-md shadow-sm font-black uppercase tracking-widest text-[10px] sm:text-xs hover:bg-white inline-flex">
+            {type}
+          </Badge>
 
-        {/* Title */}
-        <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black text-white mb-8 leading-[1.1] tracking-tighter max-w-4xl">
-          {title}
-        </h1>
+          {/* Title */}
+          <h1 className="text-xl sm:text-4xl lg:text-5xl font-black text-foreground mb-3 sm:mb-4 leading-tight sm:leading-[1.1] tracking-tighter drop-shadow-sm">
+            {title}
+          </h1>
 
-        {/* Meta Info - Icons with Focal Backgrounds */}
-        <div className="flex flex-wrap gap-4 text-sm text-white">
-          {location && (
-            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-5 py-2.5 rounded-2xl border border-white/10 shadow-lg hover:bg-white/20 transition-all">
-              <div className="w-8 h-8 rounded-lg bg-[#155DFC] flex items-center justify-center">
-                <MapPin size={18} className="text-white" />
+          {/* Meta Info - Icons with Focal Backgrounds */}
+          <div className="flex flex-wrap gap-2 sm:gap-3 text-xs sm:text-sm text-foreground">
+            {location && (
+              <div className="flex items-center gap-2 bg-white px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl border border-border shadow-sm hover:shadow-md transition-all">
+                <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <MapPin size={14} className="text-primary" />
+                </div>
+                <span className="font-bold tracking-tight">{location}</span>
               </div>
-              <span className="font-bold tracking-tight">{location}</span>
-            </div>
-          )}
-          {startDate && (
-            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-5 py-2.5 rounded-2xl border border-white/10 shadow-lg hover:bg-white/20 transition-all">
-              <div className="w-8 h-8 rounded-lg bg-[#155DFC] flex items-center justify-center">
-                <Calendar size={18} className="text-white" />
+            )}
+            {startDate && (
+              <div className="flex items-center gap-2 bg-white px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl border border-success/20 shadow-sm hover:shadow-md transition-all">
+                <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-success/10 flex items-center justify-center flex-shrink-0">
+                  <Calendar size={14} className="text-success" />
+                </div>
+                <span className="font-bold tracking-tight text-foreground">{formatDate(startDate)}</span>
               </div>
-              <span className="font-bold tracking-tight">{formatDate(startDate)}</span>
-            </div>
-          )}
-          {endDate && (
-            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-5 py-2.5 rounded-2xl border border-white/10 shadow-lg hover:bg-white/20 transition-all">
-              <div className="w-8 h-8 rounded-lg bg-[#155DFC] flex items-center justify-center">
-                <Calendar size={18} className="text-white" />
+            )}
+            {endDate && (
+              <div className="flex items-center gap-2 bg-white px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl border border-destructive/20 shadow-sm hover:shadow-md transition-all">
+                <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-destructive/10 flex items-center justify-center flex-shrink-0">
+                  <Calendar size={14} className="text-destructive" />
+                </div>
+                <span className="font-bold tracking-tight text-foreground">Until {formatDate(endDate)}</span>
               </div>
-              <span className="font-bold tracking-tight">Until {formatDate(endDate)}</span>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>

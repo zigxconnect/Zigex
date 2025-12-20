@@ -26,7 +26,7 @@ interface EditProfileModalProps {
 }
 
 const stepsFields: (keyof ProfileFormData)[][] = [
-  ["first_name", "username", "phone", "location", "about"],
+  ["first_name", "last_name", "username", "phone", "location", "about"],
   ["avatar_url", "cover_image"],
   ["university", "degree", "field_of_study", "graduation_year", "gpa"],
   [
@@ -57,6 +57,7 @@ export const EditProfileModal = ({
     mode: "onTouched",
     defaultValues: {
       first_name: initialData.first_name || "",
+      last_name: initialData.last_name || "",
       username: initialData.username || "",
       phone: initialData.phone || "",
       location: initialData.location || "",

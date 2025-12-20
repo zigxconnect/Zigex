@@ -120,6 +120,22 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
           icon: "Users",
         });
       }
+      if ((item as any).start_date) {
+        details.push({
+          label: "Start Date",
+          value: formatDate((item as any).start_date),
+          icon: "Calendar",
+          variant: "success",
+        });
+      }
+      if ((item as any).end_date) {
+        details.push({
+          label: "End Date",
+          value: formatDate((item as any).end_date),
+          icon: "Calendar",
+          variant: "destructive",
+        });
+      }
     }
 
     if (item._type === "programs" || item._type === "events") {
@@ -128,6 +144,7 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
           label: "Start Date",
           value: formatDate((item as any).start_date),
           icon: "Calendar",
+          variant: "success",
         });
       }
       if ((item as any).end_date) {
@@ -135,6 +152,7 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
           label: "End Date",
           value: formatDate((item as any).end_date),
           icon: "Calendar",
+          variant: "destructive",
         });
       }
       if ((item as any).duration) {
@@ -165,7 +183,13 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
         <div className="flex justify-between items-center mb-6">
           <BackButton />
           {opportunityStatus.isOpen && (
-            <RegisterGoDown href="getStarted" />
+            <RegisterGoDown 
+              href="getStarted" 
+              label={
+                item._type === "events" ? "RSVP" : 
+                item._type === "programs" ? "Register" : "Apply"
+              } 
+            />
           )}
         </div>
 
@@ -235,7 +259,10 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
                   id={item.id}
                   title={item.title}
                   fullWidth={true}
-                  buttonText="Get Started"
+                  buttonText={
+                    item._type === "events" ? "RSVP" : 
+                    item._type === "programs" ? "Register" : "Apply"
+                  }
                   opportunityData={{
                     title: item.title,
                     description: item.description,

@@ -224,7 +224,7 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
             </div>
 
             {/* Title */}
-            <h3 className="text-xl font-black text-foreground line-clamp-2 group-hover:text-primary transition-colors duration-300 leading-tight min-h-[3.5rem] mb-1">
+            <h3 className="text-xl font-bold text-foreground line-clamp-2 group-hover:text-primary transition-colors duration-300 leading-tight min-h-[3.5rem] mb-1">
               {item.title}
             </h3>
 
