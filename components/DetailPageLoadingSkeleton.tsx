@@ -2,6 +2,7 @@ import React from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 
+// hdhefkh
 export function DetailPageLoadingSkeleton() {
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6">
