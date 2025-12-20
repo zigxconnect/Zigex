@@ -138,7 +138,7 @@ const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = (
                     className="w-12 h-12 rounded-full object-cover transition-opacity hover:opacity-90" 
                   />
                 ) : (
-                  <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center font-bold text-base transition-colors group-hover:bg-primary/90">
+                  <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center font-bold text-base transition-colors group-hover:bg-primary/80">
                     {initials}
                   </div>
                 )}
@@ -176,7 +176,7 @@ const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = (
                   >
                     <a 
                       onClick={(e) => e.stopPropagation()}
-                      className="flex items-center justify-center w-8 h-8 rounded-full bg-button text-button-foreground hover:bg-primary hover:text-white transition-all duration-300 border border-border"
+                      className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-foreground hover:bg-primary hover:text-white transition-all duration-300 border border-border"
                       title="Connect on LinkedIn"
                     >
                       <AtSign size={14} />
