@@ -1,16 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-
-// ... existing imports ...
-
-export const EventCard = ({ 
-  event, 
-  viewMode = "grid",
-  onLiveClick 
-}: EventCardProps) => {
-  const router = useRouter();
-  // ... rest
+import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,10 +21,11 @@ import {
   XCircle,
 } from "lucide-react";
 import { useState } from "react";
-import { Event } from "@/lib/types/dashoard";
+import { Event } from "@/lib/types/dashboard";
 import { SharePopover } from "@/components/SharePopover";
 import LiveBadge from "@/components/uiComponent/LiveBadge";
 import LivePanel from "@/components/uiComponent/LivePanel";
+
 
 interface EventCardProps {
   event: Event;
@@ -54,6 +46,7 @@ export const EventCard = ({
   viewMode = "grid",
   onLiveClick 
 }: EventCardProps) => {
+  const router = useRouter();
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [openLive, setOpenLive] = useState(false);

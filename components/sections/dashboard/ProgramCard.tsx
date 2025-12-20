@@ -21,7 +21,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { Program } from "@/lib/types/dashoard";
+import { Program } from "@/lib/types/dashboard";
 import LiveBadge from "@/components/uiComponent/LiveBadge";
 import LivePanel from "@/components/uiComponent/LivePanel";
 

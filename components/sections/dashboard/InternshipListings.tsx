@@ -5,7 +5,7 @@ import { InternshipCard } from "./InternshipCard";
 import { EventCard } from "./EventCard";
 import { ProgramCard } from "./ProgramCard";
 import { Briefcase, GraduationCap, Calendar, Sparkles, Search } from "lucide-react";
-import { Internship, Event, Program } from "@/lib/types/dashoard/index";
+import { Internship, Event, Program } from "@/lib/types/dashboard/index";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { useVideoModal } from "@/hooks/UseVideoModal";
 import { LiveVideoModal } from "./Video/LiveVideoModal";

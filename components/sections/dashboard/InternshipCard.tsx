@@ -1,18 +1,29 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-
-// ... existing imports ...
-
-export const InternshipCard = ({
-  id,
-  // ... props
-  onLiveClick,
-}: InternshipCardProps) => {
-  const router = useRouter();
-  // ... rest
+import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import {
+  MapPin,
+  Clock,
+  Building2,
+  ExternalLink,
+  Bookmark,
+  BookmarkCheck,
+  Play,
+  Eye,
+  Heart,
+  ChevronRight,
+  Share2,
+  CheckCircle,
+  XCircle,
+  ArrowRight,
+} from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+// SharePopover removed in favour of native Web Share API fallback
+import LiveBadge from "@/components/uiComponent/LiveBadge";
+import LivePanel from "@/components/uiComponent/LivePanel";
 import {
   MapPin,
   Clock,
@@ -71,6 +82,7 @@ export const InternshipCard = ({
   viewerCount = 0,
   onLiveClick,
 }: InternshipCardProps) => {
+  const router = useRouter();
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [openLive, setOpenLive] = useState(false);
@@ -288,7 +300,6 @@ export const InternshipCard = ({
           </div>
         </div>
       </div>
-    );
     );
   }
 
