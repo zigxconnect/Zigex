@@ -45,7 +45,7 @@ export default function ProfileRecommendationPopup({ user }: WelcomeCardProps) {
 
   const handleViewProfile = () => {
     updateLastSeen();
-    window.location.href = `/profile/${user?.profile?.username || "username"}`;
+    window.location.href = `/profile/${user?.profile?.username || ""}`;
   };
 
   if (!isVisible) return null;

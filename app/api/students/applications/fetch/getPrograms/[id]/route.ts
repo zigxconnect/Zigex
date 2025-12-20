@@ -28,7 +28,6 @@ export async function PUT(
   );
 
   try {
-
     // Validate application ID
     if (!applicationId || !isUUID(applicationId)) {
       return NextResponse.json({ error: "Valid application ID is required." }, { status: 400 });
@@ -131,12 +130,93 @@ export async function PUT(
   }
 }
 
-// DELETE method remains the same
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id: applicationId } = await params;
 
-  // ... (same DELETE implementation as before)
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+        set(name: string, value: string, options: { path?: string }) {
+          cookieStore.set({ name, value, ...options });
+        },
+        remove(name: string, options: { path?: string }) {
+          cookieStore.set({ name, value: "", ...options, expires: new Date(0) });
+        },
+      },
+    }
+  );
+
+  try {
+    // Validate application ID
+    if (!applicationId || !isUUID(applicationId)) {
+      return NextResponse.json({ error: "Valid application ID is required." }, { status: 400 });
+    }
+
+    // Check authentication
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized. Please log in." }, { status: 401 });
+    }
+
+    // Get student profile
+    const { data: studentData, error: studentError } = await supabase
+      .from("student_profiles")
+      .select("id")
+      .eq("user_id", user.id)
+      .single();
+
+    if (studentError || !studentData?.id) {
+      return NextResponse.json({ error: "Student profile not found." }, { status: 404 });
+    }
+
+    // Verify the program application belongs to the student
+    const { data: existingApp, error: fetchError } = await supabase
+      .from("Applications")
+      .select("id, student_id, application_type, status")
+      .eq("id", applicationId)
+      .eq("application_type", "program")
+      .single();
+
+    if (fetchError || !existingApp) {
+      return NextResponse.json({ error: "Program application not found." }, { status: 404 });
+    }
+
+    if (existingApp.student_id !== studentData.id) {
+      return NextResponse.json({ error: "You can only delete your own program applications." }, { status: 403 });
+    }
+
+    // Only allow deletion of pending applications
+    if (existingApp.status !== 'pending') {
+      return NextResponse.json({ error: "Only pending program applications can be deleted." }, { status: 400 });
+    }
+
+    // Delete the program application
+    const { error: deleteError } = await supabase
+      .from("Applications")
+      .delete()
+      .eq("id", applicationId);
+
+    if (deleteError) {
+      console.error("Error deleting program application:", deleteError);
+      return NextResponse.json({ error: "Failed to delete program application." }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Program application deleted successfully."
+    });
+
+  } catch (error: any) {
+    console.error("Unexpected error:", error);
+    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
+  }
 }

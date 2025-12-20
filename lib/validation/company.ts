@@ -17,6 +17,12 @@ export const baseCompanySchema = z.object({
     .url({ message: "Please enter a valid URL." })
     .optional()
     .or(z.literal("")),
+  website: z.string().optional().or(z.literal("")), // Added for UI compatibility
+  contact_email: z.string().email().optional().or(z.literal("")), // Added for UI compatibility
+  tagline: z.string().optional().or(z.literal("")),
+  verified: z.boolean().optional(),
+  size: z.string().optional().or(z.literal("")),
+  location: z.string().optional().or(z.literal("")), // Added for UI compatibility
   logo_url: z
     .string()
     .url({ message: "Please enter a valid URL." })

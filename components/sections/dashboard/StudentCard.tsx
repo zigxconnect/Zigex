@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Heart, MessageCircle, Share2, MapPin, Briefcase, CheckCircle2, MoreHorizontal, Linkedin, Zap } from "lucide-react";
+import { Heart, MessageCircle, Share2, MapPin, Briefcase, CheckCircle2, MoreHorizontal, Linkedin, Zap, AtSign } from "lucide-react";
 
 interface StudentProps {
   id: string;
@@ -117,8 +117,7 @@ const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = (
                         (stats?.projectsCreated || 0);
 
   return (
-    <Link href={`/dashboard/student/${student.username || student.id}`} legacyBehavior>
-      <a className="block no-underline">
+    <Link href={`/dashboard/student/${student.username || student.id}`} className="block no-underline">
         <div 
           ref={cardRef}
           className={`
@@ -172,15 +171,11 @@ const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = (
                     href={student.linkedin_url}
                     target="_blank"
                     rel="noreferrer"
-                    legacyBehavior
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-foreground hover:bg-primary hover:text-white transition-all duration-300 border border-border"
+                    title="Connect on LinkedIn"
                   >
-                    <a 
-                      onClick={(e) => e.stopPropagation()}
-                      className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-foreground hover:bg-primary hover:text-white transition-all duration-300 border border-border"
-                      title="Connect on LinkedIn"
-                    >
-                      <AtSign size={14} />
-                    </a>
+                    <AtSign size={14} />
                   </Link>
                 ) : (
                   <button
@@ -267,7 +262,6 @@ const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = (
         </div>
       </div>
     </div>
-  </a>
     </Link>
   );
 };

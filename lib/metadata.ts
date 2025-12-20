@@ -18,7 +18,7 @@ export function generateMetadata(
       url: url || "",
       images: [
         {
-          url: imageUrl || "https://zigex.vercel.app/og-image.png",
+          url: imageUrl || "https://zigexconnect.com/og-image.png",
           width: 1200,
           height: 630,
           alt: title,
@@ -29,7 +29,7 @@ export function generateMetadata(
       card: "summary_large_image",
       title: title,
       description: description || "Check out this opportunity on ZigX",
-      images: [imageUrl || "https://zigex.vercel.app/og-image.png"],
+      images: [imageUrl || "https://zigexconnect.com/og-image.png"],
     },
   };
 }
@@ -51,8 +51,8 @@ export function injectMetadataTags(
   // Update or create meta tags
   const updateOrCreateMetaTag = (property: string, content: string) => {
     let tag = document.querySelector(`meta[property="${property}"]`) ||
-              document.querySelector(`meta[name="${property}"]`);
-    
+      document.querySelector(`meta[name="${property}"]`);
+
     if (!tag) {
       tag = document.createElement("meta");
       tag.setAttribute(property.startsWith("og:") ? "property" : "name", property);

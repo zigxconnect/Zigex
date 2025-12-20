@@ -151,7 +151,6 @@ const ActivitiesSection: React.FC = () => {
               <div className="absolute -top-10 -right-10 w-64 h-64 bg-blue-100 rounded-full blur-3xl opacity-50 -z-10" />
               <div className="absolute -bottom-10 -left-10 w-64 h-64 bg-indigo-100 rounded-full blur-3xl opacity-50 -z-10" />
             </div>
-
           </div>
         </div>
       </div>

@@ -44,13 +44,7 @@ const Navbar: React.FC = () => {
             href="/"
             className="group flex items-center shadow-md p-2 rounded-lg transition-all duration-300 ease-in-out hover:shadow-xl hover:shadow-primary/25 hover:scale-105 hover:bg-gradient-to-r hover:from-primary/10 hover:to-secondary/10"
           >
-            <div className="flex items-center">
-              <img
-                src="https://i.ibb.co/Cp502Yby/logo.png"
-                alt="Zigex Logo"
-                className="h-10 w-auto object-contain brightness-0 invert"
-              />
-            </div>
+            <Logo className="h-10 w-auto" />
           </Link>
 
           {/* Desktop Navigation Links */}

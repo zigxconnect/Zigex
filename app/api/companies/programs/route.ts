@@ -122,9 +122,8 @@ export async function POST(request: Request) {
       ) {
         return NextResponse.json(
           {
-            error: `MIME type ${
-              programPicture.type
-            } is not allowed. Allowed types: ${allowedMimeTypes.join(", ")}`,
+            error: `MIME type ${programPicture.type
+              } is not allowed. Allowed types: ${allowedMimeTypes.join(", ")}`,
           },
           { status: 400 }
         );
@@ -181,58 +180,58 @@ export async function POST(request: Request) {
 
     // --- NOTIFICATION & EMAIL LOGIC ---
     try {
-        // 1. Get subscribed users
-        const { data: users, error: userError } = await supabaseAdmin.rpc("get_subscribed_emails");
-        
-        let recipients = users || [];
-        if (userError) {
-            console.error("RPC get_subscribed_emails failed:", userError);
-        }
+      // 1. Get subscribed users
+      const { data: users, error: userError } = await supabaseAdmin.rpc("get_subscribed_emails");
 
-        if (recipients.length > 0) {
-            const recipientEmails = recipients.map((u: any) => u.email).filter(Boolean);
-            
-            // 2. Send Email (Batch BCC)
-            if (process.env.RESEND_API_KEY) {
-                const { Resend } = await import("resend");
-                const resend = new Resend(process.env.RESEND_API_KEY);
-                const { NewPostEmail } = await import("@/emails/NewPostEmail");
+      let recipients = users || [];
+      if (userError) {
+        console.error("RPC get_subscribed_emails failed:", userError);
+      }
 
-                // Use "notifications@ZIGEX.online" as 'to' and everyone else as 'bcc'
+      if (recipients.length > 0) {
+        const recipientEmails = recipients.map((u: any) => u.email).filter(Boolean);
+
+        // 2. Send Email (Batch BCC)
+        if (process.env.RESEND_API_KEY) {
+          const { Resend } = await import("resend");
+          const resend = new Resend(process.env.RESEND_API_KEY);
+          const { NewPostEmail } = await import("@/emails/NewPostEmail");
+
+                // Use "notifications@futureprospect.online" as 'to' and everyone else as 'bcc'
                 await resend.emails.send({
-                    from: "ZIGEX <notifications@ZIGEX.online>",
-                    to: "notifications@ZIGEX.online", 
+                    from: "FutureProspect <notifications@futureprospect.online>",
+                    to: "notifications@futureprospect.online", 
                     bcc: recipientEmails,
                     subject: `New Program Posted: ${data.title}`,
                     react: NewPostEmail({
                         postTitle: data.title,
                         postType: "Program",
                         postLocation: data.location || "Online", // Fallback
-                        viewPostUrl: `https://ZIGEX.online/programs/${data.id}`,
+                        viewPostUrl: `https://futureprospect.online/programs/${data.id}`,
                         companyLogoUrl: "https://tmvipinvvhgklmqwvows.supabase.co/storage/v1/object/public/company-assets/Seed%20Company/events/SEED%20community%20Challenge-1757769838240.jpg", 
-                        managePreferencesUrl: "https://ZIGEX.online/profile/notifications",
+                        managePreferencesUrl: "https://futureprospect.online/profile/notifications",
                         postedDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
                     }),
                 });
             }
 
-            // 3. Create Notifications in DB
-            // Deduplicate recipients to ensure only one notification per user
-            const uniqueRecipients = Array.from(new Map(recipients.map((item:any) => [item.id || item.user_id, item])).values());
+        // 3. Create Notifications in DB
+        // Deduplicate recipients to ensure only one notification per user
+        const uniqueRecipients = Array.from(new Map(recipients.map((item: any) => [item.id || item.user_id, item])).values());
 
-            const notifications = uniqueRecipients.map((u: any) => ({
-                user_id: u.id || u.user_id, 
-                title: "New Program Posted!",
-                message: `A new program "${data.title}" is available.`,
-                type: "program",
-                reference_id: data.id,
-            }));
+        const notifications = uniqueRecipients.map((u: any) => ({
+          user_id: u.id || u.user_id,
+          title: "New Program Posted!",
+          message: `A new program "${data.title}" is available.`,
+          type: "program",
+          reference_id: data.id,
+        }));
 
-            const { error: notifError } = await supabaseAdmin.from("notifications").insert(notifications);
-            if (notifError) console.error("Failed to create notifications:", notifError);
-        }
+        const { error: notifError } = await supabaseAdmin.from("notifications").insert(notifications);
+        if (notifError) console.error("Failed to create notifications:", notifError);
+      }
     } catch (innerErr) {
-        console.error("Async notification error:", innerErr);
+      console.error("Async notification error:", innerErr);
     }
     // ---------------------------------------------------------------
 
@@ -462,38 +461,4 @@ export async function DELETE(request: Request) {
       { status: 400 }
     );
   }
-}
-/*
- * Function to get programs posted by the authenticated company
- */
-// GET /api/companies/programs (Authenticated: returns programs for the authenticated company)
-export async function getAuthenticatedCompanyPrograms(request: Request) {
-  const auth = await authMiddleware(request);
-  if (auth instanceof NextResponse) {
-    return auth;
-  }
-
-  const { type, company } = auth;
-  if (type !== "company") {
-    return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
-  }
-
-  if (!company) {
-    return NextResponse.json(
-      { error: "Company profile not found" },
-      { status: 404 }
-    );
-  }
-
-  const { data, error } = await supabaseAdmin
-    .from("programs")
-    .select("*")
-    .eq("company_id", company.id);
-
-  if (error) {
-    console.error("Error fetching programs:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json(data);
 }

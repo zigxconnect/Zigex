@@ -4,13 +4,13 @@ import ProjectDetailCard from "@/components/uiComponent/ProjectDetailCard";
 import { supabaseAdmin } from "@/lib/supabase/server";
 
 interface Props {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export const revalidate = 60;
 
 export default async function ProjectPage({ params }: Props) {
-  const { id } = params;
+  const { id } = await params;
 
   const { data: project, error } = await supabaseAdmin
     .from('projects')
