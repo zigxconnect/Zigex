@@ -3,6 +3,7 @@ import { Inter, Host_Grotesk } from "next/font/google";
 import "./globals.css";
 // import { Toaster } from "@/components/ui/sonner";
 import { Toaster } from "react-hot-toast";
+import { Analytics } from "@vercel/analytics/react";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -92,6 +93,7 @@ export default function RootLayout({
       <body className={`${inter.variable} ${hostGrotesk.variable} antialiased`}>
         {children}
         <Toaster position="top-center" reverseOrder={false} />
+        <Analytics />
         {/* <Toaster /> */}
       </body>
     </html>
