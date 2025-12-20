@@ -19,6 +19,7 @@ import {
 import { AiOutlineWechat } from "react-icons/ai";
 import { Button } from "@/components/ui/button";
 import AnimatedNavLink from "@/components/customButtons/AnimatedNavLink";
+import NameInitials from "@/components/NameInitials";
 // import AnimatedNavLink from "@/components/sections/dashboard/AnimatedNavLink";
 
 interface SidebarProps {
@@ -136,8 +137,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const userAvatar =
     user?.avatar ||
     user?.profile?.avatar_url ||
-    user?.avatarUrl ||
-    "/default-avatar.png";
+    user?.avatarUrl 
   const isOnline = user?.isOnline ?? true;
   const applicationsCount =
     user?.applicationsCount || user?.stats?.applications || 0;
@@ -236,14 +236,16 @@ const isRouteActive = (href: string, matchPaths?: string[], excludePaths?: strin
         <div className="flex-shrink-0 p-4 lg:p-6 border-b border-sidebar-border bg-sidebar-accent/20">
           <div className="flex items-center gap-4">
             <div className="relative w-16 h-16 rounded-full overflow-hidden border-3 border-card shadow-lg flex-shrink-0">
-              <Image
+              {userAvatar? <Image
                 src={userAvatar}
                 alt={`${userName}'s Avatar`}
                 width={64}
                 height={64}
                 className="w-full h-full object-cover"
                 priority
-              />
+              />:
+              <NameInitials name={userName} />
+              }
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-bold text-sidebar-foreground truncate text-base">

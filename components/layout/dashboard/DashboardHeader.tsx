@@ -8,6 +8,7 @@ import { Logo } from "@/components/layout/Logo";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import NameInitials from "@/components/NameInitials";
 
 interface DashboardHeaderProps {
   user?: any;
@@ -26,8 +27,7 @@ export const DashboardHeader = ({
   const userAvatar =
     user?.avatar ||
     user?.profile?.avatar_url ||
-    user?.avatarUrl ||
-    "/default-avatar.png";
+    user?.avatarUrl 
 
 
 
@@ -69,12 +69,16 @@ export const DashboardHeader = ({
             className="flex items-center gap-3 pl-2 lg:pl-3 border-l-2 border-border flex-shrink-0 group"
           >
             <div className="relative w-9 h-9 lg:w-10 lg:h-10 rounded-full border-2 border-background ring-2 ring-muted group-hover:ring-primary/30 shadow-sm overflow-hidden transition-all duration-300">
-              <Image
-                src={userAvatar}
-                alt={userName}
-                fill
-                className="object-cover"
-              />
+              {userAvatar ? (
+                <Image
+                  src={userAvatar}
+                  alt={userName}
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <NameInitials name={userName} />
+              )}
             </div>
             <div className="hidden md:flex flex-col">
               <p className="text-sm font-bold text-foreground leading-tight group-hover:text-primary transition-colors">
