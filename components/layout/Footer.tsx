@@ -50,7 +50,7 @@ export const Footer: React.FC = () => {
             <ul className="space-y-4 text-sm text-blue-100/70">
               {['Browse Jobs', 'For Companies', 'Mentorship', 'Upcoming Events', 'Technical Blog'].map((item) => (
                 <li key={item}>
-                  <a href="#" className="hover:text-white hover:translate-x-2 transition-all duration-200 flex items-center group">
+                  <a href="/feed" className="hover:text-white hover:translate-x-2 transition-all duration-200 flex items-center group">
                     <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mr-2 opacity-0 group-hover:opacity-100 transition-opacity"></span>
                     {item}
                   </a>

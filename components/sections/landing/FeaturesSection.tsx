@@ -14,7 +14,7 @@ const ActivitiesSection: React.FC = () => {
     internship: {
       title: 'Internships',
       headline: 'Launch Your Career',
-      description: 'Our internship program is designed to bridge the gap between academic learning and professional ecosystem. We partner with top-tier companies to offer roles that provide real-world experience, mentorship, and the chance to work on impactful projects.',
+      description: 'Our internship,BOOTCAMP, EVENTS, program is designed to bridge the gap between academic learning and professional ecosystem. We partner with top-tier companies to offer roles that provide real-world experience, mentorship, and the chance to work on impactful projects.',
       benefits: [
         'Access to exclusive paid and unpaid roles',
         'Mentorship from industry veterans',
