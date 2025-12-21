@@ -3,21 +3,19 @@ import withPWAInit from "@ducanh2912/next-pwa";
 
 const withPWA = withPWAInit({
   dest: "public",
-  disable: false, // Enable in development for testing
-
+  disable: process.env.NODE_ENV === "development", // Disable in development to prevent reload loops
   register: true,
   skipWaiting: true,
-  cacheOnFrontEndNav: true,
-  aggressiveFrontEndNavCaching: true,
-  reloadOnOnline: true,
+  cacheOnFrontEndNav: false, // Disabled to prevent buggy reloads
+  aggressiveFrontEndNavCaching: false, // Disabled for stability
+  reloadOnOnline: false, // Prevent reloads on network changes
   swMinify: true,
   workboxOptions: {
     disableDevLogs: true,
-    maximumFileSizeToCacheInBytes: 5000000, // 5MB limit for precaching
+    maximumFileSizeToCacheInBytes: 5000000, 
   },
-
   fallbacks: {
-    document: "/offline", // Redirect to /offline when offline
+    document: "/offline",
   },
 });
 

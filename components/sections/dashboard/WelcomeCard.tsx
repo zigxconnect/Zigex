@@ -43,8 +43,8 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile }: WelcomeCardProp
     return skillsText.substring(0, maxLength) + "...";
   };
 
-  const avatarUrl = user.profile.avatar_url || "/default-avatar.svg";
-  const coverImageUrl = user.profile.cover_image || "https://i.ibb.co/vv3sgJwd/n8.jpg";
+  const avatarUrl = user?.profile?.avatar_url || "https://i.ibb.co/CpS0wpjC/z3.jpg";
+  const coverImageUrl = user?.profile?.cover_image || "https://i.ibb.co/vv3sgJwd/n8.jpg";
 
   return (
     <div className="relative bg-white rounded-2xl w-full mx-auto shadow-lg border border-gray-200 overflow-hidden">
@@ -155,7 +155,7 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile }: WelcomeCardProp
           onMouseLeave={() => setIsAvatarHovered(false)}
         >
           <div className="w-20 h-20 md:w-24 md:h-24 lg:w-20 lg:h-20 rounded-full border-3 lg:border-4 border-white shadow-lg overflow-hidden bg-white transition-all duration-300 group-hover:shadow-2xl group-hover:scale-105">
-            {user.profile?.avatarUrl? <Image
+            {user.profile?.avatarUrl ? <Image
               src={avatarUrl}
               alt={`${user.name}'s profile picture`}
               width={112}
@@ -163,7 +163,7 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile }: WelcomeCardProp
               className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-75"
               priority
             /> :
-            <NameInitials name={user.name} />}
+              <NameInitials name={user.name} />}
           </div>
 
           {/* Animated Ring */}
@@ -185,28 +185,29 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile }: WelcomeCardProp
                 {user.name}
               </p>
               <div className="flex items-center justify-center bg-blue-500 rounded-full p-0.5">
-                <svg 
-                  viewBox="0 0 24 24" 
+                <svg
+                  viewBox="0 0 24 24"
                   className="w-4 h-4 lg:w-5 lg:h-5 fill-white"
                   aria-label="Verified"
                 >
-                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                 </svg>
               </div>
             </div>
-            
-          <div className="flex flex-col gap-1 text-gray-600">
-            <div className="flex items-center gap-1.5 text-gray-600">
-              <MapPin size={16} className="lg:w-[18px] lg:h-[18px]" />
-              <p className="text-sm lg:text-base font-medium">
-                {user.university} 
-              </p>
+
+            <div className="flex flex-col gap-1 text-gray-600">
+              <div className="flex items-center gap-1.5 text-gray-600">
+                <MapPin size={16} className="lg:w-[18px] lg:h-[18px]" />
+                <p className="text-sm lg:text-base font-medium">
+                  {user.university}
+                </p>
+              </div>
             </div>
-          </div>
           </div>
 
           {/* Social Links & My Profile Button */}
           <div className="flex items-center gap-2 lg:gap-3 flex-wrap">
+            {(user?.profile?.linkedin_url || user?.linkedin_url) && (
               <Link
                 href={user?.profile?.linkedin_url || user?.linkedin_url}
                 target="_blank"
@@ -220,7 +221,9 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile }: WelcomeCardProp
                   </svg>
                 </div>
               </Link>
+            )}
 
+            {(user?.profile?.github_url || user?.github_url) && (
               <Link
                 href={user?.profile?.github_url || user?.github_url}
                 target="_blank"
@@ -230,15 +233,16 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile }: WelcomeCardProp
               >
                 <div className="w-5 h-5">
                   <svg xmlns="http://www.w3.org/2000/svg" aria-label="GitHub" role="img" viewBox="0 0 512 512" className="w-full h-full">
-                    <rect width="512" height="512" rx="15%" fill="#1B1817"/><path fill="#ffffff" d="M335 499c14 0 12 17 12 17H165s-2-17 12-17c13 0 16-6 16-12l-1-50c-71 16-86-28-86-28-12-30-28-37-28-37-24-16 1-16 1-16 26 2 40 26 40 26 22 39 59 28 74 22 2-17 9-28 16-35-57-6-116-28-116-126 0-28 10-51 26-69-3-6-11-32 3-67 0 0 21-7 70 26 42-12 86-12 128 0 49-33 70-26 70-26 14 35 6 61 3 67 16 18 26 41 26 69 0 98-60 120-117 126 10 8 18 24 18 48l-1 70c0 6 3 12 16 12z"/>
+                    <rect width="512" height="512" rx="15%" fill="#1B1817" /><path fill="#ffffff" d="M335 499c14 0 12 17 12 17H165s-2-17 12-17c13 0 16-6 16-12l-1-50c-71 16-86-28-86-28-12-30-28-37-28-37-24-16 1-16 1-16 26 2 40 26 40 26 22 39 59 28 74 22 2-17 9-28 16-35-57-6-116-28-116-126 0-28 10-51 26-69-3-6-11-32 3-67 0 0 21-7 70 26 42-12 86-12 128 0 49-33 70-26 70-26 14 35 6 61 3 67 16 18 26 41 26 69 0 98-60 120-117 126 10 8 18 24 18 48l-1 70c0 6 3 12 16 12z" />
                   </svg>
                 </div>
               </Link>
+            )}
 
             {/* My Profile Button - Enhanced Interactive Version */}
             {/* My Profile Button - Clean Version */}
             <Link
-              href={`/profile/${user.profile.username}`}
+              href={`/profile/${user?.profile?.username || user?.username || "username"}`}
               className="
                 flex items-center gap-1.5 lg:gap-2 px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg font-semibold text-xs lg:text-sm
                 transition-all duration-300
