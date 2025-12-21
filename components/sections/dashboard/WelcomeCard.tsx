@@ -43,7 +43,11 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile }: WelcomeCardProp
     return skillsText.substring(0, maxLength) + "...";
   };
 
-  const avatarUrl = user?.profile?.avatar_url || "https://i.ibb.co/CpS0wpjC/z3.jpg";
+  const avatarUrl =
+    user?.profile?.avatar_url ||
+    user?.profile?.avatarUrl ||
+    user?.avatar_url ||
+    user?.avatarUrl;
   const coverImageUrl = user?.profile?.cover_image || "https://i.ibb.co/vv3sgJwd/n8.jpg";
 
   return (
@@ -155,7 +159,7 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile }: WelcomeCardProp
           onMouseLeave={() => setIsAvatarHovered(false)}
         >
           <div className="w-20 h-20 md:w-24 md:h-24 lg:w-20 lg:h-20 rounded-full border-3 lg:border-4 border-white shadow-lg overflow-hidden bg-white transition-all duration-300 group-hover:shadow-2xl group-hover:scale-105">
-            {user.profile?.avatarUrl ? <Image
+            {avatarUrl ? <Image
               src={avatarUrl}
               alt={`${user.name}'s profile picture`}
               width={112}
