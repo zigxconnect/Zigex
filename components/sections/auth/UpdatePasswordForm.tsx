@@ -71,9 +71,8 @@ const PasswordStrengthIndicator = ({
         {checks.map((check, i) => (
           <li
             key={i}
-            className={`flex items-center transition-colors duration-300 ${
-              check.regex.test(password) ? "text-green-600" : ""
-            }`}
+            className={`flex items-center transition-colors duration-300 ${check.regex.test(password) ? "text-green-600" : ""
+              }`}
           >
             <CheckCircle
               size={12}
@@ -96,7 +95,7 @@ export const UpdatePasswordForm = () => {
   const [isSessionReady, setIsSessionReady] = useState(false);
   const [formState, setFormState] = useState<"idle" | "success">("idle");
   const [showPassword, setShowPassword] = useState(false);
-  const supabase = useMemo(() => createClient(), []);
+  const [supabase] = useState(() => createClient());
   const redirectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const {

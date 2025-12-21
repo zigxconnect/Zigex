@@ -7,7 +7,7 @@ const NameInitials = ({ name }: { name: string }) => {
     .toUpperCase();
 
     return (
-        <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 text-white flex items-center justify-center font-bold text-2xl">
+        <div className="w-full h-full bg-primary from-blue-500 to-purple-600 text-white flex items-center justify-center font-bold text-2xl">
                   {initials}
         </div>
     );

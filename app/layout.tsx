@@ -4,6 +4,9 @@ import "./globals.css";
 // import { Toaster } from "@/components/ui/sonner";
 import { Toaster } from "react-hot-toast";
 
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
+
 const inter = Inter({
 
   subsets: ["latin"],
@@ -127,7 +130,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.variable} ${hostGrotesk.variable} antialiased`}>
         {children}
-        <InstallPwaPopup />
+
         <Toaster position="top-center" reverseOrder={false} />
         <Analytics />
         <SpeedInsights />
