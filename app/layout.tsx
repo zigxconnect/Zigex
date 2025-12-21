@@ -3,7 +3,7 @@ import { Inter, Host_Grotesk } from "next/font/google";
 import "./globals.css";
 // import { Toaster } from "@/components/ui/sonner";
 import { Toaster } from "react-hot-toast";
-import { InstallPwaPopup } from "@/components/pwa/InstallPwaPopup";
+
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 
@@ -130,7 +130,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.variable} ${hostGrotesk.variable} antialiased`}>
         {children}
-        <InstallPwaPopup />
+
         <Toaster position="top-center" reverseOrder={false} />
         <Analytics />
         <SpeedInsights />
