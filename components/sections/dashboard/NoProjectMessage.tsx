@@ -11,7 +11,7 @@ interface NoProjectMessageProps {
 
 export default function NoProjectMessage({ studentName, studentPhone }: NoProjectMessageProps) {
   const firstName = studentName?.split(' ')[0] || 'This student';
-  
+
   // Pre-built WhatsApp message encouraging them to post a project
   const whatsappMessage = `Hi ${firstName}! 👋
 
@@ -21,7 +21,7 @@ Your project is a great way to showcase your skills and get noticed by top compa
 
 Would you mind sharing your latest project? I'd love to see what you've been working on!
 
-Post your project on ZigX: https://zigex.vercel.app`;
+Post your project on ZigX: https://www.zigexconnect.com`;
 
   const whatsappUrl = studentPhone
     ? `https://wa.me/${studentPhone.replace(/\D/g, '')}?text=${encodeURIComponent(whatsappMessage)}`

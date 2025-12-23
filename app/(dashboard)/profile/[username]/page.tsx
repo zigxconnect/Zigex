@@ -199,7 +199,7 @@ export default async function ProfilePage({ params }: Props) {
               whatsappUrl={null}
               email={data.email}
               fullName={data.full_name}
-              profileUrl={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://zigex.vercel.app'}/profile/${username}`}
+              profileUrl={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.zigexconnect.com'}/profile/${username}`}
               isOwner={true}
             />
           </div>

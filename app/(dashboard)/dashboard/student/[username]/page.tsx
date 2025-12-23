@@ -2,12 +2,12 @@ import React from "react";
 import { supabaseAdmin, createServerActionClient } from "@/lib/supabase/server";
 import Image from "next/image";
 import Link from "next/link";
-import { 
-  Github, 
-  Link2, 
-  MapPin, 
-  Briefcase, 
-  Award, 
+import {
+  Github,
+  Link2,
+  MapPin,
+  Briefcase,
+  Award,
   Calendar,
   Mail,
   Phone,
@@ -176,7 +176,7 @@ I'd love to connect and explore potential collaboration opportunities.
 
 Looking forward to hearing from you!`;
 
-  const whatsappUrl = data.phone 
+  const whatsappUrl = data.phone
     ? `https://wa.me/${data.phone.replace(/\D/g, '')}?text=${encodeURIComponent(whatsappMessage)}`
     : null;
 
@@ -223,12 +223,12 @@ Looking forward to hearing from you!`;
           </div>
 
           {/* QR Code Button */}
-          <QRCodeButton 
+          <QRCodeButton
             linkedinUrl={linkedinUrl}
             whatsappUrl={whatsappUrl}
             email={data.email}
             fullName={data.full_name}
-            profileUrl={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://zigex.vercel.app'}/dashboard/student/${data.username || username}`}
+            profileUrl={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.zigexconnect.com'}/dashboard/student/${data.username || username}`}
             isOwner={false}
           />
         </div>
@@ -245,12 +245,12 @@ Looking forward to hearing from you!`;
                 </h1>
                 {/* Verification Badge - Smaller */}
                 <div className="flex items-center justify-center bg-blue-500 rounded-full p-0.5">
-                  <svg 
-                    viewBox="0 0 24 24" 
+                  <svg
+                    viewBox="0 0 24 24"
                     className="w-4 h-4 md:w-5 md:h-5 fill-white"
                     aria-label="Verified"
                   >
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                   </svg>
                 </div>
               </div>
@@ -301,7 +301,7 @@ Looking forward to hearing from you!`;
             </div>
 
             {/* Connect Buttons - Visitor actions */}
-            <AnimatedConnectButtons 
+            <AnimatedConnectButtons
               linkedinUrl={linkedinUrl}
               whatsappUrl={whatsappUrl}
             />
@@ -344,10 +344,10 @@ Looking forward to hearing from you!`;
         {/* Project Card - Show if student has active project */}
         {visitorProject && (
           <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-            <MyMonthProject 
-              user={data} 
+            <MyMonthProject
+              user={data}
               project={visitorProject}
-              isVisitor={true} 
+              isVisitor={true}
               isOwner={false}
             />
           </div>
@@ -355,8 +355,8 @@ Looking forward to hearing from you!`;
 
         {/* No Project Message - Show if student has no active project */}
         {!visitorProject && (
-          <NoProjectMessage 
-            studentName={data.full_name || 'This student'} 
+          <NoProjectMessage
+            studentName={data.full_name || 'This student'}
             studentPhone={data.phone}
           />
         )}
@@ -534,11 +534,11 @@ Looking forward to hearing from you!`;
       </div>
 
       {/* Connect Bar at Bottom - Visitor View */}
-      <ConnectBar 
-        linkedin={data.linkedin_url} 
-        whatsapp={data.phone} 
-        x={data.twitter_url || data.x_url} 
-        email={data.email} 
+      <ConnectBar
+        linkedin={data.linkedin_url}
+        whatsapp={data.phone}
+        x={data.twitter_url || data.x_url}
+        email={data.email}
       />
 
       {/* Floating Create Project Button - Only for Owner */}
