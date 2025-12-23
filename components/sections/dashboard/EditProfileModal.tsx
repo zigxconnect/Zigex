@@ -35,7 +35,7 @@ export const EditProfileModal = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB in bytes
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
 
   useEffect(() => {
     if (isOpen && userId) {
@@ -50,7 +50,7 @@ export const EditProfileModal = ({
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       if (file.size > MAX_FILE_SIZE) {
-        toast.error("Avatar image must be less than 2MB");
+        toast.error("Avatar image must be less than 10MB");
         return;
       }
       // Revoke previous object URL if it was an object URL
@@ -74,7 +74,7 @@ export const EditProfileModal = ({
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       if (file.size > MAX_FILE_SIZE) {
-        toast.error("Cover image must be less than 2MB");
+        toast.error("Cover image must be less than 10MB");
         return;
       }
       // Revoke previous object URL if it was an object URL
@@ -140,8 +140,8 @@ export const EditProfileModal = ({
       if (!response.ok) {
         throw new Error(
           responseData.details ||
-            responseData.error ||
-            "Failed to update profile."
+          responseData.error ||
+          "Failed to update profile."
         );
       }
 
