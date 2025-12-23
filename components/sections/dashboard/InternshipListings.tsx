@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { InternshipCard } from "./InternshipCard";
 import { EventCard } from "./EventCard";
 import { ProgramCard } from "./ProgramCard";
-import { Briefcase, GraduationCap, Calendar, Sparkles, Search } from "lucide-react";
+import { Briefcase, GraduationCap, Calendar, Sparkles, Search, AlertTriangle } from "lucide-react";
 import { Internship, Event, Program } from "@/lib/types/dashoard";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { useVideoModal } from "@/hooks/UseVideoModal";
@@ -219,24 +219,22 @@ export const InternshipListings = ({
 
     return content.filter((item) => {
       const title = item.title?.toLowerCase() || "";
-      const description = item.description?.toLowerCase() || "";
+      const description = (item as any).description?.toLowerCase() || "";
 
       let companyName = "";
       if ((item as AllContentItem)._type === "internships") {
         const internship = item as Internship;
         companyName = typeof internship.company === "string"
           ? internship.company
-          : internship.company?.company_name || "";
+          : (internship as any).company?.company_name || "";
       } else if ((item as AllContentItem)._type === "events") {
-        const event = item as Event;
+        const event = item as any;
         companyName = typeof event.company === "string"
           ? event.company
           : event.company?.company_name || "";
       } else if ((item as AllContentItem)._type === "programs") {
         const program = item as Program;
-        companyName = typeof program.organizer === "string"
-          ? program.organizer
-          : "";
+        companyName = program.company?.company_name || "";
       }
 
       const company = companyName.toLowerCase();
@@ -289,7 +287,7 @@ export const InternshipListings = ({
 
   const getTabColorClasses = (color: string, isActive: boolean) => {
     const colorMap: Record<string, any> = {
-        red: {
+      red: {
         active: "bg-red-600 text-white shadow-gray-400",
         inactive: "text-red-600 hover:bg-blue-60",
       },
@@ -340,9 +338,8 @@ export const InternshipListings = ({
 
     openModal({
       videoUrl: itemMeta.youtube || "https://www.youtube.com/watch?v=ysz5S6PUM-U",
-      title: item.title,
       company: companyName,
-      description: itemMeta.description || item.description,
+      description: itemMeta.description || (item as any).description,
       thumbnail: thumbnail,
       viewerCount: Math.floor(Math.random() * 2000) + 500, // Random viewer count for demo
     });
@@ -356,8 +353,8 @@ export const InternshipListings = ({
     if (error) {
       return (
         <div className="text-center py-20">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 mb-4">
-            <span className="text-2xl">⚠️</span>
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 mb-4 text-red-600">
+            <AlertTriangle size={32} />
           </div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
             Failed to Load Opportunities
@@ -400,36 +397,36 @@ export const InternshipListings = ({
             (item as AllContentItem)._type === "internships"
               ? InternshipCard
               : (item as AllContentItem)._type === "events"
-              ? EventCard
-              : ProgramCard;
+                ? EventCard
+                : ProgramCard;
 
           const isItemLive = liveIds.has(item.id);
           const itemMeta = liveMeta[item.id] || {};
-          
+
           const baseProps = (item as AllContentItem)._type === "internships"
-            ? { 
-                ...item, 
-                is_live: isItemLive, 
-                live_stream_url: itemMeta.youtube, 
-                description: itemMeta.description || item.description,
-                onLiveClick: isItemLive ? () => handleLiveClick(item) : undefined,
-              }
+            ? {
+              ...(item as any),
+              is_live: isItemLive,
+              live_stream_url: itemMeta.youtube,
+              description: itemMeta.description || (item as any).description,
+              onLiveClick: isItemLive ? () => handleLiveClick(item) : undefined,
+            }
             : (item as AllContentItem)._type === "events"
-            ? { 
-                event: { 
-                  ...item, 
-                  is_live: isItemLive, 
-                  live_stream_url: itemMeta.youtube, 
-                  description: itemMeta.description || item.description 
+              ? {
+                event: {
+                  ...(item as any),
+                  is_live: isItemLive,
+                  live_stream_url: itemMeta.youtube,
+                  description: itemMeta.description || (item as any).description
                 },
                 onLiveClick: isItemLive ? () => handleLiveClick(item) : undefined,
               }
-            : { 
-                program: { 
-                  ...item, 
-                  is_live: isItemLive, 
-                  live_stream_url: itemMeta.youtube, 
-                  description: itemMeta.description || item.description 
+              : {
+                program: {
+                  ...(item as any),
+                  is_live: isItemLive,
+                  live_stream_url: itemMeta.youtube,
+                  description: itemMeta.description || (item as any).description
                 },
                 onLiveClick: isItemLive ? () => handleLiveClick(item) : undefined,
               };
@@ -452,7 +449,7 @@ export const InternshipListings = ({
   return (
     <>
       <div className="w-full">
-        <HappeningNowGrid/>
+        <HappeningNowGrid />
 
         <div className="max-w-7xl mx-auto px-4">
           {/* Header with Search Button and Tabs */}
@@ -477,26 +474,24 @@ export const InternshipListings = ({
             {/* Tabs */}
             <div className="w-full lg:w-auto overflow-x-auto scrollbar-hide">
               <div className="inline-flex bg-gray-100 rounded-xl p-1.5 shadow-sm min-w-max g">
-              {tabs.map((tab) => (
+                {tabs.map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
                     className={`relative flex items-center cursor-pointer gap-3 px-2 py-1 rounded-sm font-medium text-[12px] md:text-sm transition-all duration-300 whitespace-nowrap ${getTabColorClasses(
                       tab.color,
                       activeTab === tab.id
-                    )} ${
-                      activeTab === tab.id ? "scale-105 shadow-lg" : "hover:scale-102"
-                    }`}
+                    )} ${activeTab === tab.id ? "scale-105 shadow-lg" : "hover:scale-102"
+                      }`}
                   >
                     {/* <tab.icon size={16} /> */}
                     <span>{tab.label}</span>
                     {!isLoading && tab.count > 0 && (
                       <span
-                        className={`px-2 py-0.5 md:text-sm text-[12px] rounded-full font-semibold ${
-                          activeTab === tab.id
-                            ? "bg-white/20 text-white"
-                            : "bg-gray-200 text-gray-600"
-                        }`}
+                        className={`px-2 py-0.5 md:text-sm text-[12px] rounded-full font-semibold ${activeTab === tab.id
+                          ? "bg-white/20 text-white"
+                          : "bg-gray-200 text-gray-600"
+                          }`}
                       >
                         {tab.count}
                       </span>

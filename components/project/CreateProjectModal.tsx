@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
-import { X, Github, Calendar, Link, Loader2, Save, Plus } from "lucide-react";
+import { X, Github, Calendar, Link, Loader2, Save, Plus, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -26,7 +26,7 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
   const [submittedProjectTitle, setSubmittedProjectTitle] = useState("");
   const [hasDraft, setHasDraft] = useState(false);
   const router = useRouter();
-  
+
   const {
     formData,
     errors,
@@ -54,7 +54,7 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
         if (savedDraft) {
           const draft = JSON.parse(savedDraft);
           // Check if draft has any content
-          const hasContent = Object.values(draft).some(val => 
+          const hasContent = Object.values(draft).some(val =>
             val !== "" && val !== null && val !== undefined
           );
           setHasDraft(hasContent);
@@ -68,7 +68,7 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
   // Auto-save draft to localStorage
   useEffect(() => {
     if (!isOpen) return;
-    
+
     const saveDraft = () => {
       try {
         const draftData = {
@@ -163,7 +163,7 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
       console.log('Starting project creation...');
 
       const formDataToSubmit = getFormData();
-      console.log('Submitting form data:', { 
+      console.log('Submitting form data:', {
         title: formDataToSubmit.get('title'),
         description: formDataToSubmit.get('description'),
         githubLink: formDataToSubmit.get('githubLink'),
@@ -172,26 +172,26 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
         hasCoverImage: !!formDataToSubmit.get('coverImage'),
         hasVideo: !!formDataToSubmit.get('uploadedVideo')
       });
-      
+
       const result = await createProjectAction(formDataToSubmit);
       console.log('Project creation result:', result);
 
       if (result.success) {
         console.log('Project created successfully');
         setSubmittedProjectTitle(formData.title || "Your project");
-        
+
         // Clear the draft on successful submission
         localStorage.removeItem(DRAFT_STORAGE_KEY);
-        
+
         toast.success("Project created successfully! 🎉");
-        
+
         onClose();
         resetForm();
-        
+
         setTimeout(() => {
           setShowSuccessModal(true);
         }, 200);
-        
+
         router.refresh();
       } else {
         console.error('Project creation failed:', result);
@@ -220,9 +220,9 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
       // Don't reset form or clear draft - data persists
       setSubmitError(null);
       onClose();
-      
+
       // Show a toast to inform user their progress is saved
-      const hasContent = Object.values(formData).some(val => 
+      const hasContent = Object.values(formData).some(val =>
         val !== "" && val !== null && val !== undefined
       );
       if (hasContent) {
@@ -248,7 +248,7 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
 
   const modalContent = (
     <>
-      <div 
+      <div
         className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 safe-area-inset-bottom"
         onClick={(e) => {
           if (e.target === e.currentTarget && !isSubmitting) {
@@ -256,7 +256,7 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
           }
         }}
       >
-        <div 
+        <div
           className="relative w-full sm:max-w-2xl bg-white sm:rounded-[2.5rem] rounded-t-[2.5rem] shadow-2xl h-[95dvh] sm:h-[85vh] flex flex-col border border-blue-50 sm:m-4 overflow-hidden transition-all ease-out duration-500"
           onClick={(e) => e.stopPropagation()}
         >
@@ -279,7 +279,7 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
                 </p>
               </div>
             </div>
-            
+
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}
@@ -365,7 +365,7 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
                     <div>
                       <h4 className="font-black uppercase tracking-widest text-xs mb-1">Elite Showcase</h4>
                       <p className="text-sm text-primary-foreground/90 leading-relaxed font-medium">
-                        Your project will be featured in the Zigex community feed. Make it count! 🚀
+                        Your project will be featured in the Zigex community feed. Make it count!
                       </p>
                     </div>
                   </div>
@@ -491,7 +491,7 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
   return (
     <>
       {isMounted && createPortal(modalContent, document.body)}
-      
+
       {/* Success Modal */}
       <ProjectSuccessModal
         isOpen={showSuccessModal}

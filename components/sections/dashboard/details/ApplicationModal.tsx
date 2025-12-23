@@ -16,7 +16,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { X, ArrowRight, ArrowLeft, AlertTriangle, CheckCircle2, Upload, FileText } from "lucide-react";
+import { X, ArrowRight, ArrowLeft, AlertTriangle, CheckCircle2, Upload, FileText, Lightbulb } from "lucide-react";
 import { FileUploadButton } from "@/components/ui/FileUploadButton";
 import { Spinner } from "@/components/uiComponent/Spinner";
 import { getRawProfileInfo, UserProfile } from "@/lib/actions/profile.actions";
@@ -176,7 +176,7 @@ export const ApplicationModal = ({
 
       alert(
         responseData.message ||
-          `Application for ${internshipTitle} submitted successfully!`
+        `Application for ${internshipTitle} submitted successfully!`
       );
       onClose();
     } catch (error) {
@@ -189,7 +189,7 @@ export const ApplicationModal = ({
     <div className="fixed inset-0 bg-gradient-to-br from-blue-900/95 via-blue-800/95 to-indigo-900/95 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
       {/* Mobile: Slide up from bottom, Desktop: Center modal */}
       <div className="bg-white w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-2xl sm:rounded-3xl shadow-2xl flex flex-col animate-in slide-in-from-bottom sm:slide-in-from-bottom-0 duration-300">
-        
+
         {/* Header - Sticky on mobile */}
         <div className="sticky top-0 z-10 bg-gradient-to-r from-[#193CB8] to-[#2563eb] text-white px-4 sm:px-6 py-4 sm:py-5 shadow-lg">
           <div className="flex items-start justify-between gap-3">
@@ -202,21 +202,18 @@ export const ApplicationModal = ({
                   {internshipTitle}
                 </h2>
               </div>
-              
+
               {/* Progress Steps */}
               <div className="flex items-center gap-2">
                 <div className="flex items-center flex-1">
-                  <div className={`flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full text-xs sm:text-sm font-bold transition-all ${
-                    currentStep >= 1 ? 'bg-white text-[#193CB8]' : 'bg-white/30 text-white/60'
-                  }`}>
+                  <div className={`flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full text-xs sm:text-sm font-bold transition-all ${currentStep >= 1 ? 'bg-white text-[#193CB8]' : 'bg-white/30 text-white/60'
+                    }`}>
                     {currentStep > 1 ? <CheckCircle2 className="w-4 h-4" /> : '1'}
                   </div>
-                  <div className={`h-1 flex-1 mx-2 rounded-full transition-all ${
-                    currentStep >= 2 ? 'bg-white' : 'bg-white/30'
-                  }`}></div>
-                  <div className={`flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full text-xs sm:text-sm font-bold transition-all ${
-                    currentStep >= 2 ? 'bg-white text-[#193CB8]' : 'bg-white/30 text-white/60'
-                  }`}>
+                  <div className={`h-1 flex-1 mx-2 rounded-full transition-all ${currentStep >= 2 ? 'bg-white' : 'bg-white/30'
+                    }`}></div>
+                  <div className={`flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full text-xs sm:text-sm font-bold transition-all ${currentStep >= 2 ? 'bg-white text-[#193CB8]' : 'bg-white/30 text-white/60'
+                    }`}>
                     2
                   </div>
                 </div>
@@ -227,7 +224,7 @@ export const ApplicationModal = ({
                   <X size={20} />
                 </button>
               </div>
-              
+
               <p className="text-xs sm:text-sm text-white/80 mt-2">
                 {currentStep === 1 ? '📄 Upload Documents' : '👀 Review & Submit'}
               </p>
@@ -321,8 +318,8 @@ export const ApplicationModal = ({
 
                   {/* Info Card */}
                   <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                      <span className="text-lg">💡</span>
+                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 text-blue-600">
+                      <Lightbulb size={20} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs sm:text-sm text-blue-900 font-medium mb-1">
@@ -353,8 +350,8 @@ export const ApplicationModal = ({
         <div className="sticky bottom-0 bg-white border-t border-gray-200 px-4 sm:px-6 py-3 sm:py-4 shadow-lg">
           <div className="flex items-center gap-3">
             {currentStep === 2 && (
-              <Button 
-                variant="secondary" 
+              <Button
+                variant="secondary"
                 onClick={handleBackToForm}
                 className="flex-1 sm:flex-initial h-12 sm:h-10 rounded-xl font-semibold"
               >

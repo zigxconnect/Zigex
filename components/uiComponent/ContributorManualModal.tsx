@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { GitFork, Download, GitBranch, FileCode, UploadCloud, ChevronRight, ChevronLeft, Check, Copy } from "lucide-react";
+import { GitFork, Download, GitBranch, FileCode, UploadCloud, ChevronRight, ChevronLeft, Check, Copy, Rocket } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface ContributorManualModalProps {
@@ -25,8 +25,8 @@ export default function ContributorManualModal({ isOpen, onClose, repoUrl }: Con
           <p className="text-slate-600">
             Click the "Fork" button in the top-right corner of the GitHub repository page. This creates a copy of the repository in your own GitHub account.
           </p>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="w-full border-blue-200 hover:bg-blue-50 text-blue-700"
             onClick={() => window.open(repoUrl, "_blank")}
           >
@@ -117,8 +117,11 @@ export default function ContributorManualModal({ isOpen, onClose, repoUrl }: Con
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-              <span className="text-3xl">🚀</span> Contribution Guide
+            <DialogTitle className="text-2xl font-bold flex items-center gap-3">
+              <div className="p-1.5 bg-white/20 rounded-lg">
+                <Rocket className="w-6 h-6" />
+              </div>
+              Contribution Guide
             </DialogTitle>
             <p className="text-blue-100 text-sm mt-1">
               Become a legend! Follow these steps to contribute.
@@ -128,7 +131,7 @@ export default function ContributorManualModal({ isOpen, onClose, repoUrl }: Con
 
         {/* Progress Bar */}
         <div className="h-1 w-full bg-slate-100">
-          <div 
+          <div
             className="h-full bg-green-500 transition-all duration-300 ease-out"
             style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
           />
@@ -137,16 +140,16 @@ export default function ContributorManualModal({ isOpen, onClose, repoUrl }: Con
         {/* Content */}
         <div className="p-6">
           <div className="mb-6">
-             <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-slate-50 rounded-lg border border-slate-100 shadow-sm">
-                   {steps[currentStep].icon}
-                </div>
-                <h3 className="text-xl font-bold text-slate-800">
-                  Step {currentStep + 1}: {steps[currentStep].title}
-                </h3>
-             </div>
-             <p className="text-slate-500 text-sm mb-4">{steps[currentStep].description}</p>
-             {steps[currentStep].content}
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-slate-50 rounded-lg border border-slate-100 shadow-sm">
+                {steps[currentStep].icon}
+              </div>
+              <h3 className="text-xl font-bold text-slate-800">
+                Step {currentStep + 1}: {steps[currentStep].title}
+              </h3>
+            </div>
+            <p className="text-slate-500 text-sm mb-4">{steps[currentStep].description}</p>
+            {steps[currentStep].content}
           </div>
 
           {/* Navigation */}
@@ -162,21 +165,21 @@ export default function ContributorManualModal({ isOpen, onClose, repoUrl }: Con
 
             <div className="flex gap-1">
               {steps.map((_, i) => (
-                <div 
-                  key={i} 
+                <div
+                  key={i}
                   className={`w-2 h-2 rounded-full transition-colors ${i === currentStep ? 'bg-blue-600' : 'bg-slate-200'}`}
                 />
               ))}
             </div>
 
             {currentStep === steps.length - 1 ? (
-               <Button onClick={onClose} className="bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-200">
-                  Got it! <Check className="w-4 h-4 ml-1" />
-               </Button>
+              <Button onClick={onClose} className="bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-200">
+                Got it! <Check className="w-4 h-4 ml-1" />
+              </Button>
             ) : (
-               <Button onClick={handleNext} className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200">
-                  Next <ChevronRight className="w-4 h-4 ml-1" />
-               </Button>
+              <Button onClick={handleNext} className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200">
+                Next <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
             )}
           </div>
         </div>

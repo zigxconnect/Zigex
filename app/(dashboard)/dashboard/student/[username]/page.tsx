@@ -168,7 +168,7 @@ export default async function StudentDetailPage({ params }: Props) {
     .join("")
     .toUpperCase();
 
-  const whatsappMessage = `Hi ${data.full_name || 'there'}! 👋
+  const whatsappMessage = `Hi ${data.full_name || 'there'}!
 
 I came across your profile on ZigX and I'm impressed by your background in ${skills[0] || 'your field'}. 
 
@@ -228,7 +228,7 @@ Looking forward to hearing from you!`;
             whatsappUrl={whatsappUrl}
             email={data.email}
             fullName={data.full_name}
-            profileUrl={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.zigexconnect.com'}/dashboard/student/${data.username || username}`}
+            profileUrl={`https://zigex.vercel.app/dashboard/student/${data.username || username}`}
             isOwner={false}
           />
         </div>

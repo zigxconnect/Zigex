@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react';
-import { Database, RefreshCw, Copy, Check, AlertCircle, Briefcase, Calendar, GraduationCap, Download, ChevronDown, ChevronUp } from 'lucide-react';
+import { Database, RefreshCw, Copy, Check, AlertCircle, Briefcase, Calendar, GraduationCap, Download, ChevronDown, ChevronUp, MapPin, Clock } from 'lucide-react';
 
 export default function AggregatedDataViewer() {
   const [data, setData] = useState(null);
@@ -18,14 +18,14 @@ export default function AggregatedDataViewer() {
   const fetchData = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch('/api/students/aggregated-data');
-      
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-      
+
       const result = await response.json();
       setData(result);
     } catch (err) {
@@ -73,30 +73,30 @@ export default function AggregatedDataViewer() {
     if (!data?.data) return null;
 
     const sections = [
-      { 
-        key: 'internships', 
-        label: 'Internships', 
-        icon: Briefcase, 
+      {
+        key: 'internships',
+        label: 'Internships',
+        icon: Briefcase,
         color: 'blue',
         gradient: 'from-blue-500 to-blue-600',
         bgColor: 'bg-blue-50',
         borderColor: 'border-blue-200',
         textColor: 'text-blue-700'
       },
-      { 
-        key: 'events', 
-        label: 'Events', 
-        icon: Calendar, 
+      {
+        key: 'events',
+        label: 'Events',
+        icon: Calendar,
         color: 'green',
         gradient: 'from-green-500 to-green-600',
         bgColor: 'bg-green-50',
         borderColor: 'border-green-200',
         textColor: 'text-green-700'
       },
-      { 
-        key: 'programs', 
-        label: 'Programs', 
-        icon: GraduationCap, 
+      {
+        key: 'programs',
+        label: 'Programs',
+        icon: GraduationCap,
         color: 'purple',
         gradient: 'from-purple-500 to-purple-600',
         bgColor: 'bg-purple-50',
@@ -108,11 +108,11 @@ export default function AggregatedDataViewer() {
     return sections.map(section => {
       const items = data.data[section.key] || [];
       const isExpanded = expandedSections[section.key];
-      
+
       return (
         <div key={section.key} className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
           {/* Section Header */}
-          <div 
+          <div
             className={`bg-gradient-to-r ${section.gradient} p-4 cursor-pointer`}
             onClick={() => toggleSection(section.key)}
           >
@@ -134,8 +134,8 @@ export default function AggregatedDataViewer() {
               {items.length > 0 ? (
                 <div className="space-y-3 max-h-96 overflow-y-auto">
                   {items.map((item, idx) => (
-                    <div 
-                      key={idx} 
+                    <div
+                      key={idx}
                       className={`p-4 ${section.bgColor} border ${section.borderColor} rounded-lg hover:shadow-sm transition-shadow`}
                     >
                       <div className="flex justify-between items-start mb-2">
@@ -144,26 +144,33 @@ export default function AggregatedDataViewer() {
                           {item.category || item.program_category || 'Event'}
                         </span>
                       </div>
-                      
+
                       <p className={`text-sm ${section.textColor} mb-2`}>
                         {item.company || item.organizer}
                       </p>
-                      
+
                       {item.location && (
-                        <p className="text-xs text-gray-600 mb-2">📍 {item.location}</p>
+                        <p className="text-xs text-gray-600 mb-2 flex items-center gap-1.5">
+                          <MapPin size={12} className="text-gray-400" />
+                          {item.location}
+                        </p>
                       )}
-                      
+
                       {item.description && (
                         <p className="text-sm text-gray-600 line-clamp-2">
                           {item.description}
                         </p>
                       )}
-                      
+
                       <div className="mt-3 flex gap-2 text-xs text-gray-500">
-                        {item.type && <span className="px-2 py-1 bg-gray-100 rounded">⏱️ {item.type}</span>}
+                        {item.type && (
+                          <span className="px-2 py-1 bg-gray-100 rounded flex items-center gap-1">
+                            <Clock size={12} /> {item.type}
+                          </span>
+                        )}
                         {item.start_date && (
-                          <span className="px-2 py-1 bg-gray-100 rounded">
-                            📅 {new Date(item.start_date).toLocaleDateString()}
+                          <span className="px-2 py-1 bg-gray-100 rounded flex items-center gap-1">
+                            <Calendar size={12} /> {new Date(item.start_date).toLocaleDateString()}
                           </span>
                         )}
                       </div>
@@ -199,7 +206,7 @@ export default function AggregatedDataViewer() {
                 </p>
               </div>
             </div>
-            
+
             <div className="flex gap-2">
               <button
                 onClick={fetchData}
@@ -209,7 +216,7 @@ export default function AggregatedDataViewer() {
                 <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
                 <span className="hidden sm:inline">Refresh</span>
               </button>
-              
+
               <button
                 onClick={copyToClipboard}
                 disabled={!data}
@@ -218,7 +225,7 @@ export default function AggregatedDataViewer() {
                 {copied ? <Check size={16} /> : <Copy size={16} />}
                 <span className="hidden sm:inline">{copied ? 'Copied!' : 'Copy'}</span>
               </button>
-              
+
               <button
                 onClick={downloadJSON}
                 disabled={!data}
@@ -265,17 +272,17 @@ export default function AggregatedDataViewer() {
                 <p className="text-sm opacity-90 mb-1">Total Items</p>
                 <p className="text-4xl font-bold">{data.metadata?.total_count || 0}</p>
               </div>
-              
+
               <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg">
                 <p className="text-sm opacity-90 mb-1">Internships</p>
                 <p className="text-4xl font-bold">{data.metadata?.internships_count || 0}</p>
               </div>
-              
+
               <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
                 <p className="text-sm opacity-90 mb-1">Programs</p>
                 <p className="text-4xl font-bold">{data.metadata?.programs_count || 0}</p>
               </div>
-              
+
               <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg">
                 <p className="text-sm opacity-90 mb-1">Events</p>
                 <p className="text-4xl font-bold">{data.metadata?.events_count || 0}</p>
@@ -289,11 +296,10 @@ export default function AggregatedDataViewer() {
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
-                    className={`px-6 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
-                      activeTab === tab
+                    className={`px-6 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${activeTab === tab
                         ? 'bg-blue-600 text-white shadow-md'
                         : 'text-gray-600 hover:bg-gray-100'
-                    }`}
+                      }`}
                   >
                     {tab.charAt(0).toUpperCase() + tab.slice(1)}
                   </button>
@@ -331,11 +337,10 @@ export default function AggregatedDataViewer() {
                     <div key={key} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-medium text-gray-900 capitalize">{key}</span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                          status.fetched 
-                            ? 'bg-green-100 text-green-700' 
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${status.fetched
+                            ? 'bg-green-100 text-green-700'
                             : 'bg-red-100 text-red-700'
-                        }`}>
+                          }`}>
                           {status.fetched ? '✓ Success' : '✗ Failed'}
                         </span>
                       </div>

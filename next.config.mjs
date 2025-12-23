@@ -12,7 +12,7 @@ const withPWA = withPWAInit({
   swMinify: true,
   workboxOptions: {
     disableDevLogs: true,
-    maximumFileSizeToCacheInBytes: 5000000, 
+    maximumFileSizeToCacheInBytes: 5000000,
   },
   fallbacks: {
     document: "/offline",

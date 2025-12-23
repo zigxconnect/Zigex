@@ -51,19 +51,58 @@ async function getUserStats(userId: string) {
 }
 
 export default async function StudentDirectoryPage() {
-  const profiles = await getAllUsers(200, 0);
+  const profiles = await getAllUsers(100, 0); // Reduced to 100 for better initial load
   const userData = await getProfileInfo();
 
   // Filter out current user
   const filteredProfiles = profiles.filter((p) => p.id !== userData?.profile?.id);
+  const profileIds = filteredProfiles.map(p => p.id);
 
-  // Fetch real stats for each student
-  const profilesWithStats = await Promise.all(
-    filteredProfiles.map(async (profile) => ({
-      ...profile,
-      stats: await getUserStats(profile.id),
-    }))
-  );
+  // 1. Batch fetch all stats
+  const [internships, programs, events, projects] = await Promise.all([
+    supabase
+      .from("internship_applications")
+      .select("user_id")
+      .in("user_id", profileIds),
+    supabase
+      .from("program_applications")
+      .select("user_id")
+      .in("user_id", profileIds),
+    supabase
+      .from("event_rsvps")
+      .select("user_id")
+      .in("user_id", profileIds),
+    supabase
+      .from("projects")
+      .select("creator_id")
+      .in("creator_id", profileIds),
+  ]);
+
+  // 2. Count them efficiently
+  const counts = (data: any[] | null, idField: string) => {
+    const map: Record<string, number> = {};
+    (data || []).forEach(item => {
+      const id = item[idField];
+      map[id] = (map[id] || 0) + 1;
+    });
+    return map;
+  };
+
+  const internshipCounts = counts(internships.data, 'user_id');
+  const programCounts = counts(programs.data, 'user_id');
+  const eventCounts = counts(events.data, 'user_id');
+  const projectCounts = counts(projects.data, 'creator_id');
+
+  // 3. Attach stats to profiles
+  const profilesWithStats = filteredProfiles.map(profile => ({
+    ...profile,
+    stats: {
+      internshipsApplied: internshipCounts[profile.id] || 0,
+      programsApplied: programCounts[profile.id] || 0,
+      eventsApplied: eventCounts[profile.id] || 0,
+      projectsCreated: projectCounts[profile.id] || 0,
+    }
+  }));
 
   return (
     <>
