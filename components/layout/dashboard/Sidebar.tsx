@@ -74,7 +74,7 @@ interface SidebarProps {
 
 // Special navigation item for AI chat
 const aiChatItem = {
-  href: "/dashboard/fupro-ai",
+  href: "/dashboard/zigagent-ai",
   icon: AiOutlineWechat,
   label: "Chat with Agent ZAi",
 };
@@ -89,9 +89,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const navItems = [
-    { 
-      href: "/feed", 
-      icon: Globe, 
+    {
+      href: "/feed",
+      icon: Globe,
       label: "Browse",
       matchPaths: ["/feed", "/feed/"],
       excludePaths: ["/feed/projects"]
@@ -99,7 +99,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     {
       href: "/dashboard/student",
       icon: Users,
-      label: "Zigx",
+      label: "ZigX",
       matchPaths: ["/dashboard/student", "/dashboard/student/"],
     },
     {
@@ -137,7 +137,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const userAvatar =
     user?.avatar ||
     user?.profile?.avatar_url ||
-    user?.avatarUrl 
+    user?.avatarUrl
   const isOnline = user?.isOnline ?? true;
   const applicationsCount =
     user?.applicationsCount || user?.stats?.applications || 0;
@@ -153,7 +153,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
-const isRouteActive = (href: string, matchPaths?: string[], excludePaths?: string[]) => {
+  const isRouteActive = (href: string, matchPaths?: string[], excludePaths?: string[]) => {
     // Remove trailing slashes for comparison but preserve leading slash
     const normalize = (p: string | undefined) => {
       if (!p) return "";
@@ -236,15 +236,15 @@ const isRouteActive = (href: string, matchPaths?: string[], excludePaths?: strin
         <div className="flex-shrink-0 p-4 lg:p-6 border-b border-sidebar-border bg-sidebar-accent/20">
           <div className="flex items-center gap-4">
             <div className="relative w-16 h-16 rounded-full overflow-hidden border-3 border-card shadow-lg flex-shrink-0">
-              {userAvatar? <Image
+              {userAvatar ? <Image
                 src={userAvatar}
                 alt={`${userName}'s Avatar`}
                 width={64}
                 height={64}
                 className="w-full h-full object-cover"
                 priority
-              />:
-              <NameInitials name={userName} />
+              /> :
+                <NameInitials name={userName} />
               }
             </div>
             <div className="flex-1 min-w-0">
@@ -254,14 +254,12 @@ const isRouteActive = (href: string, matchPaths?: string[], excludePaths?: strin
               <p className="text-sm text-muted-foreground">{userRole}</p>
               <div className="flex items-center gap-2 mt-1">
                 <div
-                  className={`w-2 h-2 rounded-full ${
-                    isOnline ? "bg-success" : "bg-muted"
-                  }`}
+                  className={`w-2 h-2 rounded-full ${isOnline ? "bg-success" : "bg-muted"
+                    }`}
                 />
                 <span
-                  className={`text-xs font-medium ${
-                    isOnline ? "text-success" : "text-muted-foreground"
-                  }`}
+                  className={`text-xs font-medium ${isOnline ? "text-success" : "text-muted-foreground"
+                    }`}
                 >
                   {isOnline ? "Online" : "Offline"}
                 </span>

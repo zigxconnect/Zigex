@@ -53,7 +53,7 @@ export const ApplicationAcceptedEmail = ({
             <Text className="text-black text-[14px] leading-[24px]">
               Best regards,
               <br />
-              The Future Prospect Team
+              The ZigX Team
             </Text>
           </Container>
         </Body>

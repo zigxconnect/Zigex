@@ -88,7 +88,7 @@ export const sendApplicationConfirmationEmail = async (
 
   try {
     await resend.emails.send({
-      from: "FutureProspect <notifications@futureprospect.online>",
+      from: "ZigX <notifications@zigexconnect.online>",
       to: email,
       subject: `Application Received: ${postTitle}`,
       react: ApplicationConfirmationEmail({
@@ -96,7 +96,7 @@ export const sendApplicationConfirmationEmail = async (
         postTitle,
         postType,
         companyName,
-        viewApplicationUrl: "https://futureprospect.online/dashboard/applications",
+        viewApplicationUrl: "https://zigexconnect.com/dashboard/applications",
         postedDate: new Date().toLocaleDateString("en-US", {
           year: "numeric",
           month: "short",

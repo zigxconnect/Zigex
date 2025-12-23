@@ -127,7 +127,7 @@ export default function ProjectDetailsView({
 
                <div className="flex items-center gap-2">
                   <Button asChild variant="secondary" className="hidden sm:flex rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 h-9 px-4 text-sm">
-                     <a href={`mailto:?subject=Check out this project: ${project.title}&body=I found this amazing project on Future Prospect: ${typeof window !== 'undefined' ? window.location.href : ''}`}>
+                     <a href={`mailto:?subject=Check out this project: ${project.title}&body=I found this amazing project on ZigX: ${typeof window !== 'undefined' ? window.location.href : ''}`}>
                         <Share2 className="w-4 h-4 mr-2" /> Share
                      </a>
                   </Button>

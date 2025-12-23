@@ -31,7 +31,7 @@ export default function OfflinePage() {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
-          <Button 
+          <Button
             asChild
             variant="primary"
             className="h-12 px-8 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20 active:scale-95 transition-transform"
@@ -46,7 +46,7 @@ export default function OfflinePage() {
         </div>
 
         <div className="pt-8 text-sm text-slate-500">
-          <p>© {new Date().getFullYear()} ZIGEX. Future Prospects at Your Fingertips.</p>
+          <p>© {new Date().getFullYear()} ZigX. Elite Opportunities at Your Fingertips.</p>
         </div>
       </div>
     </div>

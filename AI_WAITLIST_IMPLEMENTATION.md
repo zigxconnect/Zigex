@@ -1,7 +1,7 @@
 # AI Waitlist Implementation Summary
 
 ## Overview
-Successfully implemented a waiting list system for Fupro AI that triggers when users attempt to:
+Successfully implemented a waiting list system for ZigX AI that triggers when users attempt to:
 - Send any message in the AI chat
 - Select any AI tool (Deep Research, Opportunity Finder, Project Review, Scholarship Search, etc.)
 
@@ -21,7 +21,7 @@ Location: `components/sections/ZigAgent/AIWaitingListModal.tsx`
 **Props:**
 - `isOpen`: boolean - Controls modal visibility
 - `onClose`: () => void - Callback to close modal
-- `featureName`: string - Name of the AI feature (e.g., "Fupro AI Chat", "Deep Research")
+- `featureName`: string - Name of the AI feature (e.g., "ZigAgent AI Chat", "Deep Research")
 
 ### 2. **ZigAgentInterface.tsx Updates**
 Location: `components/sections/ZigAgent/ZigAgentInterface.tsx`
@@ -49,7 +49,7 @@ NEXT_PUBLIC_EMAILJS_AI_WAITLIST_TEMPLATE_ID=your_template_id_here
 
 ## User Flow
 
-1. **User visits** `/dashboard/fupro-ai`
+1. **User visits** `/dashboard/zigagent-ai`
 2. **User tries to**:
    - Type a message and click send, OR
    - Click the "+" button and select a tool
@@ -62,7 +62,7 @@ NEXT_PUBLIC_EMAILJS_AI_WAITLIST_TEMPLATE_ID=your_template_id_here
 ## Features Covered
 
 The waiting list triggers for:
-- ✅ **Fupro AI Chat** - When sending any message
+- ✅ **ZigAgent AI Chat** - When sending any message
 - ✅ **Deep Research** - When tool is selected
 - ✅ **Opportunity Finder** - When tool is selected
 - ✅ **Project Review** - When tool is selected
@@ -107,7 +107,7 @@ When AI features are ready to launch:
 - [ ] Create EmailJS template for AI waitlist
 - [ ] Add `NEXT_PUBLIC_EMAILJS_AI_WAITLIST_TEMPLATE_ID` to `.env.local`
 - [ ] Restart dev server
-- [ ] Visit `/dashboard/fupro-ai`
+- [ ] Visit `/dashboard/zigagent-ai`
 - [ ] Try to send a message → Modal should appear
 - [ ] Try to select a tool → Modal should appear
 - [ ] Submit email → Confirmation email should arrive

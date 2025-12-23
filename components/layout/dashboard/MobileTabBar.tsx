@@ -36,9 +36,9 @@ interface TabItem {
 export function MobileTabBar({ user }: MobileTabBarProps) {
 
   const tabItems = [
-    { 
-      href: "/feed", 
-      icon: Globe, 
+    {
+      href: "/feed",
+      icon: Globe,
       label: "Browse",
       matchPaths: ["/feed", "/feed/"],
       excludePaths: ["/feed/projects"]
@@ -49,10 +49,10 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
       label: "Projects",
       matchPaths: ["/dashboard/projects", "/dashboard/projects/", "/feed/projects/"],
     },
-    { 
-      href: "/dashboard/student", 
-      icon: Users, 
-      label: "Zigx",
+    {
+      href: "/dashboard/student",
+      icon: Users,
+      label: "ZigX",
       matchPaths: ["/dashboard/student", "/dashboard/student/"]
     },
     {
@@ -62,10 +62,10 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
       matchPaths: ["/profile/"],
     },
     {
-      href: "/dashboard/fupro-ai",
+      href: "/dashboard/zigagent-ai",
       icon: BrainCircuit,
       label: "ZAi",
-      matchPaths: ["/dashboard/fupro-ai", "/dashboard/fupro-ai/"],
+      matchPaths: ["/dashboard/zigagent-ai", "/dashboard/zigagent-ai/"],
       isSpecial: true
     },
   ];
@@ -157,20 +157,20 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
                   <div
                     className={`
                       p-2 rounded-xl transition-all duration-300 active:scale-95
-                      ${isActive 
-                        ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-sidebar-primary/25' 
+                      ${isActive
+                        ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-sidebar-primary/25'
                         : 'text-sidebar-foreground/60 group-active:bg-sidebar-accent/50'
                       }
                     `}
                   >
-                    <Icon 
-                      size={20} 
+                    <Icon
+                      size={20}
                       className={`
                         ${isActive ? 'text-sidebar-primary-foreground' : 'text-sidebar-foreground/60 group-active:text-sidebar-primary'}
                       `}
                     />
                   </div>
-                  
+
                   {/* Notification Badge */}
                   {showBadge && (
                     <div className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 shadow-md">
@@ -179,12 +179,12 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
                   )}
 
                   {item.label === "ZAi" && (
-                     <div className="absolute -top-3 -right-4 bg-sidebar-primary text-sidebar-primary-foreground text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-sm z-10 tracking-wide">
+                    <div className="absolute -top-3 -right-4 bg-sidebar-primary text-sidebar-primary-foreground text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-sm z-10 tracking-wide">
                       BETA
                     </div>
                   )}
                 </div>
-                
+
                 <span
                   className={`
                     text-[10px] font-semibold tracking-tight mt-1 transition-colors duration-200

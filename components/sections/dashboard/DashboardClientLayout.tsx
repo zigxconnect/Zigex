@@ -22,14 +22,14 @@ export function DashboardClientLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const pathname = usePathname();
-  const isChatPage = pathname?.includes('/fupro-ai');
+  const isChatPage = pathname?.includes('/zigagent-ai');
 
   // Handle window resize and detect mobile
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 1024;
       setIsMobile(mobile);
-      
+
       // Auto-open sidebar on desktop, close on mobile
       if (!mobile) {
         setIsSidebarOpen(true);
@@ -40,10 +40,10 @@ export function DashboardClientLayout({
 
     // Initial check
     handleResize();
-    
+
     // Add resize listener
     window.addEventListener('resize', handleResize);
-    
+
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
@@ -57,15 +57,15 @@ export function DashboardClientLayout({
   return (
     <>
       {/* Header with user data and menu click handler */}
-      <DashboardHeader 
+      <DashboardHeader
         user={user}
         onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
       />
-      
+
       {/* Main Container */}
       <div className="flex relative">
         {/* Sidebar with user data */}
-        <Sidebar 
+        <Sidebar
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
           user={user || {}} // Pass the fetched user data
@@ -74,7 +74,7 @@ export function DashboardClientLayout({
 
         {/* Mobile Overlay */}
         {isMobile && isSidebarOpen && (
-          <div 
+          <div
             className="fixed inset-0 bg-black/50 z-30 lg:hidden"
             onClick={handleOverlayClick}
           />
@@ -89,17 +89,17 @@ export function DashboardClientLayout({
           {/* Content Container */}
           <div className="w-full max-w-full overflow-x-hidden h-full">
             {isChatPage ? (
-               // Full width/height for Chat
-               <div className="h-full w-full">
-                  {children}
-               </div>
+              // Full width/height for Chat
+              <div className="h-full w-full">
+                {children}
+              </div>
             ) : (
-                // Standard Dashboard Padding
-                <div className="p-4 sm:p-6 lg:p-8">
-                    <div className="max-w-7xl mx-auto">
-                        {children}
-                    </div>
+              // Standard Dashboard Padding
+              <div className="p-4 sm:p-6 lg:p-8">
+                <div className="max-w-7xl mx-auto">
+                  {children}
                 </div>
+              </div>
             )}
           </div>
         </main>
