@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { 
   MessageCircle, Users, Shield, ExternalLink, RefreshCw, 
-  Activity, Heart, Zap, ChevronRight, Globe, BookOpen, FileText
+  Activity, Heart, Zap, ChevronRight, Globe, BookOpen, FileText,
+  CheckCircle, Lock, UserPlus, ArrowRight
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -22,16 +23,48 @@ interface DiscordData {
   members: DiscordMember[];
 }
 
+// Storage key for persisting access state
+const ACCESS_STORAGE_KEY = "zigex_community_access";
+
 export default function CommunityPage() {
   const [discordData, setDiscordData] = useState<DiscordData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"chat" | "members" | "resources">("chat");
   const [refreshKey, setRefreshKey] = useState(0);
+  
+  // Gated Access State
+  const [hasAccess, setHasAccess] = useState(false);
+  const [accessStep, setAccessStep] = useState<"initial" | "clicked" | "confirmed">("initial");
+  const [isCheckingAccess, setIsCheckingAccess] = useState(true);
 
-  // Using the VERIFIED working channel from Discord Widget API
+  // Discord Configuration
   const GUILD_ID = "1454830922653368585";
-  const WORKING_CHANNEL_ID = "1454830924004069568"; // Lounge - VERIFIED WORKING
+  const PUBLIC_CHANNEL_ID = "1454830924004069568"; // Lounge - Public channel
+  const DISCORD_INVITE = "https://discord.gg/wh46mteK";
 
+  // Check if user already has access
+  useEffect(() => {
+    const checkAccess = () => {
+      try {
+        const stored = localStorage.getItem(ACCESS_STORAGE_KEY);
+        if (stored) {
+          const data = JSON.parse(stored);
+          // Access expires after 7 days
+          const expiryTime = 7 * 24 * 60 * 60 * 1000;
+          if (data.granted && Date.now() - data.timestamp < expiryTime) {
+            setHasAccess(true);
+          }
+        }
+      } catch (error) {
+        console.error("Error checking access:", error);
+      }
+      setIsCheckingAccess(false);
+    };
+    
+    checkAccess();
+  }, []);
+
+  // Fetch Discord data
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -50,6 +83,24 @@ export default function CommunityPage() {
     return () => clearInterval(interval);
   }, []);
 
+  const handleInviteClick = () => {
+    // Open Discord invite in new tab
+    window.open(DISCORD_INVITE, "_blank");
+    setAccessStep("clicked");
+  };
+
+  const handleConfirmJoined = () => {
+    // Grant access and save to localStorage
+    setAccessStep("confirmed");
+    setTimeout(() => {
+      setHasAccess(true);
+      localStorage.setItem(ACCESS_STORAGE_KEY, JSON.stringify({
+        granted: true,
+        timestamp: Date.now()
+      }));
+    }, 1500);
+  };
+
   const members = useMemo(() => discordData?.members || [], [discordData]);
   const onlineCount = discordData?.presence_count || 0;
 
@@ -59,6 +110,186 @@ export default function CommunityPage() {
     { id: "resources" as const, label: "Resources", icon: BookOpen },
   ];
 
+  // Show loading while checking access
+  if (isCheckingAccess) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-2 border-slate-200 border-t-blue-600 rounded-full animate-spin mx-auto" />
+          <p className="mt-4 text-slate-500">Loading community...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Gated Access Screen
+  if (!hasAccess) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
+        <div className="max-w-2xl mx-auto px-4 py-16 sm:py-24">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden"
+          >
+            {/* Header */}
+            <div className="bg-blue-600 px-8 py-10 text-center">
+              <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Globe className="w-8 h-8 text-white" />
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white">
+                Join the Zigex Community
+              </h1>
+              <p className="text-blue-100 mt-2 max-w-md mx-auto">
+                Connect with fellow students, developers, and mentors in our exclusive Discord community.
+              </p>
+            </div>
+
+            {/* Steps */}
+            <div className="p-8">
+              <AnimatePresence mode="wait">
+                {accessStep === "initial" && (
+                  <motion.div
+                    key="initial"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="text-center"
+                  >
+                    {/* Benefits */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                      {[
+                        { icon: MessageCircle, label: "Real-time Chat", desc: "Connect instantly" },
+                        { icon: Users, label: "Network", desc: "Meet developers" },
+                        { icon: Zap, label: "Exclusive Content", desc: "Get early access" }
+                      ].map((item, i) => (
+                        <div key={i} className="p-4 bg-slate-50 rounded-xl">
+                          <item.icon className="w-6 h-6 text-blue-600 mx-auto mb-2" />
+                          <p className="font-semibold text-slate-900 text-sm">{item.label}</p>
+                          <p className="text-xs text-slate-500">{item.desc}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Online Members Preview */}
+                    {members.length > 0 && (
+                      <div className="flex items-center justify-center gap-3 mb-8">
+                        <div className="flex -space-x-2">
+                          {members.slice(0, 5).map((m) => (
+                            <img
+                              key={m.id}
+                              src={m.avatar_url}
+                              alt={m.username}
+                              className="w-8 h-8 rounded-full border-2 border-white object-cover"
+                            />
+                          ))}
+                        </div>
+                        <p className="text-sm text-slate-600">
+                          <span className="font-semibold text-green-600">{onlineCount}</span> members online now
+                        </p>
+                      </div>
+                    )}
+
+                    {/* CTA Button */}
+                    <button
+                      onClick={handleInviteClick}
+                      className="inline-flex items-center gap-3 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30"
+                    >
+                      <UserPlus className="w-5 h-5" />
+                      Join Discord Server
+                      <ArrowRight className="w-5 h-5" />
+                    </button>
+
+                    <p className="text-xs text-slate-400 mt-4">
+                      Free to join • No credit card required
+                    </p>
+                  </motion.div>
+                )}
+
+                {accessStep === "clicked" && (
+                  <motion.div
+                    key="clicked"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="text-center"
+                  >
+                    {/* Progress Indicator */}
+                    <div className="flex items-center justify-center gap-4 mb-8">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                          <CheckCircle className="w-5 h-5 text-green-600" />
+                        </div>
+                        <span className="text-sm font-medium text-green-600">Step 1: Link Opened</span>
+                      </div>
+                      <div className="w-8 h-px bg-slate-200" />
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                          <span className="text-sm font-bold text-blue-600">2</span>
+                        </div>
+                        <span className="text-sm font-medium text-slate-600">Confirm</span>
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-50 rounded-2xl p-6 mb-6">
+                      <h3 className="font-semibold text-slate-900 text-lg mb-2">
+                        Did you accept the Discord invite?
+                      </h3>
+                      <p className="text-slate-500 text-sm">
+                        Click "Accept Invite" in the Discord popup, then come back here and confirm.
+                      </p>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                      <button
+                        onClick={handleConfirmJoined}
+                        className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition-all"
+                      >
+                        <CheckCircle className="w-5 h-5" />
+                        Yes, I've Joined!
+                      </button>
+                      
+                      <button
+                        onClick={handleInviteClick}
+                        className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl transition-all"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        Open Invite Again
+                      </button>
+                    </div>
+
+                    <p className="text-xs text-slate-400 mt-6">
+                      Having trouble? Make sure you're logged into Discord.
+                    </p>
+                  </motion.div>
+                )}
+
+                {accessStep === "confirmed" && (
+                  <motion.div
+                    key="confirmed"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="text-center py-8"
+                  >
+                    <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <CheckCircle className="w-10 h-10 text-green-600" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-slate-900 mb-2">Welcome to the Community!</h3>
+                    <p className="text-slate-500">Opening chat in a moment...</p>
+                    <div className="mt-6">
+                      <div className="w-8 h-8 border-2 border-slate-200 border-t-blue-600 rounded-full animate-spin mx-auto" />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
+  // Main Community Page (User has access)
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
@@ -148,7 +379,7 @@ export default function CommunityPage() {
                         </div>
                         <div>
                           <p className="font-semibold text-slate-900">Live Chat</p>
-                          <p className="text-xs text-slate-400">Lounge Channel</p>
+                          <p className="text-xs text-slate-400">General Channel</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -162,7 +393,7 @@ export default function CommunityPage() {
                           <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
                         </button>
                         <a
-                          href={discordData?.instant_invite || "https://discord.gg/zigex"}
+                          href={DISCORD_INVITE}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
@@ -174,7 +405,7 @@ export default function CommunityPage() {
                     </div>
 
                     {/* Chat Iframe */}
-                    <div className="relative h-[600px] bg-slate-50">
+                    <div className="relative h-[500px] bg-slate-50">
                       {isLoading && (
                         <div className="absolute inset-0 z-10 bg-white flex items-center justify-center">
                           <div className="text-center">
@@ -185,12 +416,29 @@ export default function CommunityPage() {
                       )}
                       <iframe
                         key={refreshKey}
-                        src={`https://e.widgetbot.io/channels/${GUILD_ID}/${WORKING_CHANNEL_ID}?color=2563EB&theme=light`}
+                        src={`https://e.widgetbot.io/channels/${GUILD_ID}/${PUBLIC_CHANNEL_ID}?color=2563EB&theme=light`}
                         className="w-full h-full border-none"
                         allow="clipboard-write; fullscreen"
                         onLoad={() => setIsLoading(false)}
                         title="Community Chat"
                       />
+                    </div>
+
+                    {/* Feature Tip */}
+                    <div className="px-4 py-3 bg-blue-50 border-t border-blue-100">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-blue-700">
+                          💡 <span className="font-medium">Tip:</span> For full features like image uploads, GIFs, and stickers, open Discord directly.
+                        </p>
+                        <a
+                          href={DISCORD_INVITE}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs font-medium text-blue-600 hover:text-blue-800 underline"
+                        >
+                          Open Discord →
+                        </a>
+                      </div>
                     </div>
                   </motion.div>
                 )}
@@ -304,41 +552,32 @@ export default function CommunityPage() {
               </div>
             </div>
 
-            {/* Setup Notice */}
-            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6">
+            {/* Access Status */}
+            <div className="bg-green-50 border border-green-200 rounded-2xl p-6">
               <div className="flex items-start gap-3">
-                <Shield className="w-5 h-5 text-amber-600 mt-0.5" />
+                <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
                 <div>
-                  <h4 className="font-semibold text-amber-900">Admin Notice</h4>
-                  <p className="text-sm text-amber-700 mt-1">
-                    To use a different channel, enable it in Discord Server Settings → Widget → Invite Channel.
+                  <h4 className="font-semibold text-green-900">Access Granted</h4>
+                  <p className="text-sm text-green-700 mt-1">
+                    You have full access to the community chat and features.
                   </p>
-                  <a
-                    href="https://add.widgetbot.io/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 mt-3 text-sm font-medium text-amber-800 hover:text-amber-900"
-                  >
-                    Configure Widget Bot
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
                 </div>
               </div>
             </div>
 
             {/* Join CTA */}
-            <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl p-6 text-white">
-              <h3 className="font-semibold text-lg">Join Our Discord</h3>
+            <div className="bg-blue-600 rounded-2xl p-6 text-white">
+              <h3 className="font-semibold text-lg">Open Full Discord</h3>
               <p className="text-blue-100 text-sm mt-2">
                 Get the full experience with voice channels, exclusive content, and more.
               </p>
               <a
-                href={discordData?.instant_invite || "https://discord.gg/zigex"}
+                href={DISCORD_INVITE}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 mt-4 px-4 py-2.5 bg-white text-blue-600 font-medium text-sm rounded-lg hover:bg-blue-50 transition-colors"
               >
-                Join Server
+                Open Discord
                 <ExternalLink className="w-4 h-4" />
               </a>
             </div>
