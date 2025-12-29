@@ -2,10 +2,11 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { Linkedin, MessageCircle, Mail, X, Users, AtSign } from "lucide-react";
+import { Linkedin, MessageCircle, Mail, X, Users, AtSign, ArrowRight } from "lucide-react";
 import StackedAvatars from "./StackedAvatars";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
+import DeveloperAvatarOverlap from "@/components/ui/DeveloperAvatarOverlap";
 
 interface SimilarStudent {
   id: string;
@@ -133,8 +134,24 @@ export default function SimilarStudentsSidebar({
               ))}
             </div>
 
-            <div className="mt-4 text-center">
-              <button onClick={() => setOpen(false)} className="px-4 py-2 rounded-lg border border-border">Close</button>
+            <div className="mt-8 pt-4 border-t border-border">
+              <Link href="/feed/mentorship" className="block group transition-all duration-300">
+                <div className="bg-blue-50/30 rounded-2xl p-5 border border-blue-100/50">
+                  <DeveloperAvatarOverlap 
+                    size="sm"
+                    title="Need a Mentor?"
+                    subtitle="Connect with industrial experts"
+                  />
+                  <div className="mt-4 flex items-center justify-between">
+                    <span className="text-[10px] font-black text-blue-700 uppercase tracking-[0.2em]">Get Mentor</span>
+                    <ArrowRight size={14} className="text-blue-600" />
+                  </div>
+                </div>
+              </Link>
+            </div>
+
+            <div className="mt-6 text-center">
+              <button onClick={() => setOpen(false)} className="w-full py-3 rounded-xl border border-border font-bold text-sm text-muted-foreground hover:bg-muted transition-colors">Close</button>
             </div>
           </div>
         </div>
@@ -216,9 +233,29 @@ export default function SimilarStudentsSidebar({
           ))}
         </div>
 
-        <div className="mt-4 text-center">
+        <div className="mt-4 text-center border-b border-border pb-6">
           <Link href="/dashboard/student" className="text-sm text-primary font-semibold">See more recommendations</Link>
         </div>
+
+        {/* Get Mentor Section */}
+        <div className="mt-8 pt-2">
+          <Link href="/feed/mentorship" className="block group transition-all duration-300">
+            <div className="bg-blue-50/50 rounded-[2rem] p-6 border border-blue-100/50 group-hover:bg-blue-50 group-hover:border-blue-200 transition-all">
+              <DeveloperAvatarOverlap 
+                size="sm"
+                title="Elite Mentors"
+                subtitle="Get career guidance from experts"
+              />
+              <div className="mt-4 flex items-center justify-between">
+                <span className="text-sm font-black text-blue-700 uppercase tracking-widest">Get Mentor</span>
+                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white group-hover:translate-x-1 transition-transform">
+                  <ArrowRight size={14} />
+                </div>
+              </div>
+            </div>
+          </Link>
+        </div>
+
 
         <style jsx>{`
           @keyframes slideRight {

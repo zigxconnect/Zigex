@@ -12,6 +12,7 @@ import {
   Globe,
   LogOut,
   BrainCircuit,
+  MessageSquare,
 } from "lucide-react";
 import { AiOutlineWechat } from "react-icons/ai";
 import { useState, useEffect } from "react";
@@ -54,6 +55,12 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
       icon: Users, 
       label: "Zigx",
       matchPaths: ["/dashboard/student", "/dashboard/student/"]
+    },
+    {
+      href: "/dashboard/community",
+      icon: MessageSquare,
+      label: "Group",
+      matchPaths: ["/dashboard/community", "/dashboard/community/"]
     },
     {
       href: `/profile/${user?.profile?.username || "username"}`,

@@ -1,69 +1,58 @@
-"use server";
-
 import React from "react";
 import { getAllUsers } from "@/lib/actions/allusers.actions";
 import StudentDirectoryClient from "@/components/sections/dashboard/StudentDirectoryClient";
 import { getProfileInfo } from "@/lib/actions/profile.actions";
-import { WelcomeCard } from "../../../../components/sections/dashboard/WelcomeCard";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ""
-);
-
-async function getUserStats(userId: string) {
-  try {
-    const [internships, programs, events, projects] = await Promise.all([
-      supabase
-        .from("internship_applications")
-        .select("id")
-        .eq("user_id", userId),
-      supabase
-        .from("program_applications")
-        .select("id")
-        .eq("user_id", userId),
-      supabase
-        .from("event_rsvps")
-        .select("id")
-        .eq("user_id", userId),
-      supabase
-        .from("projects")
-        .select("id")
-        .eq("creator_id", userId),
-    ]);
-
-    return {
-      internshipsApplied: internships.data?.length || 0,
-      programsApplied: programs.data?.length || 0,
-      eventsApplied: events.data?.length || 0,
-      projectsCreated: projects.data?.length || 0,
-    };
-  } catch (error) {
-    console.error("Error fetching user stats:", error);
-    return {
-      internshipsApplied: 0,
-      programsApplied: 0,
-      eventsApplied: 0,
-      projectsCreated: 0,
-    };
-  }
-}
+import { WelcomeCard } from "@/components/sections/dashboard/WelcomeCard";
+import { supabaseAdmin } from "@/lib/supabase/server";
 
 export default async function StudentDirectoryPage() {
-  const profiles = await getAllUsers(200, 0);
-  const userData = await getProfileInfo();
+  const [profiles, userData] = await Promise.all([
+    getAllUsers(200, 0),
+    getProfileInfo()
+  ]);
 
   // Filter out current user
   const filteredProfiles = profiles.filter((p) => p.id !== userData?.profile?.id);
+  const profileIds = filteredProfiles.map(p => p.id);
 
-  // Fetch real stats for each student
-  const profilesWithStats = await Promise.all(
-    filteredProfiles.map(async (profile) => ({
-      ...profile,
-      stats: await getUserStats(profile.id),
-    }))
-  );
+  // Fetch stats for all students in 4 bulk queries
+  const [internships, programs, events, projects] = await Promise.all([
+    supabaseAdmin.from("internship_applications").select("user_id").in("user_id", profileIds),
+    supabaseAdmin.from("program_applications").select("user_id").in("user_id", profileIds),
+    supabaseAdmin.from("event_rsvps").select("user_id").in("user_id", profileIds),
+    supabaseAdmin.from("projects").select("creator_id").in("creator_id", profileIds),
+  ]);
+
+  // Create a map for quick stat lookup
+  const statsMap: Record<string, any> = {};
+  profileIds.forEach(id => {
+    statsMap[id] = { 
+      internshipsApplied: 0, 
+      programsApplied: 0, 
+      eventsApplied: 0, 
+      projectsCreated: 0 
+    };
+  });
+
+  // Calculate stats from bulk data
+  internships.data?.forEach(row => {
+    if (statsMap[row.user_id]) statsMap[row.user_id].internshipsApplied++;
+  });
+  programs.data?.forEach(row => {
+    if (statsMap[row.user_id]) statsMap[row.user_id].programsApplied++;
+  });
+  events.data?.forEach(row => {
+    if (statsMap[row.user_id]) statsMap[row.user_id].eventsApplied++;
+  });
+  projects.data?.forEach(row => {
+    if (statsMap[row.creator_id]) statsMap[row.creator_id].projectsCreated++;
+  });
+
+  // Combine profiles with their stats
+  const profilesWithStats = filteredProfiles.map(profile => ({
+    ...profile,
+    stats: statsMap[profile.id]
+  }));
 
   return (
     <>

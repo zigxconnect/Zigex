@@ -15,6 +15,7 @@ import {
   Bell,
   X,
   LogOut,
+  MessageSquare,
 } from "lucide-react";
 import { AiOutlineWechat } from "react-icons/ai";
 import { Button } from "@/components/ui/button";
@@ -119,6 +120,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: Newspaper,
       label: "News",
       matchPaths: ["/dashboard/blog", "/dashboard/blog/"],
+    },
+    {
+      href: "/dashboard/community",
+      icon: MessageSquare,
+      label: "Community",
+      matchPaths: ["/dashboard/community", "/dashboard/community/"],
     },
   ];
 

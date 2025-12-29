@@ -187,9 +187,25 @@ export default function ProjectCard({
                  )}
                </div>
                
-               <button className="bg-white/20 hover:bg-white/40 backdrop-blur-md p-2 rounded-full text-white transition-all duration-300">
-                  <Share2 className="w-4 h-4" />
-               </button>
+               <button 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (navigator.share) {
+                      navigator.share({
+                        title: project.project_title,
+                        text: `Check out ${project.project_title} on Zigex!`,
+                        url: `${window.location.origin}/feed/projects/${project.id}`,
+                      });
+                    } else {
+                      navigator.clipboard.writeText(`${window.location.origin}/feed/projects/${project.id}`);
+                      alert("Link copied to clipboard!");
+                    }
+                  }}
+                  className="bg-white/20 hover:bg-white/40 backdrop-blur-md p-2 rounded-full text-white transition-all duration-300"
+                >
+                   <Share2 className="w-4 h-4" />
+                </button>
             </div>
 
             {/* Play Button (if video exists) */}
