@@ -12,19 +12,61 @@ import {
   Mail,
   Phone,
   MessageCircle,
-  Linkedin
+  Linkedin,
+  Heart,
+  Share2,
+  Activity,
+  Zap
 } from "lucide-react";
 import ConnectBar from "@/components/sections/dashboard/ConnectBar";
 import QRCodeButton from "@/components/sections/dashboard/QRCodeButton";
 import SimilarStudentsSidebar from "@/components/sections/dashboard/SimilarStudentsSidebar";
-import MyMonthProject from "@/components/uiComponent/MyMonthProject";
+import ProjectCard from "@/components/uiComponent/ProjectCard";
 import AnimatedConnectButtons from "@/components/customButtons/AnimatedConnectButtons";
 import NoProjectMessage from "@/components/sections/dashboard/NoProjectMessage";
-import { fetchUserActiveProject } from "@/lib/actions/getProjects.action";
+import { fetchAllUserProjects } from "@/lib/actions/getProjects.action";
 import CreateProjectButton from "@/components/project/CreateProjectButton";
+import { Metadata } from "next";
 
 interface Props {
   params: Promise<{ username: string }>;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { username } = await params;
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(username);
+  const supabase = supabaseAdmin;
+
+  let query = supabase.from("student_profiles").select("*");
+  if (isUuid) {
+    query = query.eq("id", username);
+  } else {
+    query = query.eq("username", username);
+  }
+
+  const { data } = await query.maybeSingle();
+  if (!data) return { title: "Student Not Found" };
+
+  const title = `${data.full_name} | Zigex Student`;
+  const description = data.about || `View ${data.full_name}'s professional profile and projects on Zigex.`;
+  const image = data.cover_image || "https://i.ibb.co/k2Rpz2jQ/og-image-2x-100.jpg";
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: [{ url: image }],
+      type: "profile",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [image],
+    },
+  };
 }
 
 export default async function StudentDetailPage({ params }: Props) {
@@ -58,8 +100,9 @@ export default async function StudentDetailPage({ params }: Props) {
 
   const skills = data.hard_skills || [];
   const soft = data.soft_skills || [];
-  // Fetch accepted application counts
-  const [internRes, progRes, eventRes] = await Promise.all([
+  
+  // Fetch stats and projects in parallel
+  const [internRes, progRes, eventRes, projectsResult] = await Promise.all([
     supabaseAdmin
       .from("Applications")
       .select("id", { count: "exact", head: true })
@@ -78,34 +121,28 @@ export default async function StudentDetailPage({ params }: Props) {
       .eq("student_id", data.id)
       .eq("application_type", "event")
       .eq("status", "rsvp_confirmed"),
+    fetchAllUserProjects(data.id)
   ]);
 
   const internshipsApplied = internRes?.count ?? 0;
   const programsApplied = progRes?.count ?? 0;
   const eventsApplied = eventRes?.count ?? 0;
+  const projects = projectsResult.success ? projectsResult.data : [];
+  
   const avatarUrl = data.avatar_url || "https://i.ibb.co/CpS0wpjC/z3.jpg";
   const coverImageUrl = data.cover_image || "https://i.ibb.co/vv3sgJwd/n8.jpg";
 
-  // Fetch visitor's profile and project
+  // Fetch visitor's profile for "isOwner" check
   let myProfile: any = null;
-  let visitorProject: any = null;
-
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       const { data: _myProfile } = await supabase
         .from("student_profiles")
-        .select("id, full_name, avatar_url, github_url, email, phone, about, linkedin_url, user_id")
+        .select("id, user_id")
         .eq("user_id", user.id)
         .maybeSingle();
-
       myProfile = _myProfile;
-
-      // Fetch visitor's active project
-      const projectResult = await fetchUserActiveProject(data.id);
-      if (projectResult.success && projectResult.data) {
-        visitorProject = projectResult.data;
-      }
     }
   } catch (err) {
     console.error("Error fetching visitor data:", err);
@@ -122,7 +159,6 @@ export default async function StudentDetailPage({ params }: Props) {
   }
 
   const { data: candidatesData } = await similarQuery.limit(10);
-
   const candidates = (candidatesData || []) as Array<any>;
 
   const myHard: string[] = data.hard_skills || [];
@@ -168,26 +204,16 @@ export default async function StudentDetailPage({ params }: Props) {
     .join("")
     .toUpperCase();
 
-  const whatsappMessage = `Hi ${data.full_name || 'there'}!
-
-I came across your profile on ZigX and I'm impressed by your background in ${skills[0] || 'your field'}. 
-
-I'd love to connect and explore potential collaboration opportunities.
-
-Looking forward to hearing from you!`;
-
-  const whatsappUrl = data.phone
-    ? `https://wa.me/${data.phone.replace(/\D/g, '')}?text=${encodeURIComponent(whatsappMessage)}`
+  const linkedinUrl = data.linkedin_url;
+  const whatsappUrl = data.phone 
+    ? `https://wa.me/${data.phone.replace(/\D/g, '')}`
     : null;
 
-  const linkedinUrl = data.linkedin_url;
-
   return (
-    <div className="min-h-screen bg-gray-50 pb-24 lg:pr-[26rem]">
-      {/* Header Card */}
-      <div className="relative bg-white md:rounded-2xl md:w-full mx-auto shadow-lg md:border md:border-gray-200 overflow-hidden mb-6">
-        {/* Cover Image */}
-        <div className="relative h-32 md:h-36 lg:h-48 w-full">
+    <div className="min-h-screen bg-[#F8FAFC] pb-24 lg:pr-[26rem]">
+      {/* 1. Header Card */}
+      <div className="relative bg-white md:rounded-3xl md:w-full mx-auto shadow-sm border border-slate-200 overflow-hidden mb-8">
+        <div className="relative h-40 md:h-48 lg:h-56 w-full">
           <Image
             src={coverImageUrl}
             alt="Cover image"
@@ -195,353 +221,216 @@ Looking forward to hearing from you!`;
             className="object-cover"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60" />
         </div>
 
-        {/* Avatar and QR Code Section */}
-        <div className="absolute top-20 md:top-24 lg:top-32 left-4 lg:left-6 right-4 lg:right-6 flex justify-between items-end">
-          {/* Avatar */}
+        <div className="absolute top-28 md:top-36 lg:top-40 left-6 right-6 flex justify-between items-end">
           <div className="relative group">
-            <div className="w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 rounded-full border-4 border-white shadow-xl overflow-hidden bg-white">
+            <div className="w-24 h-24 md:w-32 md:h-32 rounded-3xl border-4 border-white shadow-2xl overflow-hidden bg-white">
               {avatarUrl ? (
                 <Image
                   src={avatarUrl}
                   alt={data.full_name || "Student"}
-                  width={112}
-                  height={112}
+                  width={128}
+                  height={128}
                   className="w-full h-full object-cover"
                   priority
                 />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 text-white flex items-center justify-center font-bold text-2xl">
+                <div className="w-full h-full bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center font-bold text-3xl">
                   {initials}
                 </div>
               )}
             </div>
-            {/* Online indicator */}
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-4 border-white shadow-md"></div>
+            <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-green-500 rounded-full border-4 border-white shadow-md"></div>
           </div>
 
-          {/* QR Code Button */}
-          <QRCodeButton
+          <QRCodeButton 
             linkedinUrl={linkedinUrl}
             whatsappUrl={whatsappUrl}
             email={data.email}
             fullName={data.full_name}
-            profileUrl={`https://zigex.vercel.app/dashboard/student/${data.username || username}`}
+            profileUrl={`${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/student/${data.username || username}`}
             isOwner={false}
           />
         </div>
 
-        {/* Content Area */}
-        <div className="pt-12 md:pt-14 lg:pt-16 px-4 lg:px-6 pb-4 lg:pb-6">
-          {/* User Info and Actions */}
-          <div className="flex flex-col gap-4">
-            {/* Name and Location - Compact */}
+        <div className="pt-16 md:pt-20 lg:pt-24 px-6 pb-8">
+          <div className="flex flex-col gap-6">
             <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <h1 className="text-base md:text-lg lg:text-xl font-bold text-gray-900">
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
                   {data.full_name || "Zigex Student"}
                 </h1>
-                {/* Verification Badge - Smaller */}
-                <div className="flex items-center justify-center bg-blue-500 rounded-full p-0.5">
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="w-4 h-4 md:w-5 md:h-5 fill-white"
-                    aria-label="Verified"
-                  >
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                  </svg>
+                <div className="flex items-center justify-center bg-blue-600 rounded-full p-1 shadow-md shadow-blue-200">
+                  <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
                 </div>
               </div>
 
-              <div className="flex items-center gap-1.5 text-gray-600 mb-2">
-                <MapPin size={14} className="text-gray-500 flex-shrink-0" />
-                <p className="text-xs md:text-sm font-medium truncate">
-                  {data.university || "University not specified"}
-                </p>
+              <div className="flex items-center gap-2 text-slate-500 mb-4">
+                <MapPin size={16} className="text-blue-500" />
+                <p className="text-sm md:text-base font-semibold">{data.university || "University not specified"}</p>
               </div>
 
-              {/* Social Links - Compact */}
-              <div className="flex items-center gap-3 flex-wrap text-xs">
+              <div className="flex items-center gap-4 flex-wrap">
                 {data.linkedin_url && (
-                  <Link
-                    href={data.linkedin_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline transition-colors"
-                  >
-                    <Link2 size={14} />
-                    <span className="font-medium">LinkedIn</span>
+                  <Link href={data.linkedin_url} target="_blank" className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-xl text-xs font-bold hover:bg-blue-100 transition-all border border-blue-100">
+                    <Linkedin size={14} /> LinkedIn
                   </Link>
                 )}
-
                 {data.github_url && (
-                  <Link
-                    href={data.github_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline transition-colors"
-                  >
-                    <Github size={14} />
-                    <span className="font-medium">Github</span>
+                  <Link href={data.github_url} target="_blank" className="flex items-center gap-2 px-4 py-2 bg-slate-50 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-100 transition-all border border-slate-200">
+                    <Github size={14} /> Github
                   </Link>
                 )}
-
                 {data.email && (
-                  <Link
-                    href={`mailto:${data.email}`}
-                    className="flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline transition-colors"
-                  >
-                    <Mail size={14} />
-                    <span className="font-medium">Email</span>
+                  <Link href={`mailto:${data.email}`} className="flex items-center gap-2 px-4 py-2 bg-rose-50 text-rose-700 rounded-xl text-xs font-bold hover:bg-rose-100 transition-all border border-rose-100">
+                    <Mail size={14} /> Email
                   </Link>
                 )}
               </div>
             </div>
 
-            {/* Connect Buttons - Visitor actions */}
-            <AnimatedConnectButtons
-              linkedinUrl={linkedinUrl}
-              whatsappUrl={whatsappUrl}
-            />
-          </div>
-
-          {/* Stats Section - More compact */}
-          <div className="mt-4 pt-3 border-t border-gray-200">
-            <div className="flex items-center justify-around">
-              <div className="flex flex-col items-center cursor-pointer group">
-                <span className="text-xl md:text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
-                  {internshipsApplied}
-                </span>
-                <span className="text-[10px] md:text-xs text-gray-500 font-medium">Internships</span>
-              </div>
-
-              <div className="w-px h-8 md:h-10 bg-gray-200"></div>
-
-              <div className="flex flex-col items-center cursor-pointer group">
-                <span className="text-xl md:text-2xl font-bold text-gray-900 group-hover:text-purple-600 transition-colors">
-                  {programsApplied}
-                </span>
-                <span className="text-[10px] md:text-xs text-gray-500 font-medium">Programs</span>
-              </div>
-
-              <div className="w-px h-8 md:h-10 bg-gray-200"></div>
-
-              <div className="flex flex-col items-center cursor-pointer group">
-                <span className="text-xl md:text-2xl font-bold text-gray-900 group-hover:text-green-600 transition-colors">
-                  {eventsApplied}
-                </span>
-                <span className="text-[10px] md:text-xs text-gray-500 font-medium">Events</span>
-              </div>
-            </div>
+            <AnimatedConnectButtons linkedinUrl={linkedinUrl} whatsappUrl={whatsappUrl} />
           </div>
         </div>
       </div>
 
-      {/* Content Container - Visitor View */}
-      <div className="max-w-4xl mx-auto px-4 lg:px-6 space-y-6 md:mb-0 mb-16">
-        {/* Project Card - Show if student has active project */}
-        {visitorProject && (
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-            <MyMonthProject
-              user={data}
-              project={visitorProject}
-              isVisitor={true}
-              isOwner={false}
-            />
-          </div>
-        )}
-
-        {/* No Project Message - Show if student has no active project */}
-        {!visitorProject && (
-          <NoProjectMessage
-            studentName={data.full_name || 'This student'}
-            studentPhone={data.phone}
-          />
-        )}
-
-        {/* Similar Students Sidebar */}
-        <SimilarStudentsSidebar students={similarStudents} />
-
-        {/* Quick Connect Card - Visitor View */}
-        <div className="bg-linear-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100 shadow-sm">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Connect with {data.username || data.full_name?.split(' ')[0]}</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {/* LinkedIn */}
-            {linkedinUrl && (
-              <Link
-                href={linkedinUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-3 p-4 bg-white rounded-xl hover:shadow-md transition-all duration-200 border border-gray-200 hover:border-[#0A66C2] group"
-              >
-                <div className="w-10 h-10 bg-[#0A66C2] rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Linkedin size={20} className="text-white" />
-                </div>
-                <div className="flex-1">
-                  <div className="font-semibold text-gray-900 group-hover:text-[#0A66C2]">LinkedIn</div>
-                  <div className="text-xs text-gray-500">Professional network</div>
-                </div>
-              </Link>
-            )}
-
-            {/* WhatsApp */}
-            {whatsappUrl && (
-              <Link
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-3 p-4 bg-white rounded-xl hover:shadow-md transition-all duration-200 border border-gray-200 hover:border-[#25D366] group"
-              >
-                <div className="w-10 h-10 bg-[#25D366] rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <MessageCircle size={20} className="text-white" />
-                </div>
-                <div className="flex-1">
-                  <div className="font-semibold text-gray-900 group-hover:text-[#25D366]">WhatsApp</div>
-                  <div className="text-xs text-gray-500">Instant messaging</div>
-                </div>
-              </Link>
-            )}
-
-            {/* Email */}
-            {data.email && (
-              <Link
-                href={`mailto:${data.email}?subject=Connection Request from ZigX&body=Hi ${data.full_name || 'there'},%0D%0A%0D%0AI came across your profile on ZigX and I'm impressed by your background. I'd love to connect and explore potential collaboration opportunities.%0D%0A%0D%0ALooking forward to hearing from you!`}
-                className="flex items-center justify-center gap-3 p-4 bg-white rounded-xl hover:shadow-md transition-all duration-200 border border-gray-200 hover:border-blue-500 group"
-              >
-                <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Mail size={20} className="text-white" />
-                </div>
-                <div className="flex-1">
-                  <div className="font-semibold text-gray-900 group-hover:text-blue-500">Email</div>
-                  <div className="text-xs text-gray-500">Professional email</div>
-                </div>
-              </Link>
-            )}
-
-            {/* Phone */}
-            {data.phone && (
-              <Link
-                href={`tel:${data.phone}`}
-                className="flex items-center justify-center gap-3 p-4 bg-white rounded-xl hover:shadow-md transition-all duration-200 border border-gray-200 hover:border-green-500 group"
-              >
-                <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Phone size={20} className="text-white" />
-                </div>
-                <div className="flex-1">
-                  <div className="font-semibold text-gray-900 group-hover:text-green-500">Phone</div>
-                  <div className="text-xs text-gray-500">Direct call</div>
-                </div>
-              </Link>
-            )}
-          </div>
-        </div>
-
-        {/* About Section */}
+      {/* 2. Main Content Feed */}
+      <div className="max-w-4xl mx-auto px-6 space-y-8">
+        
+        {/* About Section - PRIORITIZED TOP */}
         {data.about && (
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-                <Briefcase size={20} className="text-white" />
+          <section className="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-200 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200">
+                <Briefcase size={24} className="text-white" />
               </div>
-              <h2 className="text-lg font-bold text-gray-900">About</h2>
+              <div>
+                <h2 className="text-xl font-black text-slate-900 tracking-tight">About Me</h2>
+                <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Professional Summary</p>
+              </div>
             </div>
-            <p className="text-gray-700 leading-relaxed text-base">
+            <p className="text-slate-600 leading-relaxed text-lg font-medium whitespace-pre-wrap">
               {data.about}
             </p>
-          </div>
+          </section>
         )}
 
+        {/* Similar Students (Mobile View) */}
+        <div className="lg:hidden">
+            <SimilarStudentsSidebar students={similarStudents} />
+        </div>
+
+        {/* Projects Section - MOVED UP */}
+        <section className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-amber-500 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-100">
+                <Award size={24} className="text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-black text-slate-900 tracking-tight">Projects Started</h2>
+                <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">{projects.length} Initiatives</p>
+              </div>
+            </div>
+          </div>
+
+          {projects.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {projects.map((project) => (
+                <ProjectCard 
+                  key={project.id} 
+                  user={data} 
+                  project={project} 
+                  isVisitor={true} 
+                  isOwner={myProfile?.id === data.id} 
+                />
+              ))}
+            </div>
+          ) : (
+            <NoProjectMessage studentName={data.full_name || 'This student'} studentPhone={data.phone} />
+          )}
+        </section>
+
+        {/* Activity & Stats - MOVED DOWN */}
+        <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-200">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-200">
+              <Activity size={24} className="text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-black text-slate-900 tracking-tight">Ecosystem Activity</h2>
+              <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Growth & Impact</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="p-6 bg-blue-50/50 rounded-3xl border border-blue-100 hover:scale-105 transition-transform">
+              <div className="text-4xl font-black text-blue-600 mb-2">{internshipsApplied}</div>
+              <div className="text-sm font-bold text-slate-500 uppercase tracking-widest">Internships</div>
+            </div>
+            <div className="p-6 bg-purple-50/50 rounded-3xl border border-purple-100 hover:scale-105 transition-transform">
+              <div className="text-4xl font-black text-purple-600 mb-2">{programsApplied}</div>
+              <div className="text-sm font-bold text-slate-500 uppercase tracking-widest">Programs</div>
+            </div>
+            <div className="p-6 bg-emerald-50/50 rounded-3xl border border-emerald-100 hover:scale-105 transition-transform">
+              <div className="text-4xl font-black text-emerald-600 mb-2">{eventsApplied}</div>
+              <div className="text-sm font-bold text-slate-500 uppercase tracking-widest">Events</div>
+            </div>
+          </div>
+        </section>
+
         {/* Skills Section */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-          {/* Hard Skills */}
-          {skills.length > 0 && (
-            <div className="mb-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+        <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-200">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <div>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center">
                   <Award size={20} className="text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">Hard Skills</h3>
+                <h3 className="text-lg font-black text-slate-900">Hard Skills</h3>
               </div>
               <div className="flex flex-wrap gap-2">
                 {skills.map((skill: string, i: number) => (
-                  <span
-                    key={i}
-                    className="px-4 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 rounded-full text-sm font-medium border border-blue-200 hover:border-blue-400 hover:shadow-md transition-all duration-200 cursor-pointer"
-                  >
+                  <span key={i} className="px-4 py-2 bg-slate-100 text-slate-800 rounded-xl text-sm font-bold border border-slate-200 hover:border-slate-400 transition-colors">
                     {skill}
                   </span>
                 ))}
               </div>
             </div>
-          )}
-
-          {/* Soft Skills */}
-          {soft.length > 0 && (
             <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-                  <Award size={20} className="text-white" />
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
+                  <Heart size={20} className="text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">Soft Skills</h3>
+                <h3 className="text-lg font-black text-slate-900">Soft Skills</h3>
               </div>
               <div className="flex flex-wrap gap-2">
                 {soft.map((skill: string, i: number) => (
-                  <span
-                    key={i}
-                    className="px-4 py-2 bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 rounded-full text-sm font-medium border border-amber-200 hover:border-amber-400 hover:shadow-md transition-all duration-200 cursor-pointer"
-                  >
+                  <span key={i} className="px-4 py-2 bg-blue-50 text-blue-700 rounded-xl text-sm font-bold border border-blue-100 hover:border-blue-300 transition-colors">
                     {skill}
                   </span>
                 ))}
               </div>
             </div>
-          )}
-        </div>
-
-        {/* Additional Info Card */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
-              <Calendar size={20} className="text-white" />
-            </div>
-            <h3 className="text-xl font-bold text-gray-900">Activity</h3>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
-              <div className="text-3xl font-bold text-blue-600 mb-1">
-                {internshipsApplied}
-              </div>
-              <div className="text-sm text-gray-600">Internships Applied</div>
-            </div>
-
-            <div className="bg-purple-50 rounded-xl p-4 border border-purple-100">
-              <div className="text-3xl font-bold text-purple-600 mb-1">
-                {programsApplied}
-              </div>
-              <div className="text-sm text-gray-600">Programs Applied</div>
-            </div>
-
-            <div className="bg-green-50 rounded-xl p-4 border border-green-100">
-              <div className="text-3xl font-bold text-green-600 mb-1">
-                {eventsApplied}
-              </div>
-              <div className="text-sm text-gray-600">Events Applied</div>
-            </div>
-          </div>
-        </div>
+        </section>
       </div>
 
-      {/* Connect Bar at Bottom - Visitor View */}
-      <ConnectBar
-        linkedin={data.linkedin_url}
-        whatsapp={data.phone}
-        x={data.twitter_url || data.x_url}
-        email={data.email}
+      {/* 3. Sidebar (Desktop) */}
+      <div className="hidden lg:block">
+        <SimilarStudentsSidebar students={similarStudents} />
+      </div>
+
+      {/* 4. Utilities */}
+      <ConnectBar 
+        linkedin={data.linkedin_url} 
+        whatsapp={data.phone} 
+        x={data.twitter_url || data.x_url} 
+        email={data.email} 
       />
 
-      {/* Floating Create Project Button - Only for Owner */}
       {myProfile?.id === data.id && (
         <CreateProjectButton variant="floating" />
       )}
