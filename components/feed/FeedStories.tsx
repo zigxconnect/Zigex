@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, X, Image as ImageIcon, Type, ChevronLeft, ChevronRight, Send, Heart, MessageCircle } from 'lucide-react';
+import { Plus, X, Image as ImageIcon, Type, ChevronLeft, ChevronRight, Share2, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -40,6 +40,7 @@ interface Story {
   color?: string; // For text-only backgrounds
   likes?: number;
   created_at: string;
+  userSlug?: string;
 }
 
 interface FeedStoriesProps {
@@ -103,19 +104,20 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
       const userIds = Array.from(new Set(data?.map(s => s.user_id) || []));
       
       // Fetch specific profiles from student_profiles
-      let profilesMap: Record<string, { name: string, avatar: string }> = {};
+      let profilesMap: Record<string, { name: string, avatar: string, username?: string }> = {};
       
       if (userIds.length > 0) {
         const { data: profiles, error: profilesError } = await supabase
           .from('student_profiles')
-          .select('user_id, full_name, avatar_url')
+          .select('user_id, full_name, avatar_url, username')
           .in('user_id', userIds);
           
         if (!profilesError && profiles) {
           profiles.forEach((p: any) => {
             profilesMap[p.user_id] = {
               name: p.full_name || 'App User',
-              avatar: p.avatar_url || ''
+              avatar: p.avatar_url || '',
+              username: p.username
             };
           });
         }
@@ -130,6 +132,7 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
             userId: s.user_id,
             userName: isMe ? (currentUser?.name || 'Me') : (profile?.name || 'App User'),
             userAvatar: isMe ? (currentUser?.avatarUrl || '') : (profile?.avatar || `https://i.pravatar.cc/150?u=${s.user_id}`),
+            userSlug: isMe ? (currentUser?.profile?.username) : (profile?.username),
             type: s.type as StoryType,
             content: s.content,
             caption: s.caption,
@@ -577,16 +580,42 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
                  </div>
 
                  {/* ... rest of viewer (messages etc) ... */}
-                 <div className="absolute bottom-4 left-4 right-4 z-50 flex gap-2">
-                    <Input 
-                      placeholder="Reply to story..." 
-                      className="bg-white/10 border-white/20 text-white placeholder:text-white/60 focus-visible:ring-white/30 rounded-full h-12" 
-                    />
-                    <Button size="icon" className="h-12 w-12 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/20 shrink-0">
-                      <Heart className={selectedStory.likes ? "fill-red-500 text-red-500" : ""} />
+                 <div className="absolute bottom-6 left-6 right-6 z-50 flex gap-4 justify-between items-center">
+                    <Button 
+                      className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-full h-12 gap-2 backdrop-blur-md transition-all shadow-lg text-sm sm:text-base font-medium"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // Navigate using username if available, else fallback to userId
+                        const target = selectedStory.userSlug || selectedStory.userId;
+                        window.location.href = `/dashboard/student/${target}`; 
+                      }}
+                    >
+                      <User size={18} />
+                      View Profile
                     </Button>
-                    <Button size="icon" className="h-12 w-12 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/20 shrink-0">
-                      <Send />
+
+                    <Button 
+                      className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-full h-12 gap-2 backdrop-blur-md transition-all shadow-lg text-sm sm:text-base font-medium"
+                      onClick={async (e) => {
+                         e.stopPropagation();
+                         if (navigator.share) {
+                           try {
+                             await navigator.share({
+                               title: `Check out ${selectedStory.userName}'s story on Zigex!`,
+                               text: selectedStory.caption || 'Watch this amazing story!',
+                               url: window.location.href, 
+                             });
+                           } catch (err) {
+                             console.log("Share cancelled");
+                           }
+                         } else {
+                            navigator.clipboard.writeText(window.location.href);
+                            showAlert("Link Copied", "Story link copied to clipboard!");
+                         }
+                      }}
+                    >
+                      <Share2 size={18} />
+                      Share
                     </Button>
                  </div>
               </motion.div>
