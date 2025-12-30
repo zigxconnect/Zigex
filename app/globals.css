@@ -41,6 +41,7 @@
     font-feature-settings:
       "rlig" 1,
       "calt" 1;
+    overflow-x: hidden;
   }
   
   h1, h2, h3, h4, h5, h6 {
@@ -288,5 +289,15 @@
   .PhoneInputInput:focus {
     outline: 2px solid hsl(215 20.2% 65.1%); /* Corresponds to ring color */
     outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }

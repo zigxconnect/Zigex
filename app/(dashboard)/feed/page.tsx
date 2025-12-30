@@ -1,7 +1,6 @@
-// app/(dashboard)/feed/page.tsx
+import FeedStories from '@/components/feed/FeedStories';
 import MainFeedPage from '@/components/feed/MainFeedPage';
 import ProfileRecommendationPopup from '@/components/feed/ProfileRecommendationPopup';
-import { WelcomeCard } from '@/components/sections/dashboard/WelcomeCard';
 import { getProfileInfo } from '@/lib/actions/profile.actions';
 
 interface FeedPageProps {
@@ -37,7 +36,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
   return (
     <>
     <ProfileRecommendationPopup user={userData}/>
-      <WelcomeCard user={userData} />
+      <FeedStories currentUser={userData} />
       <MainFeedPage searchQuery={resolvedParams.q} />
     </>
   );
