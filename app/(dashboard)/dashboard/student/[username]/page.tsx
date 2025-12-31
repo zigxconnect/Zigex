@@ -26,6 +26,8 @@ import AnimatedConnectButtons from "@/components/customButtons/AnimatedConnectBu
 import NoProjectMessage from "@/components/sections/dashboard/NoProjectMessage";
 import { fetchAllUserProjects } from "@/lib/actions/getProjects.action";
 import CreateProjectButton from "@/components/project/CreateProjectButton";
+import ProfileStories from "@/components/sections/dashboard/ProfileStories";
+import { cn } from "@/lib/utils";
 import { Metadata } from "next";
 
 interface Props {
@@ -102,7 +104,7 @@ export default async function StudentDetailPage({ params }: Props) {
   const soft = data.soft_skills || [];
   
   // Fetch stats and projects in parallel
-  const [internRes, progRes, eventRes, projectsResult] = await Promise.all([
+  const [internRes, progRes, eventRes, projectsResult, storiesRes] = await Promise.all([
     supabaseAdmin
       .from("Applications")
       .select("id", { count: "exact", head: true })
@@ -121,13 +123,20 @@ export default async function StudentDetailPage({ params }: Props) {
       .eq("student_id", data.id)
       .eq("application_type", "event")
       .eq("status", "rsvp_confirmed"),
-    fetchAllUserProjects(data.id)
+    fetchAllUserProjects(data.id),
+    supabaseAdmin
+      .from("stories")
+      .select("*")
+      .eq("user_id", data.id)
+      .gt("expires_at", new Date().toISOString())
+      .order("created_at", { ascending: false })
   ]);
 
   const internshipsApplied = internRes?.count ?? 0;
   const programsApplied = progRes?.count ?? 0;
   const eventsApplied = eventRes?.count ?? 0;
   const projects = projectsResult.success ? projectsResult.data : [];
+  const activeStories = storiesRes?.data || [];
   
   const avatarUrl = data.avatar_url || "https://i.ibb.co/CpS0wpjC/z3.jpg";
   const coverImageUrl = data.cover_image || "https://i.ibb.co/vv3sgJwd/n8.jpg";
@@ -226,21 +235,29 @@ export default async function StudentDetailPage({ params }: Props) {
 
         <div className="absolute top-28 md:top-36 lg:top-40 left-6 right-6 flex justify-between items-end">
           <div className="relative group">
-            <div className="w-24 h-24 md:w-32 md:h-32 rounded-3xl border-4 border-white shadow-2xl overflow-hidden bg-white">
-              {avatarUrl ? (
-                <Image
-                  src={avatarUrl}
-                  alt={data.full_name || "Student"}
-                  width={128}
-                  height={128}
-                  className="w-full h-full object-cover"
-                  priority
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center font-bold text-3xl">
-                  {initials}
-                </div>
-              )}
+            <div className={cn(
+              "w-24 h-24 md:w-32 md:h-32 rounded-3xl overflow-hidden bg-white transition-all duration-500 relative",
+              activeStories.length > 0 ? "p-1 bg-gradient-to-tr from-blue-600 via-indigo-500 to-purple-600 animate-gradient-xy" : "border-4 border-white shadow-2xl"
+            )}>
+              <div className={cn(
+                "w-full h-full rounded-[1.25rem] overflow-hidden bg-white",
+                activeStories.length > 0 ? "border-2 border-white" : ""
+              )}>
+                {avatarUrl ? (
+                  <Image
+                    src={avatarUrl}
+                    alt={data.full_name || "Student"}
+                    width={128}
+                    height={128}
+                    className="w-full h-full object-cover"
+                    priority
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center font-bold text-3xl">
+                    {initials}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-green-500 rounded-full border-4 border-white shadow-md"></div>
           </div>
@@ -296,7 +313,12 @@ export default async function StudentDetailPage({ params }: Props) {
         </div>
       </div>
 
-      {/* 2. Main Content Feed */}
+      {/* 2. Status Updates Tray */}
+      <div className="max-w-4xl mx-auto px-6 mb-8">
+        <ProfileStories stories={activeStories} user={data} />
+      </div>
+
+      {/* 3. Main Content Feed */}
       <div className="max-w-4xl mx-auto px-6 space-y-8">
         
         {/* About Section - PRIORITIZED TOP */}
