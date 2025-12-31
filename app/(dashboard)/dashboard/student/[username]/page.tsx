@@ -38,15 +38,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { username } = await params;
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(username);
   const supabase = supabaseAdmin;
-
-  let query = supabase.from("student_profiles").select("*");
+  let data;
   if (isUuid) {
-    query = query.eq("id", username);
+    const { data: profileById } = await supabase.from("student_profiles").select("*").eq("id", username).maybeSingle();
+    if (profileById) {
+      data = profileById;
+    } else {
+      const { data: profileByUserId } = await supabase.from("student_profiles").select("*").eq("user_id", username).maybeSingle();
+      data = profileByUserId;
+    }
   } else {
-    query = query.eq("username", username);
+    const { data: profileByUsername } = await supabase.from("student_profiles").select("*").eq("username", username).maybeSingle();
+    data = profileByUsername;
   }
 
-  const { data } = await query.maybeSingle();
   if (!data) return { title: "Student Not Found" };
 
   const title = `${data.full_name} | Zigex Student`;
@@ -78,18 +83,22 @@ export default async function StudentDetailPage({ params }: Props) {
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(username);
 
   const supabase = await createServerActionClient();
-
-  let query = supabase.from("student_profiles").select("*");
+  let data;
 
   if (isUuid) {
-    query = query.eq("id", username);
+    const { data: profileById } = await supabase.from("student_profiles").select("*").eq("id", username).maybeSingle();
+    if (profileById) {
+      data = profileById;
+    } else {
+      const { data: profileByUserId } = await supabase.from("student_profiles").select("*").eq("user_id", username).maybeSingle();
+      data = profileByUserId;
+    }
   } else {
-    query = query.eq("username", username);
+    const { data: profileByUsername } = await supabase.from("student_profiles").select("*").eq("username", username).maybeSingle();
+    data = profileByUsername;
   }
 
-  const { data, error } = await query.maybeSingle();
-
-  if (error || !data) {
+  if (!data) {
     return (
       <div className="min-h-screen p-6">
         <div className="max-w-3xl mx-auto text-center">
@@ -127,7 +136,7 @@ export default async function StudentDetailPage({ params }: Props) {
     supabaseAdmin
       .from("stories")
       .select("*")
-      .eq("user_id", data.id)
+      .eq("user_id", data.user_id)
       .gt("expires_at", new Date().toISOString())
       .order("created_at", { ascending: false })
   ]);
