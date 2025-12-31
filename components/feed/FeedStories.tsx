@@ -23,6 +23,33 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { ChevronUp } from 'lucide-react';
+
+const formatWhatsAppTime = (dateString: string) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  
+  if (diffInSeconds < 60) return "Just now";
+  
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) return `${diffInMinutes} min ago`;
+  
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) {
+    if (date.getDate() === now.getDate()) {
+       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+  }
+  
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (date.getDate() === yesterday.getDate()) {
+    return `Yesterday at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  }
+  
+  return date.toLocaleDateString([], { day: 'numeric', month: 'short' }) + " at " + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
 
 // --- Types ---
 type StoryType = 'image' | 'text' | 'mixed';
@@ -136,7 +163,7 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
             type: s.type as StoryType,
             content: s.content,
             caption: s.caption,
-            timestamp: new Date(s.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            timestamp: formatWhatsAppTime(s.created_at),
             viewed: false,
             color: s.color,
             likes: 0,
@@ -492,8 +519,10 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
          {/* ... modal content ... */}
          {selectedStory && (
            <motion.div 
-             /* ... */
-             className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-0 sm:p-4"
+             initial={{ opacity: 0 }}
+             animate={{ opacity: 1 }}
+             exit={{ opacity: 0 }}
+             className="fixed inset-0 z-[100] flex items-center justify-center bg-black backdrop-blur-md p-0 sm:p-4"
            >
               {/* ... viewer ... */}
               <motion.div 
@@ -563,11 +592,15 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
 
                  {/* ... content viewer ... */}
                  <div className="flex-1 relative flex items-center justify-center bg-neutral-900 w-full overflow-hidden">
+                    {/* Tap Zones for Navigation */}
+                    <div className="absolute inset-y-0 left-0 w-1/3 z-30 cursor-pointer" onClick={(e) => { e.stopPropagation(); handlePrevStory(); }} />
+                    <div className="absolute inset-y-0 right-0 w-1/3 z-30 cursor-pointer" onClick={(e) => { e.stopPropagation(); handleNextStory(); }} />
+
                     {(selectedStory.type === 'image' || selectedStory.type === 'mixed') ? (
                       <div className="relative w-full h-full flex flex-col">
                         <img src={selectedStory.content} className="w-full h-full object-contain bg-black" alt="story" />
                         {selectedStory.caption && (
-                           <div className="absolute bottom-20 left-0 right-0 p-6 text-center bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-12">
+                           <div className="absolute bottom-32 left-0 right-0 p-6 text-center bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-12">
                               <p className="text-white text-lg font-medium drop-shadow-md leading-relaxed">{selectedStory.caption}</p>
                            </div>
                         )}
@@ -577,10 +610,21 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
                         <p className="text-white text-2xl sm:text-3xl font-bold leading-relaxed max-w-lg">{selectedStory.content}</p>
                       </div>
                     )}
+                    
+                    {/* Swipe Up Indicator */}
+                    <motion.div 
+                      initial={{ opacity: 0.5, y: 0 }}
+                      animate={{ opacity: [0.5, 1, 0.5], y: [-5, 0, -5] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className="absolute bottom-28 left-0 right-0 flex flex-col items-center justify-center text-white/60 pointer-events-none z-40"
+                    >
+                      <ChevronUp size={24} />
+                      <span className="text-[10px] font-medium uppercase tracking-widest mt-1">Swipe Up for Next</span>
+                    </motion.div>
                  </div>
 
                  {/* ... rest of viewer (messages etc) ... */}
-                 <div className="absolute bottom-6 left-6 right-6 z-50 flex gap-4 justify-between items-center">
+                 <div className="absolute bottom-16 sm:bottom-8 left-6 right-6 z-50 flex gap-4 justify-between items-center">
                     <Button 
                       className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-full h-12 gap-2 backdrop-blur-md transition-all shadow-lg text-sm sm:text-base font-medium"
                       onClick={(e) => {
