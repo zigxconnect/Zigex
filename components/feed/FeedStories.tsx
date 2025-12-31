@@ -664,21 +664,43 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
 
                     <Button 
                       className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-full h-12 gap-2 backdrop-blur-md transition-all shadow-lg text-sm sm:text-base font-medium"
+                      disabled={isPosting}
                       onClick={async (e) => {
                          e.stopPropagation();
-                         if (navigator.share) {
-                           try {
-                             await navigator.share({
-                               title: `Check out ${selectedStory.userName}'s story on Zigex!`,
-                               text: selectedStory.caption || 'Watch this amazing story!',
-                               url: window.location.href, 
-                             });
-                           } catch (err) {
-                             console.log("Share cancelled");
-                           }
-                         } else {
+                         if (!navigator.share) {
                             navigator.clipboard.writeText(window.location.href);
-                            showAlert("Link Copied", "Story link copied to clipboard!");
+                            showAlert("Link Copied", "Sharing not supported on this browser. Link copied to clipboard!");
+                            return;
+                         }
+
+                         try {
+                           const shareData: any = {
+                             title: `Zigex Story - ${selectedStory.userName}`,
+                             text: selectedStory.type === 'text' ? selectedStory.content : (selectedStory.caption || 'Check out my story on Zigex!'),
+                           };
+
+                           // Handle Image Sharing
+                           if (selectedStory.type === 'image') {
+                              try {
+                                const response = await fetch(selectedStory.content);
+                                const blob = await response.blob();
+                                const file = new File([blob], 'story.jpg', { type: blob.type });
+                                
+                                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                                  shareData.files = [file];
+                                  // For file sharing, text is often treated as the caption
+                                }
+                              } catch (fileErr) {
+                                console.error("Could not prepare image file for sharing:", fileErr);
+                              }
+                           } else {
+                             // For text stories, we also include the URL so people can visit the app
+                             shareData.url = window.location.href;
+                           }
+
+                           await navigator.share(shareData);
+                         } catch (err) {
+                           console.log("Share cancelled or failed:", err);
                          }
                       }}
                     >
