@@ -62,19 +62,6 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
       label: "Group",
       matchPaths: ["/dashboard/community", "/dashboard/community/"]
     },
-    {
-      href: `/profile/${user?.profile?.username || "username"}`,
-      icon: User,
-      label: "Profile",
-      matchPaths: ["/profile/"],
-    },
-    {
-      href: "/dashboard/fupro-ai",
-      icon: BrainCircuit,
-      label: "ZAi",
-      matchPaths: ["/dashboard/fupro-ai", "/dashboard/fupro-ai/"],
-      isSpecial: true
-    },
   ];
   const pathname = usePathname();
   const router = useRouter();

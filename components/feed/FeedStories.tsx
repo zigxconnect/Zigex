@@ -68,7 +68,24 @@ interface Story {
   likes?: number;
   created_at: string;
   userSlug?: string;
+  fontSize?: string;
 }
+
+const STORY_COLORS = [
+  'bg-gradient-to-br from-blue-500 to-indigo-600',
+  'bg-gradient-to-br from-purple-500 to-pink-600',
+  'bg-gradient-to-br from-orange-400 to-red-500',
+  'bg-gradient-to-br from-emerald-400 to-teal-600',
+  'bg-gradient-to-br from-slate-700 to-slate-900',
+  'bg-gradient-to-br from-amber-400 to-orange-600',
+];
+
+const FONT_SIZES = [
+  { label: 'Small', value: 'text-lg' },
+  { label: 'Medium', value: 'text-2xl' },
+  { label: 'Large', value: 'text-4xl' },
+  { label: 'Huge', value: 'text-6xl' },
+];
 
 interface FeedStoriesProps {
   currentUser?: any; // The passed profile data
@@ -99,6 +116,10 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
+
+  // New Creation Customization States
+  const [selectedColor, setSelectedColor] = useState(STORY_COLORS[0]);
+  const [selectedFontSize, setSelectedFontSize] = useState(FONT_SIZES[1].value); // Default Medium (text-2xl)
 
   useEffect(() => {
     fetchStories();
@@ -166,6 +187,7 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
             timestamp: formatWhatsAppTime(s.created_at),
             viewed: false,
             color: s.color,
+            fontSize: s.font_size || 'text-2xl',
             likes: 0,
             created_at: s.created_at
         };
@@ -286,7 +308,8 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
           content: content,
           type: finalType,
           caption: newStoryImage ? newStoryText : null, // Use newStoryText as caption if image exists
-          color: !newStoryImage ? 'bg-gradient-to-br from-blue-500 to-indigo-600' : null,
+          color: !newStoryImage ? selectedColor : null,
+          font_size: !newStoryImage ? selectedFontSize : null,
         })
         .select()
         .single();
@@ -311,6 +334,7 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
         content: data.content,
         caption: data.caption,
         color: data.color,
+        fontSize: data.font_size || 'text-2xl',
         timestamp: 'Just now',
         viewed: false,
         created_at: data.created_at
@@ -455,11 +479,11 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
                  </div>
                )}
             </div>
-            <div className="absolute bottom-0 w-full h-1/3 bg-card flex flex-col items-center justify-start pt-3 z-10">
-              <span className="text-xs font-semibold mt-3 text-foreground/90">Create Story</span>
+            <div className="absolute bottom-0 w-full h-1/3 bg-card flex flex-col items-center justify-end pb-3 z-10">
+              <span className="text-xs font-bold text-foreground/90">Create Story</span>
             </div>
-            <div className="absolute top-[60%] left-1/2 -translate-x-1/2 -translate-y-1/2 p-1 bg-card rounded-full z-20">
-              <div className="bg-primary rounded-full p-1.5 text-white shadow-sm ring-2 ring-card">
+            <div className="absolute top-[66.6%] left-1/2 -translate-x-1/2 -translate-y-1/2 p-1 bg-card rounded-full z-20 shadow-md">
+              <div className="bg-primary rounded-full p-2 text-white shadow-lg ring-4 ring-card">
                 <Plus size={20} strokeWidth={3} />
               </div>
             </div>
@@ -492,7 +516,7 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
                    )}
                    {story.type === 'text' && (
                      <div className="w-full h-full flex items-center justify-center p-4 text-center">
-                        <p className="text-white text-sm font-semibold leading-snug line-clamp-6 drop-shadow-md">{story.content}</p>
+                        <p className={cn("text-white font-semibold leading-snug line-clamp-6 drop-shadow-md", story.fontSize || "text-sm")}>{story.content}</p>
                      </div>
                    )}
                 </div>
@@ -600,14 +624,14 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
                       <div className="relative w-full h-full flex flex-col">
                         <img src={selectedStory.content} className="w-full h-full object-contain bg-black" alt="story" />
                         {selectedStory.caption && (
-                           <div className="absolute bottom-32 left-0 right-0 p-6 text-center bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-12">
+                           <div className="absolute bottom-36 left-0 right-0 p-6 text-center bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-12">
                               <p className="text-white text-lg font-medium drop-shadow-md leading-relaxed">{selectedStory.caption}</p>
                            </div>
                         )}
                       </div>
                     ) : (
                       <div className={cn("w-full h-full flex items-center justify-center p-8 text-center", selectedStory.color || 'bg-blue-600')}>
-                        <p className="text-white text-2xl sm:text-3xl font-bold leading-relaxed max-w-lg">{selectedStory.content}</p>
+                        <p className={cn("text-white font-bold leading-relaxed max-w-lg", selectedStory.fontSize || "text-2xl")}>{selectedStory.content}</p>
                       </div>
                     )}
                     
@@ -624,7 +648,7 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
                  </div>
 
                  {/* ... rest of viewer (messages etc) ... */}
-                 <div className="absolute bottom-16 sm:bottom-8 left-6 right-6 z-50 flex gap-4 justify-between items-center">
+                 <div className="absolute bottom-20 sm:bottom-10 left-6 right-6 z-50 flex gap-4 justify-between items-center">
                     <Button 
                       className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-full h-12 gap-2 backdrop-blur-md transition-all shadow-lg text-sm sm:text-base font-medium"
                       onClick={(e) => {
@@ -678,7 +702,7 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
           <div className="h-[400px] relative bg-muted/20 flex flex-col">
              <div className={cn(
                 "flex-1 flex items-center justify-center p-6 transition-all relative",
-                !newStoryImage && createType === 'text' ? 'bg-gradient-to-br from-blue-500 to-indigo-600' : 'bg-transparent'
+                !newStoryImage && createType === 'text' ? selectedColor : 'bg-transparent'
              )}>
                 {createType === 'text' && !newStoryImage ? (
                   <textarea 
@@ -686,7 +710,10 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
                     placeholder="Type something..."
                     value={newStoryText}
                     onChange={(e) => setNewStoryText(e.target.value)}
-                    className="w-full h-full bg-transparent border-none text-white text-2xl font-bold text-center placeholder:text-white/50 focus:ring-0 resize-none outline-none"
+                    className={cn(
+                      "w-full h-full bg-transparent border-none text-white font-bold text-center placeholder:text-white/50 focus:ring-0 resize-none outline-none transition-all",
+                      selectedFontSize
+                    )}
                     maxLength={150}
                   />
                 ) : (
@@ -720,6 +747,47 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
                   </div>
                 )}
              </div>
+
+             {/* Customization Controls (Colors & Font Size) */}
+             {createType === 'text' && !newStoryImage && (
+               <div className="absolute bottom-20 left-0 right-0 p-4 flex flex-col gap-4 bg-black/20 backdrop-blur-sm">
+                  {/* Colors */}
+                  <div className="flex justify-center gap-3">
+                    {STORY_COLORS.map((color) => (
+                      <button
+                        key={color}
+                        onClick={() => setSelectedColor(color)}
+                        className={cn(
+                          "w-8 h-8 rounded-full border-2 transition-all",
+                          color,
+                          selectedColor === color ? "border-white scale-125 shadow-lg" : "border-transparent hover:scale-110"
+                        )}
+                      />
+                    ))}
+                  </div>
+                  
+                  {/* Font Size Selector */}
+                  <div className="flex justify-center items-center gap-4">
+                     <span className="text-white/70 text-[10px] uppercase tracking-widest font-bold">Font Size</span>
+                     <div className="flex bg-white/10 rounded-full p-1 border border-white/20">
+                        {FONT_SIZES.map((size) => (
+                          <button
+                            key={size.value}
+                            onClick={() => setSelectedFontSize(size.value)}
+                            className={cn(
+                              "px-3 py-1 rounded-full text-xs transition-all",
+                              selectedFontSize === size.value 
+                                ? "bg-white text-black font-bold" 
+                                : "text-white hover:bg-white/10"
+                            )}
+                          >
+                            {size.label[0]}
+                          </button>
+                        ))}
+                     </div>
+                  </div>
+               </div>
+             )}
 
              <div className="p-4 bg-card border-t border-border flex items-center gap-2 justify-between">
                 <div className="flex gap-2">
