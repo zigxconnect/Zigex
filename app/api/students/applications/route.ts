@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { v4 as uuidv4, validate as isUUID } from "uuid";
-import { sendApplicationConfirmation, sendApplicationAlert } from "@/lib/email";
+import { sendApplicationConfirmation, sendApplicationAlert, sendEventRSVPConfirmation } from "@/lib/email";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
 
 
@@ -462,7 +462,7 @@ const handleEventRSVP = async (
 
   const { data: postingInfo, error: postingError } = await supabase
     .from("event")
-    .select("company_id, title, company_profiles(company_name, email)")
+    .select("company_id, title, start_date, location, description, company_profiles(company_name, email)")
     .eq("id", event_id)
     .single();
 
@@ -529,13 +529,15 @@ const handleEventRSVP = async (
   }
 
   // Send RSVP confirmation to candidate
-  await sendApplicationConfirmation({
+  // Send RSVP confirmation to candidate
+  await sendEventRSVPConfirmation({
     email: user.email,
     name: studentData.full_name,
-    opportunityTitle: postingInfo.title,
-    opportunityType: "Event",
+    eventName: postingInfo.title,
     companyName: postingInfo.company_profiles?.company_name || "ZIGEX Partner",
-    isRSVP: true
+    eventDate: postingInfo.start_date ? new Date(postingInfo.start_date).toDateString() : "TBA",
+    eventLocation: postingInfo.location || "TBA",
+    eventRequirements: postingInfo.description
   });
 
   // Automated WhatsApp Alert

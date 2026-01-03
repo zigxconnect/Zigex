@@ -315,3 +315,37 @@ export const sendApplicationAlert = async (params: {
     ctaLink: "https://zigex.online/dashboard/admin/applicants",
   });
 };
+
+/**
+ * Send Event RSVP Confirmation
+ */
+export const sendEventRSVPConfirmation = async (params: {
+  email: string;
+  name: string;
+  eventName: string;
+  companyName: string;
+  eventDate: string;
+  eventLocation: string;
+  eventRequirements?: string;
+}) => {
+  const { email, name, eventName, companyName, eventDate, eventLocation, eventRequirements } = params;
+  const firstName = name.split(" ")[0];
+
+  const requirementsHtml = eventRequirements
+    ? `\n\n📌 **Requirements / What to Bring:**\n${eventRequirements}`
+    : "";
+
+  return sendEmail({
+    to: email,
+    subject: `🎟️ RSVP Confirmed: ${eventName}`,
+    heading: "You're Confirmed! 🎟️",
+    message: `Hi ${firstName}! 👋\n\nYour spot for **${eventName}** by ${companyName} is officially confirmed.\n\nHere are the details you need:\n\n📅 **Date:** ${eventDate}\n📍 **Location:** ${eventLocation}${requirementsHtml}\n\nWe can't wait to see you there!`,
+    opportunityTitle: eventName,
+    opportunityType: "Event",
+    companyName,
+    statusBadge: "CONFIRMED",
+    statusColor: "#10B981",
+    ctaText: "View My Events",
+    ctaLink: "https://zigex.online/dashboard/applied-internships",
+  });
+};
