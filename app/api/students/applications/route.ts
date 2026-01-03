@@ -529,8 +529,7 @@ const handleEventRSVP = async (
   }
 
   // Send RSVP confirmation to candidate
-  // Send RSVP confirmation to candidate
-  await sendEventRSVPConfirmation({
+  const emailResult = await sendEventRSVPConfirmation({
     email: user.email,
     name: studentData.full_name,
     eventName: postingInfo.title,
@@ -539,6 +538,7 @@ const handleEventRSVP = async (
     eventLocation: postingInfo.location || "TBA",
     eventRequirements: postingInfo.description
   });
+  console.log(`[RSVP Email] Sent to ${user.email}. Success: ${emailResult.success}. Error: ${emailResult.error || 'None'}`);
 
   // Automated WhatsApp Alert
   if (studentData.phone) {
