@@ -184,19 +184,38 @@ export async function PATCH(
   }
 
   // --- Update the application status in the database ---
-  const { data: updatedApplication, error: updateError } = await supabaseAdmin
-    .from("Applications")
-    .update({ status })
-    .eq("id", id)
-    .select()
-    .single();
+  // --- Update or Delete the application based on status ---
+  let resultData = null;
 
-  if (updateError) {
-    console.log(updateError);
-    return NextResponse.json({ error: updateError.message }, { status: 400 });
+  if (status === "rejected") {
+    // DELETE the application to allow re-applying
+    const { error: deleteError } = await supabaseAdmin
+      .from("Applications")
+      .delete()
+      .eq("id", id);
+
+    if (deleteError) {
+      console.log(deleteError);
+      return NextResponse.json({ error: deleteError.message }, { status: 400 });
+    }
+    resultData = { ...application, status: "rejected", deleted: true };
+  } else {
+    // UPDATE the application status
+    const { data: updatedApplication, error: updateError } = await supabaseAdmin
+      .from("Applications")
+      .update({ status })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.log(updateError);
+      return NextResponse.json({ error: updateError.message }, { status: 400 });
+    }
+    resultData = updatedApplication;
   }
 
-  // --- Create notification and send emails for the student AFTER the update is successful ---
+  // --- Create notification and send emails for the student AFTER the update/delete is successful ---
   const referenceId =
     application.internship_id || application.program_id || application.event_id;
   const studentAuthId = studentProfile.user_id;
@@ -231,7 +250,7 @@ export async function PATCH(
 
     // 2. Notify Zigex & Company for ANY status update
     await sendApplicationAlert({
-      adminEmail: "zigex.connect@gmail.com",
+      adminEmail: "zigex.connect@gmail.com,zigexconnect.com@gmail.com", // Updated to include both
       studentName,
       studentEmail: studentEmail || "N/A",
       opportunityTitle,
@@ -254,16 +273,17 @@ export async function PATCH(
     }
 
     // 3. Persistent Database Notification (for candidate dashboard)
+    // Note: If application is rejected (deleted), the reference ID might need to be handled carefully in UI
     const notificationTitle = status === "accepted"
       ? "Congratulations! Your Application was Accepted!"
       : status === "rejected"
-        ? "Update on Your Application"
+        ? "Application Update: Please Reapply"
         : `Application moved to [${status}]`;
 
     const notificationMessage = status === "accepted"
       ? `Great news! Your application for "${opportunityTitle}" has been accepted.`
       : status === "rejected"
-        ? `After review, your application for "${opportunityTitle}" was not selected. Check your email for more details.`
+        ? `Your previous application for "${opportunityTitle}" has been removed to allow you to reapply with updated details.`
         : `Your application for "${opportunityTitle}" is now ${status}.`;
 
     await createNotification(
@@ -275,5 +295,5 @@ export async function PATCH(
     );
   }
 
-  return NextResponse.json(updatedApplication);
+  return NextResponse.json(resultData);
 }

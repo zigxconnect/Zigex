@@ -253,13 +253,13 @@ export const sendRejectionEmail = async (params: {
     to: email,
     subject: `Update on your ${opportunityType} application`,
     heading: "Application Update",
-    message: `Hi ${firstName},\n\nThank you for your interest in "${opportunityTitle}" at ${companyName}.\n\nAfter careful consideration, we've decided to move forward with other candidates whose experience more closely matches our current needs.\n\nThis doesn't reflect on your abilities – competition was tough! We encourage you to:\n\n• Keep building your skills and portfolio\n• Apply to more opportunities on ZIGEX\n• Connect with our community for support\n\nYour next opportunity is just around the corner. Keep pushing! 💪`,
+    message: `Hi ${firstName},\n\nThank you for your interest in "${opportunityTitle}" at ${companyName}.\n\nAfter careful consideration, we've decided not to move forward with your current application for this position.\n\nHowever, we encourage you to **Reapply**! We've removed your current application from our records so you can update your profile, polish your resume, and submit a fresh application.\n\nSometimes a few small tweaks make all the difference. We'd love to see you try again!\n\nBest of luck! 💪`,
     opportunityTitle,
     opportunityType,
     companyName,
-    statusBadge: "NOT SELECTED",
-    statusColor: "#6B7280",
-    ctaText: "Explore More Opportunities",
+    statusBadge: "PLEASE REAPPLY",
+    statusColor: "#EAB308",
+    ctaText: "Reapply Now",
     ctaLink: "https://zigex.online/feed",
   });
 };
