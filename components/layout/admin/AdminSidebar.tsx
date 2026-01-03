@@ -2,46 +2,52 @@
 
 import React from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { usePathname } from "next/navigation";
 import {
   FileText,
   Users,
   CheckCheck,
-  LogOut,
   FilePen,
   LayoutDashboard,
+  Calendar,
+  Briefcase,
+  TrendingUp,
+  ChevronRight,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useAdminSidebar } from "./AdminLayoutProvider";
 
-// Define the type for the company profile, reusable across components
+// Define the type for the company profile
 export interface CompanyProfile {
   id: string;
   company_name: string;
   industry?: string;
-  description?: string;
+  logo_url?: string;
 }
 
-// Helper function to generate initials from a name
-const getInitials = (name: string = ""): string => {
-  if (!name) return "?";
-  return name
-    .split(" ")
-    .filter((word) => word.length > 0)
-    .map((word) => word[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-};
-
-// Define the navigation links for the sidebar
-const navLinks = [
-  { href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/admin/postings", icon: FileText, label: "Postings" },
-  { href: "/admin/applicants", icon: Users, label: "Applicants" },
-  { href: "/admin/accepted", icon: CheckCheck, label: "Accepted Interns" },
-  { href: "/admin/profile", icon: FilePen, label: "Edit Profile" },
+// Grouped navigation links
+const navigationGroups = [
+  {
+    title: "Overview",
+    links: [
+      { href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+      { href: "/admin/analytics", icon: TrendingUp, label: "Analytics", badge: "New" },
+    ],
+  },
+  {
+    title: "Management",
+    links: [
+      { href: "/admin/postings", icon: Briefcase, label: "Postings" },
+      { href: "/admin/applicants", icon: Users, label: "Applicants" },
+      { href: "/admin/accepted", icon: CheckCheck, label: "Hires" },
+    ],
+  },
+  {
+    title: "Organization",
+    links: [
+      { href: "/admin/calendar", icon: Calendar, label: "Schedules" },
+      { href: "/admin/profile", icon: FilePen, label: "Settings" },
+    ],
+  },
 ];
 
 export const AdminSidebar = ({
@@ -51,105 +57,90 @@ export const AdminSidebar = ({
 }) => {
   const { isOpen, isMobile, toggleSidebar } = useAdminSidebar();
   const pathname = usePathname();
-  const router = useRouter();
-
-  // Function to handle user sign-out
-  const handleSignOut = async () => {
-    try {
-      const response = await fetch("/api/auth/logout", { method: "POST" });
-      if (!response.ok) {
-        throw new Error("Logout request failed");
-      }
-      router.push("/");
-      router.refresh(); // Ensure the session state is fully cleared
-      toast.success("You have been signed out successfully.");
-    } catch (error) {
-      console.error("Logout failed:", error);
-      toast.error("Logout failed. Please try again.");
-    }
-  };
 
   return (
     <>
-      {/* Mobile Overlay: Dims the background when the sidebar is open on mobile */}
+      {/* Mobile Overlay */}
       {isOpen && isMobile && (
         <div
-          className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-30 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300"
           onClick={toggleSidebar}
         />
       )}
 
       <aside
-        className={`fixed left-0 w-72 bg-sidebar shadow-lg border-r border-sidebar-border z-40 flex flex-col transition-transform duration-300 ease-in-out
-          ${isOpen ? "translate-x-0" : "-translate-x-full"}
+        className={`fixed left-0 w-72 bg-white border-r border-slate-100 z-40 flex flex-col transition-all duration-300 ease-in-out
+          ${isOpen ? "translate-x-0 shadow-2xl shadow-slate-200/50" : "-translate-x-full"}
           top-20 
           h-[calc(100vh-5rem)]
         `}
       >
-        {/* Company Profile Section */}
-        <div className="p-5 text-center border-b border-sidebar-border">
-          <div className="relative inline-block">
-            <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center text-primary text-3xl font-bold ring-4 ring-sidebar shadow-inner">
-              { companyProfile.logo_url ? (
-                <img src={companyProfile.logo_url} alt="Company Logo" className="w-full h-full object-cover rounded-full" />
-              ) : (
-                getInitials(companyProfile.company_name)
-              )}
+        <div className="flex-1 px-4 py-8 space-y-8 overflow-y-auto custom-scrollbar">
+          {navigationGroups.map((group) => (
+            <div key={group.title} className="space-y-2">
+              <h3 className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">
+                {group.title}
+              </h3>
+              <nav className="space-y-1">
+                {group.links.map((link) => {
+                  const isActive =
+                    pathname === link.href ||
+                    (link.href !== "/admin/dashboard" &&
+                      pathname.startsWith(link.href));
+                  
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => isMobile && toggleSidebar()}
+                      className={`group relative flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all duration-200 ${
+                        isActive
+                          ? "bg-primary text-white shadow-lg shadow-primary/25 translate-x-1"
+                          : "text-slate-600 hover:bg-slate-50 hover:text-primary hover:translate-x-1"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <link.icon
+                          size={18}
+                          className={isActive ? "text-white" : "text-slate-400 group-hover:text-primary transition-colors"}
+                        />
+                        <span>{link.label}</span>
+                      </div>
+                      
+                      {link.badge && !isActive && (
+                        <span className="px-1.5 py-0.5 text-[9px] font-bold bg-indigo-50 text-indigo-600 rounded-md">
+                          {link.badge}
+                        </span>
+                      )}
+                      
+                      {isActive && (
+                        <div className="absolute left-[-1rem] top-1/2 -translate-y-1/2 w-1.5 h-6 bg-white rounded-full opacity-50" />
+                      )}
+
+                      {!isActive && (
+                         <ChevronRight size={14} className="text-slate-300 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
+                      )}
+                    </Link>
+                  );
+                })}
+              </nav>
             </div>
-          </div>
-          <h2 className="mt-3 text-lg font-bold text-sidebar-foreground truncate">
-            {companyProfile.company_name}
-          </h2>
-          {companyProfile.industry && (
-            <p className="text-sm font-medium text-primary">
-              {companyProfile.industry}
-            </p>
-          )}
+          ))}
         </div>
 
-        {/* Navigation Links */}
-        <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
-          {navLinks.map((link) => {
-            const isActive =
-              pathname === link.href ||
-              (link.href !== "/admin/dashboard" &&
-                pathname.startsWith(link.href));
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  isActive
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                }`}
-              >
-                <link.icon
-                  size={18}
-                  className={
-                    isActive
-                      ? "text-primary-foreground"
-                      : "text-muted-foreground group-hover:text-primary"
-                  }
-                />
-                <span>{link.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* Footer - Sign Out Button */}
-        <div className="p-4 border-t border-sidebar-border">
-          <Button
-            variant="ghost"
-            className="w-full justify-start gap-3 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-            onClick={handleSignOut}
-          >
-            <LogOut size={18} />
-            <span className="font-medium">Sign Out</span>
-          </Button>
+        {/* Pro Invite Banner */}
+        <div className="p-4 m-4 rounded-3xl bg-slate-900 text-white relative overflow-hidden group">
+          <div className="relative z-10">
+             <p className="text-xs font-bold text-indigo-400 mb-1">PRO PLAN</p>
+             <p className="text-[11px] text-slate-300 leading-relaxed mb-3">Unlock advanced analytics and AI candidate matching.</p>
+             <button className="w-full py-2 bg-indigo-500 hover:bg-indigo-400 text-white text-xs font-bold rounded-xl transition-colors">
+               Upgrade Now
+             </button>
+          </div>
+          <div className="absolute top-[-20px] right-[-20px] w-24 h-24 bg-indigo-500/20 rounded-full blur-2xl group-hover:bg-indigo-500/30 transition-all" />
         </div>
       </aside>
     </>
   );
 };
+

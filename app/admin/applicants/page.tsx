@@ -1,26 +1,27 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Users, Loader2, AlertTriangle } from "lucide-react";
+import { Loader2, AlertTriangle, Filter, Search, DownloadCloud, Plus } from "lucide-react";
 
 import { Applicant, ApplicantStatus } from "@/lib/types/applicants";
-import { ApplicantListItem } from "@/components/sections/admin/applicants/ApplicantListItem";
+import { ApplicantsTable } from "@/components/sections/admin/applicants/ApplicantsTable";
 import { ApplicantDetail } from "@/components/sections/admin/applicants/ApplicantDetail";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
-// This is the main component that will be rendered.
 function ApplicantsPageComponent() {
   const [applicants, setApplicants] = useState<Applicant[]>([]);
-  const [selectedApplicantId, setSelectedApplicantId] = useState<string | null>(
-    null
-  );
+  const [selectedApplicantId, setSelectedApplicantId] = useState<string | null>(null);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const searchParams = useSearchParams();
-
-  // THE FIX: Removed the duplicate declaration.
+  const router = useRouter();
   const selectedIdFromUrl = searchParams.get("selected");
 
   useEffect(() => {
@@ -28,26 +29,21 @@ function ApplicantsPageComponent() {
       try {
         setIsLoading(true);
         setError(null);
-
         const response = await fetch("/api/companies/applications");
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || `Error ${response.status}`);
         }
-
         const data: Applicant[] = await response.json();
         setApplicants(data);
 
-        if (data.length > 0) {
-          const applicantFromUrlExists = data.some(
-            (app) => app.id === selectedIdFromUrl
-          );
-
-          if (selectedIdFromUrl && applicantFromUrlExists) {
-            setSelectedApplicantId(selectedIdFromUrl);
-          } else {
-            setSelectedApplicantId(data[0].id);
-          }
+        // Handle URL selection
+        if (selectedIdFromUrl) {
+           const exists = data.some(app => app.id === selectedIdFromUrl);
+           if (exists) {
+              setSelectedApplicantId(selectedIdFromUrl);
+              setIsSheetOpen(true);
+           }
         }
       } catch (err: any) {
         const errorMessage = err.message || "Could not connect to the server.";
@@ -57,14 +53,17 @@ function ApplicantsPageComponent() {
         setIsLoading(false);
       }
     };
-
     fetchApplicants();
-    // THE FIX: Corrected the dependency array to run only once on mount.
-  }, []);
+  }, [selectedIdFromUrl]);
 
-  const selectedApplicant = applicants.find(
-    (app) => app.id === selectedApplicantId
-  );
+  const handleSelectApplicant = (id: string) => {
+    setSelectedApplicantId(id);
+    setIsSheetOpen(true);
+    // Silent update of URL for sharing/refreshing
+    const url = new URL(window.location.href);
+    url.searchParams.set("selected", id);
+    window.history.replaceState({}, "", url.toString());
+  };
 
   const handleUpdateStatus = async (
     applicantId: string,
@@ -88,89 +87,114 @@ function ApplicantsPageComponent() {
       );
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "The server rejected the update.");
+        throw new Error("Update failed");
       }
-      toast.success(`Applicant status updated to "${newStatus}"`);
+      toast.success(`Applicant marked as ${newStatus}`);
     } catch (err: any) {
       setApplicants(originalApplicants);
       toast.error("Update failed", { description: err.message });
     }
   };
 
+  const filteredApplicants = applicants.filter(app => 
+     app.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+     app.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+     app.internshipTitle?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const selectedApplicant = applicants.find(app => app.id === selectedApplicantId);
+
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-gray-500">
-        <Loader2 className="h-10 w-10 animate-spin mb-4" />
-        <h3 className="text-lg font-semibold">Loading Applicants...</h3>
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-slate-400">
+        <Loader2 className="h-10 w-10 animate-spin mb-4 text-primary" />
+        <h3 className="text-sm font-bold uppercase tracking-widest">Hydrating Pipeline...</h3>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center text-red-600 bg-red-50 p-8 rounded-lg">
-        <AlertTriangle size={48} className="mb-4" />
-        <h3 className="text-xl font-bold">An Error Occurred</h3>
-        <p>{error}</p>
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center bg-rose-50/50 border border-rose-100 p-12 rounded-[2.5rem] m-6 animate-in zoom-in-95">
+        <AlertTriangle size={48} className="mb-4 text-rose-500" />
+        <h3 className="text-xl font-black text-rose-900 font-heading">Sync Failure</h3>
+        <p className="text-sm text-rose-600/70 mt-2 max-w-sm">{error}</p>
+        <Button variant="outline" className="mt-6 rounded-xl border-rose-200 text-rose-600 hover:bg-rose-100" onClick={() => window.location.reload()}>Retry Connection</Button>
       </div>
     );
   }
 
   return (
-    <div className="flex h-[calc(100vh-theme(space.24))]">
-      <div className="w-full max-w-sm border-r border-gray-200 bg-white overflow-y-auto">
-        <div className="p-4 border-b sticky top-0 bg-white z-10">
-          <h2 className="text-xl font-bold text-gray-800">Applicants</h2>
-          <p className="text-sm text-gray-500">
-            {applicants.length} total applicants
+    <div className="p-6 lg:p-12 space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-1000">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pb-2 border-b border-slate-100">
+        <div>
+          <h1 className="text-4xl font-heading font-black text-slate-900 tracking-tight leading-none mb-3">
+             Applicant <span className="text-primary italic">Tracking</span>
+          </h1>
+          <p className="text-sm font-medium text-slate-500 uppercase tracking-widest flex items-center gap-2">
+             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+             {filteredApplicants.length} Candidates in current view
           </p>
         </div>
-        <div className="flex flex-col">
-          {applicants.length > 0 ? (
-            applicants.map((applicant) => (
-              <ApplicantListItem
-                key={applicant.id}
-                applicant={applicant}
-                isSelected={applicant.id === selectedApplicantId}
-                onSelect={() => setSelectedApplicantId(applicant.id)}
+        
+        <div className="flex flex-wrap items-center gap-3">
+           <div className="relative w-full sm:w-64">
+              <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Input 
+                placeholder="Find candidates..." 
+                className="pl-11 h-12 rounded-2xl bg-white border-slate-100 shadow-sm focus:ring-primary focus:border-primary transition-all"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
-            ))
-          ) : (
-            <div className="p-4 text-center text-gray-500">
-              No applicants found.
-            </div>
-          )}
+           </div>
+           <Button variant="outline" className="h-12 rounded-2xl border-slate-100 shadow-sm gap-2 font-bold text-slate-600">
+              <Filter size={16} /> Filters
+           </Button>
+           <Button variant="outline" className="h-12 w-12 rounded-2xl border-slate-100 shadow-sm p-0 flex items-center justify-center text-slate-600">
+              <DownloadCloud size={18} />
+           </Button>
         </div>
-      </div>
-      <div className="flex-1 p-6 lg:p-8 overflow-y-auto bg-gray-50">
-        {selectedApplicant ? (
-          <ApplicantDetail
-            applicant={selectedApplicant}
-            onUpdateStatus={(newStatus) =>
-              handleUpdateStatus(selectedApplicant.id, newStatus)
-            }
-          />
-        ) : (
-          <div className="flex flex-col items-center justify-center h-full text-center text-gray-500">
-            <Users size={48} className="mb-4" />
-            <h3 className="text-lg font-semibold">No Applicants Found</h3>
-            <p>There are currently no applications for your company.</p>
-          </div>
-        )}
-      </div>
+      </header>
+
+      <ApplicantsTable 
+        applicants={filteredApplicants}
+        selectedApplicantId={selectedApplicantId}
+        onSelect={handleSelectApplicant}
+      />
+
+      {/* Focus Modal for Candidate Review */}
+      <Dialog open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        <DialogContent className="sm:max-w-3xl p-0 overflow-y-auto max-h-[90vh] custom-scrollbar border-none shadow-3xl bg-slate-50/95 backdrop-blur-xl rounded-[2.5rem]">
+           <div className="p-8 lg:p-12">
+            {selectedApplicant ? (
+              <div className="animate-in fade-in zoom-in-95 duration-500">
+                <ApplicantDetail
+                  applicant={selectedApplicant}
+                  onUpdateStatus={(newStatus) =>
+                    handleUpdateStatus(selectedApplicant.id, newStatus)
+                  }
+                />
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center p-20 text-center text-slate-400">
+                <Loader2 size={48} className="mb-4 animate-spin text-primary/20" />
+                <h3 className="text-lg font-bold text-slate-900">Loading Intelligence...</h3>
+              </div>
+            )}
+           </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-// This structure is correct for using useSearchParams.
 export default function ApplicantsPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex flex-col items-center justify-center h-full text-gray-500">
-          <Loader2 className="h-10 w-10 animate-spin mb-4" />
-          <h3 className="text-lg font-semibold">Loading Page...</h3>
+        <div className="flex flex-col items-center justify-center min-h-screen text-slate-400">
+          <Loader2 className="h-10 w-10 animate-spin mb-4 text-primary" />
+          <h3 className="text-sm font-bold uppercase tracking-widest">Preparing View...</h3>
         </div>
       }
     >
@@ -178,3 +202,4 @@ export default function ApplicantsPage() {
     </Suspense>
   );
 }
+

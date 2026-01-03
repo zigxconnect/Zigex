@@ -11,8 +11,11 @@ export type ApplicantStatus =
   | "rejected"
   | "rsvp_confirmed";
 
+export type ApplicationType = "internship" | "program" | "event";
+
 /**
  * Defines the structure for a single applicant object used throughout the frontend.
+ * Includes ALL form fields that candidates submit.
  */
 export type Applicant = {
   id: string;
@@ -22,8 +25,29 @@ export type Applicant = {
   phone: string;
   internshipTitle: string;
   internshipId: string | null;
+  opportunityDescription?: string;
   appliedDate: string;
   status: ApplicantStatus;
   resumeUrl: string | null;
-  coverLetter: string | null; // This property holds the cover_letter_url
+  coverLetter: string | null;
+
+  // Application Type
+  applicationType: ApplicationType;
+
+  // Form Fields - Internship
+  duration?: string;
+  department?: string;
+  workMode?: string;
+
+  // Form Fields - Program/Event
+  level?: string;
+  expectations?: string;
+  comments?: string;
+
+  // Form Fields - Event RSVP
+  rsvpStatus?: boolean;
+
+  // User Info
+  studentId?: string;
+  userId?: string;
 };

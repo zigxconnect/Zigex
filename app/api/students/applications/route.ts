@@ -2,8 +2,9 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { v4 as uuidv4, validate as isUUID } from "uuid";
-import { Resend } from "resend";
-import { ApplicationConfirmationEmail } from "@/emails/ApplicationConfirmationEmail";
+import { sendApplicationConfirmation, sendApplicationAlert } from "@/lib/email";
+import { sendWhatsAppMessage } from "@/lib/whatsapp";
+
 
 // --- Types ---
 type ApplicationType = "internship" | "program" | "event";
@@ -39,38 +40,8 @@ const createNotification = async ({
   }
 };
 
-const sendConfirmationEmail = async (
-  userEmail: string,
-  studentName: string,
-  postTitle: string,
-  postType: string,
-  companyName: string
-) => {
-  if (!process.env.RESEND_API_KEY) return;
+// --- Email Helpers moved to lib/mail ---
 
-  try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
-      from: "ZIGEX <notifications@ZIGEX.online>",
-      to: userEmail,
-      subject: `Application Received: ${postTitle}`,
-      react: ApplicationConfirmationEmail({
-        studentName: studentName || "Student",
-        postTitle: postTitle,
-        postType: postType as "Internship" | "Program" | "Event",
-        companyName: companyName || "the company",
-        viewApplicationUrl: `https://ZIGEX.online/applications`,
-        postedDate: new Date().toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-        }),
-      }),
-    });
-  } catch (emailError) {
-    console.error("Failed to send confirmation email:", emailError);
-  }
-};
 
 const getSupabaseClient = async () => {
   const cookieStore = await cookies();
@@ -97,7 +68,7 @@ const getAuthenticatedStudent = async (supabase: any) => {
 
   const { data: studentData, error: studentError } = await supabase
     .from("student_profiles")
-    .select("id, full_name")
+    .select("id, full_name, phone")
     .eq("user_id", user.id)
     .single();
 
@@ -144,7 +115,7 @@ const handleInternshipApplication = async (
   // Get posting info
   const { data: postingInfo, error: postingError } = await supabase
     .from("internships")
-    .select("company_id, title, deadline, company_profiles(company_name)")
+    .select("company_id, title, deadline, company_profiles(company_name, email)")
     .eq("id", internship_id)
     .single();
 
@@ -199,7 +170,7 @@ const handleInternshipApplication = async (
     "application/msword",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   ];
-  
+
   if (!allowedTypes.includes(resume_file.type) || !allowedTypes.includes(cover_letter_file.type)) {
     return NextResponse.json(
       { error: "Only PDF and Word (DOC, DOCX) documents are allowed." },
@@ -291,13 +262,45 @@ const handleInternshipApplication = async (
     referenceId: internship_id,
   });
 
-  await sendConfirmationEmail(
-    user.email,
-    studentData.full_name,
-    postingInfo.title,
-    "Internship",
-    postingInfo.company_profiles?.company_name
-  );
+  // Centralized Alerts
+  await sendApplicationAlert({
+    adminEmail: "zigex.connect@gmail.com,zigexconnect.com@gmail.com",
+    studentName: studentData.full_name,
+    studentEmail: user.email,
+    opportunityTitle: postingInfo.title,
+    opportunityType: "Internship",
+    status: "pending",
+    companyName: postingInfo.company_profiles?.company_name
+  });
+
+  // Send to company if email exists
+  if (postingInfo.company_profiles?.email) {
+    await sendApplicationAlert({
+      adminEmail: postingInfo.company_profiles.email,
+      studentName: studentData.full_name,
+      studentEmail: user.email,
+      opportunityTitle: postingInfo.title,
+      opportunityType: "Internship",
+      status: "pending",
+      companyName: postingInfo.company_profiles?.company_name
+    });
+  }
+
+  // Send confirmation to candidate
+  await sendApplicationConfirmation({
+    email: user.email,
+    name: studentData.full_name,
+    opportunityTitle: postingInfo.title,
+    opportunityType: "Internship",
+    companyName: postingInfo.company_profiles?.company_name || "ZIGEX Partner",
+    isRSVP: false
+  });
+
+  // Automated WhatsApp Alert
+  if (studentData.phone) {
+    const waMessage = `✅ *Application Received!*\n\nHi ${studentData.full_name.split(' ')[0]}, your application for the *${postingInfo.title}* internship at ${postingInfo.company_profiles?.company_name} has been received and is under review. Good luck! 🚀`;
+    await sendWhatsAppMessage(studentData.phone, waMessage);
+  }
 
   return NextResponse.json(
     {
@@ -338,7 +341,7 @@ const handleProgramApplication = async (
 
   const { data: postingInfo, error: postingError } = await supabase
     .from("programs")
-    .select("company_id, title, company_profiles(company_name)")
+    .select("company_id, title, company_profiles(company_name, email)")
     .eq("id", program_id)
     .single();
 
@@ -380,13 +383,45 @@ const handleProgramApplication = async (
     referenceId: program_id,
   });
 
-  await sendConfirmationEmail(
-    user.email,
-    studentData.full_name,
-    postingInfo.title,
-    "Program",
-    postingInfo.company_profiles?.company_name
-  );
+  // Centralized Alerts
+  await sendApplicationAlert({
+    adminEmail: "zigex.connect@gmail.com,zigexconnect.com@gmail.com",
+    studentName: studentData.full_name,
+    studentEmail: user.email,
+    opportunityTitle: postingInfo.title,
+    opportunityType: "Program",
+    status: "pending",
+    companyName: postingInfo.company_profiles?.company_name
+  });
+
+  // Send to company if email exists
+  if (postingInfo.company_profiles?.email) {
+    await sendApplicationAlert({
+      adminEmail: postingInfo.company_profiles.email,
+      studentName: studentData.full_name,
+      studentEmail: user.email,
+      opportunityTitle: postingInfo.title,
+      opportunityType: "Program",
+      status: "pending",
+      companyName: postingInfo.company_profiles?.company_name
+    });
+  }
+
+  // Send confirmation to candidate
+  await sendApplicationConfirmation({
+    email: user.email,
+    name: studentData.full_name,
+    opportunityTitle: postingInfo.title,
+    opportunityType: "Program",
+    companyName: postingInfo.company_profiles?.company_name || "ZIGEX Partner",
+    isRSVP: false
+  });
+
+  // Automated WhatsApp Alert
+  if (studentData.phone) {
+    const waMessage = `🚀 *Program Application Received!*\n\nHi ${studentData.full_name.split(' ')[0]}, you've successfully applied for the *${postingInfo.title}* program. We'll notify you once your application is reviewed. Stay tuned! ✨`;
+    await sendWhatsAppMessage(studentData.phone, waMessage);
+  }
 
   return NextResponse.json(
     {
@@ -427,7 +462,7 @@ const handleEventRSVP = async (
 
   const { data: postingInfo, error: postingError } = await supabase
     .from("event")
-    .select("company_id, title, company_profiles(company_name)")
+    .select("company_id, title, company_profiles(company_name, email)")
     .eq("id", event_id)
     .single();
 
@@ -469,13 +504,45 @@ const handleEventRSVP = async (
     referenceId: event_id,
   });
 
-  await sendConfirmationEmail(
-    user.email,
-    studentData.full_name,
-    postingInfo.title,
-    "Event",
-    postingInfo.company_profiles?.company_name
-  );
+  // Centralized Alerts
+  await sendApplicationAlert({
+    adminEmail: "zigex.connect@gmail.com,zigexconnect.com@gmail.com",
+    studentName: studentData.full_name,
+    studentEmail: user.email,
+    opportunityTitle: postingInfo.title,
+    opportunityType: "Event",
+    status: "rsvp_confirmed",
+    companyName: postingInfo.company_profiles?.company_name
+  });
+
+  // Send to company if email exists
+  if (postingInfo.company_profiles?.email) {
+    await sendApplicationAlert({
+      adminEmail: postingInfo.company_profiles.email,
+      studentName: studentData.full_name,
+      studentEmail: user.email,
+      opportunityTitle: postingInfo.title,
+      opportunityType: "Event",
+      status: "rsvp_confirmed",
+      companyName: postingInfo.company_profiles?.company_name
+    });
+  }
+
+  // Send RSVP confirmation to candidate
+  await sendApplicationConfirmation({
+    email: user.email,
+    name: studentData.full_name,
+    opportunityTitle: postingInfo.title,
+    opportunityType: "Event",
+    companyName: postingInfo.company_profiles?.company_name || "ZIGEX Partner",
+    isRSVP: true
+  });
+
+  // Automated WhatsApp Alert
+  if (studentData.phone) {
+    const waMessage = `🎟️ *RSVP Confirmed!*\n\nHi ${studentData.full_name.split(' ')[0]}, your spot for *${postingInfo.title}* is confirmed! We've sent the details to your email. See you there! 🙌`;
+    await sendWhatsAppMessage(studentData.phone, waMessage);
+  }
 
   return NextResponse.json(
     { message: "RSVP submitted successfully!", applicationId: appData.id },

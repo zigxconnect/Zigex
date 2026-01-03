@@ -68,7 +68,8 @@ export async function getProfileInfo(): Promise<FormattedUserData> {
   const { count: applicationsCount, error: countError } = await supabase
     .from("Applications")
     .select("*", { count: "exact", head: true })
-    .eq("student_id", profile.id);
+    .eq("student_id", profile.id)
+    .neq("status", "rejected");
 
   if (countError) {
     console.error("Error fetching application count:", countError);
@@ -78,9 +79,8 @@ export async function getProfileInfo(): Promise<FormattedUserData> {
     name: profile.full_name || "New User",
     avatarUrl: profile.avatar_url,
     initials:
-      `${profile.first_name?.[0] || ""}${
-        profile.last_name?.[0] || ""
-      }`.toUpperCase() || "NU",
+      `${profile.first_name?.[0] || ""}${profile.last_name?.[0] || ""
+        }`.toUpperCase() || "NU",
     university: profile.university || "University not specified",
     skills: profile.hard_skills || [],
     coverImageUrl: "/placeholder-cover.jpg",

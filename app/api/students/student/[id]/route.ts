@@ -1,6 +1,9 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { sendWelcomeEmail } from "@/lib/email";
+import { sendWhatsAppWelcomeInvite } from "@/lib/whatsapp";
+
 
 async function createSupabaseServerClient() {
   const cookieStore = await cookies();
@@ -16,12 +19,12 @@ async function createSupabaseServerClient() {
         set: async (name: string, value: string, options: CookieOptions) => {
           try {
             (await cookieStore).set({ name, value, ...options });
-          } catch (error) {}
+          } catch (error) { }
         },
         remove: async (name: string, options: CookieOptions) => {
           try {
             (await cookieStore).set({ name, value: "", ...options });
-          } catch (error) {}
+          } catch (error) { }
         },
       },
     }
@@ -142,7 +145,7 @@ export async function PUT(
 
     // Validate URLs if present
     if (filteredUpdates.avatar_url && !filteredUpdates.avatar_url.startsWith(process.env.NEXT_PUBLIC_SUPABASE_URL!)) {
-       // Optional: stricter check to ensure it points to your specific bucket
+      // Optional: stricter check to ensure it points to your specific bucket
     }
 
     // Check if username is taken by another user
@@ -187,6 +190,30 @@ export async function PUT(
     if (updateError) {
       throw updateError;
     }
+
+    // --- AUTOMATION JOB START ---
+    // Trigger Welcome Email & WhatsApp asynchronously (don't block the UI response)
+    if (data && user.email) {
+      try {
+        const userName = data.full_name || data.first_name || "Candidate";
+
+        // 1. Send Welcome Email via EmailJS
+        sendWelcomeEmail({
+          email: user.email,
+          name: userName,
+          communityLink: "https://chat.whatsapp.com/GzXpExampleLink"
+        });
+
+        // 2. Send WhatsApp Welcome (if phone provided)
+        if (data.phone) {
+          sendWhatsAppWelcomeInvite(userName, data.phone);
+        }
+      } catch (automationError) {
+        console.error("[AUTOMATION] Background job error:", automationError);
+        // We don't throw here to avoid failing the whole request if just email/WA fails
+      }
+    }
+    // --- AUTOMATION JOB END ---
 
     return NextResponse.json(
       { success: true, message: "Profile updated successfully", data },

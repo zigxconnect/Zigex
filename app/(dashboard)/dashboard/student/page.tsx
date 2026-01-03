@@ -15,11 +15,13 @@ export default async function StudentDirectoryPage() {
   const filteredProfiles = profiles.filter((p) => p.id !== userData?.profile?.id);
   const profileIds = filteredProfiles.map(p => p.id);
 
-  // Fetch stats for all students in 4 bulk queries
-  const [internships, programs, events, projects] = await Promise.all([
-    supabaseAdmin.from("internship_applications").select("user_id").in("user_id", profileIds),
-    supabaseAdmin.from("program_applications").select("user_id").in("user_id", profileIds),
-    supabaseAdmin.from("event_rsvps").select("user_id").in("user_id", profileIds),
+  // Fetch stats for all students from the UNIFIED Applications table
+  const [applications, projects] = await Promise.all([
+    supabaseAdmin
+      .from("Applications")
+      .select("student_id, application_type")
+      .in("student_id", profileIds)
+      .neq("status", "rejected"),
     supabaseAdmin.from("projects").select("creator_id").in("creator_id", profileIds),
   ]);
 
@@ -34,15 +36,17 @@ export default async function StudentDirectoryPage() {
     };
   });
 
-  // Calculate stats from bulk data
-  internships.data?.forEach(row => {
-    if (statsMap[row.user_id]) statsMap[row.user_id].internshipsApplied++;
-  });
-  programs.data?.forEach(row => {
-    if (statsMap[row.user_id]) statsMap[row.user_id].programsApplied++;
-  });
-  events.data?.forEach(row => {
-    if (statsMap[row.user_id]) statsMap[row.user_id].eventsApplied++;
+  // Calculate stats from the unified Applications table
+  applications.data?.forEach(row => {
+    if (statsMap[row.student_id]) {
+      if (row.application_type === "internship") {
+        statsMap[row.student_id].internshipsApplied++;
+      } else if (row.application_type === "program") {
+        statsMap[row.student_id].programsApplied++;
+      } else if (row.application_type === "event") {
+        statsMap[row.student_id].eventsApplied++;
+      }
+    }
   });
   projects.data?.forEach(row => {
     if (statsMap[row.creator_id]) statsMap[row.creator_id].projectsCreated++;

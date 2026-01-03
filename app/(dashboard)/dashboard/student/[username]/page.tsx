@@ -35,7 +35,8 @@ interface Props {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { username } = await params;
+  const p = await params;
+  const username = p.username;
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(username);
   const supabase = supabaseAdmin;
   let data;
@@ -112,26 +113,34 @@ export default async function StudentDetailPage({ params }: Props) {
   const skills = data.hard_skills || [];
   const soft = data.soft_skills || [];
   
-  // Fetch stats and projects in parallel
-  const [internRes, progRes, eventRes, projectsResult, storiesRes] = await Promise.all([
+  // Fetch stats and projects in parallel from the UNIFIED Applications table
+  const [
+    internRes, 
+    progRes, 
+    eventRes, 
+    projectsResult, 
+    storiesRes
+  ] = await Promise.all([
+    // Applications Table Queries (Inclusive of pending/accepted/confirmed)
     supabaseAdmin
       .from("Applications")
       .select("id", { count: "exact", head: true })
       .eq("student_id", data.id)
       .eq("application_type", "internship")
-      .eq("status", "accepted"),
+      .neq("status", "rejected"),
     supabaseAdmin
       .from("Applications")
       .select("id", { count: "exact", head: true })
       .eq("student_id", data.id)
       .eq("application_type", "program")
-      .eq("status", "rsvp_confirmed"),
+      .neq("status", "rejected"),
     supabaseAdmin
       .from("Applications")
       .select("id", { count: "exact", head: true })
       .eq("student_id", data.id)
       .eq("application_type", "event")
-      .eq("status", "rsvp_confirmed"),
+      .neq("status", "rejected"),
+
     fetchAllUserProjects(data.id),
     supabaseAdmin
       .from("stories")
@@ -141,9 +150,10 @@ export default async function StudentDetailPage({ params }: Props) {
       .order("created_at", { ascending: false })
   ]);
 
-  const internshipsApplied = internRes?.count ?? 0;
-  const programsApplied = progRes?.count ?? 0;
-  const eventsApplied = eventRes?.count ?? 0;
+  // Get counts from the unified table
+  const internshipsApplied = internRes?.count || 0;
+  const programsApplied = progRes?.count || 0;
+  const eventsApplied = eventRes?.count || 0;
   const projects = projectsResult.success ? projectsResult.data : [];
   const activeStories = storiesRes?.data || [];
   

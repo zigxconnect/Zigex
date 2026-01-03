@@ -44,10 +44,10 @@ export const ApplicationAcceptedEmail = ({
             </Text>
             <Section className="text-center mt-[32px] mb-[32px]">
               <Button
-                className="bg-[#000000] rounded text-white text-[12px] font-semibold no-underline text-center px-5 py-3"
-                href="https://zigex.vercel.app/dashboard"
+                className="bg-[#155DFC] rounded-xl text-white text-[14px] font-bold no-underline text-center px-6 py-4"
+                href="https://ZIGEX.online/applications"
               >
-                View Dashboard
+                View Application
               </Button>
             </Section>
             <Text className="text-black text-[14px] leading-[24px]">

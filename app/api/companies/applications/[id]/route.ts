@@ -1,7 +1,7 @@
 import { authMiddleware } from "@/lib/middleware/auth";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { sendApplicationAcceptedEmail } from "@/lib/mail";
+import { sendAcceptanceEmail, sendRejectionEmail, sendApplicationAlert } from "@/lib/email";
 
 /**
  * Helper function to create a notification for a student.
@@ -154,29 +154,33 @@ export async function PATCH(
     );
   }
 
-  // Get the opportunity title based on application type
+  // Get the opportunity title and description based on application type
   let opportunityTitle = "your application";
+  let opportunityDescription = "";
   if (application.application_type === "internship" && application.internship_id) {
     const { data: internship } = await supabaseAdmin
       .from("internships")
-      .select("title")
+      .select("title, description")
       .eq("id", application.internship_id)
       .single();
     opportunityTitle = internship?.title || opportunityTitle;
+    opportunityDescription = internship?.description || "";
   } else if (application.application_type === "program" && application.program_id) {
     const { data: program } = await supabaseAdmin
       .from("programs")
-      .select("title")
+      .select("title, description")
       .eq("id", application.program_id)
       .single();
     opportunityTitle = program?.title || opportunityTitle;
+    opportunityDescription = program?.description || "";
   } else if (application.application_type === "event" && application.event_id) {
     const { data: event } = await supabaseAdmin
       .from("event")
-      .select("title")
+      .select("title, description")
       .eq("id", application.event_id)
       .single();
     opportunityTitle = event?.title || opportunityTitle;
+    opportunityDescription = event?.description || "";
   }
 
   // --- Update the application status in the database ---
@@ -192,7 +196,7 @@ export async function PATCH(
     return NextResponse.json({ error: updateError.message }, { status: 400 });
   }
 
-  // --- Create notification and send email for the student AFTER the update is successful ---
+  // --- Create notification and send emails for the student AFTER the update is successful ---
   const referenceId =
     application.internship_id || application.program_id || application.event_id;
   const studentAuthId = studentProfile.user_id;
@@ -205,72 +209,70 @@ export async function PATCH(
     const studentName = studentProfile.full_name || "Student";
     const companyName = company.company_name || "The Company";
 
-    if (status === "accepted") {
-      // 1. Send Accepted Email
-      if (process.env.RESEND_API_KEY && studentEmail) {
-        try {
-            const { Resend } = await import("resend");
-            const resend = new Resend(process.env.RESEND_API_KEY);
-            // Correct import name
-            const { ApplicationAcceptedEmail } = await import("@/emails/ApplicationAccepted");
-            
-            await resend.emails.send({
-                from: "ZIGEX <notifications@ZIGEX.online>",
-                to: studentEmail,
-                subject: `Congratulations! Application Accepted: ${opportunityTitle}`,
-                react: ApplicationAcceptedEmail({
-                    studentName: studentName,
-                    opportunityTitle: opportunityTitle,
-                    type: application.application_type,
-                }),
-            });
-        } catch (err) {
-            console.error("Failed to send accepted email:", err);
-        }
-      }
-
-      // 2. Create Notification
-      await createNotification(
-        studentAuthId,
-        "Congratulations! Your Application was Accepted!",
-        `Great news! Your application for "${opportunityTitle}" has been accepted.`,
-        application.application_type,
-        referenceId
-      );
-    } else if (status === "rejected") {
-      // 1. Send Rejected Email
-      if (process.env.RESEND_API_KEY && studentEmail) {
-        try {
-            const { Resend } = await import("resend");
-            const resend = new Resend(process.env.RESEND_API_KEY);
-            const { ApplicationRejectedEmail } = await import("@/emails/ApplicationRejected");
-
-            await resend.emails.send({
-                from: "ZIGEX <notifications@ZIGEX.online>",
-                to: studentEmail,
-                subject: `Update on your application: ${opportunityTitle}`,
-                react: ApplicationRejectedEmail({
-                    studentName: studentName,
-                    postTitle: opportunityTitle,
-                    postType: application.application_type.charAt(0).toUpperCase() + application.application_type.slice(1) as any,
-                    companyName: companyName,
-                    viewApplicationUrl: "https://ZIGEX.online/applications",
-                }),
-            });
-        } catch (err) {
-             console.error("Failed to send rejected email:", err);
-        }
-      }
-
-      // 2. Create Notification
-      await createNotification(
-        studentAuthId,
-        "Update on Your Application",
-        `There is an update regarding your application for "${opportunityTitle}".`,
-        application.application_type,
-        referenceId
-      );
+    // 1. Notify Candidate of Decision (only for Accepted/Rejected)
+    if (studentEmail && status === "accepted") {
+      await sendAcceptanceEmail({
+        email: studentEmail,
+        name: studentName,
+        opportunityTitle,
+        opportunityType: application.application_type,
+        companyName,
+        whatsappGroupLink: "https://chat.whatsapp.com/GzXpExampleLink", // Replace with real link
+      });
+    } else if (studentEmail && status === "rejected") {
+      await sendRejectionEmail({
+        email: studentEmail,
+        name: studentName,
+        opportunityTitle,
+        opportunityType: application.application_type,
+        companyName,
+      });
     }
+
+    // 2. Notify Zigex & Company for ANY status update
+    await sendApplicationAlert({
+      adminEmail: "zigex.connect@gmail.com",
+      studentName,
+      studentEmail: studentEmail || "N/A",
+      opportunityTitle,
+      opportunityType: application.application_type,
+      status,
+      companyName,
+    });
+
+    // Also notify company
+    if (company.email) {
+      await sendApplicationAlert({
+        adminEmail: company.email,
+        studentName,
+        studentEmail: studentEmail || "N/A",
+        opportunityTitle,
+        opportunityType: application.application_type,
+        status,
+        companyName,
+      });
+    }
+
+    // 3. Persistent Database Notification (for candidate dashboard)
+    const notificationTitle = status === "accepted"
+      ? "Congratulations! Your Application was Accepted!"
+      : status === "rejected"
+        ? "Update on Your Application"
+        : `Application moved to [${status}]`;
+
+    const notificationMessage = status === "accepted"
+      ? `Great news! Your application for "${opportunityTitle}" has been accepted.`
+      : status === "rejected"
+        ? `After review, your application for "${opportunityTitle}" was not selected. Check your email for more details.`
+        : `Your application for "${opportunityTitle}" is now ${status}.`;
+
+    await createNotification(
+      studentAuthId,
+      notificationTitle,
+      notificationMessage,
+      application.application_type,
+      referenceId
+    );
   }
 
   return NextResponse.json(updatedApplication);
