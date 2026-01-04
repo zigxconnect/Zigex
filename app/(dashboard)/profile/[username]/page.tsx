@@ -82,13 +82,13 @@ export default async function ProfilePage({ params }: Props) {
       .select("id", { count: "exact", head: true })
       .eq("student_id", data.id)
       .eq("application_type", "program")
-      .eq("status", "rsvp_confirmed"),
+      .eq("status", "accepted"),
     supabaseAdmin
       .from("Applications")
       .select("id", { count: "exact", head: true })
       .eq("student_id", data.id)
       .eq("application_type", "event")
-      .eq("status", "rsvp_confirmed"),
+      .eq("status", "accepted"),
   ]);
 
   const internshipsApplied = internRes?.count ?? 0;

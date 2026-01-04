@@ -1,7 +1,7 @@
 import { authMiddleware } from "@/lib/middleware/auth";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { sendAcceptanceEmail, sendRejectionEmail, sendApplicationAlert } from "@/lib/email";
+import { sendAcceptanceEmail, sendRejectionEmail, sendApplicationAlert, sendPaymentReceiptEmail } from "@/lib/email";
 
 /**
  * Helper function to create a notification for a student.
@@ -158,7 +158,7 @@ export async function PATCH(
 
   // Get the opportunity title and description based on application type
   let opportunityTitle = "your application";
-  let opportunityDescription = "";
+  let opportunityPrice = 0;
   if (application.application_type === "internship" && application.internship_id) {
     const { data: internship } = await supabaseAdmin
       .from("internships")
@@ -166,15 +166,14 @@ export async function PATCH(
       .eq("id", application.internship_id)
       .single();
     opportunityTitle = internship?.title || opportunityTitle;
-    opportunityDescription = internship?.description || "";
   } else if (application.application_type === "program" && application.program_id) {
     const { data: program } = await supabaseAdmin
       .from("programs")
-      .select("title, description")
+      .select("title, description, price_xaf")
       .eq("id", application.program_id)
       .single();
     opportunityTitle = program?.title || opportunityTitle;
-    opportunityDescription = program?.description || "";
+    opportunityPrice = program?.price_xaf || 0;
   } else if (application.application_type === "event" && application.event_id) {
     const { data: event } = await supabaseAdmin
       .from("event")
@@ -182,7 +181,6 @@ export async function PATCH(
       .eq("id", application.event_id)
       .single();
     opportunityTitle = event?.title || opportunityTitle;
-    opportunityDescription = event?.description || "";
   }
 
   // --- Handle payment_completed update (simple update, no notifications) ---
@@ -197,6 +195,30 @@ export async function PATCH(
     if (updateError) {
       console.log(updateError);
       return NextResponse.json({ error: updateError.message }, { status: 400 });
+    }
+
+    // Trigger receipt email if payment is confirmed
+    if (payment_completed === true && shouldNotify) {
+      try {
+        const studentAuthId = studentProfile!.user_id;
+        const { data: userData } = await supabaseAdmin.auth.admin.getUserById(studentAuthId);
+        const studentEmail = userData?.user?.email;
+
+        if (studentEmail) {
+          await sendPaymentReceiptEmail({
+            email: studentEmail,
+            name: studentProfile!.full_name || "Student",
+            programTitle: opportunityTitle,
+            amount: opportunityPrice,
+            date: new Date().toISOString(),
+            ref: `ZGX-APP-${id.substring(0, 6).toUpperCase()}`,
+            month: new Date().toLocaleString('default', { month: 'long' })
+          });
+          console.log(`[PAYMENT_NOTIFICATION] Receipt sent to ${studentEmail}`);
+        }
+      } catch (receiptError) {
+        console.error("[PAYMENT_NOTIFICATION] Failed to send receipt:", receiptError);
+      }
     }
 
     return NextResponse.json({

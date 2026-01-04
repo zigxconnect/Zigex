@@ -29,7 +29,7 @@ export const sendCandidateStatusEmail = async (params: {
   try {
     if (status === "accepted") {
       await resend.emails.send({
-        from: "ZIGEX <notifications@ZIGEX.online>",
+        from: "ZIGEX <notifications@zigexconnect.com>",
         to: email,
         subject: `Welcome to ${opportunityTitle}! - ZIGEX Invite`,
         react: ProgramDetailedInviteEmail({
@@ -37,12 +37,13 @@ export const sendCandidateStatusEmail = async (params: {
           programTitle: opportunityTitle,
           programDescription: opportunityDescription || "",
           companyName,
-          whatsappGroupLink: "https://chat.whatsapp.com/GzXpExampleLink",
+          // Use the specific WhatsApp link for Weekend of Code or default to it
+          whatsappGroupLink: "https://chat.whatsapp.com/DXYGLpny3DwGs5pkb1fPAr",
         }),
       });
     } else if (status === "rejected") {
       await resend.emails.send({
-        from: "ZIGEX <notifications@ZIGEX.online>",
+        from: "ZIGEX <notifications@zigexconnect.com>",
         to: email,
         subject: `Update on your application: ${opportunityTitle}`,
         react: ApplicationRejectedEmail({
@@ -50,12 +51,12 @@ export const sendCandidateStatusEmail = async (params: {
           postTitle: opportunityTitle,
           postType: opportunityType.charAt(0).toUpperCase() + opportunityType.slice(1) as any,
           companyName,
-          viewApplicationUrl: "https://ZIGEX.online/applications",
+          viewApplicationUrl: "https://zigexconnect.com/applications",
         }),
       });
     } else if (status === "pending" || status === "rsvp_confirmed") {
       await resend.emails.send({
-        from: "ZIGEX <notifications@ZIGEX.online>",
+        from: "ZIGEX <notifications@zigexconnect.com>",
         to: email,
         subject: `Application Received: ${opportunityTitle}`,
         react: ApplicationConfirmationEmail({
@@ -63,7 +64,7 @@ export const sendCandidateStatusEmail = async (params: {
           postTitle: opportunityTitle,
           postType: (opportunityType.charAt(0).toUpperCase() + opportunityType.slice(1)) as any,
           companyName: companyName || "ZIGEX Partner",
-          viewApplicationUrl: "https://ZIGEX.online/applications",
+          viewApplicationUrl: "https://zigexconnect.com/applications",
           postedDate: new Date().toLocaleDateString(),
         }),
       });
@@ -101,7 +102,7 @@ export const sendRecruitmentStatusAlert = async (params: {
 
     // 1. Alert Zigex Admins
     await resend.emails.send({
-      from: "ZIGEX ALERTS <alerts@ZIGEX.online>",
+      from: "ZIGEX ALERTS <alerts@zigexconnect.com>",
       to: "zigex.connect@gmail.com",
       subject,
       react: reactElement,
@@ -110,7 +111,7 @@ export const sendRecruitmentStatusAlert = async (params: {
     // 2. Alert Company
     if (companyEmail) {
       await resend.emails.send({
-        from: "ZIGEX <notifications@ZIGEX.online>",
+        from: "ZIGEX <notifications@zigexconnect.com>",
         to: companyEmail,
         subject,
         react: reactElement,
@@ -129,12 +130,12 @@ export const sendZigexWelcomeEmail = async (email: string, userName: string) => 
 
   try {
     await resend.emails.send({
-      from: "ZIGEX <welcome@ZIGEX.online>",
+      from: "ZIGEX <welcome@zigexconnect.com>",
       to: email,
       subject: `Welcome to ZIGEX, ${userName}! 🚀`,
       react: ZigexOnboardingWelcome({
         userName,
-        communityLink: "https://chat.whatsapp.com/GzXpExampleLink"
+        communityLink: "https://chat.whatsapp.com/DXYGLpny3DwGs5pkb1fPAr"
       }),
     });
     console.log(`[MAIL-JOB] Welcome email sent to ${email}`);

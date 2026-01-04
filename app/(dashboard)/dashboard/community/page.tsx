@@ -36,7 +36,7 @@ export default function CommunityPage() {
   const [hasAccess, setHasAccess] = useState(false);
   const [accessStep, setAccessStep] = useState<"initial" | "clicked" | "confirmed">("initial");
   const [isCheckingAccess, setIsCheckingAccess] = useState(true);
-
+``
   // Discord Configuration
   const GUILD_ID = "1454830922653368585";
   const PUBLIC_CHANNEL_ID = "1454830924004069568"; // Lounge - Public channel

@@ -19,9 +19,9 @@ export default async function StudentDirectoryPage() {
   const [applications, projects] = await Promise.all([
     supabaseAdmin
       .from("Applications")
-      .select("student_id, application_type")
+      .select("student_id, application_type, status")
       .in("student_id", profileIds)
-      .neq("status", "rejected"),
+      .eq("status", "accepted"),
     supabaseAdmin.from("projects").select("creator_id").in("creator_id", profileIds),
   ]);
 
@@ -36,7 +36,7 @@ export default async function StudentDirectoryPage() {
     };
   });
 
-  // Calculate stats from the unified Applications table
+  // Calculate stats from the unified Applications table - NOW SHOWING ONLY ACCEPTED
   applications.data?.forEach(row => {
     if (statsMap[row.student_id]) {
       if (row.application_type === "internship") {

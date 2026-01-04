@@ -94,7 +94,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       href: "/feed", 
       icon: Globe, 
       label: "Browse",
-      matchPaths: ["/feed", "/feed/"],
+      matchPaths: ["/feed", "/feed/", "/programs/"],
       excludePaths: ["/feed/projects"]
     },
     {

@@ -45,7 +45,7 @@ export const InterviewInvitationEmail = ({
           <Text style={text}>
             Please confirm your availability by clicking the button below or reply to this email to coordinate a suitable time.
           </Text>
-          <Button style={button} href="https://ZIGEX.online/applications">
+          <Button style={button} href="https://zigexconnect.com/applications">
             View Application Details
           </Button>
           <Hr style={hr} />

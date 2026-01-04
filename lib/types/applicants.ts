@@ -50,4 +50,8 @@ export type Applicant = {
   // User Info
   studentId?: string;
   userId?: string;
+
+  // Payment Status (for paid programs)
+  isPaid?: boolean;
+  programId?: string | null;
 };

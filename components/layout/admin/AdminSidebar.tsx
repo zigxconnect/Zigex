@@ -13,6 +13,7 @@ import {
   Briefcase,
   TrendingUp,
   ChevronRight,
+  BookOpen,
 } from "lucide-react";
 import { useAdminSidebar } from "./AdminLayoutProvider";
 
@@ -39,6 +40,7 @@ const navigationGroups = [
       { href: "/admin/postings", icon: Briefcase, label: "Postings" },
       { href: "/admin/applicants", icon: Users, label: "Applicants" },
       { href: "/admin/accepted", icon: CheckCheck, label: "Hires" },
+      { href: "/admin/programs/content", icon: BookOpen, label: "Content" },
     ],
   },
   {

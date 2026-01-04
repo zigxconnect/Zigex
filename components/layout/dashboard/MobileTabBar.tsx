@@ -41,7 +41,7 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
       href: "/feed", 
       icon: Globe, 
       label: "Browse",
-      matchPaths: ["/feed", "/feed/"],
+      matchPaths: ["/feed", "/feed/", "/programs/"],
       excludePaths: ["/feed/projects"]
     },
     {

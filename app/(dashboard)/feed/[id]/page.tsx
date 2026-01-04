@@ -11,6 +11,7 @@ import {
   getFeedItemById,
   getCompanyRelatedItems,
   isOpportunityOpen,
+  getApplicationStatus,
 } from "@/lib/actions/feed/feed-detail.actions";
 
 // Components - Fixed imports
@@ -67,6 +68,9 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
 
   // Check if opportunity is still open (await since it's async now)
   const opportunityStatus = await isOpportunityOpen(item, item._type);
+
+  // Get the user's application status for this opportunity
+  const applicationStatus = await getApplicationStatus(id, item._type);
 
   // Get image URL based on type
   const getImageUrl = () => {
@@ -125,7 +129,6 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
           label: "Start Date",
           value: formatDate((item as any).start_date),
           icon: "Calendar",
-          variant: "success",
         });
       }
       if ((item as any).end_date) {
@@ -133,7 +136,6 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
           label: "End Date",
           value: formatDate((item as any).end_date),
           icon: "Calendar",
-          variant: "destructive",
         });
       }
     }
@@ -144,7 +146,6 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
           label: "Start Date",
           value: formatDate((item as any).start_date),
           icon: "Calendar",
-          variant: "success",
         });
       }
       if ((item as any).end_date) {
@@ -152,7 +153,6 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
           label: "End Date",
           value: formatDate((item as any).end_date),
           icon: "Calendar",
-          variant: "destructive",
         });
       }
       if ((item as any).duration) {
@@ -250,7 +250,7 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
             )}
 
             {/* Get Started Button - After Curriculum */}
-            {opportunityStatus.isOpen && (
+            {(opportunityStatus.isOpen || applicationStatus.hasApplied) && (
               <section id="getStarted" className="mt-6 sm:mt-8">
                 <ApplyButton
                   isOpen={opportunityStatus.isOpen}
@@ -272,6 +272,7 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
                     duration: (item as any).duration,
                     department: (item as any).department,
                   }}
+                  applicationStatus={applicationStatus}
                 />
               </section>
             )}
