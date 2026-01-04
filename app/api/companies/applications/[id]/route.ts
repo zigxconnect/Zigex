@@ -106,8 +106,8 @@ export async function GET(
 }
 
 /**
- * PATCH: Updates an application's status and sends a notification to the student.
- * This version contains the fix for the notification foreign key error.
+ * PATCH: Updates an application's status and/or payment status.
+ * Supports: { status?: string, is_paid?: boolean }
  */
 export async function PATCH(
   request: Request,
@@ -124,7 +124,8 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  const { status } = await request.json();
+  const body = await request.json();
+  const { status, payment_completed } = body;
 
   // First, get the application
   const { data: application, error: applicationError } = await supabaseAdmin
@@ -147,11 +148,12 @@ export async function PATCH(
     .eq("id", application.student_id)
     .single();
 
-  if (!studentProfile?.user_id) {
-    return NextResponse.json(
-      { error: "Could not find the student's user authentication ID." },
-      { status: 404 }
-    );
+  // We allow updates even if student profile is missing (e.g. deleted user), 
+  // but we can only notify if we have a valid profile and user_id.
+  const shouldNotify = !!studentProfile?.user_id;
+
+  if (!shouldNotify) {
+    console.warn(`[UPDATE_APPLICATION] Warning: Student profile or user_id not found for application ${id}. Notifications will be skipped.`);
   }
 
   // Get the opportunity title and description based on application type
@@ -183,9 +185,35 @@ export async function PATCH(
     opportunityDescription = event?.description || "";
   }
 
-  // --- Update the application status in the database ---
+  // --- Handle payment_completed update (simple update, no notifications) ---
+  if (typeof payment_completed === 'boolean' && status === undefined) {
+    const { data: updatedApplication, error: updateError } = await supabaseAdmin
+      .from("Applications")
+      .update({ payment_completed })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.log(updateError);
+      return NextResponse.json({ error: updateError.message }, { status: 400 });
+    }
+
+    return NextResponse.json({
+      ...updatedApplication,
+      message: payment_completed
+        ? "Payment confirmed! Student now has full access."
+        : "Payment status revoked."
+    });
+  }
+
   // --- Update or Delete the application based on status ---
   let resultData = null;
+
+  // Build update object with both status and payment_completed if provided
+  const updateObject: { status?: string; payment_completed?: boolean } = {};
+  if (status !== undefined) updateObject.status = status;
+  if (typeof payment_completed === 'boolean') updateObject.payment_completed = payment_completed;
 
   if (status === "rejected") {
     // DELETE the application to allow re-applying
@@ -199,11 +227,11 @@ export async function PATCH(
       return NextResponse.json({ error: deleteError.message }, { status: 400 });
     }
     resultData = { ...application, status: "rejected", deleted: true };
-  } else {
-    // UPDATE the application status
+  } else if (Object.keys(updateObject).length > 0) {
+    // UPDATE the application
     const { data: updatedApplication, error: updateError } = await supabaseAdmin
       .from("Applications")
-      .update({ status })
+      .update(updateObject)
       .eq("id", id)
       .select()
       .single();
@@ -213,87 +241,145 @@ export async function PATCH(
       return NextResponse.json({ error: updateError.message }, { status: 400 });
     }
     resultData = updatedApplication;
+  } else {
+    return NextResponse.json({ error: "No valid update fields provided" }, { status: 400 });
   }
 
-  // --- Create notification and send emails for the student AFTER the update/delete is successful ---
-  const referenceId =
-    application.internship_id || application.program_id || application.event_id;
-  const studentAuthId = studentProfile.user_id;
+  // --- Background Tasks: Notifications and Emails ---
+  // We do NOT want to block the user interface for email dispatches.
+  // We'll wrap this in an async execution block.
 
-  if (referenceId && application.application_type) {
-    const { data: userData } = await supabaseAdmin.auth.admin.getUserById(
-      studentAuthId
-    );
-    const studentEmail = userData?.user?.email;
-    const studentName = studentProfile.full_name || "Student";
-    const companyName = company.company_name || "The Company";
+  if (shouldNotify) {
+    const startBackgroundTasks = async () => {
+      try {
+        const referenceId = application.internship_id || application.program_id || application.event_id;
+        const studentAuthId = studentProfile!.user_id;
 
-    // 1. Notify Candidate of Decision (only for Accepted/Rejected)
-    if (studentEmail && status === "accepted") {
-      await sendAcceptanceEmail({
-        email: studentEmail,
-        name: studentName,
-        opportunityTitle,
-        opportunityType: application.application_type,
-        companyName,
-        whatsappGroupLink: "https://chat.whatsapp.com/GzXpExampleLink", // Replace with real link
-      });
-    } else if (studentEmail && status === "rejected") {
-      await sendRejectionEmail({
-        email: studentEmail,
-        name: studentName,
-        opportunityTitle,
-        opportunityType: application.application_type,
-        companyName,
-      });
-    }
+        if (referenceId && application.application_type) {
+          const { data: userData } = await supabaseAdmin.auth.admin.getUserById(studentAuthId);
+          const studentEmail = userData?.user?.email;
+          const studentName = studentProfile.full_name || "Student";
+          const companyName = company.company_name || "The Company";
 
-    // 2. Notify Zigex & Company for ANY status update
-    await sendApplicationAlert({
-      adminEmail: "zigex.connect@gmail.com,zigexconnect.com@gmail.com", // Updated to include both
-      studentName,
-      studentEmail: studentEmail || "N/A",
-      opportunityTitle,
-      opportunityType: application.application_type,
-      status,
-      companyName,
-    });
+          const emailPromises = [];
 
-    // Also notify company
-    if (company.email) {
-      await sendApplicationAlert({
-        adminEmail: company.email,
-        studentName,
-        studentEmail: studentEmail || "N/A",
-        opportunityTitle,
-        opportunityType: application.application_type,
-        status,
-        companyName,
-      });
-    }
+          // 1. Notify Candidate of Decision (only for Accepted/Rejected)
+          if (studentEmail) {
+            if (status === "accepted") {
+              emailPromises.push(sendAcceptanceEmail({
+                email: studentEmail,
+                name: studentName,
+                opportunityTitle,
+                opportunityType: application.application_type,
+                companyName,
+                whatsappGroupLink: "https://chat.whatsapp.com/DXYGLpny3DwGs5pkb1fPAr",
+              }));
+            } else if (status === "rejected") {
+              emailPromises.push(sendRejectionEmail({
+                email: studentEmail,
+                name: studentName,
+                opportunityTitle,
+                opportunityType: application.application_type,
+                companyName,
+              }));
+            }
+          }
 
-    // 3. Persistent Database Notification (for candidate dashboard)
-    // Note: If application is rejected (deleted), the reference ID might need to be handled carefully in UI
-    const notificationTitle = status === "accepted"
-      ? "Congratulations! Your Application was Accepted!"
-      : status === "rejected"
-        ? "Application Update: Please Reapply"
-        : `Application moved to [${status}]`;
+          // 2. Notify Zigex & Company for status changes (except internal transitions unless preferred)
+          // Zigex Alerts
+          emailPromises.push(sendApplicationAlert({
+            adminEmail: "zigex.connect@gmail.com,zigexconnect.com@gmail.com",
+            studentName,
+            studentEmail: studentEmail || "N/A",
+            opportunityTitle,
+            opportunityType: application.application_type,
+            status: status || "updated",
+            companyName,
+          }));
 
-    const notificationMessage = status === "accepted"
-      ? `Great news! Your application for "${opportunityTitle}" has been accepted.`
-      : status === "rejected"
-        ? `Your previous application for "${opportunityTitle}" has been removed to allow you to reapply with updated details.`
-        : `Your application for "${opportunityTitle}" is now ${status}.`;
+          // Company Alerts
+          if (company.email) {
+            emailPromises.push(sendApplicationAlert({
+              adminEmail: company.email,
+              studentName,
+              studentEmail: studentEmail || "N/A",
+              opportunityTitle,
+              opportunityType: application.application_type,
+              status: status || "updated",
+              companyName,
+            }));
+          }
 
-    await createNotification(
-      studentAuthId,
-      notificationTitle,
-      notificationMessage,
-      application.application_type,
-      referenceId
-    );
+          // 3. Database Notification
+          const notificationTitle = status === "accepted"
+            ? "Congratulations! Your Application was Accepted!"
+            : status === "rejected"
+              ? "Application Update: Please Reapply"
+              : `Application move: ${status}`;
+
+          const notificationMessage = status === "accepted"
+            ? `Great news! Your application for "${opportunityTitle}" has been accepted.`
+            : status === "rejected"
+              ? `Your previous application for "${opportunityTitle}" has been removed to allow you to reapply with updated details.`
+              : `Your application status for "${opportunityTitle}" is now ${status}.`;
+
+          emailPromises.push(createNotification(
+            studentAuthId,
+            notificationTitle,
+            notificationMessage,
+            application.application_type,
+            referenceId
+          ));
+
+          // Execute all background tasks in parallel
+          await Promise.allSettled(emailPromises);
+          console.log(`[BACKGROUND_TASKS] All notifications processed for application ${id}`);
+        }
+      } catch (bgError) {
+        console.error("[BACKGROUND_TASKS] Error during email/notification dispatch:", bgError);
+      }
+    };
+
+    // Fire and forget OR wait if in a environment that requires it.
+    // For local dev and most servers, not awaiting this is fine and speeds up the response immensely.
+    // However, to be safe and ensure emails go out, we can use waitUntil (on Vercel) or just fire it.
+    startBackgroundTasks();
   }
 
   return NextResponse.json(resultData);
+}
+
+/**
+ * DELETE: Deletes an application.
+ */
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const auth = await authMiddleware(request);
+  if (auth instanceof NextResponse) {
+    return auth;
+  }
+
+  const { type, company } = auth;
+  // Ensure only authorized roles can delete (company or zigex admin if implemented)
+  // For now, assume auth.type === 'company' is sufficient as per existing logic
+  if (type !== "company" || !company) {
+    return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
+  }
+
+  const { id } = await params;
+
+  // Perform delete
+  const { error } = await supabaseAdmin
+    .from("Applications")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    console.error("Delete error:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ message: "Application deleted successfully" });
 }
