@@ -242,14 +242,16 @@ export async function POST(request: Request) {
         console.error("Error revalidating tag:", e);
     }
 
-    // Send email notifications to all paid students (Accepted or RSVP Confirmed)
+    // --- NOTIFICATION LOGIC FOR PAID USERS ---
     try {
-        const { data: paidStudents } = await supabaseAdmin
+        console.log(`[POST] Starting notification process for program: ${program_id} ("${program.title}")`);
+
+        // Fetch all paid students for this program
+        const { data: paidStudents, error: fetchAppsError } = await supabaseAdmin
             .from("Applications")
             .select(`
                 student_id,
                 payment_completed,
-                is_paid,
                 student:student_profiles (
                     full_name,
                     user_id,
@@ -259,41 +261,62 @@ export async function POST(request: Request) {
             .eq("program_id", program_id)
             .in("status", ["accepted", "rsvp_confirmed", "reviewed"]);
 
-        if (paidStudents && paidStudents.length > 0) {
-            const notificationPromises = paidStudents
-                .filter((app: any) => app.payment_completed || app.is_paid)
-                .map(async (app: any) => {
-                    const student = Array.isArray(app.student) ? app.student[0] : app.student;
-                    if (!student) return { status: 'skipped', reason: 'no student profile' };
+        if (fetchAppsError) {
+            console.error("[POST] Error fetching students for notification:", fetchAppsError);
+        } else if (paidStudents && paidStudents.length > 0) {
+            // Filter only those who have actually paid
+            const targetStudents = paidStudents.filter((app: any) => app.payment_completed);
 
-                    // Get email from profile first, then fallback to auth
-                    let studentEmail = student.email;
-                    if (!studentEmail && student.user_id) {
-                        const { data: userData } = await supabaseAdmin.auth.admin.getUserById(student.user_id);
-                        studentEmail = userData?.user?.email;
-                    }
+            console.log(`[POST] Found ${targetStudents.length} paid students to notify.`);
 
-                    if (!studentEmail) return { status: 'skipped', reason: 'no email found' };
+            const notificationPromises = targetStudents.map(async (app: any) => {
+                const studentProfile = Array.isArray(app.student) ? app.student[0] : app.student;
+                if (!studentProfile) return { status: 'skipped', reason: 'no student profile' };
 
+                // Get email (Profile first, then Auth)
+                let studentEmail = studentProfile.email;
+                if (!studentEmail && studentProfile.user_id) {
+                    const { data: userData } = await supabaseAdmin.auth.admin.getUserById(studentProfile.user_id);
+                    studentEmail = userData?.user?.email;
+                }
+
+                if (!studentEmail) {
+                    console.warn(`[POST] No email found for student: ${studentProfile.full_name} (ID: ${studentProfile.id})`);
+                    return { status: 'skipped', reason: 'no email found' };
+                }
+
+                console.log(`[POST] Sending email to: ${studentEmail} (${studentProfile.full_name})`);
+
+                try {
                     await sendEmail({
                         to: studentEmail,
-                        subject: `📚 New Resource: ${title} - SEED`,
-                        heading: "New Learning Resource Available!",
-                        message: `Hi ${student.full_name || "Student"},\n\nA new resource has been added to your program **"${program.title}"**:\n\n**${title}**\n\n${description || "Log in now to access your new learning materials, videos, and assignments."}`,
+                        subject: `New Resource: ${title}`,
+                        heading: "New Course Material Available! 📚",
+                        message: `Hi ${studentProfile.full_name.split(' ')[0] || "Student"},\n\nA new lesson/resource "${title}" has been added to your program **"${program.title}"**.\n\nDescription: ${description || "Head over to your dashboard to access the new materials, source code, and video lessons."}`,
                         ctaText: "Access Course Content",
                         ctaLink: `https://zigexconnect.com/programs/${program_id}/updates`,
                         opportunityTitle: program.title,
                         opportunityType: "program",
                         companyName: "SEED INC • GLOBAL TECH CAREERS",
+                        statusBadge: "NEW CONTENT",
+                        statusColor: "#155DFC"
                     });
-                    return { status: 'sent', email: studentEmail };
-                });
+                    console.log(`[POST] [SMTP Status] Sent to ${studentEmail}`);
+                    return { status: 'sent', email: studentEmail, method: 'SMTP' };
+                } catch (e: any) {
+                    console.error(`[POST] SMTP failed for ${studentEmail}:`, e.message);
+                    return { status: 'error', email: studentEmail, error: e.message };
+                }
+            });
 
             const results = await Promise.allSettled(notificationPromises);
-            console.log(`[NOTIFICATIONS] Sent ${results.filter(r => r.status === 'fulfilled').length} notifications for program ${program_id}`);
+            const successful = results.filter(r => r.status === 'fulfilled').length;
+            console.log(`[POST] [NOTIFICATIONS DONE] Processed ${results.length} students. Successful: ${successful}`);
+        } else {
+            console.log(`[POST] No paid students found for program ${program_id}. No notifications sent.`);
         }
     } catch (notificationError) {
-        console.error("Error sending notifications:", notificationError);
+        console.error("[POST] Unexpected error in notification loop:", notificationError);
     }
 
     return NextResponse.json(newContent);
@@ -368,6 +391,73 @@ export async function PUT(request: Request) {
     // Invalidate cache
     revalidatePath(`/programs/${existingContent.program_id}/updates`, 'page');
     revalidatePath(`/api/companies/programs/content`, 'page');
+
+    // --- NOTIFICATION LOGIC FOR UPDATED CONTENT ---
+    try {
+        console.log(`[PUT] Starting update notification for content ID: ${id}`);
+
+        // Fetch program title
+        const { data: program } = await supabaseAdmin
+            .from("programs")
+            .select("title")
+            .eq("id", existingContent.program_id)
+            .single();
+
+        // Notify paid students about the update
+        const { data: paidStudents } = await supabaseAdmin
+            .from("Applications")
+            .select(`
+                student_id,
+                payment_completed,
+                student:student_profiles (
+                    full_name,
+                    user_id,
+                    email
+                )
+            `)
+            .eq("program_id", existingContent.program_id)
+            .in("status", ["accepted", "rsvp_confirmed", "reviewed"]);
+
+        if (paidStudents && paidStudents.length > 0) {
+            const targetStudents = paidStudents.filter((app: any) => app.payment_completed);
+            console.log(`[PUT] Notifying ${targetStudents.length} paid students about update to: ${updates.title || existingContent.title}`);
+
+            const notificationPromises = targetStudents.map(async (app: any) => {
+                const studentProfile = Array.isArray(app.student) ? app.student[0] : app.student;
+                if (!studentProfile) return;
+
+                let studentEmail = studentProfile.email;
+                if (!studentEmail && studentProfile.user_id) {
+                    const { data: userData } = await supabaseAdmin.auth.admin.getUserById(studentProfile.user_id);
+                    studentEmail = userData?.user?.email;
+                }
+
+                if (!studentEmail) return;
+
+                const contentTitle = updates.title || existingContent.title;
+
+                await sendEmail({
+                    to: studentEmail,
+                    subject: `Update: ${contentTitle}`,
+                    heading: "Course Content Updated 🔄",
+                    message: `Hi ${studentProfile.full_name.split(' ')[0] || "Student"},\n\nThere has been an update to "${contentTitle}" in your program **"${program?.title || "SEED"}"**.\n\nPlease check your dashboard to see the latest changes and resources.`,
+                    ctaText: "Check Update",
+                    ctaLink: `https://zigexconnect.com/programs/${existingContent.program_id}/updates`,
+                    opportunityTitle: program?.title || "SEED",
+                    opportunityType: "program",
+                    companyName: "SEED INC • GLOBAL TECH CAREERS",
+                    statusBadge: "UPDATED",
+                    statusColor: "#3B82F6"
+                }).catch(() => { }); // Silent fail for updates to avoid noise
+            });
+
+            Promise.allSettled(notificationPromises).then(results => {
+                console.log(`[PUT] Update notifications sent for ${results.length} students.`);
+            });
+        }
+    } catch (e) {
+        console.error("[PUT] Error in update notification logic:", e);
+    }
 
     return NextResponse.json(updatedContent);
 }
