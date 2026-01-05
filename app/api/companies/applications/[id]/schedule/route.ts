@@ -61,7 +61,7 @@ export async function POST(
             const { InterviewInvitationEmail } = await import("@/emails/InterviewInvitation");
 
             await resend.emails.send({
-                from: "ZIGEX <notifications@ZIGEX.online>",
+                from: "ZIGEX <notifications@zigexconnect.com>",
                 to: studentEmail,
                 subject: `Interview Invitation: ${opportunityTitle}`,
                 react: InterviewInvitationEmail({

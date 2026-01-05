@@ -23,7 +23,7 @@ interface ZigexOnboardingWelcomeProps {
 
 export const ZigexOnboardingWelcome = ({
   userName,
-  communityLink = "https://chat.whatsapp.com/GzXpExampleLink",
+  communityLink = "https://chat.whatsapp.com/DXYGLpny3DwGs5pkb1fPAr",
 }: ZigexOnboardingWelcomeProps) => {
   const previewText = `Welcome to ZIGEX, ${userName}! Your journey starts now.`;
 
@@ -73,7 +73,7 @@ export const ZigexOnboardingWelcome = ({
             <Section className="text-center mt-[32px] mb-[32px]">
               <Button
                 className="bg-[#155DFC] rounded-xl text-white text-[14px] font-bold no-underline text-center px-6 py-4 shadow-lg"
-                href="https://ZIGEX.online/dashboard"
+                href="https://zigexconnect.com/dashboard"
               >
                 Go to My Dashboard
               </Button>

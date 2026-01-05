@@ -45,7 +45,7 @@ export const ApplicationAcceptedEmail = ({
             <Section className="text-center mt-[32px] mb-[32px]">
               <Button
                 className="bg-[#155DFC] rounded-xl text-white text-[14px] font-bold no-underline text-center px-6 py-4"
-                href="https://ZIGEX.online/applications"
+                href="https://zigexconnect.com/applications"
               >
                 View Application
               </Button>

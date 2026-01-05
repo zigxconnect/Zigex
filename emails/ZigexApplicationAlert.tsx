@@ -46,7 +46,7 @@ export const ZigexApplicationAlertEmail = ({
           </Section>
           <Hr style={hr} />
           <Text style={footer}>
-            Please log in to the <a href="https://ZIGEX.online/admin/applicants">Admin Dashboard</a> to review this candidate.
+            Please log in to the <a href="https://zigexconnect.com/admin/applicants">Admin Dashboard</a> to review this candidate.
           </Text>
         </Section>
       </Container>

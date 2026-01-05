@@ -2,19 +2,27 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, X, CheckCircle2, AlertCircle, Zap, Loader, Lock } from "lucide-react";
+import { ExternalLink, X, CheckCircle2, AlertCircle, Zap, Loader, Lock, BookOpen, ChevronRight, Clock } from "lucide-react";
 import DynamicForm from "@/components/sections/dashboard/Application/application";
 import { cn } from "@/lib/utils";
 import ApplicationModal from "./Modal";
 import { SmartApplyPreview } from "./SmartApplyPreview";
 import { generateSmartApplicationDraft } from "@/lib/actions/feed/smart-apply.actions";
 import { WaitingListModal } from "./WaitingListModal";
+import Link from "next/link";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+
+interface ApplicationStatus {
+  hasApplied: boolean;
+  status: string | null;
+  paymentCompleted?: boolean;
+  applicationId?: string;
+}
 
 interface ApplyButtonProps {
   isOpen: boolean;
@@ -25,6 +33,7 @@ interface ApplyButtonProps {
   fullWidth?: boolean;
   buttonText?: string;
   opportunityData?: any;
+  applicationStatus?: ApplicationStatus;
 }
 
 interface Draft {
@@ -42,7 +51,8 @@ export function ApplyButton({
   title, 
   fullWidth = false, 
   buttonText = "Apply Now",
-  opportunityData
+  opportunityData,
+  applicationStatus
 }: ApplyButtonProps) {
   const [showModal, setShowModal] = useState(false);
   const [showSmartPreview, setShowSmartPreview] = useState(false);
@@ -56,6 +66,104 @@ export function ApplyButton({
   const handleSmartApplyClick = () => {
     setShowWaitingList(true);
   };
+
+  // Check if user is accepted
+  const isAccepted = applicationStatus?.hasApplied && applicationStatus?.status === "accepted";
+  const isPending = applicationStatus?.hasApplied && applicationStatus?.status === "pending";
+
+  // If user is accepted, show the "View Updates" button
+  if (isAccepted) {
+    const updatesUrl = type === "program" 
+      ? `/programs/${id}/updates` 
+      : type === "internship" 
+        ? `/internships/${id}` 
+        : `/events/${id}`;
+
+    return (
+      <div className={fullWidth ? "w-full" : ""}>
+        <div className="fixed bottom-16 md:static left-0 right-0 z-40 bg-white md:bg-transparent border-t md:border-t-0 border-gray-200 md:border-gray-200 shadow-2xl md:shadow-none md:mt-6">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-3 md:space-y-4">
+            {/* Accepted Status - View Program Updates */}
+            <Link href={updatesUrl} className="block">
+              <button
+                className="
+                  w-full relative overflow-hidden flex items-center justify-center gap-2 
+                  px-6 py-4 rounded-2xl font-black text-sm uppercase tracking-wider
+                  transition-all duration-300
+                  bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700
+                  text-white
+                  shadow-lg shadow-blue-200/50 hover:shadow-xl
+                  transform hover:scale-[1.01] active:scale-[0.99]
+                  group cursor-pointer
+                "
+              >
+                <span className="relative z-10 flex items-center justify-center gap-2">
+                  <BookOpen size={18} />
+                  {type === "program" ? "View Program Updates" : type === "event" ? "View Event Details" : "View Internship Details"}
+                  <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                </span>
+              </button>
+            </Link>
+
+            {/* Congrats Message */}
+            <div className="p-4 bg-blue-50 rounded-2xl border border-blue-200">
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                  <CheckCircle2 className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-blue-900 text-sm">You're In!</p>
+                  <p className="text-blue-700 text-xs">
+                    Congratulations! Access your curriculum, updates, and resources.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If user has a pending application, show "Under Review" status
+  if (isPending) {
+    return (
+      <div className={fullWidth ? "w-full" : ""}>
+        <div className="fixed bottom-16 md:static left-0 right-0 z-40 bg-white md:bg-transparent border-t md:border-t-0 border-gray-200 md:border-gray-200 shadow-2xl md:shadow-none md:mt-6">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-3 md:space-y-4">
+            {/* Pending Status */}
+            <button
+              disabled
+              className="
+                w-full relative overflow-hidden flex items-center justify-center gap-2 
+                px-6 py-4 rounded-2xl font-bold text-sm uppercase tracking-wider
+                bg-amber-100 text-amber-700 border-2 border-amber-200
+                cursor-not-allowed
+              "
+            >
+              <Clock size={18} />
+              Application Under Review
+            </button>
+
+            {/* Info Message */}
+            <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200">
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+                  <Clock className="w-5 h-5 text-amber-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-amber-900 text-sm">Under Review</p>
+                  <p className="text-amber-700 text-xs">
+                    Your application is being reviewed. We'll notify you once there's an update.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!isOpen) {
     // ... existing closed state return

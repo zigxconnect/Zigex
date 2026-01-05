@@ -113,7 +113,8 @@ export const sendApplicationConfirmation = async (params: {
         status_badge: isRSVP ? "CONFIRMED" : "UNDER REVIEW",
         status_color: isRSVP ? "#10B981" : "#3B82F6",
         cta_text: "View My Applications",
-        cta_link: "https://zigex.online/dashboard/applied-internships",
+        // ... (inside sendApplicationConfirmation)
+        cta_link: "https://zigexconnect.com/dashboard/applied-internships",
         footer_note: "You're receiving this because you applied through ZIGEX.",
     });
 };
@@ -144,7 +145,7 @@ export const sendAcceptanceEmail = async (params: {
         status_badge: "ACCEPTED",
         status_color: "#10B981",
         cta_text: whatsappGroupLink ? "Join WhatsApp Group" : "View Dashboard",
-        cta_link: whatsappGroupLink || "https://zigex.online/dashboard",
+        cta_link: whatsappGroupLink || "https://zigexconnect.com/dashboard",
         footer_note: "Congratulations again! We can't wait to see you thrive.",
     });
 };
@@ -174,7 +175,7 @@ export const sendRejectionEmail = async (params: {
         status_badge: "NOT SELECTED",
         status_color: "#6B7280",
         cta_text: "Explore More Opportunities",
-        cta_link: "https://zigex.online/feed",
+        cta_link: "https://zigexconnect.com/feed",
         footer_note: "Don't give up – your breakthrough is coming!",
     });
 };
@@ -199,7 +200,7 @@ export const sendWelcomeEmail = async (params: {
         status_badge: "NEW MEMBER",
         status_color: "#155DFC",
         cta_text: communityLink ? "Join Our Community" : "Complete Your Profile",
-        cta_link: communityLink || "https://zigex.online/profile/create",
+        cta_link: communityLink || "https://zigexconnect.com/profile/create",
         footer_note: "Welcome to the family! We're excited to have you.",
     });
 };
@@ -230,7 +231,7 @@ export const sendApplicationAlert = async (params: {
         status_badge: status.toUpperCase(),
         status_color: status === "pending" ? "#F59E0B" : status === "accepted" ? "#10B981" : "#6B7280",
         cta_text: "View in Dashboard",
-        cta_link: "https://zigex.online/dashboard/admin/applicants",
+        cta_link: "https://zigexconnect.com/dashboard/admin/applicants",
         footer_note: "This is an automated alert from ZIGEX.",
     });
 };

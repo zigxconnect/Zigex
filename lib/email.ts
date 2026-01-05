@@ -225,3 +225,186 @@ export const sendApplicationAlert = async (params: {
     html
   });
 };
+
+/**
+ * Sends a professional payment receipt email
+ */
+export const sendPaymentReceiptEmail = async (params: {
+  email: string;
+  name: string;
+  programTitle: string;
+  amount: number;
+  date: string;
+  ref: string;
+  month?: string;
+}) => {
+  const transporter = createTransporter();
+  if (!transporter) return;
+
+  // Specific override for "Weekend of Code" as requested
+  const finalAmount = params.programTitle.toLowerCase().includes("weekend of code")
+    ? 10000
+    : params.amount;
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    @media print {
+      body { background: white !important; padding: 0 !important; }
+      .no-print { display: none !important; }
+      .receipt-card { border: none !important; box-shadow: none !important; }
+    }
+    .receipt-card { 
+      max-width: 500px; 
+      margin: 0 auto; 
+      background: #ffffff; 
+      border: 1px solid #e2e8f0; 
+      border-radius: 12px; 
+      overflow: hidden;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    .receipt-header {
+      background: #0f172a;
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+    .receipt-body {
+      padding: 40px;
+      position: relative;
+    }
+    .watermark {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-30deg);
+      font-size: 80px;
+      font-weight: 900;
+      color: rgba(16, 185, 129, 0.05);
+      z-index: 0;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .meta-grid {
+      display: table;
+      width: 100%;
+      margin-bottom: 30px;
+      border-bottom: 1px dashed #e2e8f0;
+      padding-bottom: 20px;
+    }
+    .meta-col {
+      display: table-cell;
+      width: 50%;
+    }
+    .label {
+      font-size: 10px;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 700;
+      margin: 0 0 4px 0;
+    }
+    .value {
+      font-size: 14px;
+      color: #1e293b;
+      font-weight: 700;
+      margin: 0;
+    }
+    .item-row {
+      margin: 20px 0;
+      padding: 15px;
+      background: #f8fafc;
+      border-radius: 8px;
+    }
+    .total-row {
+      margin-top: 30px;
+      text-align: right;
+      padding-top: 20px;
+      border-top: 2px solid #0f172a;
+    }
+    .stamp {
+      display: inline-block;
+      border: 3px solid #10b981;
+      color: #10b981;
+      padding: 5px 15px;
+      border-radius: 4px;
+      font-weight: 900;
+      font-size: 14px;
+      transform: rotate(-10deg);
+      margin-top: 20px;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body style="background: #f1f5f9; padding: 50px 20px;">
+  <div class="receipt-card">
+    <div class="receipt-header">
+      <h1 style="margin: 0; font-size: 20px; letter-spacing: 2px; text-transform: uppercase;">Official Receipt</h1>
+      <p style="margin: 5px 0 0; font-size: 12px; opacity: 0.7;">ZIGEX CONNECT LEARNING PLATFORM</p>
+    </div>
+    
+    <div class="receipt-body">
+      <div class="watermark">OFFICIAL</div>
+      
+      <div class="meta-grid">
+        <div class="meta-col">
+          <p class="label">Received From</p>
+          <p class="value">${params.name}</p>
+        </div>
+        <div class="meta-col" style="text-align: right;">
+          <p class="label">Date Paid</p>
+          <p class="value">${new Date(params.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+        </div>
+      </div>
+
+      <div class="meta-grid" style="border: none; margin-bottom: 10px;">
+        <div class="meta-col">
+          <p class="label">Transaction Ref</p>
+          <p class="value" style="font-family: monospace;">${params.ref}</p>
+        </div>
+        <div class="meta-col" style="text-align: right;">
+          <p class="label">Status</p>
+          <p class="value" style="color: #10b981;">PAID FULL</p>
+        </div>
+      </div>
+
+      <div class="item-row">
+        <p class="label">Item Description</p>
+        <p style="margin: 5px 0 0; font-size: 15px; font-weight: 700; color: #0f172a;">${params.programTitle}</p>
+        <p style="margin: 2px 0 0; font-size: 12px; color: #64748b;">${params.month ? `Deployment: ${params.month}` : 'Program Enrollment'}</p>
+      </div>
+
+      <div class="total-row">
+        <p class="label">Grand Total Paid</p>
+        <p style="margin: 5px 0 0; font-size: 28px; font-weight: 900; color: #0f172a;">${finalAmount.toLocaleString()} <span style="font-size: 14px; font-weight: 400;">XAF</span></p>
+      </div>
+
+      <div style="text-align: center; margin-top: 30px;">
+        <div class="stamp">Verified & Paid</div>
+      </div>
+
+      <div class="no-print" style="margin-top: 40px; text-align: center; border-top: 1px solid #f1f5f9; padding-top: 20px;">
+        <p style="font-size: 12px; color: #94a3b8;">This is an electronically generated receipt. No signature required.</p>
+        <button onclick="window.print()" style="margin-top: 15px; background: #0f172a; color: white; border: none; padding: 8px 20px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;">Download / Print PDF</button>
+      </div>
+    </div>
+  </div>
+  
+  <p style="text-align: center; font-size: 11px; color: #64748b; margin-top: 30px;">
+    ZIGEX CONNECT • Douala, Cameroon • <a href="https://zigexconnect.com" style="color: #64748b; text-decoration: none;">zigexconnect.com</a>
+  </p>
+</body>
+</html>
+  `;
+
+  await transporter.sendMail({
+    from: `"ZIGEX Payments" <${GMAIL_USER}>`,
+    to: params.email,
+    subject: `Payment Receipt: ${params.programTitle}`,
+    html
+  });
+};

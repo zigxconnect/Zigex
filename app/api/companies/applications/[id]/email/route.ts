@@ -51,7 +51,7 @@ export async function POST(
 
         // We'll use the Alert template but for contacting the student
         await resend.emails.send({
-            from: "ZIGEX <notifications@ZIGEX.online>",
+            from: "ZIGEX <notifications@zigexconnect.com>",
             to: studentEmail,
             subject: `Follow-up regarding your application at ZIGEX`,
             react: ZigexApplicationAlertEmail({

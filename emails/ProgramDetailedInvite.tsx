@@ -63,7 +63,7 @@ export const ProgramDetailedInviteEmail = ({
             Stay tuned for further updates regarding the onboarding session. If you have any questions, feel free to reply to this email.
           </Text>
 
-          <Button style={dashboardButton} href="https://ZIGEX.online/applications">
+          <Button style={dashboardButton} href="https://zigexconnect.com/applications">
             View Application Workspace
           </Button>
 

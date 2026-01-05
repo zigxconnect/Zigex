@@ -473,6 +473,13 @@ const handleEventRSVP = async (
     );
   }
 
+  // Safely extract company info
+  const companyProfile = Array.isArray(postingInfo.company_profiles)
+    ? postingInfo.company_profiles[0]
+    : postingInfo.company_profiles;
+  const companyName = companyProfile?.company_name || "ZIGEX Partner";
+  const companyEmail = companyProfile?.email;
+
   const { data: appData, error: appError } = await supabase
     .from("Applications")
     .insert({
@@ -483,7 +490,7 @@ const handleEventRSVP = async (
       expectations: (formData.get("expectations") as string) || null,
       comments: (formData.get("comments") as string) || null,
       rsvp_status: formData.get("rsvp_status") === "true",
-      status: "rsvp_confirmed",
+      status: "accepted", // Automatically accepted for events
     })
     .select("id")
     .single();
@@ -504,27 +511,27 @@ const handleEventRSVP = async (
     referenceId: event_id,
   });
 
-  // Centralized Alerts
+  // Centralized Alerts (Zigex Admins)
   await sendApplicationAlert({
     adminEmail: "zigex.connect@gmail.com,zigexconnect.com@gmail.com",
     studentName: studentData.full_name,
     studentEmail: user.email,
     opportunityTitle: postingInfo.title,
     opportunityType: "Event",
-    status: "rsvp_confirmed",
-    companyName: postingInfo.company_profiles?.company_name
+    status: "accepted",
+    companyName: companyName
   });
 
   // Send to company if email exists
-  if (postingInfo.company_profiles?.email) {
+  if (companyEmail) {
     await sendApplicationAlert({
-      adminEmail: postingInfo.company_profiles.email,
+      adminEmail: companyEmail,
       studentName: studentData.full_name,
       studentEmail: user.email,
       opportunityTitle: postingInfo.title,
       opportunityType: "Event",
-      status: "rsvp_confirmed",
-      companyName: postingInfo.company_profiles?.company_name
+      status: "accepted",
+      companyName: companyName
     });
   }
 
@@ -533,7 +540,7 @@ const handleEventRSVP = async (
     email: user.email,
     name: studentData.full_name,
     eventName: postingInfo.title,
-    companyName: postingInfo.company_profiles?.company_name || "ZIGEX Partner",
+    companyName: companyName,
     eventDate: postingInfo.start_date ? new Date(postingInfo.start_date).toDateString() : "TBA",
     eventLocation: postingInfo.location || "TBA",
     eventRequirements: postingInfo.description

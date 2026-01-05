@@ -28,6 +28,8 @@ export async function GET(request: Request) {
         comments,
         rsvp_status,
         student_id,
+        payment_completed,
+        program_id,
         internship:internships(id, title, description),
         program:programs(id, title, description),
         event:event(id, title, description),
@@ -69,16 +71,19 @@ export async function GET(request: Request) {
     const authEmailMap: Record<string, string> = {};
     if (userIdsNeedingEmail.length > 0) {
       // Use admin API to get user emails from auth.users
-      for (const userId of userIdsNeedingEmail) {
-        try {
-          const { data: userData } = await supabaseAdmin.auth.admin.getUserById(userId);
-          if (userData?.user?.email) {
-            authEmailMap[userId] = userData.user.email;
+      // Use admin API to get user emails from auth.users
+      await Promise.all(
+        userIdsNeedingEmail.map(async (userId) => {
+          try {
+            const { data: userData } = await supabaseAdmin.auth.admin.getUserById(userId);
+            if (userData?.user?.email) {
+              authEmailMap[userId] = userData.user.email;
+            }
+          } catch (e) {
+            console.error(`Failed to fetch auth email for ${userId}:`, e);
           }
-        } catch (e) {
-          console.error(`Failed to fetch auth email for ${userId}:`, e);
-        }
-      }
+        })
+      );
     }
 
     const formattedApplicants: Applicant[] = applications.map((app: any) => {
@@ -128,6 +133,10 @@ export async function GET(request: Request) {
         // User Info
         studentId: student?.id,
         userId: student?.user_id,
+
+        // Payment Status (for paid programs)
+        isPaid: app.payment_completed || false,
+        programId: app.program_id || null,
       };
     });
 

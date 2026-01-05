@@ -1,7 +1,7 @@
-"use server";
-
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { supabaseAdmin } from "@/lib/supabase/server";
+import { unstable_cache } from "next/cache";
 
 // Types for Happening Now Items
 export type HappeningNowItem = {
@@ -33,28 +33,22 @@ async function createSupabaseClient() {
         set(name: string, value: string, options: CookieOptions) {
           try {
             cookieStore.set({ name, value, ...options });
-          } catch (error) {}
+          } catch (error) { }
         },
         remove(name: string, options: CookieOptions) {
           try {
             cookieStore.set({ name, value: "", ...options });
-          } catch (error) {}
+          } catch (error) { }
         },
       },
     }
   );
 }
 
-/**
- * Fetch all happening now content from the database
- * Transforms JSONB structure into flat array of HappeningNowItem objects
- */
-export async function getHappeningNowContent(): Promise<HappeningNowItem[]> {
+const fetchHappeningNow = async (): Promise<HappeningNowItem[]> => {
   try {
-    const supabase = await createSupabaseClient();
-
-    // Fetch from happening_now table
-    const { data, error } = await supabase
+    // Use admin client for cached public data to avoid cookie dependency
+    const { data, error } = await supabaseAdmin
       .from("happening_now")
       .select("*")
       .order("updated_at", { ascending: false });
@@ -68,11 +62,6 @@ export async function getHappeningNowContent(): Promise<HappeningNowItem[]> {
     const happeningNowItems: HappeningNowItem[] = (data || []).flatMap(
       (item: any) => {
         const items: HappeningNowItem[] = [];
-
-        console.log(`📥 Processing Happening Now Item:`);
-        console.log(`  - Company: ${item.company}`);
-        console.log(`  - Images: ${item.images?.length || 0}`);
-        console.log(`  - Captions: ${JSON.stringify(item.captions)}`);
 
         // Add video as first item if it exists
         if (item.video?.url) {
@@ -93,7 +82,6 @@ export async function getHappeningNowContent(): Promise<HappeningNowItem[]> {
         if (item.images && Array.isArray(item.images)) {
           item.images.forEach((imageUrl: string, index: number) => {
             const caption = item.captions?.[index] || `${item.company} - Image ${index + 1}`;
-            console.log(`  - Image ${index + 1} Caption: "${caption}"`);
             items.push({
               id: `${item.id}-image-${index}`,
               type: "image",
@@ -112,13 +100,24 @@ export async function getHappeningNowContent(): Promise<HappeningNowItem[]> {
       }
     );
 
-    console.log(`✅ Fetched ${happeningNowItems.length} happening now items with captions`);
     return happeningNowItems;
   } catch (error) {
     console.error("Exception in getHappeningNowContent:", error);
     return [];
   }
-}
+};
+
+/**
+ * Fetch all happening now content from the database
+ * Cached for 60 seconds
+ */
+export const getHappeningNowContent = unstable_cache(
+  fetchHappeningNow,
+  ['happening-now-content'],
+  { revalidate: 60, tags: ['happening-now'] }
+);
+
+
 
 /**
  * Increment view count for a happening now item
@@ -191,7 +190,7 @@ export async function uploadHappeningNow(
     // For now, we'll assume any logged-in user with a company profile can upload, 
     // or we can just rely on the fact they are logged in if that's the requirement.
     // Let's add a check for company profile to be safe, as 'company' field is passed in form data but should probably come from profile.
-    
+
     const { data: companyProfile } = await supabase
       .from("company_profiles")
       .select("role")
@@ -199,8 +198,8 @@ export async function uploadHappeningNow(
       .single();
 
     if (!companyProfile && user.email !== process.env.ADMIN_EMAIL) { // Basic admin check fallback
-       // If strict role checking is needed:
-       // return { success: false, error: "Unauthorized: Only companies can upload happening now content." };
+      // If strict role checking is needed:
+      // return { success: false, error: "Unauthorized: Only companies can upload happening now content." };
     }
 
     // Extract form data with proper type checking

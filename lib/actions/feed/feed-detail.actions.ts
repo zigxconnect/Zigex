@@ -2,20 +2,19 @@
 "use server";
 
 import { cache } from "react";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseServerClient, supabaseAdmin } from "@/lib/supabase/server";
+import { unstable_cache } from "next/cache";
 
 export type FeedType = "internships" | "programs" | "events";
 
 /**
  * Get a single feed item by ID
- * Searches across all feed types
+ * Searches across all feed types using cached admin query
  */
-export const getFeedItemById = cache(async (id: string) => {
+const fetchFeedItemById = async (id: string) => {
   try {
-    const supabase = await createSupabaseServerClient();
-
     // Try to find in internships
-    const { data: internship, error: internshipError } = await supabase
+    const { data: internship, error: internshipError } = await supabaseAdmin
       .from("internships")
       .select(
         `
@@ -41,7 +40,7 @@ export const getFeedItemById = cache(async (id: string) => {
     }
 
     // Try to find in programs
-    const { data: program, error: programError } = await supabase
+    const { data: program, error: programError } = await supabaseAdmin
       .from("programs")
       .select(
         `
@@ -67,7 +66,7 @@ export const getFeedItemById = cache(async (id: string) => {
     }
 
     // Try to find in events
-    const { data: event, error: eventError } = await supabase
+    const { data: event, error: eventError } = await supabaseAdmin
       .from("event")
       .select(
         `
@@ -103,7 +102,16 @@ export const getFeedItemById = cache(async (id: string) => {
       error: "Failed to fetch item",
     };
   }
-});
+};
+
+export const getFeedItemById = unstable_cache(
+  fetchFeedItemById,
+  ["feed-item-details"],
+  {
+    revalidate: 300,
+    tags: ["feed-item"],
+  }
+);
 
 /**
  * Get related programs from the same company
@@ -240,6 +248,88 @@ export const getCompanyRelatedItems = cache(
     }
   }
 );
+
+/**
+ * Get the current user's application status for an opportunity
+ * Returns the application status if the user has applied, null otherwise
+ */
+export async function getApplicationStatus(
+  opportunityId: string,
+  opportunityType: FeedType
+): Promise<{
+  hasApplied: boolean;
+  status: string | null;
+  paymentCompleted?: boolean;
+  applicationId?: string;
+}> {
+  try {
+    const supabase = await createSupabaseServerClient();
+
+    // Get current user
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return { hasApplied: false, status: null };
+    }
+
+    // Get student profile
+    const { data: studentProfile, error: profileError } = await supabase
+      .from("student_profiles")
+      .select("id")
+      .eq("user_id", user.id)
+      .single();
+
+    if (profileError || !studentProfile) {
+      return { hasApplied: false, status: null };
+    }
+
+    // Map feed type to application type
+    const applicationTypeMap: Record<FeedType, string> = {
+      internships: "internship",
+      programs: "program",
+      events: "event",
+    };
+
+    const applicationType = applicationTypeMap[opportunityType];
+
+    // Map feed type to the correct foreign key column
+    const foreignKeyMap: Record<FeedType, string> = {
+      internships: "internship_id",
+      programs: "program_id",
+      events: "event_id",
+    };
+
+    const foreignKey = foreignKeyMap[opportunityType];
+
+    // Check if the user has applied to this opportunity
+    const { data: application, error: applicationError } = await supabase
+      .from("Applications")
+      .select("id, status, payment_completed")
+      .eq("student_id", studentProfile.id)
+      .eq("application_type", applicationType)
+      .eq(foreignKey, opportunityId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (applicationError || !application) {
+      return { hasApplied: false, status: null };
+    }
+
+    return {
+      hasApplied: true,
+      status: application.status,
+      paymentCompleted: application.payment_completed || false,
+      applicationId: application.id,
+    };
+  } catch (error) {
+    console.error("Error checking application status:", error);
+    return { hasApplied: false, status: null };
+  }
+}
 
 /**
  * Check if the opportunity is still open based on dates
