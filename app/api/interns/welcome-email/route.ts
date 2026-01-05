@@ -1,7 +1,7 @@
 import { authMiddleware } from "@/lib/middleware/auth";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { sendWelcomeEmail } from "@/lib/mail";
+import { sendWelcomeEmail } from "@/lib/emailjs";
 
 export async function POST(request: Request) {
   const auth = await authMiddleware(request);

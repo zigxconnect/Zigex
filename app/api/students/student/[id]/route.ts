@@ -1,7 +1,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { sendWelcomeEmail } from "@/lib/email";
+import { sendWelcomeEmail } from "@/lib/emailjs";
 import { sendWhatsAppWelcomeInvite } from "@/lib/whatsapp";
 
 
