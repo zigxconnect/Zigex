@@ -3,9 +3,10 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { programId: string } }
+  { params }: { params: Promise<{ programId: string }> }
 ) {
   try {
+    const { programId } = await params;
     const supabase = await createClient();
 
     const {
@@ -20,7 +21,7 @@ export async function GET(
     const { data: program } = await supabase
       .from("programs")
       .select("company_id")
-      .eq("id", params.programId)
+      .eq("id", programId)
       .single();
 
     if (!program) {
@@ -49,7 +50,7 @@ export async function GET(
          student_profiles(full_name),
          program_student_payment(is_paid, amount_paid_xaf, payment_date, payment_ref)`
       )
-      .eq("program_id", params.programId)
+      .eq("program_id", programId)
       .eq("status", "accepted");
 
     if (appError) throw appError;

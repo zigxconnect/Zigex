@@ -5,16 +5,17 @@ import { sendPaymentReceiptEmail } from "@/lib/email";
 // Get payment status for a student in a program
 export async function GET(
   req: NextRequest,
-  { params }: { params: { programId: string; studentId: string } }
+  { params }: { params: Promise<{ programId: string; studentId: string }> }
 ) {
   try {
+    const { programId, studentId } = await params;
     const supabase = await createClient();
 
     const { data: payment, error } = await supabase
       .from("program_student_payment")
       .select("*")
-      .eq("program_id", params.programId)
-      .eq("student_id", params.studentId)
+      .eq("program_id", programId)
+      .eq("student_id", studentId)
       .single();
 
     if (error && error.code !== "PGRST116") throw error; // PGRST116 = no rows found
@@ -39,9 +40,10 @@ export async function GET(
 // Admin updates payment status
 export async function POST(
   req: NextRequest,
-  { params }: { params: { programId: string; studentId: string } }
+  { params }: { params: Promise<{ programId: string; studentId: string }> }
 ) {
   try {
+    const { programId, studentId } = await params;
     const supabase = await createClient();
     const {
       amount_paid_xaf,
@@ -64,7 +66,7 @@ export async function POST(
     const { data: program } = await supabase
       .from("programs")
       .select("company_id")
-      .eq("id", params.programId)
+      .eq("id", programId)
       .single();
 
     if (!program) {
@@ -89,8 +91,8 @@ export async function POST(
     const { data, error } = await supabase
       .from("program_student_payment")
       .upsert({
-        program_id: params.programId,
-        student_id: params.studentId,
+        program_id: programId,
+        student_id: studentId,
         application_id: applicationId,
         amount_paid_xaf,
         payment_date,
@@ -105,6 +107,14 @@ export async function POST(
 
     if (error) throw error;
 
+    // Sync payment status to Applications table for easier querying in other parts of the app
+    if (applicationId) {
+      await supabaseAdmin
+        .from("Applications")
+        .update({ is_paid: is_paid })
+        .eq("id", applicationId);
+    }
+
     // Send email receipt if payment is marked as paid
     if (is_paid === true) {
       try {
@@ -112,7 +122,7 @@ export async function POST(
         const { data: studentProfile } = await supabaseAdmin
           .from("student_profiles")
           .select("full_name, user_id")
-          .eq("id", params.studentId)
+          .eq("id", studentId)
           .single();
 
         if (studentProfile?.user_id) {
@@ -123,7 +133,7 @@ export async function POST(
           const { data: programData } = await supabaseAdmin
             .from("programs")
             .select("title")
-            .eq("id", params.programId)
+            .eq("id", programId)
             .single();
 
           if (studentEmail && programData) {

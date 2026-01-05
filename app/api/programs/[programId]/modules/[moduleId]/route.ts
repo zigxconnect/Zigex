@@ -3,13 +3,12 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { programId: string; moduleId: string } }
+  { params }: { params: Promise<{ programId: string; moduleId: string }> }
 ) {
   try {
+    const { moduleId } = await params;
     const supabase = await createClient();
     const { title, moduleNumber, description, tutors } = await req.json();
-
-    const { moduleId } = params;
 
     // Update module in program_content table
     const { data, error } = await supabase
@@ -39,12 +38,11 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { programId: string; moduleId: string } }
+  { params }: { params: Promise<{ programId: string; moduleId: string }> }
 ) {
   try {
+    const { moduleId } = await params;
     const supabase = await createClient();
-
-    const { moduleId } = params;
 
     // Delete module from program_content table
     const { error } = await supabase

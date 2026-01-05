@@ -3,6 +3,7 @@ import { authMiddleware } from "@/lib/middleware/auth";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { sendEmail } from "@/lib/email";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 // GET: Fetch all content for a program
 // Secure: Checks if student has paid. If not, content body and resources are redacted from API response.
@@ -51,13 +52,13 @@ export async function GET(request: Request) {
         if (studentProfile) {
             const { data: application } = await supabaseAdmin
                 .from("Applications")
-                .select("payment_completed, status")
+                .select("payment_completed, is_paid, status")
                 .eq("program_id", programId)
                 .eq("student_id", studentProfile.id)
                 .single();
 
-            // Grant access if accepted and payment is completed
-            if (application && application.status === 'accepted' && application.payment_completed) {
+            // Grant access if accepted and payment is completed (check both old and new flags)
+            if (application && application.status === 'accepted' && (application.payment_completed || application.is_paid)) {
                 hasAccess = true;
             }
         }
@@ -231,52 +232,68 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: insertError.message }, { status: 500 });
     }
 
-    // Optionally send email notifications to accepted students
-    if (auth.user && auth.type === "company") {
-        try {
-            // Get all accepted students for this program who have paid
-            const { data: acceptedStudents } = await supabaseAdmin
-                .from("Applications")
-                .select(`
-          student_id,
-          payment_completed,
-          student:student_profiles (
-            full_name,
-            user_id
-          )
-        `)
-                .eq("program_id", program_id)
-                .eq("status", "accepted")
-                .eq("payment_completed", true);
+    // Invalidate cache so students see the new content immediately
+    revalidatePath(`/programs/${program_id}/updates`, 'page');
+    revalidatePath(`/api/companies/programs/content`, 'page');
+    // Also revalidate by tag if using unstable_cache
+    try {
+        revalidateTag('program-content', 'max');
+    } catch (e) {
+        console.error("Error revalidating tag:", e);
+    }
 
-            if (acceptedStudents && acceptedStudents.length > 0) {
-                // Get emails from auth users
-                const notificationPromises = acceptedStudents.map(async (app: any) => {
+    // Send email notifications to all paid students (Accepted or RSVP Confirmed)
+    try {
+        const { data: paidStudents } = await supabaseAdmin
+            .from("Applications")
+            .select(`
+                student_id,
+                payment_completed,
+                is_paid,
+                student:student_profiles (
+                    full_name,
+                    user_id,
+                    email
+                )
+            `)
+            .eq("program_id", program_id)
+            .in("status", ["accepted", "rsvp_confirmed", "reviewed"]);
+
+        if (paidStudents && paidStudents.length > 0) {
+            const notificationPromises = paidStudents
+                .filter((app: any) => app.payment_completed || app.is_paid)
+                .map(async (app: any) => {
                     const student = Array.isArray(app.student) ? app.student[0] : app.student;
-                    if (!student?.user_id) return;
+                    if (!student) return { status: 'skipped', reason: 'no student profile' };
 
-                    const { data: userData } = await supabaseAdmin.auth.admin.getUserById(student.user_id);
-                    if (!userData?.user?.email) return;
+                    // Get email from profile first, then fallback to auth
+                    let studentEmail = student.email;
+                    if (!studentEmail && student.user_id) {
+                        const { data: userData } = await supabaseAdmin.auth.admin.getUserById(student.user_id);
+                        studentEmail = userData?.user?.email;
+                    }
 
-                    return sendEmail({
-                        to: userData.user.email,
-                        subject: `📚 New Content: ${title} - ${program.title}`,
-                        heading: "New Program Content Available!",
-                        message: `Hi ${student.full_name || "Student"},\n\nNew content has been added to your program "${program.title}":\n\n**${title}**\n\n${description || "Check it out in your dashboard!"}\n\nLog in to access the full content and resources.`,
-                        ctaText: "View Content",
+                    if (!studentEmail) return { status: 'skipped', reason: 'no email found' };
+
+                    await sendEmail({
+                        to: studentEmail,
+                        subject: `📚 New Resource: ${title} - SEED`,
+                        heading: "New Learning Resource Available!",
+                        message: `Hi ${student.full_name || "Student"},\n\nA new resource has been added to your program **"${program.title}"**:\n\n**${title}**\n\n${description || "Log in now to access your new learning materials, videos, and assignments."}`,
+                        ctaText: "Access Course Content",
                         ctaLink: `https://zigexconnect.com/programs/${program_id}/updates`,
                         opportunityTitle: program.title,
                         opportunityType: "program",
-                        companyName: auth.company?.company_name || "ZIGEX",
+                        companyName: "SEED INC • GLOBAL TECH CAREERS",
                     });
+                    return { status: 'sent', email: studentEmail };
                 });
 
-                await Promise.allSettled(notificationPromises);
-            }
-        } catch (notificationError) {
-            console.error("Error sending notifications:", notificationError);
-            // Don't fail the request if notifications fail
+            const results = await Promise.allSettled(notificationPromises);
+            console.log(`[NOTIFICATIONS] Sent ${results.filter(r => r.status === 'fulfilled').length} notifications for program ${program_id}`);
         }
+    } catch (notificationError) {
+        console.error("Error sending notifications:", notificationError);
     }
 
     return NextResponse.json(newContent);
@@ -348,6 +365,10 @@ export async function PUT(request: Request) {
         return NextResponse.json({ error: updateError.message }, { status: 500 });
     }
 
+    // Invalidate cache
+    revalidatePath(`/programs/${existingContent.program_id}/updates`, 'page');
+    revalidatePath(`/api/companies/programs/content`, 'page');
+
     return NextResponse.json(updatedContent);
 }
 
@@ -395,6 +416,10 @@ export async function DELETE(request: Request) {
     if (deleteError) {
         return NextResponse.json({ error: deleteError.message }, { status: 500 });
     }
+
+    // Invalidate cache
+    revalidatePath(`/programs/${existingContent.program_id}/updates`, 'page');
+    revalidatePath(`/api/companies/programs/content`, 'page');
 
     return NextResponse.json({ success: true });
 }

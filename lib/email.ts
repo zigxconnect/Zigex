@@ -123,6 +123,41 @@ const generateEmailHTML = (params: {
 };
 
 /**
+ * Generic notification email sender
+ */
+export const sendEmail = async (params: {
+  to: string;
+  subject: string;
+  heading: string;
+  message: string;
+  ctaText?: string;
+  ctaLink?: string;
+  statusBadge?: string;
+  statusColor?: string;
+  opportunityTitle?: string;
+  opportunityType?: string;
+  companyName?: string;
+}) => {
+  const transporter = createTransporter();
+  if (!transporter) return;
+
+  const html = generateEmailHTML(params);
+
+  try {
+    await transporter.sendMail({
+      from: `"SEED GATE" <${GMAIL_USER}>`,
+      to: params.to,
+      subject: params.subject,
+      html: html,
+    });
+    console.log(`[EMAIL] Sent to ${params.to}: ${params.subject}`);
+  } catch (error) {
+    console.error("[EMAIL] Failed:", error);
+    throw error;
+  }
+};
+
+/**
  * Sends acceptance email to candidate
  */
 export const sendAcceptanceEmail = async (params: {
@@ -190,6 +225,86 @@ export const sendRejectionEmail = async (params: {
 };
 
 /**
+ * Sends application confirmation to candidate
+ */
+export const sendApplicationConfirmation = async (params: {
+  email: string;
+  name: string;
+  opportunityTitle: string;
+  opportunityType: string;
+  companyName: string;
+  isRSVP?: boolean;
+}) => {
+  const firstName = params.name.split(" ")[0];
+  await sendEmail({
+    to: params.email,
+    subject: params.isRSVP
+      ? `🎟️ RSVP Confirmed: ${params.opportunityTitle}`
+      : `✅ Application Received: ${params.opportunityTitle}`,
+    heading: params.isRSVP ? "You're In!" : "Application Received",
+    message: params.isRSVP
+      ? `Hey ${firstName}! 🎉\n\nYour spot for "${params.opportunityTitle}" by ${params.companyName} is confirmed! We can't wait to see you there.`
+      : `Hey ${firstName}! 👋\n\nWe've received your application for "${params.opportunityTitle}" at ${params.companyName}. It's now being reviewed by the team.`,
+    opportunityTitle: params.opportunityTitle,
+    opportunityType: params.opportunityType,
+    companyName: params.companyName,
+    statusBadge: params.isRSVP ? "CONFIRMED" : "UNDER REVIEW",
+    statusColor: params.isRSVP ? "#10B981" : "#3B82F6",
+    ctaText: "View My Applications",
+    ctaLink: "https://zigexconnect.com/dashboard/applied-internships",
+  });
+};
+
+/**
+ * Sends event RSVP confirmation
+ */
+export const sendEventRSVPConfirmation = async (params: {
+  email: string;
+  name: string;
+  eventName: string;
+  companyName: string;
+  eventDate: string;
+  eventLocation: string;
+  eventRequirements?: string;
+}) => {
+  await sendEmail({
+    to: params.email,
+    subject: `🎟️ RSVP Confirmed: ${params.eventName}`,
+    heading: "Your spot is reserved!",
+    message: `Hi ${params.name},\n\nYour RSVP for **${params.eventName}** has been confirmed.\n\n📅 **Date:** ${params.eventDate}\n📍 **Location:** ${params.eventLocation}\n\nWe look forward to seeing you there!`,
+    opportunityTitle: params.eventName,
+    opportunityType: "Event",
+    companyName: params.companyName,
+    ctaText: "View Event Details",
+    ctaLink: `https://zigexconnect.com/events`,
+  });
+  return { success: true };
+};
+
+/**
+ * Sends a welcome email
+ */
+export const sendWelcomeEmail = async (params: {
+  email: string,
+  name: string,
+  opportunityTitle?: string,
+  companyName?: string,
+  customMessage?: string,
+  communityLink?: string
+}) => {
+  const { email, name, opportunityTitle, companyName, customMessage, communityLink } = params;
+  const firstName = name.split(" ")[0];
+  await sendEmail({
+    to: email,
+    subject: `🚀 Welcome to ZIGEX, ${firstName}!`,
+    heading: "Welcome aboard!",
+    message: customMessage || `Hey ${firstName}! 👋\n\nWelcome to ZIGEX. We're excited to have you as part of our platform.${opportunityTitle ? ` You've joined the "${opportunityTitle}" program at ${companyName}.` : ''}`,
+    ctaText: communityLink ? "Join Our Community" : "Go to Dashboard",
+    ctaLink: communityLink || "https://zigexconnect.com/dashboard",
+  });
+};
+
+/**
  * Sends an alert to admins/companies about an application status change
  */
 export const sendApplicationAlert = async (params: {
@@ -252,154 +367,66 @@ export const sendPaymentReceiptEmail = async (params: {
 <head>
   <meta charset="utf-8">
   <style>
-    @media print {
-      body { background: white !important; padding: 0 !important; }
-      .no-print { display: none !important; }
-      .receipt-card { border: none !important; box-shadow: none !important; }
-    }
-    .receipt-card { 
-      max-width: 500px; 
-      margin: 0 auto; 
-      background: #ffffff; 
-      border: 1px solid #e2e8f0; 
-      border-radius: 12px; 
-      overflow: hidden;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-    .receipt-header {
-      background: #0f172a;
-      color: white;
-      padding: 30px;
-      text-align: center;
-    }
-    .receipt-body {
-      padding: 40px;
-      position: relative;
-    }
-    .watermark {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%) rotate(-30deg);
-      font-size: 80px;
-      font-weight: 900;
-      color: rgba(16, 185, 129, 0.05);
-      z-index: 0;
-      pointer-events: none;
-      white-space: nowrap;
-    }
-    .meta-grid {
-      display: table;
-      width: 100%;
-      margin-bottom: 30px;
-      border-bottom: 1px dashed #e2e8f0;
-      padding-bottom: 20px;
-    }
-    .meta-col {
-      display: table-cell;
-      width: 50%;
-    }
-    .label {
-      font-size: 10px;
-      color: #94a3b8;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      font-weight: 700;
-      margin: 0 0 4px 0;
-    }
-    .value {
-      font-size: 14px;
-      color: #1e293b;
-      font-weight: 700;
-      margin: 0;
-    }
-    .item-row {
-      margin: 20px 0;
-      padding: 15px;
-      background: #f8fafc;
-      border-radius: 8px;
-    }
-    .total-row {
-      margin-top: 30px;
-      text-align: right;
-      padding-top: 20px;
-      border-top: 2px solid #0f172a;
-    }
-    .stamp {
-      display: inline-block;
-      border: 3px solid #10b981;
-      color: #10b981;
-      padding: 5px 15px;
-      border-radius: 4px;
-      font-weight: 900;
-      font-size: 14px;
-      transform: rotate(-10deg);
-      margin-top: 20px;
-      text-transform: uppercase;
-    }
+    body { font-family: 'Inter', system-ui, sans-serif; color: #1e293b; line-height: 1.5; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; background-color: #f8fafc; }
+    .receipt-card { background: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+    .header { background: #000000; padding: 40px; text-align: center; }
+    .body { padding: 40px; }
+    .meta-grid { margin-bottom: 30px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 20px; }
+    .label { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; font-weight: 800; margin-bottom: 4px; }
+    .value { font-size: 15px; color: #0f172a; font-weight: 700; margin-bottom: 20px; }
+    .item-box { background: #f1f5f9; padding: 24px; border-radius: 16px; margin-bottom: 30px; }
+    .total-section { text-align: right; }
+    .total-amount { font-size: 32px; font-weight: 950; color: #000000; }
+    .stamp { display: inline-block; border: 3px solid #10b981; color: #10b981; padding: 8px 16px; border-radius: 8px; font-weight: 900; font-size: 16px; text-transform: uppercase; transform: rotate(-5deg); margin-top: 30px; }
+    .footer { text-align: center; padding-top: 40px; font-size: 12px; color: #94a3b8; }
   </style>
 </head>
-<body style="background: #f1f5f9; padding: 50px 20px;">
-  <div class="receipt-card">
-    <div class="receipt-header">
-      <h1 style="margin: 0; font-size: 20px; letter-spacing: 2px; text-transform: uppercase;">Official Receipt</h1>
-      <p style="margin: 5px 0 0; font-size: 12px; opacity: 0.7;">ZIGEX CONNECT LEARNING PLATFORM</p>
+<body>
+  <div class="container">
+    <div class="receipt-card">
+      <div class="header">
+        <img src="https://zigexconnect.com/seedLogo.png" alt="SEED" style="height: 50px; margin-bottom: 15px;">
+        <h1 style="color: white; margin: 0; font-size: 20px; letter-spacing: 2px; text-transform: uppercase;">Payment Receipt</h1>
+      </div>
+      
+      <div class="body">
+        <div class="meta-grid">
+          <div class="label">Candidate Name</div>
+          <div class="value">${params.name}</div>
+          
+          <div class="label">Date of Payment</div>
+          <div class="value">${new Date(params.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
+          
+          <div class="label">Transaction Ref</div>
+          <div class="value" style="font-family: monospace;">${params.ref}</div>
+        </div>
+
+        <div class="item-box">
+          <div class="label">Description</div>
+          <div style="font-size: 18px; font-weight: 800; color: #000000; margin: 5px 0;">${params.programTitle}</div>
+          <div style="color: #64748b; font-size: 14px;">${params.month ? `Current Term: ${params.month}` : 'Program Enrollment'}</div>
+        </div>
+
+        <div class="total-section">
+          <div class="label">Net Amount Paid</div>
+          <div class="total-amount">${finalAmount.toLocaleString()} XAF</div>
+        </div>
+
+        <div style="text-align: center;">
+          <div class="stamp">Verified & Paid</div>
+        </div>
+      </div>
     </div>
     
-    <div class="receipt-body">
-      <div class="watermark">OFFICIAL</div>
-      
-      <div class="meta-grid">
-        <div class="meta-col">
-          <p class="label">Received From</p>
-          <p class="value">${params.name}</p>
-        </div>
-        <div class="meta-col" style="text-align: right;">
-          <p class="label">Date Paid</p>
-          <p class="value">${new Date(params.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
-        </div>
-      </div>
-
-      <div class="meta-grid" style="border: none; margin-bottom: 10px;">
-        <div class="meta-col">
-          <p class="label">Transaction Ref</p>
-          <p class="value" style="font-family: monospace;">${params.ref}</p>
-        </div>
-        <div class="meta-col" style="text-align: right;">
-          <p class="label">Status</p>
-          <p class="value" style="color: #10b981;">PAID FULL</p>
-        </div>
-      </div>
-
-      <div class="item-row">
-        <p class="label">Item Description</p>
-        <p style="margin: 5px 0 0; font-size: 15px; font-weight: 700; color: #0f172a;">${params.programTitle}</p>
-        <p style="margin: 2px 0 0; font-size: 12px; color: #64748b;">${params.month ? `Deployment: ${params.month}` : 'Program Enrollment'}</p>
-      </div>
-
-      <div class="total-row">
-        <p class="label">Grand Total Paid</p>
-        <p style="margin: 5px 0 0; font-size: 28px; font-weight: 900; color: #0f172a;">${finalAmount.toLocaleString()} <span style="font-size: 14px; font-weight: 400;">XAF</span></p>
-      </div>
-
-      <div style="text-align: center; margin-top: 30px;">
-        <div class="stamp">Verified & Paid</div>
-      </div>
-
-      <div class="no-print" style="margin-top: 40px; text-align: center; border-top: 1px solid #f1f5f9; padding-top: 20px;">
-        <p style="font-size: 12px; color: #94a3b8;">This is an electronically generated receipt. No signature required.</p>
-        <button onclick="window.print()" style="margin-top: 15px; background: #0f172a; color: white; border: none; padding: 8px 20px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;">Download / Print PDF</button>
-      </div>
+    <div class="footer">
+      <p style="font-weight: 700; color: #64748b; margin-bottom: 4px;">SEED INC • GLOBAL TECH CAREERS</p>
+      <p>© ${new Date().getFullYear()} Zigex Connect. Bamenda, Cameroon</p>
     </div>
   </div>
-  
-  <p style="text-align: center; font-size: 11px; color: #64748b; margin-top: 30px;">
-    ZIGEX CONNECT • Douala, Cameroon • <a href="https://zigexconnect.com" style="color: #64748b; text-decoration: none;">zigexconnect.com</a>
-  </p>
 </body>
 </html>
-  `;
+    `;
 
   await transporter.sendMail({
     from: `"ZIGEX Payments" <${GMAIL_USER}>`,

@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 
 // Cached function to get program content
 // Uses admin client to bypass RLS and avoid cookie dependency in cache
+// Forces revalidation of program content fetching
 export const getProgramContentCached = unstable_cache(
     async (programId: string) => {
         const { data: content, error } = await supabaseAdmin
@@ -44,7 +45,7 @@ export async function getStudentEnrollment(programId: string, userId: string) {
     // 1. Get student profile
     const { data: studentProfile } = await supabase
         .from("student_profiles")
-        .select("id")
+        .select("id, full_name")
         .eq("user_id", userId)
         .single();
 
@@ -71,11 +72,17 @@ export async function getStudentEnrollment(programId: string, userId: string) {
 
     if (!application) return null;
 
-    // Map to the shape expected by the client
-    // Note: application.program is likely an object or array depending on query, usually object if single relation
-    // But strictly typed, it might be array. We handle safely.
     const program = Array.isArray(application.program) ? application.program[0] : application.program;
     const company = program?.company;
+
+    // 3. Get payment details if paid
+    const { data: payment } = (application.payment_completed || application.is_paid)
+        ? await supabase
+            .from("program_student_payment")
+            .select("*")
+            .eq("application_id", application.id)
+            .maybeSingle()
+        : { data: null };
 
     return {
         applicationId: application.id,
@@ -84,10 +91,17 @@ export async function getStudentEnrollment(programId: string, userId: string) {
         programDescription: program?.description,
         programPictureUrl: program?.program_picture_url,
         status: application.status,
-        isPaid: application.payment_completed,
+        isPaid: !!application.payment_completed || !!application.is_paid,
         companyName: company?.company_name || "Company",
         companyLogoUrl: company?.logo_url,
-        startDate: application.created_at, // Placeholder if start_date not in application
-        endDate: null
+        startDate: application.created_at,
+        endDate: null,
+        studentName: studentProfile.full_name,
+        paymentDetails: payment ? {
+            amount: payment.amount_paid_xaf,
+            ref: payment.payment_ref,
+            date: payment.payment_date || payment.created_at
+        } : null,
+        rawStatus: application.status // include raw status for debugging/flexibility
     };
 }

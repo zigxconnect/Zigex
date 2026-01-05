@@ -3,12 +3,11 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { programId: string } }
+  { params }: { params: Promise<{ programId: string }> }
 ) {
   try {
+    const { programId } = await params;
     const supabase = await createClient();
-    
-    const programId = params.programId;
 
     // Fetch curriculum modules from program_content table
     const { data, error } = await supabase

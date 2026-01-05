@@ -3,11 +3,11 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { programId: string } }
+  { params }: { params: Promise<{ programId: string }> }
 ) {
   try {
+    const { programId } = await params;
     const supabase = await createClient();
-    const programId = params.programId;
 
     // Fetch all content for the program (lessons + resources)
     const { data: content, error } = await supabase
@@ -30,9 +30,10 @@ export async function GET(
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { programId: string } }
+  { params }: { params: Promise<{ programId: string }> }
 ) {
   try {
+    const { programId } = await params;
     const supabase = await createClient();
     const { title, content_type, description, content_url, resource_type } =
       await req.json();
@@ -44,8 +45,6 @@ export async function POST(
     if (!user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
-
-    const programId = params.programId;
 
     // Verify user is admin for this program
     const { data: program } = await supabase

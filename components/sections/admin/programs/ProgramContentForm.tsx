@@ -88,7 +88,8 @@ export function ProgramContentForm({ programs, onSuccess }: ProgramContentFormPr
         program_id: selectedProgram,
         title,
         description,
-        content_type: contentType,
+        content_type: contentType === "assignment" ? "resource" : contentType,
+        resource_type: contentType === "assignment" ? "assignment" : null,
         week_number: weekNumber ? parseInt(weekNumber) : null,
         date_due: dateDue || null,
         video_url: videoUrl || null,
@@ -454,7 +455,7 @@ export function ProgramContentForm({ programs, onSuccess }: ProgramContentFormPr
 
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <svg size={18} className="text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <svg width={18} height={18} className="text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
                     </svg>
                   </div>

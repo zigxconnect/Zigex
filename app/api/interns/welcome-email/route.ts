@@ -1,7 +1,7 @@
 import { authMiddleware } from "@/lib/middleware/auth";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { sendWelcomeEmail } from "@/lib/emailjs";
+import { sendWelcomeEmail } from "@/lib/email";
 
 export async function POST(request: Request) {
   const auth = await authMiddleware(request);
@@ -78,17 +78,17 @@ export async function POST(request: Request) {
     }
 
     // Send the welcome email
-    await sendWelcomeEmail(
-      studentEmail,
-      application.student_profiles.full_name || "Student",
+    await sendWelcomeEmail({
+      email: studentEmail,
+      name: application.student_profiles.full_name || "Student",
       opportunityTitle,
-      company.company_name,
+      companyName: company.company_name,
       customMessage
-    );
+    });
 
-    return NextResponse.json({ 
-      success: true, 
-      message: "Welcome email sent successfully" 
+    return NextResponse.json({
+      success: true,
+      message: "Welcome email sent successfully"
     });
   } catch (error: any) {
     console.error("Welcome email error:", error);

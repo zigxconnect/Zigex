@@ -47,23 +47,78 @@ export default async function ProgramUpdatesPage({ params }: PageProps) {
     getStudentEnrollment(id, user.id)
   ]);
 
-  const hasAccess = enrollment?.status === 'accepted' && enrollment?.isPaid;
+  // Case-insensitive status check
+  const enrollmentStatus = enrollment?.status?.toLowerCase();
+  // Broaden access: Any paid user who isn't rejected/pending should see content
+  const isQualifiedStatus = ['accepted', 'rsvp_confirmed', 'reviewed'].includes(enrollmentStatus || '');
+  const hasAccess = isQualifiedStatus && !!enrollment?.isPaid;
 
   // Process and sanitize content
-  const processedContent = rawContent.map((item: any) => ({
-      id: item.id,
-      title: item.title,
-      weekNumber: item.week_number,
-      description: item.description,
-      // Redact content if needed
-      content: (!item.payment_required || hasAccess) ? item.assignment_details : null,
-      resources: (item.resources || []).map((r: any) => ({
-           ...r,
-           // Redact URL if needed
-           url: (!item.payment_required || hasAccess) ? r.url : '#',
-      })),
-      payment_required: item.payment_required
-  }));
+  const processedContent = rawContent.map((item: any) => {
+      const canView = !item.payment_required || hasAccess;
+      
+      // Handle resources: normalize from JSON or fallback columns
+      let resources = [];
+      try {
+          resources = typeof item.resources === 'string' 
+            ? JSON.parse(item.resources) 
+            : (item.resources || []);
+      } catch (e) {
+          resources = [];
+      }
+
+      // Add specific URL fields to resources if they exist
+      if (item.video_url) {
+          resources.push({
+              type: 'video',
+              title: 'Class Video',
+              url: item.video_url
+          });
+      }
+      if (item.github_url) {
+          resources.push({
+              type: 'github',
+              title: 'Source Code',
+              url: item.github_url
+          });
+      }
+      if (item.google_docs_url) {
+          resources.push({
+              type: 'pdf',
+              title: 'Learning Document',
+              url: item.google_docs_url
+          });
+      }
+      if (item.content_url && !resources.some((r: any) => r.url === item.content_url)) {
+          resources.push({
+              type: item.resource_type || 'link',
+              title: item.title || 'Other Resource',
+              url: item.content_url
+          });
+      }
+
+      // Map content: Combine all possible content fields to ensure nothing is missed
+      const contentParts = [
+          item.description,
+          item.content,
+          item.assignment_details ? `### Assignment Details\n${item.assignment_details}` : null
+      ].filter(Boolean);
+      
+      const rawBody = contentParts.join('\n\n');
+
+      return {
+          id: item.id,
+          title: item.title,
+          weekNumber: item.week_number,
+          description: item.description,
+          content: canView ? rawBody : null,
+          resources: resources.map((r: any) => ({
+               ...r,
+               url: canView ? r.url : '#',
+          })),
+          payment_required: !!item.payment_required
+      };
+  });
   
   return (
     <ProgramUpdatesClient 
