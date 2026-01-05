@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, supabaseAdmin } from "@/lib/supabase/server";
+import { sendEmail } from "@/lib/email";
 
 export async function GET(
   req: NextRequest,
@@ -49,7 +50,7 @@ export async function POST(
     // Verify user is admin for this program
     const { data: program } = await supabase
       .from("programs")
-      .select("company_id")
+      .select("company_id, title")
       .eq("id", programId)
       .single();
 
@@ -60,7 +61,7 @@ export async function POST(
     // Verify user is company admin
     const { data: company } = await supabase
       .from("company_profiles")
-      .select("id")
+      .select("id, company_name")
       .eq("id", program.company_id)
       .eq("user_id", user.id)
       .single();
@@ -89,6 +90,82 @@ export async function POST(
 
     if (error) throw error;
 
+    // --- NOTIFICATION LOGIC FOR PAID USERS ---
+    try {
+      console.log("Starting notification process for new content...");
+
+      // 1. Fetch "paid" applications for this program
+      // We check for is_paid OR payment_completed OR accepted status if implied
+      const { data: paidApps, error: appsError } = await supabase
+        .from("Applications")
+        .select("student_id")
+        .eq("program_id", programId)
+        .eq("payment_completed", true);
+
+      if (appsError) {
+        console.error("Error fetching paid apps for notification:", appsError);
+      } else if (paidApps && paidApps.length > 0) {
+        console.log(`Found ${paidApps.length} paid applications to notify.`);
+
+        // 2. Get Student Profiles
+        const studentIds = paidApps.map((app) => app.student_id);
+        const { data: students, error: profilesError } = await supabase
+          .from("student_profiles")
+          .select("id, user_id, full_name")
+          .in("id", studentIds);
+
+        if (profilesError) {
+          console.error("Error fetching student profiles:", profilesError);
+        } else if (students) {
+          // 3. Loop and Send
+          // We use Promise.all to send in parallel but catch errors individually
+          await Promise.all(
+            students.map(async (student) => {
+              try {
+                // Get Email from Auth (since profile might not have it or it's safer)
+                let email = "";
+                // Try to check if we can get email from profile if it exists (schema ambiguous)
+                // But safest is auth user
+                const { data: userData } = await supabaseAdmin.auth.admin.getUserById(
+                  student.user_id
+                );
+                email = userData?.user?.email || "";
+
+                if (email) {
+                  console.log(`Sending notification to ${email} (${student.full_name})...`);
+
+                  await sendEmail({
+                    to: email,
+                    subject: `New Content: ${title}`,
+                    heading: "New Learning Resource Added 📚",
+                    message: `Hi ${student.full_name?.split(" ")[0] || "Learner"
+                      }, \n\nA new resource "${title}" has been added to the **${program.title}** program.\n\nDescription: ${description || "No description provided."}\n\nLog in now to access it!`,
+                    ctaText: "Access Content",
+                    ctaLink: `https://zigexconnect.com/dashboard/programs/${programId}/content`,
+                    opportunityTitle: program.title,
+                    companyName: company.company_name,
+                    statusBadge: "NEW CONTENT",
+                    statusColor: "#155DFC"
+                  });
+
+                  console.log(`[Email Status] Sent to ${email}: Success=true`);
+                } else {
+                  console.warn(`No email found for student ${student.full_name} (User ID: ${student.user_id})`);
+                }
+              } catch (innerError) {
+                console.error(`Failed to notify student ${student.id}:`, innerError);
+              }
+            })
+          );
+        }
+      } else {
+        console.log("No paid users found for this program, skipping notifications.");
+      }
+    } catch (notifyError) {
+      console.error("Unexpected error in notification details:", notifyError);
+      // We do NOT fail the request if notifications fail
+    }
+
     return NextResponse.json(data, { status: 201 });
   } catch (error) {
     console.error("Error creating content:", error);
@@ -98,3 +175,4 @@ export async function POST(
     );
   }
 }
+

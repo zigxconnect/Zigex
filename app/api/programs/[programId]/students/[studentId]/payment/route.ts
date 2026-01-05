@@ -111,7 +111,7 @@ export async function POST(
     if (applicationId) {
       await supabaseAdmin
         .from("Applications")
-        .update({ is_paid: is_paid })
+        .update({ payment_completed: is_paid })
         .eq("id", applicationId);
     }
 

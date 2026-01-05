@@ -189,7 +189,6 @@ export async function PATCH(
       .from("Applications")
       .update({
         payment_completed,
-        is_paid: payment_completed // Sync new flag
       })
       .eq("id", id)
       .select()

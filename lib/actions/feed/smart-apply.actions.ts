@@ -2,7 +2,7 @@
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import emailjs from "@emailjs/browser";
+
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
@@ -54,10 +54,10 @@ interface SmartApplyResponse {
 async function getUserProfile(): Promise<UserProfile | null> {
   try {
     const supabase = await createSupabaseServerClient();
-    
+
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
+
     if (authError || !user?.id) {
       console.error("Error getting user:", authError);
       return null;
@@ -193,12 +193,12 @@ Respond with ONLY this JSON structure (no markdown, no extra text):
 
     // Extract response
     const responseText = result.response.text();
-    
+
     console.log("Raw Gemini response:", responseText);
 
     // Parse JSON from response - try multiple approaches
     let parsedResponse;
-    
+
     // Try 1: Direct JSON parse (cleanest response)
     try {
       parsedResponse = JSON.parse(responseText.trim());
@@ -271,7 +271,7 @@ function generateFallbackContent(
   aiResponse: string
 ) {
   const title = `Application Letter for ${opportunity.title}`;
-  
+
   // Create content from user profile and opportunity info
   const content = `Dear Hiring Team,
 
@@ -324,10 +324,10 @@ export async function submitSmartApplication(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = await createSupabaseServerClient();
-    
+
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
+
     if (authError || !user?.id) {
       return {
         success: false,
@@ -349,7 +349,7 @@ export async function submitSmartApplication(
       };
     }
 
-    // Send email via EmailJS
+    // Send email via EmailJS (REST API)
     if (companyEmail) {
       try {
         const serviceId = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || "";
@@ -358,8 +358,6 @@ export async function submitSmartApplication(
 
         // Only send real email if all EmailJS credentials are configured
         if (serviceId && templateId && publicKey) {
-          emailjs.init(publicKey);
-
           const emailParams = {
             to_email: companyEmail,
             opportunity_title: opportunityTitle,
@@ -369,13 +367,30 @@ export async function submitSmartApplication(
           };
 
           try {
-            const result = await emailjs.send(serviceId, templateId, emailParams);
-            console.log("Email sent successfully via EmailJS:", result);
-            
-            return { 
-              success: true,
-              error: undefined 
-            };
+            // Use fetch for server-side EmailJS sending instead of browser library
+            const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                service_id: serviceId,
+                template_id: templateId,
+                user_id: publicKey,
+                template_params: emailParams,
+              }),
+            });
+
+            if (response.ok) {
+              console.log("Email sent successfully via EmailJS REST API");
+              return {
+                success: true,
+                error: undefined
+              };
+            } else {
+              const errorText = await response.text();
+              throw new Error(`EmailJS API Error: ${errorText}`);
+            }
           } catch (emailSendError) {
             console.error("EmailJS send failed, simulating success:", emailSendError);
             // Simulate success even if EmailJS fails for now
@@ -392,10 +407,10 @@ export async function submitSmartApplication(
           console.log("SIMULATED: Opportunity:", opportunityTitle);
           console.log("SIMULATED: Applicant:", userProfile.full_name);
           console.log("SIMULATED: Message preview:", applicationContent.substring(0, 100) + "...");
-          
+
           // Simulate a small delay to feel real
           await new Promise(resolve => setTimeout(resolve, 500));
-          
+
           return {
             success: true,
             error: undefined
