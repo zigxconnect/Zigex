@@ -23,7 +23,9 @@ import {
   GraduationCap,
   ArrowLeft,
   X,
+  Download,
 } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -58,6 +60,12 @@ interface EnrolledProgramData {
   companyLogoUrl?: string;
   startDate?: string;
   endDate?: string;
+  studentName?: string;
+  paymentDetails?: {
+    amount: number;
+    ref: string;
+    date: string;
+  } | null;
 }
 
 // Resource icon helper
@@ -404,8 +412,9 @@ export default function ProgramUpdatesClient({
     );
   }
 
-  // Not enrolled or not accepted
-  if (!enrollment || enrollment.status !== "accepted") {
+  // Not enrolled or not in valid status
+  const currentStatus = enrollment?.status?.toLowerCase();
+  if (!enrollment || (currentStatus !== "accepted" && currentStatus !== "rsvp_confirmed")) {
     return (
       <div className="min-h-screen bg-gray-50 py-8 px-4">
         <div className="max-w-2xl mx-auto text-center">
@@ -682,6 +691,7 @@ export default function ProgramUpdatesClient({
                             {item.content ? (
                               <div className={`prose prose-sm prose-blue max-w-none mb-6 ${!isPaid ? "blur-sm select-none" : ""}`}>
                                 <div
+                                  className="whitespace-pre-wrap leading-relaxed"
                                   dangerouslySetInnerHTML={{ __html: item.content }}
                                 />
                               </div>
@@ -782,9 +792,29 @@ export default function ProgramUpdatesClient({
                     <CheckCircle2 size={32} className="text-white" />
                   </div>
                   <h3 className="font-bold text-xl mb-2 tracking-tight">Access Unlocked!</h3>
-                  <p className="text-blue-100 text-sm leading-relaxed font-medium opacity-90">
-                    You have lifetime access to all current and future updates for this program.
+                  <p className="text-blue-100 text-sm leading-relaxed font-medium opacity-90 mb-6">
+                    You have full access to all materials. Download your official receipt below.
                   </p>
+                  
+                  <Button 
+                    asChild
+                    variant="secondary" 
+                    className="w-full bg-white text-blue-700 hover:bg-blue-50 font-bold gap-2 py-6 rounded-2xl shadow-xl transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
+                  >
+                    <a 
+                      href={`/api/programs/${id}/receipt?print=true`} 
+                      target="_blank" 
+                      onClick={() => {
+                        toast.success("Preparing your receipt...", {
+                          description: "Your official receipt will open in a new tab.",
+                          icon: "📄"
+                        });
+                      }}
+                    >
+                      <Download size={18} />
+                      Download Receipt
+                    </a>
+                  </Button>
                 </div>
               </Card>
             )}

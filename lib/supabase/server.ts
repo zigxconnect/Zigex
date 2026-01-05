@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { createClient } from "@supabase/supabase-js";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
@@ -21,7 +21,7 @@ if (!supabaseServiceRoleKey) {
   );
 }
 
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
+export const supabaseAdmin = createSupabaseClient(supabaseUrl, supabaseServiceRoleKey, {
   auth: {
     autoRefreshToken: false,
     persistSession: false,
@@ -34,16 +34,16 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
 export async function createServerActionClient() {
   const cookieStore = await cookies();
 
-    const anonUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const anonUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-    if (!anonUrl || !anonKey) {
-      throw new Error(
-        'CRITICAL: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set in environment variables.'
-      );
-    }
+  if (!anonUrl || !anonKey) {
+    throw new Error(
+      'CRITICAL: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set in environment variables.'
+    );
+  }
 
-    return createServerClient(anonUrl, anonKey,
+  return createServerClient(anonUrl, anonKey,
     {
       cookies: {
         async get(name: string) {
@@ -52,12 +52,12 @@ export async function createServerActionClient() {
         async set(name: string, value: string, options: CookieOptions) {
           try {
             (await cookieStore).set({ name, value, ...options });
-          } catch (error) {}
+          } catch (error) { }
         },
         async remove(name: string, options: CookieOptions) {
           try {
             (await cookieStore).set({ name, value: "", ...options });
-          } catch (error) {}
+          } catch (error) { }
         },
       },
     }
@@ -87,3 +87,5 @@ export const createSupabaseServerClient = async () => {
     },
   });
 };
+
+export { createSupabaseServerClient as createClient };

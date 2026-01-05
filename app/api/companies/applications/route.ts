@@ -135,7 +135,7 @@ export async function GET(request: Request) {
         userId: student?.user_id,
 
         // Payment Status (for paid programs)
-        isPaid: app.payment_completed || false,
+        isPaid: app.payment_completed || app.is_paid || false,
         programId: app.program_id || null,
       };
     });

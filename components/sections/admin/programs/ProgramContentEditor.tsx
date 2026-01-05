@@ -70,7 +70,10 @@ export function ProgramContentEditor({
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
-        setContentType(initialData.content_type || "lesson");
+        const type = (initialData.content_type === "resource" && initialData.resource_type === "assignment") 
+          ? "assignment" 
+          : (initialData.content_type || "lesson");
+        setContentType(type);
         setTitle(initialData.title || "");
         setDescription(initialData.description || "");
         setWeekNumber(initialData.week_number?.toString() || "");
@@ -113,7 +116,8 @@ export function ProgramContentEditor({
         program_id: programId,
         title,
         description,
-        content_type: contentType,
+        content_type: contentType === "assignment" ? "resource" : contentType,
+        resource_type: contentType === "assignment" ? "assignment" : null,
         week_number: weekNumber ? parseInt(weekNumber) : null,
         date_due: dateDue || null,
         video_url: videoUrl || null,

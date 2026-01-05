@@ -5,13 +5,12 @@
   "private": true,
   "scripts": {
     "dev": "node --max-http-header-size=128000 node_modules/next/dist/bin/next dev --webpack",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
-    "@emailjs/browser": "^4.4.1",
     "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^5.2.1",
     "@langchain/community": "^0.3.57",
@@ -40,7 +39,6 @@
     "@sanity/icons": "^3.7.4",
     "@sanity/image-url": "^1.2.0",
     "@sanity/vision": "^4.13.0",
-    "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.53.0",
     "@types/uuid": "^10.0.0",
@@ -93,10 +91,8 @@
     "@types/nodemailer": "^7.0.4",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "cpy-cli": "^6.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.0.8",
-    "fs-extra": "^11.3.2",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
     "tw-animate-css": "^1.3.6",

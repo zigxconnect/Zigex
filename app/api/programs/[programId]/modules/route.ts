@@ -3,13 +3,12 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { programId: string } }
+  { params }: { params: Promise<{ programId: string }> }
 ) {
   try {
+    const { programId } = await params;
     const supabase = await createClient();
     const { title, moduleNumber, description, tutors } = await req.json();
-
-    const programId = params.programId;
 
     // Verify user is admin for this program
     const { data: program } = await supabase

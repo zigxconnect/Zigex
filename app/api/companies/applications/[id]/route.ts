@@ -187,7 +187,10 @@ export async function PATCH(
   if (typeof payment_completed === 'boolean' && status === undefined) {
     const { data: updatedApplication, error: updateError } = await supabaseAdmin
       .from("Applications")
-      .update({ payment_completed })
+      .update({
+        payment_completed,
+        is_paid: payment_completed // Sync new flag
+      })
       .eq("id", id)
       .select()
       .single();
