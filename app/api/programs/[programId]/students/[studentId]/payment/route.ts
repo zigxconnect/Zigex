@@ -129,16 +129,18 @@ export async function POST(
           const { data: userData } = await supabaseAdmin.auth.admin.getUserById(studentProfile.user_id);
           const studentEmail = userData?.user?.email;
 
-          // 2. Get Program Info
+          // 2. Get Program and Company Info
           const { data: programData } = await supabaseAdmin
             .from("programs")
-            .select("title")
+            .select("title, company_profiles(company_name, logo_url, address)")
             .eq("id", programId)
             .single();
 
           if (studentEmail && programData) {
             // Determine which month the receipt is for (from notes or current month)
             const currentMonth = new Date(payment_date || new Date()).toLocaleString('default', { month: 'long' });
+
+            const company = (programData as any)?.company_profiles;
 
             await sendPaymentReceiptEmail({
               email: studentEmail,
@@ -147,7 +149,10 @@ export async function POST(
               amount: amount_paid_xaf,
               date: payment_date || new Date().toISOString(),
               ref: payment_ref || `ZGX-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-              month: notes?.includes('Month') ? notes : currentMonth // Try to find month in notes or use current
+              month: notes?.includes('Month') ? notes : currentMonth,
+              companyName: company?.company_name,
+              companyLogo: company?.logo_url,
+              companyAddress: company?.address
             });
             console.log(`[PAYMENT] Receipt sent to ${studentEmail} for ${programData.title}`);
           }

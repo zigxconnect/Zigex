@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ShareButton } from "@/components/sections/dashboard/ShareButton";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import DynamicForm from "@/components/sections/dashboard/Application/application";
-import { ProgramCurriculum } from "@/components/sections/dashboard/program/ProgramCurriculum";
+
 import { useFetchDetails } from "@/hooks/useFetchDetails";
 import { hasExpired } from "@/components/uiComponent/ExpiredOverlay";
 import { InternshipDetailsLoadingSkeleton } from "@/components/SinglePageLoadingSkeleton";
@@ -90,7 +90,7 @@ function useOtherPrograms(program: ProgramWithCompany | null) {
       try {
         const response = await fetch(`/api/public/companies/${companyId}/programs`);
         const data = await response.json();
-        setPrograms((data.programs || []).filter((p: any) => p.id !== program.id));
+        setPrograms((data.programs || []).filter((p: any) => p.id !== program?.id));
       } catch (error) {
         console.error('Error fetching other programs:', error);
         setPrograms([]);
@@ -266,25 +266,7 @@ export default function ProgramDetailsClient({ id }: { id: string }) {
                 )}
               </div>
 
-              {/* Show Curriculum for Accepted Users */}
-              {isAccepted && (
-                <div className="border-t border-gray-200 p-6 sm:p-8 pt-6">
-                  <h4 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <BookOpen size={20} className="text-blue-600" />
-                    Course Content
-                  </h4>
-                  <ProgramCurriculum
-                    programId={program.id}
-                    isPaid={program.is_paid || false}
-                    paymentCompleted={enrollmentStatus.paymentCompleted}
-                    programTitle={program.title}
-                    onPaymentNeeded={() => {
-                      // Open admin contact modal or show payment verification message
-                      alert("Please contact the program administrator to verify your payment.");
-                    }}
-                  />
-                </div>
-              )}
+
 
               <div className="mt-6 space-y-4 p-6 sm:p-8 pt-0">
                 {program.location && (
@@ -375,13 +357,13 @@ export default function ProgramDetailsClient({ id }: { id: string }) {
                   </h3>
                 </div>
                 <div className="p-5">
-                  <DetailItem label="Duration" value={program.duration} icon={Clock} />
+                  <DetailItem label="Duration" value={program.duration || null} icon={Clock} />
                   <DetailItem label="Start Date" value={program.start_date ? formatDate(program.start_date) : null} icon={CalendarDays} />
                   <DetailItem label="End Date" value={program.end_date ? formatDate(program.end_date) : null} icon={CalendarDays} />
-                  <DetailItem label="Format" value={program.format} icon={Users} />
-                  <DetailItem label="Level" value={program.level} icon={GraduationCap} />
-                  <DetailItem label="Type" value={program.type} />
-                  <DetailItem label="Location" value={program.location} icon={MapPin} />
+                  <DetailItem label="Format" value={program.format || null} icon={Users} />
+                  <DetailItem label="Level" value={program.level || null} icon={GraduationCap} />
+                  <DetailItem label="Type" value={program.type || null} />
+                  <DetailItem label="Location" value={program.location || null} icon={MapPin} />
                 </div>
               </Card>
 
@@ -470,7 +452,7 @@ export default function ProgramDetailsClient({ id }: { id: string }) {
                       </h4>
                       <p className="text-blue-800 text-xs leading-relaxed">
                         {isAccepted 
-                          ? "Congratulations! Access your curriculum, weekly updates, and resources from the Updates page."
+                          ? "Congratulations! Access your weekly updates and resources from the Updates page."
                           : "Ensure your application highlights relevant experience and your motivation for joining this program. Submissions are reviewed on a rolling basis."
                         }
                       </p>

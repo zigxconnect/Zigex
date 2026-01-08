@@ -16,12 +16,14 @@ interface ApplicationAcceptedEmailProps {
   studentName: string;
   opportunityTitle: string;
   type: "internship" | "program" | "event";
+  companyName?: string;
 }
 
 export const ApplicationAcceptedEmail = ({
   studentName,
   opportunityTitle,
   type,
+  companyName,
 }: ApplicationAcceptedEmailProps) => {
   const previewText = `Congratulations! You've been accepted for ${opportunityTitle}`;
 
@@ -53,7 +55,7 @@ export const ApplicationAcceptedEmail = ({
             <Text className="text-black text-[14px] leading-[24px]">
               Best regards,
               <br />
-              The Future Prospect Team
+              The {companyName || "SEED INC"} Team
             </Text>
           </Container>
         </Body>

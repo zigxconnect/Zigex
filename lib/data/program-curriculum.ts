@@ -255,8 +255,8 @@ export function getAllCurricula(): ProgramCurriculum[] {
 export const MOBILE_MONEY_PAYMENT_INFO: MobileMoneyPaymentInfo[] = [
     {
         provider: 'MTN',
-        phoneNumber: '670 000 000', // Replace with actual number
-        accountName: 'ZIGEX CONNECT',
+        phoneNumber: '650 463 077',
+        accountName: 'SEED INC',
         amount: 10000, // XAF
         currency: 'XAF',
         steps: [
@@ -275,7 +275,7 @@ export const MOBILE_MONEY_PAYMENT_INFO: MobileMoneyPaymentInfo[] = [
             {
                 stepNumber: 3,
                 title: 'Enter Recipient Number',
-                description: 'Enter 670 000 000 (ZIGEX CONNECT) as the recipient.',
+                description: 'Enter 650 463 077 (SEED INC) as the recipient.',
                 icon: 'UserPlus',
             },
             {
@@ -300,8 +300,8 @@ export const MOBILE_MONEY_PAYMENT_INFO: MobileMoneyPaymentInfo[] = [
     },
     {
         provider: 'Orange',
-        phoneNumber: '699 000 000', // Replace with actual number
-        accountName: 'ZIGEX CONNECT',
+        phoneNumber: '650 463 077',
+        accountName: 'SEED INC',
         amount: 10000, // XAF
         currency: 'XAF',
         steps: [
@@ -320,7 +320,7 @@ export const MOBILE_MONEY_PAYMENT_INFO: MobileMoneyPaymentInfo[] = [
             {
                 stepNumber: 3,
                 title: 'Enter Recipient Number',
-                description: 'Enter 699 000 000 (ZIGEX CONNECT) as the recipient.',
+                description: 'Enter 650 463 077 (SEED INC) as the recipient.',
                 icon: 'UserPlus',
             },
             {

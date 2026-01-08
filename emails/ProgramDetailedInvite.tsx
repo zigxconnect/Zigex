@@ -34,7 +34,7 @@ export const ProgramDetailedInviteEmail = ({
     <Body style={main}>
       <Container style={container}>
         <Section style={header}>
-          <Heading style={h1}>ZIGEX Official Welcome</Heading>
+          <Heading style={h1}>Official Welcome from {companyName}</Heading>
         </Section>
         <Section style={section}>
           <Text style={text}>Congratulations {studentName}!</Text>
@@ -70,7 +70,7 @@ export const ProgramDetailedInviteEmail = ({
           <Hr style={hr} />
           <Text style={footer}>
             Empowering the next generation of professionals. <br />
-            — The ZIGEX Team
+            — The {companyName} Team
           </Text>
         </Section>
       </Container>

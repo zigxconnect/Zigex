@@ -55,7 +55,7 @@ const generateEmailHTML = (params: {
           <!-- Header -->
           <tr>
             <td style="background: linear-gradient(135deg, #155DFC 0%, #1A3CB9 100%); padding: 32px 40px; text-align: center;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;">ZIGEX</h1>
+              <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;">${companyName || 'SEED INC'}</h1>
               <p style="color: rgba(255,255,255,0.85); margin: 8px 0 0; font-size: 14px;">Your Career Launch Platform</p>
             </td>
           </tr>
@@ -105,7 +105,7 @@ const generateEmailHTML = (params: {
           <tr>
             <td style="background: #f8fafc; padding: 32px 40px; text-align: center; border-top: 1px solid #e2e8f0;">
               <p style="color: #64748b; font-size: 11px; font-weight: 600; margin: 0; text-transform: uppercase; letter-spacing: 1px;">
-                © ${new Date().getFullYear()} ZIGEX CONNECT
+                © ${new Date().getFullYear()} ${companyName || 'SEED INC'}
               </p>
               <p style="margin: 10px 0 0;">
                 <a href="https://zigexconnect.com" style="color: #155DFC; text-decoration: none; font-size: 12px; font-weight: 800;">visit our website</a>
@@ -145,7 +145,7 @@ export const sendEmail = async (params: {
 
   try {
     await transporter.sendMail({
-      from: `"SEED GATE" <${GMAIL_USER}>`,
+      from: `"${params.companyName || "SEED INC"}" <${GMAIL_USER}>`,
       to: params.to,
       subject: params.subject,
       html: html,
@@ -184,7 +184,7 @@ export const sendAcceptanceEmail = async (params: {
   });
 
   await transporter.sendMail({
-    from: `"ZIGEX" <${GMAIL_USER}>`,
+    from: `"${params.companyName || "SEED INC"}" <${GMAIL_USER}>`,
     to: params.email,
     subject: `Welcome to the Program: ${params.opportunityTitle}!`,
     html
@@ -217,7 +217,7 @@ export const sendRejectionEmail = async (params: {
   });
 
   await transporter.sendMail({
-    from: `"ZIGEX" <${GMAIL_USER}>`,
+    from: `"${params.companyName || "SEED INC"}" <${GMAIL_USER}>`,
     to: params.email,
     subject: `Update regarding your application for ${params.opportunityTitle}`,
     html
@@ -296,9 +296,9 @@ export const sendWelcomeEmail = async (params: {
   const firstName = name.split(" ")[0];
   await sendEmail({
     to: email,
-    subject: `🚀 Welcome to ZIGEX, ${firstName}!`,
+    subject: `🚀 Welcome to ${companyName || 'SEED INC'}, ${firstName}!`,
     heading: "Welcome aboard!",
-    message: customMessage || `Hey ${firstName}! 👋\n\nWelcome to ZIGEX. We're excited to have you as part of our platform.${opportunityTitle ? ` You've joined the "${opportunityTitle}" program at ${companyName}.` : ''}`,
+    message: customMessage || `Hey ${firstName}! 👋\n\nWelcome to ${companyName || 'SEED INC'}. We're excited to have you as part of our platform.${opportunityTitle ? ` You've joined the "${opportunityTitle}" program at ${companyName}.` : ''}`,
     ctaText: communityLink ? "Join Our Community" : "Go to Dashboard",
     ctaLink: communityLink || "https://zigexconnect.com/dashboard",
   });
@@ -334,7 +334,7 @@ export const sendApplicationAlert = async (params: {
   const recipients = params.adminEmail.split(',').map(e => e.trim());
 
   await transporter.sendMail({
-    from: `"ZIGEX ALERTS" <${GMAIL_USER}>`,
+    from: `"SEED INC ALERTS" <${GMAIL_USER}>`,
     to: recipients,
     subject: `[ALERT] ${params.status.toUpperCase()}: ${params.studentName}`,
     html
@@ -352,6 +352,9 @@ export const sendPaymentReceiptEmail = async (params: {
   date: string;
   ref: string;
   month?: string;
+  companyName?: string;
+  companyLogo?: string;
+  companyAddress?: string;
 }) => {
   const transporter = createTransporter();
   if (!transporter) return;
@@ -386,7 +389,7 @@ export const sendPaymentReceiptEmail = async (params: {
   <div class="container">
     <div class="receipt-card">
       <div class="header">
-        <img src="https://zigexconnect.com/seedLogo.png" alt="SEED" style="height: 50px; margin-bottom: 15px;">
+        <img src="${params.companyLogo || 'https://zigexconnect.com/seedLogo.png'}" alt="${params.companyName || 'SEED'}" style="height: 50px; margin-bottom: 15px;">
         <h1 style="color: white; margin: 0; font-size: 20px; letter-spacing: 2px; text-transform: uppercase;">Payment Receipt</h1>
       </div>
       
@@ -420,8 +423,8 @@ export const sendPaymentReceiptEmail = async (params: {
     </div>
     
     <div class="footer">
-      <p style="font-weight: 700; color: #64748b; margin-bottom: 4px;">SEED INC • GLOBAL TECH CAREERS</p>
-      <p>© ${new Date().getFullYear()} Zigex Connect. Bamenda, Cameroon</p>
+      <p style="font-weight: 700; color: #64748b; margin-bottom: 4px;">${params.companyName || 'SEED INC'} • GLOBAL TECH CAREERS</p>
+      <p>© ${new Date().getFullYear()} ${params.companyName || 'SEED INC'}. ${params.companyAddress || 'Bamenda, Cameroon'}</p>
     </div>
   </div>
 </body>
@@ -429,7 +432,7 @@ export const sendPaymentReceiptEmail = async (params: {
     `;
 
   await transporter.sendMail({
-    from: `"ZIGEX Payments" <${GMAIL_USER}>`,
+    from: `"${params.companyName || "SEED INC"} Payments" <${GMAIL_USER}>`,
     to: params.email,
     subject: `Payment Receipt: ${params.programTitle}`,
     html

@@ -25,7 +25,7 @@ export const ZigexOnboardingWelcome = ({
   userName,
   communityLink = "https://chat.whatsapp.com/DXYGLpny3DwGs5pkb1fPAr",
 }: ZigexOnboardingWelcomeProps) => {
-  const previewText = `Welcome to ZIGEX, ${userName}! Your journey starts now.`;
+  const previewText = `Welcome to SEED INC, ${userName}! Your journey starts now.`;
 
   return (
     <Html>
@@ -46,11 +46,11 @@ export const ZigexOnboardingWelcome = ({
             </Section>
             
             <Heading className="text-slate-900 text-[32px] font-black text-center p-0 mt-[40px] mb-[10px] mx-0 tracking-tighter">
-              Welcome to ZIGEX! 🚀
+              Welcome to SEED INC! 🚀
             </Heading>
             
             <Text className="text-slate-600 text-[16px] leading-[26px] text-center mb-[30px]">
-              Hi {userName}, your profile is now complete. You're officially part of the ZIGEX ecosystem—the gateway to your next big career move.
+              Hi {userName}, your profile is now complete. You're officially part of the SEED INC ecosystem—the gateway to your next big career move.
             </Text>
 
             <Section className="bg-indigo-50 border border-indigo-100 rounded-2xl p-6 mb-[30px]">
@@ -98,7 +98,7 @@ export const ZigexOnboardingWelcome = ({
             <Text className="text-[#999999] text-[12px] leading-[20px] text-center mt-[40px]">
               If you didn't create this account, please ignore this email.
               <br />
-              ZIGEX Team • Cameroon, Africa
+              SEED INC Team • Cameroon, Africa
             </Text>
           </Container>
         </Body>

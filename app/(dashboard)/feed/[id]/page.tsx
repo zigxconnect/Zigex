@@ -20,10 +20,10 @@ import { ApplyButton } from "@/components/feed/details/appyButton/ApplyButton";
 import { LocationMap } from "@/components/feed/details/LocationMap";
 import { RelatedItems } from "@/components/feed/details/RelatedItems";
 import { CompanyCard } from "@/components/feed/details/DetailsSidebar"; // This file actually exports CompanyCard
-import { DetailsSidebar } from "@/components/feed/details/CompanyCard"; // This file actually exports DetailsSidebar
+import { DetailsSidebar, DetailItem } from "@/components/feed/details/CompanyCard"; // This file actually exports DetailsSidebar
 import { BackButton } from "@/components/feed/details/BackButton";
 import { RegisterGoDown } from "@/components/feed/details/RegisterDown";
-import CurriculumSection from "@/components/feed/details/Curriculum";
+
 
 interface FeedDetailPageProps {
   params: Promise<{ id: string }>;
@@ -90,7 +90,7 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
 
   // Build details array based on type
   const buildDetails = () => {
-    const details = [];
+    const details: DetailItem[] = [];
 
     // Common details
     if (item.location) {
@@ -242,12 +242,7 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
               </Suspense>
             )}
 
-            {/* Curriculum Section - Full Width on Mobile Only */}
-            {item._type === "programs" && (
-              <div className="lg:hidden">
-                <CurriculumSection programTitle="Weekend of Code" />
-              </div>
-            )}
+
 
             {/* Get Started Button - After Curriculum */}
             {(opportunityStatus.isOpen || applicationStatus.hasApplied) && (
@@ -285,12 +280,7 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
               
               <DetailsSidebar details={buildDetails()} />
 
-              {/* Curriculum Section - Desktop Only */}
-              {item._type === "programs" && (
-                <div className="hidden lg:block">
-                  <CurriculumSection programTitle="Weekend of Code" />
-                </div>
-              )}
+
 
               {/* Additional Info Card */}
               <Card className="p-6 border border-border shadow-lg rounded-[2rem] bg-card">

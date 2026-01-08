@@ -76,11 +76,11 @@ export const NewPostEmail = ({
             </Heading>
 
             <Text className="text-dark text-[16px] leading-[24px]">
-              {recipientName ? `Dear ${recipientName},` : "Dear ZIGEX Member,"}
+              {recipientName ? `Dear ${recipientName},` : "Dear SEED INC Member,"}
             </Text>
             <Text className="text-dark text-[16px] leading-[24px]">
               We are excited to inform you that a new opportunity has just been
-              posted on <b>ZIGEX</b> — the platform dedicated to connecting
+              posted on <b>SEED INC</b> — the platform dedicated to connecting
               ambitious individuals with top programs, internships, and events
               to accelerate your career journey.
             </Text>
@@ -182,7 +182,7 @@ export const NewPostEmail = ({
               <Text className="text-dark text-[15px] leading-[24px]">
                 Best regards,
                 <br />
-                <b>The ZIGEX Team</b>
+                <b>The SEED INC Team</b>
                 <br />
                 <span className="text-gray text-[13px]">
                   Empowering your future, one opportunity at a time.
@@ -194,7 +194,7 @@ export const NewPostEmail = ({
             <Hr className="border border-solid border-[#eaeaea] my-[26px] mx-0 w-full" />
             <Text className="text-gray text-[12px] leading-[20px]">
               You are receiving this email because you opted in to notifications
-              from ZIGEX.
+              from SEED INC.
               <br />
               <Link href={managePreferencesUrl} className="text-gray underline">
                 Manage your notification preferences
@@ -206,7 +206,7 @@ export const NewPostEmail = ({
               preferences or unsubscribe at any time.
               <br />
               <span className="text-gray">
-                ZIGEX, 123 Opportunity Lane, Innovation City, Country
+                SEED INC, Cameroon, Africa
               </span>
             </Text>
 
