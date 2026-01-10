@@ -28,11 +28,11 @@ export default async function StudentDirectoryPage() {
   // Create a map for quick stat lookup
   const statsMap: Record<string, any> = {};
   profileIds.forEach(id => {
-    statsMap[id] = { 
-      internshipsApplied: 0, 
-      programsApplied: 0, 
-      eventsApplied: 0, 
-      projectsCreated: 0 
+    statsMap[id] = {
+      internshipsApplied: 0,
+      programsApplied: 0,
+      eventsApplied: 0,
+      projectsCreated: 0
     };
   });
 

@@ -6,7 +6,7 @@ import { Plus, X, Image as ImageIcon, Type, ChevronLeft, ChevronRight, Share2, U
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { cn } from '@/lib/utils';
+import { cn, slugifyUsername } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 
 import { createClient } from '@/lib/supabase/client';
@@ -654,7 +654,7 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
                       onClick={(e) => {
                         e.stopPropagation();
                         // Navigate using username if available, else fallback to userId
-                        const target = selectedStory.userSlug || selectedStory.userId;
+                        const target = slugifyUsername(selectedStory.userSlug) || selectedStory.userId;
                         window.location.href = `/dashboard/student/${target}`; 
                       }}
                     >

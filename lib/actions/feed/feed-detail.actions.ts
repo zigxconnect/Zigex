@@ -12,15 +12,23 @@ export type FeedType = "internships" | "programs" | "events";
  * Get a single feed item by ID
  * Searches across all feed types using cached admin query
  */
-const fetchFeedItemById = async (id: string) => {
+// Helper to match slug in SQL
+const matchSlug = (table: string, slug: string) => {
+  // This is a bit of a hack since we don't have a slug column.
+  // We'll replace dashes with spaces and use ILIKE.
+  // It won't be perfect for titles with actual dashes but it's a good fallback.
+  return `title.ilike.${slug.replace(/-/g, ' ')}`;
+};
+
+/**
+ * Get a single feed item by ID or Slug
+ * Searches across all feed types using cached admin query
+ */
+const fetchFeedItemById = async (idOrSlug: string) => {
   try {
-    const isIdUuid = isUUID(id);
+    const isIdUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
 
-    // Helper to format title for comparison (handles slugs)
-    // We replace dashes with wildcards (%) to match titles with punctuation
-    const titlePattern = !isIdUuid ? `%${id.replace(/-/g, '%')}%` : "";
-
-    // 1. Try to find in internships
+    // Try to find in internships
     let internshipQuery = supabaseAdmin
       .from("internships")
       .select(`
@@ -30,10 +38,10 @@ const fetchFeedItemById = async (id: string) => {
         )
       `);
 
-    if (isIdUuid) {
-      internshipQuery = internshipQuery.eq("id", id);
+    if (isIdUUID) {
+      internshipQuery = internshipQuery.eq("id", idOrSlug);
     } else {
-      internshipQuery = internshipQuery.ilike("title", titlePattern);
+      internshipQuery = internshipQuery.ilike("title", idOrSlug.replace(/-/g, ' '));
     }
 
     const { data: internship, error: internshipError } = await internshipQuery.maybeSingle();
@@ -45,7 +53,7 @@ const fetchFeedItemById = async (id: string) => {
       };
     }
 
-    // 2. Try to find in programs
+    // Try to find in programs
     let programQuery = supabaseAdmin
       .from("programs")
       .select(`
@@ -55,10 +63,10 @@ const fetchFeedItemById = async (id: string) => {
         )
       `);
 
-    if (isIdUuid) {
-      programQuery = programQuery.eq("id", id);
+    if (isIdUUID) {
+      programQuery = programQuery.eq("id", idOrSlug);
     } else {
-      programQuery = programQuery.ilike("title", titlePattern);
+      programQuery = programQuery.ilike("title", idOrSlug.replace(/-/g, ' '));
     }
 
     const { data: program, error: programError } = await programQuery.maybeSingle();
@@ -70,7 +78,7 @@ const fetchFeedItemById = async (id: string) => {
       };
     }
 
-    // 3. Try to find in events
+    // Try to find in events
     let eventQuery = supabaseAdmin
       .from("event")
       .select(`
@@ -80,10 +88,10 @@ const fetchFeedItemById = async (id: string) => {
         )
       `);
 
-    if (isIdUuid) {
-      eventQuery = eventQuery.eq("id", id);
+    if (isIdUUID) {
+      eventQuery = eventQuery.eq("id", idOrSlug);
     } else {
-      eventQuery = eventQuery.ilike("title", titlePattern);
+      eventQuery = eventQuery.ilike("title", idOrSlug.replace(/-/g, ' '));
     }
 
     const { data: event, error: eventError } = await eventQuery.maybeSingle();

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Heart, MapPin, CheckCircle2, Linkedin } from "lucide-react";
+import { slugifyUsername } from "@/lib/utils";
 
 interface StudentProps {
   id: string;
@@ -99,8 +100,8 @@ const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = (
   };
 
   return (
-    <Link href={`/dashboard/student/${student.username || student.id}`} className="block no-underline mb-6 last:mb-0">
-      <div 
+    <Link href={`/dashboard/student/${slugifyUsername(student.username || student.id)}`} className="block no-underline mb-6 last:mb-0">
+      <div
         ref={cardRef}
         className={`
           relative w-full bg-white rounded-2xl shadow-md border border-gray-100 hover:shadow-xl hover:border-blue-200 transition-all duration-500 overflow-hidden group
@@ -109,19 +110,19 @@ const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = (
       >
         {/* Decorative Background Element */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-full -mr-16 -mt-16 transition-all duration-500 group-hover:scale-150 group-hover:bg-blue-100 opacity-50" />
-        
+
         <div className="flex flex-col md:flex-row items-center md:items-stretch gap-6 p-6">
           {/* Avatar Section - Larger and with nice border */}
           <div className="relative shrink-0">
             <div className="relative w-28 h-28 md:w-32 md:h-32 rounded-2xl overflow-hidden border-4 border-white shadow-lg ring-1 ring-gray-100 group-hover:ring-blue-400 transition-all duration-300">
               {student.avatar_url ? (
-                <img 
-                  src={student.avatar_url} 
-                  alt={student.full_name || "Student"} 
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                <img
+                  src={student.avatar_url}
+                  alt={student.full_name || "Student"}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center font-bold text-3xl">
+                <div className="w-full h-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-3xl">
                   {initials}
                 </div>
               )}
@@ -140,7 +141,7 @@ const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = (
                   </h3>
                   <CheckCircle2 size={20} className="text-blue-500 shrink-0" />
                 </div>
-                
+
                 <div className="flex items-center justify-center md:justify-start gap-1.5 text-gray-500 mb-2">
                   <MapPin size={16} className="shrink-0 text-blue-400" />
                   <p className="text-sm md:text-base font-medium truncate">
@@ -165,11 +166,10 @@ const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = (
                 )}
                 <button
                   onClick={handleLike}
-                  className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 border hover:-translate-y-1 shadow-sm ${
-                    isLiked 
-                    ? 'bg-red-50 text-red-600 border-red-100 hover:bg-red-600 hover:text-white hover:border-red-600' 
-                    : 'bg-gray-50 text-gray-400 border-gray-100 hover:bg-red-50 hover:text-red-600 hover:border-red-100'
-                  }`}
+                  className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 border hover:-translate-y-1 shadow-sm ${isLiked
+                      ? 'bg-red-50 text-red-600 border-red-100 hover:bg-red-600 hover:text-white hover:border-red-600'
+                      : 'bg-gray-50 text-gray-400 border-gray-100 hover:bg-red-50 hover:text-red-600 hover:border-red-100'
+                    }`}
                 >
                   <Heart size={20} className={isLiked ? "fill-current" : ""} />
                 </button>
@@ -186,8 +186,8 @@ const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = (
               {/* Skills container */}
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
                 {primarySkills.map((skill, i) => (
-                  <span 
-                    key={i} 
+                  <span
+                    key={i}
                     className="px-3 py-1 bg-blue-50/50 text-blue-700 text-[11px] font-bold rounded-lg border border-blue-100/50 uppercase tracking-wider"
                   >
                     {skill}

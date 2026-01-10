@@ -30,9 +30,9 @@ export const Step1Uploads = () => {
     if (!validTypes.includes(file.type)) {
       throw new Error("Invalid file type. Please upload a JPEG, PNG, WEBP, or GIF image.");
     }
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
-      throw new Error("File size too large. Maximum size is 5MB.");
+      throw new Error("File size too large. Maximum size is 10MB.");
     }
   };
 
@@ -51,7 +51,7 @@ export const Step1Uploads = () => {
     try {
       setLoading(true);
       validateFile(file);
-      
+
       const fileExt = file.name.split(".").pop();
       const sanitizedName = sanitizeFileName(file.name.split(".")[0]);
       const fileName = `${uuidv4()}-${sanitizedName}.${fileExt}`;
@@ -122,11 +122,10 @@ export const Step1Uploads = () => {
       {/* Cover Image Section */}
       <div className="relative group">
         <div
-          className={`relative w-full h-48 md:h-64 rounded-xl overflow-hidden border-2 border-dashed transition-all duration-300 ${
-            coverImageUrl
+          className={`relative w-full h-48 md:h-64 rounded-xl overflow-hidden border-2 border-dashed transition-all duration-300 ${coverImageUrl
               ? "border-transparent shadow-lg"
               : "border-gray-300 bg-gray-50 hover:bg-gray-100 hover:border-primary/50"
-          }`}
+            }`}
         >
           {coverImageUrl ? (
             <>

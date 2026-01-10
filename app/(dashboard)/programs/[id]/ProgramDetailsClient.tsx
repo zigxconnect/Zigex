@@ -310,7 +310,7 @@ export default function ProgramDetailsClient({ id }: { id: string }) {
                       otherPrograms.slice(0, 6).map((prog: any) => (
                         <Link 
                           key={prog.id} 
-                          href={`/programs/${prog.id}`}
+                          href={`/programs/${slugify(prog.title) || prog.id}`}
                           className="block p-4 rounded-lg border hover:shadow-md transition-shadow bg-white"
                         >
                           <div className="flex items-center gap-3">
@@ -485,4 +485,17 @@ export default function ProgramDetailsClient({ id }: { id: string }) {
       </Dialog>
     </div>
   );
+}
+
+function slugify(text: string) {
+  if (!text) return "";
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w-]+/g, '')
+    .replace(/--+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
 }

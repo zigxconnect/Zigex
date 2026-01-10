@@ -1,6 +1,7 @@
 // just some updates
 import React from "react";
 import { supabaseAdmin, createServerActionClient } from "@/lib/supabase/server";
+import { unslugifyUsername } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -38,10 +39,11 @@ export default async function ProfilePage({ params }: Props) {
   }
 
   // Fetch the profile being viewed by username
+  const unslugified = unslugifyUsername(username);
   const { data, error } = await supabaseAdmin
     .from("student_profiles")
     .select("*")
-    .eq("username", username)
+    .or(`username.eq."${username}",username.eq."${unslugified}"`)
     .maybeSingle();
 
   if (error || !data) {
@@ -199,7 +201,7 @@ export default async function ProfilePage({ params }: Props) {
               whatsappUrl={null}
               email={data.email}
               fullName={data.full_name}
-              profileUrl={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://zigex.vercel.app'}/profile/${username}`}
+              profileUrl={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.zigexconnect.com'}/profile/${username}`}
               isOwner={true}
             />
           </div>

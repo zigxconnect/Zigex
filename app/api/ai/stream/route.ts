@@ -37,7 +37,7 @@ async function createSupabaseServerClient() {
 }
 
 function buildSystemContext(): string {
-    return `You are ZAi, the intelligent AI assistant for ZigEx (formerly FutureProspect), a comprehensive platform connecting African students with opportunities.
+    return `You are ZAi, the intelligent AI assistant for ZigEx, a comprehensive platform connecting African students with opportunities.
 
 ## PLATFORM OVERVIEW
 ZigEx is a career development platform that helps students:

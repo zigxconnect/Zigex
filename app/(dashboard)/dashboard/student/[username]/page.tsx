@@ -1,13 +1,14 @@
 import React from "react";
 import { supabaseAdmin, createServerActionClient } from "@/lib/supabase/server";
+import { unslugifyUsername } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
-import { 
-  Github, 
-  Link2, 
-  MapPin, 
-  Briefcase, 
-  Award, 
+import {
+  Github,
+  Link2,
+  MapPin,
+  Briefcase,
+  Award,
   Calendar,
   Mail,
   Phone,
@@ -49,8 +50,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       data = profileByUserId;
     }
   } else {
+    const unslugified = unslugifyUsername(username);
     const { data: profileByUsername } = await supabase.from("student_profiles").select("*").eq("username", username).maybeSingle();
-    data = profileByUsername;
+    
+    if (profileByUsername) {
+      data = profileByUsername;
+    } else {
+      const { data: profileByUnslugified } = await supabase.from("student_profiles").select("*").eq("username", unslugified).maybeSingle();
+      data = profileByUnslugified;
+    }
   }
 
   if (!data) return { title: "Student Not Found" };
@@ -95,8 +103,15 @@ export default async function StudentDetailPage({ params }: Props) {
       data = profileByUserId;
     }
   } else {
+    const unslugified = unslugifyUsername(username);
     const { data: profileByUsername } = await supabase.from("student_profiles").select("*").eq("username", username).maybeSingle();
-    data = profileByUsername;
+    
+    if (profileByUsername) {
+      data = profileByUsername;
+    } else {
+      const { data: profileByUnslugified } = await supabase.from("student_profiles").select("*").eq("username", unslugified).maybeSingle();
+      data = profileByUnslugified;
+    }
   }
 
   if (!data) {
@@ -112,13 +127,13 @@ export default async function StudentDetailPage({ params }: Props) {
 
   const skills = data.hard_skills || [];
   const soft = data.soft_skills || [];
-  
+
   // Fetch stats and projects in parallel from the UNIFIED Applications table
   const [
-    internRes, 
-    progRes, 
-    eventRes, 
-    projectsResult, 
+    internRes,
+    progRes,
+    eventRes,
+    projectsResult,
     storiesRes
   ] = await Promise.all([
     // Applications Table Queries (Inclusive of pending/accepted/confirmed)
@@ -156,7 +171,7 @@ export default async function StudentDetailPage({ params }: Props) {
   const eventsApplied = eventRes?.count || 0;
   const projects = projectsResult.success ? projectsResult.data : [];
   const activeStories = storiesRes?.data || [];
-  
+
   const avatarUrl = data.avatar_url || "https://i.ibb.co/CpS0wpjC/z3.jpg";
   const coverImageUrl = data.cover_image || "https://i.ibb.co/vv3sgJwd/n8.jpg";
 
@@ -233,7 +248,7 @@ export default async function StudentDetailPage({ params }: Props) {
     .toUpperCase();
 
   const linkedinUrl = data.linkedin_url;
-  const whatsappUrl = data.phone 
+  const whatsappUrl = data.phone
     ? `https://wa.me/${data.phone.replace(/\D/g, '')}`
     : null;
 
@@ -281,7 +296,7 @@ export default async function StudentDetailPage({ params }: Props) {
             <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-green-500 rounded-full border-4 border-white shadow-md"></div>
           </div>
 
-          <QRCodeButton 
+          <QRCodeButton
             linkedinUrl={linkedinUrl}
             whatsappUrl={whatsappUrl}
             email={data.email}
@@ -299,7 +314,7 @@ export default async function StudentDetailPage({ params }: Props) {
                   {data.full_name || "Zigex Student"}
                 </h1>
                 <div className="flex items-center justify-center bg-blue-600 rounded-full p-1 shadow-md shadow-blue-200">
-                  <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                  <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" /></svg>
                 </div>
               </div>
 
@@ -339,7 +354,7 @@ export default async function StudentDetailPage({ params }: Props) {
 
       {/* 3. Main Content Feed */}
       <div className="max-w-4xl mx-auto px-6 space-y-8">
-        
+
         {/* About Section - PRIORITIZED TOP */}
         {data.about && (
           <section className="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-200 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -360,7 +375,7 @@ export default async function StudentDetailPage({ params }: Props) {
 
         {/* Similar Students (Mobile View) */}
         <div className="lg:hidden">
-            <SimilarStudentsSidebar students={similarStudents} />
+          <SimilarStudentsSidebar students={similarStudents} />
         </div>
 
         {/* Projects Section - MOVED UP */}
@@ -380,12 +395,12 @@ export default async function StudentDetailPage({ params }: Props) {
           {projects.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {projects.map((project) => (
-                <ProjectCard 
-                  key={project.id} 
-                  user={data} 
-                  project={project} 
-                  isVisitor={true} 
-                  isOwner={myProfile?.id === data.id} 
+                <ProjectCard
+                  key={project.id}
+                  user={data}
+                  project={project}
+                  isVisitor={true}
+                  isOwner={myProfile?.id === data.id}
                 />
               ))}
             </div>
@@ -405,7 +420,7 @@ export default async function StudentDetailPage({ params }: Props) {
               <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Growth & Impact</p>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="p-6 bg-blue-50/50 rounded-3xl border border-blue-100 hover:scale-105 transition-transform">
               <div className="text-4xl font-black text-blue-600 mb-2">{internshipsApplied}</div>
@@ -465,11 +480,11 @@ export default async function StudentDetailPage({ params }: Props) {
       </div>
 
       {/* 4. Utilities */}
-      <ConnectBar 
-        linkedin={data.linkedin_url} 
-        whatsapp={data.phone} 
-        x={data.twitter_url || data.x_url} 
-        email={data.email} 
+      <ConnectBar
+        linkedin={data.linkedin_url}
+        whatsapp={data.phone}
+        x={data.twitter_url || data.x_url}
+        email={data.email}
       />
 
       {myProfile?.id === data.id && (

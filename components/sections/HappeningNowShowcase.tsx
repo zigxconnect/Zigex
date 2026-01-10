@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { HappeningNowDisplay } from "./HappeningNowDisplay";
 import { formatViewCount, getViewCountDescription } from "@/lib/utils/formatViews";
-import { Eye, TrendingUp } from "lucide-react";
+import { Eye, TrendingUp, Sparkles, Camera, Target, Zap, Palette, Accessibility } from "lucide-react";
 
 /**
  * Showcase component demonstrating the view count formatting and tracking system
@@ -73,7 +73,10 @@ export function HappeningNowShowcase() {
 
       {/* Features Description */}
       <div className="bg-white border border-gray-200 rounded-2xl p-8">
-        <h3 className="text-xl font-bold text-gray-900 mb-6">✨ Features</h3>
+        <div className="flex items-center gap-2 mb-6">
+          <Sparkles className="text-blue-600" size={24} />
+          <h3 className="text-xl font-bold text-gray-900">Features</h3>
+        </div>
 
         <div className="grid md:grid-cols-2 gap-6">
           {/* Feature 1 */}
@@ -92,7 +95,7 @@ export function HappeningNowShowcase() {
           {/* Feature 2 */}
           <div className="flex gap-4">
             <div className="flex-shrink-0 w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <span className="text-lg font-bold text-purple-600">📸</span>
+              <Camera className="text-purple-600" size={24} />
             </div>
             <div>
               <h4 className="font-semibold text-gray-900 mb-1">Individual Media Tracking</h4>
@@ -105,7 +108,7 @@ export function HappeningNowShowcase() {
           {/* Feature 3 */}
           <div className="flex gap-4">
             <div className="flex-shrink-0 w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <span className="text-lg font-bold text-green-600">🎯</span>
+              <Target className="text-green-600" size={24} />
             </div>
             <div>
               <h4 className="font-semibold text-gray-900 mb-1">Smart Formatting</h4>
@@ -118,7 +121,7 @@ export function HappeningNowShowcase() {
           {/* Feature 4 */}
           <div className="flex gap-4">
             <div className="flex-shrink-0 w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
-              <span className="text-lg font-bold text-amber-600">⚡</span>
+              <Zap className="text-amber-600" size={24} />
             </div>
             <div>
               <h4 className="font-semibold text-gray-900 mb-1">Performance Optimized</h4>
@@ -131,7 +134,7 @@ export function HappeningNowShowcase() {
           {/* Feature 5 */}
           <div className="flex gap-4">
             <div className="flex-shrink-0 w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center">
-              <span className="text-lg font-bold text-pink-600">🎨</span>
+              <Palette className="text-pink-600" size={24} />
             </div>
             <div>
               <h4 className="font-semibold text-gray-900 mb-1">Beautiful UI</h4>
@@ -144,7 +147,7 @@ export function HappeningNowShowcase() {
           {/* Feature 6 */}
           <div className="flex gap-4">
             <div className="flex-shrink-0 w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center">
-              <span className="text-lg font-bold text-cyan-600">♿</span>
+              <Accessibility className="text-cyan-600" size={24} />
             </div>
             <div>
               <h4 className="font-semibold text-gray-900 mb-1">Accessibility First</h4>
@@ -195,7 +198,10 @@ export function HappeningNowShowcase() {
 
       {/* Integration Guide */}
       <div className="bg-white border border-gray-200 rounded-2xl p-8">
-        <h3 className="text-xl font-bold text-gray-900 mb-6">🚀 Integration Guide</h3>
+        <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+          <Sparkles className="text-blue-600" size={24} />
+          Integration Guide
+        </h3>
 
         <div className="space-y-4">
           <div className="bg-gray-50 rounded-lg p-4 border-l-4 border-green-500">

@@ -3,7 +3,7 @@ import ProgramDetailsClient from './ProgramDetailsClient.tsx';
 
 async function getProgram(id: string) {
   try {
-    const res = await fetch(`https://zigex.vercel.app/api/students/programs?id=${id}`, {
+    const res = await fetch(`https://www.zigexconnect.com/api/students/programs?id=${id}`, {
       next: { revalidate: 3600 }
     });
     if (!res.ok) return null;
@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: { params: any }): Promise<Met
       title,
       description,
       type: 'article',
-      url: `https://zigex.vercel.app/programs/${program.id}`,
+      url: `https://www.zigexconnect.com/programs/${program.id}`,
       images: [{ url: image }],
     },
     twitter: {

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { QrCode, X, Download, Linkedin, MessageCircle, Mail, Share2 } from "lucide-react";
+import { QrCode, X, Download, Linkedin, MessageCircle, Mail, Share2, Smartphone } from "lucide-react";
 import Link from "next/link";
 
 interface QRCodeButtonProps {
@@ -13,12 +13,12 @@ interface QRCodeButtonProps {
   isOwner?: boolean;
 }
 
-export default function QRCodeButton({ 
-  linkedinUrl, 
-  whatsappUrl, 
-  email, 
+export default function QRCodeButton({
+  linkedinUrl,
+  whatsappUrl,
+  email,
   fullName,
-  profileUrl 
+  profileUrl
   , isOwner = false
 }: QRCodeButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -31,7 +31,7 @@ export default function QRCodeButton({
       setQrCodeDataUrl(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${qrData}&bgcolor=ffffff&color=000000`);
     }
   }, [isOpen, profileUrl, qrCodeDataUrl]);
- 
+
   // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
@@ -59,7 +59,7 @@ export default function QRCodeButton({
     } catch (error) {
       console.error('Download failed:', error);
     }
-  }; 
+  };
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -94,13 +94,13 @@ export default function QRCodeButton({
 
       {/* Modal Overlay - HIGHEST Z-INDEX */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn"
           style={{ zIndex: 9999 }}
           onClick={() => setIsOpen(false)}
         >
           {/* Modal Content */}
-          <div 
+          <div
             className="bg-card rounded-3xl max-w-md w-full border border-border transform transition-all duration-300 animate-scaleIn overflow-hidden"
             style={{ zIndex: 10000 }}
             onClick={(e) => e.stopPropagation()}
@@ -118,7 +118,7 @@ export default function QRCodeButton({
                   Scan to connect with {fullName?.split(' ')[0] || 'me'}
                 </p>
               </div>
-              
+
               {/* Close Button */}
               <button
                 onClick={() => setIsOpen(false)}
@@ -134,9 +134,9 @@ export default function QRCodeButton({
               <div className="bg-muted rounded-2xl p-6 border-2 border-border mb-6 relative overflow-hidden">
                 {qrCodeDataUrl ? (
                   <div className="relative">
-                    <img 
-                      src={qrCodeDataUrl} 
-                      alt="QR Code" 
+                    <img
+                      src={qrCodeDataUrl}
+                      alt="QR Code"
                       className="w-full h-auto rounded-xl"
                     />
                     {/* Decorative corners */}
@@ -144,7 +144,7 @@ export default function QRCodeButton({
                     <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-blue-600 rounded-tr-xl"></div>
                     <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-blue-600 rounded-bl-xl"></div>
                     <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-blue-600 rounded-br-xl"></div>
-                    
+
                     {/* Scanning line animation */}
                     <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent animate-scan"></div>
                   </div>
@@ -231,11 +231,9 @@ export default function QRCodeButton({
               </div>
 
               {/* Footer Text */}
-              <div className="mt-6 text-center">
-                <p className="text-xs text-gray-500">
-                  📱 Scan this QR code with your phone camera to instantly access the profile
-                </p>
-              </div>
+              <p className="text-xs text-gray-500 flex items-center justify-center gap-2">
+                <Smartphone size={14} /> Scan this QR code with your phone camera to instantly access the profile
+              </p>
             </div>
           </div>
         </div>

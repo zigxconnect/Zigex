@@ -337,15 +337,184 @@ const CurriculumModuleItem = ({
   </div>
 );
 
+// Crew Member Type
+interface CrewMember {
+  id: string;
+  name: string;
+  avatar: string | null;
+  username: string | null;
+}
+
+// Crew Avatar Stack (Overlapping Avatars)
+const CrewAvatarStack = ({ 
+  members, 
+  totalCount,
+  maxDisplay = 5, 
+  onClick 
+}: { 
+  members: CrewMember[]; 
+  totalCount: number;
+  maxDisplay?: number;
+  onClick: () => void;
+}) => {
+  const displayMembers = members.slice(0, maxDisplay);
+  const remaining = totalCount - displayMembers.length;
+
+  if (totalCount === 0) return null;
+
+  return (
+    <button 
+      onClick={onClick}
+      className="group flex items-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-transform cursor-pointer"
+    >
+      <div className="flex -space-x-3">
+        {displayMembers.map((member, index) => (
+          <div 
+            key={member.id}
+            className="relative w-10 h-10 rounded-full border-[3px] border-white shadow-md overflow-hidden bg-gradient-to-br from-blue-500 to-indigo-600 transition-transform group-hover:translate-x-0 hover:z-10 hover:scale-110"
+            style={{ zIndex: maxDisplay - index }}
+            title={member.name}
+          >
+            {member.avatar ? (
+              <Image
+                src={member.avatar}
+                alt={member.name}
+                fill
+                className="object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-white font-bold text-sm">
+                {member.name.charAt(0).toUpperCase()}
+              </div>
+            )}
+          </div>
+        ))}
+        {remaining > 0 && (
+          <div 
+            className="relative w-10 h-10 rounded-full border-[3px] border-white shadow-md bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center text-white text-xs font-bold"
+            style={{ zIndex: 0 }}
+          >
+            +{remaining}
+          </div>
+        )}
+      </div>
+      <div className="text-left">
+        <p className="text-sm font-bold text-white group-hover:text-blue-200 transition-colors">
+          {totalCount} {totalCount === 1 ? 'Member' : 'Members'}
+        </p>
+        <p className="text-xs text-blue-100/80">Click to view crew</p>
+      </div>
+    </button>
+  );
+};
+
+// Crew Modal Component
+const CrewModal = ({ 
+  isOpen, 
+  onClose, 
+  members,
+  programTitle
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  members: CrewMember[];
+  programTitle: string;
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div 
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" 
+        onClick={onClose} 
+      />
+      <div className="w-full max-w-2xl relative animate-in zoom-in-95 slide-in-from-bottom-5 duration-300">
+        <Card className="border-0 shadow-2xl overflow-hidden bg-white max-h-[85vh] flex flex-col">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 relative overflow-hidden flex-shrink-0">
+            <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
+            <button 
+              onClick={onClose}
+              className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors z-20 backdrop-blur-sm"
+            >
+              <X size={20} />
+            </button>
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 text-blue-100 text-sm font-medium mb-2">
+                <Users size={16} />
+                <span>Program Crew</span>
+              </div>
+              <h2 className="text-2xl font-black text-white tracking-tight">
+                {programTitle} Crew
+              </h2>
+              <p className="text-blue-100 text-sm mt-1 opacity-90">
+                {members.length} talented {members.length === 1 ? 'individual' : 'individuals'} enrolled
+              </p>
+            </div>
+          </div>
+
+          {/* Members Grid */}
+          <div className="p-6 overflow-y-auto flex-1 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-blue-50 [&::-webkit-scrollbar-thumb]:bg-blue-200 [&::-webkit-scrollbar-thumb]:rounded-full">
+            {members.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Users size={32} className="text-gray-300" />
+                </div>
+                <p className="text-gray-500 font-medium">No crew members yet</p>
+                <p className="text-gray-400 text-sm mt-1">Be the first to join!</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {members.map((member) => (
+                  <Link
+                    key={member.id}
+                    href={member.username ? `/dashboard/student/${member.username}` : '#'}
+                    className="group flex flex-col items-center p-4 rounded-2xl bg-gradient-to-b from-white to-slate-50 border border-slate-100 hover:border-blue-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                  >
+                    <div className="relative w-16 h-16 rounded-full border-[3px] border-white shadow-lg overflow-hidden bg-gradient-to-br from-blue-500 to-indigo-600 mb-3 group-hover:scale-110 transition-transform">
+                      {member.avatar ? (
+                        <Image
+                          src={member.avatar}
+                          alt={member.name}
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-white font-bold text-xl">
+                          {member.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                    <p className="font-bold text-sm text-slate-800 text-center truncate w-full group-hover:text-blue-600 transition-colors">
+                      {member.name}
+                    </p>
+                    {member.username && (
+                      <p className="text-xs text-slate-400 truncate w-full text-center">
+                        @{member.username}
+                      </p>
+                    )}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
 // Main Component
 export default function ProgramUpdatesClient({ 
   id, 
   initialContent = [], 
-  initialEnrollment = null 
+  initialEnrollment = null,
+  crew = { members: [], totalCount: 0 }
 }: { 
   id: string;
   initialContent?: any[];
   initialEnrollment?: any;
+  crew?: { members: CrewMember[], totalCount: number };
 }) {
   const [enrollment, setEnrollment] = useState<EnrolledProgramData | null>(initialEnrollment);
   const [content, setContent] = useState<ProgramContent[]>(initialContent);
@@ -353,6 +522,7 @@ export default function ProgramUpdatesClient({
   const [completedModules, setCompletedModules] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(!initialEnrollment);
   const [showPaymentGuide, setShowPaymentGuide] = useState(false);
+  const [showCrewModal, setShowCrewModal] = useState(false);
 
   // Load curriculum modules
   useEffect(() => {
@@ -446,7 +616,7 @@ export default function ProgramUpdatesClient({
         {/* Navigation */}
         <div className="mb-6">
           <Link
-            href={`/programs/${id}`}
+            href={`/feed/${enrollment.programTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`}
             className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-blue-600 transition-colors cursor-pointer group"
           >
             <div className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center group-hover:border-blue-200 group-hover:bg-blue-50 transition-colors">
@@ -475,21 +645,33 @@ export default function ProgramUpdatesClient({
              
              <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-                 <div>
-                   <div className="flex items-center gap-2 text-blue-100 text-sm font-medium mb-2">
-                     <span className="bg-white/10 backdrop-blur-sm px-2 py-1 rounded-md border border-white/10">
-                       {enrollment.companyName}
-                     </span>
-                     <span>•</span>
-                     <span className="flex items-center gap-1">
-                       <GraduationCap size={14} />
-                       Program Updates
-                     </span>
-                   </div>
-                   <h1 className="text-2xl sm:text-4xl font-bold text-white drop-shadow-lg tracking-tight">
-                     {enrollment.programTitle}
-                   </h1>
-                 </div>
+                  <div>
+                    <div className="flex items-center gap-2 text-blue-100 text-sm font-medium mb-2">
+                      <span className="bg-white/10 backdrop-blur-sm px-2 py-1 rounded-md border border-white/10">
+                        {enrollment.companyName}
+                      </span>
+                      <span>•</span>
+                      <span className="flex items-center gap-1">
+                        <GraduationCap size={14} />
+                        Program Updates
+                      </span>
+                    </div>
+                    <h1 className="text-2xl sm:text-4xl font-bold text-white drop-shadow-lg tracking-tight mb-4">
+                      {enrollment.programTitle}
+                    </h1>
+                    
+                    {/* Integrated Crew Stats */}
+                    {crew.totalCount > 0 && (
+                      <div className="flex items-center gap-4 animate-in fade-in slide-in-from-left-4 duration-700 delay-300">
+                        <CrewAvatarStack 
+                          members={crew.members} 
+                          totalCount={crew.totalCount}
+                          maxDisplay={5}
+                          onClick={() => setShowCrewModal(true)} 
+                        />
+                      </div>
+                    )}
+                  </div>
 
                  <Badge
                     variant={isPaid ? "default" : "secondary"}
@@ -808,6 +990,14 @@ export default function ProgramUpdatesClient({
           </div>
         </div>
       )}
+
+      {/* Crew Modal */}
+      <CrewModal 
+        isOpen={showCrewModal}
+        onClose={() => setShowCrewModal(false)}
+        members={crew.members}
+        programTitle={enrollment?.programTitle || "Program"}
+      />
     </div>
   );
 }

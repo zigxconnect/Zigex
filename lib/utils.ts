@@ -36,9 +36,48 @@ export function normalizeImageSrc(src?: string | null, fallback = "/placeholder.
 }
 
 /**
- * Converts a string into a URL-friendly slug.
+ * @description Get the base URL of the site.
+ * @returns The base URL of the site
  */
-export function slugify(text: string): string {
+export const getURL = () => {
+  let url =
+    process.env.NEXT_PUBLIC_SITE_URL ?? // Set this to your site URL in production env.
+    process.env.NEXT_PUBLIC_VERCEL_URL ?? // Automatically set by Vercel.
+    'http://localhost:3000/';
+  // Make sure to include `https://` when not localhost.
+  url = url.includes('http') ? url : `https://${url}`;
+  // Make sure to include a trailing `/`.
+  url = url.charAt(url.length - 1) === '/' ? url : `${url}/`;
+  return url;
+};
+
+/**
+ * @description Slugify a username (replace spaces with underscores)
+ * @param username - The username to slugify
+ * @returns The slugified username
+ */
+export function slugifyUsername(username?: string | null) {
+  if (!username) return "";
+  return username.toString().trim().replace(/\s+/g, "_");
+}
+
+/**
+ * @description Unslugify a username (replace underscores with spaces)
+ * @param slug - The slugified username
+ * @returns The unslugified username
+ */
+export function unslugifyUsername(slug?: string | null) {
+  if (!slug) return "";
+  return slug.toString().replace(/_/g, " ");
+}
+
+/**
+ * @description Slugify a string (lower case, remove special characters, replace spaces with hyphens)
+ * @param text - The string to slugify
+ * @returns The slugified string
+ */
+export function slugify(text: string) {
+  if (!text) return "";
   return text
     .toString()
     .toLowerCase()
@@ -51,9 +90,12 @@ export function slugify(text: string): string {
 }
 
 /**
- * Checks if a string is a valid UUID.
+ * @description Check if a string is a valid UUID
+ * @param str - The string to check
+ * @returns True if the string is a valid UUID
  */
-export function isUUID(text: string): boolean {
+export function isUUID(str: string) {
+  if (!str) return false;
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(text);
+  return uuidRegex.test(str);
 }

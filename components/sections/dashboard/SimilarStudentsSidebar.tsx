@@ -7,6 +7,7 @@ import StackedAvatars from "./StackedAvatars";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
 import DeveloperAvatarOverlap from "@/components/ui/DeveloperAvatarOverlap";
+import { slugifyUsername } from "@/lib/utils";
 
 interface SimilarStudent {
   id: string;
@@ -79,7 +80,7 @@ export default function SimilarStudentsSidebar({
 
               {students.map((s) => (
                 <article key={s.id} className="flex items-center gap-3 p-3 cursor-pointer rounded-xl hover:bg-muted transition"
-                 onClick={() => router.push(`/dashboard/student/${s.username || s.id}`)}
+                 onClick={() => router.push(`/dashboard/student/${slugifyUsername(s.username || s.id)}`)}
                 >
                   <div className="w-12 h-12 rounded-full overflow-hidden bg-primary flex items-center justify-center text-white font-bold">
                     {(() => {
@@ -178,8 +179,8 @@ export default function SimilarStudentsSidebar({
               key={s.id}
               role="link"
               tabIndex={0}
-              onClick={() => router.push(`/dashboard/student/${s.username || s.id}`)}
-              onKeyDown={(e) => { if (e.key === 'Enter') router.push(`/dashboard/student/${s.username || s.id}`); }}
+              onClick={() => router.push(`/dashboard/student/${slugifyUsername(s.username || s.id)}`)}
+              onKeyDown={(e) => { if (e.key === 'Enter') router.push(`/dashboard/student/${slugifyUsername(s.username || s.id)}`); }}
               className="flex items-start gap-3 p-3 rounded-xl hover:bg-muted/50 transition cursor-pointer border border-transparent hover:border-border"
             >
               <div className="w-12 h-12 rounded-full overflow-hidden bg-primary flex items-center justify-center text-white font-bold shrink-0">

@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Facebook, 
-  Twitter, 
-  Instagram, 
+import {
+  Mail,
+  Phone,
+  MapPin,
+  Facebook,
+  Twitter,
+  Instagram,
   Linkedin,
   Heart,
   ArrowUp
@@ -35,43 +35,43 @@ export const DashboardFooter = () => {
       {/* Main Footer Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          
+
           {/* Company Info */}
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-lg">FP</span>
               </div>
-              <span className="text-blue-900 font-semibold text-xl">Future Prospect</span>
+              <span className="text-blue-900 font-semibold text-xl">ZigX</span>
             </div>
             <p className="text-gray-600 text-sm leading-relaxed">
-              Empowering students to discover and secure their dream internships. 
+              Empowering students to discover and secure their dream internships.
               Build your future with confidence and connect with top companies.
             </p>
             <div className="flex space-x-4">
-              <a 
-                href="#" 
+              <a
+                href="#"
                 className="text-gray-400 hover:text-blue-600 transition-colors duration-200"
                 aria-label="Facebook"
               >
                 <Facebook size={20} />
               </a>
-              <a 
-                href="#" 
+              <a
+                href="#"
                 className="text-gray-400 hover:text-blue-600 transition-colors duration-200"
                 aria-label="Twitter"
               >
                 <Twitter size={20} />
               </a>
-              <a 
-                href="#" 
+              <a
+                href="#"
                 className="text-gray-400 hover:text-blue-600 transition-colors duration-200"
                 aria-label="Instagram"
               >
                 <Instagram size={20} />
               </a>
-              <a 
-                href="#" 
+              <a
+                href="#"
                 className="text-gray-400 hover:text-blue-600 transition-colors duration-200"
                 aria-label="LinkedIn"
               >
@@ -85,40 +85,40 @@ export const DashboardFooter = () => {
             <h3 className="text-blue-900 font-semibold text-lg">Quick Links</h3>
             <ul className="space-y-3">
               <li>
-                <Link 
-                  href="/dashboard" 
+                <Link
+                  href="/dashboard"
                   className="text-gray-600 hover:text-blue-600 transition-colors duration-200 text-sm"
                 >
                   Dashboard
                 </Link>
               </li>
               <li>
-                <Link 
-                  href="/dashboard/upload-resume" 
+                <Link
+                  href="/dashboard/upload-resume"
                   className="text-gray-600 hover:text-blue-600 transition-colors duration-200 text-sm"
                 >
                   Upload Resume
                 </Link>
               </li>
               <li>
-                <Link 
-                  href="/dashboard/applied-internships" 
+                <Link
+                  href="/dashboard/applied-internships"
                   className="text-gray-600 hover:text-blue-600 transition-colors duration-200 text-sm"
                 >
                   Applied Internships
                 </Link>
               </li>
               <li>
-                <Link 
-                  href="/dashboard/student-directory" 
+                <Link
+                  href="/dashboard/student-directory"
                   className="text-gray-600 hover:text-blue-600 transition-colors duration-200 text-sm"
                 >
                   Student Directory
                 </Link>
               </li>
               <li>
-                <Link 
-                  href="/dashboard/track-progress" 
+                <Link
+                  href="/dashboard/track-progress"
                   className="text-gray-600 hover:text-blue-600 transition-colors duration-200 text-sm"
                 >
                   Track Progress
@@ -132,40 +132,40 @@ export const DashboardFooter = () => {
             <h3 className="text-blue-900 font-semibold text-lg">Support</h3>
             <ul className="space-y-3">
               <li>
-                <Link 
-                  href="/help" 
+                <Link
+                  href="/help"
                   className="text-gray-600 hover:text-blue-600 transition-colors duration-200 text-sm"
                 >
                   Help Center
                 </Link>
               </li>
               <li>
-                <Link 
-                  href="/faq" 
+                <Link
+                  href="/faq"
                   className="text-gray-600 hover:text-blue-600 transition-colors duration-200 text-sm"
                 >
                   FAQ
                 </Link>
               </li>
               <li>
-                <Link 
-                  href="/contact" 
+                <Link
+                  href="/contact"
                   className="text-gray-600 hover:text-blue-600 transition-colors duration-200 text-sm"
                 >
                   Contact Us
                 </Link>
               </li>
               <li>
-                <Link 
-                  href="/privacy" 
+                <Link
+                  href="/privacy"
                   className="text-gray-600 hover:text-blue-600 transition-colors duration-200 text-sm"
                 >
                   Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link 
-                  href="/terms" 
+                <Link
+                  href="/terms"
                   className="text-gray-600 hover:text-blue-600 transition-colors duration-200 text-sm"
                 >
                   Terms of Service
@@ -190,8 +190,8 @@ export const DashboardFooter = () => {
               </div>
               <div className="flex items-center gap-3">
                 <Phone size={16} className="text-blue-600 flex-shrink-0" />
-                <a 
-                  href="tel:+1234567890" 
+                <a
+                  href="tel:+1234567890"
                   className="text-gray-600 hover:text-blue-600 transition-colors duration-200 text-sm"
                 >
                   +1 (234) 567-8900
@@ -199,8 +199,8 @@ export const DashboardFooter = () => {
               </div>
               <div className="flex items-center gap-3">
                 <Mail size={16} className="text-blue-600 flex-shrink-0" />
-                <a 
-                  href="mailto:support@ZIGEX.com" 
+                <a
+                  href="mailto:support@ZIGEX.com"
                   className="text-gray-600 hover:text-blue-600 transition-colors duration-200 text-sm"
                 >
                   support@ZIGEX.com
@@ -216,7 +216,7 @@ export const DashboardFooter = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-1 text-gray-600 text-sm">
-              <span>© 2024 Future Prospect. Made with</span>
+              <span>© 2024 ZigX. Made with</span>
               <Heart size={14} className="text-red-500 fill-current" />
               <span>for students worldwide.</span>
             </div>

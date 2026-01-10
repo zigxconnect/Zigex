@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { GitPullRequest, Rocket, GraduationCap, ArrowRight } from "lucide-react";
 
 interface ContributeModalProps {
   isOpen: boolean;
@@ -10,11 +11,11 @@ interface ContributeModalProps {
   githubUrl?: string | null;
 }
 
-export default function ContributeModal({ 
-  isOpen, 
-  onClose, 
+export default function ContributeModal({
+  isOpen,
+  onClose,
   projectTitle,
-  githubUrl 
+  githubUrl
 }: ContributeModalProps) {
   const [isAnimating, setIsAnimating] = useState(false);
   const [hoveredButton, setHoveredButton] = useState<string | null>(null);
@@ -38,16 +39,15 @@ export default function ContributeModal({
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
       {/* Backdrop */}
-      <div 
+      <div
         onClick={onClose}
         className="absolute inset-0 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
       />
 
       {/* Modal - More Square & Mobile Optimized */}
-      <div 
-        className={`relative bg-card rounded-2xl sm:rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden transform transition-all duration-300 ${
-          isAnimating ? 'animate-in zoom-in-95 slide-in-from-bottom-4' : ''
-        }`}
+      <div
+        className={`relative bg-card rounded-2xl sm:rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden transform transition-all duration-300 ${isAnimating ? 'animate-in zoom-in-95 slide-in-from-bottom-4' : ''
+          }`}
       >
         {/* Close button */}
         <button
@@ -60,30 +60,28 @@ export default function ContributeModal({
           </svg>
         </button>
 
-        {/* Animated Emoji Header - Much Bigger! */}
-        <div className="relative bg-gradient-to-br from-primary via-primary/90 to-primary/80 px-6 py-12 sm:py-16 text-center">
-          <div className="inline-block animate-bounce-slow">
-            <div className="text-[120px] sm:text-[140px] leading-none mb-4 animate-wiggle filter drop-shadow-2xl">
-              😏
+        {/* Professional Icon Header */}
+        <div className="relative bg-gradient-to-br from-blue-700 via-blue-800 to-indigo-900 px-6 py-10 sm:py-12 text-center">
+          <div className="inline-block mb-4">
+            <div className="w-24 h-24 sm:w-32 sm:h-32 bg-white/10 backdrop-blur-md rounded-3xl flex items-center justify-center mx-auto shadow-2xl border border-white/20 animate-in zoom-in duration-500">
+              <Rocket size={64} className="text-white" />
             </div>
           </div>
-          <h3 className="text-lg sm:text-xl font-bold text-primary-foreground drop-shadow-lg px-4">
-            You Sure Say You Get The Skills?
+          <h3 className="text-lg sm:text-xl font-bold text-white px-4">
+            Ready to contribute?
           </h3>
-          <div className="flex items-center justify-center gap-2 mt-2">
-            <span className="text-2xl animate-bounce" style={{animationDelay: '0ms'}}>😂</span>
-            <span className="text-2xl animate-bounce" style={{animationDelay: '150ms'}}>😂</span>
-            <span className="text-2xl animate-bounce" style={{animationDelay: '300ms'}}>😂</span>
-          </div>
+          <p className="text-blue-100/80 text-sm mt-2 font-medium">
+            Join the team and build something amazing together
+          </p>
         </div>
 
         {/* Content - Simplified & Bigger Touch Targets */}
         <div className="p-6 sm:p-8 space-y-4">
           {/* Simple message */}
           <p className="text-center text-sm sm:text-base text-gray-700 leading-relaxed font-medium">
-            This project need some real skills o! 💪
+            Contributing to this project requires technical expertise and commitment.
             <br />
-            <span className="text-gray-600">You don reach that level?</span>
+            <span className="text-gray-600">Are you ready to take it to the next level?</span>
           </p>
 
           {/* Action Buttons - Bigger for mobile with Shimmer */}
@@ -116,8 +114,8 @@ export default function ContributeModal({
 
               {/* Content */}
               <span className="relative z-10 flex items-center gap-3">
-                <span className="text-2xl">🚀</span>
-                <span>Yes Boss, I Sabi Am!</span>
+                <GitPullRequest size={20} />
+                <span>Submit a Pull Request</span>
               </span>
 
               {/* Particle effect on hover */}
@@ -157,8 +155,8 @@ export default function ContributeModal({
 
               {/* Content */}
               <span className="relative z-10 flex items-center gap-3">
-                <span className="text-2xl">🎓</span>
-                <span>Abeg, Teach Me First</span>
+                <GraduationCap size={20} />
+                <span>I'd like to learn more first</span>
               </span>
 
               {/* Particle effect on hover */}
@@ -175,7 +173,7 @@ export default function ContributeModal({
               onClick={onClose}
               className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-muted text-muted-foreground rounded-xl sm:rounded-2xl font-semibold text-sm sm:text-base hover:bg-muted/80 transition-all active:scale-95"
             >
-              Make I Think Am
+              Maybe Later
             </button>
           </div>
         </div>

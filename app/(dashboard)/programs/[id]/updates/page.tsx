@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import ProgramUpdatesClient from "./ProgramUpdatesClient";
 import { getProgramContentCached, getStudentEnrollment } from "@/lib/actions/program-content.actions";
+import { supabaseAdmin } from "@/lib/supabase/server";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -17,6 +18,90 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: `Program Updates | ZIGEX`,
     description: "View your program curriculum, weekly updates, and resources.",
   };
+}
+
+// Helper to check if string is UUID
+const isUUID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+
+// Fetch accepted crew members for the program
+async function getAcceptedCrewMembers(programId: string) {
+  try {
+    let actualId = programId;
+
+    // If it's a slug, we need to find the actual UUID first
+    if (!isUUID(programId)) {
+      const { data: program } = await supabaseAdmin
+        .from("programs")
+        .select("id")
+        .ilike("title", programId.replace(/-/g, ' '))
+        .maybeSingle();
+      
+      if (program?.id) {
+        actualId = program.id;
+      } else {
+        console.log("[Crew] Program not found for slug:", programId);
+        return { members: [], totalCount: 0 };
+      }
+    }
+
+    console.log("[Crew] Fetching members for program:", actualId);
+
+    // Query applications with correct relation syntax
+    const { data, error, count } = await supabaseAdmin
+      .from("Applications")
+      .select(`
+        id,
+        status,
+        student_id,
+        student:student_profiles (
+          id,
+          username,
+          full_name,
+          avatar_url
+        )
+      `, { count: "exact" })
+      .eq("program_id", actualId)
+      .eq("application_type", "program")
+      .in("status", ["accepted", "rsvp_confirmed", "confirmed", "reviewed"])
+      .order("updated_at", { ascending: false })
+      .limit(50);
+
+    console.log("[Crew] Query result - Count:", count, "Error:", error?.message || "none");
+    
+    if (error) {
+      console.error("[Crew] Error fetching crew members:", error);
+      return { members: [], totalCount: 0 };
+    }
+
+    if (!data || data.length === 0) {
+      console.log("[Crew] No accepted applications found");
+      return { members: [], totalCount: 0 };
+    }
+
+    console.log("[Crew] Raw data sample:", JSON.stringify(data[0], null, 2));
+
+    const members = data
+      .filter((app: any) => {
+        const student = Array.isArray(app.student) ? app.student[0] : app.student;
+        return student && student.id;
+      })
+      .map((app: any) => {
+        const student = Array.isArray(app.student) ? app.student[0] : app.student;
+        return {
+          id: app.student_id || student?.id,
+          name: student?.full_name || student?.username || "Member",
+          avatar: student?.avatar_url || null,
+          username: student?.username || null,
+        };
+      });
+
+    console.log("[Crew] Processed members count:", members.length);
+
+    return { members, totalCount: count || members.length };
+  } catch (err) {
+    console.error("[Crew] Error in getAcceptedCrewMembers:", err);
+    return { members: [], totalCount: 0 };
+  }
 }
 
 export default async function ProgramUpdatesPage({ params }: PageProps) {
@@ -41,10 +126,11 @@ export default async function ProgramUpdatesPage({ params }: PageProps) {
     redirect("/login");
   }
 
-  // Parallel fetch: Content (Cached) + Enrollment (Dynamic)
-  const [rawContent, enrollment] = await Promise.all([
+  // Parallel fetch: Content (Cached) + Enrollment (Dynamic) + Crew Members
+  const [rawContent, enrollment, crewMembers] = await Promise.all([
     getProgramContentCached(id),
-    getStudentEnrollment(id, user.id)
+    getStudentEnrollment(id, user.id),
+    getAcceptedCrewMembers(id)
   ]);
 
   // Case-insensitive status check
@@ -124,7 +210,8 @@ export default async function ProgramUpdatesPage({ params }: PageProps) {
     <ProgramUpdatesClient 
        id={id} 
        initialContent={processedContent} 
-       initialEnrollment={enrollment} 
+       initialEnrollment={enrollment}
+       crew={crewMembers}
     />
   );
 }

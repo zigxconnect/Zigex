@@ -2,6 +2,7 @@
 
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { getURL } from "@/lib/utils";
 
 export async function POST(request: Request) {
   // --- MODIFICATION 1: Receive the 'origin' from the request body ---
@@ -102,7 +103,7 @@ export async function POST(request: Request) {
       // --- MODIFICATION 2: Add the emailRedirectTo option ---
       // This tells Supabase where to send the user AFTER they click the verification link.
       // Use the validated origin (or safe fallback) when building the redirect target.
-      emailRedirectTo: `${validatedOrigin.replace(/\/$/, "")}/create-profile`,
+      emailRedirectTo: `${getURL()}api/auth/callback?next=/create-profile`,
 
       data: {
         full_name: fullName,
