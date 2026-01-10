@@ -5,15 +5,15 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { 
-  MapPin, Calendar, Clock, Users, 
-  Lock, Unlock, ArrowRight 
+import {
+  MapPin, Calendar, Clock, Users,
+  Lock, Unlock, ArrowRight
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/uiComponent/Badge";
 import { ShareButton } from "@/components/sections/dashboard/ShareButton";
 import type { FeedItem } from "@/lib/types/feed";
-import { normalizeImageSrc } from "@/lib/utils";
+import { normalizeImageSrc, slugify } from "@/lib/utils";
 
 interface UnifiedFeedCardProps {
   item: FeedItem;
@@ -58,7 +58,7 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
 
   const getImageUrl = () => {
     if (imageError) return "/placeholder.png";
-    
+
     switch (item._type) {
       case "internships":
         return normalizeImageSrc((item as any).cover_image_url || (item as any).internship_picture_url);
@@ -71,8 +71,8 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
     }
   };
 
-  const companyName = typeof item.company === "string" 
-    ? item.company 
+  const companyName = typeof item.company === "string"
+    ? item.company
     : item.company?.company_name || "Company";
 
   // Check if program is open (improved logic)
@@ -82,12 +82,12 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
 
   if (item._type === "programs") {
     const program = item as any;
-    
+
     // Check if explicitly locked
     if (program.isLocked) {
       isOpen = false;
       statusMessage = "Applications Closed";
-    } 
+    }
     // Check end date
     else if (program.end_date && new Date(program.end_date) < now) {
       isOpen = false;
@@ -106,30 +106,29 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
 
   const formatDate = (date?: string) => {
     if (!date) return null;
-    return new Date(date).toLocaleDateString("en-US", { 
-      month: "short", 
-      day: "numeric", 
-      year: "numeric" 
+    return new Date(date).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric"
     });
   };
 
   const handleCardClick = () => {
-    router.push(`/feed/${item.id}`);
+    router.push(`/feed/${slugify(item.title)}`);
   };
 
   return (
     <div
       ref={cardRef}
-      className={`transition-all duration-700 h-full ${
-        isVisible 
-          ? 'opacity-100 translate-y-0' 
+      className={`transition-all duration-700 h-full ${isVisible
+          ? 'opacity-100 translate-y-0'
           : 'opacity-0 translate-y-8'
-      }`}
-      style={{ 
+        }`}
+      style={{
         transitionDelay: `${index * 80}ms`,
       }}
     >
-      <Card 
+      <Card
         onClick={handleCardClick}
         className="group overflow-hidden border border-border hover:shadow-xl transition-all duration-500 bg-card rounded-xl hover:-translate-y-2 h-full flex flex-col cursor-pointer"
       >
@@ -145,18 +144,18 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               priority={index < 3}
             />
-            
+
             {/* Gradient Overlay - Simplified */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-60 transition-opacity duration-500" />
-            
+
             {/* Top Badges */}
             <div className="absolute top-3 left-3 flex flex-col gap-2 z-10 items-start">
               <Badge className="bg-white text-black border-gray-100 border backdrop-blur-sm transform transition-transform duration-300 group-hover:scale-105">
                 {item._type.charAt(0).toUpperCase() + item._type.slice(1, -1)}
               </Badge>
-              
+
               {item.is_live && (
-                <Badge 
+                <Badge
                   className="bg-destructive text-destructive-foreground border-destructive backdrop-blur-sm cursor-pointer hover:bg-destructive/90 transition-all transform hover:scale-105"
                   onClick={(e) => {
                     e.preventDefault();
@@ -187,7 +186,7 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
 
             {/* Share Button - Top Right */}
             <div className="absolute top-3 right-3 z-10">
-              <div 
+              <div
                 className="bg-white/95 backdrop-blur-sm rounded-lg shadow-sm hover:shadow-md transition-all"
                 onClick={(e) => {
                   e.preventDefault();
@@ -197,7 +196,7 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
                 <ShareButton
                   title={item.title}
                   description={item.description || `Check out this ${item._type.slice(0, -1)}`}
-                  url={`/feed/${item.id}`}
+                  url={`/feed/${slugify(item.title)}`}
                   imageUrl={getImageUrl()}
                   type={item._type === "internships" ? "internship" : item._type === "events" ? "event" : "program"}
                 />
@@ -241,14 +240,14 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
                 <MapPin size={16} className="flex-shrink-0 text-primary" />
                 <span className="truncate text-sm font-medium text-gray-700">{item.location}</span>
               </div>
-              
+
               {item._type === "programs" && (item as any).duration && (
                 <div className="flex items-center gap-1 transition-colors duration-300 hover:text-foreground">
                   <Clock size={13} className="flex-shrink-0" />
                   <span>{(item as any).duration}</span>
                 </div>
               )}
-              
+
               {item._type === "internships" && (item as any).department && (
                 <div className="flex items-center gap-1 transition-colors duration-300 hover:text-foreground">
                   <Users size={13} className="flex-shrink-0" />
@@ -266,7 +265,7 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
 
             {/* CTA Button */}
             <div className="mt-auto pt-3">
-              <button 
+              <button
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
                 className="relative cursor-pointer overflow-hidden w-full py-2.5 px-4 bg-primary text-primary-foreground font-semibold rounded-lg transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transform hover:scale-[1.02]"

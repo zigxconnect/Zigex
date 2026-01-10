@@ -25,6 +25,7 @@ import {
 import { useState, useRef, useEffect } from "react";
 import LiveBadge from "@/components/uiComponent/LiveBadge";
 import LivePanel from "@/components/uiComponent/LivePanel";
+import { slugify } from "@/lib/utils";
 // ...existing code...
 
 interface InternshipCardProps {
@@ -35,7 +36,7 @@ interface InternshipCardProps {
   type: string;
   category: string;
   logoColor: string;
-  cover_image_url: string; 
+  cover_image_url: string;
   company_logo_url?: string;
   start_date?: string | null;
   end_date?: string | null;
@@ -87,6 +88,8 @@ export const InternshipCard = ({
   const handleCardClick = () => {
     if (is_live && onLiveClick) {
       onLiveClick();
+    } else {
+      router.push(`/internships/${slugify(title)}`);
     }
   };
 
@@ -135,7 +138,7 @@ export const InternshipCard = ({
   const handleShare = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/internships/${id}`;
+    const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/internships/${slugify(title)}`;
     const text = `${title} at ${company}`;
     try {
       if (navigator.share) {
@@ -164,8 +167,8 @@ export const InternshipCard = ({
         ref={cardRef}
         className={`${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'} transition-all duration-700`}
       >
-        <div 
-          onClick={() => router.push(`/internships/${id}`)}
+        <div
+          onClick={() => router.push(`/internships/${slugify(title)}`)}
           className={`bg-white rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer`}
         >
           <div className="flex">
@@ -177,7 +180,7 @@ export const InternshipCard = ({
                 className="object-cover transition-transform duration-300 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
-              
+
               {is_live && (
                 <>
                   <div className="absolute top-3 left-3 z-10">
@@ -261,7 +264,7 @@ export const InternshipCard = ({
                     </div>
                   ) : (
                     <div className="inline-flex items-center gap-1 px-2 py-1 bg-[#DC2626]/10 text-[#DC2626] rounded-full text-xs font-semibold border border-[#DC2626]/20">
-                      <XCircle size={14} className="text-[#DC2626]" /> 
+                      <XCircle size={14} className="text-[#DC2626]" />
                       <span>Closed</span>
                     </div>
                   )}
@@ -281,15 +284,15 @@ export const InternshipCard = ({
   return (
     <>
       <div ref={cardRef} className={`${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'} transition-all duration-700`}>
-        <div 
+        <div
           className="relative group cursor-pointer overflow-hidden rounded-3xl shadow-2xl border-2 border-transparent hover:border-blue-500 transition-all duration-500 aspect-[3/4]"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
           onClick={handleCardClick}
           style={{
             transform: isHovered ? 'scale(1.02) translateY(-8px)' : 'scale(1)',
-            boxShadow: isHovered 
-              ? '0 25px 50px -12px rgba(59, 130, 246, 0.4), 0 0 0 3px rgba(59, 130, 246, 0.1)' 
+            boxShadow: isHovered
+              ? '0 25px 50px -12px rgba(59, 130, 246, 0.4), 0 0 0 3px rgba(59, 130, 246, 0.1)'
               : '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
           }}
         >
@@ -303,42 +306,42 @@ export const InternshipCard = ({
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10 transition-opacity duration-300 opacity-60 group-hover:opacity-80" />
           </div>
 
-        {/* Top Section - Floating Elements */}
-        <div className="absolute top-0 left-0 right-0 p-4 z-20">
-          <div className="flex items-start justify-between">
-            <div className="flex flex-col items-start gap-2">
-            {/* Live Badge or Category */}
-            {is_live ? (
-              <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-600 to-pink-600 rounded-full shadow-2xl animate-pulse-glow">
-                <div className="relative flex items-center justify-center">
-                  <div className="w-2.5 h-2.5 bg-white rounded-full animate-ping absolute" />
-                  <div className="w-2.5 h-2.5 bg-white rounded-full" />
-                </div>
-                <span className="text-white text-sm font-bold uppercase tracking-wider">
-                  Live Now
-                </span>
+          {/* Top Section - Floating Elements */}
+          <div className="absolute top-0 left-0 right-0 p-4 z-20">
+            <div className="flex items-start justify-between">
+              <div className="flex flex-col items-start gap-2">
+                {/* Live Badge or Category */}
+                {is_live ? (
+                  <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-600 to-pink-600 rounded-full shadow-2xl animate-pulse-glow">
+                    <div className="relative flex items-center justify-center">
+                      <div className="w-2.5 h-2.5 bg-white rounded-full animate-ping absolute" />
+                      <div className="w-2.5 h-2.5 bg-white rounded-full" />
+                    </div>
+                    <span className="text-white text-sm font-bold uppercase tracking-wider">
+                      Live Now
+                    </span>
+                  </div>
+                ) : (
+                  <div className="px-4 py-2 bg-white rounded-full shadow-lg border border-gray-100">
+                    <span className="text-black text-xs font-bold uppercase tracking-wide">
+                      {category}
+                    </span>
+                  </div>
+                )}
+
+                {/* Status Badge */}
+                {openStatusComputed ? (
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/90 backdrop-blur-md rounded-full border border-emerald-400/30">
+                    <CheckCircle size={12} className="text-white" />
+                    <span className="text-white text-xs font-bold uppercase tracking-wide">Open</span>
+                  </div>
+                ) : (
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-500/90 backdrop-blur-md rounded-full border border-rose-400/30">
+                    <XCircle size={12} className="text-white" />
+                    <span className="text-white text-xs font-bold uppercase tracking-wide">Closed</span>
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="px-4 py-2 bg-white rounded-full shadow-lg border border-gray-100">
-                <span className="text-black text-xs font-bold uppercase tracking-wide">
-                  {category}
-                </span>
-              </div>
-            )}
-            
-            {/* Status Badge */}
-            {openStatusComputed ? (
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/90 backdrop-blur-md rounded-full border border-emerald-400/30">
-                  <CheckCircle size={12} className="text-white" />
-                  <span className="text-white text-xs font-bold uppercase tracking-wide">Open</span>
-                </div>
-              ) : (
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-500/90 backdrop-blur-md rounded-full border border-rose-400/30">
-                  <XCircle size={12} className="text-white" />
-                  <span className="text-white text-xs font-bold uppercase tracking-wide">Closed</span>
-                </div>
-              )}
-            </div>
 
               <div className="flex flex-col gap-3">
                 <button
@@ -362,8 +365,8 @@ export const InternshipCard = ({
                   }}
                   className="w-11 h-11 bg-white/95 backdrop-blur-xl hover:bg-white shadow-2xl rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95"
                 >
-                  <Heart 
-                    size={18} 
+                  <Heart
+                    size={18}
                     className={`transition-all duration-300 ${isLiked ? 'text-red-600 fill-red-600 animate-like-bounce' : 'text-gray-700'}`}
                   />
                 </button>
@@ -393,7 +396,7 @@ export const InternshipCard = ({
 
           {is_live && (
             <div className="absolute inset-0 flex items-center justify-center z-10">
-              <div 
+              <div
                 className="relative transition-all duration-500"
                 style={{ transform: isHovered ? 'scale(1.1)' : 'scale(1)' }}
               >
@@ -405,27 +408,27 @@ export const InternshipCard = ({
             </div>
           )}
 
-        {/* Bottom Content - Always Visible */}
-        <div className="absolute bottom-0 left-0 right-0 p-5 z-20">
-          {/* Company Logo Badge */}
-          <div className="flex items-center gap-3 mb-3">
-            <div className="relative w-14 h-14 rounded-2xl overflow-hidden shadow-2xl border-2 border-white/30">
-              <Image
-                src={company_logo_url || "/seedLogo.png"}
-                alt={`${company} logo`}
-                fill
-                className="object-cover"
-              />
+          {/* Bottom Content - Always Visible */}
+          <div className="absolute bottom-0 left-0 right-0 p-5 z-20">
+            {/* Company Logo Badge */}
+            <div className="flex items-center gap-3 mb-3">
+              <div className="relative w-14 h-14 rounded-2xl overflow-hidden shadow-2xl border-2 border-white/30">
+                <Image
+                  src={company_logo_url || "/seedLogo.png"}
+                  alt={`${company} logo`}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              <div className="flex-1">
+                <p className="text-blue-300 text-xs font-bold uppercase tracking-wider mb-1">
+                  {company}
+                </p>
+                <h3 className="text-white text-xl font-bold leading-tight line-clamp-2 drop-shadow-md">
+                  {title}
+                </h3>
+              </div>
             </div>
-            <div className="flex-1">
-              <p className="text-blue-300 text-xs font-bold uppercase tracking-wider mb-1">
-                {company}
-              </p>
-              <h3 className="text-white text-xl font-bold leading-tight line-clamp-2 drop-shadow-md">
-                {title}
-              </h3>
-            </div>
-          </div>
 
             <div className="flex items-center gap-3 mb-4 text-white/90">
               <div className="flex items-center gap-1.5 text-sm font-medium">
@@ -442,8 +445,8 @@ export const InternshipCard = ({
                 <span className="drop-shadow-lg">{type}</span>
               </div>
             </div>
-            
-            <Link href={`/internships/${id}`} onClick={(e: React.MouseEvent<HTMLAnchorElement>) => e.stopPropagation()}>
+
+            <Link href={`/internships/${slugify(title)}`} onClick={(e: React.MouseEvent<HTMLAnchorElement>) => e.stopPropagation()}>
               <button
                 className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 shadow-2xl transition-all duration-300 hover:shadow-blue-500/50 active:scale-98 group/btn"
               >
@@ -469,7 +472,7 @@ export const InternshipCard = ({
         coverImage={cover_image_url}
         youtubeId={live_stream_url || "https://www.youtube.com/watch?v=ysz5S6PUM-U"}
         postingType="Internship"
-        applyUrl={`/internships/${id}`}
+        applyUrl={`/internships/${slugify(title)}`}
       />
 
       <style jsx>{`

@@ -4,6 +4,7 @@
 import { cache } from "react";
 import { createSupabaseServerClient, supabaseAdmin } from "@/lib/supabase/server";
 import { unstable_cache } from "next/cache";
+import { isUUID } from "@/lib/utils";
 
 export type FeedType = "internships" | "programs" | "events";
 
@@ -13,24 +14,29 @@ export type FeedType = "internships" | "programs" | "events";
  */
 const fetchFeedItemById = async (id: string) => {
   try {
-    // Try to find in internships
-    const { data: internship, error: internshipError } = await supabaseAdmin
+    const isIdUuid = isUUID(id);
+
+    // Helper to format title for comparison (handles slugs)
+    // We replace dashes with wildcards (%) to match titles with punctuation
+    const titlePattern = !isIdUuid ? `%${id.replace(/-/g, '%')}%` : "";
+
+    // 1. Try to find in internships
+    let internshipQuery = supabaseAdmin
       .from("internships")
-      .select(
-        `
+      .select(`
         *,
         company_profiles (
-          id,
-          company_name,
-          logo_url,
-          cover_image_url,
-          location,
-          website_url
+          id, company_name, logo_url, cover_image_url, location, website_url
         )
-      `
-      )
-      .eq("id", id)
-      .single();
+      `);
+
+    if (isIdUuid) {
+      internshipQuery = internshipQuery.eq("id", id);
+    } else {
+      internshipQuery = internshipQuery.ilike("title", titlePattern);
+    }
+
+    const { data: internship, error: internshipError } = await internshipQuery.maybeSingle();
 
     if (internship && !internshipError) {
       return {
@@ -39,24 +45,23 @@ const fetchFeedItemById = async (id: string) => {
       };
     }
 
-    // Try to find in programs
-    const { data: program, error: programError } = await supabaseAdmin
+    // 2. Try to find in programs
+    let programQuery = supabaseAdmin
       .from("programs")
-      .select(
-        `
+      .select(`
         *,
         company_profiles (
-          id,
-          company_name,
-          logo_url,
-          cover_image_url,
-          location,
-          website_url
+          id, company_name, logo_url, cover_image_url, location, website_url
         )
-      `
-      )
-      .eq("id", id)
-      .single();
+      `);
+
+    if (isIdUuid) {
+      programQuery = programQuery.eq("id", id);
+    } else {
+      programQuery = programQuery.ilike("title", titlePattern);
+    }
+
+    const { data: program, error: programError } = await programQuery.maybeSingle();
 
     if (program && !programError) {
       return {
@@ -65,24 +70,23 @@ const fetchFeedItemById = async (id: string) => {
       };
     }
 
-    // Try to find in events
-    const { data: event, error: eventError } = await supabaseAdmin
+    // 3. Try to find in events
+    let eventQuery = supabaseAdmin
       .from("event")
-      .select(
-        `
+      .select(`
         *,
         company_profiles (
-          id,
-          company_name,
-          logo_url,
-          cover_image_url,
-          location,
-          website_url
+          id, company_name, logo_url, cover_image_url, location, website_url
         )
-      `
-      )
-      .eq("id", id)
-      .single();
+      `);
+
+    if (isIdUuid) {
+      eventQuery = eventQuery.eq("id", id);
+    } else {
+      eventQuery = eventQuery.ilike("title", titlePattern);
+    }
+
+    const { data: event, error: eventError } = await eventQuery.maybeSingle();
 
     if (event && !eventError) {
       return {

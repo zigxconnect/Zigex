@@ -34,3 +34,26 @@ export function normalizeImageSrc(src?: string | null, fallback = "/placeholder.
   if (!/^https?:\/\//i.test(src)) return `https://${src}`;
   return src;
 }
+
+/**
+ * Converts a string into a URL-friendly slug.
+ */
+export function slugify(text: string): string {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')     // Replace spaces with -
+    .replace(/[^\w-]+/g, '')  // Remove all non-word chars
+    .replace(/--+/g, '-')     // Replace multiple - with single -
+    .replace(/^-+/, '')       // Trim - from start of text
+    .replace(/-+$/, '');      // Trim - from end of text
+}
+
+/**
+ * Checks if a string is a valid UUID.
+ */
+export function isUUID(text: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(text);
+}
