@@ -37,16 +37,19 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import {
-  getProgramCurriculum,
   MOBILE_MONEY_PAYMENT_INFO,
   formatXAF,
 } from "@/lib/data/program-curriculum";
 import type { 
-  ProgramCurriculum, 
-  CurriculumModule, 
   ProgramContent, 
-  ProgramResource 
+  ProgramResource,
+  ProgramModule,
+  ProgramCurriculum
 } from "@/lib/types/program-lms";
+import { 
+  PROGRAM_CURRICULA,
+  getProgramCurriculum
+} from "@/lib/data/program-curriculum";
 
 interface EnrolledProgramData {
   applicationId: string;
@@ -193,7 +196,7 @@ const PaymentGuide = ({ onClose, className }: { onClose?: () => void; className?
                     <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600">?</div>
                     <span className="text-xs font-medium text-slate-500">Receiver Name</span>
                  </div>
-                 <span className="font-bold text-sm text-slate-900">{paymentInfo.numberName || "ZIGEX CONNECT"}</span>
+                 <span className="font-bold text-sm text-slate-900">{paymentInfo.accountName || "SEED INC"}</span>
               </div>
             </div>
 
@@ -226,7 +229,7 @@ const PaymentGuide = ({ onClose, className }: { onClose?: () => void; className?
             {/* Confirmation CTA */}
             <div className="pt-2">
                <a
-                href="https://wa.me/237670000000?text=Hi%20ZIGEX!%20I%20just%20made%20a%20payment%20for%20my%20program.%20Transaction%20ID:%20"
+                href="https://wa.me/237650463077?text=Hi%20SEED%20INC!%20I%20just%20made%20a%20payment%20for%20my%20program.%20Transaction%20ID:%20"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl font-bold text-sm hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98] transition-all shadow-lg shadow-blue-500/25 group/btn"
@@ -246,93 +249,7 @@ const PaymentGuide = ({ onClose, className }: { onClose?: () => void; className?
   );
 };
 
-// Curriculum Module Accordion Item
-const CurriculumModuleItem = ({ module }: { module: CurriculumModule }) => (
-  <AccordionItem
-    value={`module-${module.moduleNumber}`}
-    className="border border-gray-100 rounded-xl bg-white overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 mb-3 data-[state=open]:border-green-200 data-[state=open]:shadow-md"
-  >
-    <AccordionTrigger className="px-5 py-4 hover:no-underline hover:bg-gray-50/50 group">
-      <div className="flex items-center gap-4 text-left w-full">
-        {/* Module Icon */}
-        <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-           {module.moduleNumber % 2 === 0 ? (
-             <BookOpen size={20} className="text-green-700" />
-           ) : (
-             <FileText size={20} className="text-green-700" />
-           )}
-        </div>
 
-        <div className="flex-1 min-w-0">
-          <h4 className="font-bold text-gray-900 text-base mb-1 group-hover:text-green-700 transition-colors">
-            {module.title}
-          </h4>
-          <div className="flex items-center gap-3 text-xs text-gray-500 font-medium">
-            <span className="flex items-center gap-1">
-              <Calendar size={12} />
-              {module.durationWeeks} weeks
-            </span>
-            <span>•</span>
-            <span className="flex items-center gap-1">
-              <BookOpen size={12} />
-              {module.topics.length} lessons
-            </span>
-          </div>
-        </div>
-      </div>
-    </AccordionTrigger>
-    
-    <AccordionContent className="px-5 pb-5">
-      <div className="pl-[60px]">
-        <p className="text-sm text-gray-600 leading-relaxed mb-4">
-          {module.description}
-        </p>
-
-        {/* Topics List as "Lessons" */}
-        <div className="space-y-2 mb-6">
-          <h5 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-            What you'll learn
-          </h5>
-          <ul className="grid grid-cols-1 gap-2">
-            {module.topics.map((topic, idx) => (
-              <li key={idx} className="flex items-start gap-2 text-sm text-gray-700">
-                <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />
-                <span>{topic}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Tutor Info - Compact */}
-        <div className="flex items-center gap-3 p-3 bg-gray-50/80 rounded-lg border border-gray-100">
-           <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
-             {module.tutor.avatarUrl ? (
-               <Image
-                 src={module.tutor.avatarUrl}
-                 alt={module.tutor.name}
-                 width={32}
-                 height={32}
-                 className="object-cover"
-               />
-             ) : (
-               <div className="w-full h-full flex items-center justify-center text-xs font-bold text-gray-500">
-                 {module.tutor.name.charAt(0)}
-               </div>
-             )}
-           </div>
-           <div className="flex-1">
-             <div className="text-xs font-semibold text-gray-900">
-               Instructor: {module.tutor.name}
-             </div>
-             <div className="text-[10px] text-gray-500">
-               {module.tutor.title}
-             </div>
-           </div>
-        </div>
-      </div>
-    </AccordionContent>
-  </AccordionItem>
-);
 
 // Resource Item Component
 const ResourceItem = ({ 
@@ -372,6 +289,54 @@ const ResourceItem = ({
   </a>
 );
 
+// Curriculum Module Item
+const CurriculumModuleItem = ({ 
+  module, 
+  isCompleted, 
+  onToggle 
+}: { 
+  module: ProgramModule; 
+  isCompleted: boolean; 
+  onToggle: (id: number) => void;
+}) => (
+  <div className="flex items-start gap-4 p-4 rounded-xl border border-gray-100 bg-white hover:border-blue-100 transition-all group">
+    <button 
+      onClick={() => onToggle(module.moduleNumber)}
+      className={`mt-1 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+        isCompleted 
+          ? "bg-green-500 border-green-500 text-white shadow-lg shadow-green-100" 
+          : "border-gray-200 hover:border-blue-400 group-hover:bg-blue-50/50"
+      }`}
+    >
+      {isCompleted && <CheckCircle2 size={14} strokeWidth={3} />}
+    </button>
+    <div className="flex-1">
+      <div className="flex items-center gap-2 mb-1">
+        <span className="text-[10px] font-black uppercase tracking-widest text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+          Module {module.moduleNumber}
+        </span>
+        <span className="text-[10px] font-bold text-gray-400">• {module.durationWeeks} weeks</span>
+      </div>
+      <h4 className={`font-bold text-sm mb-1 ${isCompleted ? "text-gray-400 line-through" : "text-gray-900"}`}>
+        {module.title}
+      </h4>
+      <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
+        {module.description}
+      </p>
+      
+      {module.topics && (
+        <div className="flex flex-wrap gap-1.5 mt-3">
+          {module.topics.map((topic, i) => (
+            <span key={i} className="text-[9px] font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-md border border-gray-100 group-hover:border-blue-100 group-hover:bg-white transition-colors">
+              {topic}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+);
+
 // Main Component
 export default function ProgramUpdatesClient({ 
   id, 
@@ -384,22 +349,56 @@ export default function ProgramUpdatesClient({
 }) {
   const [enrollment, setEnrollment] = useState<EnrolledProgramData | null>(initialEnrollment);
   const [content, setContent] = useState<ProgramContent[]>(initialContent);
+  const [modules, setModules] = useState<ProgramModule[]>([]);
+  const [completedModules, setCompletedModules] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(!initialEnrollment);
   const [showPaymentGuide, setShowPaymentGuide] = useState(false);
 
-  // Get local curriculum
-  const [curriculum, setCurriculum] = useState<ProgramCurriculum | null>(null);
-
+  // Load curriculum modules
   useEffect(() => {
-    // Set curriculum using ID and title
     if (enrollment) {
-       const found = getProgramCurriculum(id, enrollment.programTitle);
-       setCurriculum(found);
-    } else {
-       // Fallback
-       setCurriculum(getProgramCurriculum(id));
+      const curriculum = getProgramCurriculum(id, enrollment.programTitle);
+      if (curriculum) {
+        setModules(curriculum.modules);
+      }
     }
   }, [id, enrollment]);
+
+  // Load progress from local storage
+  useEffect(() => {
+    const saved = localStorage.getItem(`progress_${id}`);
+    if (saved) {
+      try {
+        setCompletedModules(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to parse progress:", e);
+      }
+    }
+  }, [id]);
+
+  const toggleModule = (moduleNum: number) => {
+    const newCompleted = completedModules.includes(moduleNum)
+      ? completedModules.filter(m => m !== moduleNum)
+      : [...completedModules, moduleNum];
+    
+    setCompletedModules(newCompleted);
+    localStorage.setItem(`progress_${id}`, JSON.stringify(newCompleted));
+    
+    if (!completedModules.includes(moduleNum)) {
+      toast.success("Progress updated!", {
+        description: "Great work keeping up with your curriculum!",
+        icon: "🎉"
+      });
+    }
+  };
+
+  const progress = modules.length > 0 
+    ? Math.round((completedModules.length / modules.length) * 100) 
+    : 0;
+
+
+
+
 
   if (isLoading) {
     return (
@@ -521,118 +520,7 @@ export default function ProgramUpdatesClient({
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
             
-            {/* Curriculum Section */}
-            {curriculum && (
-              <section>
-                 <div className="flex items-center gap-2 mb-4">
-                    <div className="w-1 h-6 bg-blue-600 rounded-full" />
-                    <h2 className="text-xl font-bold text-gray-900">Program Curriculum</h2>
-                 </div>
-                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                   <div className="bg-blue-50/50 p-4 border-b border-gray-100 flex justify-between items-center px-6">
-                      <div className="flex items-center gap-2 text-gray-700 font-bold text-lg">
-                         <BookOpen size={20} className="text-blue-600" />
-                         <span>Modules Overview</span>
-                      </div>
-                      <span className="text-xs font-bold bg-blue-100 text-blue-700 px-3 py-1.5 rounded-full border border-blue-200">
-                         {curriculum.totalWeeks} Weeks • {curriculum.modules.length} Modules
-                      </span>
-                   </div>
-                   <div className="p-4 sm:p-6 bg-white">
-                     <Accordion type="single" collapsible className="space-y-0">
-                       {curriculum.modules.map((module) => (
-                          <div key={module.moduleNumber}>
-                            <AccordionItem
-                              value={`module-${module.moduleNumber}`}
-                              className="border border-gray-100 rounded-xl bg-white overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 mb-3 data-[state=open]:border-blue-200 data-[state=open]:shadow-md"
-                            >
-                              <AccordionTrigger className="px-5 py-4 hover:no-underline hover:bg-gray-50/50 group">
-                                <div className="flex items-center gap-4 text-left w-full">
-                                  {/* Module Icon */}
-                                  <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform group-hover:bg-blue-100">
-                                     {module.moduleNumber % 2 === 0 ? (
-                                       <BookOpen size={20} className="text-blue-600" />
-                                     ) : (
-                                       <FileText size={20} className="text-blue-600" />
-                                     )}
-                                  </div>
 
-                                  <div className="flex-1 min-w-0">
-                                    <h4 className="font-bold text-gray-900 text-base mb-1 group-hover:text-blue-700 transition-colors">
-                                      {module.title}
-                                    </h4>
-                                    <div className="flex items-center gap-3 text-xs text-gray-500 font-medium">
-                                      <span className="flex items-center gap-1">
-                                        <Calendar size={12} />
-                                        {module.durationWeeks} weeks
-                                      </span>
-                                      <span>•</span>
-                                      <span className="flex items-center gap-1">
-                                        <BookOpen size={12} />
-                                        {module.topics.length} lessons
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                              </AccordionTrigger>
-                              
-                              <AccordionContent className="px-5 pb-5">
-                                <div className="pl-[60px]">
-                                  <p className="text-sm text-gray-600 leading-relaxed mb-4">
-                                    {module.description}
-                                  </p>
-
-                                  {/* Topics List as "Lessons" */}
-                                  <div className="space-y-2 mb-6">
-                                    <h5 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                                      What you'll learn
-                                    </h5>
-                                    <ul className="grid grid-cols-1 gap-2">
-                                      {module.topics.map((topic, idx) => (
-                                        <li key={idx} className="flex items-start gap-2 text-sm text-gray-700">
-                                          <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
-                                          <span>{topic}</span>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-
-                                  {/* Tutor Info - Compact */}
-                                  <div className="flex items-center gap-3 p-3 bg-gray-50/80 rounded-lg border border-gray-100">
-                                     <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
-                                       {module.tutor.avatarUrl ? (
-                                         <Image
-                                           src={module.tutor.avatarUrl}
-                                           alt={module.tutor.name}
-                                           width={32}
-                                           height={32}
-                                           className="object-cover"
-                                         />
-                                       ) : (
-                                         <div className="w-full h-full flex items-center justify-center text-xs font-bold text-gray-500">
-                                           {module.tutor.name.charAt(0)}
-                                         </div>
-                                       )}
-                                     </div>
-                                     <div className="flex-1">
-                                       <div className="text-xs font-semibold text-gray-900">
-                                         Instructor: {module.tutor.name}
-                                       </div>
-                                       <div className="text-[10px] text-gray-500">
-                                         {module.tutor.title}
-                                       </div>
-                                     </div>
-                                  </div>
-                                </div>
-                              </AccordionContent>
-                            </AccordionItem>
-                          </div>
-                       ))}
-                     </Accordion>
-                   </div>
-                 </div>
-              </section>
-            )}
 
             {/* Weekly Updates / Content */}
             <section>
@@ -640,6 +528,65 @@ export default function ProgramUpdatesClient({
                 <div className="w-1 h-6 bg-indigo-600 rounded-full" />
                 <h2 className="text-xl font-bold text-gray-900">Weekly Updates & Resources</h2>
               </div>
+              
+              {/* Progress Tracker Widget */}
+              {modules.length > 0 && (
+                <Card className="mb-6 overflow-hidden border-0 shadow-sm bg-indigo-50/50 border-l-4 border-l-indigo-500">
+                  <div className="p-4 sm:p-6 flex flex-col sm:flex-row items-center gap-6">
+                    <div className="relative w-20 h-20 flex-shrink-0">
+                      <svg className="w-20 h-20 transform -rotate-90">
+                        <circle
+                          cx="40"
+                          cy="40"
+                          r="34"
+                          stroke="currentColor"
+                          strokeWidth="8"
+                          fill="transparent"
+                          className="text-indigo-100"
+                        />
+                        <circle
+                          cx="40"
+                          cy="40"
+                          r="34"
+                          stroke="currentColor"
+                          strokeWidth="8"
+                          fill="transparent"
+                          strokeDasharray={213.6}
+                          strokeDashoffset={213.6 - (213.6 * progress) / 100}
+                          className="text-indigo-600 transition-all duration-1000 ease-out"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center font-black text-indigo-700 text-lg">
+                        {progress}%
+                      </div>
+                    </div>
+                    <div className="flex-1 text-center sm:text-left">
+                      <h3 className="font-black text-indigo-900 text-lg mb-1 leading-tight">Curriculum Milestone</h3>
+                      <p className="text-indigo-600/70 text-sm font-medium">
+                        You've completed {completedModules.length} out of {modules.length} key learning blocks. 
+                        Keep going to master your skills!
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              )}
+
+              {/* Curriculum Grid */}
+              {modules.length > 0 && (
+                <div className="mb-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {modules.map((module) => (
+                      <CurriculumModuleItem 
+                        key={module.moduleNumber} 
+                        module={module}
+                        isCompleted={completedModules.includes(module.moduleNumber)}
+                        onToggle={toggleModule}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
               
               <Card className="overflow-hidden border-0 shadow-md hover:shadow-lg transition-all duration-300 bg-white group">
                 {content.length === 0 ? (

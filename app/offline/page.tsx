@@ -13,11 +13,11 @@ export default function OfflinePage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background text-foreground relative overflow-hidden">
       {/* Mesh Gradient Background Effect */}
-      <div 
-        className="absolute inset-0 z-0 pointer-events-none opacity-40 dark:opacity-20" 
-        style={{ backgroundImage: 'var(--gradient-mesh)' }} 
+      <div
+        className="absolute inset-0 z-0 pointer-events-none opacity-40 dark:opacity-20"
+        style={{ backgroundImage: 'var(--gradient-mesh)' }}
       />
-      
+
       <div className="w-full max-w-md text-center space-y-8 animate-in fade-in zoom-in duration-500 relative z-10">
         <div className="relative inline-block">
           <div className="absolute inset-0 bg-primary/20 rounded-full blur-3xl transform scale-150"></div>
@@ -36,7 +36,7 @@ export default function OfflinePage() {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
-          <Button 
+          <Button
             asChild
             variant="primary"
             className="h-12 px-8 shadow-lg shadow-primary/20 active:scale-95 transition-transform"

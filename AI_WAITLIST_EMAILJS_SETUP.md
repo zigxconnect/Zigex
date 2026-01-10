@@ -129,7 +129,7 @@
 
 The template uses these variables:
 - `{{to_email}}` - Recipient's email address
-- `{{feature_name}}` - The AI feature they're interested in (e.g., "Fupro AI Chat", "Deep Research", "Opportunity Finder")
+- `{{feature_name}}` - The AI feature they're interested in (e.g., "ZigAgent AI Chat", "Deep Research", "Opportunity Finder")
 - `{{user_email}}` - User's email (same as to_email)
 - `{{year}}` - Current year for copyright
 
@@ -143,7 +143,7 @@ NEXT_PUBLIC_EMAILJS_AI_WAITLIST_TEMPLATE_ID=your_template_id_here
 
 ## Testing
 
-1. Go to `/dashboard/fupro-ai`
+1. Go to `/dashboard/zigagent-ai`
 2. Try to send a message or select a tool
 3. The waiting list modal should appear
 4. Enter your email and submit
@@ -151,7 +151,7 @@ NEXT_PUBLIC_EMAILJS_AI_WAITLIST_TEMPLATE_ID=your_template_id_here
 
 ## Features That Trigger the Waitlist
 
-- **Sending any message** in Fupro AI chat
+- **Sending any message** in ZigAgent AI chat
 - **Selecting any tool**:
   - Deep Research
   - Opportunity Finder

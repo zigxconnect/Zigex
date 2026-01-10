@@ -22,19 +22,19 @@ interface Company {
 export default async function TestCompanyProfilePage() {
   // Use server action instead of API route
   const result = await getAllCompanies();
-  
+
   // Comprehensive logging for debugging
   console.log('=== COMPANY PROFILES TEST DEBUG ===');
   console.log('Result type:', typeof result);
   console.log('Success:', result.success);
-  
+
   if (!result.success) {
-    console.log('❌ Error occurred:', result.error);
+    console.log('Error occurred:', result.error);
   } else {
-    console.log('✅ Success! Company data received:');
+    console.log('Success! Company data received:');
     console.log('Total companies found:', result.count);
     console.log('Companies array length:', result.data?.length || 0);
-    
+
     if (result.data && result.data.length > 0) {
       result.data.forEach((company, index) => {
         console.log(`--- Company ${index + 1} ---`);
@@ -49,26 +49,26 @@ export default async function TestCompanyProfilePage() {
         console.log('Address:', company.address);
         console.log('Created at:', company.created_at);
       });
-      
+
       console.log('Full data structure:', JSON.stringify(result.data[0], null, 2));
     }
   }
   console.log('=== END DEBUG ===');
-  
+
   return (
     <div className="container mx-auto p-6 max-w-6xl">
       <h1 className="text-3xl font-bold mb-6 text-gray-800">All Company Profiles Test</h1>
-      
+
       <div className="bg-white shadow-lg rounded-lg p-6 border">
         <h2 className="text-xl font-semibold mb-4 text-gray-700">
           Server Action Response: {result.success ? `${result.count} Companies Found` : 'Error'}
         </h2>
-        
+
         {!result.success ? (
           <div className="bg-red-50 border border-red-200 rounded-md p-4">
             <h3 className="text-lg font-medium text-red-800 mb-2">Error</h3>
             <p className="text-red-600">{result.error}</p>
-            
+
             <div className="mt-4 text-sm text-red-500">
               <p><strong>Troubleshooting steps:</strong></p>
               <ol className="list-decimal list-inside mt-2 space-y-1">
@@ -83,7 +83,7 @@ export default async function TestCompanyProfilePage() {
           <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
             <h3 className="text-lg font-medium text-yellow-800 mb-2">No Companies Found</h3>
             <p className="text-yellow-600">The database contains no company profiles yet.</p>
-            
+
             <div className="mt-4 text-sm text-yellow-600">
               <p><strong>This could mean:</strong></p>
               <ul className="list-disc list-inside mt-2 space-y-1">
@@ -98,7 +98,7 @@ export default async function TestCompanyProfilePage() {
             <h3 className="text-lg font-medium text-green-800 mb-4">
               Success - Found {result.count} Companies
             </h3>
-            
+
             {/* Companies Grid */}
             <div className="space-y-6">
               {result.data?.map((company, index) => (
@@ -111,7 +111,7 @@ export default async function TestCompanyProfilePage() {
                       Company #{index + 1}
                     </span>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-600">Company ID</label>
@@ -119,36 +119,36 @@ export default async function TestCompanyProfilePage() {
                         {company.id || 'Not provided'}
                       </p>
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-600">User ID</label>
                       <p className="text-gray-900 font-mono text-sm bg-gray-100 p-2 rounded">
                         {company.user_id || 'Not provided'}
                       </p>
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-600">Email</label>
                       <p className="text-gray-900">{company.email}</p>
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-600">Industry</label>
                       <p className="text-gray-900">{company.industry || 'Not specified'}</p>
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-600">Phone</label>
                       <p className="text-gray-900">{company.phone || 'Not provided'}</p>
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-600">Website</label>
                       <p className="text-gray-900">
                         {company.website_url ? (
-                          <a href={company.website_url} target="_blank" rel="noopener noreferrer" 
-                             className="text-blue-600 hover:underline break-all">
-                            {company.website_url.length > 30 
+                          <a href={company.website_url} target="_blank" rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline break-all">
+                            {company.website_url.length > 30
                               ? company.website_url.substring(0, 30) + '...'
                               : company.website_url
                             }
@@ -159,19 +159,19 @@ export default async function TestCompanyProfilePage() {
                       </p>
                     </div>
                   </div>
-                  
+
                   {company.description && (
                     <div className="mt-4">
                       <label className="block text-sm font-medium text-gray-600 mb-2">Description</label>
                       <p className="text-gray-900 bg-gray-50 p-3 rounded border text-sm">
-                        {company.description.length > 200 
+                        {company.description.length > 200
                           ? company.description.substring(0, 200) + '...'
                           : company.description
                         }
                       </p>
                     </div>
                   )}
-                  
+
                   {company.address && (
                     <div className="mt-4">
                       <label className="block text-sm font-medium text-gray-600 mb-2">Address</label>
@@ -180,26 +180,26 @@ export default async function TestCompanyProfilePage() {
                       </p>
                     </div>
                   )}
-                  
+
                   {/* Images and Timestamps */}
                   <div className="mt-4 flex flex-wrap gap-4 items-center text-sm text-gray-500">
                     {company.logo_url && (
                       <div className="flex items-center gap-2">
-                        <span>🖼️ Has Logo</span>
+                        <span className="text-xs font-bold text-gray-400 uppercase">Logo available</span>
                         <img src={company.logo_url} alt="Logo" className="w-8 h-8 object-contain rounded" />
                       </div>
                     )}
                     {company.cover_image_url && (
                       <div className="flex items-center gap-2">
-                        <span>🎨 Has Cover</span>
+                        <span className="text-xs font-bold text-gray-400 uppercase">Cover available</span>
                         <img src={company.cover_image_url} alt="Cover" className="w-8 h-8 object-cover rounded" />
                       </div>
                     )}
                     {company.created_at && (
-                      <span>📅 Created: {new Date(company.created_at).toLocaleDateString()}</span>
+                      <span className="flex items-center gap-1">Created: {new Date(company.created_at).toLocaleDateString()}</span>
                     )}
                     {company.updated_at && (
-                      <span>🔄 Updated: {new Date(company.updated_at).toLocaleDateString()}</span>
+                      <span className="flex items-center gap-1">Updated: {new Date(company.updated_at).toLocaleDateString()}</span>
                     )}
                   </div>
                 </div>
@@ -208,7 +208,7 @@ export default async function TestCompanyProfilePage() {
           </div>
         )}
       </div>
-      
+
       <div className="mt-6 bg-blue-50 border border-blue-200 rounded-md p-4">
         <h3 className="text-lg font-medium text-blue-800 mb-2">Testing Notes</h3>
         <ul className="text-blue-700 text-sm space-y-1 list-disc list-inside">
@@ -219,7 +219,7 @@ export default async function TestCompanyProfilePage() {
           <li>Server action location: <code className="bg-blue-100 px-1 rounded">lib/actions/company.ts</code></li>
         </ul>
       </div>
-      
+
       <div className="mt-4 text-center">
         <div className="bg-gray-100 border border-gray-300 rounded-md p-3">
           <p className="text-gray-700 text-sm">

@@ -12,7 +12,7 @@ const ICON_MAP = {
   Briefcase,
 } as const;
 
-interface DetailItem {
+export interface DetailItem {
   label: string;
   value: string;
   icon: keyof typeof ICON_MAP;

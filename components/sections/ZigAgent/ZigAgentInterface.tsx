@@ -35,7 +35,7 @@ interface Message {
 }
 
 interface ZigAgentInterfaceProps {
-    user?: UserProfile | null;
+  user?: UserProfile | null;
 }
 
 export function ZigAgentInterface({ user }: ZigAgentInterfaceProps) {
@@ -48,11 +48,11 @@ export function ZigAgentInterface({ user }: ZigAgentInterfaceProps) {
   const [isToolsOpen, setIsToolsOpen] = useState(false);
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const [loadingTool, setLoadingTool] = useState<string | null>(null);
-  
+
   // Artifact State
   const [activeArtifact, setActiveArtifact] = useState<any | null>(null);
   const [isArtifactOpen, setIsArtifactOpen] = useState(false);
-  
+
   // Waiting List Modal State
   const [showWaitingList, setShowWaitingList] = useState(false);
   const [waitlistFeature, setWaitlistFeature] = useState("");
@@ -69,7 +69,7 @@ export function ZigAgentInterface({ user }: ZigAgentInterfaceProps) {
     if (hour < 12) greet = "Good morning";
     else if (hour < 18) greet = "Good afternoon";
     else greet = "Good evening";
-    
+
     setGreeting(greet);
   }, []);
 
@@ -90,15 +90,15 @@ export function ZigAgentInterface({ user }: ZigAgentInterfaceProps) {
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputValue(e.target.value);
     if (textareaRef.current) {
-        textareaRef.current.style.height = "auto";
-        textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 150)}px`;
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 150)}px`;
     }
   };
 
   // Reset height on send
   useEffect(() => {
     if (!inputValue && textareaRef.current) {
-        textareaRef.current.style.height = "56px";
+      textareaRef.current.style.height = "56px";
     }
   }, [inputValue]);
 
@@ -115,7 +115,7 @@ export function ZigAgentInterface({ user }: ZigAgentInterfaceProps) {
     if (!inputValue.trim() && !selectedTool) return;
 
     // Show waiting list modal instead of sending
-    const feature = selectedTool || "Fupro AI Chat";
+    const feature = selectedTool || "ZigAgent AI Chat";
     setWaitlistFeature(feature);
     setShowWaitingList(true);
     return;
@@ -255,182 +255,182 @@ export function ZigAgentInterface({ user }: ZigAgentInterfaceProps) {
 
   return (
     <div className="flex bg-white h-full relative isolate z-0 overflow-hidden">
-        {/* Main Chat Area */}
-        <div className={cn(
-             "flex-1 flex flex-col h-full transition-all duration-300 relative",
-             isArtifactOpen ? "mr-0" : "mr-0"
-        )}>
-          {/* Background Gradients */}
-          <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-blue-50/50 rounded-full blur-[120px] pointer-events-none -z-10" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-indigo-50/50 rounded-full blur-[120px] pointer-events-none -z-10" />
+      {/* Main Chat Area */}
+      <div className={cn(
+        "flex-1 flex flex-col h-full transition-all duration-300 relative",
+        isArtifactOpen ? "mr-0" : "mr-0"
+      )}>
+        {/* Background Gradients */}
+        <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-blue-50/50 rounded-full blur-[120px] pointer-events-none -z-10" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-indigo-50/50 rounded-full blur-[120px] pointer-events-none -z-10" />
 
-          {/* Header - Minimalist */}
-          <header className="flex-none flex items-center justify-between px-6 py-4 z-20 sticky top-0">
-            <div className="flex items-center gap-2">
-                 {/* Only show logo if started, but clean, no text */}
-                 {hasStarted && (
-                     <motion.div initial={{opacity:0}} animate={{opacity:1}}>
-                         <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 p-[1px]">
-                            <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
-                                <Image src="/zigagent-brain.png" alt="AI" width={32} height={32} className="object-cover scale-110"/>
-                            </div>
-                         </div>
-                     </motion.div>
-                 )}
-            </div>
-            
-            <div className="flex items-center gap-4">
-                {/* Real Time Toggle */}
-                <div className="flex items-center gap-2 cursor-pointer group select-none" onClick={() => setIsRealTime(!isRealTime)}>
-                     <span className={cn("text-xs font-medium transition-colors duration-300", isRealTime ? "text-blue-600" : "text-gray-400 group-hover:text-gray-500")}>
-                        Fast Mode
-                    </span>
-                    <div className={cn("w-9 h-5 rounded-full relative transition-colors duration-300 border", isRealTime ? "bg-blue-600 border-blue-600" : "bg-gray-100 border-gray-200")}>
-                        <div className={cn("absolute top-0.5 left-0.5 w-3.5 h-3.5 rounded-full shadow-sm transition-all duration-300 bg-white", isRealTime ? "translate-x-4" : "translate-x-0")} />
-                    </div>
-                </div>
-            </div>
-          </header>
-
-          {/* Chat Content */}
-          <div className="flex-1 relative flex flex-col min-h-0 overflow-hidden">
-             
-             {/* Chat Messages */}
+        {/* Header - Minimalist */}
+        <header className="flex-none flex items-center justify-between px-6 py-4 z-20 sticky top-0">
+          <div className="flex items-center gap-2">
+            {/* Only show logo if started, but clean, no text */}
             {hasStarted && (
-                 <div 
-                    className="flex-1 overflow-y-auto w-full max-w-4xl mx-auto px-4 sm:px-6 pb-6 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent"
-                    ref={scrollRef}
-                >
-                    <div className="pt-8 pb-32">
-                        <AnimatePresence initial={false}>
-                            {messages.map((msg) => (
-                            <motion.div
-                                key={msg.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className={cn("flex w-full mb-8", msg.role === "user" ? "justify-end" : "justify-start")}
-                            >
-                                <div className={cn("flex gap-4 max-w-[95%] md:max-w-[85%]", msg.role === "user" ? "flex-row-reverse" : "flex-row")}>
-                                    <div className="flex-shrink-0 mt-1">
-                                        {msg.role === "ai" ? (
-                                            <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center overflow-hidden">
-                                                <Image src="/zigagent-brain.png" alt="AI" width={32} height={32} className="object-cover scale-110"/>
-                                            </div>
-                                        ) : (
-                                            <Avatar className="w-8 h-8">
-                                                <AvatarImage src={user?.avatarUrl || user?.profile?.avatar_url} className="object-cover"/>
-                                                <AvatarFallback className="bg-blue-600 text-white text-[10px] font-bold">ME</AvatarFallback>
-                                            </Avatar>
-                                        )} 
-                                    </div>
-
-                                    <div className="group relative">
-                                        <div className={cn("px-5 py-3.5 text-[15px] leading-relaxed shadow-sm", msg.role === "user" ? "bg-blue-600 text-white rounded-[20px] rounded-tr-md" : "bg-white border border-gray-100 text-gray-800 rounded-[20px] rounded-tl-md")}>
-                                            {msg.role === "ai" ? <TypingText content={msg.content} /> : <span>{msg.content}</span>}
-                                        </div>
-                                    </div>
-                                </div>
-                            </motion.div>
-                            ))}
-
-                            {isThinking && (
-                                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex w-full justify-start mb-6">
-                                    <div className="flex gap-4">
-                                        <div className="flex-shrink-0 mt-1 w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
-                                             <Image src="/zigagent-brain.png" alt="AI" width={32} height={32} className="object-cover scale-110 animate-pulse"/>
-                                        </div>
-                                        <div className="flex items-center h-10 pl-1">
-                                            <AgentLoader toolName={loadingTool} />
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            )}
-                            <div ref={messagesEndRef} />
-                        </AnimatePresence>
-                    </div>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 p-[1px]">
+                  <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
+                    <Image src="/zigagent-brain.png" alt="AI" width={32} height={32} className="object-cover scale-110" />
+                  </div>
                 </div>
+              </motion.div>
             )}
+          </div>
 
-            {/* Input Area */}
-            <div className={cn(
-                "ease-[cubic-bezier(0.25,0.1,0.25,1)] duration-700 flex flex-col items-center justify-center transition-all",
-                 hasStarted ? "absolute bottom-0 left-0 right-0 p-4 pb-0 bg-gradient-to-t from-white via-white/95 to-transparent pt-12" : "flex-1 pb-[15vh]"
-            )}>
-                 {!hasStarted && (
-                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.6 }} className="mb-10 text-center px-4 flex flex-col items-center">
-                        <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.1 }} className="mb-6 relative">
-                             <Avatar className="w-20 h-20 ring-4 ring-white shadow-xl">
-                                <AvatarImage src={user?.avatarUrl || user?.profile?.avatar_url} className="object-cover"/>
-                                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-2xl font-bold">{user?.first_name?.charAt(0) || "ME"}</AvatarFallback>
-                            </Avatar>
-                            <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-white rounded-full p-1.5 shadow-md flex items-center justify-center">
-                                <BrainCircuit size={16} className="text-blue-600" />
-                            </div>
-                        </motion.div>
-
-                        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3 tracking-tight">
-                            {greeting}, <span className="text-blue-600">{user?.profile?.first_name || user?.name || "Friend"}</span>.
-                        </h2>
-                        <p className="text-gray-500 text-base max-w-lg mx-auto">
-                            I'm ready to help you research, build, and explore.
-                        </p>
-                     </motion.div>
-                 )}
-
-                 <motion.div layout className={cn("relative w-full transition-all duration-700", hasStarted ? "max-w-3xl mb-4" : "w-[94%] md:max-w-xl")}>
-                        <ToolCommandDock isOpen={isToolsOpen} onClose={() => setIsToolsOpen(false)} onSelect={handleToolSelect} />
-
-                    <div className={cn("relative group rounded-[26px] transition-all duration-300 flex items-end overflow-hidden border bg-white hover:border-blue-300/50", hasStarted ? "shadow-2xl shadow-blue-900/5 border-gray-200" : "shadow-xl shadow-gray-200/50 border-gray-100")}>
-                        <div className="flex items-end flex-1 pl-3 pr-3 py-3 gap-3">
-                             <button className={cn("flex-shrink-0 mb-1.5 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 bg-gray-50 text-gray-500 hover:bg-blue-50 hover:text-blue-600", isToolsOpen ? "rotate-45 bg-gray-100 text-gray-900" : "")} onClick={() => setIsToolsOpen(!isToolsOpen)} title="Tools">
-                                <Plus size={20} strokeWidth={2.5} />
-                             </button>
-
-                             <div className="flex-1 flex flex-col justify-center min-w-0">
-                                <textarea
-                                    ref={textareaRef}
-                                    rows={1}
-                                    value={inputValue}
-                                    onChange={handleInput}
-                                    onKeyDown={handleKeyDown}
-                                    placeholder={selectedTool ? `Enter details for ${selectedTool}...` : "Type a message..."}
-                                    className="w-full bg-transparent border-none focus:ring-0 focus:outline-none text-gray-900 placeholder-gray-400 px-0 py-2.5 text-[16px] resize-none max-h-[200px] min-h-[50px] scrollbar-none font-medium"
-                                />
-                                {selectedTool && (
-                                    <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2 self-start bg-blue-50 text-blue-700 px-2.5 py-1 rounded-md mb-1.5">
-                                        <span className="text-xs font-semibold">Using {selectedTool}</span>
-                                        <button onClick={() => setSelectedTool(null)} className="hover:text-blue-900 transition-colors"><Plus size={14} className="rotate-45" /></button>
-                                    </motion.div>
-                                )}
-                             </div>
-
-                            <div className="pb-1.5 flex gap-2">
-                                 {inputValue.trim() || selectedTool ? (
-                                    <motion.button initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} onClick={handleSendMessage} className="p-2.5 bg-blue-600 text-white hover:bg-blue-700 rounded-full transition-all duration-200 flex items-center justify-center shadow-lg shadow-blue-600/20">
-                                        <ArrowUp size={18} className="stroke-[3px]" />
-                                    </motion.button>
-                                 ) : (
-                                    <button className="p-2.5 rounded-full bg-gray-50 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-colors">
-                                        <Mic size={20} strokeWidth={2} />
-                                    </button>
-                                 )}
-                            </div>
-                        </div>
-                    </div>
-                </motion.div>
+          <div className="flex items-center gap-4">
+            {/* Real Time Toggle */}
+            <div className="flex items-center gap-2 cursor-pointer group select-none" onClick={() => setIsRealTime(!isRealTime)}>
+              <span className={cn("text-xs font-medium transition-colors duration-300", isRealTime ? "text-blue-600" : "text-gray-400 group-hover:text-gray-500")}>
+                Fast Mode
+              </span>
+              <div className={cn("w-9 h-5 rounded-full relative transition-colors duration-300 border", isRealTime ? "bg-blue-600 border-blue-600" : "bg-gray-100 border-gray-200")}>
+                <div className={cn("absolute top-0.5 left-0.5 w-3.5 h-3.5 rounded-full shadow-sm transition-all duration-300 bg-white", isRealTime ? "translate-x-4" : "translate-x-0")} />
+              </div>
             </div>
           </div>
-        </div>
+        </header>
 
-        {/* Artifact Panel - Slide Out */}
-        <ArtifactPanel isOpen={isArtifactOpen} onClose={() => setIsArtifactOpen(false)} artifact={activeArtifact} />
-        
-        {/* AI Waiting List Modal */}
-        <AIWaitingListModal 
-          isOpen={showWaitingList}
-          onClose={() => setShowWaitingList(false)}
-          featureName={waitlistFeature}
-        />
+        {/* Chat Content */}
+        <div className="flex-1 relative flex flex-col min-h-0 overflow-hidden">
+
+          {/* Chat Messages */}
+          {hasStarted && (
+            <div
+              className="flex-1 overflow-y-auto w-full max-w-4xl mx-auto px-4 sm:px-6 pb-6 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent"
+              ref={scrollRef}
+            >
+              <div className="pt-8 pb-32">
+                <AnimatePresence initial={false}>
+                  {messages.map((msg) => (
+                    <motion.div
+                      key={msg.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={cn("flex w-full mb-8", msg.role === "user" ? "justify-end" : "justify-start")}
+                    >
+                      <div className={cn("flex gap-4 max-w-[95%] md:max-w-[85%]", msg.role === "user" ? "flex-row-reverse" : "flex-row")}>
+                        <div className="flex-shrink-0 mt-1">
+                          {msg.role === "ai" ? (
+                            <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center overflow-hidden">
+                              <Image src="/zigagent-brain.png" alt="AI" width={32} height={32} className="object-cover scale-110" />
+                            </div>
+                          ) : (
+                            <Avatar className="w-8 h-8">
+                              <AvatarImage src={user?.avatarUrl || user?.profile?.avatar_url} className="object-cover" />
+                              <AvatarFallback className="bg-blue-600 text-white text-[10px] font-bold">ME</AvatarFallback>
+                            </Avatar>
+                          )}
+                        </div>
+
+                        <div className="group relative">
+                          <div className={cn("px-5 py-3.5 text-[15px] leading-relaxed shadow-sm", msg.role === "user" ? "bg-blue-600 text-white rounded-[20px] rounded-tr-md" : "bg-white border border-gray-100 text-gray-800 rounded-[20px] rounded-tl-md")}>
+                            {msg.role === "ai" ? <TypingText content={msg.content} /> : <span>{msg.content}</span>}
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+
+                  {isThinking && (
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex w-full justify-start mb-6">
+                      <div className="flex gap-4">
+                        <div className="flex-shrink-0 mt-1 w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
+                          <Image src="/zigagent-brain.png" alt="AI" width={32} height={32} className="object-cover scale-110 animate-pulse" />
+                        </div>
+                        <div className="flex items-center h-10 pl-1">
+                          <AgentLoader toolName={loadingTool} />
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                  <div ref={messagesEndRef} />
+                </AnimatePresence>
+              </div>
+            </div>
+          )}
+
+          {/* Input Area */}
+          <div className={cn(
+            "ease-[cubic-bezier(0.25,0.1,0.25,1)] duration-700 flex flex-col items-center justify-center transition-all",
+            hasStarted ? "absolute bottom-0 left-0 right-0 p-4 pb-0 bg-gradient-to-t from-white via-white/95 to-transparent pt-12" : "flex-1 pb-[15vh]"
+          )}>
+            {!hasStarted && (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.6 }} className="mb-10 text-center px-4 flex flex-col items-center">
+                <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.1 }} className="mb-6 relative">
+                  <Avatar className="w-20 h-20 ring-4 ring-white shadow-xl">
+                    <AvatarImage src={user?.avatarUrl || user?.profile?.avatar_url} className="object-cover" />
+                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-2xl font-bold">{user?.first_name?.charAt(0) || "ME"}</AvatarFallback>
+                  </Avatar>
+                  <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-white rounded-full p-1.5 shadow-md flex items-center justify-center">
+                    <BrainCircuit size={16} className="text-blue-600" />
+                  </div>
+                </motion.div>
+
+                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3 tracking-tight">
+                  {greeting}, <span className="text-blue-600">{user?.profile?.first_name || user?.name || "Friend"}</span>.
+                </h2>
+                <p className="text-gray-500 text-base max-w-lg mx-auto">
+                  I'm ready to help you research, build, and explore.
+                </p>
+              </motion.div>
+            )}
+
+            <motion.div layout className={cn("relative w-full transition-all duration-700", hasStarted ? "max-w-3xl mb-4" : "w-[94%] md:max-w-xl")}>
+              <ToolCommandDock isOpen={isToolsOpen} onClose={() => setIsToolsOpen(false)} onSelect={handleToolSelect} />
+
+              <div className={cn("relative group rounded-[26px] transition-all duration-300 flex items-end overflow-hidden border bg-white hover:border-blue-300/50", hasStarted ? "shadow-2xl shadow-blue-900/5 border-gray-200" : "shadow-xl shadow-gray-200/50 border-gray-100")}>
+                <div className="flex items-end flex-1 pl-3 pr-3 py-3 gap-3">
+                  <button className={cn("flex-shrink-0 mb-1.5 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 bg-gray-50 text-gray-500 hover:bg-blue-50 hover:text-blue-600", isToolsOpen ? "rotate-45 bg-gray-100 text-gray-900" : "")} onClick={() => setIsToolsOpen(!isToolsOpen)} title="Tools">
+                    <Plus size={20} strokeWidth={2.5} />
+                  </button>
+
+                  <div className="flex-1 flex flex-col justify-center min-w-0">
+                    <textarea
+                      ref={textareaRef}
+                      rows={1}
+                      value={inputValue}
+                      onChange={handleInput}
+                      onKeyDown={handleKeyDown}
+                      placeholder={selectedTool ? `Enter details for ${selectedTool}...` : "Type a message..."}
+                      className="w-full bg-transparent border-none focus:ring-0 focus:outline-none text-gray-900 placeholder-gray-400 px-0 py-2.5 text-[16px] resize-none max-h-[200px] min-h-[50px] scrollbar-none font-medium"
+                    />
+                    {selectedTool && (
+                      <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2 self-start bg-blue-50 text-blue-700 px-2.5 py-1 rounded-md mb-1.5">
+                        <span className="text-xs font-semibold">Using {selectedTool}</span>
+                        <button onClick={() => setSelectedTool(null)} className="hover:text-blue-900 transition-colors"><Plus size={14} className="rotate-45" /></button>
+                      </motion.div>
+                    )}
+                  </div>
+
+                  <div className="pb-1.5 flex gap-2">
+                    {inputValue.trim() || selectedTool ? (
+                      <motion.button initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} onClick={handleSendMessage} className="p-2.5 bg-blue-600 text-white hover:bg-blue-700 rounded-full transition-all duration-200 flex items-center justify-center shadow-lg shadow-blue-600/20">
+                        <ArrowUp size={18} className="stroke-[3px]" />
+                      </motion.button>
+                    ) : (
+                      <button className="p-2.5 rounded-full bg-gray-50 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-colors">
+                        <Mic size={20} strokeWidth={2} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </div>
+
+      {/* Artifact Panel - Slide Out */}
+      <ArtifactPanel isOpen={isArtifactOpen} onClose={() => setIsArtifactOpen(false)} artifact={activeArtifact} />
+
+      {/* AI Waiting List Modal */}
+      <AIWaitingListModal
+        isOpen={showWaitingList}
+        onClose={() => setShowWaitingList(false)}
+        featureName={waitlistFeature}
+      />
     </div>
   );
 }

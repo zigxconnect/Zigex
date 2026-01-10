@@ -1,10 +1,6 @@
-// app/dashboard/layout.tsx (Server Component)
 import { redirect } from "next/navigation";
-// import { DashboardClientLayout } from "@/components/layout/dashboard/DashboardClientLayout";
-import AIChatButton from "@/components/uiComponent/AIChatButton";
-import { getProfileInfo } from "@/lib/actions/profile.actions";
+import { getProfileInfo, getRawProfileInfo } from "@/lib/actions/profile.actions";
 import { DashboardClientLayout } from "@/components/sections/dashboard/DashboardClientLayout";
-import { getRawProfileInfo } from "@/lib/actions/profile.actions";
 
 // This is now a server component
 export default async function DashboardLayout({

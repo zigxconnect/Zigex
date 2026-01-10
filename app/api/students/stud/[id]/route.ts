@@ -146,18 +146,18 @@ export async function PUT(
     }
 
     // Check file sizes (2MB max)
-    const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB in bytes
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
 
     if (avatarFile && avatarFile.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { error: "Avatar image must be less than 2MB" },
+        { error: "Avatar image must be less than 10MB" },
         { status: 400 }
       );
     }
 
     if (coverImageFile && coverImageFile.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { error: "Cover image must be less than 2MB" },
+        { error: "Cover image must be less than 10MB" },
         { status: 400 }
       );
     }

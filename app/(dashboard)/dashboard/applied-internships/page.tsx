@@ -57,7 +57,7 @@ interface Application {
   status: string;
   created_at: string;
   updated_at: string;
-  
+
   // Internship specific fields
   duration_months?: number;
   department?: string;
@@ -65,15 +65,15 @@ interface Application {
   work_mode?: string;
   cover_letter_url?: string;
   support_letter_url?: string;
-  
+
   // Program specific fields
   level?: string;
   expectations?: string;
   comments?: string;
-  
+
   // Event specific fields
   rsvp_status?: boolean;
-  
+
   // Relations
   internship?: Internship;
   program?: Program;
@@ -99,9 +99,9 @@ const StatusBadge = ({ status }: { status: string }) => {
           dot: "bg-green-500",
         };
       case "rejected":
-        return { 
-          bg: "bg-red-100 text-red-800", 
-          dot: "bg-red-500" 
+        return {
+          bg: "bg-red-100 text-red-800",
+          dot: "bg-red-500"
         };
       case "rsvp_confirmed":
         return {
@@ -285,13 +285,13 @@ const ViewModal = ({
   );
 };
 
-const ApplicationCard = ({ 
-  application, 
-  onView, 
-  onEdit, 
-  onDelete 
-}: { 
-  application: Application; 
+const ApplicationCard = ({
+  application,
+  onView,
+  onEdit,
+  onDelete
+}: {
+  application: Application;
   onView: (app: Application) => void;
   onEdit: (app: Application) => void;
   onDelete: (id: string) => void;
@@ -365,7 +365,7 @@ const ApplicationCard = ({
 
         <div className="space-y-2 text-sm text-gray-600 mb-4">
           <div className="flex items-center gap-2">
-            <Calendar size={14} /> 
+            <Calendar size={14} />
             Applied: {new Date(application.created_at).toLocaleDateString()}
           </div>
           {info.details.map((detail, index) => (
@@ -439,9 +439,9 @@ export default function MyApplicationsPage() {
       if (!res.ok) {
         throw new Error(`Failed to fetch ${activeTabConfig.name}: ${res.status}`);
       }
-      
+
       const data = await res.json();
-      
+
       // Handle the API response structure
       if (data.success && Array.isArray(data.applications)) {
         setApplications(data.applications);
@@ -462,7 +462,7 @@ export default function MyApplicationsPage() {
 
   const filterApplications = () => {
     let filtered = applications.filter(app => {
-      const matchesSearch = 
+      const matchesSearch =
         (app.internship?.title || "")
           .toLowerCase()
           .includes(searchTerm.toLowerCase()) ||
@@ -483,7 +483,7 @@ export default function MyApplicationsPage() {
           .includes(searchTerm.toLowerCase());
 
       const matchesStatus = statusFilter === "All" || app.status === statusFilter;
-      
+
       return matchesSearch && matchesStatus;
     });
 
@@ -555,11 +555,10 @@ export default function MyApplicationsPage() {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
-                      activeTab === tab.id
+                    className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${activeTab === tab.id
                         ? "border-blue-500 text-blue-600"
                         : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                    }`}
+                      }`}
                   >
                     <IconComponent size={18} />
                     {tab.name}
@@ -640,7 +639,7 @@ export default function MyApplicationsPage() {
             <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No applications found</h3>
             <p className="text-gray-600 mb-6">
-              {searchTerm || statusFilter !== "All" 
+              {searchTerm || statusFilter !== "All"
                 ? "Try adjusting your search or filters"
                 : `You haven't applied to any ${activeTab} yet`}
             </p>

@@ -29,9 +29,9 @@ export const sendCandidateStatusEmail = async (params: {
   try {
     if (status === "accepted") {
       await resend.emails.send({
-        from: "ZIGEX <notifications@zigexconnect.com>",
+        from: `${companyName || "SEED INC"} <notifications@zigexconnect.com>`,
         to: email,
-        subject: `Welcome to ${opportunityTitle}! - ZIGEX Invite`,
+        subject: `Welcome to ${opportunityTitle}! - ${companyName || "SEED INC"} Invite`,
         react: ProgramDetailedInviteEmail({
           studentName: name,
           programTitle: opportunityTitle,
@@ -43,7 +43,7 @@ export const sendCandidateStatusEmail = async (params: {
       });
     } else if (status === "rejected") {
       await resend.emails.send({
-        from: "ZIGEX <notifications@zigexconnect.com>",
+        from: `${companyName || "SEED INC"} <notifications@zigexconnect.com>`,
         to: email,
         subject: `Update on your application: ${opportunityTitle}`,
         react: ApplicationRejectedEmail({
@@ -56,7 +56,7 @@ export const sendCandidateStatusEmail = async (params: {
       });
     } else if (status === "pending" || status === "rsvp_confirmed") {
       await resend.emails.send({
-        from: "ZIGEX <notifications@zigexconnect.com>",
+        from: `${companyName || "SEED INC"} <notifications@zigexconnect.com>`,
         to: email,
         subject: `Application Received: ${opportunityTitle}`,
         react: ApplicationConfirmationEmail({
@@ -102,7 +102,7 @@ export const sendRecruitmentStatusAlert = async (params: {
 
     // 1. Alert Zigex Admins
     await resend.emails.send({
-      from: "ZIGEX ALERTS <alerts@zigexconnect.com>",
+      from: "SEED INC ALERTS <alerts@zigexconnect.com>",
       to: "zigex.connect@gmail.com",
       subject,
       react: reactElement,
@@ -111,7 +111,7 @@ export const sendRecruitmentStatusAlert = async (params: {
     // 2. Alert Company
     if (companyEmail) {
       await resend.emails.send({
-        from: "ZIGEX <notifications@zigexconnect.com>",
+        from: "SEED INC <notifications@zigexconnect.com>",
         to: companyEmail,
         subject,
         react: reactElement,
@@ -130,9 +130,9 @@ export const sendZigexWelcomeEmail = async (email: string, userName: string) => 
 
   try {
     await resend.emails.send({
-      from: "ZIGEX <welcome@zigexconnect.com>",
+      from: "SEED INC <welcome@zigexconnect.com>",
       to: email,
-      subject: `Welcome to ZIGEX, ${userName}! 🚀`,
+      subject: `Welcome to SEED INC, ${userName}! 🚀`,
       react: ZigexOnboardingWelcome({
         userName,
         communityLink: "https://chat.whatsapp.com/DXYGLpny3DwGs5pkb1fPAr"

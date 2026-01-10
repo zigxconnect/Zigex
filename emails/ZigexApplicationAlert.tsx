@@ -27,16 +27,16 @@ export const ZigexApplicationAlertEmail = ({
 }: ZigexApplicationAlertEmailProps) => (
   <Html>
     <Head />
-    <Preview>New Application Received on ZIGEX</Preview>
+    <Preview>New Application Received on SEED INC</Preview>
     <Body style={main}>
       <Container style={container}>
         <Section style={header}>
-          <Heading style={h1}>ZIGEX Portal Alert</Heading>
+          <Heading style={h1}>SEED INC Portal Alert</Heading>
         </Section>
         <Section style={section}>
           <Heading as="h2" style={h2}>New Application Received</Heading>
           <Text style={text}>
-            You have received a new application for a <strong>{type}</strong> opportunity on the ZIGEX portal.
+            You have received a new application for a <strong>{type}</strong> opportunity on the SEED INC portal.
           </Text>
           <Hr style={hr} />
           <Section style={details}>

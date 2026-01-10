@@ -3,7 +3,7 @@ import InternshipDetailsClient from './InternshipDetailsClient.tsx';
 
 async function getInternship(id: string) {
   try {
-    const res = await fetch(`https://zigex.vercel.app/api/students/internships?id=${id}`, {
+    const res = await fetch(`https://www.zigexconnect.com/api/students/internships?id=${id}`, {
       next: { revalidate: 3600 }
     });
     if (!res.ok) return null;
@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: { params: any }): Promise<Met
       title,
       description,
       type: 'article',
-      url: `https://zigex.vercel.app/internships/${internship.id}`,
+      url: `https://www.zigexconnect.com/internships/${internship.id}`,
       images: [{ url: image }],
     },
     twitter: {

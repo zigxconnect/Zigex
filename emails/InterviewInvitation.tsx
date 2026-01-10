@@ -31,7 +31,7 @@ export const InterviewInvitationEmail = ({
     <Body style={main}>
       <Container style={container}>
         <Section style={header}>
-          <Heading style={h1}>ZIGEX Recruitment</Heading>
+          <Heading style={h1}>SEED INC Recruitment</Heading>
         </Section>
         <Section style={section}>
           <Text style={text}>Hi {studentName},</Text>
@@ -51,7 +51,7 @@ export const InterviewInvitationEmail = ({
           <Hr style={hr} />
           <Text style={footer}>
             Good luck with your interview! <br />
-            — The ZIGEX Team
+            — The SEED INC Team
           </Text>
         </Section>
       </Container>

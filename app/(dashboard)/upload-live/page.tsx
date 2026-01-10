@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { Upload, X, Play, Image as ImageIcon } from "lucide-react";
+import { Upload, X, Play, Image as ImageIcon, AlertTriangle } from "lucide-react";
 import { happeningNowService } from "@/lib/services/happening-now.service";
 
 const MAX_IMAGES = 6;
@@ -117,9 +117,9 @@ export default function UploadLivePage() {
     // Check total upload size
     const totalSizeMB = getTotalSizeMB();
     if (totalSizeMB > MAX_TOTAL_UPLOAD_MB) {
-      setMessage({ 
-        type: "error", 
-        text: `Total upload size (${totalSizeMB.toFixed(2)}MB) exceeds ${MAX_TOTAL_UPLOAD_MB}MB limit. Please reduce file sizes or number of images.` 
+      setMessage({
+        type: "error",
+        text: `Total upload size (${totalSizeMB.toFixed(2)}MB) exceeds ${MAX_TOTAL_UPLOAD_MB}MB limit. Please reduce file sizes or number of images.`
       });
       return;
     }
@@ -200,11 +200,10 @@ export default function UploadLivePage() {
         {/* Message Alert */}
         {message && (
           <div
-            className={`mb-6 p-4 rounded-lg flex items-center justify-between ${
-              message.type === "success"
+            className={`mb-6 p-4 rounded-lg flex items-center justify-between ${message.type === "success"
                 ? "bg-green-100 text-green-800 border border-green-300"
                 : "bg-red-100 text-red-800 border border-red-300"
-            }`}
+              }`}
           >
             <span>{message.text}</span>
             <button
@@ -367,8 +366,8 @@ export default function UploadLivePage() {
                 onChange={(e) => setIsLive(e.target.checked)}
                 className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
               />
-              <label htmlFor="isLive" className="text-sm font-medium text-gray-700">
-                Mark as Live <span className="text-red-600">🔴</span>
+              <label htmlFor="isLive" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                Mark as Live <div className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse" />
               </label>
             </div>
 
@@ -388,7 +387,9 @@ export default function UploadLivePage() {
                 <p className="text-sm text-gray-700">
                   <span className="font-semibold">Upload Size:</span> {getTotalSizeMB().toFixed(2)}MB / {MAX_TOTAL_UPLOAD_MB}MB
                   {getTotalSizeMB() > MAX_TOTAL_UPLOAD_MB * 0.8 && (
-                    <span className="text-orange-600 ml-2">⚠️ Approaching limit</span>
+                    <span className="text-orange-600 ml-2 inline-flex items-center gap-1">
+                      <AlertTriangle size={12} /> Approaching limit
+                    </span>
                   )}
                 </p>
               </div>

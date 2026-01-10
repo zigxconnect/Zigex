@@ -30,7 +30,8 @@ export async function GET(
                 *,
                 program:programs (
                     title,
-                    price_xaf
+                    price_xaf,
+                    company_profiles(company_name, logo_url)
                 )
             `)
             .eq("program_id", programId)
@@ -48,6 +49,9 @@ export async function GET(
             .maybeSingle();
 
         const program = Array.isArray(application.program) ? application.program[0] : application.program;
+        const company = (program as any)?.company_profiles;
+        const companyName = company?.company_name || "SEED INC";
+        const companyLogo = company?.logo_url || "/seedLogo.png";
 
         const name = student.full_name;
         const programTitle = program?.title || "Program";
@@ -216,7 +220,7 @@ export async function GET(
 
     <div class="receipt-card">
         <div class="receipt-header">
-            <img src="/seedLogo.png" alt="SEED Logo" class="logo">
+            <img src="${companyLogo}" alt="${companyName} Logo" class="logo">
             <h1 class="header-title">Official Receipt</h1>
         </div>
         
@@ -265,9 +269,9 @@ export async function GET(
     </div>
     
     <div class="footer">
-        <p style="font-weight: 700; color: #64748b; margin-bottom: 8px;">SEED INC • GLOBAL TECH CAREERS</p>
-        <p>© ${new Date().getFullYear()} Zigex Connect. All rights reserved.</p>
-        <p>Mile 6 Adjacent Mawa-B Bamenda, Cameroon • zigexconnect.com</p>
+        <p style="font-weight: 700; color: #64748b; margin-bottom: 8px;">${companyName} • GLOBAL TECH CAREERS</p>
+        <p>© ${new Date().getFullYear()} ${companyName}. All rights reserved.</p>
+        <p>Bamenda, Cameroon • zigexconnect.com</p>
     </div>
 
     <script>

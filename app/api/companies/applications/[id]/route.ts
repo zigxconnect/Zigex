@@ -214,7 +214,10 @@ export async function PATCH(
             amount: opportunityPrice,
             date: new Date().toISOString(),
             ref: `ZGX-APP-${id.substring(0, 6).toUpperCase()}`,
-            month: new Date().toLocaleString('default', { month: 'long' })
+            month: new Date().toLocaleString('default', { month: 'long' }),
+            companyName: company.company_name,
+            companyLogo: company.logo_url,
+            companyAddress: company.address
           });
           console.log(`[PAYMENT_NOTIFICATION] Receipt sent to ${studentEmail}`);
         }

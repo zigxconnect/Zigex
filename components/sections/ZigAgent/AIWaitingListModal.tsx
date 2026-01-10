@@ -7,7 +7,7 @@ import { X, Mail, CheckCircle2, Loader2 } from "lucide-react";
 interface AIWaitingListModalProps {
   isOpen: boolean;
   onClose: () => void;
-  featureName: string; // e.g., "Fupro AI", "Deep Research", etc.
+  featureName: string; // e.g., "ZigAgent AI", "Deep Research", etc.
 }
 
 export function AIWaitingListModal({
@@ -79,7 +79,7 @@ export function AIWaitingListModal({
         const errorText = await response.text();
         throw new Error(`Failed to send email: ${errorText}`);
       }
-      
+
       setIsSuccess(true);
       setTimeout(() => {
         onClose();

@@ -40,7 +40,7 @@ export default function PrivacyPolicy() {
         {/* Content Tabs/Sections */}
         <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-200 overflow-hidden">
           <div className="p-8 md:p-12 space-y-12">
-            
+
             <section id="introduction">
               <div className="flex items-center gap-3 mb-4">
                 <FileText className="text-blue-500" size={24} />
@@ -48,7 +48,7 @@ export default function PrivacyPolicy() {
               </div>
               <div className="prose prose-slate max-w-none text-slate-600 leading-relaxed">
                 <p>
-                  Welcome to Zigex ("we," "our," or "us"). This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website (zigex.vercel.app) and use our platform for internships, skills growth, and professional experience.
+                  Welcome to Zigex ("we," "our," or "us"). This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website (www.zigexconnect.com) and use our platform for internships, skills growth, and professional experience.
                 </p>
                 <p>
                   By accessing or using Zigex, you agree to the terms of this Privacy Policy. If you do not agree with the terms of this privacy policy, please do not access the site.
@@ -124,8 +124,8 @@ export default function PrivacyPolicy() {
 
             <footer className="pt-12 border-t border-slate-100 text-center">
               <p className="text-slate-500 mb-4 font-medium">Have questions about our privacy practices?</p>
-              <a 
-                href="mailto:privacy@zigex.com" 
+              <a
+                href="mailto:privacy@zigex.com"
                 className="inline-block bg-slate-900 text-white px-8 py-3 rounded-full font-bold hover:bg-slate-800 transition-all hover:scale-105"
               >
                 Contact Privacy Team
