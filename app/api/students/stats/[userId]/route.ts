@@ -1,58 +1,56 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
+import { supabaseAdmin } from '@/lib/supabase/server';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const { userId } = await params;
+    const { userId: studentId } = await params;
 
-    // Fetch internship applications
-    const { data: internships, error: internshipsError } = await supabase
-      .from('internship_applications')
-      .select('id')
-      .eq('user_id', userId);
+    // Fetch counts from the unified Applications table and projects table in parallel
+    const [statsResult, projectsResult] = await Promise.all([
+      supabaseAdmin
+        .from('Applications')
+        .select('application_type, status')
+        .eq('student_id', studentId)
+        .neq('status', 'rejected'),
 
-    if (internshipsError) throw internshipsError;
+      // For projects, we need to know the user_id. Let's get it from profiles first or assume studentId IS user_id if they are the same in some contexts.
+      // But usually student_profiles.id != user_id. Let's fetch the profile to be sure.
+      supabaseAdmin
+        .from('student_profiles')
+        .select('user_id')
+        .eq('id', studentId)
+        .maybeSingle()
+    ]);
 
-    // Fetch program applications
-    const { data: programs, error: programsError } = await supabase
-      .from('program_applications')
-      .select('id')
-      .eq('user_id', userId);
+    if (statsResult.error) throw statsResult.error;
 
-    if (programsError) throw programsError;
+    const applications = statsResult.data || [];
+    const userId = projectsResult.data?.user_id;
 
-    // Fetch event RSVPs
-    const { data: events, error: eventsError } = await supabase
-      .from('event_rsvps')
-      .select('id')
-      .eq('user_id', userId);
+    // Fetch project count if we have a user_id
+    let projectsCount = 0;
+    if (userId) {
+      const { count, error: projectsError } = await supabaseAdmin
+        .from('projects')
+        .select('*', { count: 'exact', head: true })
+        .eq('creator_id', userId);
 
-    if (eventsError) throw eventsError;
+      if (!projectsError) projectsCount = count || 0;
+    }
 
-    // Fetch project count
-    const { data: projects, error: projectsError } = await supabase
-      .from('projects')
-      .select('id')
-      .eq('creator_id', userId);
-
-    if (projectsError) throw projectsError;
+    const stats = {
+      internshipsApplied: applications.filter(a => a.application_type === 'internship').length,
+      programsApplied: applications.filter(a => a.application_type === 'program').length,
+      eventsApplied: applications.filter(a => a.application_type === 'event').length,
+      projectsCreated: projectsCount,
+    };
 
     return NextResponse.json({
       success: true,
-      data: {
-        internshipsApplied: internships?.length || 0,
-        programsApplied: programs?.length || 0,
-        eventsApplied: events?.length || 0,
-        projectsCreated: projects?.length || 0,
-      },
+      data: stats,
     });
   } catch (error) {
     console.error('Error fetching student stats:', error);

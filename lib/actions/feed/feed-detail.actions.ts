@@ -41,7 +41,8 @@ const fetchFeedItemById = async (idOrSlug: string) => {
     if (isIdUUID) {
       internshipQuery = internshipQuery.eq("id", idOrSlug);
     } else {
-      internshipQuery = internshipQuery.ilike("title", idOrSlug.replace(/-/g, ' '));
+      // Use resilient wildcard matching
+      internshipQuery = internshipQuery.ilike("title", `%${idOrSlug.replace(/-/g, '%')}%`);
     }
 
     const { data: internship, error: internshipError } = await internshipQuery.maybeSingle();
@@ -66,7 +67,8 @@ const fetchFeedItemById = async (idOrSlug: string) => {
     if (isIdUUID) {
       programQuery = programQuery.eq("id", idOrSlug);
     } else {
-      programQuery = programQuery.ilike("title", idOrSlug.replace(/-/g, ' '));
+      // Use resilient wildcard matching
+      programQuery = programQuery.ilike("title", `%${idOrSlug.replace(/-/g, '%')}%`);
     }
 
     const { data: program, error: programError } = await programQuery.maybeSingle();
@@ -91,7 +93,8 @@ const fetchFeedItemById = async (idOrSlug: string) => {
     if (isIdUUID) {
       eventQuery = eventQuery.eq("id", idOrSlug);
     } else {
-      eventQuery = eventQuery.ilike("title", idOrSlug.replace(/-/g, ' '));
+      // Use resilient wildcard matching
+      eventQuery = eventQuery.ilike("title", `%${idOrSlug.replace(/-/g, '%')}%`);
     }
 
     const { data: event, error: eventError } = await eventQuery.maybeSingle();

@@ -375,18 +375,15 @@ const CrewAvatarStack = ({
             style={{ zIndex: maxDisplay - index }}
             title={member.name}
           >
-            {member.avatar ? (
-              <Image
-                src={member.avatar}
-                alt={member.name}
-                fill
-                className="object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-white font-bold text-sm">
-                {member.name.charAt(0).toUpperCase()}
-              </div>
-            )}
+            <Image
+              src={member.avatar || "https://i.ibb.co/8n8d37H4/white-logo-4x.png"}
+              alt={member.name}
+              fill
+              className={cn(
+                "object-cover",
+                !member.avatar && "bg-gradient-to-br from-blue-500 to-indigo-600 p-2"
+              )}
+            />
           </div>
         ))}
         {remaining > 0 && (
@@ -423,13 +420,13 @@ const CrewModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 lg:p-10 safe-area-bottom">
       <div 
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" 
+        className="absolute inset-0 bg-black/70 backdrop-blur-md animate-in fade-in duration-300" 
         onClick={onClose} 
       />
-      <div className="w-full max-w-2xl relative animate-in zoom-in-95 slide-in-from-bottom-5 duration-300">
-        <Card className="border-0 shadow-2xl overflow-hidden bg-white max-h-[85vh] flex flex-col">
+      <div className="w-full max-w-2xl relative animate-in zoom-in-95 slide-in-from-bottom-5 duration-500">
+        <Card className="border-0 shadow-2xl overflow-hidden bg-white max-h-[90vh] flex flex-col rounded-[2.5rem]">
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 relative overflow-hidden flex-shrink-0">
             <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
@@ -472,18 +469,15 @@ const CrewModal = ({
                     className="group flex flex-col items-center p-4 rounded-2xl bg-gradient-to-b from-white to-slate-50 border border-slate-100 hover:border-blue-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
                   >
                     <div className="relative w-16 h-16 rounded-full border-[3px] border-white shadow-lg overflow-hidden bg-gradient-to-br from-blue-500 to-indigo-600 mb-3 group-hover:scale-110 transition-transform">
-                      {member.avatar ? (
-                        <Image
-                          src={member.avatar}
-                          alt={member.name}
-                          fill
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-white font-bold text-xl">
-                          {member.name.charAt(0).toUpperCase()}
-                        </div>
-                      )}
+                      <Image
+                        src={member.avatar || "https://i.ibb.co/8n8d37H4/white-logo-4x.png"}
+                        alt={member.name}
+                        fill
+                        className={cn(
+                          "object-cover",
+                          !member.avatar && "bg-gradient-to-br from-blue-500 to-indigo-600 p-3"
+                        )}
+                      />
                     </div>
                     <p className="font-bold text-sm text-slate-800 text-center truncate w-full group-hover:text-blue-600 transition-colors">
                       {member.name}
@@ -585,23 +579,36 @@ export default function ProgramUpdatesClient({
   const currentStatus = enrollment?.status?.toLowerCase();
   if (!enrollment || (currentStatus !== "accepted" && currentStatus !== "rsvp_confirmed")) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8 px-4">
-        <div className="max-w-2xl mx-auto text-center">
-          <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <AlertCircle size={40} className="text-amber-500" />
+      <div className="min-h-screen bg-[#F8FAFC] py-20 px-6 flex items-center justify-center">
+        <div className="max-w-xl w-full text-center space-y-10">
+          <div className="relative inline-block">
+            <div className="w-24 h-24 bg-white rounded-[2rem] shadow-xl flex items-center justify-center border border-slate-100 relative z-10 animate-pulse">
+              <AlertCircle size={44} className="text-amber-500" strokeWidth={2.5} />
+            </div>
+            <div className="absolute inset-0 bg-amber-200/20 blur-3xl rounded-full translate-y-4" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Restricted</h1>
-          <p className="text-gray-500 mb-6">
-            {enrollment?.status === "pending" || enrollment?.status === "reviewed"
-              ? "Your application is still being reviewed. You'll get access once accepted!"
-              : "You need to apply and be accepted to access program updates."}
-          </p>
-          <Link href={`/programs/${id}`}>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <ArrowLeft size={16} className="mr-2" />
-              Back to Program
-            </Button>
-          </Link>
+          
+          <div className="space-y-4">
+            <h1 className="text-4xl font-black text-slate-900 tracking-tighter sm:text-5xl">
+              Access Restricted
+            </h1>
+            <p className="text-slate-500 text-lg font-medium leading-relaxed max-w-md mx-auto">
+              {enrollment?.status === "pending" || enrollment?.status === "reviewed"
+                ? "Your journey is currently being reviewed by our team. Check back soon for full access!"
+                : "This universe is exclusive to accepted voyagers. Start your journey by applying today."}
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link href={`/programs/${id}`} className="w-full sm:w-auto px-8 py-4 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 flex items-center justify-center gap-2">
+              <ArrowLeft size={16} />
+              Return Home
+            </Link>
+            <Link href="/dashboard/student" className="w-full sm:w-auto px-8 py-4 bg-white text-slate-900 border border-slate-200 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center gap-2">
+              <Users size={16} />
+              Discover Peers
+            </Link>
+          </div>
         </div>
       </div>
     );

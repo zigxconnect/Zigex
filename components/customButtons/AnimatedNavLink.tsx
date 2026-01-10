@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 interface AnimatedNavLinkProps {
   href: string;
-  icon: LucideIcon;
+  icon: any;
   label: string;
   isActive: boolean;
   onClick?: () => void;

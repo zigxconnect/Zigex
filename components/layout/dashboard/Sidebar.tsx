@@ -21,7 +21,7 @@ import { AiOutlineWechat } from "react-icons/ai";
 import { Button } from "@/components/ui/button";
 import AnimatedNavLink from "@/components/customButtons/AnimatedNavLink";
 import NameInitials from "@/components/NameInitials";
-import { slugifyUsername } from "@/lib/utils";
+import { slugifyUsername, cn } from "@/lib/utils";
 // import AnimatedNavLink from "@/components/sections/dashboard/AnimatedNavLink";
 
 interface SidebarProps {
@@ -244,16 +244,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="flex-shrink-0 p-4 lg:p-6 border-b border-sidebar-border bg-sidebar-accent/20">
           <div className="flex items-center gap-4">
             <div className="relative w-16 h-16 rounded-full overflow-hidden border-3 border-card shadow-lg flex-shrink-0">
-              {userAvatar ? <Image
-                src={userAvatar}
+              <Image
+                src={userAvatar || "https://i.ibb.co/8n8d37H4/white-logo-4x.png"}
                 alt={`${userName}'s Avatar`}
                 width={64}
                 height={64}
-                className="w-full h-full object-cover"
+                className={cn(
+                  "w-full h-full object-cover",
+                  !userAvatar && "bg-gradient-to-br from-blue-600 to-indigo-700 p-3"
+                )}
                 priority
-              /> :
-                <NameInitials name={userName} />
-              }
+              />
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-bold text-sidebar-foreground truncate text-base">

@@ -39,7 +39,7 @@ export async function GET(
         if (isIdUUID) {
             query = query.eq("id", id);
         } else {
-            query = query.ilike("title", id.replace(/-/g, ' '));
+            query = query.ilike("title", `%${id.replace(/-/g, '%')}%`);
         }
 
         const { data: program, error } = await query.maybeSingle();

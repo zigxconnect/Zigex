@@ -22,7 +22,6 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { Program } from "@/lib/types/dashoard";
 import { Card } from "@/components/ui/card";
 import { normalizeImageSrc } from "@/lib/utils";
@@ -329,16 +328,3 @@ export const ProgramCard = ({
   );
 };
 
-// Helper inside file for now
-function slugify(text: string) {
-  if (!text) return "";
-  return text
-    .toString()
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/[^\w-]+/g, '')
-    .replace(/--+/g, '-')
-    .replace(/^-+/, '')
-    .replace(/-+$/, '');
-}

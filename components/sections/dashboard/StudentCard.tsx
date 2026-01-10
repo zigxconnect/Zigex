@@ -2,18 +2,33 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Heart, MapPin, CheckCircle2, Linkedin } from "lucide-react";
-import { slugifyUsername } from "@/lib/utils";
+import { 
+  Heart, 
+  MapPin, 
+  CheckCircle2, 
+  Linkedin, 
+  Briefcase, 
+  Calendar, 
+  Award, 
+  Rocket,
+  ExternalLink,
+  ChevronRight,
+  Sparkles
+} from "lucide-react";
+import { slugifyUsername, cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface StudentProps {
   id: string;
   username?: string;
   full_name?: string | null;
   avatar_url?: string | null;
+  cover_image?: string | null;
   university?: string | null;
   hard_skills?: string[] | null;
   soft_skills?: string[] | null;
   linkedin_url?: string | null;
+  about?: string | null;
 }
 
 interface StudentStats {
@@ -24,35 +39,19 @@ interface StudentStats {
 }
 
 const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = ({ student, stats: initialStats }) => {
-  if (!student) {
-    return null;
-  }
+  if (!student) return null;
 
   const [isLiked, setIsLiked] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
   const [stats, setStats] = useState<StudentStats>(initialStats || {});
-  const [isLoadingStats, setIsLoadingStats] = useState(!initialStats);
-  const cardRef = useRef<HTMLDivElement>(null);
-
-  const initials =
-    student.full_name?.split(" ")
-      .map((n) => n[0])
-      .slice(0, 2)
-      .join("")
-      .toUpperCase() || "ST";
-
+  
+  const studentColor = "from-blue-600 to-indigo-700";
   const primarySkills = (student.hard_skills || []).slice(0, 3);
+  const username = student.username || (student.full_name ? student.full_name.toLowerCase().replace(/\s+/g, '') : "student");
+  const profileLink = `/dashboard/student/${slugifyUsername(student.username || student.id)}`;
 
   useEffect(() => {
     if (initialStats) {
       setStats(initialStats);
-      setIsLoadingStats(false);
-      return;
-    }
-
-    if (!student.id) {
-      setIsLoadingStats(false);
       return;
     }
 
@@ -65,179 +64,176 @@ const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = (
         }
       } catch (error) {
         console.error('Failed to fetch student stats:', error);
-      } finally {
-        setIsLoadingStats(false);
       }
     };
 
-    fetchStats();
+    if (student.id) fetchStats();
   }, [student.id, initialStats]);
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setTimeout(() => setIsVisible(true), Math.random() * 200);
-          }
-        });
-      },
-      { threshold: 0.1 }
-    );
-
-    if (cardRef.current) {
-      observer.observe(cardRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, []);
-
-  const handleLike = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsLiked(!isLiked);
-    setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
-  };
-
   return (
-    <Link href={`/dashboard/student/${slugifyUsername(student.username || student.id)}`} className="block no-underline mb-6 last:mb-0">
-      <div
-        ref={cardRef}
-        className={`
-          relative w-full bg-white rounded-2xl shadow-md border border-gray-100 hover:shadow-xl hover:border-blue-200 transition-all duration-500 overflow-hidden group
-          ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}
-        `}
-      >
-        {/* Decorative Background Element */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-full -mr-16 -mt-16 transition-all duration-500 group-hover:scale-150 group-hover:bg-blue-100 opacity-50" />
-
-        <div className="flex flex-col md:flex-row items-center md:items-stretch gap-6 p-6">
-          {/* Avatar Section - Larger and with nice border */}
-          <div className="relative shrink-0">
-            <div className="relative w-28 h-28 md:w-32 md:h-32 rounded-2xl overflow-hidden border-4 border-white shadow-lg ring-1 ring-gray-100 group-hover:ring-blue-400 transition-all duration-300">
-              {student.avatar_url ? (
-                <img
-                  src={student.avatar_url}
-                  alt={student.full_name || "Student"}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                />
-              ) : (
-                <div className="w-full h-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-3xl">
-                  {initials}
-                </div>
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-50px" }}
+      className="w-full mb-8 last:mb-0"
+    >
+      <div className="group relative bg-white rounded-[2.5rem] border border-slate-100 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_30px_60px_-12px_rgba(0,0,0,0.12)] hover:border-blue-100 transition-all duration-500 overflow-hidden">
+        
+        {/* 1. Immersive Header Container */}
+        <Link href={profileLink} className="block relative aspect-[21/9] sm:aspect-[3.5/1] overflow-hidden">
+          <div className={cn(
+            "absolute inset-0 bg-gradient-to-br transition-all duration-700 group-hover:scale-110 opacity-90",
+            studentColor
+          )} />
+          <img 
+            src={student.cover_image || "https://i.ibb.co/9kLrm6KY/og-image-2x-100-1.jpg"} 
+            alt="Cover" 
+            className="w-full h-full object-cover mix-blend-overlay group-hover:scale-110 transition-transform duration-1000"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+          
+          {/* Top Floating Actions */}
+          <div className="absolute top-4 right-4 flex gap-2 z-10" onClick={(e) => e.preventDefault()}>
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={(e) => { e.preventDefault(); setIsLiked(!isLiked); }}
+              className={cn(
+                "w-10 h-10 rounded-2xl backdrop-blur-md flex items-center justify-center transition-all duration-300",
+                isLiked 
+                  ? "bg-rose-500 text-white shadow-lg shadow-rose-500/40" 
+                  : "bg-white/10 text-white hover:bg-white/20 border border-white/20"
               )}
-            </div>
-            {/* Status Indicator */}
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 border-4 border-white rounded-full shadow-sm" />
+            >
+              <Heart size={18} className={isLiked ? "fill-current" : ""} />
+            </motion.button>
+            <motion.a
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              href={student.linkedin_url || "#"}
+              target="_blank"
+              onClick={(e) => e.stopPropagation()}
+              className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md text-white border border-white/20 flex items-center justify-center hover:bg-blue-600 hover:border-blue-500 transition-all duration-300 shadow-sm"
+            >
+              <Linkedin size={18} />
+            </motion.a>
+          </div>
+        </Link>
+
+        {/* 2. Content Body */}
+        <div className="px-8 pb-8 relative">
+          
+          {/* Dynamic Avatar Overlap */}
+          <div className="relative -mt-14 sm:-mt-18 mb-6">
+            <Link href={profileLink} className="inline-block relative group/avatar">
+              <motion.div 
+                 whileHover={{ rotate: 5, scale: 1.05 }}
+                 className="w-28 h-28 sm:w-36 sm:h-36 rounded-[2.8rem] border-8 border-white shadow-2xl overflow-hidden bg-white ring-1 ring-slate-100 transition-all duration-500"
+              >
+                <img
+                  src={student.avatar_url || "https://i.ibb.co/8n8d37H4/white-logo-4x.png"}
+                  alt={student.full_name || "Talent"}
+                  className={cn(
+                    "w-full h-full object-cover transition-transform duration-700 group-hover/avatar:scale-110",
+                    !student.avatar_url && "bg-gradient-to-br from-blue-600 to-indigo-700 p-6"
+                  )}
+                />
+              </motion.div>
+              <div className="absolute bottom-4 right-4 w-5 h-5 bg-green-500 border-4 border-white rounded-full shadow-lg" />
+            </Link>
           </div>
 
-          {/* Content Section */}
-          <div className="flex-1 flex flex-col min-w-0 text-center md:text-left">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="min-w-0">
-                <div className="flex items-center justify-center md:justify-start gap-2 mb-1">
-                  <h3 className="text-xl md:text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors truncate">
-                    {student.full_name || student.username || "Unnamed Student"}
+          <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-10">
+            
+            {/* 3. Identity & Pitch */}
+            <div className="flex-1 min-w-0 space-y-4">
+              <div className="space-y-1">
+                <Link href={profileLink} className="inline-flex items-center gap-2 group/name">
+                  <h3 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tighter group-hover/name:text-blue-600 transition-colors">
+                    {student.full_name || "Studio Member"}
                   </h3>
-                  <CheckCircle2 size={20} className="text-blue-500 shrink-0" />
-                </div>
-
-                <div className="flex items-center justify-center md:justify-start gap-1.5 text-gray-500 mb-2">
-                  <MapPin size={16} className="shrink-0 text-blue-400" />
-                  <p className="text-sm md:text-base font-medium truncate">
-                    {student.university || "University not specified"}
-                  </p>
+                  <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center shadow-lg">
+                    <CheckCircle2 size={12} className="text-white fill-current" />
+                  </div>
+                </Link>
+                <div className="flex items-center gap-3">
+                   <p className="text-[10px] font-black text-slate-400 tracking-[0.2em] uppercase">@{username}</p>
+                   <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-50 border border-slate-100 rounded-full text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                      <MapPin size={10} className="text-blue-500" />
+                      {student.university || "Global Ecosystem"}
+                   </div>
                 </div>
               </div>
 
-              {/* Socials & Connect */}
-              <div className="flex items-center justify-center md:justify-end gap-3" onClick={(e) => e.preventDefault()}>
-                {student.linkedin_url && (
-                  <Link
-                    href={student.linkedin_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all duration-300 border border-blue-100 hover:border-blue-600 hover:-translate-y-1 shadow-sm"
-                    title="Connect on LinkedIn"
+              <div className="relative">
+                 <div className="absolute left-0 top-0 w-1 h-full bg-blue-100 rounded-full" />
+                 <p className="text-slate-600 text-base md:text-lg font-medium leading-relaxed italic pl-6 py-1 line-clamp-2">
+                    "{student.about || `Building the future of the African tech landscape through ${primarySkills[0] || 'Technical Innovation'}.`}"
+                 </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2 pt-2">
+                {primarySkills.map((skill, i) => (
+                  <div
+                    key={i}
+                    className="px-5 py-2 bg-slate-900 text-white text-[9px] font-black rounded-xl uppercase tracking-widest hover:bg-blue-600 transition-all duration-300 shadow-sm cursor-default"
                   >
-                    <Linkedin size={20} />
-                  </Link>
-                )}
-                <button
-                  onClick={handleLike}
-                  className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 border hover:-translate-y-1 shadow-sm ${isLiked
-                      ? 'bg-red-50 text-red-600 border-red-100 hover:bg-red-600 hover:text-white hover:border-red-600'
-                      : 'bg-gray-50 text-gray-400 border-gray-100 hover:bg-red-50 hover:text-red-600 hover:border-red-100'
-                    }`}
-                >
-                  <Heart size={20} className={isLiked ? "fill-current" : ""} />
-                </button>
+                    {skill}
+                  </div>
+                ))}
+                <div className="flex items-center gap-1.5 px-5 py-2 bg-white border border-slate-100 text-slate-400 text-[9px] font-black rounded-xl uppercase tracking-widest group-hover:border-blue-100 transition-all group-hover:text-blue-600">
+                    <Sparkles size={10} />
+                    Member
+                </div>
               </div>
             </div>
 
-            {/* Bio Snippet */}
-            <p className="text-sm md:text-base text-gray-600 mt-3 leading-relaxed max-w-2xl line-clamp-2 italic">
-              "Passionate innovator from {student.university?.split(' ')[0] || 'the academy'}. Building a career in {primarySkills[0] || 'modern technology'} and making an impact."
-            </p>
+            {/* 4. Stats & Interactive Dock */}
+            <div className="xl:w-60 shrink-0 space-y-4">
+               <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-slate-50/80 rounded-[1.8rem] p-4 border border-slate-100 hover:bg-white hover:border-blue-100 hover:shadow-xl hover:shadow-blue-50/50 transition-all duration-500 group/stat">
+                     <div className="flex items-center gap-2 mb-2">
+                        <Rocket size={14} className="text-amber-500 group-hover/stat:rotate-12 transition-transform" />
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Impact</span>
+                     </div>
+                     <p className="text-2xl font-black text-slate-900 leading-none">{stats?.projectsCreated || 0}</p>
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Projects</p>
+                  </div>
+                  <div className="bg-slate-50/80 rounded-[1.8rem] p-4 border border-slate-100 hover:bg-white hover:border-indigo-100 hover:shadow-xl hover:shadow-indigo-50/50 transition-all duration-500 group/stat">
+                     <div className="flex items-center gap-2 mb-2">
+                        <Briefcase size={14} className="text-indigo-500 group-hover/stat:scale-110 transition-transform" />
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Experience</span>
+                     </div>
+                     <p className="text-2xl font-black text-slate-900 leading-none">{stats?.internshipsApplied || 0}</p>
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Events</p>
+                  </div>
+               </div>
 
-            {/* Bottom Meta Bar */}
-            <div className="mt-auto pt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-t border-gray-50 mt-6">
-              {/* Skills container */}
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
-                {primarySkills.map((skill, i) => (
-                  <span
-                    key={i}
-                    className="px-3 py-1 bg-blue-50/50 text-blue-700 text-[11px] font-bold rounded-lg border border-blue-100/50 uppercase tracking-wider"
+               <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between px-3 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                     <div className="flex items-center gap-2">
+                        <Calendar size={12} className="text-blue-400" />
+                        <span>{stats?.eventsApplied || 0} Attended</span>
+                     </div>
+                     <div className="flex items-center gap-2">
+                        <Award size={12} className="text-purple-400" />
+                        <span>{stats?.programsApplied || 0} Badges</span>
+                     </div>
+                  </div>
+                  <Link 
+                     href={profileLink}
+                     className="w-full py-4 bg-slate-900 text-white rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-slate-100 hover:bg-blue-600 hover:shadow-blue-200 transition-all duration-300 group/btn"
                   >
-                    {skill}
-                  </span>
-                ))}
-                {student.soft_skills?.[0] && (
-                  <span className="px-3 py-1 bg-indigo-50/50 text-indigo-700 text-[11px] font-bold rounded-lg border border-indigo-100/50 uppercase tracking-wider">
-                    {student.soft_skills[0]}
-                  </span>
-                )}
-              </div>
-
-              {/* Stats Highlights */}
-              <div className="flex items-center justify-center gap-4 sm:gap-6 flex-wrap">
-                <div className="text-center min-w-[60px]">
-                  <p className="text-base sm:text-lg font-bold text-gray-900 leading-none">{stats?.projectsCreated || 0}</p>
-                  <p className="text-[9px] sm:text-[10px] font-semibold text-gray-400 uppercase tracking-widest mt-1">Projects</p>
-                </div>
-                <div className="hidden sm:block w-px h-8 bg-gray-100" />
-                <div className="text-center min-w-[60px]">
-                  <p className="text-base sm:text-lg font-bold text-gray-900 leading-none">{stats?.internshipsApplied || 0}</p>
-                  <p className="text-[9px] sm:text-[10px] font-semibold text-gray-400 uppercase tracking-widest mt-1">Exp</p>
-                </div>
-                <div className="hidden sm:block w-px h-8 bg-gray-100" />
-                <div className="text-center min-w-[60px]">
-                  <p className="text-base sm:text-lg font-bold text-gray-900 leading-none">{stats?.eventsApplied || 0}</p>
-                  <p className="text-[9px] sm:text-[10px] font-semibold text-gray-400 uppercase tracking-widest mt-1">Events</p>
-                </div>
-              </div>
+                     <span>Open Portfolio</span>
+                     <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" strokeWidth={3} />
+                  </Link>
+               </div>
             </div>
           </div>
         </div>
       </div>
-    </Link>
+    </motion.div>
   );
 };
-
-interface StatItemProps {
-  value: number;
-  label: string;
-  color?: string;
-}
-
-const StatItem: React.FC<StatItemProps> = ({ value, label, color = "text-gray-600" }) => (
-  <div className="text-center">
-    <div className={`text-lg font-bold ${color}`}>
-      {value}
-    </div>
-    <div className="text-[10px] text-gray-500 font-medium">{label}</div>
-  </div>
-);
 
 export default StudentCard;

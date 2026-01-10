@@ -1,17 +1,22 @@
 "use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import {
   User,
-  User2,
-  ChevronDown,
-  ChevronUp,
   MapPin,
-  UserCircle2,
+  ChevronRight,
+  ExternalLink,
+  Sparkles,
+  Award,
+  Rocket,
+  ShieldCheck,
+  Zap
 } from "lucide-react";
 import { UserProfile } from "@/app/types/type";
 import { useState } from "react";
-import NameInitials from "@/components/NameInitials";
+import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 interface WelcomeCardProps {
   user: UserProfile | any;
@@ -20,253 +25,156 @@ interface WelcomeCardProps {
 }
 
 export const WelcomeCard = ({ user, onProfileUpdated, profile }: WelcomeCardProps) => {
-  console.log("User in WelcomeCard:", user);
-  if (user?.profile) {
-    console.log("Profile keys:", Object.keys(user.profile));
-    console.log("LinkedIn URL:", user.profile.linkedin_url);
-    console.log("GitHub URL:", user.profile.github_url);
-  }
-  const [isAboutExpanded, setIsAboutExpanded] = useState(false);
-  const [isSkillsExpanded, setIsSkillsExpanded] = useState(false);
   const [isAvatarHovered, setIsAvatarHovered] = useState(false);
-
-  const truncateText = (text: string, maxLength: number) => {
-    if (!text) return "";
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + "...";
-  };
-
-  const truncateSkills = (skills: string[], maxLength: number) => {
-    if (!skills || skills.length === 0) return "";
-    const skillsText = skills.join(", ");
-    if (skillsText.length <= maxLength) return skillsText;
-    return skillsText.substring(0, maxLength) + "...";
-  };
 
   const avatarUrl =
     user?.profile?.avatar_url ||
     user?.profile?.avatarUrl ||
     user?.avatar_url ||
     user?.avatarUrl;
-  const coverImageUrl = user?.profile?.cover_image || "https://i.ibb.co/vv3sgJwd/n8.jpg";
+    
+  const coverImageUrl = user?.profile?.cover_image || "https://i.ibb.co/9kLrm6KY/og-image-2x-100-1.jpg";
+  const username = user?.profile?.username || user?.username || "student";
 
   return (
-    <div className="relative bg-white rounded-2xl w-full mx-auto shadow-lg border border-gray-200 overflow-hidden">
-      {/* Cover Image */}
-      <div className="relative h-32 md:h-36 lg:h-40 w-full">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="relative bg-white rounded-[3rem] w-full mx-auto shadow-[0_10px_40px_-15px_rgba(0,0,0,0.08)] border border-slate-100 overflow-hidden mb-12 group/card"
+    >
+      {/* 1. Immersive Cover Header */}
+      <div className="relative h-44 md:h-52 lg:h-60 w-full overflow-hidden">
         <Image
           src={coverImageUrl}
           alt="Cover image"
           fill
-          className="object-cover"
+          className="object-cover transition-transform duration-1000 group-hover/card:scale-105"
           priority
         />
-        <div className="absolute inset-0" />
-
-        {/* Skills and About Cards positioned over background */}
-        <div className="absolute top-2 right-2 lg:top-4 lg:right-4 flex flex-col lg:flex-row gap-2 lg:gap-3 max-w-[320px] lg:max-w-none">
-          {/* Skills Section */}
-          {user.skills && user.skills.length > 0 && (
-            <div className="bg-white/95 backdrop-blur-sm rounded-lg lg:rounded-xl p-2 lg:p-3 shadow-lg border border-white/20 lg:min-w-[140px]">
-              <div className="flex items-center gap-1 lg:gap-2 mb-1 lg:mb-2">
-                <div className="w-4 h-4 lg:w-6 lg:h-6 bg-blue-600 rounded-full flex items-center justify-center">
-                  <User2 size={10} className="lg:w-3 lg:h-3 text-white" />
-                </div>
-                <h3 className="text-[9px] lg:text-xs font-semibold text-blue-900 uppercase tracking-wide">Skills</h3>
-              </div>
-              <div className="text-[9px] lg:text-xs text-blue-800">
-                {isSkillsExpanded ? (
-                  <div>
-                    <p className="break-words leading-relaxed">{user.skills.join(", ")}</p>
-                    <button
-                      onClick={() => setIsSkillsExpanded(false)}
-                      className="flex items-center gap-1 text-blue-600 hover:text-blue-800 mt-1 transition-colors"
-                    >
-                      <span className="text-[8px] lg:text-[10px] font-medium">Show less</span>
-                      <ChevronUp size={8} className="lg:w-2.5 lg:h-2.5" />
-                    </button>
-                  </div>
-                ) : (
-                  <div>
-                    <p className="break-words leading-relaxed">
-                      {truncateSkills(user.skills, 40)}
-                    </p>
-                    {user.skills.join(", ").length > 40 && (
-                      <button
-                        onClick={() => setIsSkillsExpanded(true)}
-                        className="flex items-center gap-1 text-blue-600 hover:text-blue-800 mt-1 transition-colors"
-                      >
-                        <span className="text-[8px] lg:text-[10px] font-medium">Read more</span>
-                        <ChevronDown size={8} className="lg:w-2.5 lg:h-2.5" />
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* About Me Section */}
-          {user.profile.about && (
-            <div className="bg-white/95 backdrop-blur-sm rounded-lg lg:rounded-xl p-2 lg:p-3 shadow-lg border border-white/20 lg:min-w-[140px]">
-              <div className="flex items-center gap-1 lg:gap-2 mb-1 lg:mb-2">
-                <div className="w-4 h-4 lg:w-6 lg:h-6 bg-gray-600 rounded-full flex items-center justify-center">
-                  <User size={10} className="lg:w-3 lg:h-3 text-white" />
-                </div>
-                <h3 className="text-[9px] lg:text-xs font-semibold text-gray-900 uppercase tracking-wide">About Me</h3>
-              </div>
-              <div className="text-[9px] lg:text-xs text-gray-700">
-                {isAboutExpanded ? (
-                  <div>
-                    <p className="break-words leading-relaxed">
-                      {user.profile.about}
-                    </p>
-                    <button
-                      onClick={() => setIsAboutExpanded(false)}
-                      className="flex items-center gap-1 text-blue-600 hover:text-blue-800 mt-1 transition-colors"
-                    >
-                      <span className="text-[8px] lg:text-[10px] font-medium">Show less</span>
-                      <ChevronUp size={8} className="lg:w-2.5 lg:h-2.5" />
-                    </button>
-                  </div>
-                ) : (
-                  <div>
-                    <p className="break-words leading-relaxed">
-                      {truncateText(user.profile.about, 50)}
-                    </p>
-                    {user.profile.about.length > 50 && (
-                      <button
-                        onClick={() => setIsAboutExpanded(true)}
-                        className="flex items-center gap-1 text-blue-600 hover:text-blue-800 mt-1 transition-colors"
-                      >
-                        <span className="text-[8px] lg:text-[10px] font-medium">Read more</span>
-                        <ChevronDown size={8} className="lg:w-2.5 lg:h-2.5" />
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60" />
+        
+        {/* Top Badges / Level Indicator */}
+        <div className="absolute top-6 right-6 flex items-center gap-3">
+           <div className="bg-white/10 backdrop-blur-xl border border-white/20 px-4 py-2 rounded-2xl flex items-center gap-2 shadow-2xl">
+              <Zap size={14} className="text-amber-400 fill-amber-400" />
+              <span className="text-[10px] font-black text-white uppercase tracking-widest">Level 12 Voyager</span>
+           </div>
+           <div className="bg-blue-600/80 backdrop-blur-xl border border-blue-400/30 w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-lg">
+              <ShieldCheck size={20} />
+           </div>
         </div>
       </div>
 
-      {/* Avatar with Edit Hover Effect */}
-      <div className="absolute top-20 md:top-24 lg:top-28 left-4 lg:left-6">
-        <div
-          className="relative group cursor-pointer"
-          onMouseEnter={() => setIsAvatarHovered(true)}
-          onMouseLeave={() => setIsAvatarHovered(false)}
-        >
-          <div className="w-20 h-20 md:w-24 md:h-24 lg:w-20 lg:h-20 rounded-full border-3 lg:border-4 border-white shadow-lg overflow-hidden bg-white transition-all duration-300 group-hover:shadow-2xl group-hover:scale-105">
-            {avatarUrl ? <Image
-              src={avatarUrl}
-              alt={`${user.name}'s profile picture`}
-              width={112}
-              height={112}
-              className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-75"
-              priority
-            /> :
-              <NameInitials name={user.name} />}
+      {/* 2. Identity Section */}
+      <div className="px-8 lg:px-12 pb-10 relative">
+        
+        {/* Floating Avatar */}
+        <div className="relative -mt-16 sm:-mt-20 mb-6 flex justify-between items-end">
+          <motion.div
+            whileHover={{ scale: 1.05, rotate: 2 }}
+            className="relative"
+            onMouseEnter={() => setIsAvatarHovered(true)}
+            onMouseLeave={() => setIsAvatarHovered(false)}
+          >
+            <div className="w-32 h-32 md:w-40 md:h-40 rounded-[3rem] border-8 border-white shadow-[0_20px_40px_-5px_rgba(0,0,0,0.15)] overflow-hidden bg-white ring-1 ring-slate-100">
+              <Image
+                src={avatarUrl || "https://i.ibb.co/8n8d37H4/white-logo-4x.png"}
+                alt={`${user.name}`}
+                width={160}
+                height={160}
+                className={cn(
+                  "w-full h-full object-cover transition-all duration-700",
+                  !avatarUrl && "bg-gradient-to-br from-blue-600 to-indigo-700 p-6"
+                )}
+                priority
+              />
+            </div>
+            {/* Active Glow */}
+            <div className="absolute bottom-4 right-4 w-6 h-6 bg-green-500 border-4 border-white rounded-full shadow-lg" />
+          </motion.div>
+
+          {/* Quick Stats Grid over body */}
+          <div className="hidden md:flex items-center gap-6 mb-2">
+             <div className="text-right">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Ecosystem Rank</p>
+                <p className="text-2xl font-black text-slate-900 leading-none">#42</p>
+             </div>
+             <div className="w-px h-10 bg-slate-100" />
+             <div className="text-right">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Points</p>
+                <p className="text-2xl font-black text-blue-600 leading-none">8.4k</p>
+             </div>
           </div>
-
-          {/* Animated Ring */}
-          <div className={`
-            absolute inset-0 rounded-full border-2 border-blue-500
-            transition-all duration-300 ease-in-out
-            ${isAvatarHovered ? 'scale-110 opacity-100' : 'scale-100 opacity-0'}
-          `} />
         </div>
-      </div>
 
-      {/* Content Area */}
-      <div className="pt-12 md:pt-14 lg:pt-8 px-4 lg:px-6 pb-4 lg:pb-6">
-        {/* User Info and Social Links */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 lg:gap-4">
-          <div className="flex flex-col items-start gap-1">
-            <div className="flex items-center gap-1.5">
-              <p className="text-base lg:text-lg font-bold text-gray-900">
-                {user.name}
-              </p>
-              <div className="flex items-center justify-center bg-blue-500 rounded-full p-0.5">
-                <svg
-                  viewBox="0 0 24 24"
-                  className="w-4 h-4 lg:w-5 lg:h-5 fill-white"
-                  aria-label="Verified"
+        {/* 3. Welcome Text & Primary Info */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+          <div className="space-y-4 max-w-2xl">
+            <div>
+              <div className="flex items-center gap-3 mb-1">
+                <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tighter">
+                  Welcome back, {user.name.split(' ')[0]}!
+                </h1>
+                <motion.div 
+                   animate={{ rotate: [0, 20, 0] }}
+                   transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                 >
-                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                </svg>
+                   <Sparkles className="text-amber-500 w-8 h-8" fill="currentColor" />
+                </motion.div>
+              </div>
+              <div className="flex items-center gap-2 text-slate-500 font-bold uppercase text-[10px] tracking-[0.2em] bg-slate-50 w-fit px-4 py-1.5 rounded-full border border-slate-100">
+                <MapPin size={12} className="text-blue-500" />
+                <span>{user.university || "Zigex Student"}</span>
               </div>
             </div>
 
-            <div className="flex flex-col gap-1 text-gray-600">
-              <div className="flex items-center gap-1.5 text-gray-600">
-                <MapPin size={16} className="lg:w-[18px] lg:h-[18px]" />
-                <p className="text-sm lg:text-base font-medium">
-                  {user.university}
-                </p>
+            <p className="text-slate-500 text-lg font-medium leading-relaxed italic border-l-4 border-blue-600 pl-6 py-1">
+               {user.profile.about ? `"${user.profile.about.slice(0, 100)}..."` : `"You're shaping the future of African technology. Your journey continues here."`}
+            </p>
+          </div>
+
+          {/* 4. Action Center */}
+          <div className="flex items-center gap-3">
+             <Link
+               href={`/profile/${username}`}
+               className="group flex items-center gap-3 px-8 py-4 bg-slate-900 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-widest transition-all hover:bg-blue-600 hover:shadow-2xl hover:shadow-blue-200 shadow-xl shadow-slate-100 active:scale-95"
+             >
+               <span>Studio Portfolio</span>
+               <div className="p-1 bg-white/20 rounded-lg group-hover:translate-x-1 transition-transform">
+                  <ExternalLink size={14} />
+               </div>
+             </Link>
+             
+             <button className="flex items-center justify-center w-14 h-14 rounded-[1.5rem] bg-slate-50 text-slate-400 border border-slate-100 hover:bg-white hover:text-blue-600 hover:border-blue-200 transition-all active:scale-90">
+                <div className="relative">
+                   <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
+                   <ChevronRight className="rotate-90" size={24} />
+                </div>
+             </button>
+          </div>
+        </div>
+
+        {/* 5. Personal Quick-Links / Identity Tags */}
+        <div className="mt-12 flex flex-wrap gap-3">
+           {user.skills && user.skills.slice(0, 5).map((skill: string, i: number) => (
+              <div key={i} className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-100 rounded-2xl shadow-sm hover:border-blue-200 hover:shadow-md transition-all cursor-default group/skill">
+                 <Rocket size={14} className="text-blue-500 group-hover/skill:scale-110 transition-transform" />
+                 <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest">{skill}</span>
               </div>
-            </div>
-          </div>
-
-          {/* Social Links & My Profile Button */}
-          <div className="flex items-center gap-2 lg:gap-3 flex-wrap">
-            {(user?.profile?.linkedin_url || user?.linkedin_url) && (
-              <Link
-                href={user?.profile?.linkedin_url || user?.linkedin_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                title="LinkedIn"
-                className="flex items-center justify-center w-9 h-9 lg:w-10 lg:h-10 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all border border-blue-100"
-              >
-                <div className="w-5 h-5">
-                  <svg fill="currentColor" viewBox="0 0 32 32" version="1.1" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-                    <path d="M28.778 1.004h-25.56c-0.008-0-0.017-0-0.027-0-1.199 0-2.172 0.964-2.186 2.159v25.672c0.014 1.196 0.987 2.161 2.186 2.161 0.010 0 0.019-0 0.029-0h25.555c0.008 0 0.018 0 0.028 0 1.2 0 2.175-0.963 2.194-2.159l0-0.002v-25.67c-0.019-1.197-0.994-2.161-2.195-2.161-0.010 0-0.019 0-0.029 0h0.001zM9.9 26.562h-4.454v-14.311h4.454zM7.674 10.293c-1.425 0-2.579-1.155-2.579-2.579s1.155-2.579 2.579-2.579c1.424 0 2.579 1.154 2.579 2.578v0c0 0.001 0 0.002 0 0.004 0 1.423-1.154 2.577-2.577 2.577-0.001 0-0.002 0-0.003 0h0zM26.556 26.562h-4.441v-6.959c0-1.66-0.034-3.795-2.314-3.795-2.316 0-2.669 1.806-2.669 3.673v7.082h-4.441v-14.311h4.266v1.951h0.058c0.828-1.395 2.326-2.315 4.039-2.315 0.061 0 0.121 0.001 0.181 0.003l-0.009-0c4.5 0 5.332 2.962 5.332 6.817v7.855z"></path>
-                  </svg>
-                </div>
-              </Link>
-            )}
-
-            {(user?.profile?.github_url || user?.github_url) && (
-              <Link
-                href={user?.profile?.github_url || user?.github_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                title="GitHub"
-                className="flex items-center justify-center w-9 h-9 lg:w-10 lg:h-10 rounded-full bg-neutral-50 text-neutral-900 hover:bg-neutral-100 transition-all border border-neutral-200"
-              >
-                <div className="w-5 h-5">
-                  <svg xmlns="http://www.w3.org/2000/svg" aria-label="GitHub" role="img" viewBox="0 0 512 512" className="w-full h-full">
-                    <rect width="512" height="512" rx="15%" fill="#1B1817" /><path fill="#ffffff" d="M335 499c14 0 12 17 12 17H165s-2-17 12-17c13 0 16-6 16-12l-1-50c-71 16-86-28-86-28-12-30-28-37-28-37-24-16 1-16 1-16 26 2 40 26 40 26 22 39 59 28 74 22 2-17 9-28 16-35-57-6-116-28-116-126 0-28 10-51 26-69-3-6-11-32 3-67 0 0 21-7 70 26 42-12 86-12 128 0 49-33 70-26 70-26 14 35 6 61 3 67 16 18 26 41 26 69 0 98-60 120-117 126 10 8 18 24 18 48l-1 70c0 6 3 12 16 12z" />
-                  </svg>
-                </div>
-              </Link>
-            )}
-
-            {/* My Profile Button - Enhanced Interactive Version */}
-            {/* My Profile Button - Clean Version */}
-            <Link
-              href={`/profile/${user?.profile?.username || user?.username || "username"}`}
-              className="
-                flex items-center gap-1.5 lg:gap-2 px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg font-semibold text-xs lg:text-sm
-                transition-all duration-300
-                bg-primary text-white hover:bg-primary/90
-                shadow-sm hover:shadow-md
-                active:scale-95
-              "
-            >
-              <span className="flex items-center gap-1.5">
-                <UserCircle2
-                  size={16}
-                  className="lg:w-[18px] lg:h-[18px]"
-                />
-                <span className="font-bold">My Profile</span>
-              </span>
-            </Link>
-          </div>
+           ))}
+           <Link href="/dashboard/projects" className="flex items-center gap-2 px-5 py-2.5 bg-amber-50 border border-amber-100 rounded-2xl shadow-sm hover:bg-amber-100 transition-all group/projects">
+              <Award size={14} className="text-amber-600 group-hover/projects:rotate-12 transition-transform" />
+              <span className="text-[10px] font-black text-amber-900 uppercase tracking-widest">My Projects</span>
+           </Link>
         </div>
       </div>
 
-    </div>
+      <style jsx>{`
+        .bg-studio-gradient {
+          background: linear-gradient(135deg, #2563eb 0%, #4338ca 100%);
+        }
+      `}</style>
+    </motion.div>
   );
 };

@@ -21,7 +21,7 @@ export default async function StudentDirectoryPage() {
       .from("Applications")
       .select("student_id, application_type, status")
       .in("student_id", profileIds)
-      .eq("status", "accepted"),
+      .neq("status", "rejected"),
     supabaseAdmin.from("projects").select("creator_id").in("creator_id", profileIds),
   ]);
 
@@ -36,8 +36,8 @@ export default async function StudentDirectoryPage() {
     };
   });
 
-  // Calculate stats from the unified Applications table - NOW SHOWING ONLY ACCEPTED
-  applications.data?.forEach(row => {
+  // Calculate stats from the unified Applications table - NOW SHOWING ALL NON-REJECTED
+  applications.data?.forEach((row: any) => {
     if (statsMap[row.student_id]) {
       if (row.application_type === "internship") {
         statsMap[row.student_id].internshipsApplied++;
@@ -48,7 +48,7 @@ export default async function StudentDirectoryPage() {
       }
     }
   });
-  projects.data?.forEach(row => {
+  projects.data?.forEach((row: any) => {
     if (statsMap[row.creator_id]) statsMap[row.creator_id].projectsCreated++;
   });
 
