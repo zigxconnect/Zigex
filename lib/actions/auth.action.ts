@@ -3,6 +3,7 @@
 import { createServerActionClient } from "@/lib/supabase/server";
 import { z } from "zod";
 import { redirect } from "next/navigation";
+import { getURL } from "@/lib/utils";
 
 /**
  * Server Action to check if a user is already authenticated.
@@ -55,6 +56,7 @@ export async function signUpAction(formData: z.infer<typeof signUpSchema>) {
     email,
     password,
     options: {
+      emailRedirectTo: `${getURL()}api/auth/callback?next=/create-profile`,
       data: {
         full_name: fullName, // Pass fullName to be used by the database trigger
       },

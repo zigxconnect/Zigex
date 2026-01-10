@@ -8,6 +8,7 @@ import { NextResponse } from "next/server";
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
+  const next = searchParams.get("next") ?? "/dashboard";
 
   if (code) {
     const cookieStore = await cookies();
@@ -72,7 +73,7 @@ export async function GET(request: Request) {
         }
 
         if (studentProfile && studentProfile.profile_status === "complete") {
-          return NextResponse.redirect(`${origin}/dashboard`);
+          return NextResponse.redirect(`${origin}${next}`);
         }
 
         if (!studentProfile) {
@@ -95,7 +96,7 @@ export async function GET(request: Request) {
           });
         }
 
-        return NextResponse.redirect(`${origin}/create-profile`);
+        return NextResponse.redirect(`${origin}${next.startsWith('/') ? next : '/create-profile'}`);
       }
     } catch (err) {
       console.error("Auth callback unexpected error:", err);
