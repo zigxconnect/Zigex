@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Calendar, MessageCircle, Activity, Award } from 'lucide-react';
+import { Calendar, MessageCircle, Activity, Award, Sparkles, Rocket } from 'lucide-react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 
 interface NoProjectMessageProps {
   studentName: string;
@@ -27,68 +28,97 @@ Post your project on ZigX: https://zigexconnect.com`;
     : null;
 
   return (
-    <div className="bg-white rounded-[2.5rem] p-8 md:p-12 shadow-sm border border-slate-200 w-full overflow-hidden relative">
-      <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none">
-        <Activity size={200} />
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.95 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true }}
+      className="bg-white rounded-[3.5rem] p-10 md:p-16 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] border border-slate-100 w-full overflow-hidden relative group"
+    >
+      {/* Abstract Background Elements */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-blue-50/50 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 group-hover:bg-blue-100/50 transition-colors duration-700" />
+      <div className="absolute bottom-0 left-0 w-64 h-64 bg-amber-50/50 rounded-full blur-[80px] translate-y-1/2 -translate-x-1/2 group-hover:bg-amber-100/30 transition-colors duration-700" />
+      
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.02] pointer-events-none group-hover:scale-110 transition-transform duration-1000">
+        <Rocket size={400} />
       </div>
 
-      <div className="flex flex-col items-center justify-center text-center space-y-8 relative z-10">
-        {/* Visual Cue */}
-        <div className="w-24 h-24 bg-slate-50 rounded-3xl flex items-center justify-center border border-slate-100 shadow-inner">
-          <Award size={48} className="text-slate-300" />
+      <div className="flex flex-col items-center justify-center text-center space-y-10 relative z-10">
+        {/* Visual Cue - Icon with Animated Ring */}
+        <div className="relative">
+          <div className="w-28 h-28 bg-white rounded-[2.5rem] flex items-center justify-center border border-slate-100 shadow-xl relative z-10">
+            <Award size={52} className="text-slate-300 group-hover:text-blue-500 transition-colors duration-500" />
+          </div>
+          <motion.div 
+             animate={{ rotate: 360 }}
+             transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+             className="absolute inset-0 -m-4 border-2 border-dashed border-blue-200/50 rounded-[3.5rem]" 
+          />
         </div>
 
         {/* Main Message */}
-        <div className="space-y-3 max-w-lg">
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight">
-            No Projects Started Yet
+        <div className="space-y-4 max-w-xl">
+          <div className="flex items-center justify-center gap-2 mb-2">
+             <Sparkles size={16} className="text-blue-500" />
+             <span className="text-[10px] font-black text-blue-600 uppercase tracking-[0.3em]">Incubating Talent</span>
+          </div>
+          <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter">
+            Brewing Something Great
           </h2>
-          <p className="text-lg text-slate-500 font-medium">
-            <span className="text-blue-600 font-bold">{firstName}</span> is currently brewing something amazing. Check back soon for their next big showcase!
+          <p className="text-lg md:text-xl text-slate-500 font-medium leading-relaxed">
+            <span className="text-slate-900 font-bold">{firstName}</span> is currently engineering their next big showcase. Check back soon to witness their latest evolution!
           </p>
         </div>
 
-        {/* Info Box */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl">
-          <div className="bg-blue-50/50 rounded-2xl p-6 border border-blue-100 text-left">
-            <div className="flex gap-3 mb-2">
-              <Calendar size={20} className="text-blue-600" />
-              <p className="font-bold text-slate-800">Why Projects?</p>
+        {/* Dynamic Insight Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-3xl">
+          <motion.div 
+            whileHover={{ y: -5 }}
+            className="bg-slate-50/50 backdrop-blur-sm rounded-[2rem] p-8 border border-slate-100 text-left group/card"
+          >
+            <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg shadow-blue-200 group-hover/card:scale-110 transition-transform">
+              <Activity size={20} />
             </div>
-            <p className="text-sm text-slate-600 leading-relaxed font-medium">
-              Monthly highlights document the learning journey and prove real-world competence to recruiters.
+            <p className="font-black text-slate-900 uppercase text-xs tracking-widest mb-2">The Proof of Skill</p>
+            <p className="text-sm text-slate-500 leading-relaxed font-medium">
+              Monthly projects are the "Proof of Work" that validates technical competence to top-tier engineering teams.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="bg-amber-50/50 rounded-2xl p-6 border border-amber-100 text-left">
-            <div className="flex gap-3 mb-2">
-              <Activity size={20} className="text-amber-600" />
-              <p className="font-bold text-slate-800">Visibility</p>
+          <motion.div 
+            whileHover={{ y: -5 }}
+            className="bg-slate-50/50 backdrop-blur-sm rounded-[2rem] p-8 border border-slate-100 text-left group/card"
+          >
+            <div className="w-12 h-12 bg-amber-500 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg shadow-amber-200 group-hover/card:scale-110 transition-transform">
+              <Calendar size={20} />
             </div>
-            <p className="text-sm text-slate-600 leading-relaxed font-medium">
-              Projects are the fastest way to get featured on the ZigX main feed and gain network traction.
+            <p className="font-black text-slate-900 uppercase text-xs tracking-widest mb-2">Network Velocity</p>
+            <p className="text-sm text-slate-500 leading-relaxed font-medium">
+              Sharing progress increases visibility by 14x. Projects are the fastest bridge between learners and leaders.
             </p>
-          </div>
+          </motion.div>
         </div>
 
-        {/* Contact Button */}
+        {/* Contact/CTA Section */}
         {whatsappUrl && (
-          <div className="pt-4 flex flex-col items-center gap-4">
+          <div className="pt-8 flex flex-col items-center gap-5">
             <Link
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-3 px-8 py-4 bg-[#25D366] hover:bg-[#1EBE57] text-white font-black rounded-2xl transition-all duration-300 shadow-xl shadow-green-200 hover:scale-105 uppercase text-xs tracking-widest"
+              className="group/btn relative flex items-center justify-center gap-4 px-10 py-5 bg-[#25D366] text-white font-black rounded-3xl transition-all duration-300 shadow-[0_20px_40px_-10px_rgba(37,211,102,0.3)] hover:shadow-[0_25px_50px_-10px_rgba(37,211,102,0.5)] active:scale-95 uppercase text-[10px] tracking-[0.2em]"
             >
-              <MessageCircle size={18} />
-              <span>Request Project Showcase</span>
+              <MessageCircle size={18} className="group-hover/btn:rotate-12 transition-transform" />
+              <span>Prompt Project Update</span>
             </Link>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-tighter">
-              Encourage them to share their work
-            </p>
+            <div className="flex items-center gap-2">
+               <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                 Direct Connection Available
+               </p>
+            </div>
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }
