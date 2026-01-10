@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import ProjectDetailsView from "@/components/project/ProjectDetailsView";
 
+import { Metadata } from "next";
+
 interface Props {
   params: Promise<{ id: string }>;
 }
@@ -137,6 +139,45 @@ async function getSimilarProjects(topic: string, language: string) {
     console.error("Error fetching similar projects:", error);
     return [];
   }
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  
+  const { data: project } = await supabaseAdmin
+    .from("projects")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (!project) return { title: "Project Not Found" };
+
+  const { data: owner } = await supabaseAdmin
+    .from("student_profiles")
+    .select("full_name")
+    .eq("id", project.student_id)
+    .maybeSingle();
+
+  const title = `${project.project_title} | Zigex Project`;
+  const description = project.description || `Check out ${owner?.full_name || 'this'}'s project on Zigex.`;
+  const image = project.cover_image_url || "https://i.ibb.co/k2Rpz2jQ/og-image-2x-100.jpg";
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: [{ url: image }],
+      type: "article",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [image],
+    },
+  };
 }
 
 export default async function ProjectPage({ params }: Props) {

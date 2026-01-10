@@ -117,7 +117,6 @@ export async function fetchActiveProject(): Promise<ActiveProjectResult> {
       success: true,
       data: activeProject
     };
-
   } catch (error: any) {
     console.error('Critical error in fetchActiveProject:', error);
     return {
@@ -125,6 +124,49 @@ export async function fetchActiveProject(): Promise<ActiveProjectResult> {
       error: 'An unexpected error occurred.',
       data: null
     };
+  }
+}
+
+// Helper function to fetch all projects for a specific student profile ID
+export async function fetchAllUserProjects(studentProfileId: string): Promise<{ success: boolean; data: any[]; error?: string }> {
+  try {
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value;
+          },
+          set(name: string, value: string, options: CookieOptions) {
+            cookieStore.set({ name, value, ...options });
+          },
+          remove(name: string, options: CookieOptions) {
+            cookieStore.set({ name, value: '', ...options });
+          },
+        },
+      }
+    );
+
+    const { data: projects, error: projectError } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('student_id', studentProfileId)
+      .order('created_at', { ascending: false });
+
+    if (projectError) {
+      console.error('Projects fetch error:', projectError);
+      return { success: false, data: [] };
+    }
+
+    return {
+      success: true,
+      data: projects || []
+    };
+  } catch (error: any) {
+    console.error('Critical error in fetchAllUserProjects:', error);
+    return { success: false, data: [] };
   }
 }
 

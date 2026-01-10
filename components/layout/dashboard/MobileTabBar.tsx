@@ -12,6 +12,7 @@ import {
   Globe,
   LogOut,
   BrainCircuit,
+  MessageSquare,
 } from "lucide-react";
 import { AiOutlineWechat } from "react-icons/ai";
 import { useState, useEffect } from "react";
@@ -40,7 +41,7 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
       href: "/feed",
       icon: Globe,
       label: "Browse",
-      matchPaths: ["/feed", "/feed/"],
+      matchPaths: ["/feed", "/feed/", "/programs/"],
       excludePaths: ["/feed/projects"]
     },
     {
@@ -56,17 +57,10 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
       matchPaths: ["/dashboard/student", "/dashboard/student/"]
     },
     {
-      href: `/profile/${user?.profile?.username || "username"}`,
-      icon: User,
-      label: "Profile",
-      matchPaths: ["/profile/"],
-    },
-    {
-      href: "/dashboard/zigagent-ai",
-      icon: BrainCircuit,
-      label: "ZAi",
-      matchPaths: ["/dashboard/zigagent-ai", "/dashboard/zigagent-ai/"],
-      isSpecial: true
+      href: "/dashboard/community",
+      icon: MessageSquare,
+      label: "Group",
+      matchPaths: ["/dashboard/community", "/dashboard/community/"]
     },
   ];
   const pathname = usePathname();

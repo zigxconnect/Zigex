@@ -45,7 +45,7 @@ export async function GET(request: Request) {
         return auth; // Return the NextResponse if authentication fails
     }
 
-    const {user, type} = auth;
+    const { user, type } = auth;
     if (type !== 'company') {
         return NextResponse.json(
             { error: 'Unauthorized access' },
@@ -53,7 +53,7 @@ export async function GET(request: Request) {
         );
     }
 
-    const {company} = auth;
+    const { company } = auth;
     if (!company) {
         return NextResponse.json(
             { error: 'Company profile not found' },
@@ -63,15 +63,15 @@ export async function GET(request: Request) {
 
 
     const { data, error } = await supabaseAdmin
-    .from('internships')
-    .select('*')
-    .eq('company_id', company.id);
+        .from('internships')
+        .select('*')
+        .eq('company_id', company.id);
     if (error) {
         console.log('Error fetching internships:', error);
         return NextResponse.json(
-            { error: error.message }, 
+            { error: error.message },
             { status: 500 }
-            );
+        );
     }
     return NextResponse.json(data);
 }
@@ -83,7 +83,7 @@ export async function POST(request: Request) {
         return auth; // Return the NextResponse if authentication fails
     }
 
-    const {user, type} = auth;
+    const { user, type } = auth;
     if (type !== 'company') {
         return NextResponse.json(
             { error: 'Unauthorized access' },
@@ -91,7 +91,7 @@ export async function POST(request: Request) {
         );
     }
 
-    const {company} = auth;
+    const { company } = auth;
     if (!company) {
         return NextResponse.json(
             { error: 'Company profile not found' },
@@ -107,9 +107,9 @@ export async function POST(request: Request) {
 
         const { data: internship, error } = await supabaseAdmin.from('internships').insert([validatedData]).select('*').single();
         if (error) {
-            console.log( error);
+            console.log(error);
             return NextResponse.json(
-                { error: error.message }, 
+                { error: error.message },
                 { status: 500 });
         }
 
@@ -117,7 +117,7 @@ export async function POST(request: Request) {
         try {
             // 1. Get subscribed users
             const { data: users, error: userError } = await supabaseAdmin.rpc("get_subscribed_emails");
-            
+
             let recipients = users || [];
             if (userError) {
                 console.error("RPC get_subscribed_emails failed:", userError);
@@ -134,26 +134,26 @@ export async function POST(request: Request) {
                 });
                 const uniqueRecipients = Array.from(uniqueRecipientsMap.values());
                 const recipientEmails = uniqueRecipients.map((u: any) => u.email).filter(Boolean);
-                
+
                 // 2. Send Email (Batch BCC with Generic To)
                 if (process.env.RESEND_API_KEY && recipientEmails.length > 0) {
                     const { Resend } = await import("resend");
                     const resend = new Resend(process.env.RESEND_API_KEY);
                     const { NewPostEmail } = await import("@/emails/NewPostEmail");
 
-                    // Send to "notifications@ZIGEX.online" (ourselves) and BCC everyone else
+                    // Send to "notifications@zigexconnect.com" (ourselves) and BCC everyone else
                     await resend.emails.send({
-                        from: "ZIGEX <notifications@ZIGEX.online>",
-                        to: "notifications@ZIGEX.online", 
+                        from: "ZIGEX <notifications@zigexconnect.com>",
+                        to: "notifications@zigexconnect.com",
                         bcc: recipientEmails, // Everyone goes to BCC
                         subject: `New Internship Posted: ${internship.title}`,
                         react: NewPostEmail({
                             postTitle: internship.title,
                             postType: "Internship",
                             postLocation: internship.location,
-                            viewPostUrl: `https://ZIGEX.online/internships/${internship.id}`,
-                            companyLogoUrl: "https://tmvipinvvhgklmqwvows.supabase.co/storage/v1/object/public/company-assets/Seed%20Company/events/SEED%20community%20Challenge-1757769838240.jpg", 
-                            managePreferencesUrl: "https://ZIGEX.online/profile/notifications",
+                            viewPostUrl: `https://zigexconnect.com/internships/${internship.id}`,
+                            companyLogoUrl: "https://tmvipinvvhgklmqwvows.supabase.co/storage/v1/object/public/company-assets/Seed%20Company/events/SEED%20community%20Challenge-1757769838240.jpg",
+                            managePreferencesUrl: "https://zigexconnect.com/profile/notifications",
                             postedDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
                         }),
                     });
@@ -161,7 +161,7 @@ export async function POST(request: Request) {
 
                 // 3. Create Notifications in DB (using unique recipients)
                 const notifications = uniqueRecipients.map((u: any) => ({
-                    user_id: u.id || u.user_id, 
+                    user_id: u.id || u.user_id,
                     title: "New Internship Posted!",
                     message: `A new internship "${internship.title}" is available.`,
                     type: "internship",
@@ -178,7 +178,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json(internship, { status: 201 });
     }
-    catch(err){
+    catch (err) {
         console.log(err)
         return NextResponse.json(
             { error: (err as Error).message },
@@ -194,7 +194,7 @@ export async function PATCH(request: Request) {
         return auth; // Return the NextResponse if authentication fails
     }
 
-    const {user, type} = auth;
+    const { user, type } = auth;
     if (type !== 'company') {
         return NextResponse.json(
             { error: 'Unauthorized access' },
@@ -202,7 +202,7 @@ export async function PATCH(request: Request) {
         );
     }
 
-    const {company} = auth;
+    const { company } = auth;
     if (!company) {
         return NextResponse.json(
             { error: 'Company profile not found' },
@@ -241,7 +241,7 @@ export async function PATCH(request: Request) {
         .eq('id', id);
     if (error) {
         return NextResponse.json(
-            { error: error.message }, 
+            { error: error.message },
             { status: 500 });
     }
     return NextResponse.json(data);
@@ -249,13 +249,13 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
     // Authenticate the user
-    
+
     const auth = await authMiddleware(request);
     if (auth instanceof NextResponse) {
         return auth; // Return the NextResponse if authentication fails
     }
 
-    const {user, type} = auth;
+    const { user, type } = auth;
     if (type !== 'company') {
         return NextResponse.json(
             { error: 'Unauthorized access' },
@@ -263,7 +263,7 @@ export async function DELETE(request: Request) {
         );
     }
 
-    const {company} = auth;
+    const { company } = auth;
     if (!company) {
         return NextResponse.json(
             { error: 'Company profile not found' },

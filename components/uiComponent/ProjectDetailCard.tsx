@@ -50,7 +50,22 @@ export default function ProjectDetailCard({ project, owner }: { project: Project
             <button className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 text-white hover:bg-primary hover:scale-110 transition-all duration-500 group shadow-2xl">
               <Heart className="w-5 h-5 group-hover:fill-current" />
             </button>
-            <button className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 text-white hover:bg-primary hover:scale-110 transition-all duration-500 shadow-2xl">
+            <button 
+              onClick={() => {
+                const url = typeof window !== "undefined" ? window.location.href : "";
+                if (navigator.share) {
+                  navigator.share({
+                    title: project.project_title,
+                    text: `Check out ${project.project_title} on Zigex!`,
+                    url: url,
+                  });
+                } else {
+                  navigator.clipboard.writeText(url);
+                  alert("Link copied to clipboard!");
+                }
+              }}
+              className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 text-white hover:bg-primary hover:scale-110 transition-all duration-500 shadow-2xl"
+            >
               <Share2 className="w-5 h-5" />
             </button>
           </div>

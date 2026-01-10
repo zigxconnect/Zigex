@@ -3,12 +3,13 @@
 import { use, useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { MapPin, Building2, ExternalLink, Clock, CalendarDays, Users, GraduationCap, X, Lock } from "lucide-react";
+import { MapPin, Building2, ExternalLink, Clock, CalendarDays, Users, GraduationCap, X, Lock, BookOpen, ChevronRight, AlertCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShareButton } from "@/components/sections/dashboard/ShareButton";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import DynamicForm from "@/components/sections/dashboard/Application/application";
+
 import { useFetchDetails } from "@/hooks/useFetchDetails";
 import { hasExpired } from "@/components/uiComponent/ExpiredOverlay";
 import { InternshipDetailsLoadingSkeleton } from "@/components/SinglePageLoadingSkeleton";
@@ -27,6 +28,8 @@ interface ProgramWithCompany {
   type?: string;
   program_picture_url?: string;
   company_id?: string;
+  is_paid?: boolean;
+  price_xaf?: number;
   company?: {
     id: string;
     company_name: string;
@@ -87,7 +90,7 @@ function useOtherPrograms(program: ProgramWithCompany | null) {
       try {
         const response = await fetch(`/api/public/companies/${companyId}/programs`);
         const data = await response.json();
-        setPrograms((data.programs || []).filter((p: any) => p.id !== program.id));
+        setPrograms((data.programs || []).filter((p: any) => p.id !== program?.id));
       } catch (error) {
         console.error('Error fetching other programs:', error);
         setPrograms([]);
@@ -100,8 +103,52 @@ function useOtherPrograms(program: ProgramWithCompany | null) {
   return programs;
 }
 
+// Hook to check enrollment status
+function useEnrollmentStatus(programId: string) {
+  const [enrollmentStatus, setEnrollmentStatus] = useState<{
+    isEnrolled: boolean;
+    status: string | null;
+    paymentCompleted: boolean;
+    applicationId?: string;
+    studentId?: string;
+  }>({ isEnrolled: false, status: null, paymentCompleted: false });
+
+  useEffect(() => {
+    async function checkEnrollment() {
+      try {
+        const res = await fetch("/api/students/enrolled-programs");
+        if (res.ok) {
+          const programs = await res.json();
+          const thisProgram = programs.find((p: any) => p.programId === programId);
+          if (thisProgram) {
+            setEnrollmentStatus({
+              isEnrolled: true,
+              status: thisProgram.status,
+              paymentCompleted: thisProgram.paymentCompleted || false,
+              applicationId: thisProgram.applicationId,
+              studentId: thisProgram.studentId,
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error checking enrollment:", error);
+      }
+    }
+    checkEnrollment();
+  }, [programId]);
+
+  return enrollmentStatus;
+}
+
 export default function ProgramDetailsClient({ id }: { id: string }) {
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [enrollmentStatus, setEnrollmentStatus] = useState<{
+    isEnrolled: boolean;
+    status: string | null;
+    paymentCompleted: boolean;
+    applicationId?: string;
+    studentId?: string;
+  }>({ isEnrolled: false, status: null, paymentCompleted: false });
 
   const {
     data: program,
@@ -110,6 +157,11 @@ export default function ProgramDetailsClient({ id }: { id: string }) {
   } = useFetchDetails<ProgramWithCompany>("/api/students/programs", id);
 
   const otherPrograms = useOtherPrograms(program);
+  const initialEnrollmentStatus = useEnrollmentStatus(id);
+
+  useEffect(() => {
+    setEnrollmentStatus(initialEnrollmentStatus);
+  }, [initialEnrollmentStatus]);
 
   if (isLoading) return <InternshipDetailsLoadingSkeleton />;
   if (error) return <div className="text-center p-12 text-red-500">{error}</div>;
@@ -121,6 +173,7 @@ export default function ProgramDetailsClient({ id }: { id: string }) {
 
   const company = program.company;
   const isExpired = hasExpired(program.end_date);
+  const isAccepted = enrollmentStatus.status === "accepted";
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
@@ -213,6 +266,8 @@ export default function ProgramDetailsClient({ id }: { id: string }) {
                 )}
               </div>
 
+
+
               <div className="mt-6 space-y-4 p-6 sm:p-8 pt-0">
                 {program.location && (
                   <div className="rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
@@ -302,13 +357,13 @@ export default function ProgramDetailsClient({ id }: { id: string }) {
                   </h3>
                 </div>
                 <div className="p-5">
-                  <DetailItem label="Duration" value={program.duration} icon={Clock} />
+                  <DetailItem label="Duration" value={program.duration || null} icon={Clock} />
                   <DetailItem label="Start Date" value={program.start_date ? formatDate(program.start_date) : null} icon={CalendarDays} />
                   <DetailItem label="End Date" value={program.end_date ? formatDate(program.end_date) : null} icon={CalendarDays} />
-                  <DetailItem label="Format" value={program.format} icon={Users} />
-                  <DetailItem label="Level" value={program.level} icon={GraduationCap} />
-                  <DetailItem label="Type" value={program.type} />
-                  <DetailItem label="Location" value={program.location} icon={MapPin} />
+                  <DetailItem label="Format" value={program.format || null} icon={Users} />
+                  <DetailItem label="Level" value={program.level || null} icon={GraduationCap} />
+                  <DetailItem label="Type" value={program.type || null} />
+                  <DetailItem label="Location" value={program.location || null} icon={MapPin} />
                 </div>
               </Card>
 
@@ -336,33 +391,54 @@ export default function ProgramDetailsClient({ id }: { id: string }) {
                 </Card>
               )}
 
-              <Button
-                className={`w-full text-base py-6 font-semibold shadow-lg transition-all duration-300 relative
-                  ${!isExpired 
-                    ? "hover:shadow-xl transform hover:scale-[1.02] bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
-                    : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  } border-0`}
-                onClick={() => !isExpired && setIsFormOpen(true)}
-                disabled={isExpired}
-              >
-                {!isExpired ? (
-                  <>
-                    Register Now
-                    <ExternalLink size={18} className="ml-2" />
-                  </>
-                ) : (
-                  <div className="flex items-center justify-center gap-2">
-                    <Lock size={18} />
-                    <span>Registration Closed</span>
-                  </div>
-                )}
-                
-                {isExpired && (
-                  <div className="absolute -bottom-6 left-0 right-0 text-center text-sm text-gray-500">
-                    Program ended on {new Date(program.end_date || '').toLocaleDateString()}
-                  </div>
-                )}
-              </Button>
+              {/* Main CTA Button - Changes based on enrollment status */}
+              {isAccepted ? (
+                <Link href={`/programs/${id}/updates`} className="block">
+                  <Button
+                    className="w-full text-base py-6 font-semibold shadow-lg transition-all duration-300 hover:shadow-xl transform hover:scale-[1.02] bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white border-0"
+                  >
+                    <BookOpen size={18} className="mr-2" />
+                    View Program Updates
+                    <ChevronRight size={18} className="ml-2" />
+                  </Button>
+                </Link>
+              ) : enrollmentStatus.isEnrolled ? (
+                <Button
+                  className="w-full text-base py-6 font-semibold shadow-lg bg-amber-100 text-amber-700 border-2 border-amber-200 cursor-default"
+                  disabled
+                >
+                  <Clock size={18} className="mr-2" />
+                  Application Under Review
+                </Button>
+              ) : (
+                <Button
+                  className={`w-full text-base py-6 font-semibold shadow-lg transition-all duration-300 relative
+                    ${!isExpired 
+                      ? "hover:shadow-xl transform hover:scale-[1.02] bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
+                      : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    } border-0`}
+                  onClick={() => !isExpired && setIsFormOpen(true)}
+                  disabled={isExpired}
+                >
+                  {!isExpired ? (
+                    <>
+                      Register Now
+                      <ExternalLink size={18} className="ml-2" />
+                    </>
+                  ) : (
+                    <div className="flex items-center justify-center gap-2">
+                      <Lock size={18} />
+                      <span>Registration Closed</span>
+                    </div>
+                  )}
+                  
+                  {isExpired && (
+                    <div className="absolute -bottom-6 left-0 right-0 text-center text-sm text-gray-500">
+                      Program ended on {new Date(program.end_date || '').toLocaleDateString()}
+                    </div>
+                  )}
+                </Button>
+              )}
 
               <Card className="border-blue-200 bg-blue-50/50 shadow-md">
                 <div className="p-4">
@@ -371,9 +447,14 @@ export default function ProgramDetailsClient({ id }: { id: string }) {
                       <GraduationCap size={16} className="text-blue-600" />
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-bold text-blue-900 text-sm mb-1">Application Tips</h4>
+                      <h4 className="font-bold text-blue-900 text-sm mb-1">
+                        {isAccepted ? "You're In!" : "Application Tips"}
+                      </h4>
                       <p className="text-blue-800 text-xs leading-relaxed">
-                        Ensure your application highlights relevant experience and your motivation for joining this program. Submissions are reviewed on a rolling basis.
+                        {isAccepted 
+                          ? "Congratulations! Access your weekly updates and resources from the Updates page."
+                          : "Ensure your application highlights relevant experience and your motivation for joining this program. Submissions are reviewed on a rolling basis."
+                        }
                       </p>
                     </div>
                   </div>

@@ -62,8 +62,8 @@ Deno.serve(async (req) => {
     const recipientEmails = users.map((u) => u.email).filter(Boolean);
 
     // Define URLs for the template
-    const postUrl = `https://ZIGEX.online/${tableName}/${postId}`;
-    const managePreferencesUrl = `https://ZIGEX.online/profile/notifications`;
+    const postUrl = `https://zigexconnect.com/${tableName}/${postId}`;
+    const managePreferencesUrl = `https://zigexconnect.com/profile/notifications`;
 
     // Format the posted date (e.g., 'Sep 22, 2025')
     const postedDate = new Date().toLocaleDateString("en-US", {
@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
 
     // Send the email
     await resend.emails.send({
-      from: "ZIGEX <notifications@ZIGEX.online>",
+      from: "ZIGEX <notifications@zigexconnect.com>",
       to: "delivered@resend.dev",
       bcc: recipientEmails,
       subject: `New ${postType} Posted: ${postTitle}`,

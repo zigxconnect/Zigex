@@ -6,6 +6,8 @@ import { Loader2, Star, GitFork, Users, FileText, Github } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
+// this is just testing the new enpoint i created.
+
 export default function GithubDemoPage() {
   const [owner, setOwner] = useState("facebook");
   const [repo, setRepo] = useState("react");

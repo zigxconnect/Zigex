@@ -11,34 +11,35 @@ type Stats = {
 };
 
 export const StatCardsGrid = ({ stats }: { stats: Stats }) => (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12 animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-100">
     <StatCard
       icon={Users}
       title="Total Hired"
       value={<AnimatedCounter target={stats.totalHired} />}
-      subtitle="All time"
-      color="blue"
+      subtitle="Lifetime hires"
+      color="indigo"
     />
     <StatCard
       icon={FileText}
-      title="Total Applications"
+      title="Submissions"
       value={<AnimatedCounter target={stats.totalApplications} />}
-      subtitle="All time"
-      color="green"
+      subtitle="Pending review"
+      color="blue"
     />
     <StatCard
       icon={Calendar}
-      title="Active Postings"
+      title="Live Events"
       value={<AnimatedCounter target={stats.activePostings} />}
-      subtitle="Currently running"
-      color="orange"
+      subtitle="Ongoing programs"
+      color="amber"
     />
     <StatCard
       icon={TrendingUp}
-      title="Completion Rate"
+      title="Success Rate"
       value={stats.completionRate}
-      subtitle="Of all postings"
-      color="purple"
+      subtitle="Fulfillment"
+      color="emerald"
     />
   </div>
 );
+

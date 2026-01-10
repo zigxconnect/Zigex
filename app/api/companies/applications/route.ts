@@ -1,6 +1,6 @@
 import { authMiddleware } from "@/lib/middleware/auth";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { Applicant } from "@/lib/types/applicants"; // Assuming this type is defined elsewhere
+import { Applicant } from "@/lib/types/applicants";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
@@ -12,8 +12,7 @@ export async function GET(request: Request) {
   const { company } = auth;
 
   try {
-    // With company_id on the Applications table, our query becomes incredibly simple.
-    // We no longer need to fetch posting IDs first.
+    // Fetch ALL application data including form fields
     const selectString = `
         id,
         status,
@@ -21,10 +20,22 @@ export async function GET(request: Request) {
         cover_letter_url,
         created_at,
         application_type,
-        internship:internships(id, title),
-        program:programs(id, title),
-        event:event(id, title),
+        duration,
+        department,
+        work_mode,
+        level,
+        expectations,
+        comments,
+        rsvp_status,
+        student_id,
+        payment_completed,
+        program_id,
+        internship:internships(id, title, description),
+        program:programs(id, title, description),
+        event:event(id, title, description),
         student:student_profiles (
+          id,
+          user_id,
           full_name,
           avatar_url,
           email,
@@ -33,9 +44,9 @@ export async function GET(request: Request) {
       `;
 
     const { data: applications, error } = await supabaseAdmin
-      .from("Applications") // Make sure this table name is cased correctly
+      .from("Applications")
       .select(selectString)
-      .eq("company_id", company.id) // This is the new, efficient filter
+      .eq("company_id", company.id)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -47,29 +58,87 @@ export async function GET(request: Request) {
       return NextResponse.json([]);
     }
 
-    // This local type helps with formatting the data
-    type ApplicationRow = (typeof applications)[0];
-
-    const formattedApplicants: Applicant[] = applications.map(
-      (app: ApplicationRow) => {
-        const opportunity = app.internship || app.program || app.event;
-
-        return {
-          id: app.id,
-          name: app.student?.full_name || "N/A",
-          avatarUrl:
-            app.student?.avatar_url || `/default-avatar.svg`,
-          email: app.student?.email || "No email",
-          phone: app.student?.phone || "No phone",
-          internshipTitle: opportunity?.title || app.application_type || "N/A",
-          internshipId: opportunity?.id,
-          appliedDate: app.created_at,
-          status: app.status,
-          resumeUrl: app.resume_url,
-          coverLetter: app.cover_letter_url,
-        };
+    // Collect user_ids that need auth email lookup
+    const userIdsNeedingEmail: string[] = [];
+    applications.forEach((app: any) => {
+      const student = Array.isArray(app.student) ? app.student[0] : app.student;
+      if (student && !student.email && student.user_id) {
+        userIdsNeedingEmail.push(student.user_id);
       }
-    );
+    });
+
+    // Batch fetch auth emails for users without profile email
+    const authEmailMap: Record<string, string> = {};
+    if (userIdsNeedingEmail.length > 0) {
+      // Use admin API to get user emails from auth.users
+      // Use admin API to get user emails from auth.users
+      await Promise.all(
+        userIdsNeedingEmail.map(async (userId) => {
+          try {
+            const { data: userData } = await supabaseAdmin.auth.admin.getUserById(userId);
+            if (userData?.user?.email) {
+              authEmailMap[userId] = userData.user.email;
+            }
+          } catch (e) {
+            console.error(`Failed to fetch auth email for ${userId}:`, e);
+          }
+        })
+      );
+    }
+
+    const formattedApplicants: Applicant[] = applications.map((app: any) => {
+      const student = Array.isArray(app.student) ? app.student[0] : app.student;
+      const internship = Array.isArray(app.internship) ? app.internship[0] : app.internship;
+      const program = Array.isArray(app.program) ? app.program[0] : app.program;
+      const event = Array.isArray(app.event) ? app.event[0] : app.event;
+
+      const opportunity = internship || program || event;
+
+      // Get email: First try profile, then try auth lookup
+      let email = student?.email;
+      if (!email && student?.user_id && authEmailMap[student.user_id]) {
+        email = authEmailMap[student.user_id];
+      }
+
+      return {
+        id: app.id,
+        name: student?.full_name || "N/A",
+        avatarUrl: student?.avatar_url || `/default-avatar.svg`,
+        email: email || "No email",
+        phone: student?.phone || "No phone",
+        internshipTitle: opportunity?.title || app.application_type || "N/A",
+        internshipId: opportunity?.id,
+        opportunityDescription: opportunity?.description || "",
+        appliedDate: app.created_at,
+        status: app.status,
+        resumeUrl: app.resume_url,
+        coverLetter: app.cover_letter_url,
+
+        // Application Type
+        applicationType: app.application_type,
+
+        // Form Fields - Internship
+        duration: app.duration,
+        department: app.department,
+        workMode: app.work_mode,
+
+        // Form Fields - Program/Event
+        level: app.level,
+        expectations: app.expectations,
+        comments: app.comments,
+
+        // Form Fields - Event RSVP
+        rsvpStatus: app.rsvp_status,
+
+        // User Info
+        studentId: student?.id,
+        userId: student?.user_id,
+
+        // Payment Status (for paid programs)
+        isPaid: app.payment_completed || app.is_paid || false,
+        programId: app.program_id || null,
+      };
+    });
 
     return NextResponse.json(formattedApplicants);
   } catch (err: unknown) {
