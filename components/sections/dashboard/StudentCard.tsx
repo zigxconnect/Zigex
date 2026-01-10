@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Heart, MapPin, CheckCircle2, Linkedin } from "lucide-react";
+import { slugifyUsername } from "@/lib/utils";
 
 interface StudentProps {
   id: string;
@@ -99,7 +100,7 @@ const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = (
   };
 
   return (
-    <Link href={`/dashboard/student/${student.username || student.id}`} className="block no-underline mb-6 last:mb-0">
+    <Link href={`/dashboard/student/${slugifyUsername(student.username || student.id)}`} className="block no-underline mb-6 last:mb-0">
       <div
         ref={cardRef}
         className={`

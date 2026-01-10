@@ -8,7 +8,6 @@ export async function GET(
 ) {
   const { id } = await params;
 
-
   if (!id) {
     return NextResponse.json(
       { error: "Internship ID is required" },
@@ -38,12 +37,15 @@ export async function GET(
   );
 
   try {
-    const { data: internship, error } = await supabase
+    const isIdUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+    let query = supabase
       .from("internships")
       .select(
         `
         *,
         company_profiles (
+          id,
           company_name,
           logo_url,
           email,
@@ -51,11 +53,17 @@ export async function GET(
           website_url
         )
       `
-      )
-      .eq("id", id)
-      .single();
+      );
 
-    if (error) {
+    if (isIdUUID) {
+      query = query.eq("id", id);
+    } else {
+      query = query.ilike("title", id.replace(/-/g, ' '));
+    }
+
+    const { data: internship, error } = await query.maybeSingle();
+
+    if (error || !internship) {
       console.error("Supabase query error:", error);
 
       return NextResponse.json(

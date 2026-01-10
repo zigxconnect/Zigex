@@ -1,5 +1,6 @@
 import React from "react";
 import { supabaseAdmin, createServerActionClient } from "@/lib/supabase/server";
+import { unslugifyUsername } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -49,8 +50,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       data = profileByUserId;
     }
   } else {
+    const unslugified = unslugifyUsername(username);
     const { data: profileByUsername } = await supabase.from("student_profiles").select("*").eq("username", username).maybeSingle();
-    data = profileByUsername;
+    
+    if (profileByUsername) {
+      data = profileByUsername;
+    } else {
+      const { data: profileByUnslugified } = await supabase.from("student_profiles").select("*").eq("username", unslugified).maybeSingle();
+      data = profileByUnslugified;
+    }
   }
 
   if (!data) return { title: "Student Not Found" };
@@ -95,8 +103,15 @@ export default async function StudentDetailPage({ params }: Props) {
       data = profileByUserId;
     }
   } else {
+    const unslugified = unslugifyUsername(username);
     const { data: profileByUsername } = await supabase.from("student_profiles").select("*").eq("username", username).maybeSingle();
-    data = profileByUsername;
+    
+    if (profileByUsername) {
+      data = profileByUsername;
+    } else {
+      const { data: profileByUnslugified } = await supabase.from("student_profiles").select("*").eq("username", unslugified).maybeSingle();
+      data = profileByUnslugified;
+    }
   }
 
   if (!data) {

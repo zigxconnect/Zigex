@@ -70,7 +70,7 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
   const opportunityStatus = await isOpportunityOpen(item, item._type);
 
   // Get the user's application status for this opportunity
-  const applicationStatus = await getApplicationStatus(id, item._type);
+  const applicationStatus = await getApplicationStatus(item.id, item._type);
 
   // Get image URL based on type
   const getImageUrl = () => {

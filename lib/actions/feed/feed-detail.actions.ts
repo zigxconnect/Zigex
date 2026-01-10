@@ -11,26 +11,39 @@ export type FeedType = "internships" | "programs" | "events";
  * Get a single feed item by ID
  * Searches across all feed types using cached admin query
  */
-const fetchFeedItemById = async (id: string) => {
+// Helper to match slug in SQL
+const matchSlug = (table: string, slug: string) => {
+  // This is a bit of a hack since we don't have a slug column.
+  // We'll replace dashes with spaces and use ILIKE.
+  // It won't be perfect for titles with actual dashes but it's a good fallback.
+  return `title.ilike.${slug.replace(/-/g, ' ')}`;
+};
+
+/**
+ * Get a single feed item by ID or Slug
+ * Searches across all feed types using cached admin query
+ */
+const fetchFeedItemById = async (idOrSlug: string) => {
   try {
+    const isIdUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
+
     // Try to find in internships
-    const { data: internship, error: internshipError } = await supabaseAdmin
+    let internshipQuery = supabaseAdmin
       .from("internships")
-      .select(
-        `
+      .select(`
         *,
         company_profiles (
-          id,
-          company_name,
-          logo_url,
-          cover_image_url,
-          location,
-          website_url
+          id, company_name, logo_url, cover_image_url, location, website_url
         )
-      `
-      )
-      .eq("id", id)
-      .single();
+      `);
+
+    if (isIdUUID) {
+      internshipQuery = internshipQuery.eq("id", idOrSlug);
+    } else {
+      internshipQuery = internshipQuery.ilike("title", idOrSlug.replace(/-/g, ' '));
+    }
+
+    const { data: internship, error: internshipError } = await internshipQuery.maybeSingle();
 
     if (internship && !internshipError) {
       return {
@@ -40,23 +53,22 @@ const fetchFeedItemById = async (id: string) => {
     }
 
     // Try to find in programs
-    const { data: program, error: programError } = await supabaseAdmin
+    let programQuery = supabaseAdmin
       .from("programs")
-      .select(
-        `
+      .select(`
         *,
         company_profiles (
-          id,
-          company_name,
-          logo_url,
-          cover_image_url,
-          location,
-          website_url
+          id, company_name, logo_url, cover_image_url, location, website_url
         )
-      `
-      )
-      .eq("id", id)
-      .single();
+      `);
+
+    if (isIdUUID) {
+      programQuery = programQuery.eq("id", idOrSlug);
+    } else {
+      programQuery = programQuery.ilike("title", idOrSlug.replace(/-/g, ' '));
+    }
+
+    const { data: program, error: programError } = await programQuery.maybeSingle();
 
     if (program && !programError) {
       return {
@@ -66,23 +78,22 @@ const fetchFeedItemById = async (id: string) => {
     }
 
     // Try to find in events
-    const { data: event, error: eventError } = await supabaseAdmin
+    let eventQuery = supabaseAdmin
       .from("event")
-      .select(
-        `
+      .select(`
         *,
         company_profiles (
-          id,
-          company_name,
-          logo_url,
-          cover_image_url,
-          location,
-          website_url
+          id, company_name, logo_url, cover_image_url, location, website_url
         )
-      `
-      )
-      .eq("id", id)
-      .single();
+      `);
+
+    if (isIdUUID) {
+      eventQuery = eventQuery.eq("id", idOrSlug);
+    } else {
+      eventQuery = eventQuery.ilike("title", idOrSlug.replace(/-/g, ' '));
+    }
+
+    const { data: event, error: eventError } = await eventQuery.maybeSingle();
 
     if (event && !eventError) {
       return {

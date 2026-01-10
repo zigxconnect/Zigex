@@ -21,6 +21,7 @@ import { AiOutlineWechat } from "react-icons/ai";
 import { Button } from "@/components/ui/button";
 import AnimatedNavLink from "@/components/customButtons/AnimatedNavLink";
 import NameInitials from "@/components/NameInitials";
+import { slugifyUsername } from "@/lib/utils";
 // import AnimatedNavLink from "@/components/sections/dashboard/AnimatedNavLink";
 
 interface SidebarProps {
@@ -104,7 +105,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       matchPaths: ["/dashboard/student", "/dashboard/student/"],
     },
     {
-      href: `/profile/${user?.profile?.username || "username"}`,
+      href: `/profile/${slugifyUsername(user?.profile?.username) || "username"}`,
       icon: User,
       label: "My Profile",
       matchPaths: ["/profile/"],

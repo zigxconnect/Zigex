@@ -50,3 +50,52 @@ export const getURL = () => {
   url = url.charAt(url.length - 1) === '/' ? url : `${url}/`;
   return url;
 };
+
+/**
+ * @description Slugify a username (replace spaces with underscores)
+ * @param username - The username to slugify
+ * @returns The slugified username
+ */
+export function slugifyUsername(username?: string | null) {
+  if (!username) return "";
+  return username.toString().trim().replace(/\s+/g, "_");
+}
+
+/**
+ * @description Unslugify a username (replace underscores with spaces)
+ * @param slug - The slugified username
+ * @returns The unslugified username
+ */
+export function unslugifyUsername(slug?: string | null) {
+  if (!slug) return "";
+  return slug.toString().replace(/_/g, " ");
+}
+
+/**
+ * @description Slugify a string (lower case, remove special characters, replace spaces with hyphens)
+ * @param text - The string to slugify
+ * @returns The slugified string
+ */
+export function slugify(text: string) {
+  if (!text) return "";
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')     // Replace spaces with -
+    .replace(/[^\w-]+/g, '')  // Remove all non-word chars
+    .replace(/--+/g, '-')     // Replace multiple - with single -
+    .replace(/^-+/, '')       // Trim - from start of text
+    .replace(/-+$/, '');      // Trim - from end of text
+}
+
+/**
+ * @description Check if a string is a valid UUID
+ * @param str - The string to check
+ * @returns True if the string is a valid UUID
+ */
+export function isUUID(str: string) {
+  if (!str) return false;
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+}
