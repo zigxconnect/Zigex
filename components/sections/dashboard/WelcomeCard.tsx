@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { UserProfile } from "@/app/types/type";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
+import { cn, slugifyUsername } from "@/lib/utils";
 import { motion } from "framer-motion";
 
 interface WelcomeCardProps {
@@ -137,7 +137,7 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile }: WelcomeCardProp
           {/* 4. Action Center */}
           <div className="flex items-center gap-3">
              <Link
-               href={`/profile/${username}`}
+               href={`/profile/${slugifyUsername(username)}`}
                className="group flex items-center gap-3 px-8 py-4 bg-slate-900 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-widest transition-all hover:bg-blue-600 hover:shadow-2xl hover:shadow-blue-200 shadow-xl shadow-slate-100 active:scale-95"
              >
                <span>Studio Portfolio</span>

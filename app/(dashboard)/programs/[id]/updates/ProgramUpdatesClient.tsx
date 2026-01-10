@@ -26,10 +26,11 @@ import {
   Download,
 } from "lucide-react";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, slugifyUsername } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import NameInitials from "@/components/NameInitials";
 import {
   Accordion,
   AccordionContent,
@@ -465,26 +466,27 @@ const CrewModal = ({
                 {members.map((member) => (
                   <Link
                     key={member.id}
-                    href={member.username ? `/dashboard/student/${member.username}` : '#'}
+                    href={member.username ? `/dashboard/student/${slugifyUsername(member.username)}` : '#'}
                     className="group flex flex-col items-center p-4 rounded-2xl bg-gradient-to-b from-white to-slate-50 border border-slate-100 hover:border-blue-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
                   >
                     <div className="relative w-16 h-16 rounded-full border-[3px] border-white shadow-lg overflow-hidden bg-gradient-to-br from-blue-500 to-indigo-600 mb-3 group-hover:scale-110 transition-transform">
-                      <Image
-                        src={member.avatar || "https://i.ibb.co/8n8d37H4/white-logo-4x.png"}
-                        alt={member.name}
-                        fill
-                        className={cn(
-                          "object-cover",
-                          !member.avatar && "bg-gradient-to-br from-blue-500 to-indigo-600 p-3"
-                        )}
-                      />
+                      {member.avatar ? (
+                        <Image
+                          src={member.avatar}
+                          alt={member.name}
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <NameInitials name={member.name} />
+                      )}
                     </div>
-                    <p className="font-bold text-sm text-slate-800 text-center truncate w-full group-hover:text-blue-600 transition-colors">
+                    <p className="font-bold text-sm text-slate-800 text-center line-clamp-2 w-full group-hover:text-blue-600 transition-colors h-10 flex items-center justify-center">
                       {member.name}
                     </p>
                     {member.username && (
-                      <p className="text-xs text-slate-400 truncate w-full text-center">
-                        @{member.username}
+                      <p className="text-xs text-slate-400 truncate w-full text-center mt-1">
+                        @{slugifyUsername(member.username)}
                       </p>
                     )}
                   </Link>

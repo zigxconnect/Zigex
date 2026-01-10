@@ -1,7 +1,7 @@
 // just some updates
 import React from "react";
 import { supabaseAdmin, createServerActionClient } from "@/lib/supabase/server";
-import { unslugifyUsername } from "@/lib/utils";
+import { unslugifyUsername, slugifyUsername } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -57,15 +57,20 @@ export default async function ProfilePage({ params }: Props) {
     );
   }
 
+  // Force slugified URL if profile username contains spaces
+  if (username.includes(" ")) {
+    redirect(`/profile/${slugifyUsername(username)}`);
+  }
+
   // Verify this is the current user's profile
   const myProfile = await supabase
     .from("student_profiles")
-    .select("*")
+    .select("id, username")
     .eq("user_id", authUser.id)
     .maybeSingle();
 
-  if (myProfile.error || !myProfile.data || myProfile.data.username !== username) {
-    redirect(`/dashboard/student/${username}`);
+  if (myProfile.error || !myProfile.data || myProfile.data.id !== data.id) {
+    redirect(`/dashboard/student/${slugifyUsername(username)}`);
   }
 
   const skills = data.hard_skills || [];
@@ -201,7 +206,7 @@ export default async function ProfilePage({ params }: Props) {
               whatsappUrl={null}
               email={data.email}
               fullName={data.full_name}
-              profileUrl={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.zigexconnect.com'}/profile/${username}`}
+              profileUrl={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.zigexconnect.com'}/profile/${slugifyUsername(username)}`}
               isOwner={true}
             />
           </div>

@@ -46,7 +46,7 @@ const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = (
   
   const studentColor = "from-blue-600 to-indigo-700";
   const primarySkills = (student.hard_skills || []).slice(0, 3);
-  const username = student.username || (student.full_name ? student.full_name.toLowerCase().replace(/\s+/g, '') : "student");
+  const username = slugifyUsername(student.username) || (student.full_name ? student.full_name.toLowerCase().replace(/\s+/g, '') : "student");
   const profileLink = `/dashboard/student/${slugifyUsername(student.username || student.id)}`;
 
   useEffect(() => {

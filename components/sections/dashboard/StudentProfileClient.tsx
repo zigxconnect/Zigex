@@ -34,7 +34,7 @@ import AnimatedConnectButtons from "@/components/customButtons/AnimatedConnectBu
 import NoProjectMessage from "@/components/sections/dashboard/NoProjectMessage";
 import CreateProjectButton from "@/components/project/CreateProjectButton";
 import ProfileStories from "@/components/sections/dashboard/ProfileStories";
-import { cn } from "@/lib/utils";
+import { cn, slugifyUsername } from "@/lib/utils";
 
 interface StudentProfileClientProps {
   data: any;
@@ -88,7 +88,7 @@ export default function StudentProfileClient({
                 <Share2 size={18} />
              </button>
              {myProfile?.id === data.id && (
-                <Link href={`/profile/${data.username}`} className="p-3 bg-white text-slate-900 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-100 transition-all">
+                <Link href={`/profile/${slugifyUsername(data.username)}`} className="p-3 bg-white text-slate-900 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-100 transition-all">
                    Settings
                 </Link>
              )}

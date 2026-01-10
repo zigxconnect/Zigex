@@ -1,8 +1,9 @@
 import React from "react";
 import { supabaseAdmin, createServerActionClient } from "@/lib/supabase/server";
-import { unslugifyUsername } from "@/lib/utils";
+import { unslugifyUsername, slugifyUsername } from "@/lib/utils";
 import { fetchAllUserProjects } from "@/lib/actions/getProjects.action";
 import { Metadata } from "next";
+import { redirect } from "next/navigation";
 import StudentProfileClient from "@/components/sections/dashboard/StudentProfileClient";
 
 interface Props {
@@ -41,6 +42,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function StudentDetailPage({ params }: Props) {
   const { username } = await params;
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(username);
+
+  // Force slugified URL if non-UUID and contains spaces
+  if (!isUuid && username.includes(" ")) {
+    redirect(`/dashboard/student/${slugifyUsername(username)}`);
+  }
 
   const supabase = await createServerActionClient();
   let data;
