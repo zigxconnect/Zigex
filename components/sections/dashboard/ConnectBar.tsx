@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Linkedin, Mail, Twitter, Handshake, MessageCircle, ExternalLink, Sparkles } from "lucide-react";
+import { Linkedin, Mail, Twitter, Handshake, MessageCircle, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -19,15 +19,15 @@ export const ConnectBar: React.FC<Props> = ({ linkedin, whatsapp, x, email }) =>
   if (!hasLinks) return null;
 
   return (
-    <div className="fixed left-1/2 -translate-x-1/2 bottom-8 z-[60] w-full max-w-2xl px-6">
+    <div className="fixed left-1/2 -translate-x-1/2 bottom-6 z-[100] w-full max-w-2xl px-6 pointer-events-none">
       <motion.div 
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", stiffness: 260, damping: 20 }}
-        className="bg-slate-900/90 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] p-2 pr-6 flex items-center justify-between group"
+        className="bg-white/90 backdrop-blur-2xl border border-blue-100 rounded-[2.5rem] shadow-[0_25px_50px_-12px_rgba(37,99,235,0.25)] p-2 pr-6 flex items-center justify-between group pointer-events-auto"
       >
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-[1.8rem] bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/20 relative overflow-hidden group-hover:scale-105 transition-transform duration-500">
+          <div className="w-12 h-12 rounded-[1.8rem] bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/30 relative overflow-hidden group-hover:scale-105 transition-transform duration-500">
             <Handshake size={22} className="relative z-10" />
             <motion.div 
               animate={{ rotate: 360 }}
@@ -37,10 +37,9 @@ export const ConnectBar: React.FC<Props> = ({ linkedin, whatsapp, x, email }) =>
           </div>
           <div className="hidden sm:block">
             <div className="flex items-center gap-1.5 leading-none mb-1">
-              <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Live Connection</span>
-              <Sparkles size={10} className="text-amber-400" />
+              <span className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">Live Connection</span>
             </div>
-            <p className="text-xs font-bold text-slate-400">Available for collaboration</p>
+            <p className="text-xs font-bold text-slate-500">Available for collaboration</p>
           </div>
         </div>
 
@@ -80,7 +79,7 @@ export const ConnectBar: React.FC<Props> = ({ linkedin, whatsapp, x, email }) =>
               href={x}
               target="_blank"
               rel="noreferrer"
-              className="w-10 h-10 flex items-center justify-center rounded-2xl bg-white/10 text-white border border-white/20 hover:bg-white hover:text-slate-900 transition-all duration-300 shadow-sm"
+              className="w-10 h-10 flex items-center justify-center rounded-2xl bg-slate-100 text-slate-600 border border-slate-200 hover:bg-black hover:text-white transition-all duration-300 shadow-sm"
               title="X"
             >
               <Twitter className="w-4 h-4" />
@@ -99,9 +98,9 @@ export const ConnectBar: React.FC<Props> = ({ linkedin, whatsapp, x, email }) =>
             </motion.a>
           )}
           
-          <div className="w-px h-6 bg-white/10 mx-2 hidden sm:block" />
+          <div className="w-px h-6 bg-slate-200 mx-2 hidden sm:block" />
           
-          <button className="hidden sm:flex items-center gap-2 px-5 py-2.5 bg-white text-slate-900 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all duration-300 shadow-md">
+          <button className="hidden sm:flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:shadow-lg hover:shadow-blue-200 transition-all duration-300 shadow-md">
              <span>Get In Touch</span>
              <ExternalLink size={12} strokeWidth={3} />
           </button>

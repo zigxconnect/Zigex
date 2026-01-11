@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Calendar, MessageCircle, Activity, Award, Sparkles, Rocket } from 'lucide-react';
+import { Calendar, MessageCircle, Activity, Award, Rocket } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 
@@ -58,7 +58,7 @@ Post your project on ZigX: https://zigexconnect.com`;
         {/* Main Message */}
         <div className="space-y-4 max-w-xl">
           <div className="flex items-center justify-center gap-2 mb-2">
-             <Sparkles size={16} className="text-blue-500" />
+             <Activity size={16} className="text-blue-500" />
              <span className="text-[10px] font-black text-blue-600 uppercase tracking-[0.3em]">Incubating Talent</span>
           </div>
           <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter">

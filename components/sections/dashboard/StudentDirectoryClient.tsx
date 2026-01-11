@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import StudentCard from "./StudentCard";
-import { Search, TrendingUp, Sparkles, Filter, Users, LayoutGrid } from "lucide-react";
+import { Search, TrendingUp, Filter, Users, LayoutGrid } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +11,7 @@ interface StudentStats {
   programsApplied?: number;
   eventsApplied?: number;
   projectsCreated?: number;
+  currentProgram?: string;
 }
 
 interface RawUserProfile {
@@ -115,7 +116,7 @@ export const StudentDirectoryClient: React.FC<{ profiles: RawUserProfile[] }> = 
                 <div>
                   <h3 className="font-black text-slate-900 tracking-tight text-lg mb-0.5">Community Pulse</h3>
                   <div className="flex items-center gap-1.5 text-blue-600 font-black text-[10px] uppercase tracking-widest">
-                    <Sparkles size={12} fill="currentColor" />
+                    <Users size={12} />
                     <span>{filtered.length} Talent Profiles Active Now</span>
                   </div>
                 </div>

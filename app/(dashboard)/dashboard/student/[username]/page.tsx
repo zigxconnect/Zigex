@@ -100,6 +100,20 @@ export default async function StudentDetailPage({ params }: Props) {
     return { ...c, score: hard + soft };
   }).sort((a, b) => b.score - a.score).slice(0, 6);
 
+  /* Fetch detailed application status for the display list */
+  const { data: appsData } = await supabaseAdmin
+    .from("Applications")
+    .select("id, application_type, status, program_id, event_id, programs(title), events(title)")
+    .eq("student_id", data.id)
+    .neq("status", "rejected");
+
+  const applicationsList = appsData?.map((app: any) => ({
+    type: app.application_type,
+    status: app.status,
+    title: app.programs?.title || app.events?.title || "Unknown Activity",
+    id: app.program_id || app.event_id
+  })) || [];
+
   return (
     <StudentProfileClient
       data={data}
@@ -109,6 +123,7 @@ export default async function StudentDetailPage({ params }: Props) {
       similarStudents={similarlyScored}
       myProfile={myProfile}
       username={username}
+      applicationsList={applicationsList}
     />
   );
 }

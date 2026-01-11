@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { Linkedin, MessageCircle, Mail, X, Users, AtSign, ArrowRight, Sparkles, CheckCircle2, ChevronRight, Inbox } from "lucide-react";
+import { Linkedin, MessageCircle, Mail, X, Users, AtSign, ArrowRight, CheckCircle2, ChevronRight, Inbox } from "lucide-react";
 import StackedAvatars from "./StackedAvatars";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
@@ -50,7 +50,7 @@ export default function SimilarStudentsSidebar({
       {/* Mobile Drawer */}
       <AnimatePresence>
         {open && (
-          <div className="fixed inset-0 z-[100] lg:hidden">
+          <div className="fixed inset-0 z-[9999] lg:hidden">
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -198,7 +198,7 @@ export default function SimilarStudentsSidebar({
            <div className="relative z-10">
               <div className="flex items-center gap-2 mb-6">
                  <div className="w-8 h-8 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center">
-                    <Sparkles size={16} />
+                    <Users size={16} />
                  </div>
                  <span className="text-[10px] font-black uppercase tracking-[0.2em]">Elevate Talent</span>
               </div>

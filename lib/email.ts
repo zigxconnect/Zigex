@@ -438,3 +438,140 @@ export const sendPaymentReceiptEmail = async (params: {
     html
   });
 };
+
+/**
+ * Sends blog post feedback/comment email to Zigex admin
+ */
+export const sendBlogFeedbackEmail = async (params: {
+  postTitle: string;
+  postSlug: string;
+  senderName: string;
+  senderEmail: string;
+  message: string;
+  feedbackType?: 'comment' | 'suggestion' | 'question' | 'issue';
+}) => {
+  const transporter = createTransporter();
+  if (!transporter) {
+    console.warn("[EMAIL] Blog feedback not sent - email not configured");
+    return { success: false, error: "Email not configured" };
+  }
+
+  const adminEmail = process.env.ADMIN_EMAIL || 'fonyuyjudegita@gmail.com';
+  const feedbackTypeLabel = params.feedbackType
+    ? params.feedbackType.charAt(0).toUpperCase() + params.feedbackType.slice(1)
+    : 'Feedback';
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc;">
+  <table width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8fafc;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table width="600" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.08);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); padding: 32px 40px;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">
+                📰 Blog ${feedbackTypeLabel}
+              </h1>
+              <p style="color: rgba(255,255,255,0.75); margin: 8px 0 0; font-size: 13px; font-weight: 500;">
+                New feedback on Zigex News
+              </p>
+            </td>
+          </tr>
+
+          <!-- Post Info -->
+          <tr>
+            <td style="padding: 24px 40px 0;">
+              <div style="background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 0 12px 12px 0;">
+                <p style="margin: 0; color: #64748b; font-size: 10px; text-transform: uppercase; font-weight: 800; letter-spacing: 1.5px;">Article</p>
+                <p style="margin: 6px 0 0; color: #0f172a; font-size: 16px; font-weight: 700;">${params.postTitle}</p>
+                <a href="https://zigexconnect.com/dashboard/blog/${params.postSlug}" style="display: inline-block; margin-top: 10px; color: #3b82f6; font-size: 12px; font-weight: 600; text-decoration: none;">View Article →</a>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Sender Info -->
+          <tr>
+            <td style="padding: 24px 40px 0;">
+              <table width="100%" style="background: #fafafa; border-radius: 16px; padding: 20px;">
+                <tr>
+                  <td style="padding: 16px;">
+                    <p style="margin: 0 0 4px; color: #64748b; font-size: 10px; text-transform: uppercase; font-weight: 800; letter-spacing: 1px;">From</p>
+                    <p style="margin: 0; color: #0f172a; font-size: 15px; font-weight: 700;">${params.senderName}</p>
+                    <p style="margin: 4px 0 0; color: #3b82f6; font-size: 13px;">${params.senderEmail}</p>
+                  </td>
+                  <td style="padding: 16px; text-align: right;">
+                    <span style="display: inline-block; background: ${params.feedbackType === 'issue' ? '#fef2f2' :
+      params.feedbackType === 'question' ? '#fef9c3' :
+        params.feedbackType === 'suggestion' ? '#f0fdf4' : '#eff6ff'
+    }; color: ${params.feedbackType === 'issue' ? '#dc2626' :
+      params.feedbackType === 'question' ? '#ca8a04' :
+        params.feedbackType === 'suggestion' ? '#16a34a' : '#2563eb'
+    }; padding: 6px 14px; border-radius: 50px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
+                      ${feedbackTypeLabel}
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Message -->
+          <tr>
+            <td style="padding: 24px 40px;">
+              <p style="margin: 0 0 12px; color: #64748b; font-size: 10px; text-transform: uppercase; font-weight: 800; letter-spacing: 1px;">Message</p>
+              <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px;">
+                <p style="margin: 0; color: #334155; font-size: 15px; line-height: 1.7; white-space: pre-wrap;">${params.message}</p>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Reply Button -->
+          <tr>
+            <td style="padding: 0 40px 32px; text-align: center;">
+              <a href="mailto:${params.senderEmail}?subject=Re: Your feedback on ${encodeURIComponent(params.postTitle)}" style="display: inline-block; background: #0f172a; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 12px; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">
+                Reply to ${params.senderName.split(' ')[0]}
+              </a>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background: #f8fafc; padding: 24px 40px; text-align: center; border-top: 1px solid #e2e8f0;">
+              <p style="color: #94a3b8; font-size: 11px; margin: 0;">
+                This feedback was submitted via <strong>Zigex News</strong>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+
+  try {
+    await transporter.sendMail({
+      from: `"Zigex News Feedback" <${GMAIL_USER}>`,
+      to: adminEmail,
+      replyTo: params.senderEmail,
+      subject: `[${feedbackTypeLabel}] ${params.postTitle} - from ${params.senderName}`,
+      html
+    });
+    console.log(`[EMAIL] Blog feedback sent from ${params.senderEmail} about "${params.postTitle}"`);
+    return { success: true };
+  } catch (error: any) {
+    console.error("[EMAIL] Blog feedback failed:", error);
+    return { success: false, error: error.message };
+  }
+};
+

@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { HappeningNowDisplay } from "./HappeningNowDisplay";
 import { formatViewCount, getViewCountDescription } from "@/lib/utils/formatViews";
-import { Eye, TrendingUp, Sparkles, Camera, Target, Zap, Palette, Accessibility } from "lucide-react";
+import { Eye, TrendingUp, Camera, Target, Zap, Palette, Accessibility } from "lucide-react";
 
 /**
  * Showcase component demonstrating the view count formatting and tracking system
@@ -74,7 +74,7 @@ export function HappeningNowShowcase() {
       {/* Features Description */}
       <div className="bg-white border border-gray-200 rounded-2xl p-8">
         <div className="flex items-center gap-2 mb-6">
-          <Sparkles className="text-blue-600" size={24} />
+          <Zap className="text-blue-600" size={24} />
           <h3 className="text-xl font-bold text-gray-900">Features</h3>
         </div>
 
@@ -199,7 +199,7 @@ export function HappeningNowShowcase() {
       {/* Integration Guide */}
       <div className="bg-white border border-gray-200 rounded-2xl p-8">
         <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-          <Sparkles className="text-blue-600" size={24} />
+          <Zap className="text-blue-600" size={24} />
           Integration Guide
         </h3>
 
