@@ -11,43 +11,55 @@ export default async function StudentDirectoryPage() {
     getProfileInfo()
   ]);
 
-  // Filter out current user
+  // Filter out current user from directory list, but keep track of ID for stats
   const filteredProfiles = profiles.filter((p) => p.id !== userData?.profile?.id);
-  const profileIds = filteredProfiles.map(p => p.id);
+  const allProfileIds = [...filteredProfiles.map(p => p.id), userData?.profile?.id].filter(Boolean) as string[];
 
-  // Fetch stats for all students from the UNIFIED Applications table
+  // Fetch stats for all students including current user from the UNIFIED Applications table
+  // Attempting to fetch program title. Function name for join assumed to be 'programs'.
   const [applications, projects] = await Promise.all([
     supabaseAdmin
       .from("Applications")
-      .select("student_id, application_type, status")
-      .in("student_id", profileIds)
+      .select("student_id, application_type, status, program_id, programs(title)")
+      .in("student_id", allProfileIds)
       .neq("status", "rejected"),
-    supabaseAdmin.from("projects").select("creator_id").in("creator_id", profileIds),
+    supabaseAdmin.from("projects").select("creator_id").in("creator_id", allProfileIds),
   ]);
 
   // Create a map for quick stat lookup
   const statsMap: Record<string, any> = {};
-  profileIds.forEach(id => {
+  allProfileIds.forEach(id => {
     statsMap[id] = {
       internshipsApplied: 0,
       programsApplied: 0,
       eventsApplied: 0,
-      projectsCreated: 0
+      projectsCreated: 0,
+      currentProgram: undefined
     };
   });
 
-  // Calculate stats from the unified Applications table - NOW SHOWING ALL NON-REJECTED
+  // Calculate stats from the unified Applications table
   applications.data?.forEach((row: any) => {
     if (statsMap[row.student_id]) {
       if (row.application_type === "internship") {
         statsMap[row.student_id].internshipsApplied++;
       } else if (row.application_type === "program") {
         statsMap[row.student_id].programsApplied++;
+        
+        // Check for active program
+        if (row.status === 'accepted') {
+           // @ts-ignore
+           const programTitle = row.programs?.title;
+           if (programTitle) {
+              statsMap[row.student_id].currentProgram = programTitle;
+           }
+        }
       } else if (row.application_type === "event") {
         statsMap[row.student_id].eventsApplied++;
       }
     }
   });
+
   projects.data?.forEach((row: any) => {
     if (statsMap[row.creator_id]) statsMap[row.creator_id].projectsCreated++;
   });
@@ -58,9 +70,11 @@ export default async function StudentDirectoryPage() {
     stats: statsMap[profile.id]
   }));
 
+  const userStats = userData?.profile?.id ? statsMap[userData.profile.id] : undefined;
+
   return (
     <>
-      <WelcomeCard user={userData} />
+      <WelcomeCard user={userData} stats={userStats} />
       <StudentDirectoryClient profiles={profilesWithStats} />
     </>
   );

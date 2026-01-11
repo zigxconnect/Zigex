@@ -1,8 +1,9 @@
 import React from "react";
 import { supabaseAdmin, createServerActionClient } from "@/lib/supabase/server";
-import { unslugifyUsername } from "@/lib/utils";
+import { unslugifyUsername, slugifyUsername } from "@/lib/utils";
 import { fetchAllUserProjects } from "@/lib/actions/getProjects.action";
 import { Metadata } from "next";
+import { redirect } from "next/navigation";
 import StudentProfileClient from "@/components/sections/dashboard/StudentProfileClient";
 
 interface Props {
@@ -41,6 +42,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function StudentDetailPage({ params }: Props) {
   const { username } = await params;
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(username);
+
+  // Force slugified URL if non-UUID and contains spaces
+  if (!isUuid && username.includes(" ")) {
+    redirect(`/dashboard/student/${slugifyUsername(username)}`);
+  }
 
   const supabase = await createServerActionClient();
   let data;
@@ -94,6 +100,20 @@ export default async function StudentDetailPage({ params }: Props) {
     return { ...c, score: hard + soft };
   }).sort((a, b) => b.score - a.score).slice(0, 6);
 
+  /* Fetch detailed application status for the display list */
+  const { data: appsData } = await supabaseAdmin
+    .from("Applications")
+    .select("id, application_type, status, program_id, event_id, programs(title), events(title)")
+    .eq("student_id", data.id)
+    .neq("status", "rejected");
+
+  const applicationsList = appsData?.map((app: any) => ({
+    type: app.application_type,
+    status: app.status,
+    title: app.programs?.title || app.events?.title || "Unknown Activity",
+    id: app.program_id || app.event_id
+  })) || [];
+
   return (
     <StudentProfileClient
       data={data}
@@ -103,6 +123,7 @@ export default async function StudentDetailPage({ params }: Props) {
       similarStudents={similarlyScored}
       myProfile={myProfile}
       username={username}
+      applicationsList={applicationsList}
     />
   );
 }

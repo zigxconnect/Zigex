@@ -19,6 +19,7 @@ import {
    ArrowLeft,
    GitPullRequest
 } from "lucide-react";
+import { slugifyUsername } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -240,7 +241,7 @@ export default function ProjectDetailsView({
                   <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Project Creator</h3>
                      <div className="flex items-center gap-4">
-                        <Link href={`/dashboard/student/${project.student_id}`} className="shrink-0 relative">
+                        <Link href={`/dashboard/student/${slugifyUsername(project.student_id)}`} className="shrink-0 relative">
                            {owner?.avatar_url ? (
                               <Image src={owner.avatar_url} alt={owner.full_name} width={64} height={64} className="rounded-2xl object-cover shadow-sm bg-slate-50" />
                            ) : (
@@ -251,11 +252,11 @@ export default function ProjectDetailsView({
                            {/* Online indicator placeholder could go here */}
                         </Link>
                         <div>
-                           <Link href={`/dashboard/student/${project.student_id}`} className="block">
+                           <Link href={`/dashboard/student/${slugifyUsername(project.student_id)}`} className="block">
                               <h4 className="text-lg font-bold text-slate-900 hover:text-blue-600 transition-colors line-clamp-1">{owner?.full_name}</h4>
                            </Link>
                            <p className="text-sm text-slate-500 line-clamp-1">{owner?.university || "Student"}</p>
-                           <Link href={`/dashboard/student/${project.student_id}`} className="text-xs font-bold text-blue-600 mt-1 inline-block hover:underline">
+                           <Link href={`/dashboard/student/${slugifyUsername(project.student_id)}`} className="text-xs font-bold text-blue-600 mt-1 inline-block hover:underline">
                               View Profile
                            </Link>
                         </div>

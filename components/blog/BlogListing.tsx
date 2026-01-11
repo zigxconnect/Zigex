@@ -53,31 +53,34 @@ export default function BlogListing({
   const regularPosts = filteredPosts.slice(1);
 
   return (
-    <div className="w-full">
+    <div className="w-full min-h-screen bg-[#F8FAFC]">
       {/* Header / Nav */}
-      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center gap-4">
+      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-2xl border-b border-slate-100 supports-[backdrop-filter]:bg-white/60">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+          <div className="flex justify-between items-center gap-6">
             <Link
               href="/dashboard/blog"
-              className="group flex items-center gap-2"
+              className="group flex items-center gap-3"
             >
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-blue-600/20 group-hover:scale-105 transition-transform">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-500/30 group-hover:scale-105 transition-transform duration-300">
                 Z
               </div>
-              <span className="font-bold text-xl text-gray-900 tracking-tight">
-                ZIGEX<span className="text-blue-600">NEWS</span>
-              </span>
+              <div className="flex flex-col">
+                <span className="font-black text-xl text-slate-900 tracking-tight leading-none">
+                  ZIGEX<span className="text-blue-600">NEWS</span>
+                </span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mt-1">Updates & Insights</span>
+              </div>
             </Link>
 
             <div className="flex items-center gap-4">
                {/* Search Bar - Hidden on small mobile */}
-              <div className="hidden md:flex items-center bg-gray-100 rounded-full px-4 py-2 w-64 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
-                <Search className="w-4 h-4 text-gray-400 mr-2" />
+              <div className="hidden md:flex items-center bg-slate-100 rounded-2xl px-5 py-2.5 w-72 focus-within:ring-2 focus-within:ring-blue-600 focus-within:bg-white transition-all duration-300">
+                <Search className="w-4 h-4 text-slate-400 mr-3" />
                 <input 
                   type="text" 
                   placeholder="Search articles..."
-                  className="bg-transparent border-none outline-none text-sm w-full"
+                  className="bg-transparent border-none outline-none text-sm font-medium text-slate-900 w-full placeholder:text-slate-400"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -86,7 +89,7 @@ export default function BlogListing({
               {isAdmin && (
                 <Link
                   href="/studio"
-                  className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors shadow-lg shadow-gray-900/10"
+                  className="px-5 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-xl hover:bg-black transition-all shadow-xl shadow-slate-900/20 hover:scale-105"
                 >
                   Studio
                 </Link>
@@ -95,12 +98,12 @@ export default function BlogListing({
           </div>
           
            {/* Mobile Search Bar */}
-           <div className="md:hidden mt-4 flex items-center bg-gray-100 rounded-full px-4 py-2 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
-                <Search className="w-4 h-4 text-gray-400 mr-2" />
+           <div className="md:hidden mt-4 flex items-center bg-slate-100 rounded-2xl px-4 py-3 focus-within:ring-2 focus-within:ring-blue-600 focus-within:bg-white transition-all duration-300">
+                <Search className="w-4 h-4 text-slate-400 mr-3" />
                 <input 
                   type="text" 
                   placeholder="Search articles..."
-                  className="bg-transparent border-none outline-none text-sm w-full"
+                  className="bg-transparent border-none outline-none text-sm font-medium text-slate-900 w-full placeholder:text-slate-400"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -108,15 +111,15 @@ export default function BlogListing({
         </div>
 
         {/* Categories Scroll */}
-        <div className="border-t border-gray-100">
+        <div className="border-t border-slate-100/50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-6 overflow-x-auto py-3 no-scrollbar mask-gradient-right">
+            <div className="flex items-center gap-3 overflow-x-auto py-4 no-scrollbar mask-gradient-right">
               <button
                 onClick={() => setSelectedCategory("All")}
-                className={`text-sm font-medium whitespace-nowrap transition-colors ${
+                className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all duration-300 ${
                   selectedCategory === "All"
-                    ? "text-blue-600"
-                    : "text-gray-500 hover:text-gray-900"
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25 scale-105"
+                    : "bg-white text-slate-500 hover:bg-slate-100 hover:text-slate-900 border border-slate-100"
                 }`}
               >
                 All Stories
@@ -125,10 +128,10 @@ export default function BlogListing({
                 <button
                   key={cat.slug?.current || cat.title}
                   onClick={() => setSelectedCategory(cat.title)}
-                  className={`text-sm font-medium whitespace-nowrap transition-colors ${
+                  className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all duration-300 ${
                     selectedCategory === cat.title
-                      ? "text-blue-600"
-                      : "text-gray-500 hover:text-gray-900"
+                      ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25 scale-105"
+                      : "bg-white text-slate-500 hover:bg-slate-100 hover:text-slate-900 border border-slate-100"
                   }`}
                 >
                   {cat.title}
@@ -139,15 +142,17 @@ export default function BlogListing({
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 space-y-12">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 space-y-16">
         {filteredPosts.length === 0 ? (
-           <div className="text-center py-32">
-             <div className="inline-block p-4 rounded-full bg-blue-50 mb-4">
-                <Search className="w-8 h-8 text-blue-500"/>
+           <div className="text-center py-40">
+             <div className="inline-flex p-6 rounded-[2rem] bg-slate-100 mb-6">
+                <Search className="w-10 h-10 text-slate-400"/>
              </div>
-             <h3 className="text-lg font-bold text-gray-900">No articles found</h3>
-             <p className="text-gray-500 mt-2">Try adjusting your search or filter</p>
-             <button onClick={() => { setSearchQuery(''); setSelectedCategory('All'); }} className="mt-4 text-blue-600 text-sm font-medium hover:underline">Clear all filters</button>
+             <h3 className="text-2xl font-black text-slate-900 mb-2">No articles found</h3>
+             <p className="text-slate-500 font-medium">We couldn't find any articles matching your search.</p>
+             <button onClick={() => { setSearchQuery(''); setSelectedCategory('All'); }} className="mt-8 px-6 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 text-sm font-bold shadow-sm hover:bg-slate-50 transition-colors">
+               Clear filters
+             </button>
            </div>
         ) : (
             <>
@@ -159,7 +164,7 @@ export default function BlogListing({
             className="col-span-full"
           >
              {/* Slightly different layout for the featured post */}
-             <div className="relative rounded-3xl overflow-hidden bg-gray-900 shadow-2xl shadow-blue-900/20 group cursor-pointer aspect-[4/3] md:aspect-[21/9]">
+             <div className="relative rounded-[2.5rem] overflow-hidden bg-slate-900 shadow-2xl shadow-blue-900/20 group cursor-pointer aspect-[4/3] md:aspect-[21/9] ring-1 ring-slate-900/5">
                 <Link href={`/dashboard/blog/${featuredPost.slug.current}`} className="block w-full h-full"> 
                     <BlogCard post={featuredPost} isFeatured={true} />
                 </Link>
@@ -168,8 +173,8 @@ export default function BlogListing({
         )}
 
         {/* Regular Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <AnimatePresence>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
+          <AnimatePresence mode="popLayout">
             {regularPosts.map((post) => (
               <motion.div
                 key={post._id}
@@ -177,7 +182,7 @@ export default function BlogListing({
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.2 }}
+                transition={{ duration: 0.3, type: "spring", stiffness: 100 }}
               >
                 <BlogCard post={post} />
               </motion.div>
@@ -189,10 +194,12 @@ export default function BlogListing({
       </main>
 
        {/* Footer */}
-       <footer className="bg-white mt-20 py-12 border-t border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg mb-6">Z</div>
-            <p className="text-gray-500 text-sm">© {new Date().getFullYear()} Zigex News. All rights reserved.</p>
+       <footer className="bg-white mt-32 py-16 border-t border-slate-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center text-center">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-xl shadow-blue-500/20 mb-6">Z</div>
+            <h4 className="text-lg font-black text-slate-900 mb-2 tracking-tight">Zigex News</h4>
+            <p className="text-slate-500 text-sm font-medium mb-8 max-w-md">Illuminating the path for Africa's next generation of tech leaders through stories, insights, and opportunities.</p>
+            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">© {new Date().getFullYear()} Zigex Inc. All rights reserved.</p>
         </div>
       </footer>
     </div>

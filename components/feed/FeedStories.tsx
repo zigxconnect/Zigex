@@ -654,7 +654,7 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
                       onClick={(e) => {
                         e.stopPropagation();
                         // Navigate using username if available, else fallback to userId
-                        const target = slugifyUsername(selectedStory.userSlug) || selectedStory.userId;
+                        const target = slugifyUsername(selectedStory.userSlug || selectedStory.userId);
                         window.location.href = `/dashboard/student/${target}`; 
                       }}
                     >

@@ -6,6 +6,7 @@ import ContributeModal from "./ContributeModal";
 import Link from "next/link";
 import { ExternalLink, Github, Calendar, Clock, User, Heart, Share2, Eye, Sparkles, MessageSquare, ShieldCheck } from "lucide-react";
 import Image from "next/image";
+import { slugifyUsername } from "@/lib/utils";
 
 interface Project {
   id: string;
@@ -139,7 +140,7 @@ export default function ProjectDetailCard({ project, owner }: { project: Project
               </button>
 
               <Link 
-                href={`/dashboard/student/${project.student_id}`} 
+                href={`/dashboard/student/${slugifyUsername(project.student_id)}`} 
                 className="flex items-center gap-3 px-8 py-4 bg-muted text-primary rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-muted/80 transition-all border border-border"
               >
                 <User className="w-4 h-4" />
@@ -193,7 +194,7 @@ export default function ProjectDetailCard({ project, owner }: { project: Project
                   <p className="text-xs font-black text-primary uppercase tracking-widest mb-6">Innovative Builder</p>
                   
                   <Link
-                    href={`/dashboard/student/${project.student_id}`}
+                    href={`/dashboard/student/${slugifyUsername(project.student_id)}`}
                     className="w-full flex items-center justify-center h-12 bg-primary text-primary-foreground rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-secondary transition-all shadow-xl"
                   >
                     View Network
