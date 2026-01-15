@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { X, User, Check } from 'lucide-react';
 import Image from 'next/image';
 import { UserProfile } from '@/app/types/type';
+import { slugifyUsername } from '@/lib/utils';
 
 interface WelcomeCardProps {
   user: UserProfile | any;
@@ -45,7 +46,7 @@ export default function ProfileRecommendationPopup({ user }: WelcomeCardProps) {
 
   const handleViewProfile = () => {
     updateLastSeen();
-    window.location.href = `/profile/${user?.profile?.username || ""}`;
+    window.location.href = `/profile/${slugifyUsername(user?.profile?.username) || ""}`;
   };
 
   if (!isVisible) return null;
@@ -54,18 +55,16 @@ export default function ProfileRecommendationPopup({ user }: WelcomeCardProps) {
     <>
       {/* Dark Backdrop Overlay */}
       <div
-        className={`fixed inset-0 bg-black/20 z-40 transition-opacity duration-300 ${
-          isAnimating ? 'opacity-100' : 'opacity-0'
-        }`}
+        className={`fixed inset-0 bg-black/20 z-40 transition-opacity duration-300 ${isAnimating ? 'opacity-100' : 'opacity-0'
+          }`}
         onClick={handleClose}
       />
 
       {/* Popup */}
       <div className="fixed inset-0 flex items-center justify-center z-50 p-4 pointer-events-none">
         <div
-          className={`bg-card border border-border rounded-xl shadow-lg max-w-md w-full pointer-events-auto transform transition-all duration-300 ${
-            isAnimating ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
-          }`}
+          className={`bg-card border border-border rounded-xl shadow-lg max-w-md w-full pointer-events-auto transform transition-all duration-300 ${isAnimating ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
+            }`}
         >
           {/* Header with close button */}
           <div className="relative p-6 px-8 pb-2 pt-8 flex flex-col items-center">

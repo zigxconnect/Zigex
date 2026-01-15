@@ -9,6 +9,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import NameInitials from "@/components/NameInitials";
+import { slugifyUsername } from "@/lib/utils";
 
 interface DashboardHeaderProps {
   user?: any;
@@ -27,7 +28,7 @@ export const DashboardHeader = ({
   const userAvatar =
     user?.avatar ||
     user?.profile?.avatar_url ||
-    user?.avatarUrl 
+    user?.avatarUrl
 
 
 
@@ -64,8 +65,8 @@ export const DashboardHeader = ({
           </div>
 
           {/* User Profile */}
-          <Link  
-            href={`/profile/${user?.profile?.username || ""}`} 
+          <Link
+            href={`/profile/${slugifyUsername(user?.profile?.username) || ""}`}
             className="flex items-center gap-3 pl-2 lg:pl-3 border-l-2 border-border flex-shrink-0 group"
           >
             <div className="relative w-9 h-9 lg:w-10 lg:h-10 rounded-full border-2 border-background ring-2 ring-muted group-hover:ring-primary/30 shadow-sm overflow-hidden transition-all duration-300">
