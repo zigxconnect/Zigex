@@ -54,15 +54,75 @@ export const AuthForm = ({ type }: AuthFormProps) => {
   const [csrfToken, setCsrfToken] = useState<string | null>(null);
 
   const [supabase] = useState(() => createClient());
-  // Fetch CSRF token on mount (for sign-in only)
+  const googleButtonRef = typeof window !== 'undefined' ? (window as any).googleButtonRef : null;
+
+  // Initialize Google Identity Services on mount
   useEffect(() => {
+    let isMounted = true;
+    const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+    if (googleClientId && (window as any).google) {
+      const google = (window as any).google;
+      google.accounts.id.initialize({
+        client_id: googleClientId,
+        itp_support: true,
+        use_fedcm_for_prompt: true,
+        callback: async (response: any) => {
+          if (!isMounted) return;
+          const { data, error } = await supabase.auth.signInWithIdToken({
+            provider: "google",
+            token: response.credential,
+          });
+
+          if (error) {
+            console.error("Supabase ID Token Auth Error:", error);
+            if (error.message.toLowerCase().includes("audience")) {
+              toast.error("Config Error: Add your Google Client ID to 'Authorized Client IDs' in Supabase Dashboard (Auth -> Providers -> Google).", { duration: 6000 });
+            } else {
+              toast.error(error.message);
+            }
+          } else {
+            toast.success("Logged in successfully!");
+            router.push(data.user ? "/dashboard" : "/create-profile");
+          }
+        },
+      });
+
+      // Render the official Google button
+      const parent = document.getElementById("google-button-container");
+      if (parent) {
+        google.accounts.id.renderButton(parent, {
+          theme: "outline",
+          size: "large",
+          width: 400, // Matches our form width
+          text: isSignUp ? "signup_with" : "signin_with",
+          shape: "rectangular",
+        });
+      }
+
+      // Small delay for the One Tap prompt to avoid conflicts with button rendering
+      setTimeout(() => {
+        if (isMounted) {
+          google.accounts.id.prompt((notification: any) => {
+            if (notification.isNotDisplayed()) {
+              console.log("One Tap not displayed:", notification.getNotDisplayedReason());
+            }
+          });
+        }
+      }, 500);
+    }
+
     if (!isSignUp) {
       fetch("/api/auth/login")
         .then((res) => res.json())
         .then((data) => setCsrfToken(data.csrfToken))
         .catch(() => setCsrfToken(null));
     }
-  }, [isSignUp]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isSignUp, router, supabase.auth]);
 
   const {
     register,
@@ -122,6 +182,30 @@ export const AuthForm = ({ type }: AuthFormProps) => {
     "By continuing, you agree to our Terms of Service and Privacy Policy.";
 
   const handleGoogleSignIn = async () => {
+    // If a Google Client ID is provided, we use the ID Token flow to avoid the Supabase URL on the consent screen.
+    const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+    if (googleClientId && (window as any).google) {
+      const google = (window as any).google;
+
+      // Since we initialize in useEffect, we just need to trigger the prompt here.
+      // We use 'toggle_display: true' to ensure it shows if the user explicitly clicks.
+      google.accounts.id.prompt((notification: any) => {
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          // If One Tap is blocked or skipped, we fall back to the standard OAuth flow 
+          // to ensure the user can still sign in, but they will see the supabase.co URL.
+          console.log("One Tap skipped or not displayed, falling back to standard OAuth");
+          startStandardOAuth();
+        }
+      });
+      return;
+    }
+
+    // Default Supabase OAuth flow
+    await startStandardOAuth();
+  };
+
+  const startStandardOAuth = async () => {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -227,11 +311,17 @@ export const AuthForm = ({ type }: AuthFormProps) => {
         <p className="mt-1 text-sm text-muted-foreground">{currentContent.subtitle}</p>
       </div>
       <div className="mt-5 space-y-3">
-        <SocialButton
-          icon={GoogleIcon}
-          onClick={handleGoogleSignIn}
-          text={`${currentContent.socialButtonText} with Google`}
-        />
+        {/* Official Google Button Container */}
+        <div id="google-button-container" className="w-full flex justify-center min-h-[44px]"></div>
+
+        {/* Custom button as a fallback if Google script fails to load Client ID */}
+        {!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID && (
+          <SocialButton
+            icon={GoogleIcon}
+            onClick={handleGoogleSignIn}
+            text={`${currentContent.socialButtonText} with Google`}
+          />
+        )}
       </div>
       <Divider />
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
