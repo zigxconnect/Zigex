@@ -124,16 +124,17 @@ export const StudentDirectoryClient: React.FC<{ profiles: RawUserProfile[] }> = 
               <div className="flex items-center gap-2">
                  <div className="flex -space-x-3 mr-4">
                     {profiles.slice(0, 5).map((p, i) => (
-                       <div key={i} className="w-10 h-10 rounded-full border-2 border-white overflow-hidden bg-slate-100 shadow-sm relative z-[10-i]">
+                       <div key={i} className="w-10 h-10 rounded-full border-2 border-white overflow-hidden bg-slate-100 shadow-sm relative" style={{ zIndex: 10 - i }}>
                           <img 
-                            src={p.avatar_url || "https://i.ibb.co/8n8d37H4/white-logo-4x.png"} 
+                            src={p.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.full_name || 'U')}`} 
                             alt="Talent" 
-                            className="w-full h-full object-cover" 
+                            className="w-full h-full object-cover"
+                            onError={(e) => { (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.full_name || 'U')}`; }}
                           />
                        </div>
                     ))}
                     <div className="w-10 h-10 rounded-full border-2 border-white bg-slate-900 flex items-center justify-center text-white text-[10px] font-black shadow-sm relative z-0">
-                       +83
+                       +{Math.max(0, profiles.length - 5)}
                     </div>
                  </div>
                  <div className="w-px h-10 bg-slate-200 mx-2 hidden md:block" />

@@ -77,9 +77,7 @@ export async function GET(request: Request) {
         }
 
         if (!studentProfile) {
-          console.log(
-            `New student via OAuth: ${user.email}. Creating profile.`
-          );
+
           const metadata = (user.user_metadata || {}) as Record<
             string,
             unknown
@@ -96,7 +94,8 @@ export async function GET(request: Request) {
           });
         }
 
-        return NextResponse.redirect(`${origin}${next.startsWith('/') ? next : '/create-profile'}`);
+        // If profile is incomplete or new, force redirect to completion flow
+        return NextResponse.redirect(`${origin}/create-profile`);
       }
     } catch (err) {
       console.error("Auth callback unexpected error:", err);

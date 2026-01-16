@@ -5,23 +5,37 @@
 
 import nodemailer from 'nodemailer';
 
-// Configuration
+// Configuration - Strip ALL whitespace from app password
 const GMAIL_USER = process.env.GMAIL_USER;
-const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD?.replace(/\s/g, '');
+const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD?.replace(/\s+/g, '');
 
-// Create transporter
+// Create transporter with optimized settings
 const createTransporter = () => {
   if (!GMAIL_USER || !GMAIL_APP_PASSWORD) {
-    console.warn("[EMAIL] Not configured. Set GMAIL_USER and GMAIL_APP_PASSWORD in .env.local");
+    console.error("[EMAIL] Not configured! Set GMAIL_USER and GMAIL_APP_PASSWORD in .env.local");
+    console.error("[EMAIL] GMAIL_USER:", GMAIL_USER ? "SET" : "MISSING");
+    console.error("[EMAIL] GMAIL_APP_PASSWORD:", GMAIL_APP_PASSWORD ? "SET" : "MISSING");
     return null;
   }
 
+  console.log(`[EMAIL] Creating transporter for: ${GMAIL_USER}`);
+
   return nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false, // Use TLS
     auth: {
       user: GMAIL_USER,
       pass: GMAIL_APP_PASSWORD,
     },
+    // Connection settings for faster delivery
+    connectionTimeout: 10000, // 10 seconds
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
+    // Pool connections for faster subsequent emails
+    pool: true,
+    maxConnections: 3,
+    maxMessages: 100,
   });
 };
 
@@ -575,3 +589,44 @@ export const sendBlogFeedbackEmail = async (params: {
   }
 };
 
+
+/**
+ * Sends a verification email for new signups
+ */
+export const sendVerificationEmail = async (params: {
+  email: string;
+  name: string;
+  link: string;
+}) => {
+  console.log(`[EMAIL] Attempting to send verification email to: ${params.email}`);
+
+  const transporter = createTransporter();
+  if (!transporter) {
+    console.error("[EMAIL] Transporter not configured. Check GMAIL_USER and GMAIL_APP_PASSWORD env vars.");
+    throw new Error("Email service not configured");
+  }
+
+  const html = generateEmailHTML({
+    heading: "Verify Your Account",
+    message: `Hi ${params.name},\n\nWelcome to Zigex! Please verify your email address to complete your account setup and start applying to opportunities.\n\nIf you didn't create this account, you can safely ignore this email.`,
+    ctaText: "Verify My Email",
+    ctaLink: params.link,
+    statusBadge: "Action Required",
+    statusColor: "#155DFC",
+    companyName: "Zigex"
+  });
+
+  try {
+    const result = await transporter.sendMail({
+      from: `"Zigex" <${GMAIL_USER}>`,
+      to: params.email,
+      subject: "🚀 Verify your Zigex account",
+      html
+    });
+    console.log(`[EMAIL] Verification email sent successfully to ${params.email}. MessageId: ${result.messageId}`);
+    return { success: true, messageId: result.messageId };
+  } catch (error: any) {
+    console.error(`[EMAIL] Failed to send verification email to ${params.email}:`, error.message);
+    throw error;
+  }
+};

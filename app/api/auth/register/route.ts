@@ -96,15 +96,14 @@ export async function POST(request: Request) {
     );
   }
 
-  const { data: authData, error: authError } = await supabaseAdmin.auth.signUp({
+
+  // --- REFACTOR: Use generateLink to create user and get verification link without sending default email ---
+  const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+    type: "signup",
     email,
     password,
     options: {
-      // --- MODIFICATION 2: Add the emailRedirectTo option ---
-      // This tells Supabase where to send the user AFTER they click the verification link.
-      // Use the validated origin (or safe fallback) when building the redirect target.
-      emailRedirectTo: `${getURL()}api/auth/callback?next=/create-profile`,
-
+      redirectTo: `${getURL()}api/auth/callback?next=/create-profile`,
       data: {
         full_name: fullName,
         user_role: "student",
@@ -112,33 +111,42 @@ export async function POST(request: Request) {
     },
   });
 
-  if (authError || !authData.user) {
-    if (authError?.message.includes("User already registered")) {
+  if (linkError || !linkData.user) {
+    if (linkError?.message.includes("already registered")) {
       return NextResponse.json(
         { error: "A user with this email already exists." },
-        { status: 400 } // Using 409 Conflict might be more semantically correct here
+        { status: 400 }
       );
     }
-    console.error("Supabase SignUp Error:", authError?.message);
+    console.error("Supabase Admin GenerateLink Error:", linkError?.message);
     return NextResponse.json(
-      { error: authError?.message || "There was an error creating the user." },
+      { error: linkError?.message || "There was an error creating the user." },
       { status: 400 }
     );
   }
 
-  // --- MODIFICATION 3: REMOVE the automatic sign-in block ---
-  /* 
-    The entire block for createServerClient and signInWithPassword has been removed.
-    The signUp call is now the final step. It triggers the confirmation email, 
-    which is exactly what we want.
-  */
+  // Send the custom verification email using Nodemailer
+  // The 'action_link' is the full URL to verify the email
+  const verificationLink = linkData.properties?.action_link;
 
-  // --- MODIFICATION 4: Update the success response ---
-  // We now return a simple success message indicating an email has been sent.
+  if (verificationLink) {
+    const { sendVerificationEmail } = await import("@/lib/email");
+    try {
+      await sendVerificationEmail({
+        email,
+        name: fullName,
+        link: verificationLink,
+      });
+    } catch (emailErr) {
+      console.error("Failed to send custom verification email:", emailErr);
+      // We don't fail the request, but we log it. User might need to resend.
+    }
+  }
+
   return NextResponse.json(
     {
       message:
-        "Registration successful. Please check your email to verify your account.",
+        "Registration successful. Please check your email (and spam) to verify your account.",
     },
     { status: 201 }
   );

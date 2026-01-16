@@ -16,7 +16,8 @@ import {
   AtSign,
   GraduationCap,
   LayoutGrid,
-  Clock
+  Clock,
+  Edit
 } from "lucide-react";
 import { motion } from "framer-motion";
 import ConnectBar from "@/components/sections/dashboard/ConnectBar";
@@ -53,8 +54,11 @@ export default function StudentProfileClient({
   username,
   applicationsList = []
 }: StudentProfileClientProps) {
-  const avatarUrl = data.avatar_url || "https://i.ibb.co/8n8d37H4/white-logo-4x.png";
-  const coverImageUrl = data.cover_image || "https://i.ibb.co/9kLrm6KY/og-image-2x-100-1.jpg";
+  // Fallback images using more reliable sources
+  const defaultAvatar = "https://api.dicebear.com/7.x/initials/svg?seed=" + encodeURIComponent(data.full_name || "ZX");
+  const defaultCover = "https://images.unsplash.com/photo-1557683316-973673baf926?w=1200&q=80";
+  const avatarUrl = data.avatar_url || defaultAvatar;
+  const coverImageUrl = data.cover_image || defaultCover;
   const linkedinUrl = data.linkedin_url;
   const whatsappUrl = data.phone ? `https://wa.me/${data.phone.replace(/\D/g, '')}` : null;
   const skills = data.hard_skills || [];
@@ -82,6 +86,7 @@ export default function StudentProfileClient({
     }
   };
 
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-40">
       {/* 1. Header Banner */}
@@ -99,12 +104,6 @@ export default function StudentProfileClient({
              <button onClick={handleShare} className="p-2 sm:p-3 bg-white/20 backdrop-blur-md rounded-xl sm:rounded-2xl text-white border border-white/20 hover:bg-white/30 transition-all">
                 <Share2 size={18} />
              </button>
-             {isOwner && (
-                <Link href={`/profile/${slugifyUsername(data.username)}`} className="px-4 py-2 sm:p-3 bg-white text-slate-900 rounded-xl sm:rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-slate-100 transition-all flex items-center">
-                   <span className="hidden sm:inline">Settings</span>
-                   <span className="sm:hidden">Edit</span>
-                </Link>
-             )}
           </div>
         </div>
       </div>
@@ -136,13 +135,15 @@ export default function StudentProfileClient({
              </div>
            </motion.div>
 
-           {/* Name & Headline */}
-           <div className="flex-1 pt-2 md:pb-2 text-center md:text-left min-w-0">
+           {/* Name & Headline - Frosted glass overlay on desktop for contrast */}
+           <div className="flex-1 pt-2 md:pb-2 text-center md:text-left min-w-0 bg-white md:bg-white/80 md:backdrop-blur-md rounded-2xl md:rounded-2xl p-4 md:p-5 shadow-lg md:shadow-xl border border-slate-100 md:border-white/50">
              <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                <div className="flex-1">
-                  <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 tracking-tight leading-tight">
-                    {data.full_name}
-                  </h1>
+                  <div className="flex items-center justify-center md:justify-start gap-4">
+                      <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 tracking-tight leading-tight">
+                        {data.full_name}
+                      </h1>
+                  </div>
                   <p className="text-sm sm:text-base font-medium text-slate-600 mt-2 max-w-2xl mx-auto md:mx-0 leading-relaxed">
                     {data.about || "Building in the African tech ecosystem."}
                   </p>
@@ -163,11 +164,34 @@ export default function StudentProfileClient({
                         </a>
                      )}
                   </div>
+
+                  {/* Mobile Edit Button */}
+                  {isOwner && (
+                    <div className="mt-5 md:hidden flex justify-center">
+                        <Link 
+                          href="/create-profile" 
+                          className="flex items-center gap-2 px-6 py-2 w-full justify-center bg-white border border-slate-300 text-slate-700 rounded-full font-bold hover:bg-slate-50 transition-all shadow-sm"
+                        >
+                          <Edit size={16} />
+                          <span>Edit profile</span>
+                        </Link>
+                    </div>
+                  )}
                </div>
                
-               {/* Desktop Actions */}
+               {/* Desktop Actions (Right Side) */}
                <div className="hidden md:flex gap-3 shrink-0 pt-2">
-                  <AnimatedConnectButtons linkedinUrl={linkedinUrl} whatsappUrl={whatsappUrl} />
+                  {isOwner ? (
+                       <Link 
+                         href="/create-profile" 
+                         className="flex items-center gap-2 px-6 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-full font-bold hover:bg-slate-50 hover:border-slate-400 transition-all shadow-sm group"
+                       >
+                         <Edit size={16} className="text-slate-400 group-hover:text-slate-600 transition-colors" />
+                         <span>Edit profile</span>
+                       </Link>
+                  ) : (
+                       <AnimatedConnectButtons linkedinUrl={linkedinUrl} whatsappUrl={whatsappUrl} />
+                  )}
                </div>
              </div>
            </div>
@@ -297,34 +321,36 @@ export default function StudentProfileClient({
                </div>
             </div>
 
-            {/* Skills */}
+            {/* Skills & Interests */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
-                  <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-slate-900 mb-2 flex items-center gap-2">
                      <div className="w-6 h-6 bg-blue-100 rounded flex items-center justify-center text-blue-600"><Rocket size={12} /></div>
-                     Hard Skills
+                     Interests & Skills
                   </h3>
+                  <p className="text-xs text-slate-400 mb-4">Areas of expertise or topics they&apos;re passionate about</p>
                   <div className="flex flex-wrap gap-2">
                      {skills.map((s: string, i: number) => (
-                        <span key={i} className="px-3 py-1.5 bg-slate-50 text-slate-700 border border-slate-100 rounded-lg text-xs font-semibold hover:border-blue-200 transition-colors">
+                        <span key={i} className="px-3 py-1.5 bg-blue-50 text-blue-700 border border-blue-100 rounded-lg text-xs font-semibold hover:border-blue-300 transition-colors">
                           {s}
                         </span>
                      ))}
-                     {skills.length === 0 && <p className="text-sm text-slate-400 italic">No hard skills listed.</p>}
+                     {skills.length === 0 && <p className="text-sm text-slate-400 italic">No interests added yet.</p>}
                   </div>
                </div>
                <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
-                  <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-slate-900 mb-2 flex items-center gap-2">
                      <div className="w-6 h-6 bg-purple-100 rounded flex items-center justify-center text-purple-600"><LayoutGrid size={12} /></div>
-                     Soft Skills
+                     Personality & Strengths
                   </h3>
+                  <p className="text-xs text-slate-400 mb-4">Traits and qualities that define them</p>
                   <div className="flex flex-wrap gap-2">
                      {soft.map((s: string, i: number) => (
                         <span key={i} className="px-3 py-1.5 bg-purple-50 text-purple-700 border border-purple-100 rounded-lg text-xs font-semibold">
                           {s}
                         </span>
                      ))}
-                      {soft.length === 0 && <p className="text-sm text-slate-400 italic">No soft skills listed.</p>}
+                      {soft.length === 0 && <p className="text-sm text-slate-400 italic">No strengths added yet.</p>}
                   </div>
                </div>
             </div>

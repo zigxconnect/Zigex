@@ -44,8 +44,16 @@ const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = (
   
   const studentColor = "from-blue-600 to-indigo-700";
   const primarySkills = (student.hard_skills || []).slice(0, 3);
-  const username = slugifyUsername(student.username) || (student.full_name ? student.full_name.toLowerCase().replace(/\s+/g, '') : "student");
-  const profileLink = `/dashboard/student/${slugifyUsername(student.username || student.id)}`;
+
+  // Use full_name for the slug if available, replacing spaces with underscores. 
+  // This matches the format expected by the unslugification logic in the page lookup.
+  const nameSlug = student.full_name ? student.full_name.trim().replace(/\s+/g, '_').toLowerCase() : '';
+  const usernameSlug = slugifyUsername(student.username);
+  
+  // Prefer the name-based slug if full_name exists, as users are identifying by name.
+  // Fallback to username slug, then ID.
+  const finalSlug = nameSlug || usernameSlug || student.id;
+  const profileLink = `/dashboard/student/${finalSlug}`;
 
   useEffect(() => {
     if (initialStats) {
@@ -84,9 +92,10 @@ const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = (
             studentColor
           )} />
           <img 
-            src={student.cover_image || "https://i.ibb.co/9kLrm6KY/og-image-2x-100-1.jpg"} 
+            src={student.cover_image || "https://images.unsplash.com/photo-1557683316-973673baf926?w=800&q=80"} 
             alt="Cover" 
             className="w-full h-full object-cover mix-blend-overlay group-hover:scale-105 transition-transform duration-700"
+            onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1557683316-973673baf926?w=800&q=80"; }}
           />
           <div className="absolute inset-0 bg-black/10" />
         </div>
@@ -97,14 +106,12 @@ const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = (
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
             {/* Avatar - Left aligned overlapping */}
             <div className="-mt-10 sm:-mt-12 flex-shrink-0 relative z-10">
-              <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl border-[4px] border-white shadow-md overflow-hidden bg-white">
+              <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl border-[4px] border-white shadow-md overflow-hidden bg-slate-100">
                  <img
-                   src={student.avatar_url || "https://i.ibb.co/8n8d37H4/white-logo-4x.png"}
+                   src={student.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(student.full_name || 'ZX')}`}
                    alt={student.full_name || "Talent"}
-                   className={cn(
-                     "w-full h-full object-cover",
-                     !student.avatar_url && "p-4 bg-slate-50"
-                   )}
+                   className="w-full h-full object-cover"
+                   onError={(e) => { (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(student.full_name || 'ZX')}`; }}
                  />
               </div>
             </div>
@@ -117,7 +124,7 @@ const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = (
                       {student.full_name || "Studio Member"}
                     </h3>
                     <div className="flex items-center gap-2 mt-1">
-                      <p className="text-xs sm:text-sm font-medium text-slate-500">@{username}</p>
+                      <p className="text-xs sm:text-sm font-medium text-slate-500">@{usernameSlug || nameSlug || "student"}</p>
                       <div className="w-1 h-1 rounded-full bg-slate-300" />
                       <div className="flex items-center gap-1 text-xs sm:text-sm font-medium text-slate-500">
                          <MapPin size={12} className="text-slate-400" />

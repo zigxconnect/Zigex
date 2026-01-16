@@ -7,7 +7,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 
 export default async function StudentDirectoryPage() {
   const [profiles, userData] = await Promise.all([
-    getAllUsers(200, 0),
+    getAllUsers(1000, 0), // Fetch up to 1000 profiles to ensure we get all students
     getProfileInfo()
   ]);
 

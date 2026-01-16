@@ -55,33 +55,33 @@ const stepsFields: (keyof ProfileFormData)[][] = [
 const stepsData = [
   {
     number: 1,
-    title: "Personal Details",
-    description: "Basic info & location",
+    title: "Let's Get Started",
+    description: "Tell us a bit about yourself",
   },
   {
     number: 2,
-    title: "Profile Images",
-    description: "Photo & cover image",
+    title: "Add Your Photo",
+    description: "Help others recognize you",
   },
   {
     number: 3,
-    title: "Education",
-    description: "University & degree",
+    title: "Your Education",
+    description: "Where are you studying?",
   },
   {
     number: 4,
-    title: "Skills & Languages",
-    description: "Technical & soft skills",
+    title: "Interests & Learning",
+    description: "What excites you?",
   },
   {
     number: 5,
-    title: "Experience",
-    description: "Work history",
+    title: "Career Goals",
+    description: "What are you hoping to achieve?",
   },
   {
     number: 6,
-    title: "Preferences & Extras",
-    description: "Work mode & interests",
+    title: "Almost Done!",
+    description: "Final touches",
   },
 ];
 
@@ -199,7 +199,8 @@ export const MultiStepForm = () => {
         throw new Error(responseData.error || "Failed to update profile.");
       }
       toast.success("Profile updated successfully!", { id: toastId });
-      router.push("/profile-complete");
+      // Redirect to the feed (dashboard) immediately after completion
+      router.push("/dashboard");
     } catch (err) {
       const errorMessage = (err as Error).message;
       toast.error(`Submission failed: ${errorMessage}`, { id: toastId });

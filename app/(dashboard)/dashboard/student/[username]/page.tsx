@@ -16,13 +16,27 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(username);
   const supabase = supabaseAdmin;
   let data;
+
   if (isUuid) {
     data = (await supabase.from("student_profiles").select("*").eq("id", username).maybeSingle()).data || 
            (await supabase.from("student_profiles").select("*").eq("user_id", username).maybeSingle()).data;
   } else {
+    // 1. Try exact match on 'username' column
+    const { data: byUsername } = await supabase.from("student_profiles").select("*").eq("username", username).maybeSingle();
+    
+    // 2. Try case-insensitive match on 'full_name' using unslugified string ( underscores -> spaces )
+    // e.g. "amandong_blandine_njweng" -> "amandong blandine njweng" -> matches "Amandong Blandine Njweng"
     const unslugified = unslugifyUsername(username);
-    data = (await supabase.from("student_profiles").select("*").eq("username", username).maybeSingle()).data ||
-           (await supabase.from("student_profiles").select("*").eq("username", unslugified).maybeSingle()).data;
+    const { data: byFullName } = !byUsername 
+      ? await supabase.from("student_profiles").select("*").ilike("full_name", unslugified).maybeSingle()
+      : { data: null };
+
+    // 3. Fallback: Try case-insensitive match on 'username'
+    const { data: byUsernameIlike } = (!byUsername && !byFullName)
+      ? await supabase.from("student_profiles").select("*").ilike("username", username).maybeSingle()
+      : { data: null };
+
+    data = byUsername || byFullName || byUsernameIlike;
   }
 
   if (!data) return { title: "Student Not Found" };
@@ -51,19 +65,59 @@ export default async function StudentDetailPage({ params }: Props) {
   const supabase = await createServerActionClient();
   let data;
 
+
+
+
   if (isUuid) {
     const { data: profileById } = await supabase.from("student_profiles").select("*").eq("id", username).maybeSingle();
     data = profileById || (await supabase.from("student_profiles").select("*").eq("user_id", username).maybeSingle()).data;
   } else {
-    const unslugified = unslugifyUsername(username);
-    const { data: profileByUsername } = await supabase.from("student_profiles").select("*").eq("username", username).maybeSingle();
-    data = profileByUsername || (await supabase.from("student_profiles").select("*").eq("username", unslugified).maybeSingle()).data;
+    // Normalize the search term
+    const unslugified = unslugifyUsername(username).trim().toLowerCase();
+    
+    // 1. Try exact match on 'username' column
+    const { data: byUsername } = await supabase.from("student_profiles").select("*").eq("username", username).maybeSingle();
+    
+    // 2. Try case-insensitive exact match on 'full_name'
+    const { data: byFullName } = !byUsername
+      ? await supabase.from("student_profiles").select("*").ilike("full_name", unslugified).maybeSingle()
+      : { data: null };
+
+    // 3. Fallback: Pattern-based search on 'full_name' (handles name order variations)
+    // Split the name into parts and search for all parts being present
+    const nameParts = unslugified.split(' ').filter(p => p.length > 2);
+    let byFullNamePattern: typeof byFullName = null;
+    if (!byUsername && !byFullName && nameParts.length > 0) {
+      // Search for profiles that contain ALL name parts (case-insensitive)
+      let query = supabase.from("student_profiles").select("*");
+      for (const part of nameParts) {
+        query = query.ilike("full_name", `%${part}%`);
+      }
+      const { data: patternResult } = await query.limit(1).maybeSingle();
+      byFullNamePattern = patternResult;
+    }
+
+    // 4. Fallback: Try case-insensitive match on 'username' column
+    const { data: byUsernameIlike } = (!byUsername && !byFullName && !byFullNamePattern)
+      ? await supabase.from("student_profiles").select("*").ilike("username", username).maybeSingle()
+      : { data: null };
+
+    // Debug logging
+    console.log(`[StudentLookup] lookup for: '${username}'`);
+    console.log(`[StudentLookup] unslugified: '${unslugified}'`);
+    console.log(`[StudentLookup] nameParts: [${nameParts.join(', ')}]`);
+    console.log(`[StudentLookup] byUsername: ${!!byUsername}, byFullName: ${!!byFullName}, byFullNamePattern: ${!!byFullNamePattern}, byUsernameIlike: ${!!byUsernameIlike}`);
+
+    data = byUsername || byFullName || byFullNamePattern || byUsernameIlike;
   }
 
   if (!data) {
+    console.warn(`[StudentLookup] FAILED for username: ${username}`);
     return (
-      <div className="min-h-screen p-6 flex items-center justify-center">
-        <h2 className="text-xl font-semibold">Student not found</h2>
+      <div className="min-h-screen p-6 flex flex-col items-center justify-center text-center">
+        <h2 className="text-2xl font-bold mb-2">Student not found</h2>
+        <p className="text-muted-foreground mb-4">Could not find a profile for &quot;{username}&quot;</p>
+        <p className="text-xs text-muted-foreground">Try searching by the exact full name or ID.</p>
       </div>
     );
   }
