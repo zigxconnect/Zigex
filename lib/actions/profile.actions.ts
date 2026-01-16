@@ -48,6 +48,8 @@ export async function getProfileInfo(): Promise<FormattedUserData> {
   } = await supabase.auth.getUser();
 
   if (!user) {
+    const { data: { session } } = await supabase.auth.getSession();
+    console.error("[ProfileActions] User not found in getProfileInfo. Session exists:", !!session);
     throw new Error(
       "Authentication error: User not found. Middleware should have prevented this."
     );

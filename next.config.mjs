@@ -121,7 +121,7 @@ const nextConfig = {
 
   // Console removal in production
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production',
+    // removeConsole: process.env.NODE_ENV === 'production',
   },
 };
 

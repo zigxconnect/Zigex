@@ -3,7 +3,7 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const response = NextResponse.next({
+  let response = NextResponse.next({
     request: { headers: request.headers },
   });
 
@@ -16,10 +16,22 @@ export async function proxy(request: NextRequest) {
           return request.cookies.get(name)?.value;
         },
         set(name, value, options) {
+          request.cookies.set({ name, value, ...options });
+          const headers = new Headers(request.headers);
+          headers.set('cookie', request.cookies.toString());
+          response = NextResponse.next({
+            request: { headers },
+          });
           response.cookies.set({ name, value, ...options });
         },
         remove(name, options) {
-          response.cookies.set({ name, value: "", ...options, maxAge: 0 });
+          request.cookies.set({ name, value: "", ...options });
+          const headers = new Headers(request.headers);
+          headers.set('cookie', request.cookies.toString());
+          response = NextResponse.next({
+            request: { headers },
+          });
+          response.cookies.set({ name, value: "", ...options });
         },
       },
     }
@@ -28,6 +40,11 @@ export async function proxy(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  console.log(`[Proxy] Pathname: ${pathname}, User Authenticated: ${!!user}`);
+  if (user) {
+    console.log(`[Proxy] User ID: ${user.id}`);
+  }
 
   const publicPaths = [
     "/",
@@ -40,6 +57,25 @@ export async function proxy(request: NextRequest) {
     "/update-password",
     "/demo",
   ];
+
+  // Helper helper to create a redirect that preserves session cookies
+  const createRedirectResponse = (targetPath: string) => {
+    const redirectUrl = new URL(targetPath, request.url);
+    const redirectResponse = NextResponse.redirect(redirectUrl);
+    // Copy all cookies from our intermediate 'response' object to the redirect
+    response.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie.name, cookie.value, {
+        domain: cookie.domain,
+        expires: cookie.expires,
+        httpOnly: cookie.httpOnly,
+        maxAge: cookie.maxAge,
+        path: cookie.path,
+        sameSite: cookie.sameSite,
+        secure: cookie.secure,
+      });
+    });
+    return redirectResponse;
+  };
 
   // --- 1. Handle Unauthenticated Users ---
   const publicApiPaths = [
@@ -64,12 +100,17 @@ export async function proxy(request: NextRequest) {
     }
     // If API route, return JSON error instead of redirect
     if (pathname.startsWith('/api')) {
-      return new NextResponse(
+      const errorResponse = new NextResponse(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
       );
+      // Even error responses should try to sync cookies if any were updated (e.g. clearing stale ones)
+      response.cookies.getAll().forEach((cookie) => {
+        errorResponse.cookies.set(cookie.name, cookie.value, cookie);
+      });
+      return errorResponse;
     }
-    return NextResponse.redirect(new URL("/sign-in", request.url));
+    return createRedirectResponse("/sign-in");
   }
 
   // --- 2. Handle Authenticated Users ---
@@ -92,10 +133,10 @@ export async function proxy(request: NextRequest) {
 
   // Log any errors for debugging
   if (studentError) {
-    console.error("[Middleware] Error fetching student profile:", studentError);
+    console.error("[Proxy] Error fetching student profile:", studentError);
   }
   if (companyError) {
-    console.error("[Middleware] Error fetching company profile:", companyError);
+    console.error("[Proxy] Error fetching company profile:", companyError);
   }
 
   // Determine user role, or mark as "unassigned" if neither profile exists
@@ -116,7 +157,7 @@ export async function proxy(request: NextRequest) {
       pathname !== "/company/sign-up" &&
       !pathname.startsWith("/api")
     ) {
-      return NextResponse.redirect(new URL("/create-profile", request.url));
+      return createRedirectResponse("/create-profile");
     }
     return response;
   }
@@ -124,35 +165,33 @@ export async function proxy(request: NextRequest) {
   // --- 4. Enforce Profile Creation for Students ---
   if (userRole === "student" && !isStudentProfileComplete) {
     if (pathname !== "/create-profile" && !pathname.startsWith("/api")) {
-      return NextResponse.redirect(new URL("/create-profile", request.url));
+      return createRedirectResponse("/create-profile");
     }
     return response;
   }
 
   // --- 5. Redirect Authenticated Users from Restricted Pages ---
 
-  // --- THE FIX ---
   // Create a list of all pages an authenticated and fully set-up user should NOT be able to access.
   const authRedirectPaths = [
     ...publicPaths.filter((path) => path !== "/demo"),
     "/create-profile",
-    "/profile-complete", // Added the new page here
+    "/profile-complete",
   ];
 
   // If the user is on any of these restricted pages, redirect them to their dashboard.
   if (authRedirectPaths.includes(pathname)) {
     if (userRole === "company") {
-      return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+      return createRedirectResponse("/admin/dashboard");
     }
     if (userRole === "student") {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+      return createRedirectResponse("/dashboard");
     }
   }
-  // --- END OF FIX ---
 
   // --- 6. Role-Based Authorization ---
   if (pathname.startsWith("/admin") && userRole !== "company") {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return createRedirectResponse("/dashboard");
   }
 
   const studentPaths = [
@@ -167,7 +206,7 @@ export async function proxy(request: NextRequest) {
     studentPaths.some((p) => pathname.startsWith(p)) &&
     userRole !== "student"
   ) {
-    return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+    return createRedirectResponse("/admin/dashboard");
   }
 
   return response;

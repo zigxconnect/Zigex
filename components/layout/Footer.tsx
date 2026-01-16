@@ -13,14 +13,14 @@ export const Footer: React.FC = () => {
           {/* Brand & Mission */}
           <div className="space-y-8">
             <Link href="/" className="inline-block transition-transform hover:scale-105">
-               <img
-                 src="https://i.ibb.co/Cp502Yby/logo.png"
-                 alt="Zigex Logo"
-                 className="h-12 w-auto object-contain brightness-0 invert"
-               />
+              <img
+                src="https://i.ibb.co/Cp502Yby/logo.png"
+                alt="Zigex Logo"
+                className="h-12 w-auto object-contain brightness-0 invert"
+              />
             </Link>
             <p className="text-blue-100/80 text-sm leading-relaxed max-w-sm">
-              Connecting talented individuals with world-class internship opportunities. 
+              Connecting talented individuals with world-class internship opportunities.
               Bridging the gap between education and industry in Bamenda and beyond.
             </p>
             <div className="flex space-x-3">
@@ -30,9 +30,9 @@ export const Footer: React.FC = () => {
                 { icon: FaFacebook, href: "#" },
                 { icon: FaGithub, href: "#" }
               ].map((social, idx) => (
-                <a 
+                <a
                   key={idx}
-                  href={social.href} 
+                  href={social.href}
                   className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/10 hover:bg-[#EA580C] text-white transition-all duration-300 shadow-md backdrop-blur-sm border border-white/10"
                 >
                   <social.icon size={18} />
@@ -66,18 +66,18 @@ export const Footer: React.FC = () => {
               <span className="absolute -bottom-2 left-0 w-8 h-1 bg-[#EA580C] rounded-full"></span>
             </h4>
             <ul className="space-y-5 text-sm text-blue-100/70">
-               <li className="flex items-start gap-3">
-                  <MapPin size={18} className="text-[#EA580C] shrink-0" />
-                  <span>Commercial Avenue, Bamenda, NW Region, Cameroon</span>
-               </li>
-               <li className="flex items-center gap-3">
-                  <Mail size={18} className="text-[#EA580C] shrink-0" />
-                  <a href="mailto:hello@zigex.com" className="hover:text-white transition-colors">hello@zigex.com</a>
-               </li>
-               <li className="flex items-center gap-3">
-                  <Phone size={18} className="text-[#EA580C] shrink-0" />
-                  <a href="tel:+237123456789" className="hover:text-white transition-colors">+237 6XX XXX XXX</a>
-               </li>
+              <li className="flex items-start gap-3">
+                <MapPin size={18} className="text-[#EA580C] shrink-0" />
+                <span>Commercial Avenue, Bamenda, NW Region, Cameroon</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <Mail size={18} className="text-[#EA580C] shrink-0" />
+                <a href="mailto:zigexconnect.com@gmail.com" className="hover:text-white transition-colors">zigexcinnect.com@gmail.com</a>
+              </li>
+              <li className="flex items-center gap-3">
+                <Phone size={18} className="text-[#EA580C] shrink-0" />
+                <a href="tel:+237123456789" className="hover:text-white transition-colors">+237 650 146 590</a>
+              </li>
             </ul>
           </div>
 
@@ -88,9 +88,9 @@ export const Footer: React.FC = () => {
               Get weekly updates on new internship roles and career bootcamps.
             </p>
             <form className="relative space-y-3" onSubmit={(e) => e.preventDefault()}>
-              <input 
-                type="email" 
-                placeholder="Your email address" 
+              <input
+                type="email"
+                placeholder="Your email address"
                 className="w-full bg-white/10 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-[#EA580C] transition-all"
               />
               <button className="w-full py-3 bg-[#EA580C] hover:bg-orange-600 rounded-xl text-white font-bold text-sm transition-all shadow-lg shadow-orange-900/20 flex items-center justify-center gap-2 group">

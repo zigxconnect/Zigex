@@ -56,77 +56,15 @@ export const AuthForm = ({ type }: AuthFormProps) => {
   const [supabase] = useState(() => createClient());
   const googleButtonRef = typeof window !== 'undefined' ? (window as any).googleButtonRef : null;
 
-  // Initialize Google Identity Services on mount
+  // Fetch CSRF token on mount
   useEffect(() => {
-    let isMounted = true;
-    const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-
-    if (googleClientId && (window as any).google) {
-      const google = (window as any).google;
-      google.accounts.id.initialize({
-        client_id: googleClientId,
-        itp_support: true,
-        use_fedcm_for_prompt: true,
-        callback: async (response: any) => {
-          if (!isMounted) return;
-          const { data, error } = await supabase.auth.signInWithIdToken({
-            provider: "google",
-            token: response.credential,
-          });
-
-
-          if (error) {
-            console.error("Supabase ID Token Auth Error:", error);
-            if (error.message.toLowerCase().includes("audience")) {
-              toast.error("Config Error: Add your Google Client ID to 'Authorized Client IDs' in Supabase Dashboard (Auth -> Providers -> Google).", { duration: 6000 });
-            } else {
-              toast.error(error.message);
-            }
-          } else {
-            toast.success("Logged in successfully!");
-            // Refresh session to ensure cookies are synced
-            await supabase.auth.refreshSession();
-            // Force full reload to ensure middleware sees the new session cookie
-            window.location.href = data.user ? "/dashboard" : "/create-profile";
-          }
-        },
-      });
-
-      // Render the official Google button
-      const parent = document.getElementById("google-button-container");
-      if (parent) {
-        google.accounts.id.renderButton(parent, {
-          theme: "outline",
-          size: "large",
-          width: 400, // Matches our form width
-          text: isSignUp ? "signup_with" : "signin_with",
-          shape: "rectangular",
-        });
-      }
-
-      // Small delay for the One Tap prompt to avoid conflicts with button rendering
-      setTimeout(() => {
-        if (isMounted) {
-          google.accounts.id.prompt((notification: any) => {
-            if (notification.isNotDisplayed()) {
-
-            }
-          });
-        }
-      }, 500);
-    }
-
     if (!isSignUp) {
       fetch("/api/auth/login")
         .then((res) => res.json())
         .then((data) => setCsrfToken(data.csrfToken))
         .catch(() => setCsrfToken(null));
     }
-
-    return () => {
-      isMounted = false;
-    };
-  }, [isSignUp, router, supabase.auth]);
+  }, [isSignUp]);
 
   const {
     register,
@@ -186,8 +124,21 @@ export const AuthForm = ({ type }: AuthFormProps) => {
     "By continuing, you agree to our Terms of Service and Privacy Policy.";
 
   const handleGoogleSignIn = async () => {
-    // This function is now just a fallback or triggered by the overlay button
-    // The actual click is handled by the invisible Google button on top
+    console.log("[AuthForm] handleGoogleSignIn triggered");
+    const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    const isGoogleScriptLoaded = typeof window !== 'undefined' && (window as any).google;
+
+    console.log("[AuthForm] Google Client ID exists:", !!googleClientId);
+    console.log("[AuthForm] Google Script loaded:", !!isGoogleScriptLoaded);
+
+    if (!isGoogleScriptLoaded || !googleClientId) {
+      console.log("[AuthForm] Falling back to standard OAuth flow");
+      await startStandardOAuth();
+    } else {
+      console.log("[AuthForm] Google script is loaded, the invisible overlay should have handled this click. If you see this, the overlay might have failed.");
+      // As an emergency fallback, trigger the ID token prompt manually
+      (window as any).google.accounts.id.prompt();
+    }
   };
 
   // Initialize Google Identity Services
@@ -195,39 +146,43 @@ export const AuthForm = ({ type }: AuthFormProps) => {
     let isMounted = true;
     const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
+    if (!googleClientId) {
+      console.warn("[AuthForm] NEXT_PUBLIC_GOOGLE_CLIENT_ID is missing");
+    }
+
     if (googleClientId && (window as any).google) {
+      console.log("[AuthForm] Initializing Google Identity Services");
       const google = (window as any).google;
-      
+
       google.accounts.id.initialize({
         client_id: googleClientId,
         itp_support: true,
         use_fedcm_for_prompt: true,
         callback: async (response: any) => {
           if (!isMounted) return;
+          console.log("[AuthForm] Google ID Token received, signing in with Supabase...");
           const { data, error } = await supabase.auth.signInWithIdToken({
             provider: "google",
             token: response.credential,
           });
 
           if (error) {
-            console.error("Supabase ID Token Auth Error:", error);
+            console.error("[AuthForm] Supabase ID Token Auth Error:", error);
             toast.error(error.message);
           } else {
+            console.log("[AuthForm] Supabase sign-in successful, user:", data.user?.id);
             toast.success("Logged in successfully!");
-            
-            // Refetch user/profile to check status
-            const { data: { user } } = await supabase.auth.getUser();
-            
+
+            // Refresh session to ensure cookies are synced
+            await supabase.auth.refreshSession();
+
             // Check if profile exists and is complete
             const { data: profile } = await supabase
               .from("student_profiles")
               .select("profile_status")
-              .eq("user_id", user?.id)
+              .eq("user_id", data.user?.id)
               .maybeSingle();
 
-            // Refresh session to ensure cookies are synced
-            await supabase.auth.refreshSession();
-            
             // Redirect based on profile status
             if (profile?.profile_status === "complete") {
               window.location.href = "/dashboard";
@@ -241,17 +196,24 @@ export const AuthForm = ({ type }: AuthFormProps) => {
       // Render the official Google button INVISIBLY on top of our custom button
       const parent = document.getElementById("google-button-overlay");
       if (parent) {
+        console.log("[AuthForm] Rendering invisible Google button onto overlay");
         google.accounts.id.renderButton(parent, {
-          theme: "filled_black", // Theme doesn't matter as it's invisible, but filled usually captures clicks well
+          theme: "filled_black",
           size: "large",
           type: "standard",
           shape: "rectangular",
           text: isSignUp ? "signup_with" : "signin_with",
-          width: 400, // Make it wide enough to cover the parent
+          width: 400,
         });
       }
+    } else {
+      console.log("[AuthForm] Google script or Client ID not ready for Identity Services");
     }
-  }, [isSignUp, router, supabase, supabase.auth]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isSignUp, router, supabase]);
 
   const startStandardOAuth = async () => {
     const { data, error } = await supabase.auth.signInWithOAuth({
@@ -334,31 +296,31 @@ export const AuthForm = ({ type }: AuthFormProps) => {
         {/* Background gradient decoration */}
         <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-primary/10 via-primary/5 to-transparent" />
         <div className="absolute top-10 left-1/2 -translate-x-1/2 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
-        
+
         {/* Content */}
         <div className="relative z-10">
           {/* Animated Icon */}
           <div className="mx-auto w-20 h-20 bg-gradient-to-br from-primary to-blue-600 rounded-3xl flex items-center justify-center shadow-lg shadow-primary/30 mb-6">
             <MailCheck className="w-10 h-10 text-white" />
           </div>
-          
+
           {/* Main Title */}
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
             Check your inbox!
           </h1>
-          
+
           {/* Subtitle */}
           <p className="mt-3 text-muted-foreground leading-relaxed max-w-sm">
             We&apos;ve sent a verification link to your email address. Click the link to activate your account.
           </p>
-          
+
           {/* Visual Divider */}
           <div className="my-6 flex items-center gap-4">
             <div className="flex-1 h-px bg-border" />
             <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">or</span>
             <div className="flex-1 h-px bg-border" />
           </div>
-          
+
           {/* Spam Notice Card */}
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-left">
             <div className="flex items-start gap-3">
@@ -375,7 +337,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
               </div>
             </div>
           </div>
-          
+
           {/* Back to Sign In */}
           <p className="mt-6 text-sm text-muted-foreground">
             Already verified?{" "}
@@ -405,13 +367,13 @@ export const AuthForm = ({ type }: AuthFormProps) => {
           {/* The visible custom button */}
           <SocialButton
             icon={GoogleIcon}
-            onClick={() => {}} // Click is handled by the overlay
+            onClick={handleGoogleSignIn} // Now has fallback logic
             text={`${currentContent.socialButtonText} with Google`}
           />
           {/* The invisible official Google button layered on top */}
-          <div 
-            id="google-button-overlay" 
-            className="absolute inset-0 z-10 opacity-0 overflow-hidden" 
+          <div
+            id="google-button-overlay"
+            className="absolute inset-0 z-10 opacity-0 overflow-hidden"
             style={{ transform: 'scale(1.05)' }} // Slight scale to ensure full coverage
           />
         </div>
