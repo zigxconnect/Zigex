@@ -16,19 +16,18 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "react-hot-toast";
 
 // --- Schemas ---
+// Define a unified form data type that covers both sign-in and sign-up
 const signUpSchema = z.object({
-  fullName: z
-    .string()
-    .min(2, { message: "Full name must be at least 2 characters." }),
+  fullName: z.string().min(2, { message: "Full name must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email address." }),
-  password: z
-    .string()
-    .min(6, { message: "Password must be at least 6 characters." }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters." }),
 });
+
 const signInSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
   password: z.string().min(1, { message: "Password is required." }),
 });
+
 type FormData = z.infer<typeof signUpSchema>;
 type AuthFormProps = { type: "signIn" | "signUp" };
 
@@ -54,7 +53,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
   const [csrfToken, setCsrfToken] = useState<string | null>(null);
 
   const [supabase] = useState(() => createClient());
-  const googleButtonRef = typeof window !== 'undefined' ? (window as any).googleButtonRef : null;
+  const [isGoogleReady, setIsGoogleReady] = useState(false);
 
   // Fetch CSRF token on mount
   useEffect(() => {
@@ -71,7 +70,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
-    resolver: zodResolver(isSignUp ? signUpSchema : signInSchema),
+    resolver: zodResolver(isSignUp ? signUpSchema : signInSchema) as any,
   });
 
   useEffect(() => {
@@ -124,19 +123,18 @@ export const AuthForm = ({ type }: AuthFormProps) => {
     "By continuing, you agree to our Terms of Service and Privacy Policy.";
 
   const handleGoogleSignIn = async () => {
-    console.log("[AuthForm] handleGoogleSignIn triggered");
+    console.log("[AuthForm] handleGoogleSignIn triggered. isGoogleReady:", isGoogleReady);
     const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
     const isGoogleScriptLoaded = typeof window !== 'undefined' && (window as any).google;
 
     console.log("[AuthForm] Google Client ID exists:", !!googleClientId);
     console.log("[AuthForm] Google Script loaded:", !!isGoogleScriptLoaded);
 
-    if (!isGoogleScriptLoaded || !googleClientId) {
-      console.log("[AuthForm] Falling back to standard OAuth flow");
+    if (!isGoogleReady || !isGoogleScriptLoaded || !googleClientId) {
+      console.log("[AuthForm] Falling back to standard OAuth flow because modern Google is not ready");
       await startStandardOAuth();
     } else {
-      console.log("[AuthForm] Google script is loaded, the invisible overlay should have handled this click. If you see this, the overlay might have failed.");
-      // As an emergency fallback, trigger the ID token prompt manually
+      console.log("[AuthForm] Google script is ready, the invisible overlay should have handled this click. Triggering prompt as fallback.");
       (window as any).google.accounts.id.prompt();
     }
   };
@@ -148,70 +146,81 @@ export const AuthForm = ({ type }: AuthFormProps) => {
 
     if (!googleClientId) {
       console.warn("[AuthForm] NEXT_PUBLIC_GOOGLE_CLIENT_ID is missing");
+      return;
     }
 
-    if (googleClientId && (window as any).google) {
-      console.log("[AuthForm] Initializing Google Identity Services");
+    const initGoogle = async () => {
       const google = (window as any).google;
+      if (google && isMounted) {
+        console.log("[AuthForm] Initializing Google Identity Services with Client ID:", googleClientId.substring(0, 10) + "...");
+        try {
+          google.accounts.id.initialize({
+            client_id: googleClientId,
+            itp_support: true,
+            use_fedcm_for_prompt: true,
+            callback: async (response: any) => {
+              if (!isMounted) return;
+              console.log("[AuthForm] Google ID Token received, signing in with Supabase...");
+              const { data, error } = await supabase.auth.signInWithIdToken({
+                provider: "google",
+                token: response.credential,
+              });
 
-      google.accounts.id.initialize({
-        client_id: googleClientId,
-        itp_support: true,
-        use_fedcm_for_prompt: true,
-        callback: async (response: any) => {
-          if (!isMounted) return;
-          console.log("[AuthForm] Google ID Token received, signing in with Supabase...");
-          const { data, error } = await supabase.auth.signInWithIdToken({
-            provider: "google",
-            token: response.credential,
+              if (error) {
+                console.error("[AuthForm] Supabase ID Token Auth Error:", error);
+                toast.error(error.message);
+              } else {
+                console.log("[AuthForm] Supabase sign-in successful, user:", data.user?.id);
+                toast.success("Logged in successfully!");
+
+                // Refresh session to ensure cookies are synced
+                await supabase.auth.refreshSession();
+
+                // Check if profile exists and is complete
+                const { data: profile } = await supabase
+                  .from("student_profiles")
+                  .select("profile_status")
+                  .eq("user_id", data.user?.id)
+                  .maybeSingle();
+
+                // Redirect based on profile status
+                if (profile?.profile_status === "complete") {
+                  window.location.href = "/dashboard";
+                } else {
+                  window.location.href = "/create-profile";
+                }
+              }
+            },
           });
 
-          if (error) {
-            console.error("[AuthForm] Supabase ID Token Auth Error:", error);
-            toast.error(error.message);
-          } else {
-            console.log("[AuthForm] Supabase sign-in successful, user:", data.user?.id);
-            toast.success("Logged in successfully!");
-
-            // Refresh session to ensure cookies are synced
-            await supabase.auth.refreshSession();
-
-            // Check if profile exists and is complete
-            const { data: profile } = await supabase
-              .from("student_profiles")
-              .select("profile_status")
-              .eq("user_id", data.user?.id)
-              .maybeSingle();
-
-            // Redirect based on profile status
-            if (profile?.profile_status === "complete") {
-              window.location.href = "/dashboard";
-            } else {
-              window.location.href = "/create-profile";
-            }
+          // Render the official Google button INVISIBLY on top of our custom button
+          const parent = document.getElementById("google-button-overlay");
+          if (parent) {
+            console.log("[AuthForm] Rendering invisible Google button onto overlay");
+            google.accounts.id.renderButton(parent, {
+              theme: "filled_black",
+              size: "large",
+              type: "standard",
+              shape: "rectangular",
+              text: isSignUp ? "signup_with" : "signin_with",
+              width: 400,
+            });
+            setIsGoogleReady(true);
           }
-        },
-      });
-
-      // Render the official Google button INVISIBLY on top of our custom button
-      const parent = document.getElementById("google-button-overlay");
-      if (parent) {
-        console.log("[AuthForm] Rendering invisible Google button onto overlay");
-        google.accounts.id.renderButton(parent, {
-          theme: "filled_black",
-          size: "large",
-          type: "standard",
-          shape: "rectangular",
-          text: isSignUp ? "signup_with" : "signin_with",
-          width: 400,
-        });
+        } catch (err) {
+          console.error("[AuthForm] Failed to initialize Google:", err);
+        }
+      } else {
+        console.log("[AuthForm] Google script not found on window");
       }
-    } else {
-      console.log("[AuthForm] Google script or Client ID not ready for Identity Services");
-    }
+    };
+
+    // Use a small timeout to ensure the script has time to register on the window object
+    const timer = setTimeout(initGoogle, 1000);
 
     return () => {
       isMounted = false;
+      clearTimeout(timer);
     };
   }, [isSignUp, router, supabase]);
 
@@ -366,16 +375,17 @@ export const AuthForm = ({ type }: AuthFormProps) => {
         <div className="relative w-full">
           {/* The visible custom button */}
           <SocialButton
-            icon={GoogleIcon}
-            onClick={handleGoogleSignIn} // Now has fallback logic
+            icon={GoogleIcon as any}
+            onClick={handleGoogleSignIn}
             text={`${currentContent.socialButtonText} with Google`}
           />
-          {/* The invisible official Google button layered on top */}
-          <div
-            id="google-button-overlay"
-            className="absolute inset-0 z-10 opacity-0 overflow-hidden"
-            style={{ transform: 'scale(1.05)' }} // Slight scale to ensure full coverage
-          />
+          {isGoogleReady && (
+            <div
+              id="google-button-overlay"
+              className="absolute inset-0 z-10 opacity-0 overflow-hidden"
+              style={{ transform: 'scale(1.05)' }} // Slight scale to ensure full coverage
+            />
+          )}
         </div>
       </div>
       <Divider />
