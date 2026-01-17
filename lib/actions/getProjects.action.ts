@@ -151,7 +151,7 @@ export async function fetchAllUserProjects(studentProfileId: string): Promise<{ 
 
     const { data: projects, error: projectError } = await supabase
       .from('projects')
-      .select('*')
+      .select('*, project_submissions(status)')
       .eq('student_id', studentProfileId)
       .order('created_at', { ascending: false });
 
@@ -160,9 +160,14 @@ export async function fetchAllUserProjects(studentProfileId: string): Promise<{ 
       return { success: false, data: [] };
     }
 
+    const mappedProjects = (projects || []).map((p: any) => ({
+      ...p,
+      pitch_status: p.project_submissions?.[0]?.status
+    }));
+
     return {
       success: true,
-      data: projects || []
+      data: mappedProjects
     };
   } catch (error: any) {
     console.error('Critical error in fetchAllUserProjects:', error);

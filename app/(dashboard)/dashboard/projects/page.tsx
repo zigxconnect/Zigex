@@ -2,7 +2,7 @@
 import React from 'react';
 import { createServerActionClient, supabaseAdmin } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import { Plus, Briefcase, Users, ExternalLink, Sparkles, TrendingUp } from 'lucide-react';
+import { Plus, Briefcase, ExternalLink, Sparkles, TrendingUp } from 'lucide-react';
 import MyMonthProject from '@/components/uiComponent/ProjectCard';
 import CreateProjectButton from '@/components/project/CreateProjectButton';
 import { getRawProfileInfo } from '@/lib/actions/profile.actions';
@@ -22,43 +22,30 @@ export default async function DashboardProjectsPage() {
 
     const supabase = await createServerActionClient();
 
-    // Fetch all projects for this student profile
+    // Fetch all projects for this user
+    // Note: We use owner_id now. We check if user_id matches profile.user_id
     const [myRes, othersRes] = await Promise.all([
       supabase
         .from('projects')
-        .select('*')
-        .eq('student_id', profile!.id)
+        .select('*, project_submissions(id, status)')
+        .eq('owner_id', profile.user_id)
         .order('created_at', { ascending: false }),
 
-      // Community projects: other students' projects (excluding user's own)
-      supabaseAdmin
+      // Community projects: show all published projects from others
+      supabase
         .from('projects')
-        .select('*, student_profiles(id, username, full_name, avatar_url, university, hard_skills)')
-        .neq('student_id', profile!.id)  // Don't show user's own projects (already in "My Projects")
-        .or(`end_date.gte.${new Date().toISOString()},end_date.is.null`)  // Active or no end date
+        .select('*, student_profiles!inner(id, username, full_name, avatar_url, university, hard_skills)')
+        .neq('owner_id', profile.user_id)
+        .eq('is_published', true)
         .order('created_at', { ascending: false })
         .limit(50),
     ]);
 
-    const myProjects = myRes.data || [];
+    const myProjects = (myRes.data || []).map((p: any) => ({
+      ...p,
+      pitch_status: p.project_submissions?.[0]?.status
+    }));
     const otherProjects = othersRes.data || [];
-
-    // Fallback fetch logic if needed
-    let displayedOtherProjects = otherProjects;
-    if ((!otherProjects || otherProjects.length === 0) && !othersRes.error) {
-       try {
-        const { data: fbData } = await supabaseAdmin
-          .from('projects')
-          .select('*, student_profiles(id, username, full_name, avatar_url, university, hard_skills)')
-          .neq('student_id', profile!.id)
-          .or(`end_date.gte.${new Date().toISOString()},end_date.is.null`)
-          .order('created_at', { ascending: false })
-          .limit(50);
-        if (fbData) displayedOtherProjects = fbData;
-       } catch (e) {
-         console.error('Fallback fetch error', e);
-       }
-    }
 
     return (
       <div className="min-h-screen bg-slate-50/50 selection:bg-blue-100 selection:text-blue-900">
@@ -71,9 +58,9 @@ export default async function DashboardProjectsPage() {
                   <div className="p-2 bg-blue-600 rounded-xl shadow-lg shadow-blue-200">
                      <Briefcase className="w-6 h-6 text-white" />
                   </div>
-                  Projects
+                  Projects & Pitches
                 </h1>
-                <p className="text-sm text-slate-500 mt-1 ml-1">Manage your work and explore the community</p>
+                <p className="text-sm text-slate-500 mt-1 ml-1">Showcase your innovation to investors and the community</p>
               </div>
               
               <CreateProjectButton />
@@ -87,7 +74,7 @@ export default async function DashboardProjectsPage() {
           <section>
             <div className="flex items-center justify-between mb-8">
                <div className="flex items-center gap-3">
-                  <h2 className="text-xl font-bold text-slate-900">My Projects</h2>
+                  <h2 className="text-xl font-bold text-slate-900">My Portfolio</h2>
                   <Badge variant="secondary" className="rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-100 px-3">
                     {myProjects.length}
                   </Badge>
@@ -95,7 +82,7 @@ export default async function DashboardProjectsPage() {
                {myProjects.length > 0 && (
                    <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-slate-500 bg-white px-3 py-1.5 rounded-full border border-slate-200 shadow-sm">
                       <Sparkles className="w-3.5 h-3.5 text-amber-400 fill-current" />
-                      <span>{myProjects.filter((p: any) => p.is_valid === true || p.status === 'valid').length} Active</span>
+                      <span>{myProjects.filter((p: any) => p.is_published).length} Published</span>
                    </div>
                )}
             </div>
@@ -121,20 +108,20 @@ export default async function DashboardProjectsPage() {
                 ))}
               </div>
             ) : (
-              <div className="bg-white rounded-3xl border border-dashed border-slate-300 p-12 text-center">
-                  <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                     <Plus className="w-10 h-10 text-slate-300" />
+              <div className="bg-white rounded-[2.5rem] border-2 border-dashed border-slate-200 p-12 text-center group hover:border-blue-400 transition-colors duration-500">
+                  <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-500">
+                     <Plus className="w-10 h-10 text-blue-400" />
                   </div>
-                  <h3 className="text-lg font-bold text-slate-900 mb-2">Create your first project</h3>
-                  <p className="text-slate-500 max-w-sm mx-auto mb-8">
-                     Showcase your skills to the world. It takes less than 2 minutes to get started.
+                  <h3 className="text-xl font-black text-slate-900 mb-2 uppercase tracking-tight">Launch your first pitch</h3>
+                  <p className="text-slate-500 max-w-sm mx-auto mb-8 font-medium">
+                     The world needs your ideas. Pitch your project to companies, find investors, and build your future.
                   </p>
                   <CreateProjectButton 
                     variant="custom"
                     customTrigger={
-                      <div className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200">
+                      <div className="inline-flex items-center gap-3 px-8 py-4 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-200 hover:shadow-blue-300 active:scale-95">
                         <Plus className="w-5 h-5" />
-                        Start New Project
+                        Start New Pitch
                       </div>
                     }
                   />
@@ -145,24 +132,23 @@ export default async function DashboardProjectsPage() {
           {/* Other Projects Section */}
           <section>
             <div className="flex items-center gap-3 mb-8">
-              <div className="p-1.5 bg-indigo-100 rounded-lg">
+              <div className="p-2 bg-indigo-50 rounded-xl">
                  <TrendingUp className="w-5 h-5 text-indigo-600" />
               </div>
               <div>
-                  <h2 className="text-xl font-bold text-slate-900">Discover Community</h2>
-                  <p className="text-xs text-slate-500 font-medium">Top projects picking up steam</p>
+                  <h2 className="text-xl font-bold text-slate-900">Innovation Feed</h2>
+                  <p className="text-xs text-slate-500 font-medium">Top pitches from the Zigex community</p>
               </div>
             </div>
 
-            {displayedOtherProjects.length > 0 ? (
+            {otherProjects.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-                {displayedOtherProjects.map((p: any) => (
+                {otherProjects.map((p: any) => (
                   <div key={p.id} className="h-full group">
-                     {/* Card Wrapper */}
                      <MyMonthProject
                         user={
                           p.student_profiles || {
-                            id: p.student_id,
+                            id: p.owner_id,
                             full_name: 'Unknown',
                             avatar_url: null,
                           }
@@ -170,16 +156,15 @@ export default async function DashboardProjectsPage() {
                         project={p}
                         isVisitor={true}
                         isOwner={false}
-                        profileOwnerId={p.student_id}
+                        profileOwnerId={p.owner_id}
                       />
 
-                      {/* Link to visit owner's profile */}
                       {p.student_profiles && (
-                        <div className="mt-3 px-4">
+                        <div className="mt-4 px-4">
                           <a href={`/dashboard/student/${slugifyUsername(p.student_profiles.username) || p.student_profiles.id}`}
-                            className="inline-flex items-center gap-2 text-sm sm:text-base text-gray-700 hover:text-blue-600 font-semibold group/link transition-colors duration-200">
-                            <span className="flex items-center gap-1.5">
-                              View {p.student_profiles.full_name}&apos;s profile
+                            className="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-blue-600 font-bold group/link transition-colors duration-200">
+                            <span className="flex items-center gap-1.5 uppercase tracking-tighter">
+                              Meet {p.student_profiles.full_name}
                               <ExternalLink className="w-4 h-4 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform duration-200" />
                             </span>
                           </a>
@@ -189,8 +174,11 @@ export default async function DashboardProjectsPage() {
                 ))}
               </div>
             ) : (
-               <div className="text-center py-20">
-                  <p className="text-slate-400 font-medium">No community projects found at the moment.</p>
+               <div className="text-center py-20 bg-white/50 rounded-[2.5rem] border border-slate-100">
+                  <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                     <Users className="w-8 h-8 text-slate-300" />
+                  </div>
+                  <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">No community pitches found yet.</p>
                </div>
             )}
           </section>
@@ -202,11 +190,18 @@ export default async function DashboardProjectsPage() {
     console.error('Unexpected error in dashboard projects page', err);
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="text-center p-8">
-          <h3 className="text-lg font-bold text-slate-900 mb-2">Something went wrong</h3>
-          <p className="text-slate-500">Please refresh the page to try again.</p>
+        <div className="text-center p-8 bg-white rounded-3xl shadow-sm border border-slate-100">
+          <h3 className="text-lg font-bold text-slate-900 mb-2 uppercase tracking-tight">System Sync Error</h3>
+          <p className="text-slate-500 text-sm mb-6">We encountered an issue syncing your project data.</p>
+          <button onClick={() => window.location.reload()} className="px-6 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold uppercase tracking-widest">
+             Retry Sync
+          </button>
         </div>
       </div>
     );
   }
 }
+
+const Users = ({ className }: { className?: string }) => (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+);

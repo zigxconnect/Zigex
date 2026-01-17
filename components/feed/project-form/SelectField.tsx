@@ -19,7 +19,7 @@ interface SelectFieldProps {
   label: string;
   value: string;
   onChange: (value: string) => void;
-  onBlur: () => void;
+  onBlur?: () => void;
   options: readonly SelectOption[];
   placeholder?: string;
   required?: boolean;
@@ -61,7 +61,7 @@ export const SelectField: React.FC<SelectFieldProps> = ({
                 ? "border-red-500/50 focus:ring-red-500/10" 
                 : ""
             } text-sm font-bold h-12 shadow-sm`}
-            onBlur={onBlur}
+            onBlur={() => onBlur?.()}
           >
             <SelectValue placeholder={placeholder} />
           </SelectTrigger>

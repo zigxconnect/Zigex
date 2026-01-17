@@ -2,6 +2,7 @@ import React from "react";
 import { notFound } from "next/navigation";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import ProjectDetailsView from "@/components/project/ProjectDetailsView";
+import { getProfileInfo, getRawProfileInfo } from "@/lib/actions/profile.actions";
 
 import { Metadata } from "next";
 
@@ -183,7 +184,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ProjectPage({ params }: Props) {
   const { id } = await params;
 
-  // 1. Fetch Project from Supabase
+  // 1. Fetch User Data
+  const rawProfile = await getRawProfileInfo();
+  const currentUserData = await getProfileInfo().catch(() => null);
+
+  const isAdmin = !!(rawProfile && rawProfile.email && process.env.ADMIN_EMAIL && rawProfile.email === process.env.ADMIN_EMAIL);
+
+  const currentUser = currentUserData || (rawProfile ? {
+    profile: rawProfile as any,
+    name: rawProfile.full_name || "User",
+    avatarUrl: rawProfile.avatar_url || null,
+  } : null);
+
+  // 2. Fetch Project from Supabase
   const { data: project, error } = await supabaseAdmin
     .from("projects")
     .select("*")
@@ -195,14 +208,15 @@ export default async function ProjectPage({ params }: Props) {
   }
 
   // 2. Fetch Owner Profile
+  // We use user_id on student_profiles to match project.owner_id (which is auth.users.id)
   const { data: owner } = await supabaseAdmin
     .from("student_profiles")
-    .select("id, full_name, avatar_url, university")
-    .eq("id", project.student_id)
+    .select("id, user_id, full_name, avatar_url, university")
+    .eq("user_id", project.owner_id) 
     .maybeSingle();
 
   // 3. Fetch GitHub Data
-  const githubData = await getGitHubData(project.github_repository);
+  const githubData = await getGitHubData(project.github_url);
 
   // 4. Fetch Similar Projects
   let similarProjects = [];
@@ -215,8 +229,39 @@ export default async function ProjectPage({ params }: Props) {
   // Transform project data to match View Interface
   const projectViewData = {
     ...project,
-    title: project.project_title,
+    title: project.title, 
   };
+
+  // 5. Fetch Company Context if user is a company
+  let companyProfile = null;
+  let activeSubmission = null;
+  if (rawProfile?.user_id) {
+    const { data: company } = await supabaseAdmin
+      .from("company_profiles")
+      .select("*")
+      .eq("user_id", rawProfile.user_id)
+      .maybeSingle();
+    
+    if (company) {
+      companyProfile = company;
+      const { data: submission } = await supabaseAdmin
+        .from("project_submissions")
+        .select("*")
+        .eq("project_id", id)
+        .eq("company_id", company.id)
+        .maybeSingle();
+      activeSubmission = submission;
+    }
+  }
+
+  // 6. Visibility Restriction
+  const isPrivate = !project.is_published;
+  const isOwner = rawProfile?.user_id === project.owner_id;
+  const canAccess = !isPrivate || isOwner || isAdmin || !!activeSubmission;
+
+  if (!canAccess) {
+    notFound();
+  }
 
   return (
     <ProjectDetailsView 
@@ -224,6 +269,10 @@ export default async function ProjectPage({ params }: Props) {
       owner={owner}
       githubData={githubData}
       similarProjects={similarProjects}
+      currentUser={currentUser}
+      isAdmin={isAdmin}
+      companyProfile={companyProfile}
+      activeSubmission={activeSubmission}
     />
   );
 }

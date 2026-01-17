@@ -95,12 +95,22 @@ export async function getProfileInfo(): Promise<FormattedUserData> {
 }
 
 /**
- * Server action to get just the raw user profile data.
- * Returns null if the user or profile is not found, allowing client
- * components to handle the UI state gracefully.
- * @returns {Promise<UserProfile | null>}
+ * Simple helper to get the authenticated user from Supabase Auth.
  */
-export async function getRawProfileInfo(): Promise<UserProfile | null> {
+export async function getAuthUser() {
+  const supabase = await createServerActionClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  return user;
+}
+
+/**
+ * Server action to get just the raw user profile data.
+ * Returns null if the user is not found.
+ * If the user is found but no record exists in `student_profiles`, 
+ * returns a partial object with `user_id` and `email` from Auth.
+ * @returns {Promise<Partial<UserProfile> | null>}
+ */
+export async function getRawProfileInfo(): Promise<Partial<UserProfile> | null> {
   try {
     const supabase = await createServerActionClient();
     const {
@@ -117,10 +127,17 @@ export async function getRawProfileInfo(): Promise<UserProfile | null> {
 
     if (error) {
       console.error("Error fetching raw profile:", error);
-      return null;
     }
 
-    return profile;
+    if (profile) return profile;
+
+    // Fallback: return basic info from auth user if no DB profile exists
+    return {
+      user_id: user.id,
+      email: user.email || null,
+      full_name: user.user_metadata?.full_name || null,
+      avatar_url: user.user_metadata?.avatar_url || null,
+    };
   } catch (error) {
     console.error("Unexpected error in getRawProfileInfo:", error);
     return null;

@@ -1,30 +1,35 @@
 import { FormErrors, ProjectFormData, TouchedFields } from "@/app/types/project.types";
 import { projectFormSchema } from "@/lib/validation/project.validation";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { z } from "zod";
-
 
 export const useProjectForm = () => {
   const [formData, setFormData] = useState<Partial<ProjectFormData>>({
     title: "",
-    description: "",
-    githubLink: "",
-    youtubeLink: "",
-    duration: "",
-    coverImage: null,
-    uploadedVideo: null
+    tagline: "",
+    problemStatement: "",
+    solutionDescription: "",
+    category: "",
+    coverImages: [],
+    videoFile: null,
+    pitchDeck: null,
+    targetCompanyId: undefined,
+    fundingGoal: "",
+    repoLink: "",
+    techStack: [],
+    roadmap: ""
   });
-  
+
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<TouchedFields>({});
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
 
-  const validateField = (name: keyof ProjectFormData, value: any) => {
+  const validateField = useCallback((name: keyof ProjectFormData, value: any) => {
     try {
       const dataToValidate = { ...formData, [name]: value };
       projectFormSchema.parse(dataToValidate);
-      
+
       setErrors(prev => {
         const newErrors = { ...prev };
         delete newErrors[name];
@@ -32,14 +37,14 @@ export const useProjectForm = () => {
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
-        const fieldError = (error as z.ZodError).issues.find((err: z.ZodIssue) => 
+        const fieldError = (error as z.ZodError).issues.find((err: z.ZodIssue) =>
           err.path.length > 0 && err.path[0] === name
         );
-        
+
         if (fieldError) {
-          setErrors(prev => ({ 
-            ...prev, 
-            [name]: fieldError.message 
+          setErrors(prev => ({
+            ...prev,
+            [name]: fieldError.message
           }));
         } else {
           setErrors(prev => {
@@ -50,7 +55,7 @@ export const useProjectForm = () => {
         }
       }
     }
-  };
+  }, [formData]);
 
   const handleInputChange = (name: keyof ProjectFormData, value: any) => {
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -65,233 +70,215 @@ export const useProjectForm = () => {
     validateField(name, currentValue);
   };
 
-  const handleImageChange = (file: File | null) => {
-    if (!file) return;
+  const handleImagesChange = (files: FileList | File[]) => {
+    const newFiles = Array.from(files);
+    const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
-    const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"];
-    
-    if (file.size > 5000000) {
-      setErrors(prev => ({ ...prev, coverImage: "Image must be less than 5MB" }));
-      return;
-    }
-
-    if (!validTypes.includes(file.type)) {
-      setErrors(prev => ({ 
-        ...prev, 
-        coverImage: "Only .jpg, .jpeg, .png, .webp, and .gif formats are supported" 
-      }));
-      return;
-    }
-
-    setErrors(prev => {
-      const newErrors = { ...prev };
-      delete newErrors.coverImage;
-      return newErrors;
+    // Filter valid files
+    const validFiles = newFiles.filter(file => {
+      if (file.size > 5000000) return false;
+      if (!validTypes.includes(file.type)) return false;
+      return true;
     });
 
-    setFormData(prev => ({ ...prev, coverImage: file }));
-    
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
+    if (validFiles.length !== newFiles.length) {
+      setErrors(prev => ({ ...prev, coverImages: "Some images were invalid (too large or wrong format)" }));
     }
-    
-    const url = URL.createObjectURL(file);
-    setPreviewUrl(url);
+
+    const updatedImages = [...(formData.coverImages || []), ...validFiles].slice(0, 6);
+    setFormData(prev => ({ ...prev, coverImages: updatedImages }));
+
+    // Update previews
+    const newPreviewUrls = validFiles.map(file => URL.createObjectURL(file));
+    setPreviewUrls(prev => [...prev, ...newPreviewUrls].slice(0, 6));
+
+    if (touched.coverImages) {
+      validateField("coverImages", updatedImages);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    const updatedImages = (formData.coverImages || []).filter((_, i) => i !== index);
+    setFormData(prev => ({ ...prev, coverImages: updatedImages }));
+
+    if (previewUrls[index]) {
+      URL.revokeObjectURL(previewUrls[index]);
+    }
+    const updatedPreviews = previewUrls.filter((_, i) => i !== index);
+    setPreviewUrls(updatedPreviews);
+
+    validateField("coverImages", updatedImages);
   };
 
   const handleVideoChange = (file: File | null) => {
-    if (!file) return;
-
-    const validTypes = ["video/mp4", "video/webm", "video/ogg", "video/quicktime"];
-    
-    if (file.size > 20000000) {
-      setErrors(prev => ({ ...prev, uploadedVideo: "Video must be less than 20MB" }));
+    if (!file) {
+      setFormData(prev => ({ ...prev, videoFile: null }));
+      setVideoPreviewUrl(null);
       return;
     }
 
-    if (!validTypes.includes(file.type)) {
-      setErrors(prev => ({ 
-        ...prev, 
-        uploadedVideo: "Only .mp4, .webm, .ogg, and .mov formats are supported" 
-      }));
+    if (file.size > 50000000) {
+      setErrors(prev => ({ ...prev, videoFile: "Video must be less than 50MB" }));
       return;
     }
 
-    setErrors(prev => {
-      const newErrors = { ...prev };
-      delete newErrors.uploadedVideo;
-      return newErrors;
-    });
+    setFormData(prev => ({ ...prev, videoFile: file }));
 
-    setFormData(prev => ({ ...prev, uploadedVideo: file }));
-    
     if (videoPreviewUrl) {
       URL.revokeObjectURL(videoPreviewUrl);
     }
-    
+
     const url = URL.createObjectURL(file);
     setVideoPreviewUrl(url);
+    validateField("videoFile", file);
   };
 
-  const removeImage = () => {
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
+  const handlePitchDeckChange = (file: File | null) => {
+    if (!file) {
+      setFormData(prev => ({ ...prev, pitchDeck: null }));
+      return;
     }
-    setFormData(prev => ({ ...prev, coverImage: null }));
-    setPreviewUrl(null);
-    setErrors(prev => {
-      const newErrors = { ...prev };
-      delete newErrors.coverImage;
-      return newErrors;
-    });
-  };
 
-  const removeVideo = () => {
-    if (videoPreviewUrl) {
-      URL.revokeObjectURL(videoPreviewUrl);
+    if (file.size > 10000000) {
+      setErrors(prev => ({ ...prev, pitchDeck: "PDF must be less than 10MB" }));
+      return;
     }
-    setFormData(prev => ({ ...prev, uploadedVideo: null }));
-    setVideoPreviewUrl(null);
-    setErrors(prev => {
-      const newErrors = { ...prev };
-      delete newErrors.uploadedVideo;
-      return newErrors;
-    });
+
+    setFormData(prev => ({ ...prev, pitchDeck: file }));
+    validateField("pitchDeck", file);
   };
 
   const validateForm = (): { isValid: boolean; errors?: FormErrors } => {
     try {
-      console.log('Validating form with data:', {
-        title: formData.title,
-        descriptionLength: formData.description?.length,
-        githubLink: formData.githubLink,
-        youtubeLink: formData.youtubeLink,
-        duration: formData.duration,
-        hasCoverImage: !!formData.coverImage,
-        hasUploadedVideo: !!formData.uploadedVideo
-      });
-      
-      // Parse with schema
       projectFormSchema.parse(formData);
-      // Clear errors if validation passes
       setErrors({});
-      console.log('Form validation passed!');
       return { isValid: true };
     } catch (error) {
       if (error instanceof z.ZodError) {
-        console.warn('Zod validation errors:', error.issues);
-        // Create a new errors object
         const fieldErrors: FormErrors = {};
-        
-        // Safely process each validation error
         error.issues.forEach((issue: z.ZodIssue) => {
           const path = issue.path[0];
-          if (typeof path === 'string' && path in formData) {
+          if (typeof path === 'string') {
             fieldErrors[path as keyof ProjectFormData] = issue.message;
           }
         });
 
-        // Update the errors state
         setErrors(fieldErrors);
-        
-        // Update touched state for fields with errors
+
+        // Touch all fields that have errors
         const newTouched = { ...touched };
         Object.keys(fieldErrors).forEach(key => {
-          if (key in formData) {
-            newTouched[key as keyof ProjectFormData] = true;
-          }
+          newTouched[key as keyof ProjectFormData] = true;
         });
         setTouched(newTouched);
-        
-        console.log('Form validation failed with errors:', fieldErrors);
+
         return { isValid: false, errors: fieldErrors };
       }
-      // Handle unexpected errors
-      console.error('Unexpected validation error:', error);
-      setErrors({});
       return { isValid: false };
     }
   };
 
+  const validateStep = useCallback((fields: (keyof ProjectFormData)[]): boolean => {
+    // 1. Create a partial schema for only the requested fields
+    const stepSchema = projectFormSchema.pick(
+      fields.reduce((acc, field) => ({ ...acc, [field]: true }), {})
+    );
+
+    // 2. Validate the data
+    const result = stepSchema.safeParse(formData);
+
+    // 3. Update errors and touched state
+    const newErrors = { ...errors };
+    const newTouched = { ...touched };
+
+    // Mark all target fields as touched
+    fields.forEach(field => {
+      newTouched[field] = true;
+    });
+
+    if (!result.success) {
+      // Map Zod issues back to our errors object
+      result.error.issues.forEach(issue => {
+        const fieldPath = issue.path[0] as keyof ProjectFormData;
+        if (fields.includes(fieldPath)) {
+          newErrors[fieldPath] = issue.message;
+        }
+      });
+
+      setErrors(newErrors);
+      setTouched(newTouched);
+      return false;
+    }
+
+    // Clean up errors for successfully validated fields
+    fields.forEach(field => {
+      delete newErrors[field];
+    });
+
+    setErrors(newErrors);
+    setTouched(newTouched);
+    return true;
+  }, [formData, errors, touched]);
+
   const resetForm = () => {
     setFormData({
       title: "",
-      description: "",
-      githubLink: "",
-      youtubeLink: "",
-      duration: "",
-      coverImage: null,
-      uploadedVideo: null
+      tagline: "",
+      problemStatement: "",
+      solutionDescription: "",
+      category: "",
+      coverImages: [],
+      videoFile: null,
+      pitchDeck: null,
+      targetCompanyId: undefined,
+      fundingGoal: "",
+      repoLink: "",
+      techStack: [],
+      roadmap: ""
     });
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-    }
-    if (videoPreviewUrl) {
-      URL.revokeObjectURL(videoPreviewUrl);
-    }
-    setPreviewUrl(null);
+    previewUrls.forEach(url => URL.revokeObjectURL(url));
+    if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
+    setPreviewUrls([]);
     setVideoPreviewUrl(null);
     setErrors({});
     setTouched({});
   };
 
-  const isFormValid = () => {
-    try {
-      projectFormSchema.parse(formData);
-      return true;
-    } catch {
-      return false;
-    }
-  };
-
   const getFormData = (): FormData => {
     const formDataObj = new FormData();
-    
-    if (formData.title) formDataObj.append('title', formData.title);
-    if (formData.description) formDataObj.append('description', formData.description);
-    if (formData.githubLink) formDataObj.append('githubLink', formData.githubLink);
-    if (formData.youtubeLink) formDataObj.append('youtubeLink', formData.youtubeLink);
-    if (formData.duration) formDataObj.append('duration', formData.duration);
-    if (formData.coverImage) formDataObj.append('coverImage', formData.coverImage);
-    if (formData.uploadedVideo) formDataObj.append('uploadedVideo', formData.uploadedVideo);
-    
-    return formDataObj;
-  };
 
-  const validateAllFieldsOnChange = () => {
-    // This function validates all fields when form data changes
-    // Used primarily for real-time validation feedback
-    const fieldsToCheck: (keyof ProjectFormData)[] = [
-      'title',
-      'description',
-      'duration',
-      'githubLink',
-      'youtubeLink'
-    ];
-    
-    fieldsToCheck.forEach(field => {
-      if (touched[field]) {
-        validateField(field, formData[field]);
+    Object.entries(formData).forEach(([key, value]) => {
+      if (value === null || value === undefined) return;
+
+      if (key === 'coverImages' && Array.isArray(value)) {
+        value.forEach((file) => formDataObj.append('coverImages', file));
+      } else if (key === 'techStack' && Array.isArray(value)) {
+        value.forEach((tech) => formDataObj.append('techStack', tech));
+      } else if (value instanceof File) {
+        formDataObj.append(key, value);
+      } else {
+        formDataObj.append(key, String(value));
       }
     });
+
+    return formDataObj;
   };
 
   return {
     formData,
     errors,
     touched,
-    previewUrl,
+    previewUrls,
     videoPreviewUrl,
     handleInputChange,
     handleBlur,
-    handleImageChange,
+    handleImagesChange,
     handleVideoChange,
+    handlePitchDeckChange,
     removeImage,
-    removeVideo,
     validateForm,
+    validateStep,
     resetForm,
-    isFormValid,
     getFormData,
-    validateAllFieldsOnChange
   };
 };

@@ -14,6 +14,7 @@ import {
   TrendingUp,
   ChevronRight,
   BookOpen,
+  Rocket,
 } from "lucide-react";
 import { useAdminSidebar } from "./AdminLayoutProvider";
 
@@ -41,6 +42,7 @@ const navigationGroups = [
       { href: "/admin/applicants", icon: Users, label: "Applicants" },
       { href: "/admin/accepted", icon: CheckCheck, label: "Hires" },
       { href: "/admin/programs/content", icon: BookOpen, label: "Content" },
+      { href: "/admin/pitches", icon: Rocket, label: "Pitches", badge: "Live" },
     ],
   },
   {

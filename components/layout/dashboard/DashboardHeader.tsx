@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, Bell } from "lucide-react";
+import { Menu, Bell, MessageCircle } from "lucide-react";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { NotificationDropdown } from "./NotificationDropdown";
@@ -59,6 +59,17 @@ export const DashboardHeader = ({
 
         {/* Right Side - Notifications, User & Logout */}
         <div className="flex items-center gap-3 lg:gap-4">
+          {/* Messaging Shortcut */}
+          <div className="flex-shrink-0 relative group">
+            <button className="p-2 hover:bg-muted text-muted-foreground hover:text-primary rounded-xl transition-all duration-300">
+              <MessageCircle size={22} />
+              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-blue-600 border-2 border-background rounded-full animate-pulse" />
+            </button>
+            <div className="absolute top-full right-0 mt-2 p-2 bg-slate-900 text-white text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+               Direct Messages
+            </div>
+          </div>
+
           {/* Notifications Dropdown */}
           <div className="flex-shrink-0">
             <NotificationDropdown />

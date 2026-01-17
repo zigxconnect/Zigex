@@ -1,503 +1,491 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { X, Github, Calendar, Link, Loader2, Save, Plus, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { X, Github, Link, Loader2, Save, Rocket, Target, Lightbulb, FileText, Globe, Code2, ChevronRight, ChevronLeft, Plus, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { CreateProjectModalProps, PROJECT_DURATIONS } from "@/app/types/project.types";
+import { CreateProjectModalProps } from "@/app/types/project.types";
 import { createProjectAction } from "@/lib/actions/project.actions";
 import { InputField } from "../feed/project-form/InputField";
 import { TextareaField } from "../feed/project-form/TextareaField";
-import { ImageUpload } from "../feed/project-form/ImageUpload";
 import { VideoUpload } from "../feed/project-form/VideoUpload";
 import { SelectField } from "../feed/project-form/SelectField";
+import { MultiImageUpload } from "../feed/project-form/MultiImageUpload";
+import { FileUpload } from "../feed/project-form/FileUpload";
 import { useProjectForm } from "@/hooks/useProjectForm";
 import ProjectSuccessModal from "./ProjectSuccessModal";
+import { Badge } from "@/components/ui/badge";
+import { getCompaniesAction } from "@/lib/actions/company.actions";
+import { ProjectFormData } from "@/app/types/project.types";
 
-// Local storage key for draft persistence
-const DRAFT_STORAGE_KEY = "project_form_draft";
+const PROJECT_CATEGORIES = [
+  { value: "SaaS", label: "SaaS / Software" },
+  { value: "Fintech", label: "Fintech" },
+  { value: "Edtech", label: "Edtech" },
+  { value: "Healthtech", label: "Healthtech" },
+  { value: "E-commerce", label: "E-commerce" },
+  { value: "AI/ML", label: "AI / Machine Learning" },
+  { value: "Blockchain", label: "Blockchain" },
+  { value: "Social", label: "Social Media" },
+  { value: "Sustainability", label: "Green Tech" },
+];
+
+const COMMON_TECH = ["Next.js", "React", "TypeScript", "Node.js", "Python", "Supabase", "PostgreSQL", "TailwindCSS", "Prisma", "Go", "Rust", "Swift", "Kotlin"];
 
 export default function CreateProjectModal({ isOpen, onClose }: CreateProjectModalProps) {
+  const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [submittedProjectTitle, setSubmittedProjectTitle] = useState("");
-  const [hasDraft, setHasDraft] = useState(false);
+  const [techInput, setTechInput] = useState("");
+  const [companies, setCompanies] = useState<{ value: string; label: string }[]>([]);
   const router = useRouter();
 
   const {
     formData,
     errors,
     touched,
-    previewUrl,
+    previewUrls,
     videoPreviewUrl,
     handleInputChange,
     handleBlur,
-    handleImageChange,
+    handleImagesChange,
     handleVideoChange,
+    handlePitchDeckChange,
     removeImage,
-    removeVideo,
     validateForm,
+    validateStep,
     resetForm,
-    isFormValid,
     getFormData,
-    validateAllFieldsOnChange
   } = useProjectForm();
 
-  // Check for saved draft on mount
-  useEffect(() => {
-    if (isOpen) {
-      try {
-        const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
-        if (savedDraft) {
-          const draft = JSON.parse(savedDraft);
-          // Check if draft has any content
-          const hasContent = Object.values(draft).some(val =>
-            val !== "" && val !== null && val !== undefined
-          );
-          setHasDraft(hasContent);
-        }
-      } catch (error) {
-        console.error("Error loading draft:", error);
-      }
-    }
-  }, [isOpen]);
-
-  // Auto-save draft to localStorage
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const saveDraft = () => {
-      try {
-        const draftData = {
-          title: formData.title || "",
-          description: formData.description || "",
-          githubLink: formData.githubLink || "",
-          youtubeLink: formData.youtubeLink || "",
-          duration: formData.duration || "",
-          timestamp: new Date().toISOString()
-        };
-        localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draftData));
-      } catch (error) {
-        console.error("Error saving draft:", error);
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => { 
+    setIsMounted(true); 
+    const fetchCompanies = async () => {
+      const result = await getCompaniesAction();
+      if (result.success && result.data) {
+        const formatted = result.data.map((c: any) => ({
+          value: c.id,
+          label: c.company_name
+        }));
+        setCompanies([{ value: "open", label: "🌍 Open Pitch (Visible to Everyone)" }, ...formatted]);
       }
     };
-
-    // Debounce the save operation
-    const timeoutId = setTimeout(saveDraft, 1000);
-    return () => clearTimeout(timeoutId);
-  }, [formData, isOpen]);
-
-  // Load draft when user wants to restore
-  const loadDraft = useCallback(() => {
-    try {
-      const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
-      if (savedDraft) {
-        const draft = JSON.parse(savedDraft);
-        Object.entries(draft).forEach(([key, value]) => {
-          if (key !== "timestamp" && value) {
-            handleInputChange(key as any, value as string);
-          }
-        });
-        toast.success("Draft restored!");
-        setHasDraft(false);
-      }
-    } catch (error) {
-      console.error("Error loading draft:", error);
-      toast.error("Failed to load draft");
-    }
-  }, [handleInputChange]);
-
-  // Clear draft
-  const clearDraft = useCallback(() => {
-    try {
-      localStorage.removeItem(DRAFT_STORAGE_KEY);
-      setHasDraft(false);
-      toast.success("Draft cleared");
-    } catch (error) {
-      console.error("Error clearing draft:", error);
-    }
+    fetchCompanies();
   }, []);
 
-  // Always validate all fields on change
-  useEffect(() => {
-    if (typeof validateAllFieldsOnChange === 'function') {
-      validateAllFieldsOnChange();
+  const totalSteps = 4;
+
+  const nextStep = () => {
+    let fieldsToValidate: (keyof ProjectFormData)[] = [];
+    
+    if (currentStep === 1) fieldsToValidate = ["title", "tagline", "category", "targetCompanyId"];
+    if (currentStep === 2) fieldsToValidate = ["problemStatement", "solutionDescription"];
+    if (currentStep === 3) fieldsToValidate = ["videoFile", "coverImages"];
+    if (currentStep === 4) fieldsToValidate = ["pitchDeck", "techStack", "repoLink"];
+
+    const isValid = validateStep(fieldsToValidate);
+    
+    if (isValid) {
+      if (currentStep < totalSteps) {
+        setCurrentStep(prev => prev + 1);
+      }
     } else {
-      validateForm();
+      // Find the first error message for the current slide
+      const firstErrorKey = fieldsToValidate.find(field => errors[field]);
+      const errorMessage = firstErrorKey ? errors[firstErrorKey] : "Please check your inputs";
+      toast.error(errorMessage);
     }
-  }, [formData]);
+  };
+
+  const prevStep = () => {
+    if (currentStep > 1) setCurrentStep(prev => prev - 1);
+  };
+
+  const addTech = (tech: string) => {
+    const cleanTech = tech.trim();
+    if (!cleanTech) return;
+    const currentStack = formData.techStack || [];
+    if (!currentStack.includes(cleanTech)) {
+      handleInputChange("techStack", [...currentStack, cleanTech]);
+    }
+    setTechInput("");
+  };
+
+  const removeTech = (tech: string) => {
+    const currentStack = formData.techStack || [];
+    handleInputChange("techStack", currentStack.filter(t => t !== tech));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    e.stopPropagation();
-
-    try {
-      const { isValid, errors: validationErrors } = validateForm();
-      console.log('Form validation result:', { isValid, validationErrors, formData });
-
-      if (!isValid) {
-        console.warn('Form validation failed:', validationErrors);
-        setSubmitError("Please fix the highlighted fields");
-        // Show toast with more specific errors
-        const errorMessages = Object.entries(validationErrors || {})
-          .map(([field, message]) => `${field}: ${message}`)
-          .join('\n');
-        toast.error('Validation failed', {
-          description: errorMessages.substring(0, 100) // Limit description length
-        });
-        return;
-      }
-    } catch (error) {
-      console.error('Validation error:', error);
-      setSubmitError("Form validation failed");
-      toast.error("Form validation failed");
+    const { isValid } = validateForm();
+    
+    if (!isValid) {
+      toast.error("Please complete all required fields correctly across all steps");
       return;
     }
 
     try {
       setIsSubmitting(true);
-      setSubmitError(null);
-      console.log('Starting project creation...');
-
-      const formDataToSubmit = getFormData();
-      console.log('Submitting form data:', {
-        title: formDataToSubmit.get('title'),
-        description: formDataToSubmit.get('description'),
-        githubLink: formDataToSubmit.get('githubLink'),
-        youtubeLink: formDataToSubmit.get('youtubeLink'),
-        duration: formDataToSubmit.get('duration'),
-        hasCoverImage: !!formDataToSubmit.get('coverImage'),
-        hasVideo: !!formDataToSubmit.get('uploadedVideo')
-      });
-
-      const result = await createProjectAction(formDataToSubmit);
-      console.log('Project creation result:', result);
+      const data = getFormData();
+      const result = await createProjectAction(data);
 
       if (result.success) {
-        console.log('Project created successfully');
-        setSubmittedProjectTitle(formData.title || "Your project");
-
-        // Clear the draft on successful submission
-        localStorage.removeItem(DRAFT_STORAGE_KEY);
-
-        toast.success("Project created successfully! 🎉");
-
+        setSubmittedProjectTitle(formData.title || "Project");
+        toast.success("Project Pitch Launched! 🚀");
         onClose();
         resetForm();
-
-        setTimeout(() => {
-          setShowSuccessModal(true);
-        }, 200);
-
+        setShowSuccessModal(true);
         router.refresh();
       } else {
-        console.error('Project creation failed:', result);
-        const errorMsg = result.error || "Failed to create project";
-        setSubmitError(errorMsg);
-
-        if (result.fieldErrors) {
-          console.warn('Field errors:', result.fieldErrors);
-          toast.error(errorMsg);
-        } else {
-          toast.error(errorMsg);
-        }
+        toast.error(result.error || "Launch failed");
       }
     } catch (error) {
-      console.error("Error submitting project:", error);
-      const errorMsg = "An unexpected error occurred. Please try again.";
-      setSubmitError(errorMsg);
-      toast.error(errorMsg);
+      toast.error("An unexpected error occurred");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleClose = () => {
-    if (!isSubmitting) {
-      // Don't reset form or clear draft - data persists
-      setSubmitError(null);
-      onClose();
+  if (!isOpen) return null;
 
-      // Show a toast to inform user their progress is saved
-      const hasContent = Object.values(formData).some(val =>
-        val !== "" && val !== null && val !== undefined
-      );
-      if (hasContent) {
-        toast.info("Your progress has been saved", {
-          description: "You can continue where you left off"
-        });
-      }
+  const renderStep = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+             <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <Rocket className="w-5 h-5" />
+                </div>
+                <div>
+                   <h3 className="text-lg font-black uppercase tracking-tight text-slate-900">Project Identity</h3>
+                   <p className="text-[10px] text-slate-500 font-medium uppercase tracking-widest">Slide 1 of 4</p>
+                </div>
+             </div>
+             
+             <InputField
+              id="title"
+              label="Project Title"
+              value={formData.title || ""}
+              onChange={(v) => handleInputChange("title", v)}
+              placeholder="e.g. Zigex Connect"
+              required
+              error={errors.title}
+              touched={touched.title}
+            />
+
+            <InputField
+              id="tagline"
+              label="Elevator Pitch (Tagline)"
+              value={formData.tagline || ""}
+              onChange={(v) => handleInputChange("tagline", v)}
+              placeholder="Explain your mission in one sentence..."
+              required
+              error={errors.tagline}
+              touched={touched.tagline}
+            />
+
+            <SelectField
+              id="category"
+              label="Domain / Category"
+              value={formData.category || ""}
+              onChange={(v) => handleInputChange("category", v)}
+              options={PROJECT_CATEGORIES}
+              placeholder="Select project category"
+              required
+              error={errors.category}
+              icon={<Target className="w-4 h-4 text-blue-500" />}
+            />
+
+            <SelectField
+              id="targetCompanyId"
+              label="Target Company (Pitch To)"
+              value={formData.targetCompanyId || ""}
+              onChange={(v) => handleInputChange("targetCompanyId", v)}
+              options={companies}
+              placeholder="Submit to a specific company?"
+              error={errors.targetCompanyId}
+              icon={<Globe className="w-4 h-4 text-emerald-500" />}
+            />
+          </div>
+        );
+      case 2:
+        return (
+          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+             <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                    <Lightbulb className="w-5 h-5" />
+                </div>
+                <div>
+                   <h3 className="text-lg font-black uppercase tracking-tight text-slate-900">The Problem & Solution</h3>
+                   <p className="text-[10px] text-slate-500 font-medium uppercase tracking-widest">Slide 2 of 4</p>
+                </div>
+             </div>
+
+             <TextareaField
+              id="problemStatement"
+              label="The Problem"
+              value={formData.problemStatement || ""}
+              onChange={(v) => handleInputChange("problemStatement", v)}
+              placeholder="What pain point are you solving? (min 20 chars)"
+              required
+              error={errors.problemStatement}
+              rows={4}
+            />
+
+            <TextareaField
+              id="solutionDescription"
+              label="Your Solution"
+              value={formData.solutionDescription || ""}
+              onChange={(v) => handleInputChange("solutionDescription", v)}
+              placeholder="How does your project fix it? Describe the innovation... (min 50 chars)"
+              required
+              error={errors.solutionDescription}
+              rows={6}
+            />
+          </div>
+        );
+      case 3:
+        return (
+          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+             <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                    <Globe className="w-5 h-5" />
+                </div>
+                <div>
+                   <h3 className="text-lg font-black uppercase tracking-tight text-slate-900">Media Assets</h3>
+                   <p className="text-[10px] text-slate-500 font-medium uppercase tracking-widest">Slide 3 of 4</p>
+                </div>
+             </div>
+
+             <div className="p-4 bg-slate-50 rounded-[2rem] border border-blue-50">
+               <VideoUpload
+                videoPreviewUrl={videoPreviewUrl}
+                onVideoChange={handleVideoChange}
+                onRemove={() => handleVideoChange(null)}
+                error={errors.videoFile}
+               />
+             </div>
+
+             <div className="p-4 bg-slate-50 rounded-[2rem] border border-blue-50">
+               <MultiImageUpload
+                 previewUrls={previewUrls}
+                 onImagesChange={handleImagesChange}
+                 onRemove={removeImage}
+                 error={errors.coverImages}
+               />
+             </div>
+          </div>
+        );
+      case 4:
+        return (
+          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+             <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    <Code2 className="w-5 h-5" />
+                </div>
+                <div>
+                   <h3 className="text-lg font-black uppercase tracking-tight text-slate-900">Investor & Dev Details</h3>
+                   <p className="text-[10px] text-slate-500 font-medium uppercase tracking-widest">Slide 4 of 4</p>
+                </div>
+             </div>
+
+             <FileUpload 
+              label="Pitch Deck (PDF)"
+              file={formData.pitchDeck || null}
+              onFileChange={handlePitchDeckChange}
+              error={errors.pitchDeck}
+             />
+
+             <div className="grid grid-cols-2 gap-4">
+                <InputField
+                    id="fundingGoal"
+                    label="Funding Goal ($)"
+                    type="number"
+                    value={formData.fundingGoal || ""}
+                    onChange={(v) => handleInputChange("fundingGoal", v)}
+                    placeholder="Optional amount"
+                    icon={<Check className="w-4 h-4 text-emerald-500" />}
+                />
+                <InputField
+                    id="repo"
+                    label="Github Repository"
+                    value={formData.repoLink || ""}
+                    onChange={(v) => handleInputChange("repoLink", v)}
+                    placeholder="https://github.com/..."
+                    icon={<Github className="w-4 h-4 text-slate-900" />}
+                    error={errors.repoLink}
+                />
+             </div>
+
+             <div className="space-y-3">
+                <Label className="text-[10px] font-black text-[#155DFC] uppercase tracking-widest ml-1">Tech Stack</Label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                   {(formData.techStack || []).map(tech => (
+                     <Badge key={tech} variant="secondary" className="px-3 py-1 bg-blue-50 text-blue-700 border-blue-100 flex items-center gap-2">
+                        {tech}
+                        <X className="w-3 h-3 cursor-pointer" onClick={() => removeTech(tech)} />
+                     </Badge>
+                   ))}
+                </div>
+                <div className="flex gap-2">
+                   <input
+                    type="text"
+                    value={techInput}
+                    onChange={(e) => setTechInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTech(techInput))}
+                    className="flex-1 px-4 py-2 bg-slate-50 border border-blue-100 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                    placeholder="Add technology (Press Enter)"
+                   />
+                   <button 
+                    type="button" 
+                    onClick={() => addTech(techInput)}
+                    className="p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+                   >
+                     <Plus className="w-4 h-4" />
+                   </button>
+                </div>
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                   {COMMON_TECH.filter(t => !(formData.techStack || []).includes(t)).slice(0, 8).map(tech => (
+                     <button
+                        key={tech}
+                        type="button"
+                        onClick={() => addTech(tech)}
+                        className="text-[9px] font-bold uppercase tracking-tighter px-2 py-1 bg-slate-100 text-slate-500 rounded-lg hover:bg-blue-100 hover:text-blue-600 transition-colors"
+                     >
+                       + {tech}
+                     </button>
+                   ))}
+                </div>
+             </div>
+
+             <InputField
+                id="roadmap"
+                label="Roadmap Link (Optional)"
+                value={formData.roadmap || ""}
+                onChange={(v) => handleInputChange("roadmap", v)}
+                placeholder="Product Hunt, Notion, or Trello link"
+                icon={<Link className="w-4 h-4 text-blue-500" />}
+             />
+          </div>
+        );
+      default:
+        return null;
     }
   };
 
-  const handleSuccessModalClose = () => {
-    setShowSuccessModal(false);
-    setSubmittedProjectTitle("");
-  };
-
-  // Handle portal mounting on client side
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  if (!isOpen) return null;
-
   const modalContent = (
-    <>
+    <div
+      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 safe-area-inset-bottom"
+    >
       <div
-        className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 safe-area-inset-bottom"
-        onClick={(e) => {
-          if (e.target === e.currentTarget && !isSubmitting) {
-            handleClose();
-          }
-        }}
+        className="relative w-full sm:max-w-2xl bg-white sm:rounded-[2.5rem] rounded-t-[2.5rem] shadow-2xl h-[95dvh] sm:h-[90vh] flex flex-col border border-blue-50 sm:m-4 overflow-hidden transition-all ease-out duration-500"
       >
-        <div
-          className="relative w-full sm:max-w-2xl bg-white sm:rounded-[2.5rem] rounded-t-[2.5rem] shadow-2xl h-[95dvh] sm:h-[85vh] flex flex-col border border-blue-50 sm:m-4 overflow-hidden transition-all ease-out duration-500"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Header - Premium Brand Style */}
-          <div className="sticky top-0 z-50 flex items-center justify-between px-6 sm:px-8 py-5 border-b border-border bg-card/95 backdrop-blur-xl shrink-0 safe-area-top">
-            <div className="flex items-center gap-4 min-w-0 flex-1">
-              <button
-                onClick={handleClose}
-                disabled={isSubmitting}
-                className="h-10 w-10 rounded-full shrink-0 flex items-center justify-center bg-muted hover:bg-muted/80 text-primary transition-all duration-300"
-              >
-                <X className="h-5 w-5" />
-              </button>
-              <div className="min-w-0">
-                <h2 className="text-xl sm:text-2xl font-black text-foreground truncate tracking-tight uppercase">
-                  New Project
-                </h2>
-                <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none mt-1">
-                  Zigex Spotlight
-                </p>
-              </div>
-            </div>
-
+        {/* Header */}
+        <div className="sticky top-0 z-50 flex items-center justify-between px-6 sm:px-8 py-5 border-b border-border bg-card/95 backdrop-blur-xl shrink-0">
+          <div className="flex items-center gap-4">
             <button
-              onClick={handleSubmit}
+              onClick={onClose}
               disabled={isSubmitting}
-              className={`
-                relative overflow-hidden group
-                px-8 sm:px-10 py-3
-                rounded-2xl font-black text-xs sm:text-sm 
-                h-12 shrink-0 ml-4
-                text-primary-foreground uppercase tracking-[0.1em]
-                bg-primary hover:bg-secondary
-                shadow-xl shadow-primary/20
-                hover:shadow-primary/30
-                hover:scale-[1.02] active:scale-[0.98]
-                flex items-center justify-center
-                transition-all duration-500
-                ${isSubmitting ? 'opacity-80 cursor-wait' : ''}
-              `}
+              className="h-10 w-10 rounded-full shrink-0 flex items-center justify-center bg-muted hover:bg-muted/80 text-primary transition-all duration-300"
             >
-              <div className="relative z-10 flex items-center gap-2">
+              <X className="h-5 w-5" />
+            </button>
+            <div className="min-w-0">
+              <h2 className="text-xl sm:text-2xl font-black text-foreground truncate tracking-tight uppercase">
+                New Pitch
+              </h2>
+              <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none mt-1">
+                Mission Deployment
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+             <div className="flex gap-1.5 mr-4">
+                {[1, 2, 3, 4].map(step => (
+                    <div 
+                        key={step} 
+                        className={`w-1.5 h-1.5 rounded-full transition-all duration-500 ${step === currentStep ? 'w-6 bg-blue-600' : (step < currentStep ? 'bg-blue-300' : 'bg-slate-200')}`} 
+                    />
+                ))}
+             </div>
+          </div>
+        </div>
+
+        {/* Form Body */}
+        <div className="flex-1 overflow-y-auto px-6 sm:px-10 py-8">
+            {renderStep()}
+        </div>
+
+        {/* Footer Navigation */}
+        <div className="px-8 py-6 border-t border-border bg-slate-50/80 backdrop-blur-md flex items-center justify-between">
+            <button
+              onClick={prevStep}
+              disabled={currentStep === 1 || isSubmitting}
+              className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-blue-600 disabled:opacity-0 transition-all px-4 py-2"
+            >
+              <ChevronLeft className="w-4 h-4" /> Back
+            </button>
+
+            {currentStep < totalSteps ? (
+              <button
+                onClick={nextStep}
+                className="group flex items-center gap-2 px-8 py-3 bg-slate-900 border-2 border-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-transparent hover:text-slate-900 transition-all shadow-xl shadow-slate-200"
+              >
+                Next Slide <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </button>
+            ) : (
+              <button
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className={`
+                  relative overflow-hidden group
+                  px-10 py-3
+                  rounded-2xl font-black text-[10px] uppercase tracking-[0.2em]
+                  bg-blue-600 hover:bg-blue-700
+                  text-white shadow-xl shadow-blue-200
+                  flex items-center justify-center gap-2
+                  transition-all duration-300
+                  ${isSubmitting ? 'opacity-80' : ''}
+                `}
+              >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Processing...</span>
+                    <span>Launching...</span>
                   </>
                 ) : (
                   <>
-                    <span>Publish</span>
+                    <Rocket className="w-4 h-4 group-hover:-translate-y-1 transition-transform" />
+                    <span>Launch Pitch</span>
                   </>
                 )}
-              </div>
-            </button>
-          </div>
-
-          {/* Draft Notification - Themed */}
-          {hasDraft && (
-            <div className="px-6 sm:px-8 pt-6 pb-2 shrink-0">
-              <div className="bg-muted border border-border rounded-[1.5rem] p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-card rounded-xl flex items-center justify-center shadow-sm border border-border">
-                    <Save className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-xs font-black text-foreground uppercase">Saved Progress Found</p>
-                    <p className="text-[10px] text-muted-foreground font-medium">Continue where you left off?</p>
-                  </div>
-                </div>
-                <div className="flex gap-2 w-full sm:w-auto">
-                  <button
-                    onClick={loadDraft}
-                    className="flex-1 sm:flex-none h-10 px-6 rounded-xl bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest hover:bg-secondary transition-all"
-                  >
-                    Restore
-                  </button>
-                  <button
-                    onClick={clearDraft}
-                    className="flex-1 sm:flex-none h-10 px-6 rounded-xl bg-card border border-border text-primary text-[10px] font-black uppercase tracking-widest hover:bg-muted transition-all"
-                  >
-                    Dismiss
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Content - Enhanced Scrolling */}
-          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto overscroll-contain">
-            <div className="px-6 sm:px-10 py-8 space-y-8">
-              {/* Error Alert */}
-              {submitError && (
-                <div className="bg-red-50 border border-red-100 rounded-2xl p-4 animate-in fade-in slide-in-from-top-2">
-                  <p className="text-xs font-bold text-red-600 flex items-center gap-2">
-                    <X className="w-4 h-4" />
-                    {submitError}
-                  </p>
-                </div>
-              )}
-
-              {/* Info Alert - Premium Style */}
-              <div className="relative group">
-                <div className="absolute inset-0 bg-muted rounded-3xl -rotate-1 transition-transform group-hover:rotate-0" />
-                <div className="relative bg-primary rounded-3xl p-6 text-primary-foreground shadow-xl shadow-primary/20">
-                  <div className="flex items-center gap-4">
-                    <div>
-                      <h4 className="font-black uppercase tracking-widest text-xs mb-1">Elite Showcase</h4>
-                      <p className="text-sm text-primary-foreground/90 leading-relaxed font-medium">
-                        Your project will be featured in the Zigex community feed. Make it count!
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Form Grid */}
-              <div className="space-y-6">
-                <InputField
-                  id="title"
-                  label="Project Title"
-                  value={formData.title || ""}
-                  onChange={(value) => handleInputChange("title", value)}
-                  onBlur={() => handleBlur("title")}
-                  placeholder="e.g. Next-Gen AI Workspace"
-                  required
-                  error={errors.title}
-                  touched={touched.title}
-                  maxLength={100}
-                  showCharCount
-                />
-
-                <TextareaField
-                  id="description"
-                  label="Mission Description"
-                  value={formData.description || ""}
-                  onChange={(value) => handleInputChange("description", value)}
-                  onBlur={() => handleBlur("description")}
-                  placeholder="Tell the community about your breakthrough..."
-                  required
-                  error={errors.description}
-                  touched={touched.description}
-                  maxLength={500}
-                  rows={4}
-                />
-
-                <div className="p-1 bg-muted rounded-[2rem] border border-border overflow-hidden">
-                  <ImageUpload
-                    previewUrl={previewUrl}
-                    onImageChange={handleImageChange}
-                    onRemove={removeImage}
-                    error={errors.coverImage}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <InputField
-                    id="github"
-                    label="Repository"
-                    type="url"
-                    value={formData.githubLink || ""}
-                    onChange={(value) => handleInputChange("githubLink", value)}
-                    onBlur={() => handleBlur("githubLink")}
-                    placeholder="github.com/your/project"
-                    error={errors.githubLink}
-                    touched={touched.githubLink}
-                    icon={<Github className="h-4 w-4 text-primary" />}
-                  />
-
-                  <InputField
-                    id="youtube"
-                    label="Video Demo"
-                    type="url"
-                    value={formData.youtubeLink || ""}
-                    onChange={(value) => handleInputChange("youtubeLink", value)}
-                    onBlur={() => handleBlur("youtubeLink")}
-                    placeholder="youtube.com/watch?v=..."
-                    required
-                    error={errors.youtubeLink}
-                    touched={touched.youtubeLink}
-                    icon={<Link className="h-4 w-4 text-primary" />}
-                  />
-                </div>
-
-                <SelectField
-                  id="duration"
-                  label="Project Timeline"
-                  value={formData.duration || ""}
-                  onChange={(value) => handleInputChange("duration", value)}
-                  onBlur={() => handleBlur("duration")}
-                  options={PROJECT_DURATIONS}
-                  placeholder="How long did it take?"
-                  required
-                  error={errors.duration}
-                  touched={touched.duration}
-                  icon={<Calendar className="h-4 w-4 text-primary" />}
-                />
-
-                <div className="p-1 bg-muted rounded-[2rem] border border-border overflow-hidden">
-                  <VideoUpload
-                    videoPreviewUrl={videoPreviewUrl}
-                    onVideoChange={handleVideoChange}
-                    onRemove={removeVideo}
-                    error={errors.uploadedVideo}
-                    coverImageUrl={previewUrl}
-                  />
-                </div>
-              </div>
-
-              {/* Bottom Spacing */}
-              <div className="h-6 sm:h-4" />
-            </div>
-          </form>
-
-          {/* Footer - Premium Branding */}
-          <div className="px-8 py-4 border-t border-border bg-muted/50 shrink-0">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <p className="text-[10px] font-black text-primary uppercase tracking-widest text-center sm:text-left">
-                Progress automatically secured
-              </p>
-              <div className="flex items-center gap-1">
-                <div className="w-1 h-1 bg-red-500 rounded-full animate-pulse" />
-                <span className="text-[10px] font-medium text-muted-foreground">All fields mandatory for elite status</span>
-              </div>
-            </div>
-          </div>
+              </button>
+            )}
         </div>
       </div>
-
-    </>
+    </div>
   );
 
   return (
     <>
       {isMounted && createPortal(modalContent, document.body)}
-
-      {/* Success Modal */}
       <ProjectSuccessModal
         isOpen={showSuccessModal}
-        onClose={handleSuccessModalClose}
+        onClose={() => setShowSuccessModal(false)}
         projectTitle={submittedProjectTitle}
       />
     </>
   );
 }
+
+const Label = ({ children, className }: { children: React.ReactNode, className?: string }) => (
+    <label className={`block text-sm font-medium text-slate-700 mb-1 ${className}`}>
+        {children}
+    </label>
+);

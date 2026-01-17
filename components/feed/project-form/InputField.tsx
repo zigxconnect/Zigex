@@ -9,7 +9,7 @@ interface InputFieldProps {
   label: string;
   value: string;
   onChange: (value: string) => void;
-  onBlur: () => void;
+  onBlur?: () => void;
   placeholder?: string;
   required?: boolean;
   error?: string;
@@ -55,7 +55,7 @@ export const InputField: React.FC<InputFieldProps> = ({
           type={type}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          onBlur={onBlur}
+          onBlur={() => onBlur?.()}
           placeholder={placeholder}
           maxLength={maxLength}
           className={`w-full rounded-2xl bg-slate-50/50 border-blue-50 focus:border-[#155DFC] focus:ring-[#155DFC]/10 transition-all duration-300 ${icon ? "pl-11" : "px-4"} ${

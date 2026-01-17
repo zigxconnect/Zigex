@@ -8,23 +8,9 @@ import ContributeModal from "./ContributeModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { normalizeImageSrc } from "@/lib/utils";
+import { Project } from "@/types/models";
 
-interface Project {
-  id: string;
-  project_title: string;
-  description: string;
-  cover_image_url: string | null;
-  project_video_url: string | null;
-  uploaded_video_url: string | null;
-  github_repository: string | null;
-  project_duration: string | null;
-  created_at: string;
-  end_date: string | null;
-  student_id: string;
-  status: string;
-}
-
-interface User {
+interface UserProfile {
   id: string;
   full_name: string;
   avatar_url: string | null;
@@ -35,8 +21,19 @@ interface User {
 }
 
 interface ProjectCardProps {
-  user: User;
-  project: Project | null;
+  user: UserProfile;
+  project: (Project & { 
+    project_title?: string; 
+    description?: string; 
+    cover_image_url?: string; 
+    project_video_url?: string; 
+    uploaded_video_url?: string; 
+    github_repository?: string; 
+    student_id?: string; 
+    status?: string; 
+    project_duration?: string;
+    pitch_status?: string; // Added for submission status
+  }) | null;
   isVisitor?: boolean;
   profileOwnerId?: string;
   isOwner?: boolean;
@@ -45,7 +42,6 @@ interface ProjectCardProps {
 export default function ProjectCard({ 
   user, 
   project, 
-  profileOwnerId, 
   isVisitor = false,
   isOwner
 }: ProjectCardProps) {
@@ -57,8 +53,13 @@ export default function ProjectCard({
 
   // Video carousel: prioritize uploaded video first, then youtube link
   const videos: Array<{ type: "uploaded" | "youtube"; url: string }> = [];
+  
+  // New schema uses video_url
+  if (project?.video_url) videos.push({ type: "uploaded", url: project.video_url });
+  // Old schema fallback
   if (project?.uploaded_video_url) videos.push({ type: "uploaded", url: project.uploaded_video_url });
   if (project?.project_video_url) videos.push({ type: "youtube", url: project.project_video_url });
+  
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const currentVideo = videos.length > 0 ? videos[currentVideoIndex] : null;
   const hasVideos = videos.length > 0;
@@ -77,14 +78,27 @@ export default function ProjectCard({
 
   // Format date
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch (e) {
+        return "N/A";
+    }
   };
 
-  const coverImageUrl = normalizeImageSrc(project?.cover_image_url, '/projects.png');
+  const projectTitle = project?.title || project?.project_title || "Untitled Project";
+  const projectTagline = project?.tagline || project?.description || project?.solution_description || "No description available.";
+  const mainCoverImage = project?.cover_images?.[0] || project?.cover_image_url;
+  const coverImageUrl = normalizeImageSrc(mainCoverImage, '/projects.png');
+  const githubLink = project?.github_url || project?.github_repository;
+  const projectStage = project?.current_stage || project?.project_duration || "Ideation";
 
   // --- CARD 1: UNDER REVIEW / PENDING ---
-  if (project && project.status !== 'valid' && isVisitor) {
+  // Using is_published as the visibility flag. 
+  // If explicitly set to false (new schema) or status is not valid (old schema)
+  const isPublished = project?.is_published ?? (project?.status === 'valid');
+  
+  if (project && !isPublished && isVisitor) {
     return (
       <div className="bg-muted rounded-3xl border border-border shadow-sm overflow-hidden hover:shadow-md transition-all duration-300">
         <div className="p-6">
@@ -152,7 +166,7 @@ export default function ProjectCard({
                 {!imageError && coverImageUrl && coverImageUrl !== '/projects.png' ? (
                   <Image
                     src={coverImageUrl} 
-                    alt={project.project_title}
+                    alt={projectTitle}
                     fill
                     className="object-cover"
                     priority
@@ -179,10 +193,20 @@ export default function ProjectCard({
                         VIEWING
                      </Badge>
                  )}
-                 {project.status === 'valid' && (
+                 {isPublished && (
                     <div className="flex items-center gap-1.5 px-3 py-1 bg-primary/90 backdrop-blur-md text-primary-foreground rounded-full text-[10px] font-black shadow-lg">
                         <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
                         LIVE
+                    </div>
+                 )}
+                 {project?.pitch_status && (
+                    <div className={`flex items-center gap-1.5 px-3 py-1 backdrop-blur-md rounded-full text-[10px] font-black shadow-lg border-none ${
+                        project.pitch_status === 'interested' ? 'bg-emerald-500/90 text-white' :
+                        project.pitch_status === 'meeting_scheduled' ? 'bg-amber-500/90 text-white' :
+                        project.pitch_status === 'rejected' ? 'bg-red-500/90 text-white' :
+                        'bg-blue-500/90 text-white'
+                    }`}>
+                        {project.pitch_status.toUpperCase()}
                     </div>
                  )}
                </div>
@@ -193,8 +217,8 @@ export default function ProjectCard({
                     e.stopPropagation();
                     if (navigator.share) {
                       navigator.share({
-                        title: project.project_title,
-                        text: `Check out ${project.project_title} on Zigex!`,
+                        title: projectTitle,
+                        text: `Check out ${projectTitle} on Zigex!`,
                         url: `${window.location.origin}/feed/projects/${project.id}`,
                       });
                     } else {
@@ -230,7 +254,7 @@ export default function ProjectCard({
                 onClick={(e) => { e.stopPropagation(); setShowVideo(false); }}
                 className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 backdrop-blur-md z-30"
              >
-                <div className="w-4 h-4 flex items-center justify-center text-xs font-bold font-mono">X</div>
+                <div className="w-4 h-4 flex items-center justify-center text-xs font-bold font-mono text-white">×</div>
              </button>
 
              {/* Carousel Controls */}
@@ -278,11 +302,11 @@ export default function ProjectCard({
          <div className="mb-5">
              <Link href={`/feed/projects/${project.id}`} className="block group/title mb-2">
                 <h3 className="text-xl font-black text-foreground leading-tight group-hover/title:text-primary transition-all duration-300 line-clamp-1">
-                    {project.project_title}
+                    {projectTitle}
                 </h3>
              </Link>
              <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed h-[40px]">
-                 {project.description}
+                 {projectTagline}
              </p>
          </div>
 
@@ -290,7 +314,7 @@ export default function ProjectCard({
          <div className="flex items-center gap-4 mb-6">
             <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground">
                 <Clock className="w-3.5 h-3.5 text-primary/70" />
-                <span>{project.project_duration || 'Ongoing'}</span>
+                <span>{projectStage}</span>
             </div>
             <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground border-l border-border pl-4">
                 <Calendar className="w-3.5 h-3.5 text-primary/70" />
@@ -306,9 +330,9 @@ export default function ProjectCard({
                  </Link>
              </Button>
              
-             {project.github_repository && (
+             {githubLink && (
                  <a 
-                    href={project.github_repository} 
+                    href={githubLink} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="h-11 w-11 flex items-center justify-center bg-muted text-primary rounded-xl hover:bg-primary hover:text-primary-foreground transition-all duration-300 shadow-sm"
@@ -323,8 +347,8 @@ export default function ProjectCard({
       <ContributeModal 
         isOpen={showContributeModal} 
         onClose={() => setShowContributeModal(false)}
-        projectTitle={project?.project_title || ''}
-        githubUrl={project?.github_repository || ''}
+        projectTitle={projectTitle}
+        githubUrl={githubLink || ''}
       />
     </div>
   );

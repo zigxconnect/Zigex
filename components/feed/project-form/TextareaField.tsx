@@ -9,7 +9,7 @@ interface TextareaFieldProps {
   label: string;
   value: string;
   onChange: (value: string) => void;
-  onBlur: () => void;
+  onBlur?: () => void;
   placeholder?: string;
   required?: boolean;
   error?: string;
@@ -41,7 +41,7 @@ export const TextareaField: React.FC<TextareaFieldProps> = ({
         id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        onBlur={onBlur}
+        onBlur={() => onBlur?.()}
         placeholder={placeholder}
         rows={rows}
         maxLength={maxLength}
