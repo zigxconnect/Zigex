@@ -37,8 +37,8 @@ export async function getCompanySubmissionsAction() {
 
     if (companyError || !company) return { success: false, error: "Company profile not found" };
 
-    // Fetch Submissions
-    const { data: submissions, error } = await supabase
+    // Fetch Submissions using admin to bypass RLS on private projects
+    const { data: submissions, error } = await supabaseAdmin
         .from('project_submissions')
         .select(`
       id,
@@ -69,7 +69,7 @@ export async function getCompanySubmissionsAction() {
     // or use a second query
     const ownerIds = validSubmissions.map((s: any) => s.project.owner_id);
 
-    const { data: owners } = await supabase
+    const { data: owners } = await supabaseAdmin
         .from('student_profiles')
         .select('user_id, full_name, avatar_url, university')
         .in('user_id', ownerIds);
