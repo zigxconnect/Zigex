@@ -556,17 +556,24 @@ export default function ProjectChatModal({
   const isDocked = mode === "docked";
 
   return (
-    <div className={isDocked ? "z-[100]" : "fixed inset-0 z-[100] flex items-center justify-center p-4"}>
+    <div className={`
+      fixed z-[100] 
+      ${isDocked 
+         ? "md:bottom-20 md:right-4 md:top-auto md:left-auto md:w-[380px] md:h-[500px] md:max-h-[70vh] bottom-0 inset-x-0 w-full h-[85vh] md:rounded-2xl rounded-t-[32px] pointer-events-auto"
+         : "inset-0 flex items-center justify-center p-4 pointer-events-none"
+      }
+    `}>
+      {/* Backdrop: Only show for Modal or Mobile Docked */}
       <div 
         onClick={onClose}
-        className={`fixed inset-0 bg-black/40 backdrop-blur-md animate-in fade-in duration-200 z-[90] ${isDocked ? 'md:hidden' : 'absolute'}`}
+        className={`fixed inset-0 bg-black/40 backdrop-blur-none animate-in fade-in duration-200 z-[90] pointer-events-auto ${isDocked ? 'md:hidden' : ''}`}
       />
 
       <div className={`
-        relative bg-white shadow-2xl overflow-hidden border border-slate-100 flex flex-col
+        relative bg-white shadow-2xl overflow-hidden border border-slate-200 flex flex-col z-[100] pointer-events-auto
         ${isDocked 
-            ? "fixed z-[100] md:bottom-20 md:right-4 md:w-[380px] md:h-[500px] md:max-h-[70vh] md:rounded-2xl bottom-0 inset-x-0 w-full h-[85vh] rounded-t-[32px] animate-in slide-in-from-bottom duration-300 shadow-xl border border-slate-200"
-           : "w-full max-w-xl rounded-2xl z-[100] animate-in zoom-in-95 duration-300 h-[600px] max-h-[80vh]"
+           ? "w-full h-full" 
+           : "w-full max-w-xl rounded-2xl animate-in zoom-in-95 duration-300 h-[600px] max-h-[80vh]"
         }
       `}>
         {/* Glow effect only for Modal mode */}
