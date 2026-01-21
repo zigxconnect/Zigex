@@ -565,7 +565,7 @@ export default function ProjectChatModal({
       <div className={`
         relative bg-white shadow-2xl overflow-hidden border border-slate-100 flex flex-col
         ${isDocked 
-            ? "fixed z-[100] md:bottom-0 md:right-4 md:w-[380px] md:h-[600px] md:max-h-[80vh] md:rounded-t-2xl bottom-0 inset-x-0 w-full h-[85vh] rounded-t-[32px] animate-in slide-in-from-bottom duration-300 shadow-2xl"
+            ? "fixed z-[100] md:bottom-20 md:right-4 md:w-[380px] md:h-[500px] md:max-h-[70vh] md:rounded-2xl bottom-0 inset-x-0 w-full h-[85vh] rounded-t-[32px] animate-in slide-in-from-bottom duration-300 shadow-xl border border-slate-200"
            : "w-full max-w-xl rounded-2xl z-[100] animate-in zoom-in-95 duration-300 h-[600px] max-h-[80vh]"
         }
       `}>

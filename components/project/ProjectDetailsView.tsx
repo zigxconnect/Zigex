@@ -587,36 +587,37 @@ export default function ProjectDetailsView({
          />
 
          {/* Owner Floating Trigger (Collapsed State) */}
-         {/* Floating Trigger (Collapsed State) - Visible to All */}
+         {/* Mobile Trigger (FAB) - Hidden when open */}
          {!isChatOpen && (
-            <>
-               {/* Mobile FAB */}
-               <div className="md:hidden fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-10 fade-in duration-500">
-                  <Button
-                     onClick={() => setIsChatOpen(true)}
-                     className="h-14 w-14 rounded-full bg-black hover:bg-slate-900 text-white shadow-2xl flex items-center justify-center p-0"
-                  >
-                     <Mail className="w-6 h-6" />
-                  </Button>
-               </div>
-
-               {/* Desktop Footer Bar */}
-               <div 
+            <div className="md:hidden fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-10 fade-in duration-500">
+               <Button
                   onClick={() => setIsChatOpen(true)}
-                  className="hidden md:flex fixed bottom-0 right-4 z-50 w-[380px] bg-white border border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] rounded-t-2xl cursor-pointer items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors animate-in slide-in-from-bottom-4 fade-in duration-500"
+                  className="h-14 w-14 rounded-full bg-black hover:bg-slate-900 text-white shadow-2xl flex items-center justify-center p-0"
                >
-                  <div className="flex items-center gap-3">
-                     <div className="p-1.5 bg-blue-100 rounded-lg text-blue-600">
-                        <Mail className="w-4 h-4" />
-                     </div>
-                     <div className="font-bold text-slate-900 text-sm tracking-tight">
-                        {isOwner ? "Messages" : "Chat with Owner"}
-                     </div>
-                  </div>
-                  <ChevronsUp className="w-5 h-5 text-slate-400" />
-               </div>
-            </>
+                  <Mail className="w-6 h-6" />
+               </Button>
+            </div>
          )}
+
+         {/* Desktop Footer Bar - Always Visible Toggle */}
+         <div 
+            onClick={() => setIsChatOpen(!isChatOpen)}
+            className="hidden md:flex fixed bottom-0 right-4 z-[110] w-[380px] bg-white border border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] rounded-t-2xl cursor-pointer items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors"
+         >
+            <div className="flex items-center gap-3">
+               <div className="p-1.5 bg-blue-100 rounded-lg text-blue-600">
+                  <Mail className="w-4 h-4" />
+               </div>
+               <div className="font-bold text-slate-900 text-sm tracking-tight">
+                  {isOwner ? "Messages" : "Chat with Owner"}
+               </div>
+            </div>
+            {isChatOpen ? (
+               <ChevronsDown className="w-5 h-5 text-slate-400" />
+            ) : (
+               <ChevronsUp className="w-5 h-5 text-slate-400" />
+            )}
+         </div>
       </div>
    );
 }
