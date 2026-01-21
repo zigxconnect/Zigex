@@ -583,7 +583,7 @@ export default function ProjectDetailsView({
             currentUser={currentUser}
             isAdmin={isAdmin}
             // If owner, use "docked" mode (Twitter style), else standard modal
-            mode={isOwner ? "docked" : "modal"}
+            mode="docked"
          />
 
          {/* Owner Floating Trigger (Collapsed State) */}
