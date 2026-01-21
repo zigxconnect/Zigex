@@ -49,7 +49,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 import { UserProfile } from "@/app/types/type";
 import ProjectChatModal from "@/components/uiComponent/ProjectChatModal";
-import { publishProjectAction } from "@/lib/actions/project.actions";
+import { confirmCollaboratorAction } from "@/lib/actions/project.actions";
+import { toggleProjectVisibilityAction } from "@/lib/actions/company.actions";
 import { toast } from "sonner";
 
 interface Contributor {
@@ -156,17 +157,30 @@ export default function ProjectDetailsView({
    }, []);
 
    const [isPublishing, setIsPublishing] = useState(false);
-   const handlePublish = async () => {
-      if (!confirm("Are you sure you want to publish this project to the public Innovation Feed?")) return;
+   const handleToggleVisibility = async () => {
+      const action = isPublished ? "make this project private" : "publish this project to the public Innovation Feed";
+      if (!confirm(`Are you sure you want to ${action}?`)) return;
       
       setIsPublishing(true);
-      const res = await publishProjectAction(project.id);
+      
+      let res;
+      if (activeSubmission?.id) {
+         // Use the specific submission ID for company visibility toggle
+         res = await toggleProjectVisibilityAction(activeSubmission.id, !isPublished);
+      } else {
+         // Generic toggle fallback if no submission found (e.g. for super admins)
+         // In this case we might need a general action, but for now we follow the user's flow
+         toast.error("No active submission found to authorize this action.");
+         setIsPublishing(false);
+         return;
+      }
+      
       setIsPublishing(false);
 
       if (res.success) {
-         toast.success("Project successfully published to the Innovation Feed!");
+         toast.success(isPublished ? "Project is now private." : "Project published successfully!");
       } else {
-         toast.error("Failed to publish project: " + res.error);
+         toast.error("Failed to update visibility: " + res.error);
       }
    };
 
@@ -262,25 +276,37 @@ export default function ProjectDetailsView({
                         "{tagline}"
                       </p>
 
-                      {/* Publishing Banner for Companies/Admins */}
-                      {(isAdmin || activeSubmission) && !isPublished && (
-                         <div className="mb-8 p-6 bg-amber-50 rounded-[24px] border border-amber-100 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in slide-in-from-top duration-500">
-                            <div className="flex items-center gap-3">
-                               <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
-                                  <AlertCircle className="w-5 h-5" />
-                               </div>
-                               <div>
-                                  <p className="text-sm font-bold text-amber-900 line-clamp-1">Reviewer Actions Available</p>
-                                  <p className="text-xs text-amber-700">This project is currently private. You can validate it to make it visible to all users.</p>
-                               </div>
-                            </div>
-                            <Button 
-                              onClick={handlePublish} 
-                              disabled={isPublishing}
-                              className="bg-amber-600 hover:bg-amber-700 text-white font-black rounded-full h-10 px-6 text-xs uppercase tracking-wider"
-                            >
-                               {isPublishing ? "Publishing..." : "Validate & Publish"}
-                            </Button>
+                       {/* Publishing Banner for Companies/Admins */}
+                       {(isAdmin || activeSubmission) && (
+                          <div className={`mb-8 p-6 rounded-[24px] border flex flex-col sm:flex-row items-center justify-between gap-4 animate-in slide-in-from-top duration-500 ${
+                             isPublished ? 'bg-emerald-50 border-emerald-100' : 'bg-amber-50 border-amber-100'
+                          }`}>
+                             <div className="flex items-center gap-3">
+                                <div className={`p-2 rounded-lg ${isPublished ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
+                                   {isPublished ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+                                </div>
+                                <div>
+                                   <p className={`text-sm font-bold line-clamp-1 ${isPublished ? 'text-emerald-900' : 'text-amber-900'}`}>
+                                      {isPublished ? "Project is Live & Public" : "Reviewer Actions Available"}
+                                   </p>
+                                   <p className={`text-xs ${isPublished ? 'text-emerald-700' : 'text-amber-700'}`}>
+                                      {isPublished 
+                                         ? "This project is visible to the entire community. You can hide it if needed." 
+                                         : "This project is currently private. You can validate it to make it visible to all users."}
+                                   </p>
+                                </div>
+                             </div>
+                             <Button 
+                               onClick={handleToggleVisibility} 
+                               disabled={isPublishing}
+                               className={`font-black rounded-full h-10 px-6 text-xs uppercase tracking-wider ${
+                                 isPublished 
+                                    ? "bg-slate-200 hover:bg-slate-300 text-slate-700" 
+                                    : "bg-amber-600 hover:bg-amber-700 text-white"
+                               }`}
+                             >
+                                {isPublishing ? "Processing..." : (isPublished ? "Set to Private" : "Validate & Make Public")}
+                             </Button>
                          </div>
                       )}
 
