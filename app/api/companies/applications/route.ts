@@ -53,30 +53,42 @@ export async function GET(request: Request) {
     if (legacyError) throw legacyError;
 
     // --- FETCH FROM NEW INTERNSHIP_APPLICATIONS TABLE ---
-    // First, get all internship IDs for this company
-    const { data: companyInternships, error: internshipIdsError } = await supabaseAdmin
-      .from("internships")
-      .select("id")
-      .eq("company_id", company.id);
-
-    if (internshipIdsError) throw internshipIdsError;
-    const internshipIds = companyInternships?.map(i => i.id) || [];
-
+    // This is optional - table may not exist yet
     let structuredInternshipApps: any[] = [];
-    if (internshipIds.length > 0) {
-      const { data: sApps, error: sError } = await supabaseAdmin
-        .from("internship_applications")
-        .select(`
-          *,
-          internship:internships(id, title, description),
-          student:student_profiles(id, user_id, full_name, avatar_url, email, phone)
-        `)
-        .in("internship_id", internshipIds)
-        .order("created_at", { ascending: false });
+    try {
+      // First, get all internship IDs for this company
+      const { data: companyInternships, error: internshipIdsError } = await supabaseAdmin
+        .from("internships")
+        .select("id")
+        .eq("company_id", company.id);
 
-      if (sError) throw sError;
-      structuredInternshipApps = sApps || [];
+      if (!internshipIdsError && companyInternships) {
+        const internshipIds = companyInternships.map(i => i.id);
+
+        if (internshipIds.length > 0) {
+          const { data: sApps, error: sError } = await supabaseAdmin
+            .from("internship_applications")
+            .select(`
+              *,
+              internship:internships(id, title, description),
+              student:student_profiles(id, user_id, full_name, avatar_url, email, phone)
+            `)
+            .in("internship_id", internshipIds)
+            .order("created_at", { ascending: false });
+
+          if (!sError && sApps) {
+            structuredInternshipApps = sApps;
+          } else if (sError) {
+            // Table might not exist yet - this is okay, we'll just use legacy apps
+            console.log("[API] internship_applications table query failed (table may not exist):", sError.message);
+          }
+        }
+      }
+    } catch (e) {
+      // Gracefully handle if the new table doesn't exist
+      console.log("[API] internship_applications lookup skipped (table may not exist)");
     }
+
 
     // Collect user_ids that need auth email lookup
     const userIdsNeedingEmail: string[] = [];
