@@ -587,7 +587,8 @@ export default function ProjectDetailsView({
          />
 
          {/* Owner Floating Trigger (Collapsed State) */}
-         {isOwner && !isChatOpen && (
+         {/* Floating Trigger (Collapsed State) - Visible to All */}
+         {!isChatOpen && (
             <>
                {/* Mobile FAB */}
                <div className="md:hidden fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-10 fade-in duration-500">
@@ -605,7 +606,12 @@ export default function ProjectDetailsView({
                   className="hidden md:flex fixed bottom-0 right-4 z-50 w-[380px] bg-white border border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] rounded-t-2xl cursor-pointer items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors animate-in slide-in-from-bottom-4 fade-in duration-500"
                >
                   <div className="flex items-center gap-3">
-                     <div className="font-bold text-slate-900 text-lg tracking-tight">Messages</div>
+                     <div className="p-1.5 bg-blue-100 rounded-lg text-blue-600">
+                        <Mail className="w-4 h-4" />
+                     </div>
+                     <div className="font-bold text-slate-900 text-sm tracking-tight">
+                        {isOwner ? "Messages" : "Chat with Owner"}
+                     </div>
                   </div>
                   <ChevronsUp className="w-5 h-5 text-slate-400" />
                </div>
