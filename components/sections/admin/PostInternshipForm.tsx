@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import React from "react";
 import { Select } from "@/components/uiComponent/Select";
 import { Textarea } from "@/components/uiComponent/Textarea";
+import { ImageUpload } from "@/components/feed/project-form/ImageUpload";
+import { createClient } from "@/lib/supabase/client";
 
 // Helper UI Components
 
@@ -112,10 +114,15 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
     initialData?.type || "onsite"
   );
 
-  const [compensation, setCompensation] = useState(
-    initialData?.compensation || ""
+  const [compensationAmount, setCompensationAmount] = useState(
+    initialData?.compensation_amount || ""
   );
-  const [isPaid, setIsPaid] = useState(Boolean(initialData?.compensation));
+  const [isPaid, setIsPaid] = useState(Boolean(initialData?.is_paid));
+  const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(initialData?.cover_image_url || null);
+  const [endDate, setEndDate] = useState(
+    formatDateForInput(initialData?.end_date)
+  );
 
   const addSkill = () => {
     const trimmed = skillInput.trim();
@@ -129,20 +136,43 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const internshipData = {
-      id: isEditMode ? initialData.id : undefined,
-      title,
-      description,
-      location,
-      category,
-      start_date: startDate ? new Date(startDate).toISOString() : null,
-      deadline: deadline ? new Date(deadline).toISOString() : null,
-      type: internshipType,
-      required_skills: requiredSkills,
-      compensation: isPaid ? compensation : null,
-    };
-
     try {
+      const supabase = createClient();
+      let uploadedImageUrl = coverImageUrl;
+
+      // Handle Image Upload if new image selected
+      if (coverImage) {
+        const fileExt = coverImage.name.split('.').pop();
+        const fileName = `internships/${Date.now()}.${fileExt}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('company-assets')
+          .upload(fileName, coverImage);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('company-assets')
+          .getPublicUrl(uploadData.path);
+        
+        uploadedImageUrl = publicUrl;
+      }
+
+      const internshipData = {
+        id: isEditMode ? initialData.id : undefined,
+        title,
+        description,
+        location,
+        category,
+        start_date: startDate ? new Date(startDate).toISOString() : null,
+        end_date: endDate ? new Date(endDate).toISOString() : null,
+        deadline: deadline ? new Date(deadline).toISOString() : null,
+        type: internshipType,
+        required_skills: requiredSkills,
+        is_paid: isPaid,
+        compensation_amount: isPaid ? compensationAmount : null,
+        cover_image_url: uploadedImageUrl
+      };
+
       const endpoint = isEditMode
         ? `/api/companies/internships/${initialData.id}`
         : "/api/companies/internships";
@@ -156,16 +186,10 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
 
       const result = await response.json();
       if (!response.ok) {
-        console.error("API Error:", result);
-        throw new Error(
-          result.error?.message || result.error || "Failed to submit form"
-        );
+        throw new Error(result.error?.message || result.error || "Failed to submit form");
       }
 
-      toast.success(
-        `Internship ${isEditMode ? "updated" : "published"} successfully!`
-      );
-
+      toast.success(`Internship ${isEditMode ? "updated" : "published"} successfully!`);
       router.push("/admin/postings");
       router.refresh();
     } catch (error: any) {
@@ -227,6 +251,13 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
             required
           />
         </FormField>
+        <FormField label="End Date">
+          <Input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+          />
+        </FormField>
         <FormField label="Application Deadline" required>
           <Input
             type="date"
@@ -235,6 +266,20 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
             required
           />
         </FormField>
+      </FormSection>
+
+      <FormSection title="Visuals">
+         <div className="md:col-span-2">
+            <ImageUpload 
+              previewUrl={coverImage ? URL.createObjectURL(coverImage) : coverImageUrl}
+              onImageChange={(file) => setCoverImage(file)}
+              onRemove={() => {
+                setCoverImage(null);
+                setCoverImageUrl(null);
+              }}
+              maxSize="5MB"
+            />
+         </div>
       </FormSection>
 
       <FormSection title="Job Details">
@@ -300,12 +345,12 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
             </div>
           </div>
           {isPaid && (
-            <FormField label="Compensation Details">
+            <FormField label="Monthly Compensation (Amount)">
               <Input
                 type="text"
-                value={compensation}
-                onChange={(e) => setCompensation(e.target.value)}
-                placeholder="e.g., $20/hour, $3000 stipend"
+                value={compensationAmount}
+                onChange={(e) => setCompensationAmount(e.target.value)}
+                placeholder="e.g., 50,000 FCFA, $500, etc."
               />
             </FormField>
           )}

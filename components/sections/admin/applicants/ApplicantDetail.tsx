@@ -171,7 +171,7 @@ export const ApplicantDetail = ({
               </button>
            </div>
 
-           {/* Location Card */}
+           {/* Location/Bio Card */}
            <div className="flex flex-col p-4 bg-white rounded-[2rem] border border-slate-100 col-span-2 relative overflow-hidden group">
               <div className="flex items-center gap-2 mb-2">
                  <div className="p-1.5 bg-slate-50 rounded-lg text-slate-400">
@@ -179,10 +179,16 @@ export const ApplicantDetail = ({
                  </div>
                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Candidate Region</span>
               </div>
-              <span className="text-sm font-black text-slate-900">
-                {applicant.phone?.startsWith('+237') ? "Douala, Cameroon" : "International Preference"}
-              </span>
-              <p className="text-[10px] text-slate-400 mt-1 font-medium italic opacity-70">Region derived from profile coordinates</p>
+              <div className="space-y-1">
+                <span className="text-sm font-black text-slate-900 block">
+                  {applicant.address || (applicant.phone?.startsWith('+237') ? "Douala, Cameroon" : "International Preference")}
+                </span>
+                {applicant.dateOfBirth && (
+                  <span className="text-[10px] text-slate-500 font-medium bg-slate-50 px-2 py-0.5 rounded-md">
+                    Born: {new Date(applicant.dateOfBirth).toLocaleDateString()}
+                  </span>
+                )}
+              </div>
            </div>
         </div>
       </header>
@@ -206,33 +212,61 @@ export const ApplicantDetail = ({
                    <div className="flex flex-wrap gap-3 mt-1.5">
                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-white px-2 py-0.5 rounded-lg border border-slate-100">
                         REF-{applicant.id.slice(0,6).toUpperCase()}
-                      </span>
-                      <span className="text-[10px] font-black text-primary uppercase tracking-widest bg-primary/5 px-2 py-0.5 rounded-lg border border-primary/10">
+                       </span>
+                       <span className="text-[10px] font-black text-primary uppercase tracking-widest bg-primary/5 px-2 py-0.5 rounded-lg border border-primary/10">
                         {applicant.applicationType}
-                      </span>
-                   </div>
+                       </span>
+                    </div>
+                 </div>
+              </div>
+              
+              {/* Background Information */}
+              {(applicant.school || applicant.schoolLevel) && (
+                <div className="grid grid-cols-2 gap-3 p-4 bg-indigo-50/20 rounded-3xl border border-indigo-100/30">
+                  <div className="space-y-1">
+                    <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest block">Institution</span>
+                    <span className="text-xs font-bold text-indigo-900">{applicant.school || "N/A"}</span>
+                  </div>
+                  <div className="space-y-1 text-right">
+                    <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest block">Level</span>
+                    <span className="text-xs font-bold text-indigo-900">{applicant.schoolLevel || "N/A"}</span>
+                  </div>
                 </div>
-             </div>
-             {applicant.opportunityDescription && (
-                <div className="bg-indigo-50/30 p-5 rounded-3xl border border-indigo-100/50 relative overflow-hidden group">
-                   <MessageSquare className="absolute -right-4 -bottom-4 text-indigo-500/10 group-hover:scale-110 transition-transform duration-500" size={100} />
-                   <p className="italic text-xs text-indigo-900 leading-relaxed relative z-10 font-medium">
-                      "{applicant.opportunityDescription}"
-                   </p>
-                </div>
-             )}
-          </div>
+              )}
+
+              {applicant.opportunityDescription && (
+                 <div className="bg-indigo-50/30 p-5 rounded-3xl border border-indigo-100/50 relative overflow-hidden group">
+                    <MessageSquare className="absolute -right-4 -bottom-4 text-indigo-500/10 group-hover:scale-110 transition-transform duration-500" size={100} />
+                    <p className="italic text-xs text-indigo-900 leading-relaxed relative z-10 font-medium">
+                       "{applicant.opportunityDescription}"
+                    </p>
+                 </div>
+              )}
+           </div>
         </DetailSection>
 
         {/* Dynamic Responses Section */}
         <DetailSection title="Candidate Narratives" icon={FileText} delay={0.3}>
           <div className="space-y-6">
+            {/* Reason for Application */}
+            {applicant.reason && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                   <User size={12} className="text-primary/50" />
+                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Motivation & Suitability</label>
+                </div>
+                <div className="bg-slate-50/50 p-5 rounded-3xl border border-slate-100/80">
+                  <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{applicant.reason}</p>
+                </div>
+              </div>
+            )}
+
             {/* Expectations */}
             {applicant.expectations && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                   <User size={12} className="text-primary/50" />
-                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Aspirations & Goals</label>
+                   <ShieldCheck size={12} className="text-primary/50" />
+                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Career Aspirations</label>
                 </div>
                 <div className="bg-slate-50/50 p-5 rounded-3xl border border-slate-100/80">
                   <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{applicant.expectations}</p>
@@ -245,7 +279,7 @@ export const ApplicantDetail = ({
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                    <MessageSquare size={12} className="text-primary/50" />
-                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Additional Commentary</label>
+                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Additional Notes</label>
                 </div>
                 <div className="bg-slate-50/50 p-5 rounded-3xl border border-slate-100/80">
                   <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{applicant.comments}</p>
@@ -255,6 +289,18 @@ export const ApplicantDetail = ({
 
             {/* Attributes Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {applicant.domain && (
+                  <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                    <span className="text-[9px] font-black text-slate-400 uppercase">Target Domain</span>
+                    <span className="text-xs font-black text-primary bg-primary/10 px-3 py-1 rounded-lg">{applicant.domain}</span>
+                  </div>
+                )}
+                {applicant.experienceLevel && (
+                  <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                    <span className="text-[9px] font-black text-slate-400 uppercase">Experience</span>
+                    <span className="text-xs font-black text-slate-900">{applicant.experienceLevel}</span>
+                  </div>
+                )}
                 {applicant.level && (
                   <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
                     <span className="text-[9px] font-black text-slate-400 uppercase">Expertise</span>

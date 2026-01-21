@@ -21,11 +21,30 @@ if (!supabaseServiceRoleKey) {
   );
 }
 
+const fetchWithRetry = async (url: any, options: any) => {
+  const MAX_RETRIES = 3;
+  for (let i = 0; i < MAX_RETRIES; i++) {
+    try {
+      return await fetch(url, options);
+    } catch (error: any) {
+      if (i === MAX_RETRIES - 1) throw error;
+      const isTimeout = error.cause?.code === 'UND_ERR_CONNECT_TIMEOUT' || error.name === 'AbortError';
+      // Only retry on network/timeout errors, though usually "fetch failed" covers these in Node
+      // Exponential backoff: 500, 1000, 2000ms
+      await new Promise(r => setTimeout(r, 500 * Math.pow(2, i)));
+    }
+  }
+  return fetch(url, options);
+}
+
 export const supabaseAdmin = createSupabaseClient(supabaseUrl, supabaseServiceRoleKey, {
   auth: {
     autoRefreshToken: false,
     persistSession: false,
   },
+  global: {
+    fetch: fetchWithRetry,
+  }
 });
 
 /**
@@ -60,6 +79,9 @@ export async function createServerActionClient() {
           } catch (error) { }
         },
       },
+      global: {
+        fetch: fetchWithRetry,
+      }
     }
   );
 }
@@ -85,6 +107,9 @@ export const createSupabaseServerClient = async () => {
         return cookieStore.get(name)?.value;
       },
     },
+    global: {
+      fetch: fetchWithRetry,
+    }
   });
 };
 

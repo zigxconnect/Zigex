@@ -6,6 +6,7 @@ import { ExternalLink, X, CheckCircle2, AlertCircle, Zap, Loader, Lock, BookOpen
 import DynamicForm from "@/components/sections/dashboard/Application/application";
 import { cn } from "@/lib/utils";
 import ApplicationModal from "./Modal";
+import InternshipApplicationModal from "./InternshipApplicationModal";
 import { SmartApplyPreview } from "./SmartApplyPreview";
 import { generateSmartApplicationDraft } from "@/lib/actions/feed/smart-apply.actions";
 import { WaitingListModal } from "./WaitingListModal";
@@ -55,6 +56,7 @@ export function ApplyButton({
   applicationStatus
 }: ApplyButtonProps) {
   const [showModal, setShowModal] = useState(false);
+  const [showInternshipModal, setShowInternshipModal] = useState(false);
   const [showSmartPreview, setShowSmartPreview] = useState(false);
   const [showWaitingList, setShowWaitingList] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -66,6 +68,14 @@ export function ApplyButton({
   const handleSmartApplyClick = () => {
     setShowWaitingList(true);
   };
+  
+  const handleApplyClick = () => {
+    if (type === "internship") {
+      setShowInternshipModal(true);
+    } else {
+      setShowModal(true);
+    }
+  };
 
   // Check if user is accepted
   const isAccepted = applicationStatus?.hasApplied && applicationStatus?.status === "accepted";
@@ -73,6 +83,7 @@ export function ApplyButton({
 
   // If user is accepted, show the "View Updates" button
   if (isAccepted) {
+// ... (keep existing accepted logic)
     const updatesUrl = type === "program" 
       ? `/programs/${id}/updates` 
       : type === "internship" 
@@ -165,7 +176,43 @@ export function ApplyButton({
     );
   }
 
+  // Check for deadline
+  const deadline = opportunityData?.deadline;
+  const isDeadlinePassed = deadline ? new Date(deadline) < new Date() : false;
+
+  if (isDeadlinePassed) {
+    return (
+      <div className={fullWidth ? "w-full" : ""}>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="p-4 rounded-2xl bg-gray-100 border border-gray-200 dark:bg-gray-800 dark:border-gray-700 cursor-not-allowed opacity-80 hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gray-200 dark:bg-gray-700 rounded-full shrink-0">
+                    <X className="text-gray-500 dark:text-gray-400" size={18} />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">
+                      Applications Closed
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400 text-xs mt-0.5 line-clamp-1">
+                      The deadline ({new Date(deadline).toLocaleDateString()}) has passed.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>This opportunity is no longer accepting applications.</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+    );
+  }
+
   if (!isOpen) {
+    // ... rest of closed logic
     // ... existing closed state return
     return (
       <div className={fullWidth ? "w-full" : ""}>
@@ -206,7 +253,7 @@ export function ApplyButton({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-3 md:space-y-4">
           {/* Apply Now Button */}
           <button
-            onClick={() => setShowModal(true)}
+            onClick={handleApplyClick}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
             className="
@@ -279,6 +326,17 @@ export function ApplyButton({
           type={type}
           id={id}
           title={title}
+        />
+      )}
+
+      {/* Internship Specific Modal */}
+      {showInternshipModal && (
+        <InternshipApplicationModal
+          isOpen={showInternshipModal}
+          onClose={() => setShowInternshipModal(false)}
+          internshipId={id}
+          internshipTitle={title}
+          companyName={opportunityData?.company_profiles?.company_name || "Company"}
         />
       )}
 

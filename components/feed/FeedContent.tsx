@@ -98,8 +98,10 @@ export function FeedContent({ initialData, error }: FeedContentProps) {
     } else if (activeTab === "live") {
       content = allContentSorted.filter((it) => liveIds.has(it.id));
     } else {
-      content = transformedData[activeTab] as FeedItem[];
+      content = (transformedData[activeTab as keyof typeof transformedData] || []) as FeedItem[];
     }
+
+    if (!content) content = [];
 
     if (!searchQuery.trim()) return content;
 

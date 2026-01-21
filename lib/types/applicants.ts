@@ -38,6 +38,13 @@ export type Applicant = {
   duration?: string;
   department?: string;
   workMode?: string;
+  school?: string;
+  schoolLevel?: string;
+  dateOfBirth?: string;
+  address?: string;
+  domain?: string;
+  experienceLevel?: string;
+  reason?: string;
 
   // Form Fields - Program/Event
   level?: string;

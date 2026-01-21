@@ -14,7 +14,9 @@ import {
   TrendingUp,
   ChevronRight,
   BookOpen,
+  GraduationCap,
 } from "lucide-react";
+
 import { useAdminSidebar } from "./AdminLayoutProvider";
 
 // Define the type for the company profile
@@ -39,10 +41,12 @@ const navigationGroups = [
     links: [
       { href: "/admin/postings", icon: Briefcase, label: "Postings" },
       { href: "/admin/applicants", icon: Users, label: "Applicants" },
+      { href: "/admin/interns", icon: GraduationCap, label: "Interns", badge: "New" },
       { href: "/admin/accepted", icon: CheckCheck, label: "Hires" },
       { href: "/admin/programs/content", icon: BookOpen, label: "Content" },
     ],
   },
+
   {
     title: "Organization",
     links: [

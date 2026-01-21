@@ -28,6 +28,16 @@ const fetchFeedItemById = async (idOrSlug: string) => {
   try {
     const isIdUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
 
+    // Helper function to create a search pattern from slug
+    // Converts "seed-cohort-test-2026" to pattern that matches "Seed Cohort Test 2026"
+    const createSearchPattern = (slug: string) => {
+      // Replace dashes with wildcards for flexible matching
+      // Also handle numbers that might be at the end (like years)
+      return slug.replace(/-/g, ' ').trim();
+    };
+
+    const searchTerm = isIdUUID ? idOrSlug : createSearchPattern(idOrSlug);
+
     // Try to find in internships
     let internshipQuery = supabaseAdmin
       .from("internships")
@@ -41,8 +51,8 @@ const fetchFeedItemById = async (idOrSlug: string) => {
     if (isIdUUID) {
       internshipQuery = internshipQuery.eq("id", idOrSlug);
     } else {
-      // Use resilient wildcard matching
-      internshipQuery = internshipQuery.ilike("title", `%${idOrSlug.replace(/-/g, '%')}%`);
+      // Use case-insensitive search that matches the unslugified title
+      internshipQuery = internshipQuery.ilike("title", `%${searchTerm}%`);
     }
 
     const { data: internship, error: internshipError } = await internshipQuery.maybeSingle();
@@ -67,8 +77,7 @@ const fetchFeedItemById = async (idOrSlug: string) => {
     if (isIdUUID) {
       programQuery = programQuery.eq("id", idOrSlug);
     } else {
-      // Use resilient wildcard matching
-      programQuery = programQuery.ilike("title", `%${idOrSlug.replace(/-/g, '%')}%`);
+      programQuery = programQuery.ilike("title", `%${searchTerm}%`);
     }
 
     const { data: program, error: programError } = await programQuery.maybeSingle();
@@ -93,8 +102,7 @@ const fetchFeedItemById = async (idOrSlug: string) => {
     if (isIdUUID) {
       eventQuery = eventQuery.eq("id", idOrSlug);
     } else {
-      // Use resilient wildcard matching
-      eventQuery = eventQuery.ilike("title", `%${idOrSlug.replace(/-/g, '%')}%`);
+      eventQuery = eventQuery.ilike("title", `%${searchTerm}%`);
     }
 
     const { data: event, error: eventError } = await eventQuery.maybeSingle();
@@ -106,6 +114,46 @@ const fetchFeedItemById = async (idOrSlug: string) => {
       };
     }
 
+    // If no match found with space replacement, try with the original slug pattern
+    // This handles cases where the title might contain actual dashes
+    if (!isIdUUID) {
+      console.log(`[FEED_LOOKUP] No match for "${searchTerm}", trying fallback patterns...`);
+
+      // Try internships with original slug pattern
+      const { data: internshipFallback } = await supabaseAdmin
+        .from("internships")
+        .select(`*, company_profiles (id, company_name, logo_url, cover_image_url, location, website_url)`)
+        .ilike("title", `%${idOrSlug.replace(/-/g, '%')}%`)
+        .maybeSingle();
+
+      if (internshipFallback) {
+        return { data: { ...internshipFallback, _type: "internships" as FeedType }, error: null };
+      }
+
+      // Try programs with original slug pattern
+      const { data: programFallback } = await supabaseAdmin
+        .from("programs")
+        .select(`*, company_profiles (id, company_name, logo_url, cover_image_url, location, website_url)`)
+        .ilike("title", `%${idOrSlug.replace(/-/g, '%')}%`)
+        .maybeSingle();
+
+      if (programFallback) {
+        return { data: { ...programFallback, _type: "programs" as FeedType }, error: null };
+      }
+
+      // Try events with original slug pattern  
+      const { data: eventFallback } = await supabaseAdmin
+        .from("event")
+        .select(`*, company_profiles (id, company_name, logo_url, cover_image_url, location, website_url)`)
+        .ilike("title", `%${idOrSlug.replace(/-/g, '%')}%`)
+        .maybeSingle();
+
+      if (eventFallback) {
+        return { data: { ...eventFallback, _type: "events" as FeedType }, error: null };
+      }
+    }
+
+    console.log(`[FEED_LOOKUP] No item found for slug/id: "${idOrSlug}"`);
     return {
       data: null,
       error: "Item not found",
@@ -118,6 +166,7 @@ const fetchFeedItemById = async (idOrSlug: string) => {
     };
   }
 };
+
 
 export const getFeedItemById = unstable_cache(
   fetchFeedItemById,
