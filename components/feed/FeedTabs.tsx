@@ -6,7 +6,7 @@ import { Search } from "lucide-react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
-type TabId = "all" | "live" | "internships" | "programs" | "events";
+type TabId = "all" | "live" | "internships" | "programs" | "events" | "projects";
 
 interface FeedTabsProps {
   counts?: {
@@ -15,6 +15,7 @@ interface FeedTabsProps {
     internships: number;
     programs: number;
     events: number;
+    projects: number;
   };
   isLoading?: boolean;
 }
@@ -29,6 +30,10 @@ const tabs = [
     label: "All",
   },
   {
+    id: "projects" as TabId,
+    label: "Projects",
+  },
+  {
     id: "internships" as TabId,
     label: "Internships",
   },
@@ -41,6 +46,7 @@ const tabs = [
     label: "Events",
   },
 ];
+
 
   export function FeedTabs({ counts, isLoading = false }: FeedTabsProps) {
   const { activeTab, setActiveTab, searchQuery, setSearchQuery } = useFeedStore();
@@ -98,7 +104,7 @@ const tabs = [
               type="text"
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
-              placeholder="Search internships, programs, events..."
+              placeholder="Search projects, internships, programs, events..."
               className="flex-1 bg-transparent border-none outline-none text-sm text-gray-900 placeholder:text-gray-500"
             />
             {searchQuery && (

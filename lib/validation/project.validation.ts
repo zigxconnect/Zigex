@@ -43,7 +43,7 @@ export const projectFormSchema = z.object({
     .refine((file) => file, "Pitch Deck (PDF) is required"),
   // Additional refinement for PDF type can be done in the component or refined here if we are sure it's a File
 
-  targetCompanyId: z.string().uuid().or(z.literal("open")).optional(), // Optional, can be "open" for everyone
+  targetCompanyId: z.string().or(z.literal("open")), // Required: UUID or 'open'
   fundingGoal: z.string().optional(), // Treated as string for input, parsed later
 
   // --- SECTION 4: DEVELOPER INFO ---

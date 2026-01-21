@@ -8,6 +8,7 @@ import { Metadata } from "next";
 
 interface Props {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ chat?: string }>;
 }
 
 export const revalidate = 60; // Revalidate the page itself every minute
@@ -181,8 +182,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function ProjectPage({ params }: Props) {
+export default async function ProjectPage({ params, searchParams }: Props) {
   const { id } = await params;
+  const { chat } = await searchParams;
+
+  const isChatInitiallyOpen = chat === 'true';
 
   // 1. Fetch User Data
   const rawProfile = await getRawProfileInfo();
@@ -273,6 +277,7 @@ export default async function ProjectPage({ params }: Props) {
       isAdmin={isAdmin}
       companyProfile={companyProfile}
       activeSubmission={activeSubmission}
+      isChatInitiallyOpen={isChatInitiallyOpen}
     />
   );
 }

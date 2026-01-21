@@ -122,11 +122,23 @@ export default async function StudentDetailPage({ params }: Props) {
     );
   }
 
+  // Get current user first to determine if they're viewing their own profile
+  let myProfile: any = null;
+  let isOwner = false;
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      myProfile = (await supabase.from("student_profiles").select("id, user_id").eq("user_id", user.id).maybeSingle()).data;
+      isOwner = myProfile?.id === data.id;
+    }
+  } catch (err) {}
+
+  // Fetch data - for projects, only show public ones if visitor (not owner)
   const [internRes, progRes, eventRes, projectsResult, storiesRes] = await Promise.all([
     supabaseAdmin.from("Applications").select("id", { count: "exact", head: true }).eq("student_id", data.id).eq("application_type", "internship").neq("status", "rejected"),
     supabaseAdmin.from("Applications").select("id", { count: "exact", head: true }).eq("student_id", data.id).eq("application_type", "program").neq("status", "rejected"),
     supabaseAdmin.from("Applications").select("id", { count: "exact", head: true }).eq("student_id", data.id).eq("application_type", "event").neq("status", "rejected"),
-    fetchAllUserProjects(data.id),
+    fetchAllUserProjects(data.id, !isOwner), // Only public projects for visitors
     supabaseAdmin.from("stories").select("*").eq("user_id", data.user_id).gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false })
   ]);
 
@@ -138,13 +150,6 @@ export default async function StudentDetailPage({ params }: Props) {
   const projects = projectsResult.success ? projectsResult.data : [];
   const activeStories = storiesRes?.data || [];
 
-  let myProfile: any = null;
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      myProfile = (await supabase.from("student_profiles").select("id, user_id").eq("user_id", user.id).maybeSingle()).data;
-    }
-  } catch (err) {}
 
   const { data: candidatesData } = await supabase.from("student_profiles").select("id, username, full_name, avatar_url, university, linkedin_url, phone, email, hard_skills, soft_skills").neq("id", data.id).limit(10);
   const candidates = (candidatesData || []) as Array<any>;

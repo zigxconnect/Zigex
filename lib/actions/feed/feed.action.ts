@@ -4,60 +4,13 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { cache } from "react";
-
-// Types
-export type Internship = {
-  id: string;
-  title: string;
-  location: string;
-  type: string;
-  category: string;
-  description?: string;
-  created_at: string;
-  company_profiles: {
-    company_name: string;
-    logo_url: string;
-    cover_image_url: string;
-  };
-};
-
-export type Event = {
-  id:string;
-  title: string;
-  start_date: string;
-  end_date: string;
-  location: string;
-  description?: string;
-  event_picture_url?: string;
-  created_at: string;
-  company: {
-    company_name: string;
-    logo_url: string;
-  };
-};
-
-export type Program = {
-  id: string;
-  title: string;
-  program_category: string;
-  start_date: string;
-  end_date: string;
-  location: string;
-  description?: string;
-  program_picture_url?: string;
-  created_at: string;
-  company: {
-    company_name: string;
-    logo_url: string;
-  };
-  // ADDED: isOpen property to determine if the program is locked
-  isOpen: boolean;
-};
+import type { Internship, Event, Program, Project } from "@/lib/types/feed";
 
 /**
  * Create Supabase client - uses cookies()
  * This function is NOT cached
  */
+
 async function createClient() {
   const cookieStore = await cookies();
 
@@ -121,11 +74,13 @@ export const getInternships = cache(async (searchQuery?: string) => {
           description,
           created_at,
           company_profiles (
+            id,
             company_name,
             logo_url,
             cover_image_url
           )
         `
+
         )
         .order("created_at", { ascending: false });
       internships = data;
@@ -137,12 +92,23 @@ export const getInternships = cache(async (searchQuery?: string) => {
       return { data: [], error: "Failed to fetch internships" };
     }
 
-    return { data: internships || [], error: null };
+    // Normalize internships to match global type
+    const normalizedInternships = (internships || []).map((i: any) => ({
+      ...i,
+      company: i.company_profiles ? {
+        id: i.company_profiles.id,
+        company_name: i.company_profiles.company_name,
+        logo_url: i.company_profiles.logo_url
+      } : undefined
+    }));
+
+    return { data: normalizedInternships as Internship[], error: null };
   } catch (error) {
     console.error("Internships fetch error:", error);
     return { data: [], error: "Failed to fetch internships" };
   }
 });
+
 
 /**
  * Get events with React cache
@@ -153,7 +119,7 @@ export const getEvents = cache(async (searchQuery?: string) => {
 
     let query = supabase
       .from("event")
-      .select("*, company:company_profiles (company_name, logo_url)")
+      .select("*, company:company_profiles (id, company_name, logo_url)")
       .order("created_at", { ascending: false });
 
     if (searchQuery) {
@@ -161,6 +127,7 @@ export const getEvents = cache(async (searchQuery?: string) => {
         `title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`
       );
     }
+
 
     const { data: events, error } = await query;
 
@@ -185,9 +152,9 @@ export const getPrograms = cache(async (searchQuery?: string) => {
 
     let query = supabase
       .from("programs")
-      .select("*, company:company_profiles (company_name, logo_url)");
-      // REMOVED: .order("created_at", { ascending: false });
-      // Sorting will be handled in the code now.
+      .select("*, company:company_profiles (id, company_name, logo_url)");
+    // REMOVED: .order("created_at", { ascending: false });
+    // Sorting will be handled in the code now.
 
     if (searchQuery) {
       query = query.or(
@@ -242,6 +209,43 @@ export const getPrograms = cache(async (searchQuery?: string) => {
 });
 
 /**
+ * Get public projects for the community feed (Phase 3: The Market)
+ */
+export const getPublicProjects = cache(async (searchQuery?: string) => {
+  try {
+    const supabase = await createClient();
+
+    let query = supabase
+      .from("projects")
+      .select(`
+        *,
+        owner:student_profiles(id, full_name, avatar_url, university)
+      `)
+      .eq("is_published", true)
+      .order("created_at", { ascending: false });
+
+    if (searchQuery) {
+      query = query.or(
+        `title.ilike.%${searchQuery}%,tagline.ilike.%${searchQuery}%,category.ilike.%${searchQuery}%`
+      );
+    }
+
+    const { data: projects, error } = await query;
+
+    if (error) {
+      console.error("Error fetching public projects:", error);
+      return { data: [], error: "Failed to fetch projects" };
+    }
+
+    return { data: projects || [], error: null };
+  } catch (error) {
+    console.error("Public projects fetch error:", error);
+    return { data: [], error: "Failed to fetch projects" };
+  }
+});
+
+
+/**
  * Get all feed data in parallel
  * This is the main function to use in your components
  * Uses React cache to deduplicate requests
@@ -249,11 +253,12 @@ export const getPrograms = cache(async (searchQuery?: string) => {
 export const getAllFeedData = cache(async (searchQuery?: string) => {
   try {
     // Fetch all data in parallel for better performance
-    const [internshipsResult, eventsResult, programsResult] =
+    const [internshipsResult, eventsResult, programsResult, projectsResult] =
       await Promise.all([
         getInternships(searchQuery),
         getEvents(searchQuery),
         getPrograms(searchQuery),
+        getPublicProjects(searchQuery),
       ]);
 
     // Collect any errors
@@ -261,12 +266,14 @@ export const getAllFeedData = cache(async (searchQuery?: string) => {
       internshipsResult.error,
       eventsResult.error,
       programsResult.error,
+      projectsResult.error,
     ].filter(Boolean);
 
     return {
       internships: internshipsResult.data,
       events: eventsResult.data,
       programs: programsResult.data,
+      projects: projectsResult.data,
       error: errors.length > 0 ? errors.join(", ") : null,
     };
   } catch (error) {
@@ -275,6 +282,7 @@ export const getAllFeedData = cache(async (searchQuery?: string) => {
       internships: [],
       events: [],
       programs: [],
+      projects: [],
       error: "Failed to fetch feed data",
     };
   }

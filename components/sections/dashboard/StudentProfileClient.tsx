@@ -19,6 +19,7 @@ import {
   Clock,
   Edit
 } from "lucide-react";
+import { Button } from "@/components/ui/button"; // Added Button import
 import { motion } from "framer-motion";
 import ConnectBar from "@/components/sections/dashboard/ConnectBar";
 import SimilarStudentsSidebar from "@/components/sections/dashboard/SimilarStudentsSidebar";
@@ -213,9 +214,40 @@ export default function StudentProfileClient({
       <div className="max-w-7xl mx-auto px-3 sm:px-8 pb-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative items-start">
           
-          {/* Sidebar Column (Mobile: Top, Desktop: Right) */}
+          {/* Sidebar Column (Mobile: Bottom, Desktop: Right) */}
           <div className="lg:col-span-4 lg:order-2 space-y-8">
-             <div className="sticky top-24">
+             {/* Featured Project (Right Sidebar) */}
+             {projects.length > 0 && (
+                <div className="bg-white rounded-3xl p-2 sm:p-4 border border-slate-100 shadow-sm">
+                   <div className="flex items-center justify-between px-2 mb-3">
+                      <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                        <div className="w-6 h-6 bg-blue-100 rounded flex items-center justify-center text-blue-600">
+                           <Briefcase size={12} />
+                        </div>
+                        Featured Project
+                      </h3>
+                      {projects.length > 1 && (
+                         <span className="text-[10px] font-bold text-slate-400 uppercase">+{projects.length - 1} MORE</span>
+                      )}
+                   </div>
+                   
+                   <div className="mb-4">
+                      <ProjectCard user={data} project={projects[0]} isVisitor={true} isOwner={isOwner} />
+                   </div>
+
+                   {projects.length > 1 && (
+                     <Button 
+                       variant="outline" 
+                       className="w-full rounded-xl border-dashed border-slate-300 text-slate-500 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50 transition-all font-bold text-xs uppercase h-10"
+                       onClick={() => document.getElementById('projects-list')?.scrollIntoView({ behavior: 'smooth' })}
+                     >
+                        View {projects.length - 1} More Projects
+                     </Button>
+                   )}
+                </div>
+             )}
+
+             <div className="sticky top-24 hidden md:block">
                 <SimilarStudentsSidebar students={similarStudents} />
              </div>
           </div>
@@ -356,7 +388,7 @@ export default function StudentProfileClient({
             </div>
 
             {/* Projects */}
-            <section className="space-y-6">
+            <section id="projects-list" className="space-y-6">
                <div className="flex items-center justify-between">
                   <h2 className="text-xl font-bold text-slate-900">Projects & Portfolio</h2>
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{projects.length} PROJECTS</span>

@@ -38,6 +38,7 @@ const navigationGroups = [
   {
     title: "Management",
     links: [
+      { href: "/admin/dashboard/inbox", icon: FileText, label: "Impact Inbox", badge: "New" },
       { href: "/admin/postings", icon: Briefcase, label: "Postings" },
       { href: "/admin/applicants", icon: Users, label: "Applicants" },
       { href: "/admin/accepted", icon: CheckCheck, label: "Hires" },

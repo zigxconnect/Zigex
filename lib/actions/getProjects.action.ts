@@ -128,7 +128,8 @@ export async function fetchActiveProject(): Promise<ActiveProjectResult> {
 }
 
 // Helper function to fetch all projects for a specific student profile ID
-export async function fetchAllUserProjects(studentProfileId: string): Promise<{ success: boolean; data: any[]; error?: string }> {
+// When onlyPublic is true, only returns projects where is_published = true (for visitors viewing other profiles)
+export async function fetchAllUserProjects(studentProfileId: string, onlyPublic: boolean = false): Promise<{ success: boolean; data: any[]; error?: string }> {
   try {
     const cookieStore = await cookies();
     const supabase = createServerClient(
@@ -149,11 +150,18 @@ export async function fetchAllUserProjects(studentProfileId: string): Promise<{ 
       }
     );
 
-    const { data: projects, error: projectError } = await supabase
+    let query = supabase
       .from('projects')
       .select('*, project_submissions(status)')
       .eq('student_id', studentProfileId)
       .order('created_at', { ascending: false });
+
+    // If onlyPublic, filter to only show published projects
+    if (onlyPublic) {
+      query = query.eq('is_published', true);
+    }
+
+    const { data: projects, error: projectError } = await query;
 
     if (projectError) {
       console.error('Projects fetch error:', projectError);

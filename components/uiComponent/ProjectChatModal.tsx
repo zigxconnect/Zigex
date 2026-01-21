@@ -20,7 +20,9 @@ import {
   Search,
   ArrowLeft,
   Rocket,
-  BookOpen
+  BookOpen,
+  FileText,
+  ChevronsDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -64,6 +66,7 @@ interface ChatRoomProps {
 function ChatRoom({ roomId, currentUser, isAdmin, projectTitle, projectOwnerId, onBack }: ChatRoomProps) {
   const [inputText, setInputText] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const isOwner = currentUser?.profile?.user_id === projectOwnerId;
 
   // Use a more robust selector similar to LiveReports
   const messages = useStorage((root: any) => {
@@ -240,7 +243,7 @@ function ChatRoom({ roomId, currentUser, isAdmin, projectTitle, projectOwnerId, 
   }, [messages, hydrateHistory]);
 
   return (
-    <div className="flex flex-col h-[500px] bg-white rounded-2xl overflow-hidden">
+    <div className="flex flex-col h-full bg-white rounded-2xl overflow-hidden">
       {/* Chat Header */}
       <div className="px-6 py-4 border-b bg-slate-50 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -383,7 +386,7 @@ function OwnerInboxContent({ projectTitle, onSelectRoom }: OwnerInboxProps) {
   const allThreads = [...defaultThreads, ...filteredThreads].sort((a, b) => b.updatedAt - a.updatedAt);
 
   return (
-    <div className="flex flex-col h-[500px] bg-white rounded-2xl overflow-hidden">
+    <div className="flex flex-col h-full bg-white rounded-2xl overflow-hidden">
       <div className="px-6 py-4 border-b bg-slate-50 text-left">
         <h4 className="font-bold text-slate-900 text-sm">Project Inquiries</h4>
         <p className="text-[10px] text-slate-500 font-medium">Messages for {projectTitle}</p>
@@ -509,7 +512,8 @@ export default function ProjectChatModal({
   projectTitle,
   projectOwnerId,
   currentUser,
-  isAdmin
+  isAdmin,
+  mode = "modal"
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -518,6 +522,7 @@ export default function ProjectChatModal({
   projectOwnerId: string;
   currentUser: UserProfile | null;
   isAdmin: boolean;
+  mode?: "modal" | "docked";
 }) {
   const [selectedConverserId, setSelectedConverserId] = useState<string | null>(null);
 
@@ -548,26 +553,37 @@ export default function ProjectChatModal({
 
   if (!isOpen) return null;
 
+  const isDocked = mode === "docked";
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div className={isDocked ? "z-[100]" : "fixed inset-0 z-[100] flex items-center justify-center p-4"}>
       <div 
         onClick={onClose}
-        className="absolute inset-0 bg-black/40 backdrop-blur-md animate-in fade-in duration-200"
+        className={`fixed inset-0 bg-black/40 backdrop-blur-md animate-in fade-in duration-200 z-[90] ${isDocked ? 'md:hidden' : 'absolute'}`}
       />
 
-      <div className="relative w-full max-w-xl group animate-in zoom-in-95 duration-300">
-        <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl blur opacity-20 group-hover:opacity-30 transition duration-1000 group-hover:duration-200" />
+      <div className={`
+        relative bg-white shadow-2xl overflow-hidden border border-slate-100 flex flex-col
+        ${isDocked 
+            ? "fixed z-[100] md:bottom-0 md:right-4 md:w-[380px] md:h-[600px] md:max-h-[80vh] md:rounded-t-2xl bottom-0 inset-x-0 w-full h-[85vh] rounded-t-[32px] animate-in slide-in-from-bottom duration-300 shadow-2xl"
+           : "w-full max-w-xl rounded-2xl z-[100] animate-in zoom-in-95 duration-300 h-[600px] max-h-[80vh]"
+        }
+      `}>
+        {/* Glow effect only for Modal mode */}
+        {!isDocked && (
+            <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl blur opacity-20 pointer-events-none" />
+        )}
         
-        <div className="relative bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-100">
+        <div className="relative flex-1 flex flex-col bg-white overflow-hidden h-full">
           <button 
             onClick={onClose}
             className="absolute top-4 right-4 z-[110] p-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors"
           >
-            <X className="w-4 h-4" />
+            {isDocked ? <ChevronsDown className="w-4 h-4" /> : <X className="w-4 h-4" />}
           </button>
 
           {!isKeyValid ? (
-            <div className="p-12 text-center h-[500px] flex flex-col items-center justify-center">
+            <div className="p-12 text-center h-full flex flex-col items-center justify-center">
               <div className="w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center mb-6 text-amber-600">
                 <ShieldCheck className="w-8 h-8" />
               </div>
@@ -589,7 +605,7 @@ export default function ProjectChatModal({
                   onSelectRoom={setSelectedConverserId}
                 />
               ) : !validatedRoomId ? (
-                <div className="p-12 text-center h-[500px] flex flex-col items-center justify-center">
+                <div className="p-12 text-center h-full flex flex-col items-center justify-center">
                   <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center mb-6 text-slate-300">
                     <Rocket className="w-8 h-8 animate-pulse" />
                   </div>

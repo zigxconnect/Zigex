@@ -323,22 +323,46 @@ export default function ProjectCard({
          </div>
 
          {/* Action Buttons */}
-         <div className="mt-auto pt-5 border-t border-border flex items-center gap-3">
-             <Button asChild className="flex-1 bg-primary hover:bg-secondary text-primary-foreground rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all duration-300 h-11">
-                 <Link href={`/feed/projects/${project.id}`}>
-                     EXPLORE PROJECT
-                 </Link>
-             </Button>
-             
-             {githubLink && (
-                 <a 
-                    href={githubLink} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="h-11 w-11 flex items-center justify-center bg-muted text-primary rounded-xl hover:bg-primary hover:text-primary-foreground transition-all duration-300 shadow-sm"
-                 >
-                     <Github className="w-5 h-5" />
-                 </a>
+         <div className="mt-auto pt-5 border-t border-border flex flex-col gap-3">
+             <div className="flex items-center gap-3">
+                <Button asChild className="flex-1 bg-primary hover:bg-secondary text-primary-foreground rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all duration-300 h-11">
+                    <Link href={`/feed/projects/${project.id}`}>
+                        EXPLORE PROJECT
+                    </Link>
+                </Button>
+                
+                {githubLink && (
+                    <a 
+                       href={githubLink} 
+                       target="_blank" 
+                       rel="noopener noreferrer"
+                       className="h-11 w-11 flex items-center justify-center bg-muted text-primary rounded-xl hover:bg-primary hover:text-primary-foreground transition-all duration-300 shadow-sm"
+                    >
+                        <Github className="w-5 h-5" />
+                    </a>
+                )}
+             </div>
+
+             {/* Collaboration Actions for Visitors */}
+             {isVisitor && isPublished && (
+                <div className="flex gap-2">
+                   <Button 
+                     variant="outline"
+                     onClick={() => setShowContributeModal(true)}
+                     className="flex-1 h-10 rounded-xl text-xs font-bold border-dashed border-primary/30 text-primary hover:bg-primary/5 hover:border-primary transition-all"
+                   >
+                      🤝 Contribute
+                   </Button>
+                   <Button 
+                     asChild
+                     variant="outline"
+                     className="flex-1 h-10 rounded-xl text-xs font-bold border-dashed border-blue-300 text-blue-600 hover:bg-blue-50 hover:border-blue-400 transition-all"
+                   >
+                      <Link href={`/feed/projects/${project.id}?chat=true`}>
+                         💬 DM Owner
+                      </Link>
+                   </Button>
+                </div>
              )}
          </div>
 

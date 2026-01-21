@@ -63,14 +63,24 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
         return normalizeImageSrc((item as any).program_picture_url);
       case "events":
         return normalizeImageSrc((item as any).event_picture_url);
+      case "projects":
+        return normalizeImageSrc((item as any).cover_images?.[0] || "/projects.png");
       default:
         return "/placeholder.png";
     }
   };
 
-  const companyName = typeof item.company === "string"
-    ? item.company
-    : item.company?.company_name || "Company";
+  const isProject = item._type === "projects";
+  const displayTitle = isProject ? (item as any).title : item.title;
+  const displayTagline = isProject ? (item as any).tagline : item.description;
+
+  const companyName = item._type === "projects"
+    ? (item as any).owner?.full_name || "Founder"
+    : (typeof item.company === "string" ? item.company : item.company?.company_name || "Company");
+
+  const companyLogo = item._type === "projects"
+    ? (item as any).owner?.avatar_url || "/seedLogo.png"
+    : (item.company?.logo_url || "/seedLogo.png");
 
   // Check if program is open
   const now = new Date();
@@ -84,6 +94,10 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
   }
 
   const handleCardClick = () => {
+    if (isProject) {
+      router.push(`/feed/projects/${item.id}`);
+      return;
+    }
     // Use slug for cleaner URLs as requested
     const slug = slugify(item.title) || item.id;
     router.push(`/feed/${slug}`);
@@ -118,22 +132,24 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
 
           {/* Badges on Image */}
           <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
-            <div className="bg-white px-4 py-1.5 rounded-full shadow-sm">
-              <span className="text-black text-xs font-bold uppercase tracking-tight">
+            <div className="bg-white px-4 py-1.5 rounded-full shadow-sm border border-slate-100">
+              <span className="text-black text-[10px] font-black uppercase tracking-widest text-[#155DFC]">
                 {item._type.slice(0, -1)}
               </span>
             </div>
 
-            {isOpen ? (
-              <div className="bg-[#16A34A] px-4 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">
-                <Unlock size={12} className="text-black" />
-                <span className="text-black text-xs font-bold uppercase tracking-tight">OPEN</span>
-              </div>
-            ) : (
-              <div className="bg-destructive px-4 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">
-                <Lock size={12} className="text-white" />
-                <span className="text-white text-xs font-bold uppercase tracking-tight">CLOSED</span>
-              </div>
+            {item._type !== "projects" && (
+                isOpen ? (
+                    <div className="bg-[#16A34A] px-4 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">
+                        <Unlock size={10} className="text-white fill-white" />
+                        <span className="text-white text-[10px] font-black uppercase tracking-widest">OPEN</span>
+                    </div>
+                ) : (
+                    <div className="bg-destructive px-4 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">
+                        <Lock size={10} className="text-white fill-white" />
+                        <span className="text-white text-[10px] font-black uppercase tracking-widest">CLOSED</span>
+                    </div>
+                )
             )}
           </div>
 
@@ -148,10 +164,10 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
             >
               <ShareButton
                 title={item.title}
-                description={item.description || `Check out this ${item._type.slice(0, -1)}`}
-                url={`/feed/${slugify(item.title) || item.id}`}
+                description={displayTagline || `Check out this ${item._type.slice(0, -1)}`}
+                url={isProject ? `/feed/projects/${item.id}` : `/feed/${slugify(item.title) || item.id}`}
                 imageUrl={getImageUrl()}
-                type={item._type === "internships" ? "internship" : item._type === "events" ? "event" : "program"}
+                type={isProject ? "project" : (item._type === "internships" ? "internship" : item._type === "events" ? "event" : "program") as any}
               />
             </div>
           </div>
@@ -161,17 +177,18 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
         <div className="px-6 py-6 space-y-4 flex-1 flex flex-col">
           {/* Company Info */}
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
+            <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0 border border-slate-100">
               <Image
-                src={normalizeImageSrc(item.company?.logo_url || "/seedLogo.png")}
+                src={normalizeImageSrc(companyLogo)}
                 alt={companyName}
                 width={24}
                 height={24}
-                className="object-cover"
+                className="object-cover h-full"
               />
             </div>
-            <p className="text-[#155DFC] text-sm font-black uppercase tracking-wider">{companyName}</p>
+            <p className="text-[#155DFC] text-xs font-black uppercase tracking-wider truncate max-w-[150px]">{companyName}</p>
           </div>
+
 
           {/* Title */}
           <h3 className="text-2xl font-black text-black leading-tight line-clamp-2">

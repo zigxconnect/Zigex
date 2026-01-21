@@ -26,7 +26,10 @@ import {
    Coins, // Added for Funding
    Globe,
    Code2,
-   Layers
+
+   Layers,
+   Mail,
+   ChevronsUp
 } from "lucide-react";
 import { slugifyUsername } from "@/lib/utils";
 import { Project } from "@/types/models";
@@ -109,6 +112,7 @@ interface ProjectDetailsViewProps {
    isAdmin?: boolean;
    companyProfile?: any | null;
    activeSubmission?: any | null;
+   isChatInitiallyOpen?: boolean;
 }
 
 export default function ProjectDetailsView({
@@ -119,12 +123,13 @@ export default function ProjectDetailsView({
    currentUser,
    isAdmin = false,
    companyProfile = null,
-   activeSubmission = null
+   activeSubmission = null,
+   isChatInitiallyOpen = false
 }: ProjectDetailsViewProps) {
    const [isReadmeOpen, setIsReadmeOpen] = useState(false);
    const [isContributeOpen, setIsContributeOpen] = useState(false);
    const [isManualOpen, setIsManualOpen] = useState(false);
-   const [isChatOpen, setIsChatOpen] = useState(false);
+   const [isChatOpen, setIsChatOpen] = useState(isChatInitiallyOpen);
 
    const isOwner = currentUser?.profile?.user_id === owner?.user_id;
 
@@ -475,15 +480,36 @@ export default function ProjectDetailsView({
                            </div>
                         </div>
 
-                        <div className="pt-2">
-                           <Button onClick={() => setIsChatOpen(true)} className="w-full h-12 rounded-2xl bg-[#155DFC] hover:bg-blue-700 text-white font-black text-sm uppercase tracking-wider shadow-lg shadow-blue-200 transition-all hover:scale-[1.02]">
-                             {isOwner ? (
-                               <><BookOpen className="w-4 h-4 mr-2" /> View Inquiries</>
-                             ) : (
-                               <><Rocket className="w-4 h-4 mr-2" /> {isAdmin ? "Contact Founder" : "Message Owner"}</>
-                             )}
-                           </Button>
+                        <div className="pt-2 space-y-3">
+                           <div className="pt-2 space-y-3">
+                              {/* Visitor/Admin Actions */}
+                              {!isOwner && (
+                                 <>
+                                    <Button onClick={() => setIsChatOpen(true)} className="w-full h-12 rounded-2xl bg-[#155DFC] hover:bg-blue-700 text-white font-black text-sm uppercase tracking-wider shadow-lg shadow-blue-200 transition-all hover:scale-[1.02]">
+                                       <Rocket className="w-4 h-4 mr-2" /> {isAdmin ? "Contact Founder" : "Message Owner"}
+                                    </Button>
+
+                                    <Button 
+                                       onClick={() => setIsContributeOpen(true)} 
+                                       variant="outline"
+                                       className="w-full h-12 rounded-2xl border-slate-200 hover:bg-slate-50 text-slate-700 font-black text-sm uppercase tracking-wider transition-all hover:scale-[1.02]"
+                                    >
+                                       <GitPullRequest className="w-4 h-4 mr-2 text-[#155DFC]" /> Request to Contribute
+                                    </Button>
+                                 </>
+                              )}
+                              
+                              {/* Owner View Hint */}
+                              {isOwner && (
+                                 <div className="text-center p-4 bg-slate-50 rounded-2xl border border-slate-200 border-dashed">
+                                    <p className="text-xs text-slate-500 font-medium">
+                                       Check your <strong>Inbox</strong> at the bottom right to see messages.
+                                    </p>
+                                 </div>
+                              )}
+                           </div>
                         </div>
+
                      </div>
                   </div>
 
@@ -556,7 +582,35 @@ export default function ProjectDetailsView({
             projectOwnerId={owner?.user_id || ""}
             currentUser={currentUser}
             isAdmin={isAdmin}
+            // If owner, use "docked" mode (Twitter style), else standard modal
+            mode={isOwner ? "docked" : "modal"}
          />
+
+         {/* Owner Floating Trigger (Collapsed State) */}
+         {isOwner && !isChatOpen && (
+            <>
+               {/* Mobile FAB */}
+               <div className="md:hidden fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-10 fade-in duration-500">
+                  <Button
+                     onClick={() => setIsChatOpen(true)}
+                     className="h-14 w-14 rounded-full bg-black hover:bg-slate-900 text-white shadow-2xl flex items-center justify-center p-0"
+                  >
+                     <Mail className="w-6 h-6" />
+                  </Button>
+               </div>
+
+               {/* Desktop Footer Bar */}
+               <div 
+                  onClick={() => setIsChatOpen(true)}
+                  className="hidden md:flex fixed bottom-0 right-4 z-50 w-[380px] bg-white border border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] rounded-t-2xl cursor-pointer items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors animate-in slide-in-from-bottom-4 fade-in duration-500"
+               >
+                  <div className="flex items-center gap-3">
+                     <div className="font-bold text-slate-900 text-lg tracking-tight">Messages</div>
+                  </div>
+                  <ChevronsUp className="w-5 h-5 text-slate-400" />
+               </div>
+            </>
+         )}
       </div>
    );
 }

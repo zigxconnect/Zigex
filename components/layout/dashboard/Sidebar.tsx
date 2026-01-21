@@ -142,6 +142,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // Extract user data with fallbacks
   const userName = user?.name || user?.profile?.name || "Guest User";
   const userRole = user?.role || user?.profile?.role || "Student";
+
+  if (userRole === 'Company' || userRole === 'Employer') {
+    navItems.splice(1, 0, { // Insert after Browse
+      href: "/dashboard/inbox",
+      icon: MessageSquare, // Using MessageSquare as generic Inbox or I can use Inbox icon
+      label: "Impact Inbox", 
+      matchPaths: ["/dashboard/inbox"],
+    });
+  }
   const userAvatar =
     user?.avatar ||
     user?.profile?.avatar_url ||
