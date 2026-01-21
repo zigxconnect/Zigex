@@ -29,7 +29,8 @@ import {
 
    Layers,
    Mail,
-   ChevronsUp
+   ChevronsUp,
+   ChevronsDown
 } from "lucide-react";
 import { slugifyUsername } from "@/lib/utils";
 import { Project } from "@/types/models";
