@@ -151,7 +151,7 @@ export async function PATCH(
 
   const { id } = await params;
   const body = await request.json();
-  const { status, payment_completed } = body;
+  const { status, payment_completed, payment_ledger } = body;
 
   // --- FETCH APPLICATION (LEGACY OR NEW INTERNSHIP) ---
   let application: any = null;
@@ -255,8 +255,9 @@ export async function PATCH(
 
   // --- Handle payment_completed update (simple update, no notifications) ---
   if (typeof payment_completed === 'boolean' && status === undefined) {
+    const table = isNewInternshipApp ? "internship_applications" : "Applications";
     const { data: updatedApplication, error: updateError } = await supabaseAdmin
-      .from("Applications")
+      .from(table)
       .update({
         payment_completed,
       })
@@ -308,9 +309,10 @@ export async function PATCH(
   let resultData = null;
 
   // Build update object with both status and payment_completed if provided
-  const updateObject: { status?: string; payment_completed?: boolean } = {};
+  const updateObject: { status?: string; payment_completed?: boolean; payment_ledger?: any } = {};
   if (status !== undefined) updateObject.status = status;
   if (typeof payment_completed === 'boolean') updateObject.payment_completed = payment_completed;
+  if (payment_ledger !== undefined) updateObject.payment_ledger = payment_ledger;
 
   if (status === "rejected") {
     // DELETE the application to allow re-applying

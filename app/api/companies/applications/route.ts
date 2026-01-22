@@ -12,6 +12,9 @@ export async function GET(request: Request) {
   const { company } = auth;
 
   try {
+    const { searchParams } = new URL(request.url);
+    const opportunityId = searchParams.get("opportunityId");
+
     // Fetch ALL application data including form fields
     const selectString = `
         id,
@@ -29,64 +32,95 @@ export async function GET(request: Request) {
         rsvp_status,
         student_id,
         payment_completed,
+        payment_ledger,
         program_id,
-        internship:internships(id, title, description),
-        program:programs(id, title, description),
+        internship_id,
+        event_id,
+        internship:internships(id, title, description, monthly_rate),
+        program:programs(id, title, description, price_xaf),
         event:event(id, title, description),
         student:student_profiles (
           id,
           user_id,
           full_name,
           avatar_url,
-          email,
           phone
         )
       `;
 
+
     // --- FETCH FROM LEGACY APPLICATIONS TABLE ---
-    const { data: legacyApps, error: legacyError } = await supabaseAdmin
+    let legacyQuery = supabaseAdmin
       .from("Applications")
       .select(selectString)
-      .eq("company_id", company.id)
-      .order("created_at", { ascending: false });
+      .eq("company_id", company.id);
 
-    if (legacyError) throw legacyError;
+    if (opportunityId) {
+      legacyQuery = legacyQuery.or(`internship_id.eq.${opportunityId},program_id.eq.${opportunityId},event_id.eq.${opportunityId}`);
+    }
+
+    const { data: legacyApps, error: legacyError } = await legacyQuery.order("created_at", { ascending: false });
+
+    if (legacyError) {
+      console.error("[API] Error fetching legacy apps:", legacyError.message);
+      // throw legacyError; // Don't throw yet, try structured apps
+    }
 
     // --- FETCH FROM NEW INTERNSHIP_APPLICATIONS TABLE ---
-    // This is optional - table may not exist yet
     let structuredInternshipApps: any[] = [];
     try {
       // First, get all internship IDs for this company
-      const { data: companyInternships, error: internshipIdsError } = await supabaseAdmin
+      let internshipIdsQuery = supabaseAdmin
         .from("internships")
         .select("id")
         .eq("company_id", company.id);
+
+      if (opportunityId) {
+        internshipIdsQuery = internshipIdsQuery.eq("id", opportunityId);
+      }
+
+      const { data: companyInternships, error: internshipIdsError } = await internshipIdsQuery;
 
       if (!internshipIdsError && companyInternships) {
         const internshipIds = companyInternships.map(i => i.id);
 
         if (internshipIds.length > 0) {
+          // Note: student_profiles might not have a direct FK relationship in Supabase for this join
+          // We'll fetch them separately if needed, but attempt basic join first
           const { data: sApps, error: sError } = await supabaseAdmin
             .from("internship_applications")
             .select(`
               *,
-              internship:internships(id, title, description),
-              student:student_profiles(id, user_id, full_name, avatar_url, email, phone)
+              internship:internships(id, title, description)
             `)
             .in("internship_id", internshipIds)
             .order("created_at", { ascending: false });
 
           if (!sError && sApps) {
             structuredInternshipApps = sApps;
+
+            // Manually fetch student profiles for these apps since direct join might fail due to FK constraints
+            const studentIds = [...new Set(sApps.map(a => a.student_id))];
+            if (studentIds.length > 0) {
+              const { data: profiles } = await supabaseAdmin
+                .from("student_profiles")
+                .select("id, user_id, full_name, avatar_url, phone")
+                .in("user_id", studentIds);
+
+              if (profiles) {
+                structuredInternshipApps = sApps.map(app => ({
+                  ...app,
+                  student: profiles.find(p => p.user_id === app.student_id)
+                }));
+              }
+            }
           } else if (sError) {
-            // Table might not exist yet - this is okay, we'll just use legacy apps
-            console.log("[API] internship_applications table query failed (table may not exist):", sError.message);
+            console.log("[API] internship_applications table query failure:", sError.message);
           }
         }
       }
     } catch (e) {
-      // Gracefully handle if the new table doesn't exist
-      console.log("[API] internship_applications lookup skipped (table may not exist)");
+      console.log("[API] internship_applications lookup skipped:", e);
     }
 
 
@@ -94,16 +128,21 @@ export async function GET(request: Request) {
     const userIdsNeedingEmail: string[] = [];
     [...(legacyApps || []), ...structuredInternshipApps].forEach((app: any) => {
       const student = Array.isArray(app.student) ? app.student[0] : app.student;
-      if (student && !student.email && student.user_id) {
+      // We need email from auth for both legacy and structured
+      if (student?.user_id) {
         userIdsNeedingEmail.push(student.user_id);
+      } else if (app.student_id && !student) {
+        // For structured apps where profile might be missing
+        userIdsNeedingEmail.push(app.student_id);
       }
     });
 
     // Batch fetch auth emails
     const authEmailMap: Record<string, string> = {};
     if (userIdsNeedingEmail.length > 0) {
+      const uniqueUserIds = [...new Set(userIdsNeedingEmail)];
       await Promise.all(
-        userIdsNeedingEmail.map(async (userId) => {
+        uniqueUserIds.map(async (userId) => {
           try {
             const { data: userData } = await supabaseAdmin.auth.admin.getUserById(userId);
             if (userData?.user?.email) authEmailMap[userId] = userData.user.email;
@@ -122,25 +161,31 @@ export async function GET(request: Request) {
       const event = Array.isArray(app.event) ? app.event[0] : app.event;
       const opportunity = internship || program || event;
 
-      let email = student?.email;
-      if (!email && student?.user_id && authEmailMap[student.user_id]) {
-        email = authEmailMap[student.user_id];
+      // Robust email lookup
+      const email = student?.email || authEmailMap[app.student_id] || authEmailMap[student?.user_id] || "No email";
+
+      // Determine application type based on IDs if not explicitly set
+      let applicationType = app.application_type;
+      if (!applicationType) {
+        if (app.internship_id || internship) applicationType = "internship";
+        else if (app.program_id || program) applicationType = "program";
+        else if (app.event_id || event) applicationType = "event";
       }
 
       return {
         id: app.id,
         name: student?.full_name || "N/A",
         avatarUrl: student?.avatar_url || `/default-avatar.svg`,
-        email: email || "No email",
+        email: email,
         phone: student?.phone || "No phone",
         internshipTitle: opportunity?.title || app.application_type || "N/A",
-        internshipId: opportunity?.id,
+        internshipId: internship?.id || app.internship_id || opportunity?.id,
         opportunityDescription: opportunity?.description || "",
         appliedDate: app.created_at,
         status: app.status,
         resumeUrl: app.resume_url,
         coverLetter: app.cover_letter_url,
-        applicationType: app.application_type,
+        applicationType: applicationType,
         duration: app.duration,
         department: app.department,
         workMode: app.work_mode,
@@ -149,10 +194,13 @@ export async function GET(request: Request) {
         comments: app.comments,
         rsvpStatus: app.rsvp_status,
         studentId: student?.id,
-        userId: student?.user_id,
+        userId: student?.user_id || app.student_id,
         isPaid: app.payment_completed || app.is_paid || false,
+        monthlyRate: internship?.monthly_rate || program?.price_xaf || 0,
+        paymentLedger: app.payment_ledger || [],
         programId: app.program_id || null,
       };
+
     });
 
     // Format Structured Internship Applications
@@ -160,16 +208,14 @@ export async function GET(request: Request) {
       const student = Array.isArray(app.student) ? app.student[0] : app.student;
       const internship = Array.isArray(app.internship) ? app.internship[0] : app.internship;
 
-      let email = student?.email;
-      if (!email && student?.user_id && authEmailMap[student.user_id]) {
-        email = authEmailMap[student.user_id];
-      }
+      // Robust email lookup
+      const email = student?.email || authEmailMap[app.student_id] || authEmailMap[student?.user_id] || "No email";
 
       return {
         id: app.id,
         name: app.full_name || student?.full_name || "N/A",
         avatarUrl: student?.avatar_url || `/default-avatar.svg`,
-        email: email || "No email",
+        email: email,
         phone: student?.phone || "No phone",
         internshipTitle: internship?.title || "Internship",
         internshipId: internship?.id,
@@ -190,8 +236,10 @@ export async function GET(request: Request) {
         expectations: app.expectations,
         comments: app.comment,
         studentId: student?.id,
-        userId: app.student_id,
+        userId: app.student_id || student?.user_id,
         isPaid: app.is_paid_acknowledgement, // this indicates they acknowledged payment terms
+        monthlyRate: internship?.monthly_rate || 0,
+        paymentLedger: app.payment_ledger || [],
       };
     });
 

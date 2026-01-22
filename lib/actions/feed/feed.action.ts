@@ -14,7 +14,8 @@ export type Internship = {
   category: string;
   description?: string;
   created_at: string;
-  company_profiles: {
+  cover_image_url?: string;
+  company: {
     company_name: string;
     logo_url: string;
     cover_image_url: string;
@@ -22,7 +23,7 @@ export type Internship = {
 };
 
 export type Event = {
-  id:string;
+  id: string;
   title: string;
   start_date: string;
   end_date: string;
@@ -120,7 +121,8 @@ export const getInternships = cache(async (searchQuery?: string) => {
           category,
           description,
           created_at,
-          company_profiles (
+          cover_image_url,
+          company: company_profiles (
             company_name,
             logo_url,
             cover_image_url
@@ -186,8 +188,8 @@ export const getPrograms = cache(async (searchQuery?: string) => {
     let query = supabase
       .from("programs")
       .select("*, company:company_profiles (company_name, logo_url)");
-      // REMOVED: .order("created_at", { ascending: false });
-      // Sorting will be handled in the code now.
+    // REMOVED: .order("created_at", { ascending: false });
+    // Sorting will be handled in the code now.
 
     if (searchQuery) {
       query = query.or(

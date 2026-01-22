@@ -13,13 +13,16 @@ import {
 import { format, formatDistanceToNow } from "date-fns";
 import Image from "next/image";
 
-import { Applicant, ApplicantStatus } from "@/lib/types/applicants";
+import { Applicant, ApplicantStatus, PaymentRecord } from "@/lib/types/applicants";
 import { ApplicantDetail } from "@/components/sections/admin/applicants/ApplicantDetail";
+import { ApplicantsTable } from "@/components/sections/admin/applicants/ApplicantsTable";
+import { InternLedgerTable } from "@/components/sections/admin/applicants/InternLedgerTable";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { LayoutGrid, List, Table as TableIcon } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -72,6 +75,7 @@ function InternsPageComponent() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterDomain, setFilterDomain] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"grid" | "table" | "ledger">("table");
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -88,9 +92,14 @@ function InternsPageComponent() {
           throw new Error(errorData.error || `Error ${response.status}`);
         }
         const data: Applicant[] = await response.json();
-        // Filter only internship applications
-        const internshipApps = data.filter(app => app.applicationType === "internship");
+        // Filter internship applications - includes those with type "internship" OR those with an internshipId
+        const internshipApps = data.filter(app => 
+          app.applicationType === "internship" || 
+          (app.internshipId && app.applicationType !== "program" && app.applicationType !== "event")
+        );
+        console.log("[INTERNS] Total apps:", data.length, "Internship apps:", internshipApps.length);
         setApplicants(internshipApps);
+
 
         if (selectedIdFromUrl) {
           const exists = internshipApps.some(app => app.id === selectedIdFromUrl);
@@ -145,6 +154,36 @@ function InternsPageComponent() {
     } catch (err: any) {
       setApplicants(originalApplicants);
       toast.error("Update failed", { description: err.message });
+    }
+  };
+
+  const handleUpdatePaymentLedger = async (appId: string, ledger: PaymentRecord[]) => {
+    try {
+      const resp = await fetch(`/api/companies/applications/${appId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ payment_ledger: ledger })
+      });
+      if (!resp.ok) throw new Error("Update failed");
+      
+      setApplicants(prev => prev.map(a => a.id === appId ? { ...a, paymentLedger: ledger } : a));
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  };
+
+  const handleUpdatePaymentLegacy = async (id: string, isPaid: boolean) => {
+    try {
+      const response = await fetch(`/api/companies/applications/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ payment_completed: isPaid }),
+      });
+      if (!response.ok) throw new Error("Update failed");
+      setApplicants(prev => prev.map(a => a.id === id ? { ...a, isPaid } : a));
+    } catch (err) {
+      toast.error("Failed to update payment status");
     }
   };
 
@@ -270,8 +309,35 @@ function InternsPageComponent() {
             </div>
           </div>
 
+          <div className="flex items-center gap-2 bg-slate-100/50 p-1.5 rounded-2xl border border-slate-100">
+            <Button 
+              variant={viewMode === "grid" ? "primary" : "ghost"}
+              size="sm"
+              className={cn("rounded-xl h-10 px-4", viewMode === "grid" ? "shadow-md" : "text-slate-500")}
+              onClick={() => setViewMode("grid")}
+            >
+              <LayoutGrid size={16} className="mr-2" /> Cards
+            </Button>
+            <Button 
+              variant={viewMode === "table" ? "primary" : "ghost"}
+              size="sm"
+              className={cn("rounded-xl h-10 px-4", viewMode === "table" ? "shadow-md" : "text-slate-500")}
+              onClick={() => setViewMode("table")}
+            >
+              <TableIcon size={16} className="mr-2" /> Table
+            </Button>
+            <Button 
+              variant={viewMode === "ledger" ? "primary" : "ghost"}
+              size="sm"
+              className={cn("rounded-xl h-10 px-4", viewMode === "ledger" ? "shadow-md" : "text-slate-500")}
+              onClick={() => setViewMode("ledger")}
+            >
+              <TrendingUp size={16} className="mr-2" /> Ledger
+            </Button>
+          </div>
+
           <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={handleExportCSV} className="gap-2 rounded-xl">
+            <Button variant="outline" onClick={handleExportCSV} className="gap-2 rounded-xl h-12">
               <DownloadCloud size={16} />
               Export
             </Button>
@@ -364,7 +430,7 @@ function InternsPageComponent() {
           )}
         </div>
 
-        {/* Applicants Grid */}
+        {/* View content */}
         {filteredApplicants.length === 0 ? (
           <div className="text-center py-20">
             <div className="w-24 h-24 bg-gradient-to-br from-slate-100 to-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-slate-100 shadow-inner">
@@ -378,96 +444,118 @@ function InternsPageComponent() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-            {filteredApplicants.map((applicant, index) => (
-              <div
-                key={applicant.id}
-                onClick={() => handleSelectApplicant(applicant.id)}
-                className={cn(
-                  "group relative bg-white rounded-3xl border-2 p-5 cursor-pointer transition-all duration-300",
-                  "hover:shadow-xl hover:shadow-slate-200/50 hover:border-primary/30 hover:-translate-y-1",
-                  selectedApplicantId === applicant.id 
-                    ? "border-primary shadow-lg shadow-primary/10" 
-                    : "border-slate-100"
-                )}
-              >
-                {/* Status indicator */}
-                <div className="absolute top-4 right-4">
-                  <StatusBadge status={applicant.status} />
-                </div>
-
-                {/* Avatar & Name */}
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="relative">
-                    {applicant.avatarUrl && applicant.avatarUrl !== "/default-avatar.svg" ? (
-                      <div className="w-14 h-14 rounded-2xl overflow-hidden ring-2 ring-slate-100 group-hover:ring-primary/30 transition-all shadow-sm">
-                        <Image 
-                          src={applicant.avatarUrl} 
-                          alt={applicant.name} 
-                          width={56} 
-                          height={56}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <div className={cn(
-                        "w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl shadow-sm transition-all",
-                        index % 4 === 0 ? "bg-gradient-to-br from-violet-400 to-violet-600 text-white" :
-                        index % 4 === 1 ? "bg-gradient-to-br from-blue-400 to-blue-600 text-white" :
-                        index % 4 === 2 ? "bg-gradient-to-br from-emerald-400 to-emerald-600 text-white" :
-                        "bg-gradient-to-br from-amber-400 to-amber-600 text-white"
-                      )}>
-                        {applicant.name?.charAt(0).toUpperCase() ?? "?"}
-                      </div>
+          <>
+            {viewMode === "grid" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                {filteredApplicants.map((applicant, index) => (
+                  <div
+                    key={applicant.id}
+                    onClick={() => handleSelectApplicant(applicant.id)}
+                    className={cn(
+                      "group relative bg-white rounded-3xl border-2 p-5 cursor-pointer transition-all duration-300",
+                      "hover:shadow-xl hover:shadow-slate-200/50 hover:border-primary/30 hover:-translate-y-1",
+                      selectedApplicantId === applicant.id 
+                        ? "border-primary shadow-lg shadow-primary/10" 
+                        : "border-slate-100"
                     )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-slate-900 truncate group-hover:text-primary transition-colors">
-                      {applicant.name}
-                    </h3>
-                    <p className="text-xs text-slate-500 truncate flex items-center gap-1">
-                      <Mail size={10} />
-                      {applicant.email}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Position Applied */}
-                <div className="mb-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Applied For</p>
-                  <p className="text-sm font-semibold text-slate-900 truncate">
-                    {applicant.internshipTitle || "General Internship"}
-                  </p>
-                </div>
-
-                {/* Quick Info Pills */}
-                <div className="flex flex-wrap gap-2 mb-4">
-                  <InfoPill icon={GraduationCap} value={applicant.school} />
-                  <InfoPill icon={Target} value={applicant.domain} variant="primary" />
-                  <InfoPill icon={Clock} value={applicant.duration} />
-                </div>
-
-                {/* Footer */}
-                <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-                  <span className="text-xs text-slate-400">
-                    {formatDistanceToNow(new Date(applicant.appliedDate), { addSuffix: true })}
-                  </span>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="gap-1 text-xs text-primary hover:bg-primary/10 rounded-lg"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleSelectApplicant(applicant.id);
-                    }}
                   >
-                    View Profile
-                    <ChevronRight size={14} />
-                  </Button>
-                </div>
+                    {/* Status indicator */}
+                    <div className="absolute top-4 right-4">
+                      <StatusBadge status={applicant.status} />
+                    </div>
+
+                    {/* Avatar & Name */}
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="relative">
+                        {applicant.avatarUrl && applicant.avatarUrl !== "/default-avatar.svg" ? (
+                          <div className="w-14 h-14 rounded-2xl overflow-hidden ring-2 ring-slate-100 group-hover:ring-primary/30 transition-all shadow-sm">
+                            <Image 
+                              src={applicant.avatarUrl} 
+                              alt={applicant.name} 
+                              width={56} 
+                              height={56}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className={cn(
+                            "w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl shadow-sm transition-all",
+                            index % 4 === 0 ? "bg-gradient-to-br from-violet-400 to-violet-600 text-white" :
+                            index % 4 === 1 ? "bg-gradient-to-br from-blue-400 to-blue-600 text-white" :
+                            index % 4 === 2 ? "bg-gradient-to-br from-emerald-400 to-emerald-600 text-white" :
+                            "bg-gradient-to-br from-amber-400 to-amber-600 text-white"
+                          )}>
+                            {applicant.name?.charAt(0).toUpperCase() ?? "?"}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-slate-900 truncate group-hover:text-primary transition-colors">
+                          {applicant.name}
+                        </h3>
+                        <p className="text-xs text-slate-500 truncate flex items-center gap-1">
+                          <Mail size={10} />
+                          {applicant.email}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Position Applied */}
+                    <div className="mb-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Applied For</p>
+                      <p className="text-sm font-semibold text-slate-900 truncate">
+                        {applicant.internshipTitle || "General Internship"}
+                      </p>
+                    </div>
+
+                    {/* Quick Info Pills */}
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      <InfoPill icon={GraduationCap} value={applicant.school} />
+                      <InfoPill icon={Target} value={applicant.domain} variant="primary" />
+                      <InfoPill icon={Clock} value={applicant.duration} />
+                    </div>
+
+                    {/* Footer */}
+                    <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                      <span className="text-xs text-slate-400">
+                        {formatDistanceToNow(new Date(applicant.appliedDate), { addSuffix: true })}
+                      </span>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="gap-1 text-xs text-primary hover:bg-primary/10 rounded-lg"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSelectApplicant(applicant.id);
+                        }}
+                      >
+                        View Profile
+                        <ChevronRight size={14} />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            )}
+
+            {viewMode === "table" && (
+              <ApplicantsTable 
+                applicants={filteredApplicants}
+                selectedApplicantId={selectedApplicantId}
+                onSelect={handleSelectApplicant}
+                onDelete={handleDeleteApplicant}
+                onUpdatePayment={handleUpdatePaymentLegacy}
+              />
+            )}
+
+            {viewMode === "ledger" && (
+              <InternLedgerTable 
+                applicants={filteredApplicants}
+                onDelete={handleDeleteApplicant}
+                onUpdatePayment={handleUpdatePaymentLedger}
+              />
+            )}
+          </>
         )}
 
         {/* Detail Dialog */}

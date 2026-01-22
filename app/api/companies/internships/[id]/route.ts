@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "@/lib/supabase/server";
+import { createClient, supabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { authMiddleware } from "@/lib/middleware/auth";
 import { internshipSchema } from "@/lib/validation/internship";
@@ -49,32 +49,97 @@ export async function PATCH(
     );
   }
 
-  // Validate data
-  const body = await request.json();
-  const { ...updates } = internshipSchema.partial().parse(body);
+  // Handle FormData
+  try {
+    const formData = await request.formData();
+    const coverImage = formData.get("cover_image") as File | null;
 
-  const { data: existingInternship, error: fetchError } = await supabaseAdmin
-    .from("internships")
-    .select("*")
-    .eq("id", id)
-    .eq("company_id", company.id)
-    .single();
-  if (fetchError || !existingInternship) {
-    return NextResponse.json(
-      { error: "Internship not found or does not belong to this company" },
-      { status: 404 }
-    );
-  }
+    // Extract fields from FormData
+    const rawData: any = {};
+    formData.forEach((value, key) => {
+      if (key === "required_skills") {
+        try {
+          rawData[key] = JSON.parse(value as string);
+        } catch {
+          rawData[key] = [];
+        }
+      } else if (key === "is_paid") {
+        rawData[key] = value === "true";
+      } else if (key !== "cover_image") {
+        rawData[key] = value === "null" ? null : value;
+      }
+    });
 
-  // Update data
-  const { data, error } = await supabaseAdmin
-    .from("internships")
-    .update(updates)
-    .eq("id", id);
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const sanitizePathComponent = (str: string) =>
+      str.replace(/[^a-zA-Z0-9_-]/g, "_");
+
+    let cover_image_url = rawData.cover_image_url || null;
+
+    const supabase = await createClient();
+
+    // Verify ownership
+    const { data: existingInternship, error: fetchError } = await supabase
+      .from("internships")
+      .select("*")
+      .eq("id", id)
+      .eq("company_id", company.id)
+      .single();
+
+    if (fetchError || !existingInternship) {
+      return NextResponse.json(
+        { error: "Internship not found or does not belong to this company" },
+        { status: 404 }
+      );
+    }
+
+    // Handle Image Upload if new image provided
+    if (coverImage) {
+      console.log("Updating internship cover image...");
+      const imageExt = coverImage.name.split(".").pop();
+      const imageName = `internship-${Date.now()}.${imageExt}`;
+      const imagePath = `${sanitizePathComponent(company.company_name)}/internships/${imageName}`;
+
+      const { error: uploadError } = await supabaseAdmin.storage
+        .from("company-assets")
+        .upload(imagePath, coverImage, { cacheControl: "3600", upsert: false });
+
+      if (uploadError) {
+        console.error("Supabase storage upload error:", uploadError);
+        return NextResponse.json(
+          { error: "Failed to upload cover image" },
+          { status: 500 }
+        );
+      }
+
+      const { data: imageData } = supabaseAdmin.storage
+        .from("company-assets")
+        .getPublicUrl(imagePath);
+      cover_image_url = imageData.publicUrl;
+    }
+
+    // Validate updates
+    const validatedUpdates = internshipSchema.partial().parse({
+      ...rawData,
+      cover_image_url
+    });
+
+    // Update data
+    const { data, error } = await supabase
+      .from("internships")
+      .update(validatedUpdates)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("PATCH DB Update Error:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json(data);
+  } catch (err: any) {
+    console.error("PATCH Handler Error:", err);
+    return NextResponse.json({ error: err.message }, { status: 400 });
   }
-  return NextResponse.json(data);
 }
 
 //Delete Company Internship
@@ -115,8 +180,9 @@ export async function DELETE(
     );
   }
 
+  const supabase = await createClient();
   // verify internship belongs to company
-  const { data: existingInternship, error: fetchError } = await supabaseAdmin
+  const { data: existingInternship, error: fetchError } = await supabase
     .from("internships")
     .select("*")
     .eq("id", id)
@@ -129,7 +195,7 @@ export async function DELETE(
     );
   }
 
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await supabase
     .from("internships")
     .delete()
     .eq("id", id);
@@ -174,8 +240,9 @@ export async function GET(
   }
 
 
+  const supabase = await createClient();
   // Fetch the single internship that matches the ID and is owned by the requesting company.
-  const { data: internship, error } = await supabaseAdmin
+  const { data: internship, error } = await supabase
     .from("internships")
     .select(`*`)
     .eq("id", id)

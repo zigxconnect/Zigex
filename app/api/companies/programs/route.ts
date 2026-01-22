@@ -1,6 +1,4 @@
-// api/companies/programs/route.ts (MODIFIED)
-import { NextResponse } from "next/server";
-import { supabaseAdmin } from "../../../../lib/supabase/server";
+import { createClient, supabaseAdmin } from "@/lib/supabase/server";
 import { authMiddleware } from "@/lib/middleware/auth";
 import { programSchema } from "@/lib/validation/program";
 import { v4 as uuidv4 } from "uuid"; // For unique file names
@@ -32,7 +30,8 @@ export async function GET(request: Request) {
     );
   }
 
-  const { data, error } = await supabaseAdmin
+  const supabase = await createClient();
+  const { data, error } = await supabase
     .from("programs")
     .select("*")
     .eq("company_id", company.id);
@@ -131,6 +130,7 @@ export async function POST(request: Request) {
       const fileName = `${uuidv4()}.${fileExtension}`; // Use UUID for unique filename
       const filePath = `${company.id}/${fileName}`; // Store images per company ID
 
+      const supabase = await createClient();
       const { data: uploadData, error: uploadError } =
         await supabaseAdmin.storage
           .from("program_pictures") // Your bucket name
@@ -156,7 +156,8 @@ export async function POST(request: Request) {
     }
 
     // Insert program data into the database
-    const { data, error } = await supabaseAdmin
+    const supabase = await createClient();
+    const { data, error } = await supabase
       .from("programs")
       .insert([
         {
@@ -181,7 +182,7 @@ export async function POST(request: Request) {
     // --- NOTIFICATION & EMAIL LOGIC ---
     try {
       // 1. Get subscribed users
-      const { data: users, error: userError } = await supabaseAdmin.rpc("get_subscribed_emails");
+      const { data: users, error: userError } = await (await createClient()).rpc("get_subscribed_emails");
 
       let recipients = users || [];
       if (userError) {
@@ -202,7 +203,7 @@ export async function POST(request: Request) {
           await resend.emails.send({
             from: "ZigX <notifications@zigexconnect.online>",
             to: "notifications@zigexconnect.online",
-            bcc: recipientEmails,
+            bcc: recipientEmails.slice(0, 50),
             subject: `New Program Posted: ${data.title}`,
             react: NewPostEmail({
               postTitle: data.title,
@@ -228,7 +229,7 @@ export async function POST(request: Request) {
           reference_id: data.id,
         }));
 
-        const { error: notifError } = await supabaseAdmin.from("notifications").insert(notifications);
+        const { error: notifError } = await (await createClient()).from("notifications").insert(notifications);
         if (notifError) console.error("Failed to create notifications:", notifError);
       }
     } catch (innerErr) {
@@ -295,7 +296,8 @@ export async function PATCH(request: Request) {
     const updates = programSchema.partial().parse(rawUpdates);
 
     // Ensure the program belongs to the authenticated company
-    const { data: existingProgram, error: fetchError } = await supabaseAdmin
+    const supabase = await createClient();
+    const { data: existingProgram, error: fetchError } = await supabase
       .from("programs")
       .select("id, company_id, program_picture_url") // Also get current image URL
       .eq("id", programId)
@@ -355,7 +357,7 @@ export async function PATCH(request: Request) {
     }
 
     // Update program data in the database
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from("programs")
       .update({
         ...updates,
@@ -409,8 +411,9 @@ export async function DELETE(request: Request) {
       );
     }
 
+    const supabase = await createClient();
     // Verify program belongs to company and get its image URL
-    const { data: existingProgram, error: fetchError } = await supabaseAdmin
+    const { data: existingProgram, error: fetchError } = await supabase
       .from("programs")
       .select("id, company_id, program_picture_url")
       .eq("id", id)
@@ -425,7 +428,7 @@ export async function DELETE(request: Request) {
     }
 
     // Delete program from database
-    const { error: dbError } = await supabaseAdmin
+    const { error: dbError } = await supabase
       .from("programs")
       .delete()
       .eq("id", id);

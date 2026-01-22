@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 
 import { supabaseAdmin } from "../supabase/server"; // Ensure this path is correct
 
@@ -29,10 +30,10 @@ export async function authMiddleware(request: Request) {
 
   // 3. If there's an error or no user, the session is invalid. Deny access.
   if (error || !user) {
-    return {
-      error: "Unauthorized: Invalid or missing session cookie",
-      status: 401,
-    };
+    return NextResponse.json(
+      { error: "Unauthorized: Invalid or missing session cookie" },
+      { status: 401 }
+    );
   }
 
   // --- END OF CORRECTED LOGIC ---
@@ -52,10 +53,10 @@ export async function authMiddleware(request: Request) {
       // No rows found, treat as not a company
     } else {
       console.error("Supabase company profile error:", companyError);
-      return {
-        error: "Internal server error: Could not fetch company profile",
-        status: 500,
-      };
+      return NextResponse.json(
+        { error: "Internal server error: Could not fetch company profile" },
+        { status: 500 }
+      );
     }
   }
   if (companyProfile) {
@@ -75,10 +76,10 @@ export async function authMiddleware(request: Request) {
       // No rows found, treat as not a student
     } else {
       console.error("Supabase student profile error:", studentError);
-      return {
-        error: "Internal server error: Could not fetch student profile",
-        status: 500,
-      };
+      return NextResponse.json(
+        { error: "Internal server error: Could not fetch student profile" },
+        { status: 500 }
+      );
     }
   }
   if (studentProfile) {
@@ -88,5 +89,8 @@ export async function authMiddleware(request: Request) {
 
   // 5. If the user is authenticated but has NEITHER a company nor a student profile,
   // they are unauthorized to perform actions.
-  return { error: "Unauthorized: User profile not found", status: 401 };
+  return NextResponse.json(
+    { error: "Unauthorized: User profile not found" },
+    { status: 401 }
+  );
 }

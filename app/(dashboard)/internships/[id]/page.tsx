@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import InternshipDetailsClient from './InternshipDetailsClient.tsx';
+import InternshipDetailsClient from './InternshipDetailsClient';
 
 async function getInternship(id: string) {
   try {
@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: { params: any }): Promise<Met
 
   const title = `${internship.title} Internship | Zigex`;
   const description = internship.description?.substring(0, 160) || `Apply for the ${internship.title} internship opportunity on Zigex.`;
-  const image = internship.internship_picture_url || "https://i.ibb.co/k2Rpz2jQ/og-image-2x-100.jpg";
+  const image = internship.cover_image_url || "https://i.ibb.co/k2Rpz2jQ/og-image-2x-100.jpg";
 
   return {
     title,

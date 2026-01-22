@@ -41,6 +41,28 @@ export async function POST(request: Request) {
       );
     }
 
+    const { internship_id } = validationResult.data;
+
+    // Check for existing application
+    const { data: existingApp, error: checkError } = await supabase
+      .from("internship_applications")
+      .select("id")
+      .eq("internship_id", internship_id)
+      .eq("student_id", user.id)
+      .maybeSingle();
+
+    if (checkError) {
+      console.error("Error checking for existing application:", checkError);
+    }
+
+    if (existingApp) {
+      return NextResponse.json(
+        { error: "You have already applied for this internship." },
+        { status: 400 }
+      );
+    }
+
+
     const { data, error } = await supabase
       .from("internship_applications")
       .insert({

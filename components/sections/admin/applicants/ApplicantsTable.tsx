@@ -5,7 +5,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge"
 import { 
   Trash2, Mail, Calendar, Briefcase, ChevronRight, User, CreditCard, 
   CheckCircle2, GraduationCap, MapPin, Clock, Target, Eye, MoreHorizontal,
-  Building2, Star, TrendingUp, Filter
+  Building2, Star, TrendingUp, Filter, DollarSign
 } from "lucide-react"
 import { format, formatDistanceToNow } from "date-fns"
 import Image from "next/image"
@@ -195,10 +195,10 @@ export const ApplicantsTable = ({
                       Status
                     </div>
                   </th>
-                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] border-b border-slate-100 hidden md:table-cell">
+                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] border-b border-slate-100">
                     <div className="flex items-center gap-2">
-                      <Calendar size={12} />
-                      Applied
+                      <DollarSign size={12} />
+                      Financials
                     </div>
                   </th>
                   <th className="px-6 py-4 border-b border-slate-100 w-[100px]" />
@@ -306,15 +306,30 @@ export const ApplicantsTable = ({
                       </div>
                     </td>
 
-                    {/* Date Cell */}
-                    <td className="px-6 py-4 hidden md:table-cell" onClick={() => onSelect(applicant.id)}>
-                      <div className="space-y-1">
-                        <p className="text-xs font-semibold text-slate-700">
-                          {format(new Date(applicant.appliedDate), "MMM dd, yyyy")}
-                        </p>
-                        <p className="text-[10px] text-slate-400">
-                          {formatDistanceToNow(new Date(applicant.appliedDate), { addSuffix: true })}
-                        </p>
+                    {/* Financials Cell */}
+                    <td className="px-6 py-4" onClick={() => onSelect(applicant.id)}>
+                      <div className="flex flex-col gap-1">
+                        {applicant.applicationType === 'internship' ? (
+                          <>
+                            <p className="text-xs font-bold text-slate-900 leading-none">
+                              {(() => {
+                                const ledger = applicant.paymentLedger || [];
+                                const paid = ledger.reduce((sum, p) => sum + (p.status === 'paid' ? (p.amount || applicant.monthlyRate || 0) : 0), 0);
+                                return `${paid.toLocaleString()} XAF`;
+                              })()}
+                            </p>
+                            <p className="text-[10px] text-slate-400 font-medium whitespace-nowrap">Monthly Ledger</p>
+                          </>
+                        ) : (
+                          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                            <Switch
+                              checked={applicant.isPaid || false}
+                              onCheckedChange={(checked) => onUpdatePayment?.(applicant.id, checked)}
+                              className="scale-75"
+                            />
+                            <span className="text-[10px] font-bold text-slate-500">{applicant.isPaid ? 'PAID' : 'PENDING'}</span>
+                          </div>
+                        )}
                       </div>
                     </td>
 

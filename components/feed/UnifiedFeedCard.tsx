@@ -58,7 +58,7 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
 
     switch (item._type) {
       case "internships":
-        return normalizeImageSrc((item as any).cover_image_url || (item as any).internship_picture_url);
+        return normalizeImageSrc((item as any).cover_image_url);
       case "programs":
         return normalizeImageSrc((item as any).program_picture_url);
       case "events":
@@ -78,7 +78,31 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
 
   if (item._type === "programs") {
     const program = item as any;
-    if (program.isLocked || (program.end_date && new Date(program.end_date) < now) || (program.application_deadline && new Date(program.application_deadline) < now)) {
+    const appDeadline = program.application_deadline ? new Date(program.application_deadline) : null;
+    const endDate = program.end_date ? new Date(program.end_date) : null;
+    
+    if (appDeadline) appDeadline.setHours(23, 59, 59, 999);
+    if (endDate) endDate.setHours(23, 59, 59, 999);
+
+    if (program.isLocked || (endDate && endDate < now) || (appDeadline && appDeadline < now)) {
+      isOpen = false;
+    }
+  } else if (item._type === "internships") {
+    const internship = item as any;
+    const deadline = internship.deadline ? new Date(internship.deadline) : null;
+    if (deadline) {
+      deadline.setHours(23, 59, 59, 999);
+      if (deadline < now) isOpen = false;
+    }
+  } else if (item._type === "events") {
+    const event = item as any;
+    const registrationDeadline = event.registration_deadline ? new Date(event.registration_deadline) : null;
+    const endDate = event.end_date ? new Date(event.end_date) : null;
+
+    if (registrationDeadline) registrationDeadline.setHours(23, 59, 59, 999);
+    if (endDate) endDate.setHours(23, 59, 59, 999);
+
+    if ((endDate && endDate < now) || (registrationDeadline && registrationDeadline < now)) {
       isOpen = false;
     }
   }

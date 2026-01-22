@@ -79,7 +79,11 @@ export function ApplyButton({
 
   // Check if user is accepted
   const isAccepted = applicationStatus?.hasApplied && applicationStatus?.status === "accepted";
-  const isPending = applicationStatus?.hasApplied && applicationStatus?.status === "pending";
+  const isUnderReview = applicationStatus?.hasApplied && 
+    (applicationStatus?.status === "pending" || 
+     applicationStatus?.status === "reviewing" || 
+     applicationStatus?.status === "reviewed");
+
 
   // If user is accepted, show the "View Updates" button
   if (isAccepted) {
@@ -87,8 +91,14 @@ export function ApplyButton({
     const updatesUrl = type === "program" 
       ? `/programs/${id}/updates` 
       : type === "internship" 
-        ? `/internships/${id}` 
+        ? `/dashboard/applied-internships` 
         : `/events/${id}`;
+
+    const buttonLabel = type === "internship" 
+      ? "Visit Your Internship Dashboard" 
+      : type === "program" 
+        ? "View Program Updates" 
+        : "View Event Details";
 
     return (
       <div className={fullWidth ? "w-full" : ""}>
@@ -110,7 +120,7 @@ export function ApplyButton({
               >
                 <span className="relative z-10 flex items-center justify-center gap-2">
                   <BookOpen size={18} />
-                  {type === "program" ? "View Program Updates" : type === "event" ? "View Event Details" : "View Internship Details"}
+                  {buttonLabel}
                   <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
                 </span>
               </button>
@@ -137,7 +147,7 @@ export function ApplyButton({
   }
 
   // If user has a pending application, show "Under Review" status
-  if (isPending) {
+  if (isUnderReview) {
     return (
       <div className={fullWidth ? "w-full" : ""}>
         <div className="fixed bottom-16 md:static left-0 right-0 z-40 bg-white md:bg-transparent border-t md:border-t-0 border-gray-200 md:border-gray-200 shadow-2xl md:shadow-none md:mt-6">
@@ -153,7 +163,7 @@ export function ApplyButton({
               "
             >
               <Clock size={18} />
-              Application Under Review
+              Application In Review
             </button>
 
             {/* Info Message */}
@@ -165,7 +175,7 @@ export function ApplyButton({
                 <div>
                   <p className="font-semibold text-amber-900 text-sm">Under Review</p>
                   <p className="text-amber-700 text-xs">
-                    Your application is being reviewed. We'll notify you once there's an update.
+                    Feedback will be given as soon as reviews are done.
                   </p>
                 </div>
               </div>

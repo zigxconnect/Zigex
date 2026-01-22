@@ -7,11 +7,21 @@
 export type ApplicantStatus =
   | "pending"
   | "reviewed"
+  | "reviewing"
   | "accepted"
   | "rejected"
   | "rsvp_confirmed";
 
+
 export type ApplicationType = "internship" | "program" | "event";
+
+export type PaymentRecord = {
+  month: number;
+  status: 'paid' | 'unpaid';
+  amount: number;
+  date?: string;
+  transactionId?: string;
+};
 
 /**
  * Defines the structure for a single applicant object used throughout the frontend.
@@ -58,7 +68,9 @@ export type Applicant = {
   studentId?: string;
   userId?: string;
 
-  // Payment Status (for paid programs)
+  // Financials & Ledger
   isPaid?: boolean;
+  monthlyRate?: number;
+  paymentLedger?: PaymentRecord[];
   programId?: string | null;
 };

@@ -10,10 +10,12 @@ const badgeVariants = cva(
     variants: {
       status: {
         pending: "border-transparent bg-yellow-100 text-yellow-800",
-        reviewed: "border-transparent bg-blue-100 text-blue-800", // New
+        reviewing: "border-transparent bg-sky-100 text-sky-800",
+        reviewed: "border-transparent bg-blue-100 text-blue-800",
         accepted: "border-transparent bg-green-100 text-green-800",
         rejected: "border-transparent bg-red-100 text-red-800",
-        rsvp_confirmed: "border-transparent bg-indigo-100 text-indigo-800", // New
+        rsvp_confirmed: "border-transparent bg-indigo-100 text-indigo-800",
+
       },
       size: {
         normal: "px-2.5 py-0.5 text-xs",

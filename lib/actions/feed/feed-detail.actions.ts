@@ -368,7 +368,7 @@ export async function getApplicationStatus(
 
     const foreignKey = foreignKeyMap[opportunityType];
 
-    // Check if the user has applied to this opportunity
+    // Check legacy Applications table
     const { data: application, error: applicationError } = await supabase
       .from("Applications")
       .select("id, status, payment_completed")
@@ -377,18 +377,38 @@ export async function getApplicationStatus(
       .eq(foreignKey, opportunityId)
       .order("created_at", { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
-    if (applicationError || !application) {
-      return { hasApplied: false, status: null };
+    if (application && !applicationError) {
+      return {
+        hasApplied: true,
+        status: application.status,
+        paymentCompleted: application.payment_completed || false,
+        applicationId: application.id,
+      };
     }
 
-    return {
-      hasApplied: true,
-      status: application.status,
-      paymentCompleted: application.payment_completed || false,
-      applicationId: application.id,
-    };
+    // If it's an internship, also check the new internship_applications table
+    if (opportunityType === "internships") {
+      const { data: sApp, error: sAppError } = await supabase
+        .from("internship_applications")
+        .select("id, status, is_paid_acknowledgement")
+        .eq("internship_id", opportunityId)
+        .eq("student_id", user.id)
+        .maybeSingle();
+
+      if (sApp && !sAppError) {
+        return {
+          hasApplied: true,
+          status: sApp.status,
+          paymentCompleted: sApp.is_paid_acknowledgement, // conceptually similar for acknowledgment
+          applicationId: sApp.id,
+        };
+      }
+    }
+
+    return { hasApplied: false, status: null };
+
   } catch (error) {
     console.error("Error checking application status:", error);
     return { hasApplied: false, status: null };
@@ -407,9 +427,13 @@ export async function isOpportunityOpen(
 
   try {
     if (type === "internships") {
-      // Check if there's an application deadline
-      if (item.application_deadline) {
-        const deadline = new Date(item.application_deadline);
+      // Check if there's a deadline (database column is 'deadline')
+      const deadlineField = item.deadline || item.application_deadline;
+      if (deadlineField) {
+        const deadline = new Date(deadlineField);
+        // Set deadline to end of day to be generous
+        deadline.setHours(23, 59, 59, 999);
+
         if (now > deadline) {
           return {
             isOpen: false,
@@ -418,13 +442,14 @@ export async function isOpportunityOpen(
         }
       }
 
-      // Check if there's a start date in the past (assuming internship has started)
-      if (item.start_date) {
-        const startDate = new Date(item.start_date);
-        if (now > startDate) {
+      // Check if internship has ended (if end_date exists)
+      if (item.end_date) {
+        const endDate = new Date(item.end_date);
+        endDate.setHours(23, 59, 59, 999);
+        if (now > endDate) {
           return {
             isOpen: false,
-            reason: "Internship has already started",
+            reason: "Internship has already ended",
           };
         }
       }
@@ -436,6 +461,7 @@ export async function isOpportunityOpen(
       // Check application deadline
       if (item.application_deadline) {
         const deadline = new Date(item.application_deadline);
+        deadline.setHours(23, 59, 59, 999);
         if (now > deadline) {
           return {
             isOpen: false,
@@ -447,6 +473,7 @@ export async function isOpportunityOpen(
       // Check if program has ended
       if (item.end_date) {
         const endDate = new Date(item.end_date);
+        endDate.setHours(23, 59, 59, 999);
         if (now > endDate) {
           return { isOpen: false, reason: "Program has ended" };
         }
@@ -467,6 +494,7 @@ export async function isOpportunityOpen(
       // Check if event has ended
       if (item.end_date) {
         const endDate = new Date(item.end_date);
+        endDate.setHours(23, 59, 59, 999);
         if (now > endDate) {
           return { isOpen: false, reason: "Event has ended" };
         }
@@ -475,6 +503,7 @@ export async function isOpportunityOpen(
       // Check registration deadline
       if (item.registration_deadline) {
         const deadline = new Date(item.registration_deadline);
+        deadline.setHours(23, 59, 59, 999);
         if (now > deadline) {
           return {
             isOpen: false,

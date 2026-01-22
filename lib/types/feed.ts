@@ -20,7 +20,6 @@ export interface Internship extends BaseFeedItem {
   duration?: string;
   department?: string;
   type?: string;
-  internship_picture_url?: string;
   cover_image_url?: string;
   logo_url?: string;
 }

@@ -59,7 +59,7 @@ interface InternshipWithCompany {
   location: string;
   duration?: string;
   department?: string;
-  internship_picture_url?: string;
+  cover_image_url?: string;
   company_id?: string;
   company?: {
     id: string;
@@ -71,7 +71,6 @@ interface InternshipWithCompany {
   end_date?: string;
   is_paid?: boolean;
   compensation_amount?: string;
-  cover_image_url?: string;
   category?: string;
 }
 
@@ -150,7 +149,7 @@ export default function InternshipDetailsClient({ id }: { id: string }) {
               <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
                 <div className="relative h-64 sm:h-80 lg:h-96 bg-gradient-to-br from-blue-100 to-indigo-100">
                   <Image
-                    src={normalizeImageSrc(internship.cover_image_url || internship.internship_picture_url)}
+                    src={normalizeImageSrc(internship.cover_image_url)}
                     alt={internship.title}
                     fill
                     className="object-cover"
@@ -161,7 +160,7 @@ export default function InternshipDetailsClient({ id }: { id: string }) {
                       title={internship.title}
                       description={internship.description || "Check out this internship opportunity"}
                       url={`/internship/${internship.id}`}
-                      imageUrl={normalizeImageSrc(internship.cover_image_url || internship.internship_picture_url)}
+                      imageUrl={normalizeImageSrc(internship.cover_image_url)}
                       type="internship"
                     />
                   </div>
@@ -359,7 +358,12 @@ export default function InternshipDetailsClient({ id }: { id: string }) {
                 </Card>
 
                 {(() => {
-                  const isDeadlinePassed = internship.deadline ? new Date(internship.deadline) < new Date() : false;
+                  const isDeadlinePassed = (() => {
+                    if (!internship.deadline) return false;
+                    const deadline = new Date(internship.deadline);
+                    deadline.setHours(23, 59, 59, 999);
+                    return deadline < new Date();
+                  })();
                   
                   return (
                     <Button
@@ -400,7 +404,12 @@ export default function InternshipDetailsClient({ id }: { id: string }) {
         <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 px-4 pb-4 pt-3 bg-gradient-to-t from-white via-white to-transparent">
           <div className="max-w-lg mx-auto">
             {(() => {
-              const isDeadlinePassed = internship.deadline ? new Date(internship.deadline) < new Date() : false;
+              const isDeadlinePassed = (() => {
+                if (!internship.deadline) return false;
+                const deadline = new Date(internship.deadline);
+                deadline.setHours(23, 59, 59, 999);
+                return deadline < new Date();
+              })();
               return (
                 <Button
                   className={`w-full py-4 text-base font-semibold shadow-2xl border-0 transform hover:scale-[1.02] transition-all duration-300 ${

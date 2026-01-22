@@ -16,7 +16,7 @@ type Internship = {
   deadline: string;
   category: string;
   created_at: string;
-  internship_image_url?: string;
+  cover_image_url?: string;
   [key: string]: any;
 };
 type Program = {
@@ -147,9 +147,21 @@ export async function getHeaderStats(companyId: string) {
   const totalPostings = internships.length + programs.length + events.length;
   const now = new Date();
   const activePostings =
-    internships.filter((p) => new Date(p.deadline) >= now).length +
-    programs.filter((p) => new Date(p.end_date) >= now).length +
-    events.filter((p) => new Date(p.end_date) >= now).length;
+    internships.filter((p) => {
+      const d = new Date(p.deadline);
+      d.setHours(23, 59, 59, 999);
+      return d >= now;
+    }).length +
+    programs.filter((p) => {
+      const d = new Date(p.end_date);
+      d.setHours(23, 59, 59, 999);
+      return d >= now;
+    }).length +
+    events.filter((p) => {
+      const d = new Date(p.end_date);
+      d.setHours(23, 59, 59, 999);
+      return d >= now;
+    }).length;
 
   const totalApplicationsCount = await _fetchTotalApplicationCount(
     supabase,
@@ -404,8 +416,9 @@ function _formatPostingsForClient(
   countsMap: Record<string, number>
 ) {
   return allPostings.map((p) => {
-    const endDate = new Date(p.deadline || p.end_date);
-    const isExpired = endDate < new Date();
+    const deadlineDate = new Date(p.deadline || p.end_date);
+    deadlineDate.setHours(23, 59, 59, 999);
+    const isExpired = deadlineDate < new Date();
     return {
       id: p.id,
       title: p.title,
@@ -422,7 +435,7 @@ function _formatPostingsForClient(
           ? p.program_picture_url
           : p.postingType === "Event"
             ? p.event_picture_url
-            : p.internship_image_url,
+            : p.cover_image_url,
     };
   });
 }
@@ -438,7 +451,11 @@ function _calculateKPIs(
   ).length;
   const now = new Date();
   const activePostings = allPostings.filter(
-    (p) => new Date(p.deadline || p.end_date) >= now
+    (p) => {
+      const d = new Date(p.deadline || p.end_date);
+      d.setHours(23, 59, 59, 999);
+      return d >= now;
+    }
   ).length;
   const expiredPostings = totalPostings - activePostings;
   const completionRate =

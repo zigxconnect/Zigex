@@ -17,7 +17,8 @@ export const internshipSchema = z.object({
     created_at: z.string().datetime().optional(),
     updated_at: z.string().datetime().optional(),
     required_skills: z.array(z.string()).optional(),
-    category: z.string().min(2)
+    category: z.string().min(2),
+    monthly_rate: z.coerce.number().default(0).optional()
 });
 
 export type Internship = z.infer<typeof internshipSchema>;

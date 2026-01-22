@@ -107,13 +107,13 @@ export const ApplicantActions = ({
         return (
           <ActionWrapper title="Screening Phase" subtitle="Verify candidate fit" icon={Zap} colorClass="text-amber-500">
               <Button
-                onClick={() => handleStatusUpdate("reviewed")}
+                onClick={() => handleStatusUpdate("reviewing")}
                 disabled={isSubmittingUpdate}
                 variant="outline"
                 className="rounded-2xl h-12 px-6 border-slate-200 hover:bg-slate-50 transition-all font-bold group"
               >
                 {isSubmittingUpdate ? <Loader2 className="animate-spin mr-2" size={16} /> : <Eye className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />}
-                Move to Review
+                Start Review
               </Button>
               <Button
                 onClick={() => setShowRejectConfirm(true)}
@@ -126,6 +126,7 @@ export const ApplicantActions = ({
           </ActionWrapper>
         )
 
+      case "reviewing":
       case "reviewed":
         return (
           <ActionWrapper title="Final Evaluation" subtitle="Select your decision" icon={ThumbsUp} colorClass="text-indigo-500">
@@ -137,6 +138,7 @@ export const ApplicantActions = ({
                 {isSubmittingUpdate ? <Loader2 className="animate-spin mr-2" size={16} /> : <Check className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />}
                 Accept & Invite
               </Button>
+
               <div className="flex gap-2">
                   <Button
                     onClick={() => setIsScheduling(true)}

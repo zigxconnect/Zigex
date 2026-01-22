@@ -117,6 +117,9 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
   const [compensationAmount, setCompensationAmount] = useState(
     initialData?.compensation_amount || ""
   );
+  const [monthlyRate, setMonthlyRate] = useState(
+    initialData?.monthly_rate || 0
+  );
   const [isPaid, setIsPaid] = useState(Boolean(initialData?.is_paid));
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(initialData?.cover_image_url || null);
@@ -135,65 +138,78 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    console.log("Submit button clicked! isEditMode:", isEditMode);
 
     try {
-      const supabase = createClient();
-      let uploadedImageUrl = coverImageUrl;
+      const formData = new FormData();
 
-      // Handle Image Upload if new image selected
-      if (coverImage) {
-        const fileExt = coverImage.name.split('.').pop();
-        const fileName = `internships/${Date.now()}.${fileExt}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('company-assets')
-          .upload(fileName, coverImage);
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('company-assets')
-          .getPublicUrl(uploadData.path);
-        
-        uploadedImageUrl = publicUrl;
-      }
-
-      const internshipData = {
-        id: isEditMode ? initialData.id : undefined,
-        title,
-        description,
-        location,
-        category,
-        start_date: startDate ? new Date(startDate).toISOString() : null,
-        end_date: endDate ? new Date(endDate).toISOString() : null,
-        deadline: deadline ? new Date(deadline).toISOString() : null,
-        type: internshipType,
-        required_skills: requiredSkills,
-        is_paid: isPaid,
-        compensation_amount: isPaid ? compensationAmount : null,
-        cover_image_url: uploadedImageUrl
+      // Helper for date validation
+      const validateDate = (dateStr: string, name: string) => {
+        if (!dateStr) return null;
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) {
+          throw new Error(`Invalid ${name} date selected.`);
+        }
+        return d.toISOString();
       };
+
+      // Add all fields to FormData
+      formData.append("title", title);
+      formData.append("description", description);
+      formData.append("location", location);
+      formData.append("category", category);
+      formData.append("start_date", validateDate(startDate, "start") || "");
+      formData.append("end_date", validateDate(endDate, "end") || "");
+      formData.append("deadline", validateDate(deadline, "deadline") || "");
+      formData.append("type", internshipType);
+      formData.append("is_paid", String(isPaid));
+      formData.append("compensation_amount", isPaid ? compensationAmount : "");
+      formData.append("monthly_rate", String(monthlyRate));
+      formData.append("required_skills", JSON.stringify(requiredSkills));
+
+      if (coverImage) {
+        formData.append("cover_image", coverImage);
+        console.log("Added new cover image to form data");
+      } else if (coverImageUrl) {
+        formData.append("cover_image_url", coverImageUrl);
+      }
 
       const endpoint = isEditMode
         ? `/api/companies/internships/${initialData.id}`
         : "/api/companies/internships";
       const method = isEditMode ? "PATCH" : "POST";
 
+      console.log(`Sending ${method} request to ${endpoint}...`);
+
       const response = await fetch(endpoint, {
         method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(internshipData),
+        body: formData, // Sending FormData instead of JSON
       });
 
-      const result = await response.json();
+      console.log("API response status:", response.status);
+
+      let result;
+      try {
+        result = await response.json();
+        console.log("API response data:", result);
+      } catch (err) {
+        console.error("Failed to parse JSON response:", err);
+        throw new Error("The server returned an invalid response. Please try again.");
+      }
+
       if (!response.ok) {
-        throw new Error(result.error?.message || result.error || "Failed to submit form");
+        throw new Error(result?.error?.message || result?.error || "Failed to submit form");
       }
 
       toast.success(`Internship ${isEditMode ? "updated" : "published"} successfully!`);
-      router.push("/admin/postings");
-      router.refresh();
+      
+      setTimeout(() => {
+        router.push("/admin/postings");
+        router.refresh();
+      }, 1000);
     } catch (error: any) {
-      toast.error(error.message || "An unexpected error occurred.");
+      console.error("Form submission error details:", error);
+      toast.error(error.message || "An unexpected error occurred. Please check your internet connection.");
     } finally {
       setIsSubmitting(false);
     }
@@ -345,14 +361,24 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
             </div>
           </div>
           {isPaid && (
-            <FormField label="Monthly Compensation (Amount)">
-              <Input
-                type="text"
-                value={compensationAmount}
-                onChange={(e) => setCompensationAmount(e.target.value)}
-                placeholder="e.g., 50,000 FCFA, $500, etc."
-              />
-            </FormField>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField label="Monthly Stipend (Paid to Intern)">
+                <Input
+                  type="text"
+                  value={compensationAmount}
+                  onChange={(e) => setCompensationAmount(e.target.value)}
+                  placeholder="e.g., 50,000 FCFA"
+                />
+              </FormField>
+              <FormField label="Program Fee (Paid by Intern)">
+                <Input
+                  type="number"
+                  value={monthlyRate}
+                  onChange={(e) => setMonthlyRate(parseInt(e.target.value) || 0)}
+                  placeholder="e.g., 25000"
+                />
+              </FormField>
+            </div>
           )}
         </div>
       </FormSection>
