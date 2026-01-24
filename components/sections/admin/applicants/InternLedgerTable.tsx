@@ -6,7 +6,7 @@ import {
   Trash2, DollarSign, Download, CheckCircle2, 
   User, Calendar, TrendingUp, Search, Briefcase,
   CreditCard, Wallet, PiggyBank,
-  ArrowUpRight, Loader2, Info
+  ArrowUpRight, Loader2, Info, Clock
 } from "lucide-react";
 import { format } from "date-fns";
 import Image from "next/image";
