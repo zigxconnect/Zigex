@@ -158,6 +158,12 @@ function InternsPageComponent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const selectedIdFromUrl = searchParams.get("selected");
+  
+  // Use a ref to store the latest applicants for use in stable callbacks without adding to deps
+  const applicantsRef = useRef<Applicant[]>(applicants);
+  useEffect(() => {
+    applicantsRef.current = applicants;
+  }, [applicants]);
 
   const fetchApplicants = useCallback(async () => {
     try {
@@ -207,10 +213,10 @@ function InternsPageComponent() {
 
   // Updated handler - Stable reference using functional state updates
   const handleUpdateStatus = useCallback(async (applicantId: string, newStatus: ApplicantStatus) => {
+    const previousApplicants = applicantsRef.current;
     console.log(`[STATUS_UPDATE] Initiating: ${applicantId} -> ${newStatus}`);
     
-    // We'll capture the original state inside the functional update if needed for revert
-    // But for now, we just perform the optimistic update
+    // 1. Optimistic update
     setApplicants(prev =>
       prev.map(app => app.id === applicantId ? { ...app, status: newStatus } : app)
     );
@@ -224,13 +230,14 @@ function InternsPageComponent() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Update failed");
+        if (response.status === 401) toast.error("Session Expired", { description: "Please login again." });
+        throw new Error(errorData.error || `Error ${response.status}`);
       }
 
       const updatedData = await response.json();
-      console.log(`[STATUS_UPDATE] Finalized:`, updatedData);
+      console.log(`[STATUS_UPDATE] Success:`, updatedData);
       
-      // Confirm with server truth
+      // 2. Confirm state
       setApplicants(prev =>
         prev.map(app => app.id === applicantId ? { 
           ...app, 
@@ -241,20 +248,23 @@ function InternsPageComponent() {
       return Promise.resolve();
     } catch (err: any) {
       console.error("[STATUS_UPDATE] Failed:", err);
-      // Optional: Logic to revert state could go here, but usually a refresh is better
-      toast.error("Process Failed", { description: err.message });
+      // Revert state
+      setApplicants(previousApplicants);
+      toast.error("Update Failed", { description: err.message });
       return Promise.reject(err);
     }
   }, []); // Stable reference!
 
   const handleUpdatePaymentLedger = useCallback(async (appId: string, ledger: PaymentRecord[]) => {
+    // Capture state for revert
+    const previousApplicants = applicantsRef.current;
     console.group(`[FINANCIAL_SYNC] ${appId}`);
     
     // 1. Optimistic Update
     setApplicants(prev => prev.map(a => a.id === appId ? { ...a, paymentLedger: ledger } : a));
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 12000); 
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
 
     try {
       const resp = await fetch(`/api/companies/applications/${appId}`, {
@@ -268,15 +278,17 @@ function InternsPageComponent() {
 
       if (!resp.ok) {
         const errorData = await resp.json().catch(() => ({}));
-        throw new Error(errorData.error || `Server error`);
+        if (resp.status === 401) toast.error("Session Expired", { description: "Please refresh the page and log in again." });
+        throw new Error(errorData.error || `Server Error (${resp.status})`);
       }
       
       const serverData = await resp.json();
-      console.log("Confirmed from server:", serverData);
+      console.log("Sync Success:", serverData);
 
-      // 2. Commit and ensure correct mapping
+      // 2. Firmly commit the data with robust mapping
       setApplicants(prev => prev.map(a => {
         if (a.id !== appId) return a;
+        // Map backend keys to frontend keys correctly
         return {
           ...a,
           paymentLedger: serverData.payment_ledger || serverData.paymentLedger || ledger,
@@ -286,13 +298,17 @@ function InternsPageComponent() {
 
     } catch (err: any) {
       clearTimeout(timeoutId);
-      console.error("Sync error:", err);
-      toast.error("Ledger Sync Failed");
-      throw err;
+      console.error("Sync Failed:", err);
+      // Revert state on error to previousRef
+      setApplicants(previousApplicants);
+      
+      const message = err.name === 'AbortError' ? "Request timed out" : (err.message || "Failed to save");
+      toast.error("Process Failed", { description: message });
+      throw err; 
     } finally {
       console.groupEnd();
     }
-  }, []); // Stable reference!
+  }, []); // Truly stable!
 
   const handleUpdatePaymentLegacy = async (id: string, isPaid: boolean) => {
     try {
