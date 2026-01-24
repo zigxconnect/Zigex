@@ -20,7 +20,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import html2pdf from "html2pdf.js";
+// lib: html2pdf.js is imported dynamically inside handleExportPDF to avoid SSR issues
 
 interface InternLedgerTableProps {
   applicants: Applicant[];
@@ -95,23 +95,34 @@ export const InternLedgerTable = ({
     }
   }, [getFinancials, onUpdatePayment, updatingPayments]);
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     setIsExporting(true);
     const element = document.getElementById('ledger-table-container');
-    if (!element) return;
+    if (!element) {
+      setIsExporting(false);
+      return;
+    }
 
-    const opt = {
-      margin: 10,
-      filename: `Intern_Ledger_${format(new Date(), 'yyyy-MM-dd')}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-    };
+    try {
+      // @ts-ignore
+      const html2pdf = (await import('html2pdf.js')).default;
 
-    html2pdf().from(element).set(opt).save().then(() => {
+      const opt = {
+        margin: 10,
+        filename: `Intern_Ledger_${format(new Date(), 'yyyy-MM-dd')}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+      };
+
+      await html2pdf().from(element).set(opt).save();
       setIsExporting(false);
       toast.success("Ledger exported as PDF");
-    }).catch(() => setIsExporting(false));
+    } catch (error) {
+      console.error("PDF Export error:", error);
+      setIsExporting(false);
+      toast.error("Failed to generate PDF");
+    }
   };
 
   const totals = useMemo(() => {

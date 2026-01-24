@@ -402,7 +402,7 @@ function InternsPageComponent() {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-2xl border border-slate-200">
               <Button 
-                variant={viewMode === "grid" ? "default" : "ghost"}
+                variant={viewMode === "grid" ? "outline" : "ghost"}
                 size="sm"
                 className={cn(
                   "rounded-xl h-10 px-4 font-medium transition-all duration-200",
@@ -416,7 +416,7 @@ function InternsPageComponent() {
                 Cards
               </Button>
               <Button 
-                variant={viewMode === "table" ? "default" : "ghost"}
+                variant={viewMode === "table" ? "outline" : "ghost"}
                 size="sm"
                 className={cn(
                   "rounded-xl h-10 px-4 font-medium transition-all duration-200",
@@ -430,7 +430,7 @@ function InternsPageComponent() {
                 Table
               </Button>
               <Button 
-                variant={viewMode === "ledger" ? "default" : "ghost"}
+                variant={viewMode === "ledger" ? "outline" : "ghost"}
                 size="sm"
                 className={cn(
                   "rounded-xl h-10 px-4 font-medium transition-all duration-200",
