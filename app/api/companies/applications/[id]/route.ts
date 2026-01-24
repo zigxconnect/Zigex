@@ -314,19 +314,7 @@ export async function PATCH(
   if (typeof payment_completed === 'boolean') updateObject.payment_completed = payment_completed;
   if (payment_ledger !== undefined) updateObject.payment_ledger = payment_ledger;
 
-  if (status === "rejected") {
-    // DELETE the application to allow re-applying
-    const table = isNewInternshipApp ? "internship_applications" : "Applications";
-    const { error: deleteError } = await supabaseAdmin
-      .from(table)
-      .delete()
-      .eq("id", id);
-
-    if (deleteError) {
-      return NextResponse.json({ error: deleteError.message }, { status: 400 });
-    }
-    resultData = { ...application, status: "rejected", deleted: true };
-  } else if (Object.keys(updateObject).length > 0) {
+  if (Object.keys(updateObject).length > 0) {
     // UPDATE the application
     const table = isNewInternshipApp ? "internship_applications" : "Applications";
     const { data: updatedApplication, error: updateError } = await supabaseAdmin

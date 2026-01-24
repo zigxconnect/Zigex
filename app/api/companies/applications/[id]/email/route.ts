@@ -21,19 +21,48 @@ export async function POST(
     const { id } = await params;
 
     // 1. Get Application & Student
-    const { data: application, error: appError } = await supabaseAdmin
+    let application: any = null;
+    let studentInfo: any = null;
+
+    // Try legacy first
+    const { data: legacyApp } = await supabaseAdmin
         .from("Applications")
         .select("*, student:student_profiles(full_name, user_id)")
         .eq("id", id)
         .single();
 
-    if (appError || !application) {
+    if (legacyApp) {
+        application = legacyApp;
+        studentInfo = legacyApp.student;
+    } else {
+        const { data: sApp } = await supabaseAdmin
+            .from("internship_applications")
+            .select("*")
+            .eq("id", id)
+            .single();
+
+        if (sApp) {
+            application = sApp;
+            const { data: profile } = await supabaseAdmin
+                .from("student_profiles")
+                .select("full_name, user_id")
+                .eq("user_id", sApp.student_id)
+                .single();
+            studentInfo = profile || { full_name: sApp.full_name, user_id: sApp.student_id };
+        }
+    }
+
+    if (!application) {
         return NextResponse.json({ error: "Application not found" }, { status: 404 });
+    }
+
+    if (!studentInfo?.user_id) {
+        return NextResponse.json({ error: "Student info not found" }, { status: 404 });
     }
 
     // 2. Get Student Email
     const { data: userData } = await supabaseAdmin.auth.admin.getUserById(
-        application.student.user_id
+        studentInfo.user_id
     );
     const studentEmail = userData?.user?.email;
 

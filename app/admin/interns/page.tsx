@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { 
@@ -8,7 +8,7 @@ import {
   GraduationCap, Briefcase, MapPin, Calendar, Clock,
   Target, User, Mail, Phone, ChevronRight, Eye,
   CheckCircle2, XCircle, MoreHorizontal, Filter,
-  Building2, Star, TrendingUp, Sparkles
+  Building2, Star, TrendingUp, Sparkles, Users, UserCheck
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import Image from "next/image";
@@ -36,24 +36,102 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+
+// Stat card component
+const StatCard = ({ 
+  label, 
+  value, 
+  sublabel, 
+  icon: Icon, 
+  variant = "default",
+  className = ""
+}: { 
+  label: string;
+  value: number;
+  sublabel: string;
+  icon: any;
+  variant?: "default" | "warning" | "info" | "success";
+  className?: string;
+}) => {
+  const variants = {
+    default: {
+      bg: "bg-white",
+      border: "border-blue-50",
+      iconBg: "bg-blue-50/50",
+      iconColor: "text-blue-400",
+      labelColor: "text-blue-400",
+      valueColor: "text-slate-900",
+      sublabelColor: "text-blue-400",
+      hoverShadow: "hover:shadow-blue-200/50"
+    },
+    warning: {
+      bg: "bg-white",
+      border: "border-indigo-100",
+      iconBg: "bg-indigo-50",
+      iconColor: "text-indigo-500",
+      labelColor: "text-indigo-500/70",
+      valueColor: "text-indigo-600",
+      sublabelColor: "text-indigo-500/70",
+      hoverShadow: "hover:shadow-indigo-200/50"
+    },
+    info: {
+      bg: "bg-white",
+      border: "border-blue-100",
+      iconBg: "bg-blue-50",
+      iconColor: "text-blue-500",
+      labelColor: "text-blue-500/70",
+      valueColor: "text-blue-600",
+      sublabelColor: "text-blue-500/70",
+      hoverShadow: "hover:shadow-blue-200/50"
+    },
+    success: {
+      bg: "bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700",
+      border: "border-transparent",
+      iconBg: "bg-white/20",
+      iconColor: "text-white",
+      labelColor: "text-white/70",
+      valueColor: "text-white",
+      sublabelColor: "text-white/70",
+      hoverShadow: "hover:shadow-blue-300/50"
+    },
+  };
+
+  const v = variants[variant];
+
+  return (
+    <div className={cn(
+      "relative overflow-hidden rounded-3xl p-6 border-2 transition-all duration-300 group",
+      v.bg, v.border, v.hoverShadow,
+      "hover:shadow-xl hover:-translate-y-1",
+      className
+    )}>
+      <div className="relative z-10 flex items-center justify-between">
+        <div>
+          <p className={cn("text-[10px] font-bold uppercase tracking-[0.2em] mb-1", v.labelColor)}>{label}</p>
+          <p className={cn("text-4xl font-black tracking-tighter", v.valueColor)}>{value}</p>
+          <p className={cn("text-[10px] font-bold uppercase mt-1", v.sublabelColor)}>{sublabel}</p>
+        </div>
+        <div className={cn(
+          "w-14 h-14 rounded-2xl flex items-center justify-center transition-transform duration-500 group-hover:scale-110",
+          v.iconBg
+        )}>
+          <Icon size={24} className={v.iconColor} />
+        </div>
+      </div>
+      <div className={cn(
+        "absolute -right-4 -bottom-4 w-24 h-24 rounded-full transition-all duration-500 group-hover:scale-110",
+        variant === "success" ? "bg-white/10" : "bg-slate-50"
+      )} />
+    </div>
+  );
+};
 
 // Info pill component
 const InfoPill = ({ icon: Icon, value, variant = "default" }: { icon: any, value?: string, variant?: "default" | "primary" | "success" }) => {
   if (!value) return null;
   const variants = {
     default: "bg-slate-100 text-slate-600 border-slate-200",
-    primary: "bg-primary/10 text-primary border-primary/20",
+    primary: "bg-blue-50 text-blue-600 border-blue-100",
     success: "bg-emerald-50 text-emerald-700 border-emerald-200"
   };
   return (
@@ -81,43 +159,43 @@ function InternsPageComponent() {
   const router = useRouter();
   const selectedIdFromUrl = searchParams.get("selected");
 
-  useEffect(() => {
-    const fetchApplicants = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const response = await fetch("/api/companies/applications");
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || `Error ${response.status}`);
-        }
-        const data: Applicant[] = await response.json();
-        // Filter internship applications - includes those with type "internship" OR those with an internshipId
-        const internshipApps = data.filter(app => 
-          app.applicationType === "internship" || 
-          (app.internshipId && app.applicationType !== "program" && app.applicationType !== "event")
-        );
-        console.log("[INTERNS] Total apps:", data.length, "Internship apps:", internshipApps.length);
-        setApplicants(internshipApps);
-
-
-        if (selectedIdFromUrl) {
-          const exists = internshipApps.some(app => app.id === selectedIdFromUrl);
-          if (exists) {
-            setSelectedApplicantId(selectedIdFromUrl);
-            setIsSheetOpen(true);
-          }
-        }
-      } catch (err: any) {
-        console.error("Fetch error:", err);
-        setError(err.message || "Could not connect to the server.");
-        toast.error("Failed to load interns", { description: err.message });
-      } finally {
-        setIsLoading(false);
+  const fetchApplicants = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await fetch("/api/companies/applications");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Error ${response.status}`);
       }
-    };
-    fetchApplicants();
+      const data: Applicant[] = await response.json();
+      // Filter internship applications - includes those with type "internship" OR those with an internshipId
+      const internshipApps = data.filter(app => 
+        app.applicationType === "internship" || 
+        (app.internshipId && app.applicationType !== "program" && app.applicationType !== "event")
+      );
+      console.log("[INTERNS] Total apps:", data.length, "Internship apps:", internshipApps.length);
+      setApplicants(internshipApps);
+
+      if (selectedIdFromUrl) {
+        const exists = internshipApps.some(app => app.id === selectedIdFromUrl);
+        if (exists) {
+          setSelectedApplicantId(selectedIdFromUrl);
+          setIsSheetOpen(true);
+        }
+      }
+    } catch (err: any) {
+      console.error("Fetch error:", err);
+      setError(err.message || "Could not connect to the server.");
+      toast.error("Failed to load interns", { description: err.message });
+    } finally {
+      setIsLoading(false);
+    }
   }, [selectedIdFromUrl]);
+
+  useEffect(() => {
+    fetchApplicants();
+  }, [fetchApplicants]);
 
   const handleSelectApplicant = (id: string) => {
     setSelectedApplicantId(id);
@@ -127,15 +205,14 @@ function InternsPageComponent() {
     window.history.replaceState({}, "", url.toString());
   };
 
-  const handleUpdateStatus = async (applicantId: string, newStatus: ApplicantStatus) => {
+  // Updated handler - returns a Promise and updates optimistically then confirms
+  const handleUpdateStatus = useCallback(async (applicantId: string, newStatus: ApplicantStatus) => {
     const originalApplicants = [...applicants];
-    if (newStatus === "rejected") {
-      setApplicants(prev => prev.filter(app => app.id !== applicantId));
-    } else {
-      setApplicants(prev =>
-        prev.map(app => app.id === applicantId ? { ...app, status: newStatus } : app)
-      );
-    }
+    
+    // Optimistic update
+    setApplicants(prev =>
+      prev.map(app => app.id === applicantId ? { ...app, status: newStatus } : app)
+    );
 
     try {
       const response = await fetch(`/api/companies/applications/${applicantId}`, {
@@ -144,18 +221,32 @@ function InternsPageComponent() {
         body: JSON.stringify({ status: newStatus }),
       });
 
-      if (!response.ok) throw new Error("Update failed");
-      toast.success(`Intern ${newStatus === "accepted" ? "accepted" : newStatus === "rejected" ? "rejected" : "updated"}!`);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Update failed");
+      }
+      
+      // Refresh the selected applicant data if sheet is open
+      if (isSheetOpen && selectedApplicantId === applicantId) {
+        // Update the local state with the confirmed new status
+        setApplicants(prev =>
+          prev.map(app => app.id === applicantId ? { ...app, status: newStatus } : app)
+        );
+      }
       
       if (newStatus === "rejected") {
         setIsSheetOpen(false);
         setSelectedApplicantId(null);
       }
+      
+      return Promise.resolve();
     } catch (err: any) {
+      // Revert on error
       setApplicants(originalApplicants);
-      toast.error("Update failed", { description: err.message });
+      toast.error("Failed to update status", { description: err.message });
+      return Promise.reject(err);
     }
-  };
+  }, [applicants, isSheetOpen, selectedApplicantId]);
 
   const handleUpdatePaymentLedger = async (appId: string, ledger: PaymentRecord[]) => {
     try {
@@ -227,7 +318,7 @@ function InternsPageComponent() {
     total: applicants.length,
     pending: applicants.filter(a => a.status === "pending").length,
     accepted: applicants.filter(a => a.status === "accepted").length,
-    reviewing: applicants.filter(a => a.status === "reviewing").length,
+    reviewing: applicants.filter(a => a.status === "reviewing" || a.status === "reviewed").length,
   };
 
   const handleExportCSV = () => {
@@ -268,8 +359,8 @@ function InternsPageComponent() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center space-y-4">
           <div className="relative">
-            <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto" />
-            <GraduationCap className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 text-primary" />
+            <div className="w-16 h-16 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mx-auto" />
+            <GraduationCap className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 text-blue-600" />
           </div>
           <p className="text-sm font-medium text-slate-500">Loading intern applications...</p>
         </div>
@@ -286,7 +377,7 @@ function InternsPageComponent() {
           </div>
           <h2 className="text-xl font-bold text-slate-900">Unable to load data</h2>
           <p className="text-sm text-slate-500">{error}</p>
-          <Button onClick={() => window.location.reload()}>Try Again</Button>
+          <Button onClick={() => window.location.reload()} className="bg-blue-600 hover:bg-blue-700">Try Again</Button>
         </div>
       </div>
     );
@@ -295,49 +386,70 @@ function InternsPageComponent() {
   return (
     <TooltipProvider>
       <div className="space-y-8 p-6 md:p-8">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-200">
-                <GraduationCap className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-black text-slate-900">Intern Applications</h1>
-                <p className="text-sm text-slate-500">Manage and review internship candidates</p>
-              </div>
+        {/* Header Section */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center shadow-xl shadow-blue-200">
+              <GraduationCap className="w-7 h-7 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-black text-slate-900">Intern Applications</h1>
+              <p className="text-sm text-slate-500">Manage and review internship candidates</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 bg-slate-100/50 p-1.5 rounded-2xl border border-slate-100">
-            <Button 
-              variant={viewMode === "grid" ? "primary" : "ghost"}
-              size="sm"
-              className={cn("rounded-xl h-10 px-4", viewMode === "grid" ? "shadow-md" : "text-slate-500")}
-              onClick={() => setViewMode("grid")}
-            >
-              <LayoutGrid size={16} className="mr-2" /> Cards
-            </Button>
-            <Button 
-              variant={viewMode === "table" ? "primary" : "ghost"}
-              size="sm"
-              className={cn("rounded-xl h-10 px-4", viewMode === "table" ? "shadow-md" : "text-slate-500")}
-              onClick={() => setViewMode("table")}
-            >
-              <TableIcon size={16} className="mr-2" /> Table
-            </Button>
-            <Button 
-              variant={viewMode === "ledger" ? "primary" : "ghost"}
-              size="sm"
-              className={cn("rounded-xl h-10 px-4", viewMode === "ledger" ? "shadow-md" : "text-slate-500")}
-              onClick={() => setViewMode("ledger")}
-            >
-              <TrendingUp size={16} className="mr-2" /> Ledger
-            </Button>
-          </div>
-
+          {/* View Mode Toggle */}
           <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={handleExportCSV} className="gap-2 rounded-xl h-12">
+            <div className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-2xl border border-slate-200">
+              <Button 
+                variant={viewMode === "grid" ? "default" : "ghost"}
+                size="sm"
+                className={cn(
+                  "rounded-xl h-10 px-4 font-medium transition-all duration-200",
+                  viewMode === "grid" 
+                    ? "bg-white shadow-md text-blue-600" 
+                    : "text-slate-500 hover:text-slate-700"
+                )}
+                onClick={() => setViewMode("grid")}
+              >
+                <LayoutGrid size={16} className="mr-2" />
+                Cards
+              </Button>
+              <Button 
+                variant={viewMode === "table" ? "default" : "ghost"}
+                size="sm"
+                className={cn(
+                  "rounded-xl h-10 px-4 font-medium transition-all duration-200",
+                  viewMode === "table" 
+                    ? "bg-white shadow-md text-blue-600" 
+                    : "text-slate-500 hover:text-slate-700"
+                )}
+                onClick={() => setViewMode("table")}
+              >
+                <TableIcon size={16} className="mr-2" />
+                Table
+              </Button>
+              <Button 
+                variant={viewMode === "ledger" ? "default" : "ghost"}
+                size="sm"
+                className={cn(
+                  "rounded-xl h-10 px-4 font-medium transition-all duration-200",
+                  viewMode === "ledger" 
+                    ? "bg-white shadow-md text-blue-600" 
+                    : "text-slate-500 hover:text-slate-700"
+                )}
+                onClick={() => setViewMode("ledger")}
+              >
+                <TrendingUp size={16} className="mr-2" />
+                Ledger
+              </Button>
+            </div>
+            
+            <Button 
+              variant="outline" 
+              onClick={handleExportCSV} 
+              className="gap-2 rounded-xl h-12 border-slate-200 hover:border-blue-300 hover:bg-blue-50 font-medium"
+            >
               <DownloadCloud size={16} />
               Export
             </Button>
@@ -345,70 +457,56 @@ function InternsPageComponent() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-3xl font-black text-slate-900">{stats.total}</p>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mt-1">Total Applicants</p>
-              </div>
-              <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center">
-                <User size={20} className="text-slate-600" />
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-2xl p-5 border border-amber-100 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-3xl font-black text-amber-600">{stats.pending}</p>
-                <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider mt-1">Pending Review</p>
-              </div>
-              <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
-                <Clock size={20} className="text-amber-600" />
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-2xl p-5 border border-blue-100 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-3xl font-black text-blue-600">{stats.reviewing}</p>
-                <p className="text-xs font-semibold text-blue-400 uppercase tracking-wider mt-1">Reviewing</p>
-              </div>
-              <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
-                <Eye size={20} className="text-blue-600" />
-              </div>
-            </div>
-          </div>
-          <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-5 shadow-lg shadow-emerald-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-3xl font-black text-white">{stats.accepted}</p>
-                <p className="text-xs font-semibold text-white/70 uppercase tracking-wider mt-1">Accepted</p>
-              </div>
-              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
-                <CheckCircle2 size={20} className="text-white" />
-              </div>
-            </div>
-          </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
+          <StatCard
+            label="Census"
+            value={stats.total}
+            sublabel="Candidates"
+            icon={Users}
+            variant="default"
+          />
+          <StatCard
+            label="Awaiting"
+            value={stats.pending}
+            sublabel="Pending Review"
+            icon={Clock}
+            variant="warning"
+          />
+          <StatCard
+            label="Active"
+            value={stats.reviewing}
+            sublabel="In Process"
+            icon={Eye}
+            variant="info"
+          />
+          <StatCard
+            label="Success"
+            value={stats.accepted}
+            sublabel="Hired Interns"
+            icon={UserCheck}
+            variant="success"
+          />
         </div>
 
         {/* Search & Filters */}
         <div className="flex flex-col md:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <div className="relative flex-1 group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
             <Input
               placeholder="Search by name, email, school, or position..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-11 h-12 rounded-xl border-slate-200 focus:border-primary"
+              className="pl-12 h-12 rounded-xl border-slate-200 focus:border-blue-400 focus:ring-blue-100 text-sm"
             />
           </div>
           {domains.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="gap-2 h-12 rounded-xl">
-                  <Filter size={16} />
-                  {filterDomain || "All Domains"}
+                <Button variant="outline" className="gap-2 h-12 rounded-xl border-slate-200 hover:border-blue-300 min-w-[140px] justify-between">
+                  <div className="flex items-center gap-2">
+                    <Filter size={16} />
+                    <span>{filterDomain || "All Domains"}</span>
+                  </div>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 rounded-xl">
@@ -432,11 +530,11 @@ function InternsPageComponent() {
 
         {/* View content */}
         {filteredApplicants.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="w-24 h-24 bg-gradient-to-br from-slate-100 to-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-slate-100 shadow-inner">
+          <div className="text-center py-20 bg-gradient-to-br from-slate-50 to-blue-50/30 rounded-3xl border-2 border-dashed border-slate-200">
+            <div className="w-24 h-24 bg-white rounded-3xl flex items-center justify-center mx-auto mb-6 border border-slate-100 shadow-lg">
               <GraduationCap size={40} className="text-slate-300" />
             </div>
-            <h3 className="text-xl font-black text-slate-700 mb-2">No Intern Applications</h3>
+            <h3 className="text-xl font-bold text-slate-700 mb-2">No Intern Applications</h3>
             <p className="text-sm text-slate-400 max-w-md mx-auto">
               {searchQuery || filterDomain 
                 ? "No applications match your current filters. Try adjusting your search."
@@ -453,9 +551,9 @@ function InternsPageComponent() {
                     onClick={() => handleSelectApplicant(applicant.id)}
                     className={cn(
                       "group relative bg-white rounded-3xl border-2 p-5 cursor-pointer transition-all duration-300",
-                      "hover:shadow-xl hover:shadow-slate-200/50 hover:border-primary/30 hover:-translate-y-1",
+                      "hover:shadow-xl hover:shadow-blue-100/50 hover:border-blue-200 hover:-translate-y-1",
                       selectedApplicantId === applicant.id 
-                        ? "border-primary shadow-lg shadow-primary/10" 
+                        ? "border-blue-500 shadow-lg shadow-blue-100" 
                         : "border-slate-100"
                     )}
                   >
@@ -468,7 +566,7 @@ function InternsPageComponent() {
                     <div className="flex items-center gap-4 mb-4">
                       <div className="relative">
                         {applicant.avatarUrl && applicant.avatarUrl !== "/default-avatar.svg" ? (
-                          <div className="w-14 h-14 rounded-2xl overflow-hidden ring-2 ring-slate-100 group-hover:ring-primary/30 transition-all shadow-sm">
+                          <div className="w-14 h-14 rounded-2xl overflow-hidden ring-2 ring-slate-100 group-hover:ring-blue-200 transition-all shadow-sm">
                             <Image 
                               src={applicant.avatarUrl} 
                               alt={applicant.name} 
@@ -479,18 +577,15 @@ function InternsPageComponent() {
                           </div>
                         ) : (
                           <div className={cn(
-                            "w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl shadow-sm transition-all",
-                            index % 4 === 0 ? "bg-gradient-to-br from-violet-400 to-violet-600 text-white" :
-                            index % 4 === 1 ? "bg-gradient-to-br from-blue-400 to-blue-600 text-white" :
-                            index % 4 === 2 ? "bg-gradient-to-br from-emerald-400 to-emerald-600 text-white" :
-                            "bg-gradient-to-br from-amber-400 to-amber-600 text-white"
+                            "w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-xl shadow-sm transition-all",
+                            "bg-gradient-to-br from-blue-500 to-indigo-600 text-white"
                           )}>
                             {applicant.name?.charAt(0).toUpperCase() ?? "?"}
                           </div>
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-slate-900 truncate group-hover:text-primary transition-colors">
+                        <h3 className="font-bold text-slate-900 truncate group-hover:text-blue-600 transition-colors">
                           {applicant.name}
                         </h3>
                         <p className="text-xs text-slate-500 truncate flex items-center gap-1">
@@ -501,8 +596,8 @@ function InternsPageComponent() {
                     </div>
 
                     {/* Position Applied */}
-                    <div className="mb-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Applied For</p>
+                    <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
+                      <p className="text-[10px] font-bold text-blue-600/60 uppercase tracking-wider mb-1">Applied For</p>
                       <p className="text-sm font-semibold text-slate-900 truncate">
                         {applicant.internshipTitle || "General Internship"}
                       </p>
@@ -523,7 +618,7 @@ function InternsPageComponent() {
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        className="gap-1 text-xs text-primary hover:bg-primary/10 rounded-lg"
+                        className="gap-1 text-xs text-blue-600 hover:bg-blue-50 rounded-lg font-medium"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleSelectApplicant(applicant.id);
@@ -560,7 +655,7 @@ function InternsPageComponent() {
 
         {/* Detail Dialog */}
         <Dialog open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0 rounded-3xl">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0 rounded-3xl border-0 shadow-2xl">
             {selectedApplicant && (
               <ApplicantDetail
                 applicant={selectedApplicant}
@@ -578,7 +673,7 @@ export default function InternsPage() {
   return (
     <Suspense fallback={
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
       </div>
     }>
       <InternsPageComponent />

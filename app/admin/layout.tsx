@@ -26,19 +26,21 @@ export default async function AdminDashboardLayout({
       {/* Header is fixed and always visible */}
       <AdminHeader stats={headerStats} companyProfile={companyProfile} />
 
-      <div className="flex min-h-screen">
+      <div className="flex min-h-screen bg-[#F6F8FF] overflow-x-hidden">
         {/* Sidebar is an off-canvas menu on mobile, and fixed on desktop */}
         <AdminSidebar companyProfile={companyProfile} />
 
         {/* Main content area that adapts its margin based on screen size */}
         <main
-          className="flex-1 w-full transition-all duration-500 ease-in-out
+          className="flex-1 w-full transition-all duration-500 ease-in-out relative
             pt-20
-            lg:ml-72 
-            bg-[#F6F8FF]
+            lg:ml-72
           "
         >
-          <div className="p-4 sm:p-6 lg:p-10 max-w-[1600px] mx-auto min-h-[calc(100vh-5rem)]">
+          {/* Subtle background mesh gradient */}
+          <div className="absolute inset-0 bg-[radial-gradient(at_top_right,_#E0EAFF_0%,_transparent_50%),_radial-gradient(at_bottom_left,_#E0EAFF_0%,_transparent_50%)] opacity-40 pointer-events-none" />
+          
+          <div className="relative z-10 p-4 sm:p-6 lg:p-10 max-w-[1600px] mx-auto min-h-[calc(100vh-5rem)]">
             {children}
           </div>
         </main>

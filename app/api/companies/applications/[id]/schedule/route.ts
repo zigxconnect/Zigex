@@ -21,17 +21,47 @@ export async function POST(
     const { date } = await request.json();
 
     // 1. Get Application & Student info
-    const { data: application, error: appError } = await supabaseAdmin
+    let application: any = null;
+    let studentProfile: any = null;
+
+    // Try legacy table first
+    const { data: legacyApp } = await supabaseAdmin
         .from("Applications")
-        .select("*, student_profiles(full_name, user_id)")
+        .select("*, student:student_profiles(full_name, user_id)")
         .eq("id", id)
         .single();
 
-    if (appError || !application) {
+    if (legacyApp) {
+        application = legacyApp;
+        studentProfile = legacyApp.student;
+    } else {
+        // Try new internship table
+        const { data: sApp } = await supabaseAdmin
+            .from("internship_applications")
+            .select(`
+                *,
+                internship:internships(id, title, description)
+            `)
+            .eq("id", id)
+            .single();
+
+        if (sApp) {
+            application = sApp;
+            // For new apps, student_id is the user_id
+            const { data: profile } = await supabaseAdmin
+                .from("student_profiles")
+                .select("full_name, user_id")
+                .eq("user_id", sApp.student_id)
+                .single();
+
+            studentProfile = profile || { full_name: sApp.full_name, user_id: sApp.student_id };
+        }
+    }
+
+    if (!application) {
         return NextResponse.json({ error: "Application not found" }, { status: 404 });
     }
 
-    const studentProfile = (application as any).student_profiles;
     if (!studentProfile?.user_id) {
         return NextResponse.json({ error: "Student user not found" }, { status: 404 });
     }
@@ -46,9 +76,12 @@ export async function POST(
 
     // 3. Get Opportunity Title
     let opportunityTitle = "the opportunity";
-    if (application.application_type === "internship" && application.internship_id) {
-        const { data: internship } = await supabaseAdmin.from("internships").select("title").eq("id", application.internship_id).single();
-        opportunityTitle = internship?.title || opportunityTitle;
+    if (application.application_type === "internship" || application.internship_id) {
+        const internshipId = application.internship_id || (application.internship?.id);
+        if (internshipId) {
+            const { data: internship } = await supabaseAdmin.from("internships").select("title").eq("id", internshipId).single();
+            opportunityTitle = internship?.title || opportunityTitle;
+        }
     } else if (application.application_type === "program" && application.program_id) {
         const { data: program } = await supabaseAdmin.from("programs").select("title").eq("id", application.program_id).single();
         opportunityTitle = program?.title || opportunityTitle;
@@ -74,7 +107,8 @@ export async function POST(
 
             // 5. Update Status to "reviewed" if it was pending
             if (application.status === "pending") {
-                await supabaseAdmin.from("Applications").update({ status: "reviewed" }).eq("id", id);
+                const table = legacyApp ? "Applications" : "internship_applications";
+                await supabaseAdmin.from(table).update({ status: "reviewed" }).eq("id", id);
             }
 
         } catch (err) {

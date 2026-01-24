@@ -58,18 +58,18 @@ export const RecentApplicationsTable = ({
   };
 
   return (
-    <Card className="bg-white rounded-[2.5rem] shadow-sm border-slate-100 overflow-hidden animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-300">
-      <div className="p-8 pb-4">
+    <Card className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-indigo-100/20 border-indigo-100/50 overflow-hidden animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-300">
+      <div className="p-10 pb-6">
         <div className="flex justify-between items-center sm:items-end">
-          <div>
-            <h3 className="text-xl font-heading font-black text-slate-900 tracking-tight">
-              Candidate <span className="text-primary">Pipeline</span>
-            </h3>
-            <p className="text-xs font-medium text-slate-500 mt-1 uppercase tracking-wide">Latest submissions needing your attention</p>
+          <div className="space-y-1">
+            <h1 className="text-2xl font-heading font-black text-slate-900 tracking-tighter">
+              Candidate <span className="text-primary italic">Pipeline</span>
+            </h1>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none">Intelligence Stream • Real-time processing</p>
           </div>
           <Link href="/admin/applicants">
-            <Button variant="ghost" className="rounded-xl h-9 text-xs font-bold gap-2 text-primary hover:text-primary hover:bg-primary/5">
-              Explore Full Filter
+            <Button variant="ghost" className="rounded-2xl h-11 px-6 text-[10px] font-black uppercase tracking-widest gap-2 text-primary hover:text-white hover:bg-primary transition-all active:scale-95">
+              Explore Analytics
               <ArrowRight size={14} />
             </Button>
           </Link>
@@ -88,58 +88,63 @@ export const RecentApplicationsTable = ({
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full border-separate border-spacing-0">
             <thead>
-              <tr className="bg-white">
-                <th className="px-8 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] border-b border-slate-50">
+              <tr className="bg-white/50 backdrop-blur-md">
+                <th className="px-10 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-indigo-50">
                   Candidate Profile
                 </th>
-                <th className="px-8 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] border-b border-slate-50">
+                <th className="px-10 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-indigo-50">
                   Target Opportunity
                 </th>
-                <th className="px-8 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] border-b border-slate-50">
+                <th className="px-10 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-indigo-50">
                   Status
                 </th>
-                <th className="px-8 py-4 border-b border-slate-50" />
+                <th className="px-10 py-5 border-b border-indigo-50 text-right">
+                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Actions</span>
+                </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50/50">
+            <tbody className="divide-y divide-indigo-50/50">
               {(applicationsData.data ?? []).map((app, index) => (
                 <tr
                   key={app.id}
                   onClick={() => router.push(`/admin/applicants?selected=${app.id}`)}
-                  className="group hover:bg-slate-50/50 transition-all duration-300 cursor-pointer"
+                  className="group hover:bg-white/80 transition-all duration-500 cursor-pointer"
                 >
-                  <td className="px-8 py-5">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-bold text-sm shadow-sm ring-1 ring-slate-100 group-hover:scale-110 transition-transform duration-500 ${
-                        index % 2 === 0 ? 'bg-indigo-50 text-indigo-600 ring-indigo-100' : 'bg-blue-50 text-blue-600 ring-blue-100'
+                  <td className="px-10 py-6">
+                    <div className="flex items-center gap-5">
+                      <div className={`w-12 h-12 rounded-[1.25rem] flex items-center justify-center font-black text-lg shadow-lg group-hover:scale-110 transition-all duration-700 ${
+                        index % 4 === 0 ? 'bg-gradient-to-br from-primary to-secondary text-white' :
+                        index % 4 === 1 ? 'bg-gradient-to-br from-violet-500 to-indigo-600 text-white' :
+                        index % 4 === 2 ? 'bg-gradient-to-br from-emerald-400 to-teal-600 text-white' :
+                        'bg-gradient-to-br from-amber-400 to-orange-600 text-white'
                       }`}>
                         {app.name?.charAt(0) ?? "?"}
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-slate-900 group-hover:text-primary transition-colors">
+                        <p className="text-sm font-black text-slate-900 group-hover:text-primary transition-colors">
                           {app.name}
                         </p>
-                        <p className="text-[10px] text-slate-400 font-medium">Candidate ID: #{String(app.id).slice(-4)}</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5 opacity-60">ID: #{String(app.id).slice(-4).toUpperCase()}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-8 py-5">
+                  <td className="px-10 py-6">
                     <div className="flex flex-col">
-                       <span className="text-sm font-semibold text-slate-700 truncate max-w-[200px]">{app.field}</span>
+                       <span className="text-sm font-black text-slate-800 tracking-tight truncate max-w-[240px]">{app.field}</span>
                     </div>
                   </td>
-                  <td className="px-8 py-5">
+                  <td className="px-10 py-6">
                     <span
-                      className={`inline-flex items-center px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg ring-1 ring-inset ${getStatusStyles(
+                      className={`inline-flex items-center px-3.5 py-1.5 text-[10px] font-black uppercase tracking-[0.15em] rounded-xl shadow-sm ${getStatusStyles(
                         app.status
                       )}`}
                     >
                       {app.status}
                     </span>
                   </td>
-                  <td className="px-8 py-5 text-right">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-slate-300 group-hover:text-primary group-hover:bg-primary/5 transition-all outline-none">
-                      <Eye size={16} />
+                  <td className="px-10 py-6 text-right">
+                    <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-slate-300 group-hover:text-primary group-hover:bg-primary/10 group-hover:rotate-12 transition-all duration-500 ml-auto border border-transparent group-hover:border-primary/10">
+                      <Eye size={18} />
                     </div>
                   </td>
                 </tr>
@@ -147,12 +152,12 @@ export const RecentApplicationsTable = ({
             </tbody>
           </table>
           
-          <div className="p-6 bg-slate-50/30 flex justify-center">
+          <div className="p-8 bg-indigo-50/20 flex justify-center">
              <button 
                onClick={() => router.push('/admin/applicants')}
-               className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-primary transition-colors"
+               className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] hover:text-primary transition-all hover:scale-105"
              >
-               View all candidates in pipeline
+               Explore comprehensive pipeline analytics
              </button>
           </div>
         </div>

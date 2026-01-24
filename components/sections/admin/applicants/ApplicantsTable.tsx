@@ -107,101 +107,110 @@ export const ApplicantsTable = ({
     <TooltipProvider>
       <div className="space-y-6">
         {/* Stats Bar */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
-            <div className="flex items-center justify-between">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="bg-white rounded-[2rem] p-5 border border-slate-100 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
+            <div className="relative z-10 flex items-center justify-between">
               <div>
-                <p className="text-2xl font-black text-slate-900">{stats.total}</p>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total</p>
+                <p className="text-3xl font-black text-slate-900 tracking-tighter">{stats.total}</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Census</p>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
-                <User size={18} className="text-slate-600" />
+              <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+                <User size={18} className="text-slate-400" />
               </div>
             </div>
+            <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-slate-50 rounded-full group-hover:bg-slate-100 transition-colors" />
           </div>
-          <div className="bg-white rounded-2xl p-4 border border-violet-100 shadow-sm">
-            <div className="flex items-center justify-between">
+
+          <div className="bg-white rounded-[2rem] p-5 border border-violet-100 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
+            <div className="relative z-10 flex items-center justify-between">
               <div>
-                <p className="text-2xl font-black text-violet-600">{stats.internships}</p>
-                <p className="text-[10px] font-bold text-violet-400 uppercase tracking-wider">Internships</p>
+                <p className="text-3xl font-black text-violet-600 tracking-tighter">{stats.internships}</p>
+                <p className="text-[10px] font-black text-violet-400 uppercase tracking-widest">Internships</p>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
-                <Briefcase size={18} className="text-violet-600" />
+              <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+                <Briefcase size={18} className="text-violet-500" />
               </div>
             </div>
+            <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-violet-50/50 rounded-full group-hover:bg-violet-50 transition-colors" />
           </div>
-          <div className="bg-white rounded-2xl p-4 border border-emerald-100 shadow-sm">
-            <div className="flex items-center justify-between">
+
+          <div className="bg-white rounded-[2rem] p-5 border border-emerald-100 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
+            <div className="relative z-10 flex items-center justify-between">
               <div>
-                <p className="text-2xl font-black text-emerald-600">{stats.programs}</p>
-                <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Programs</p>
+                <p className="text-3xl font-black text-emerald-600 tracking-tighter">{stats.programs}</p>
+                <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Programs</p>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
-                <GraduationCap size={18} className="text-emerald-600" />
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+                <GraduationCap size={18} className="text-emerald-500" />
               </div>
             </div>
+            <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-emerald-50/50 rounded-full group-hover:bg-emerald-50 transition-colors" />
           </div>
-          <div className="bg-white rounded-2xl p-4 border border-amber-100 shadow-sm">
-            <div className="flex items-center justify-between">
+
+          <div className="bg-white rounded-[2rem] p-5 border border-amber-100 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
+            <div className="relative z-10 flex items-center justify-between">
               <div>
-                <p className="text-2xl font-black text-amber-600">{stats.events}</p>
-                <p className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">Events</p>
+                <p className="text-3xl font-black text-amber-600 tracking-tighter">{stats.events}</p>
+                <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest">Events</p>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
-                <Calendar size={18} className="text-amber-600" />
+              <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+                <Calendar size={18} className="text-amber-500" />
               </div>
             </div>
+            <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-amber-50/50 rounded-full group-hover:bg-amber-50 transition-colors" />
           </div>
-          <div className="bg-gradient-to-br from-primary to-indigo-600 rounded-2xl p-4 shadow-lg shadow-primary/20">
-            <div className="flex items-center justify-between">
+
+          <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 rounded-[2rem] p-5 shadow-lg shadow-blue-200 hover:shadow-blue-300 transition-all group relative overflow-hidden">
+            <div className="relative z-10 flex items-center justify-between">
               <div>
-                <p className="text-2xl font-black text-white">{stats.pending}</p>
-                <p className="text-[10px] font-bold text-white/70 uppercase tracking-wider">Pending</p>
+                <p className="text-3xl font-black text-white tracking-tighter">{stats.pending}</p>
+                <p className="text-[10px] font-black text-white/70 uppercase tracking-widest">Awaiting</p>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
+              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm group-hover:scale-110 transition-transform duration-500">
                 <Clock size={18} className="text-white" />
               </div>
             </div>
+            <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full group-hover:scale-110 transition-transform duration-700" />
           </div>
         </div>
 
         {/* Main Table */}
-        <div className="w-full overflow-hidden rounded-[2rem] border border-slate-100 bg-white shadow-sm">
+        <div className="w-full overflow-hidden rounded-[2.5rem] border border-blue-100/50 bg-white/70 backdrop-blur-xl shadow-2xl shadow-blue-100/20">
           <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full border-separate border-spacing-0">
               <thead>
-                <tr className="bg-gradient-to-r from-slate-50 to-slate-100/50">
-                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] border-b border-slate-100">
+                <tr className="bg-white/50 backdrop-blur-md">
+                  <th className="px-6 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-blue-50">
                     <div className="flex items-center gap-2">
-                      <User size={12} />
+                      <User size={13} className="text-blue-600" />
                       Candidate
                     </div>
                   </th>
-                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] border-b border-slate-100">
+                  <th className="px-6 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-blue-50">
                     <div className="flex items-center gap-2">
-                      <Target size={12} />
+                      <Target size={13} className="text-blue-600" />
                       Opportunity
                     </div>
                   </th>
-                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] border-b border-slate-100 hidden lg:table-cell">
+                  <th className="px-6 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-blue-50 hidden lg:table-cell">
                     <div className="flex items-center gap-2">
-                      <GraduationCap size={12} />
+                      <GraduationCap size={13} className="text-blue-600" />
                       Background
                     </div>
                   </th>
-                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] border-b border-slate-100">
+                  <th className="px-6 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-blue-50">
                     <div className="flex items-center gap-2">
-                      <TrendingUp size={12} />
+                      <TrendingUp size={13} className="text-blue-600" />
                       Status
                     </div>
                   </th>
-                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] border-b border-slate-100">
+                  <th className="px-6 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-blue-50">
                     <div className="flex items-center gap-2">
-                      <DollarSign size={12} />
+                      <DollarSign size={13} className="text-blue-600" />
                       Financials
                     </div>
                   </th>
-                  <th className="px-6 py-4 border-b border-slate-100 w-[100px]" />
+                  <th className="px-6 py-5 border-b border-blue-50 w-[100px]" />
                 </tr>
               </thead>
               <tbody>
@@ -211,7 +220,7 @@ export const ApplicantsTable = ({
                     className={cn(
                       "group cursor-pointer transition-all duration-300",
                       selectedApplicantId === applicant.id 
-                        ? "bg-primary/5 hover:bg-primary/10" 
+                        ? "bg-blue-50/50 hover:bg-blue-50" 
                         : "hover:bg-slate-50/80"
                     )}
                   >
@@ -220,7 +229,7 @@ export const ApplicantsTable = ({
                       <div className="flex items-center gap-4">
                         <div className="relative">
                           {applicant.avatarUrl && applicant.avatarUrl !== "/default-avatar.svg" ? (
-                            <div className="w-12 h-12 rounded-2xl overflow-hidden ring-2 ring-slate-100 group-hover:ring-primary/30 transition-all shadow-sm">
+                            <div className="w-12 h-12 rounded-2xl overflow-hidden ring-2 ring-slate-100 group-hover:ring-blue-300 transition-all shadow-sm">
                               <Image 
                                 src={applicant.avatarUrl} 
                                 alt={applicant.name} 
@@ -246,7 +255,7 @@ export const ApplicantsTable = ({
                           </div>
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-bold text-slate-900 group-hover:text-primary transition-colors truncate max-w-[150px]">
+                          <p className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate max-w-[150px]">
                             {applicant.name}
                           </p>
                           <div className="flex items-center gap-2 mt-1">
@@ -342,7 +351,7 @@ export const ApplicantsTable = ({
                               variant="ghost"
                               size="sm"
                               onClick={() => onSelect(applicant.id)}
-                              className="w-9 h-9 p-0 rounded-xl hover:bg-primary/10 hover:text-primary"
+                              className="w-9 h-9 p-0 rounded-xl hover:bg-blue-50 hover:text-blue-600"
                             >
                               <Eye size={16} />
                             </Button>
