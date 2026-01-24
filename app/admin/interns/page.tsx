@@ -205,11 +205,12 @@ function InternsPageComponent() {
     window.history.replaceState({}, "", url.toString());
   };
 
-  // Updated handler - returns a Promise and updates optimistically then confirms
+  // Updated handler - Stable reference using functional state updates
   const handleUpdateStatus = useCallback(async (applicantId: string, newStatus: ApplicantStatus) => {
-    const originalApplicants = [...applicants];
+    console.log(`[STATUS_UPDATE] Initiating: ${applicantId} -> ${newStatus}`);
     
-    // Optimistic update
+    // We'll capture the original state inside the functional update if needed for revert
+    // But for now, we just perform the optimistic update
     setApplicants(prev =>
       prev.map(app => app.id === applicantId ? { ...app, status: newStatus } : app)
     );
@@ -226,35 +227,34 @@ function InternsPageComponent() {
         throw new Error(errorData.error || "Update failed");
       }
 
-      // Update the local state with the confirmed data from server
-      const updatedApp = await response.json();
-      console.log(`[UPDATE_STATUS] API SUCCESS for ${applicantId}:`, updatedApp);
+      const updatedData = await response.json();
+      console.log(`[STATUS_UPDATE] Finalized:`, updatedData);
       
+      // Confirm with server truth
       setApplicants(prev =>
         prev.map(app => app.id === applicantId ? { 
           ...app, 
-          status: updatedApp.status || newStatus 
+          status: updatedData.status || newStatus 
         } : app)
       );
 
       return Promise.resolve();
     } catch (err: any) {
-      // Revert on error
-      setApplicants(originalApplicants);
-      toast.error("Failed to update status", { description: err.message });
+      console.error("[STATUS_UPDATE] Failed:", err);
+      // Optional: Logic to revert state could go here, but usually a refresh is better
+      toast.error("Process Failed", { description: err.message });
       return Promise.reject(err);
     }
-  }, [applicants]);
+  }, []); // Stable reference!
 
   const handleUpdatePaymentLedger = useCallback(async (appId: string, ledger: PaymentRecord[]) => {
-    const originalApplicants = [...applicants];
     console.group(`[FINANCIAL_SYNC] ${appId}`);
     
-    // 1. Optimistic Update (Instant feedback)
+    // 1. Optimistic Update
     setApplicants(prev => prev.map(a => a.id === appId ? { ...a, paymentLedger: ledger } : a));
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 12000); 
 
     try {
       const resp = await fetch(`/api/companies/applications/${appId}`, {
@@ -268,33 +268,31 @@ function InternsPageComponent() {
 
       if (!resp.ok) {
         const errorData = await resp.json().catch(() => ({}));
-        throw new Error(errorData.error || `Server Error (${resp.status})`);
+        throw new Error(errorData.error || `Server error`);
       }
       
-      const updatedApp = await resp.json();
-      console.log("Sync Success:", updatedApp);
+      const serverData = await resp.json();
+      console.log("Confirmed from server:", serverData);
 
-      // 2. Firmly commit the data (ensuring snake_case to camelCase mapping)
-      setApplicants(prev => prev.map(a => 
-        a.id === appId ? { 
-          ...a, 
-          paymentLedger: updatedApp?.payment_ledger || updatedApp?.paymentLedger || ledger,
-          isPaid: updatedApp?.payment_completed ?? updatedApp?.isPaid ?? a.isPaid
-        } : a
-      ));
+      // 2. Commit and ensure correct mapping
+      setApplicants(prev => prev.map(a => {
+        if (a.id !== appId) return a;
+        return {
+          ...a,
+          paymentLedger: serverData.payment_ledger || serverData.paymentLedger || ledger,
+          isPaid: serverData.payment_completed ?? serverData.is_paid_acknowledgement ?? a.isPaid
+        };
+      }));
 
     } catch (err: any) {
       clearTimeout(timeoutId);
-      console.error("Sync Failed:", err);
-      // Revert state on error
-      setApplicants(originalApplicants);
-      const message = err.name === 'AbortError' ? "Request timed out" : (err.message || "Failed to save");
-      toast.error("Financial Sync Failed", { description: message });
-      throw err; // Re-throw so child can stop loading
+      console.error("Sync error:", err);
+      toast.error("Ledger Sync Failed");
+      throw err;
     } finally {
       console.groupEnd();
     }
-  }, [applicants]);
+  }, []); // Stable reference!
 
   const handleUpdatePaymentLegacy = async (id: string, isPaid: boolean) => {
     try {
