@@ -225,20 +225,13 @@ function InternsPageComponent() {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || "Update failed");
       }
+      console.log(`[UPDATE_STATUS] API SUCCESS for ${applicantId}: ${newStatus}`);
       
-      // Refresh the selected applicant data if sheet is open
-      if (isSheetOpen && selectedApplicantId === applicantId) {
-        // Update the local state with the confirmed new status
-        setApplicants(prev =>
-          prev.map(app => app.id === applicantId ? { ...app, status: newStatus } : app)
-        );
-      }
-      
-      if (newStatus === "rejected") {
-        setIsSheetOpen(false);
-        setSelectedApplicantId(null);
-      }
-      
+      // Secondary update to ensure state is absolutely fresh after API returns 
+      setApplicants(prev =>
+        prev.map(app => app.id === applicantId ? { ...app, status: newStatus } : app)
+      );
+
       return Promise.resolve();
     } catch (err: any) {
       // Revert on error

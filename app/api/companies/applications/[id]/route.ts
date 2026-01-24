@@ -199,10 +199,11 @@ export async function PATCH(
   // ... (Legacy permission check is implicit later or we could add it here)
 
   // Get the student profile
+  // IMPORTANT: For structured apps, student_id is user_id. For legacy, it's profile_id.
   const { data: studentProfile } = await supabaseAdmin
     .from("student_profiles")
     .select("user_id, full_name")
-    .eq("id", application.student_id)
+    .eq(isNewInternshipApp ? "user_id" : "id", application.student_id)
     .single();
 
   // We allow updates even if student profile is missing (e.g. deleted user), 
@@ -310,7 +311,17 @@ export async function PATCH(
 
   // Build update object with both status and payment_completed if provided
   const updateObject: { status?: string; payment_completed?: boolean; payment_ledger?: any } = {};
-  if (status !== undefined) updateObject.status = status;
+
+  if (status !== undefined) {
+    // Map 'reviewing' to 'reviewed' for structured apps to satisfy DB check constraint if needed
+    // The structured table only allows: 'pending', 'reviewed', 'accepted', 'rejected'
+    if (isNewInternshipApp && status === "reviewing") {
+      updateObject.status = "reviewed";
+    } else {
+      updateObject.status = status;
+    }
+  }
+
   if (typeof payment_completed === 'boolean') updateObject.payment_completed = payment_completed;
   if (payment_ledger !== undefined) updateObject.payment_ledger = payment_ledger;
 
