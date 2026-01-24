@@ -6,7 +6,7 @@ import {
   Trash2, DollarSign, Download, CheckCircle2, 
   User, Calendar, TrendingUp, Search, Briefcase,
   CreditCard, Wallet, PiggyBank,
-  ArrowUpRight, Loader2, Info, Clock
+  ArrowUpRight, Loader2, Info, Clock, AlertCircle
 } from "lucide-react";
 import { format } from "date-fns";
 import Image from "next/image";
@@ -20,7 +20,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-// lib: html2pdf.js is imported dynamically inside handleExportPDF to avoid SSR issues
+import { motion, AnimatePresence } from "framer-motion";
 
 interface InternLedgerTableProps {
   applicants: Applicant[];
@@ -37,6 +37,7 @@ export const InternLedgerTable = ({
   const [isExporting, setIsExporting] = useState(false);
   const [updatingPayments, setUpdatingPayments] = useState<Record<string, boolean>>({});
 
+  // Helper to parse duration into months
   const getMonthsCount = (duration: string = "1") => {
     const match = duration.match(/\d+/);
     return match ? parseInt(match[0]) : 1;
@@ -60,10 +61,12 @@ export const InternLedgerTable = ({
     );
   }, [applicants, searchQuery]);
 
+  // Refined toggle handler with improved UX
   const handleToggleMonth = useCallback(async (applicant: Applicant, monthIndex: number, shouldBePaid: boolean) => {
     const paymentKey = `${applicant.id}-${monthIndex}`;
     if (updatingPayments[paymentKey]) return;
     
+    // UI feedback starts immediately
     setUpdatingPayments(prev => ({ ...prev, [paymentKey]: true }));
     
     try {
@@ -86,11 +89,20 @@ export const InternLedgerTable = ({
         });
       }
 
+      // We wait for the parent to confirm before clearing the loading state
       await onUpdatePayment(applicant.id, newLedger);
-      toast.success(shouldBePaid ? `Month ${monthIndex + 1} marked as paid` : `Month ${monthIndex + 1} marked as unpaid`);
+      
+      toast.success(
+        shouldBePaid 
+          ? `Month ${monthIndex + 1} confirmed for ${applicant.name}` 
+          : `Month ${monthIndex + 1} payment revoked`,
+        { icon: shouldBePaid ? <CheckCircle2 className="text-emerald-500" /> : <AlertCircle className="text-amber-500" /> }
+      );
     } catch (err) {
-      toast.error("Failed to update payment");
+      console.error("Payment toggle error:", err);
+      toast.error("Network synchronization failed", { description: "The update could not be saved to our servers." });
     } finally {
+      // Clear loading state
       setUpdatingPayments(prev => ({ ...prev, [paymentKey]: false }));
     }
   }, [getFinancials, onUpdatePayment, updatingPayments]);
@@ -98,30 +110,24 @@ export const InternLedgerTable = ({
   const handleExportPDF = async () => {
     setIsExporting(true);
     const element = document.getElementById('ledger-table-container');
-    if (!element) {
-      setIsExporting(false);
-      return;
-    }
+    if (!element) return;
 
     try {
       // @ts-ignore
       const html2pdf = (await import('html2pdf.js')).default;
-
       const opt = {
         margin: 10,
-        filename: `Intern_Ledger_${format(new Date(), 'yyyy-MM-dd')}.pdf`,
+        filename: `Zigex_Intern_Ledger_${format(new Date(), 'yyyy-MM-dd')}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
       };
-
       await html2pdf().from(element).set(opt).save();
       setIsExporting(false);
-      toast.success("Ledger exported as PDF");
+      toast.success("Financial ledger exported");
     } catch (error) {
-      console.error("PDF Export error:", error);
       setIsExporting(false);
-      toast.error("Failed to generate PDF");
+      toast.error("Export failed");
     }
   };
 
@@ -135,154 +141,256 @@ export const InternLedgerTable = ({
   return (
     <TooltipProvider>
       <div className="space-y-6">
+        {/* Top Control Bar */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-5 rounded-3xl border border-blue-100 shadow-xl shadow-blue-500/5">
-          <div className="relative w-full md:w-96">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <div className="relative w-full md:w-96 group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={18} />
             <input 
               type="text" 
-              placeholder="Search financial records..." 
+              placeholder="Search by intern name or email..." 
               className="w-full pl-11 pr-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition-all text-sm font-medium"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Button onClick={handleExportPDF} disabled={isExporting} variant="outline" className="rounded-2xl h-12 border-blue-200 text-blue-600 hover:bg-blue-600 hover:text-white gap-2 px-6">
+          <Button onClick={handleExportPDF} disabled={isExporting} variant="outline" className="rounded-2xl h-12 border-blue-200 text-blue-600 hover:bg-blue-600 hover:text-white gap-2 px-6 font-bold shadow-sm transition-all active:scale-95">
             {isExporting ? <Loader2 className="animate-spin" size={18} /> : <Download size={18} />}
-            <span className="font-bold text-xs uppercase tracking-widest">Export Ledger</span>
+            <span className="uppercase tracking-widest text-[10px]">Export Financials</span>
           </Button>
         </div>
 
+        {/* Ledger Table Container */}
         <div id="ledger-table-container" className="w-full overflow-hidden rounded-[2.5rem] border border-blue-100 bg-white shadow-2xl shadow-blue-500/10">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full border-separate border-spacing-0">
               <thead>
-                <tr className="bg-blue-50/50">
-                  <th className="px-6 py-6 text-left text-[10px] font-black text-blue-900/40 uppercase tracking-[0.2em] border-b border-blue-50">Intern Details</th>
-                  <th className="px-6 py-6 text-left text-[10px] font-black text-blue-900/40 uppercase tracking-[0.2em] border-b border-blue-50">Opportunity</th>
-                  <th className="px-6 py-6 text-left text-[10px] font-black text-blue-900/40 uppercase tracking-[0.2em] border-b border-blue-50">Payment Breakdown</th>
-                  <th className="px-6 py-6 text-right text-[10px] font-black text-blue-900/40 uppercase tracking-[0.2em] border-b border-blue-50">Financials</th>
+                <tr className="bg-blue-50/30 backdrop-blur-sm">
+                  <th className="px-6 py-6 text-left text-[10px] font-black text-blue-900/40 uppercase tracking-[0.2em] border-b border-blue-50">Intern Identification</th>
+                  <th className="px-6 py-6 text-left text-[10px] font-black text-blue-900/40 uppercase tracking-[0.2em] border-b border-blue-50">Program Info</th>
+                  <th className="px-6 py-6 text-center text-[10px] font-black text-blue-900/40 uppercase tracking-[0.2em] border-b border-blue-50">Monthly Payment Status</th>
+                  <th className="px-6 py-6 text-right text-[10px] font-black text-blue-900/40 uppercase tracking-[0.2em] border-b border-blue-50">Balance Sheet</th>
                   <th className="px-6 py-6 border-b border-blue-50 w-[80px]"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-blue-50">
-                {filteredData.map((app) => {
-                  const { months, rate, totalPaid, balance, ledger } = getFinancials(app);
-                  return (
-                    <tr key={app.id} className="group hover:bg-blue-50/20 transition-colors">
-                      <td className="px-6 py-5 whitespace-nowrap">
-                        <div className="flex items-center gap-3">
-                          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 p-0.5 shadow-lg shadow-blue-200">
-                            {app.avatarUrl && app.avatarUrl !== '/default-avatar.svg' ? (
-                              <Image src={app.avatarUrl} alt={app.name} width={44} height={44} className="rounded-[14px] object-cover h-full w-full" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-white font-black text-sm">{app.name.charAt(0)}</div>
-                            )}
-                          </div>
-                          <div>
-                            <p className="text-sm font-black text-slate-900 leading-none mb-1">{app.name}</p>
-                            <p className="text-[11px] text-slate-400 font-medium">{app.email}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-5">
-                        <div className="space-y-1">
-                          <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200 border-none text-[10px] font-black uppercase px-2 py-0.5">{app.internshipTitle || "Intern"}</Badge>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1"><Clock size={10}/> {months} Months</p>
-                        </div>
-                      </td>
-                      <td className="px-6 py-5">
-                        <div className="flex flex-wrap gap-2">
-                          {Array.from({ length: months }).map((_, i) => {
-                            const isPaid = ledger.some(p => p.month === i + 1 && p.status === 'paid');
-                            const key = `${app.id}-${i}`;
-                            const loading = updatingPayments[key];
-                            return (
-                              <Tooltip key={i}>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    onClick={() => handleToggleMonth(app, i, !isPaid)}
-                                    disabled={loading}
-                                    className={cn(
-                                      "flex items-center gap-2 px-3 py-1.5 rounded-xl border-2 transition-all group/btn",
-                                      isPaid ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-slate-50 border-slate-200 text-slate-400 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600"
-                                    )}
-                                  >
-                                    <span className={cn("text-[10px] font-black", isPaid ? "text-emerald-500" : "text-slate-300 group-hover/btn:text-blue-500")}>M{i + 1}</span>
-                                    {loading ? <Loader2 size={12} className="animate-spin" /> : isPaid ? <CheckCircle2 size={14} /> : <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-200 group-hover/btn:border-blue-200" />}
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent className="text-[10px] font-bold">Month {i+1}: {isPaid ? 'PAID' : 'DUE'}</TooltipContent>
-                              </Tooltip>
-                            );
-                          })}
-                        </div>
-                      </td>
-                      <td className="px-6 py-5 text-right whitespace-nowrap">
-                        <div className="flex flex-col items-end gap-1">
-                          <div className="flex items-center gap-3">
-                            <div className="text-right">
-                              <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-0.5">Collected</p>
-                              <p className="text-sm font-black text-emerald-600">{totalPaid.toLocaleString()} <span className="text-[10px]">XAF</span></p>
+                <AnimatePresence mode="popLayout">
+                  {filteredData.map((app, appIdx) => {
+                    const { months, rate, totalPaid, balance, ledger } = getFinancials(app);
+                    return (
+                      <motion.tr 
+                        key={app.id} 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: appIdx * 0.05 }}
+                        className="group hover:bg-blue-50/20 transition-colors"
+                      >
+                        {/* ID Column */}
+                        <td className="px-6 py-5 whitespace-nowrap">
+                          <div className="flex items-center gap-4">
+                            <div className="relative">
+                              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 p-0.5 shadow-lg shadow-blue-200">
+                                {app.avatarUrl && app.avatarUrl !== '/default-avatar.svg' ? (
+                                  <Image src={app.avatarUrl} alt={app.name} width={48} height={48} className="rounded-[14px] object-cover h-full w-full" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-white font-black text-base">{app.name.charAt(0)}</div>
+                                )}
+                              </div>
+                              <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-lg bg-white shadow-sm border border-blue-50 flex items-center justify-center">
+                                <CheckCircle2 size={10} className={cn(balance === 0 ? "text-emerald-500" : "text-slate-300")} />
+                              </div>
                             </div>
-                            <div className="w-px h-6 bg-slate-100" />
-                            <div className="text-right">
-                              <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-0.5">Total Due</p>
-                              <p className={cn("text-sm font-black", balance > 0 ? "text-rose-500" : "text-slate-900")}>
-                                {rate === 0 ? <span className="text-amber-500">SET RATE</span> : balance === 0 ? "PAID" : `${balance.toLocaleString()} XAF`}
-                              </p>
+                            <div>
+                              <p className="text-sm font-black text-slate-900 leading-none mb-1 group-hover:text-blue-600 transition-colors">{app.name}</p>
+                              <p className="text-[11px] text-slate-400 font-medium">{app.email}</p>
                             </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-5 text-right">
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-lg text-rose-500 hover:bg-rose-50" onClick={() => confirm(`Delete ledger for ${app.name}?`) && onDelete(app.id)}><Trash2 size={16} /></Button>
-                      </td>
-                    </tr>
-                  );
-                })}
+                        </td>
+
+                        {/* Program Column */}
+                        <td className="px-6 py-5">
+                          <div className="space-y-1.5">
+                            <Badge className="bg-blue-50 text-blue-600 hover:bg-blue-100 border-none text-[10px] font-black uppercase px-2.5 py-1 rounded-lg">
+                              {app.internshipTitle || "Professional Intern"}
+                            </Badge>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                              <Calendar size={12} className="text-blue-400" />
+                              {months} Months Engagement
+                            </p>
+                          </div>
+                        </td>
+
+                        {/* Toggles Column */}
+                        <td className="px-6 py-5">
+                          <div className="flex flex-center justify-center gap-3">
+                            {Array.from({ length: months }).map((_, i) => {
+                              const isPaid = ledger.some(p => p.month === i + 1 && p.status === 'paid');
+                              const key = `${app.id}-${i}`;
+                              const loading = updatingPayments[key];
+                              
+                              return (
+                                <Tooltip key={i}>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      onClick={() => handleToggleMonth(app, i, !isPaid)}
+                                      disabled={loading}
+                                      className={cn(
+                                        "relative flex items-center gap-3 pl-3 pr-2 py-1.5 rounded-full border-2 transition-all duration-300 group/toggle shadow-sm",
+                                        isPaid 
+                                          ? "bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200 text-emerald-700 w-[84px]" 
+                                          : "bg-slate-50 border-slate-200 text-slate-400 w-[84px] hover:border-blue-200 hover:bg-white"
+                                      )}
+                                    >
+                                      <span className={cn(
+                                        "text-[10px] font-black tracking-tighter transition-colors",
+                                        isPaid ? "text-emerald-600" : "text-slate-400 group-toggle-hover:text-blue-500"
+                                      )}>M{i + 1}</span>
+                                      
+                                      <div className={cn(
+                                        "w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm",
+                                        isPaid ? "bg-emerald-500 text-white ml-auto" : "bg-white border-2 border-slate-200 text-slate-200 ml-auto"
+                                      )}>
+                                        {loading ? (
+                                          <Loader2 size={12} className="animate-spin text-inherit" />
+                                        ) : isPaid ? (
+                                          <CheckCircle2 size={14} />
+                                        ) : (
+                                          <div className="w-1.5 h-1.5 rounded-full bg-slate-200" />
+                                        )}
+                                      </div>
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent className="bg-slate-900 text-white border-none rounded-xl p-3 shadow-2xl">
+                                    <div className="space-y-1">
+                                      <p className="text-xs font-black uppercase text-blue-400">Month {i+1} Payment</p>
+                                      <p className="text-sm font-bold">{isPaid ? 'Payment Confirmed' : 'Payment Outstanding'}</p>
+                                      {rate > 0 && <p className="text-[10px] opacity-60">Expected: {rate.toLocaleString()} XAF</p>}
+                                    </div>
+                                  </TooltipContent>
+                                </Tooltip>
+                              );
+                            })}
+                          </div>
+                        </td>
+
+                        {/* Financials Column */}
+                        <td className="px-6 py-5 text-right whitespace-nowrap">
+                          <div className="flex flex-col items-end gap-2">
+                            <div className="flex items-center gap-4">
+                              <div className="text-right">
+                                <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">Total Paid</p>
+                                <div className="flex items-center gap-1.5 justify-end">
+                                  <span className="text-sm font-black text-emerald-600 tabular-nums">{totalPaid.toLocaleString()}</span>
+                                  <span className="text-[9px] font-bold text-slate-400">XAF</span>
+                                </div>
+                              </div>
+                              <div className="w-px h-8 bg-blue-50" />
+                              <div className="text-right">
+                                <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">Balance</p>
+                                <div className="flex items-center gap-1.5 justify-end">
+                                  <span className={cn(
+                                    "text-sm font-black tabular-nums",
+                                    rate === 0 ? "text-amber-500" : balance > 0 ? "text-rose-500" : "text-emerald-500"
+                                  )}>
+                                    {rate === 0 ? "N/A" : balance === 0 ? "CLEAR" : `${balance.toLocaleString()}`}
+                                  </span>
+                                  {balance > 0 && <span className="text-[9px] font-bold text-slate-400">XAF</span>}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="w-full max-w-[120px] h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                              <motion.div 
+                                initial={{ width: 0 }}
+                                animate={{ width: `${Math.min((totalPaid / (totalPaid + balance || 1)) * 100, 100)}%` }}
+                                className="h-full bg-gradient-to-r from-emerald-400 to-teal-500"
+                              />
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Actions Column */}
+                        <td className="px-6 py-5 text-right">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-10 w-10 p-0 rounded-xl text-rose-500 hover:bg-rose-50 hover:text-rose-600 opacity-0 group-hover:opacity-100 transition-all active:scale-90" 
+                            onClick={() => confirm(`Permanently remove ${app.name} from financial tracking?`) && onDelete(app.id)}
+                          >
+                            <Trash2 size={18} />
+                          </Button>
+                        </td>
+                      </motion.tr>
+                    );
+                  })}
+                </AnimatePresence>
               </tbody>
             </table>
           </div>
         </div>
 
+        {/* Bottom Metrics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-gradient-to-br from-blue-600 to-indigo-800 p-8 rounded-[2.5rem] text-white shadow-2xl shadow-blue-500/20 relative overflow-hidden group">
-            <div className="relative z-10 space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center"><PiggyBank size={24}/></div>
+          <motion.div 
+            whileHover={{ y: -5 }}
+            className="bg-gradient-to-br from-blue-700 to-indigo-900 p-8 rounded-[2.5rem] text-white shadow-2xl shadow-blue-500/20 relative overflow-hidden group"
+          >
+            <div className="relative z-10 space-y-6">
+              <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-xl flex items-center justify-center shadow-inner"><PiggyBank size={28}/></div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Total Outstanding</p>
-                <p className="text-4xl font-black tabular-nums">{totals.outstanding.toLocaleString()}</p>
-                <p className="text-xs font-bold opacity-40 uppercase mt-1">Pending Collection</p>
-              </div>
-            </div>
-            <DollarSign className="absolute -right-8 -bottom-8 opacity-10 group-hover:scale-110 transition-transform duration-700" size={200} />
-          </div>
-
-          <div className="bg-white p-8 rounded-[2.5rem] border border-blue-100 shadow-xl shadow-blue-500/5 relative overflow-hidden group">
-            <div className="relative z-10 space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600"><TrendingUp size={24}/></div>
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Collection Rate</p>
-                <p className="text-4xl font-black text-slate-900 tabular-nums">{totals.collectionRate}%</p>
-                <div className="w-full h-2 bg-slate-100 rounded-full mt-3 overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full" style={{ width: `${totals.collectionRate}%` }} />
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-200/80 mb-1">Outstanding Revenue</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-black tabular-nums">{totals.outstanding.toLocaleString()}</span>
+                  <span className="text-lg font-bold opacity-40">XAF</span>
+                </div>
+                <div className="flex items-center gap-2 mt-4 text-[10px] font-bold text-blue-200/60 uppercase">
+                  <Clock size={12} />
+                  Net Balance across all interns
                 </div>
               </div>
             </div>
-            <ArrowUpRight className="absolute -right-4 -top-4 opacity-[0.03] group-hover:translate-x-2 group-hover:-translate-y-2 transition-transform duration-700" size={150} />
-          </div>
+            <DollarSign className="absolute -right-8 -bottom-8 opacity-[0.05] group-hover:scale-110 transition-transform duration-1000" size={200} />
+          </motion.div>
 
-          <div className="bg-white p-8 rounded-[2.5rem] border border-blue-100 shadow-xl shadow-blue-500/5 relative overflow-hidden group">
-            <div className="relative z-10 space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600"><Wallet size={24}/></div>
+          <motion.div 
+            whileHover={{ y: -5 }}
+            className="bg-white p-8 rounded-[2.5rem] border border-blue-100 shadow-xl shadow-blue-500/5 relative overflow-hidden group"
+          >
+            <div className="relative z-10 space-y-6">
+              <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 shadow-inner"><TrendingUp size={28}/></div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Active Contracts</p>
-                <p className="text-4xl font-black text-slate-900 tabular-nums">{filteredData.length}</p>
-                <p className="text-xs font-bold text-slate-400 uppercase mt-1">Hired Candidates</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Collection Efficiency</p>
+                <p className="text-4xl font-black text-slate-900 tabular-nums">{totals.collectionRate}%</p>
+                <div className="w-full h-2.5 bg-slate-100 rounded-full mt-4 overflow-hidden shadow-inner">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${totals.collectionRate}%` }}
+                    className="h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full shadow-lg" 
+                  />
+                </div>
               </div>
             </div>
-            <Briefcase className="absolute -right-8 -bottom-8 opacity-[0.03] group-hover:scale-110 transition-transform duration-700" size={180} />
-          </div>
+            <ArrowUpRight className="absolute -right-4 -top-4 opacity-[0.03] group-hover:translate-x-3 group-hover:-translate-y-3 transition-transform duration-1000" size={150} />
+          </motion.div>
+
+          <motion.div 
+            whileHover={{ y: -5 }}
+            className="bg-white p-8 rounded-[2.5rem] border border-blue-100 shadow-xl shadow-blue-500/5 relative overflow-hidden group"
+          >
+            <div className="relative z-10 space-y-6">
+              <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 shadow-inner"><Wallet size={28}/></div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Active Accounts</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-black text-slate-900 tabular-nums">{filteredData.length}</span>
+                  <span className="text-lg font-bold text-slate-400 underline decoration-blue-500/30 decoration-4">Interns</span>
+                </div>
+                <div className="flex items-center gap-2 mt-4 text-[10px] font-bold text-slate-400 uppercase">
+                  <Briefcase size={12} className="text-blue-500" />
+                  Currently enrolled in programs
+                </div>
+              </div>
+            </div>
+            <Briefcase className="absolute -right-8 -bottom-8 opacity-[0.03] group-hover:scale-110 transition-transform duration-1000" size={180} />
+          </motion.div>
         </div>
       </div>
     </TooltipProvider>

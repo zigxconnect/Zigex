@@ -248,21 +248,33 @@ function InternsPageComponent() {
     }
   }, [applicants, isSheetOpen, selectedApplicantId]);
 
-  const handleUpdatePaymentLedger = async (appId: string, ledger: PaymentRecord[]) => {
+  const handleUpdatePaymentLedger = useCallback(async (appId: string, ledger: PaymentRecord[]) => {
+    const originalApplicants = [...applicants];
+    
+    // Optimistic Update
+    setApplicants(prev => prev.map(a => a.id === appId ? { ...a, paymentLedger: ledger } : a));
+
     try {
       const resp = await fetch(`/api/companies/applications/${appId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ payment_ledger: ledger })
       });
-      if (!resp.ok) throw new Error("Update failed");
       
-      setApplicants(prev => prev.map(a => a.id === appId ? { ...a, paymentLedger: ledger } : a));
-    } catch (err) {
-      console.error(err);
+      if (!resp.ok) {
+        const errorData = await resp.json().catch(() => ({}));
+        throw new Error(errorData.error || "Update failed");
+      }
+      
+      // Success case handled by optimistic update
+    } catch (err: any) {
+      console.error("Ledger update failed:", err);
+      // Revert state on error
+      setApplicants(originalApplicants);
+      toast.error("Failed to save payment", { description: err.message });
       throw err;
     }
-  };
+  }, [applicants]);
 
   const handleUpdatePaymentLegacy = async (id: string, isPaid: boolean) => {
     try {
