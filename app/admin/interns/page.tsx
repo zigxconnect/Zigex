@@ -225,11 +225,16 @@ function InternsPageComponent() {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || "Update failed");
       }
-      console.log(`[UPDATE_STATUS] API SUCCESS for ${applicantId}: ${newStatus}`);
+
+      // Update the local state with the confirmed data from server
+      const updatedApp = await response.json();
+      console.log(`[UPDATE_STATUS] API SUCCESS for ${applicantId}:`, updatedApp);
       
-      // Secondary update to ensure state is absolutely fresh after API returns 
       setApplicants(prev =>
-        prev.map(app => app.id === applicantId ? { ...app, status: newStatus } : app)
+        prev.map(app => app.id === applicantId ? { 
+          ...app, 
+          status: updatedApp.status || newStatus 
+        } : app)
       );
 
       return Promise.resolve();
@@ -239,7 +244,7 @@ function InternsPageComponent() {
       toast.error("Failed to update status", { description: err.message });
       return Promise.reject(err);
     }
-  }, [applicants, isSheetOpen, selectedApplicantId]);
+  }, [applicants]);
 
   const handleUpdatePaymentLedger = useCallback(async (appId: string, ledger: PaymentRecord[]) => {
     const originalApplicants = [...applicants];
@@ -627,7 +632,7 @@ function InternsPageComponent() {
                     {/* Quick Info Pills */}
                     <div className="flex flex-wrap gap-2 mb-4">
                       <InfoPill icon={GraduationCap} value={applicant.school} />
-                      <InfoPill icon={Target} value={applicant.domain} variant="primary" />
+                      <InfoPill icon={Target} value={applicant.domain} />
                       <InfoPill icon={Clock} value={applicant.duration} />
                     </div>
 

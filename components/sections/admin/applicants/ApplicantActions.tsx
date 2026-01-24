@@ -112,14 +112,16 @@ export const ApplicantActions = ({
       { key: 'accepted', label: 'Accepted', icon: CheckCircle2 },
     ]
     
-    const currentIndex = stages.findIndex(s => s.key === status) || 0
+    // Normalize 'reviewed' to 'reviewing' for UI stages
+    const normalizedStatus = status === 'reviewed' ? 'reviewing' : status;
+    const currentIndex = stages.findIndex(s => s.key === normalizedStatus);
     
     return (
       <div className="flex items-center justify-center gap-2 mb-8">
         {stages.map((stage, idx) => {
           const Icon = stage.icon
-          const isActive = stage.key === status
-          const isPast = idx < currentIndex
+          const isActive = stage.key === normalizedStatus
+          const isPast = idx < currentIndex && currentIndex !== -1
           const isRejected = status === 'rejected'
           
           return (
