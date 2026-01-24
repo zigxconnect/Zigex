@@ -267,7 +267,11 @@ function InternsPageComponent() {
 
       // Re-apply confirmed data to ensure camelCase/snake_case mapping is correct and state is fresh
       setApplicants(prev => prev.map(a => 
-        a.id === appId ? { ...a, paymentLedger: updatedApp.payment_ledger || ledger } : a
+        a.id === appId ? { 
+          ...a, 
+          paymentLedger: updatedApp.payment_ledger || updatedApp.paymentLedger || ledger,
+          isPaid: updatedApp.payment_completed || updatedApp.isPaid || a.isPaid
+        } : a
       ));
 
       console.groupEnd();
