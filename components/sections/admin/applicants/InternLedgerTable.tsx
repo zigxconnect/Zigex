@@ -48,8 +48,9 @@ export const InternLedgerTable = ({
     const rate = applicant.monthlyRate || 0;
     const totalDue = months * rate;
     const ledger = applicant.paymentLedger || [];
-    const totalPaid = ledger.reduce((sum, p) => sum + (p.status === 'paid' ? (p.amount || rate) : 0), 0);
-    const balance = totalDue - totalPaid;
+    // Calculate total paid based on actual amount in the ledger records
+    const totalPaid = ledger.reduce((sum, p) => sum + (p.status === 'paid' ? (p.amount ?? rate) : 0), 0);
+    const balance = totalDue > 0 ? (totalDue - totalPaid) : 0;
     return { months, rate, totalDue, totalPaid, balance, ledger };
   }, []);
 
@@ -61,48 +62,52 @@ export const InternLedgerTable = ({
     );
   }, [applicants, searchQuery]);
 
-  // Refined toggle handler with improved UX
+  // Refined toggle handler with improved UX and amount handling
   const handleToggleMonth = useCallback(async (applicant: Applicant, monthIndex: number, shouldBePaid: boolean) => {
     const paymentKey = `${applicant.id}-${monthIndex}`;
     if (updatingPayments[paymentKey]) return;
     
-    // UI feedback starts immediately
+    const { rate, ledger } = getFinancials(applicant);
+    let amountToPay = rate;
+
+    // If rate is 0 and we are marking as paid, we MUST have an amount
+    if (shouldBePaid && rate <= 0) {
+      const input = window.prompt(`Enter payment amount (XAF) for Month ${monthIndex + 1}:`, "50000");
+      if (input === null) return; // User cancelled
+      amountToPay = parseInt(input) || 0;
+    }
+
     setUpdatingPayments(prev => ({ ...prev, [paymentKey]: true }));
     
     try {
-      const { ledger, rate } = getFinancials(applicant);
       const newLedger: PaymentRecord[] = [...ledger];
       const existingIndex = newLedger.findIndex(p => p.month === monthIndex + 1);
       
+      const newRecord: PaymentRecord = {
+        month: monthIndex + 1,
+        status: shouldBePaid ? 'paid' : 'unpaid',
+        amount: amountToPay,
+        date: shouldBePaid ? new Date().toISOString() : undefined
+      };
+
       if (existingIndex > -1) {
-        newLedger[existingIndex] = { 
-          ...newLedger[existingIndex], 
-          status: shouldBePaid ? 'paid' : 'unpaid',
-          date: shouldBePaid ? new Date().toISOString() : undefined
-        };
+        newLedger[existingIndex] = newRecord;
       } else {
-        newLedger.push({
-          month: monthIndex + 1,
-          status: shouldBePaid ? 'paid' : 'unpaid',
-          amount: rate || 0,
-          date: shouldBePaid ? new Date().toISOString() : undefined
-        });
+        newLedger.push(newRecord);
       }
 
-      // We wait for the parent to confirm before clearing the loading state
       await onUpdatePayment(applicant.id, newLedger);
       
       toast.success(
         shouldBePaid 
-          ? `Month ${monthIndex + 1} confirmed for ${applicant.name}` 
-          : `Month ${monthIndex + 1} payment revoked`,
-        { icon: shouldBePaid ? <CheckCircle2 className="text-emerald-500" /> : <AlertCircle className="text-amber-500" /> }
+          ? `Month ${monthIndex + 1} marked as PAID (${amountToPay.toLocaleString()} XAF)` 
+          : `Month ${monthIndex + 1} marked as UNPAID`,
+        { icon: shouldBePaid ? <CheckCircle2 className="text-emerald-500" /> : <Clock className="text-amber-500" /> }
       );
     } catch (err) {
-      console.error("Payment toggle error:", err);
-      toast.error("Network synchronization failed", { description: "The update could not be saved to our servers." });
+      console.error("Payment update failed:", err);
+      toast.error("Sync Failed", { description: "The payment status could not be saved to the database." });
     } finally {
-      // Clear loading state
       setUpdatingPayments(prev => ({ ...prev, [paymentKey]: false }));
     }
   }, [getFinancials, onUpdatePayment, updatingPayments]);
@@ -175,7 +180,7 @@ export const InternLedgerTable = ({
               <tbody className="divide-y divide-blue-50">
                 <AnimatePresence mode="popLayout">
                   {filteredData.map((app, appIdx) => {
-                    const { months, rate, totalPaid, balance, ledger } = getFinancials(app);
+                    const { months, rate, totalDue, totalPaid, balance, ledger } = getFinancials(app);
                     return (
                       <motion.tr 
                         key={app.id} 
@@ -274,7 +279,7 @@ export const InternLedgerTable = ({
 
                         {/* Financials Column */}
                         <td className="px-6 py-5 text-right whitespace-nowrap">
-                          <div className="flex flex-col items-end gap-2">
+                          <div className="flex flex-col items-end gap-1">
                             <div className="flex items-center gap-4">
                               <div className="text-right">
                                 <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">Total Paid</p>
@@ -289,19 +294,18 @@ export const InternLedgerTable = ({
                                 <div className="flex items-center gap-1.5 justify-end">
                                   <span className={cn(
                                     "text-sm font-black tabular-nums",
-                                    rate === 0 ? "text-amber-500" : balance > 0 ? "text-rose-500" : "text-emerald-500"
+                                    rate === 0 && totalPaid === 0 ? "text-amber-500" : balance > 0 ? "text-rose-500" : "text-emerald-500"
                                   )}>
-                                    {rate === 0 ? "N/A" : balance === 0 ? "CLEAR" : `${balance.toLocaleString()}`}
+                                    {rate === 0 && totalPaid === 0 ? "NO RATE" : balance <= 0 ? "CLEAR" : `${balance.toLocaleString()}`}
                                   </span>
                                   {balance > 0 && <span className="text-[9px] font-bold text-slate-400">XAF</span>}
                                 </div>
                               </div>
                             </div>
-                            <div className="w-full max-w-[120px] h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                              <motion.div 
-                                initial={{ width: 0 }}
-                                animate={{ width: `${Math.min((totalPaid / (totalPaid + balance || 1)) * 100, 100)}%` }}
-                                className="h-full bg-gradient-to-r from-emerald-400 to-teal-500"
+                            <div className="w-full max-w-[120px] h-1.5 bg-slate-100 rounded-full mt-1 overflow-hidden">
+                              <div 
+                                className="h-full bg-gradient-to-r from-emerald-400 to-teal-500 transition-all duration-500" 
+                                style={{ width: `${totalDue > 0 ? Math.min((totalPaid / totalDue) * 100, 100) : (totalPaid > 0 ? 100 : 0)}%` }} 
                               />
                             </div>
                           </div>

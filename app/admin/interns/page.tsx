@@ -243,6 +243,8 @@ function InternsPageComponent() {
 
   const handleUpdatePaymentLedger = useCallback(async (appId: string, ledger: PaymentRecord[]) => {
     const originalApplicants = [...applicants];
+    console.group(`[FINANCIAL_SYNC] Updating Ledger for ${appId}`);
+    console.log("New Ledger Data:", ledger);
     
     // Optimistic Update
     setApplicants(prev => prev.map(a => a.id === appId ? { ...a, paymentLedger: ledger } : a));
@@ -256,12 +258,22 @@ function InternsPageComponent() {
       
       if (!resp.ok) {
         const errorData = await resp.json().catch(() => ({}));
+        console.error("Server update failed:", errorData);
         throw new Error(errorData.error || "Update failed");
       }
       
-      // Success case handled by optimistic update
+      const updatedApp = await resp.json();
+      console.log("Server record updated successfully:", updatedApp);
+
+      // Re-apply confirmed data to ensure camelCase/snake_case mapping is correct and state is fresh
+      setApplicants(prev => prev.map(a => 
+        a.id === appId ? { ...a, paymentLedger: updatedApp.payment_ledger || ledger } : a
+      ));
+
+      console.groupEnd();
     } catch (err: any) {
       console.error("Ledger update failed:", err);
+      console.groupEnd();
       // Revert state on error
       setApplicants(originalApplicants);
       toast.error("Failed to save payment", { description: err.message });
