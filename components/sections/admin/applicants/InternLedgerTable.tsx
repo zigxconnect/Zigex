@@ -46,12 +46,20 @@ export const InternLedgerTable = ({
   const getFinancials = useCallback((applicant: Applicant) => {
     const months = getMonthsCount(applicant.duration || "3");
     const rate = applicant.monthlyRate || 0;
-    const totalDue = months * rate;
     const ledger = applicant.paymentLedger || [];
-    // Calculate total paid based on actual amount in the ledger records
+    
+    // Total amount actually received (sum of individual month amounts)
     const totalPaid = ledger.reduce((sum, p) => sum + (p.status === 'paid' ? (p.amount ?? rate) : 0), 0);
-    const balance = totalDue > 0 ? (totalDue - totalPaid) : 0;
-    return { months, rate, totalDue, totalPaid, balance, ledger };
+    
+    // Total amount expected for the whole duration
+    // Projected as: Actual Paid + (Unpaid Months * Standard Rate)
+    const paidMonthsCount = ledger.filter(p => p.status === 'paid').length;
+    const remainingMonths = Math.max(0, months - paidMonthsCount);
+    const totalExpected = totalPaid + (remainingMonths * rate);
+    
+    const balance = Math.max(0, totalExpected - totalPaid);
+    
+    return { months, rate, totalDue: totalExpected, totalPaid, balance, ledger };
   }, []);
 
   const filteredData = useMemo(() => {
@@ -137,10 +145,19 @@ export const InternLedgerTable = ({
   };
 
   const totals = useMemo(() => {
+    // Total amount actually received
+    const totalCollected = filteredData.reduce((sum, app) => sum + getFinancials(app).totalPaid, 0);
+    // Total amount expected (Projected)
+    const totalExpected = filteredData.reduce((sum, app) => sum + getFinancials(app).totalDue, 0);
+    // Net outstanding
     const outstanding = filteredData.reduce((sum, app) => sum + getFinancials(app).balance, 0);
-    const totalDue = filteredData.reduce((sum, app) => sum + getFinancials(app).totalDue, 0);
-    const totalPaid = filteredData.reduce((sum, app) => sum + getFinancials(app).totalPaid, 0);
-    return { outstanding, totalPaid, collectionRate: totalDue > 0 ? Math.round((totalPaid / totalDue) * 100) : 0 };
+    
+    // Efficiency calculation (Projected Collection vs Actual)
+    const collectionRate = totalExpected > 0 
+      ? Math.round((totalCollected / totalExpected) * 100) 
+      : (totalCollected > 0 ? 100 : 0);
+
+    return { outstanding, totalCollected, totalExpected, collectionRate };
   }, [filteredData, getFinancials]);
 
   return (
@@ -335,23 +352,23 @@ export const InternLedgerTable = ({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <motion.div 
             whileHover={{ y: -5 }}
-            className="bg-gradient-to-br from-blue-700 to-indigo-900 p-8 rounded-[2.5rem] text-white shadow-2xl shadow-blue-500/20 relative overflow-hidden group"
+            className="bg-gradient-to-br from-emerald-600 to-teal-800 p-8 rounded-[2.5rem] text-white shadow-2xl shadow-emerald-500/20 relative overflow-hidden group"
           >
             <div className="relative z-10 space-y-6">
-              <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-xl flex items-center justify-center shadow-inner"><PiggyBank size={28}/></div>
+              <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-xl flex items-center justify-center shadow-inner"><TrendingUp size={28}/></div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-200/80 mb-1">Outstanding Revenue</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-100 mb-1">Total Revenue Collected</p>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-black tabular-nums">{totals.outstanding.toLocaleString()}</span>
+                  <span className="text-4xl font-black tabular-nums">{totals.totalCollected.toLocaleString()}</span>
                   <span className="text-lg font-bold opacity-40">XAF</span>
                 </div>
-                <div className="flex items-center gap-2 mt-4 text-[10px] font-bold text-blue-200/60 uppercase">
-                  <Clock size={12} />
-                  Net Balance across all interns
+                <div className="flex items-center gap-2 mt-4 text-[10px] font-bold text-emerald-100/60 uppercase">
+                  <CheckCircle2 size={12} />
+                  Net received funds
                 </div>
               </div>
             </div>
-            <DollarSign className="absolute -right-8 -bottom-8 opacity-[0.05] group-hover:scale-110 transition-transform duration-1000" size={200} />
+            <ArrowUpRight className="absolute -right-8 -bottom-8 opacity-[0.05] group-hover:scale-110 transition-transform duration-1000" size={200} />
           </motion.div>
 
           <motion.div 
@@ -359,10 +376,13 @@ export const InternLedgerTable = ({
             className="bg-white p-8 rounded-[2.5rem] border border-blue-100 shadow-xl shadow-blue-500/5 relative overflow-hidden group"
           >
             <div className="relative z-10 space-y-6">
-              <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 shadow-inner"><TrendingUp size={28}/></div>
+              <div className="w-14 h-14 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-600 shadow-inner"><PiggyBank size={28}/></div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Collection Efficiency</p>
-                <p className="text-4xl font-black text-slate-900 tabular-nums">{totals.collectionRate}%</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Outstanding Balance</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-black text-slate-900 tabular-nums">{totals.outstanding.toLocaleString()}</span>
+                  <span className="text-lg font-bold text-slate-400">XAF</span>
+                </div>
                 <div className="w-full h-2.5 bg-slate-100 rounded-full mt-4 overflow-hidden shadow-inner">
                   <motion.div 
                     initial={{ width: 0 }}
@@ -372,7 +392,7 @@ export const InternLedgerTable = ({
                 </div>
               </div>
             </div>
-            <ArrowUpRight className="absolute -right-4 -top-4 opacity-[0.03] group-hover:translate-x-3 group-hover:-translate-y-3 transition-transform duration-1000" size={150} />
+            <Clock className="absolute -right-4 -top-4 opacity-[0.03] group-hover:translate-x-3 group-hover:-translate-y-3 transition-transform duration-1000" size={150} />
           </motion.div>
 
           <motion.div 

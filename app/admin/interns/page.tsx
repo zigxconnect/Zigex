@@ -248,45 +248,51 @@ function InternsPageComponent() {
 
   const handleUpdatePaymentLedger = useCallback(async (appId: string, ledger: PaymentRecord[]) => {
     const originalApplicants = [...applicants];
-    console.group(`[FINANCIAL_SYNC] Updating Ledger for ${appId}`);
-    console.log("New Ledger Data:", ledger);
+    console.group(`[FINANCIAL_SYNC] ${appId}`);
     
-    // Optimistic Update
+    // 1. Optimistic Update (Instant feedback)
     setApplicants(prev => prev.map(a => a.id === appId ? { ...a, paymentLedger: ledger } : a));
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
     try {
       const resp = await fetch(`/api/companies/applications/${appId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ payment_ledger: ledger })
+        body: JSON.stringify({ payment_ledger: ledger }),
+        signal: controller.signal
       });
       
+      clearTimeout(timeoutId);
+
       if (!resp.ok) {
         const errorData = await resp.json().catch(() => ({}));
-        console.error("Server update failed:", errorData);
-        throw new Error(errorData.error || "Update failed");
+        throw new Error(errorData.error || `Server Error (${resp.status})`);
       }
       
       const updatedApp = await resp.json();
-      console.log("Server record updated successfully:", updatedApp);
+      console.log("Sync Success:", updatedApp);
 
-      // Re-apply confirmed data to ensure camelCase/snake_case mapping is correct and state is fresh
+      // 2. Firmly commit the data (ensuring snake_case to camelCase mapping)
       setApplicants(prev => prev.map(a => 
         a.id === appId ? { 
           ...a, 
-          paymentLedger: updatedApp.payment_ledger || updatedApp.paymentLedger || ledger,
-          isPaid: updatedApp.payment_completed || updatedApp.isPaid || a.isPaid
+          paymentLedger: updatedApp?.payment_ledger || updatedApp?.paymentLedger || ledger,
+          isPaid: updatedApp?.payment_completed ?? updatedApp?.isPaid ?? a.isPaid
         } : a
       ));
 
-      console.groupEnd();
     } catch (err: any) {
-      console.error("Ledger update failed:", err);
-      console.groupEnd();
+      clearTimeout(timeoutId);
+      console.error("Sync Failed:", err);
       // Revert state on error
       setApplicants(originalApplicants);
-      toast.error("Failed to save payment", { description: err.message });
-      throw err;
+      const message = err.name === 'AbortError' ? "Request timed out" : (err.message || "Failed to save");
+      toast.error("Financial Sync Failed", { description: message });
+      throw err; // Re-throw so child can stop loading
+    } finally {
+      console.groupEnd();
     }
   }, [applicants]);
 
