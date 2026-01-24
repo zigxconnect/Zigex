@@ -18,7 +18,7 @@ import { ApplicantDetail } from "@/components/sections/admin/applicants/Applican
 import { ApplicantsTable } from "@/components/sections/admin/applicants/ApplicantsTable";
 import { InternLedgerTable } from "@/components/sections/admin/applicants/InternLedgerTable";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -656,6 +656,8 @@ function InternsPageComponent() {
         {/* Detail Dialog */}
         <Dialog open={isSheetOpen} onOpenChange={setIsSheetOpen}>
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0 rounded-3xl border-0 shadow-2xl">
+            <DialogTitle className="sr-only">Applicant Details - {selectedApplicant?.name}</DialogTitle>
+            <DialogDescription className="sr-only">Detailed view and actions for the selected internship application.</DialogDescription>
             {selectedApplicant && (
               <ApplicantDetail
                 applicant={selectedApplicant}
