@@ -50,8 +50,8 @@ type ApplicantsTableProps = {
 const TypeBadge = ({ type }: { type: string }) => {
   const config = {
     internship: { bg: "bg-violet-100", text: "text-violet-700", icon: Briefcase },
-    program: { bg: "bg-emerald-100", text: "text-emerald-700", icon: GraduationCap },
-    event: { bg: "bg-amber-100", text: "text-amber-700", icon: Calendar }
+    program: { bg: "bg-blue-100", text: "text-blue-700", icon: GraduationCap },
+    event: { bg: "bg-slate-100", text: "text-slate-700", icon: Calendar }
   }[type] || { bg: "bg-slate-100", text: "text-slate-700", icon: Briefcase };
 
   const Icon = config.icon;
@@ -134,17 +134,17 @@ export const ApplicantsTable = ({
             <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-violet-50/50 rounded-full group-hover:bg-violet-50 transition-colors" />
           </div>
 
-          <div className="bg-white rounded-[2rem] p-5 border border-emerald-100 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
+          <div className="bg-white rounded-[2rem] p-5 border border-blue-100 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
             <div className="relative z-10 flex items-center justify-between">
               <div>
-                <p className="text-3xl font-black text-emerald-600 tracking-tighter">{stats.programs}</p>
-                <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Programs</p>
+                <p className="text-3xl font-black text-blue-600 tracking-tighter">{stats.programs}</p>
+                <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Programs</p>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
-                <GraduationCap size={18} className="text-emerald-500" />
+              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+                <GraduationCap size={18} className="text-blue-500" />
               </div>
             </div>
-            <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-emerald-50/50 rounded-full group-hover:bg-emerald-50 transition-colors" />
+            <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-blue-50/50 rounded-full group-hover:bg-blue-50 transition-colors" />
           </div>
 
           <div className="bg-white rounded-[2rem] p-5 border border-amber-100 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">

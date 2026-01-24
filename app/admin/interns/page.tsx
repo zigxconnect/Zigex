@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense, useCallback } from "react";
+import { useState, useEffect, Suspense, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { 
@@ -132,7 +132,7 @@ const InfoPill = ({ icon: Icon, value, variant = "default" }: { icon: any, value
   const variants = {
     default: "bg-slate-100 text-slate-600 border-slate-200",
     primary: "bg-blue-50 text-blue-600 border-blue-100",
-    success: "bg-emerald-50 text-emerald-700 border-emerald-200"
+    success: "bg-blue-50 text-blue-700 border-blue-200"
   };
   return (
     <span className={cn(
