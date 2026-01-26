@@ -269,7 +269,7 @@ export const InternLedgerTable = ({
               <tbody className="divide-y divide-blue-50">
                 <AnimatePresence mode="popLayout">
                   {filteredData.map((app, appIdx) => {
-                    const { months, rate, totalDue, totalPaid, balance, ledger } = getFinancials(app);
+                    const { months, rate, totalDue, totalPaid, debt, netBalance, isOverdue, ledger } = getFinancials(app);
                     return (
                       <motion.tr 
                         key={app.id} 
@@ -290,7 +290,7 @@ export const InternLedgerTable = ({
                                 )}
                               </div>
                               <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-lg bg-white shadow-sm border border-blue-50 flex items-center justify-center">
-                                <CheckCircle2 size={10} className={cn(balance === 0 ? "text-emerald-500" : "text-slate-300")} />
+                                <CheckCircle2 size={10} className={cn(netBalance === 0 ? "text-emerald-500" : "text-slate-300")} />
                               </div>
                             </div>
                             <div>
