@@ -7,7 +7,8 @@ import {
   User, Calendar, TrendingUp, Search, Briefcase,
   CreditCard, Wallet, PiggyBank, FileSpreadsheet,
   ArrowUpRight, Loader2, Info, Clock, AlertCircle,
-  FileJson, ChevronRight, X
+  FileJson, ChevronRight, X,
+  ShieldCheck
 } from "lucide-react";
 import { format } from "date-fns";
 import Image from "next/image";
