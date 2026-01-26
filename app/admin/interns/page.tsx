@@ -175,21 +175,13 @@ function InternsPageComponent() {
         throw new Error(errorData.error || `Error ${response.status}`);
       }
       const data: Applicant[] = await response.json();
-      // Filter internship applications - includes those with type "internship" OR those with an internshipId
+      // Filter internship applications
       const internshipApps = data.filter(app => 
         app.applicationType === "internship" || 
         (app.internshipId && app.applicationType !== "program" && app.applicationType !== "event")
       );
       console.log("[INTERNS] Total apps:", data.length, "Internship apps:", internshipApps.length);
       setApplicants(internshipApps);
-
-      if (selectedIdFromUrl) {
-        const exists = internshipApps.some(app => app.id === selectedIdFromUrl);
-        if (exists) {
-          setSelectedApplicantId(selectedIdFromUrl);
-          setIsSheetOpen(true);
-        }
-      }
     } catch (err: any) {
       console.error("Fetch error:", err);
       setError(err.message || "Could not connect to the server.");
@@ -197,11 +189,22 @@ function InternsPageComponent() {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedIdFromUrl]);
+  }, []);
 
   useEffect(() => {
     fetchApplicants();
   }, [fetchApplicants]);
+
+  // Handle initial selection from URL separately
+  useEffect(() => {
+    if (selectedIdFromUrl && !isLoading && applicants.length > 0) {
+      const exists = applicants.some(app => app.id === selectedIdFromUrl);
+      if (exists && !selectedApplicantId) {
+        setSelectedApplicantId(selectedIdFromUrl);
+        setIsSheetOpen(true);
+      }
+    }
+  }, [selectedIdFromUrl, isLoading, applicants.length, selectedApplicantId]);
 
   const handleSelectApplicant = (id: string) => {
     setSelectedApplicantId(id);

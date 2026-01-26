@@ -107,8 +107,12 @@ export async function POST(
 
             // 5. Update Status to "reviewed" if it was pending
             if (application.status === "pending") {
-                const table = legacyApp ? "Applications" : "internship_applications";
-                await supabaseAdmin.from(table).update({ status: "reviewed" }).eq("id", id);
+                const isNewInternshipApp = !legacyApp;
+                const table = isNewInternshipApp ? "internship_applications" : "Applications";
+                await supabaseAdmin.from(table).update({
+                    status: "reviewed",
+                    updated_at: new Date().toISOString()
+                }).eq("id", id);
             }
 
         } catch (err) {

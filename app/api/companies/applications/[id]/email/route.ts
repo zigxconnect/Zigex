@@ -84,10 +84,10 @@ export async function POST(
             to: studentEmail,
             subject: `Follow-up regarding your application at ZIGEX`,
             react: ZigexApplicationAlertEmail({
-                studentName: application.student.full_name,
+                studentName: studentInfo.full_name || "Student",
                 studentEmail: studentEmail,
                 opportunityTitle: "Recruitment Review",
-                type: application.application_type,
+                type: application.application_type || "internship",
             }),
         });
 
