@@ -3,7 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 /**
- * GET: Fetches the student's active internship and their logs.
+ * GET: Fetches the student's internship journey (accepted or ongoing applications).
  */
 export async function GET(request: Request) {
     const auth = await authMiddleware(request);
@@ -15,50 +15,82 @@ export async function GET(request: Request) {
     const { user } = auth;
 
     try {
-        // 1. Get the active internship (where the application is 'accepted')
-        // Check both legacy "Applications" and new "internship_applications"
-        let activeInternship = null;
+        // 1. Get ALL internship applications to determine the "Current Phase"
+        const { data: structuredApps } = await supabaseAdmin
+            .from("internship_applications")
+            .select("*, internship:internships(*, company:company_profiles(*))")
+            .eq("student_id", user.id);
 
-        const { data: legacyApp } = await supabaseAdmin
+        const { data: legacyApps } = await supabaseAdmin
             .from("Applications")
-            .select("internship_id, internships(*, company:company_profiles(*))")
-            .eq("student_id", user.id) // Note: student_id in legacy might be profile_id, check this
-            .eq("status", "accepted")
-            .eq("application_type", "internship")
-            .maybeSingle();
-
-        if (legacyApp) {
-            activeInternship = { ...legacyApp.internships, appId: legacyApp.id, type: 'legacy' };
-        } else {
-            const { data: sApp } = await supabaseAdmin
-                .from("internship_applications")
-                .select("internship_id, internship:internships(*, company:company_profiles(*))")
-                .eq("student_id", user.id)
-                .eq("status", "accepted")
-                .maybeSingle();
-
-            if (sApp) {
-                activeInternship = { ...sApp.internship, appId: sApp.id, type: 'structured' };
-            }
-        }
-
-        if (!activeInternship) {
-            return NextResponse.json({ message: "No active internship found" }, { status: 200 });
-        }
-
-        // 2. Fetch logs for this internship
-        const { data: logs } = await supabaseAdmin
-            .from("intern_logs")
-            .select("*")
+            .select("*, internship:internships(*, company:company_profiles(*))")
             .eq("student_id", user.id)
-            .eq("internship_id", activeInternship.id)
-            .order("log_date", { ascending: false });
+            .eq("application_type", "internship");
+
+        const allApps = [
+            ...(structuredApps || []).map(a => ({ ...a, source: 'structured' })),
+            ...(legacyApps || []).map(a => ({ ...a, source: 'legacy' }))
+        ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+        if (allApps.length === 0) {
+            return NextResponse.json({ phase: 'none', message: "No applications found" });
+        }
+
+        // Determine the "Primary" application (Accepted takes priority, then most recent)
+        const acceptedApp = allApps.find(a => a.status === 'accepted');
+        const primaryApp = acceptedApp || allApps[0];
+
+        // Determine the phase
+        let phase: 'enrolled' | 'screening' | 'reviewing' | 'rejected' = 'screening';
+        if (primaryApp.status === 'accepted') phase = 'enrolled';
+        else if (primaryApp.status === 'reviewing' || primaryApp.status === 'reviewed') phase = 'reviewing';
+        else if (primaryApp.status === 'rejected') phase = 'rejected';
+
+        // 2. If enrolled, fetch logs and curriculum
+        let logs: any[] = [];
+        let curriculum: any[] = [];
+        let tasks: any[] = [];
+
+        const targetInternshipId = primaryApp.internship_id || (primaryApp.internship?.id);
+
+        if (phase === 'enrolled' && targetInternshipId) {
+            const { data: logData } = await supabaseAdmin
+                .from("intern_logs")
+                .select("*")
+                .eq("student_id", user.id)
+                .eq("internship_id", targetInternshipId)
+                .order("log_date", { ascending: false });
+
+            logs = logData || [];
+
+            const { data: currData } = await supabaseAdmin
+                .from("internship_curriculum")
+                .select("*")
+                .eq("internship_id", targetInternshipId)
+                .order("order_index", { ascending: true });
+
+            curriculum = currData || [];
+
+            const { data: taskData } = await supabaseAdmin
+                .from("internship_tasks")
+                .select("*")
+                .eq("internship_id", targetInternshipId)
+                .order("created_at", { ascending: false });
+
+            tasks = taskData || [];
+        }
 
         return NextResponse.json({
-            internship: activeInternship,
-            logs: logs || []
+            phase,
+            currentApp: primaryApp,
+            internship: primaryApp.internship || primaryApp.internships,
+            logs,
+            curriculum,
+            tasks,
+            allApps
         });
     } catch (error: any) {
+        console.error("[WORKSPACE_API_ERROR]", error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

@@ -419,7 +419,7 @@ export const InternLedgerTable = ({
         </div>
 
         {/* Bottom Metrics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <motion.div 
             whileHover={{ y: -5 }}
             className="bg-gradient-to-br from-indigo-700 to-blue-900 p-8 rounded-[2.5rem] text-white shadow-2xl shadow-blue-500/20 relative overflow-hidden group"
@@ -427,7 +427,7 @@ export const InternLedgerTable = ({
             <div className="relative z-10 space-y-6">
               <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-xl flex items-center justify-center shadow-inner"><TrendingUp size={28}/></div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-100 mb-1">Total Collections</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-100 mb-1">Actual Collections</p>
                 <div className="flex items-baseline gap-2">
                   <span className="text-4xl font-black tabular-nums">{totals.totalCollected.toLocaleString()}</span>
                   <span className="text-lg font-bold opacity-40">XAF</span>
@@ -449,23 +449,23 @@ export const InternLedgerTable = ({
               <div className="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-600 shadow-inner"><PiggyBank size={28}/></div>
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Outstanding Balance</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Recovery Required</p>
                   <Tooltip>
                     <TooltipTrigger><Info size={12} className="text-slate-300" /></TooltipTrigger>
                     <TooltipContent className="bg-slate-900 text-white max-w-[200px] rounded-xl text-[10px] p-2">
-                      Projected revenue that is yet to be collected for the full duration of active internships.
+                      Total outstanding debt based on contract values.
                     </TooltipContent>
                   </Tooltip>
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-black text-slate-900 tabular-nums">{totals.outstanding.toLocaleString()}</span>
+                  <span className="text-4xl font-black text-rose-600 tabular-nums">{totals.outstanding.toLocaleString()}</span>
                   <span className="text-lg font-bold text-slate-400">XAF</span>
                 </div>
                 <div className="w-full h-2.5 bg-slate-100 rounded-full mt-4 overflow-hidden shadow-inner">
                   <motion.div 
                     initial={{ width: 0 }}
                     animate={{ width: `${totals.collectionRate}%` }}
-                    className="h-full bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full shadow-lg" 
+                    className="h-full bg-gradient-to-r from-emerald-400 to-blue-500 rounded-full shadow-lg" 
                   />
                 </div>
               </div>
@@ -478,16 +478,37 @@ export const InternLedgerTable = ({
             className="bg-white p-8 rounded-[2.5rem] border border-blue-100 shadow-xl shadow-blue-500/5 relative overflow-hidden group"
           >
             <div className="relative z-10 space-y-6">
+              <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 shadow-inner"><DollarSign size={28}/></div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Projected Asset Value</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-black text-slate-900 tabular-nums">{totals.totalExpected.toLocaleString()}</span>
+                  <span className="text-lg font-bold text-slate-400 decoration-blue-500/30">XAF</span>
+                </div>
+                <div className="flex items-center gap-2 mt-4 text-[10px] font-bold text-slate-400 uppercase">
+                  <TrendingUp size={12} className="text-blue-500" />
+                  Total Contractual Worth
+                </div>
+              </div>
+            </div>
+            <ShieldCheck className="absolute -right-8 -bottom-8 opacity-[0.03] group-hover:scale-110 transition-transform duration-1000" size={180} />
+          </motion.div>
+
+          <motion.div 
+            whileHover={{ y: -5 }}
+            className="bg-white p-8 rounded-[2.5rem] border border-blue-100 shadow-xl shadow-blue-500/5 relative overflow-hidden group"
+          >
+            <div className="relative z-10 space-y-6">
               <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 shadow-inner"><Wallet size={28}/></div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Active Accounts</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Workforce Load</p>
                 <div className="flex items-baseline gap-2">
                   <span className="text-4xl font-black text-slate-900 tabular-nums">{filteredData.length}</span>
-                  <span className="text-lg font-bold text-slate-400 underline decoration-blue-500/30 decoration-4">Interns</span>
+                  <span className="text-lg font-bold text-slate-400 underline decoration-blue-500/30 decoration-4">Nodes</span>
                 </div>
                 <div className="flex items-center gap-2 mt-4 text-[10px] font-bold text-slate-400 uppercase">
                   <Briefcase size={12} className="text-blue-500" />
-                  Currently enrolled in programs
+                  Active Billing Accounts
                 </div>
               </div>
             </div>
