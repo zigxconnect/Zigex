@@ -234,24 +234,150 @@ export const InternLedgerTable = ({
   };
 
   const totals = useMemo(() => {
-    // Total amount actually received
-    const totalCollected = filteredData.reduce((sum, app) => sum + getFinancials(app).totalPaid, 0);
-    // Total amount expected (Projected)
-    const totalExpected = filteredData.reduce((sum, app) => sum + getFinancials(app).totalDue, 0);
-    // Net outstanding
-    const outstanding = filteredData.reduce((sum, app) => sum + getFinancials(app).balance, 0);
+    const records = filteredData.map(app => getFinancials(app));
     
-    // Efficiency calculation (Projected Collection vs Actual)
-    const collectionRate = totalExpected > 0 
-      ? Math.round((totalCollected / totalExpected) * 100) 
-      : (totalCollected > 0 ? 100 : 0);
+    const totalCollected = records.reduce((sum, r) => sum + r.totalPaid, 0);
+    const totalExpected = records.reduce((sum, r) => sum + r.totalDue, 0);
+    const totalDebt = records.reduce((sum, r) => sum + r.debt, 0);
+    const totalAccrued = records.reduce((sum, r) => sum + r.accruedDue, 0);
+    const totalRemaining = records.reduce((sum, r) => sum + r.netBalance, 0);
+    
+    const collectionRate = totalAccrued > 0 
+      ? Math.round((totalCollected / totalAccrued) * 100) 
+      : 0;
 
-    return { outstanding, totalCollected, totalExpected, collectionRate };
+    return { 
+        totalCollected, 
+        totalExpected, 
+        totalDebt, 
+        totalAccrued, 
+        totalRemaining,
+        collectionRate,
+        count: filteredData.length
+    };
   }, [filteredData, getFinancials]);
 
   return (
     <TooltipProvider>
-      <div className="space-y-6 pt-4">
+      <div className="space-y-10 pt-4">
+        
+        {/* Creative Financial Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+           {/* Total Collections - Growth Vibe */}
+           <motion.div 
+             initial={{ opacity: 0, y: 20 }}
+             animate={{ opacity: 1, y: 0 }}
+             className="bg-white rounded-[2.5rem] p-8 border border-blue-100 shadow-xl shadow-blue-500/5 relative overflow-hidden group"
+           >
+              <div className="relative z-10 flex flex-col justify-between h-full space-y-6">
+                 <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 shadow-inner group-hover:scale-110 transition-transform">
+                    <TrendingUp size={28} />
+                 </div>
+                 <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Realized Revenue</p>
+                    <div className="flex items-baseline gap-2">
+                       <span className="text-4xl font-black text-slate-900 tabular-nums">
+                          {totals.totalCollected.toLocaleString()}
+                       </span>
+                       <span className="text-sm font-bold text-slate-400">XAF</span>
+                    </div>
+                 </div>
+                 <div className="flex items-center gap-2 pt-4 border-t border-slate-50 text-[10px] font-bold text-emerald-500 uppercase tracking-widest">
+                    <CheckCircle2 size={12} />
+                    Secured Capital
+                 </div>
+              </div>
+              <Sparkles className="absolute -right-6 -top-6 opacity-[0.03] text-blue-500" size={120} />
+           </motion.div>
+
+           {/* Risk / Arrears - Alert Vibe */}
+           <motion.div 
+             initial={{ opacity: 0, y: 20 }}
+             animate={{ opacity: 1, y: 0 }}
+             transition={{ delay: 0.1 }}
+             className="bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden group"
+           >
+              <div className="relative z-10 flex flex-col justify-between h-full space-y-6">
+                 <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-rose-400 shadow-inner group-hover:scale-110 transition-transform">
+                    <AlertCircle size={28} />
+                 </div>
+                 <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Risk at Arrears</p>
+                    <div className="flex items-baseline gap-2">
+                       <span className="text-4xl font-black text-rose-500 tabular-nums">
+                          {totals.totalDebt.toLocaleString()}
+                       </span>
+                       <span className="text-sm font-bold text-slate-500">XAF</span>
+                    </div>
+                 </div>
+                 <div className="flex items-center gap-2 pt-4 border-t border-white/5 text-[10px] font-bold text-rose-400 uppercase tracking-widest">
+                    <Clock size={12} className="animate-pulse" />
+                    Immediate Recovery Needed
+                 </div>
+              </div>
+              <div className="absolute -right-8 -bottom-8 w-40 h-40 bg-rose-500/10 rounded-full blur-[60px]" />
+           </motion.div>
+
+           {/* Future Pipeline - Contract Value */}
+           <motion.div 
+             initial={{ opacity: 0, y: 20 }}
+             animate={{ opacity: 1, y: 0 }}
+             transition={{ delay: 0.2 }}
+             className="bg-white rounded-[2.5rem] p-8 border border-blue-100 shadow-xl shadow-blue-500/5 relative overflow-hidden group"
+           >
+              <div className="relative z-10 flex flex-col justify-between h-full space-y-6">
+                 <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 shadow-inner group-hover:scale-110 transition-transform">
+                    <Briefcase size={28} />
+                 </div>
+                 <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Guaranteed Pipeline</p>
+                    <div className="flex items-baseline gap-2">
+                       <span className="text-4xl font-black text-slate-900 tabular-nums">
+                          {totals.totalRemaining.toLocaleString()}
+                       </span>
+                       <span className="text-sm font-bold text-slate-400">XAF</span>
+                    </div>
+                 </div>
+                 <div className="flex items-center gap-2 pt-4 border-t border-slate-50 text-[10px] font-bold text-blue-400 uppercase tracking-widest">
+                    <ArrowUpRight size={12} />
+                    Unrealized Assets
+                 </div>
+              </div>
+              <FileSpreadsheet className="absolute -right-6 -bottom-6 opacity-[0.03] text-slate-900" size={120} />
+           </motion.div>
+
+           {/* Health Rate - Success Vibe */}
+           <motion.div 
+             initial={{ opacity: 0, y: 20 }}
+             animate={{ opacity: 1, y: 0 }}
+             transition={{ delay: 0.3 }}
+             className="bg-gradient-to-br from-blue-600 to-indigo-800 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-blue-500/20 relative overflow-hidden group"
+           >
+              <div className="relative z-10 flex flex-col justify-between h-full space-y-6">
+                 <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white shadow-inner group-hover:scale-110 transition-transform">
+                    <ShieldCheck size={28} />
+                 </div>
+                 <div>
+                    <p className="text-[10px] font-black text-blue-100/60 uppercase tracking-[0.2em] mb-1">Collection Health</p>
+                    <div className="flex items-baseline gap-2">
+                       <span className="text-4xl font-black text-white tabular-nums">
+                          {totals.collectionRate}
+                       </span>
+                       <span className="text-xl font-bold opacity-40">%</span>
+                    </div>
+                 </div>
+                 <div className="w-full h-2 bg-white/10 rounded-full mt-4 overflow-hidden border border-white/5">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${totals.collectionRate}%` }}
+                      transition={{ duration: 1, delay: 0.5 }}
+                      className="h-full bg-white shadow-[0_0_15px_rgba(255,255,255,0.5)] rounded-full"
+                    />
+                 </div>
+              </div>
+              <Target className="absolute -right-8 -top-8 opacity-[0.1]" size={150} />
+           </motion.div>
+        </div>
 
         {/* Ledger Table Container */}
         <div id="ledger-table-container" className="w-full overflow-hidden rounded-[2.5rem] border border-blue-100 bg-white shadow-2xl shadow-blue-500/10">
