@@ -508,76 +508,79 @@ function InternsPageComponent() {
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
+        {/* Stats Section with improved spacing */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           <StatCard
-            label="Census"
+            label="Total Census"
             value={stats.total}
             sublabel="Candidates"
             icon={Users}
             variant="default"
           />
           <StatCard
-            label="Awaiting"
+            label="Pending Review"
             value={stats.pending}
-            sublabel="Pending Review"
+            sublabel="Direct Action Needed"
             icon={Clock}
             variant="warning"
           />
           <StatCard
-            label="Active"
+            label="Under Review"
             value={stats.reviewing}
-            sublabel="In Process"
+            sublabel="Active Screening"
             icon={Eye}
             variant="info"
           />
           <StatCard
-            label="Success"
+            label="Onboarded"
             value={stats.accepted}
-            sublabel="Hired Interns"
+            sublabel="Confirmed Interns"
             icon={UserCheck}
             variant="success"
           />
         </div>
 
-        {/* Search & Filters */}
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="relative flex-1 group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+        {/* Command Center: Search & Global Actions */}
+        <div className="bg-white p-6 rounded-[2.5rem] border border-blue-100 shadow-xl shadow-blue-500/5 flex flex-col md:flex-row gap-6 items-center">
+          <div className="relative flex-1 w-full group">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
             <Input
-              placeholder="Search by name, email, school, or position..."
+              placeholder="Deep search candidates by name, school, email, or skill domain..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 h-12 rounded-xl border-slate-200 focus:border-blue-400 focus:ring-blue-100 text-sm"
+              className="pl-14 h-16 rounded-[1.5rem] border-slate-100 bg-slate-50/50 focus:bg-white focus:border-blue-300 focus:ring-8 focus:ring-blue-50 transition-all font-medium text-base shadow-inner"
             />
           </div>
-          {domains.length > 0 && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="gap-2 h-12 rounded-xl border-slate-200 hover:border-blue-300 min-w-[140px] justify-between">
-                  <div className="flex items-center gap-2">
-                    <Filter size={16} />
-                    <span>{filterDomain || "All Domains"}</span>
-                  </div>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 rounded-xl">
-                <DropdownMenuItem onClick={() => setFilterDomain(null)} className="rounded-lg">
-                  All Domains
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                {domains.map(domain => (
-                  <DropdownMenuItem 
-                    key={domain} 
-                    onClick={() => setFilterDomain(domain!)}
-                    className="rounded-lg"
-                  >
-                    {domain}
+          
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            {domains.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="gap-3 h-16 px-6 rounded-[1.5rem] border-slate-100 bg-slate-50/50 hover:bg-white hover:border-blue-200 min-w-[180px] justify-between font-bold text-slate-600 uppercase tracking-widest text-[10px]">
+                    <div className="flex items-center gap-3">
+                      <Filter size={16} className="text-blue-500" />
+                      <span>{filterDomain || "All Expertise"}</span>
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 rounded-[1.5rem] p-2 border-blue-50 shadow-2xl">
+                  <DropdownMenuItem onClick={() => setFilterDomain(null)} className="rounded-xl py-3 font-bold text-xs uppercase text-slate-400">
+                    All Expertise
                   </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+                  <DropdownMenuSeparator />
+                  {domains.map(domain => (
+                    <DropdownMenuItem 
+                      key={domain} 
+                      onClick={() => setFilterDomain(domain!)}
+                      className="rounded-xl py-3 font-bold text-xs uppercase"
+                    >
+                      {domain}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
         </div>
 
         {/* View content */}

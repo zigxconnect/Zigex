@@ -105,74 +105,7 @@ export const ApplicantsTable = ({
 
   return (
     <TooltipProvider>
-      <div className="space-y-6">
-        {/* Stats Bar */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div className="bg-white rounded-[2rem] p-5 border border-slate-100 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
-            <div className="relative z-10 flex items-center justify-between">
-              <div>
-                <p className="text-3xl font-black text-slate-900 tracking-tighter">{stats.total}</p>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Census</p>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
-                <User size={18} className="text-slate-400" />
-              </div>
-            </div>
-            <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-slate-50 rounded-full group-hover:bg-slate-100 transition-colors" />
-          </div>
-
-          <div className="bg-white rounded-[2rem] p-5 border border-violet-100 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
-            <div className="relative z-10 flex items-center justify-between">
-              <div>
-                <p className="text-3xl font-black text-violet-600 tracking-tighter">{stats.internships}</p>
-                <p className="text-[10px] font-black text-violet-400 uppercase tracking-widest">Internships</p>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
-                <Briefcase size={18} className="text-violet-500" />
-              </div>
-            </div>
-            <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-violet-50/50 rounded-full group-hover:bg-violet-50 transition-colors" />
-          </div>
-
-          <div className="bg-white rounded-[2rem] p-5 border border-blue-100 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
-            <div className="relative z-10 flex items-center justify-between">
-              <div>
-                <p className="text-3xl font-black text-blue-600 tracking-tighter">{stats.programs}</p>
-                <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Programs</p>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
-                <GraduationCap size={18} className="text-blue-500" />
-              </div>
-            </div>
-            <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-blue-50/50 rounded-full group-hover:bg-blue-50 transition-colors" />
-          </div>
-
-          <div className="bg-white rounded-[2rem] p-5 border border-amber-100 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
-            <div className="relative z-10 flex items-center justify-between">
-              <div>
-                <p className="text-3xl font-black text-amber-600 tracking-tighter">{stats.events}</p>
-                <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest">Events</p>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
-                <Calendar size={18} className="text-amber-500" />
-              </div>
-            </div>
-            <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-amber-50/50 rounded-full group-hover:bg-amber-50 transition-colors" />
-          </div>
-
-          <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 rounded-[2rem] p-5 shadow-lg shadow-blue-200 hover:shadow-blue-300 transition-all group relative overflow-hidden">
-            <div className="relative z-10 flex items-center justify-between">
-              <div>
-                <p className="text-3xl font-black text-white tracking-tighter">{stats.pending}</p>
-                <p className="text-[10px] font-black text-white/70 uppercase tracking-widest">Awaiting</p>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm group-hover:scale-110 transition-transform duration-500">
-                <Clock size={18} className="text-white" />
-              </div>
-            </div>
-            <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full group-hover:scale-110 transition-transform duration-700" />
-          </div>
-        </div>
+      <div className="space-y-6 pt-4">
 
         {/* Main Table */}
         <div className="w-full overflow-hidden rounded-[2.5rem] border border-blue-100/50 bg-white/70 backdrop-blur-xl shadow-2xl shadow-blue-100/20">
@@ -273,13 +206,12 @@ export const ApplicantsTable = ({
                       </div>
                     </td>
 
-                    {/* Opportunity Cell */}
                     <td className="px-6 py-4" onClick={() => onSelect(applicant.id)}>
-                      <div className="space-y-2">
-                        <p className="text-sm font-semibold text-slate-800 truncate max-w-[180px]">
-                          {applicant.internshipTitle || "General Application"}
+                      <div className="space-y-1">
+                        <p className="text-sm font-bold text-slate-800 truncate max-w-[220px]">
+                          {applicant.internshipTitle || "Professional Internship"}
                         </p>
-                        <TypeBadge type={applicant.applicationType} />
+                        {/* Type badge removed for less noise - this is the internship dashboard */}
                       </div>
                     </td>
 
@@ -315,30 +247,16 @@ export const ApplicantsTable = ({
                       </div>
                     </td>
 
-                    {/* Financials Cell */}
                     <td className="px-6 py-4" onClick={() => onSelect(applicant.id)}>
                       <div className="flex flex-col gap-1">
-                        {applicant.applicationType === 'internship' ? (
-                          <>
-                            <p className="text-xs font-bold text-slate-900 leading-none">
-                              {(() => {
-                                const ledger = applicant.paymentLedger || [];
-                                const paid = ledger.reduce((sum, p) => sum + (p.status === 'paid' ? (p.amount || applicant.monthlyRate || 0) : 0), 0);
-                                return `${paid.toLocaleString()} XAF`;
-                              })()}
-                            </p>
-                            <p className="text-[10px] text-slate-400 font-medium whitespace-nowrap">Monthly Ledger</p>
-                          </>
-                        ) : (
-                          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                            <Switch
-                              checked={applicant.isPaid || false}
-                              onCheckedChange={(checked) => onUpdatePayment?.(applicant.id, checked)}
-                              className="scale-75"
-                            />
-                            <span className="text-[10px] font-bold text-slate-500">{applicant.isPaid ? 'PAID' : 'PENDING'}</span>
-                          </div>
-                        )}
+                        <p className="text-xs font-black text-slate-900 leading-none">
+                          {(() => {
+                            const ledger = applicant.paymentLedger || [];
+                            const paid = ledger.reduce((sum, p) => sum + (p.status === 'paid' ? (p.amount || applicant.monthlyRate || 0) : 0), 0);
+                            return `${paid.toLocaleString()} XAF`;
+                          })()}
+                        </p>
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Net Collections</p>
                       </div>
                     </td>
 

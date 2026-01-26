@@ -65,16 +65,40 @@ export const InternLedgerTable = ({
     const rate = applicant.monthlyRate || 0;
     const ledger = applicant.paymentLedger || [];
     
-    // Total amount actually received (sum of individual month amounts)
+    // 1. Calculate Realized Revenue (Total Paid)
     const totalPaid = ledger.reduce((sum, p) => sum + (p.status === 'paid' ? (p.amount ?? rate) : 0), 0);
     
-    // Total Contract Value: Standard rate multiplied by months
+    // 2. Calculate Contract Asset Value (Total Expected)
     const totalContractValue = months * rate;
     
-    // Balance is the difference between what they should pay total and what they have paid
-    const balance = totalContractValue > 0 ? Math.max(0, totalContractValue - totalPaid) : 0;
+    // 3. Time-based Debt Calculation: How many months HAVE PASSED since they applied?
+    const startDate = new Date(applicant.appliedDate);
+    const today = new Date();
+    const monthsElapsed = Math.min(
+      months,
+      (today.getFullYear() - startDate.getFullYear()) * 12 + (today.getMonth() - startDate.getMonth()) + 1
+    );
     
-    return { months, rate, totalDue: totalContractValue, totalPaid, balance, ledger };
+    // 4. Expected Revenue to Date (Accrued)
+    const accruedDue = monthsElapsed * rate;
+    
+    // 5. Arrears (Debt): The gap between what they should have paid BY TODAY vs what they paid
+    const debt = Math.max(0, accruedDue - totalPaid);
+    
+    // 6. Remaining Lifetime Balance: Total Contract Value - Total Paid
+    const netBalance = Math.max(0, totalContractValue - totalPaid);
+    
+    return { 
+      months, 
+      rate, 
+      totalDue: totalContractValue, 
+      totalPaid, 
+      accruedDue,
+      debt,
+      netBalance, 
+      ledger,
+      isOverdue: debt > 0
+    };
   }, []);
 
   const filteredData = useMemo(() => {
@@ -227,30 +251,7 @@ export const InternLedgerTable = ({
 
   return (
     <TooltipProvider>
-      <div className="space-y-6">
-        {/* Top Control Bar */}
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-5 rounded-3xl border border-blue-100 shadow-xl shadow-blue-500/5">
-            <div className="relative w-full md:w-96 group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={18} />
-              <input 
-                type="text" 
-                placeholder="Search by intern name or email..." 
-                className="w-full pl-11 pr-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition-all text-sm font-medium"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <div className="flex items-center gap-3">
-              <Button onClick={handleExportCSV} variant="outline" className="rounded-2xl h-12 border-blue-200 text-slate-600 hover:bg-slate-50 hover:text-blue-600 gap-2 px-6 font-bold shadow-sm transition-all active:scale-95">
-                <FileSpreadsheet size={18} />
-                <span className="uppercase tracking-widest text-[10px]">CSV Export</span>
-              </Button>
-              <Button onClick={handleExportPDF} disabled={isExporting} className="rounded-2xl h-12 bg-blue-600 hover:bg-blue-700 text-white gap-2 px-6 font-bold shadow-sm transition-all active:scale-95">
-                {isExporting ? <Loader2 className="animate-spin" size={18} /> : <Download size={18} />}
-                <span className="uppercase tracking-widest text-[10px]">PDF Summary</span>
-              </Button>
-            </div>
-          </div>
+      <div className="space-y-6 pt-4">
 
         {/* Ledger Table Container */}
         <div id="ledger-table-container" className="w-full overflow-hidden rounded-[2.5rem] border border-blue-100 bg-white shadow-2xl shadow-blue-500/10">
@@ -370,7 +371,7 @@ export const InternLedgerTable = ({
                           <div className="flex flex-col items-end gap-1">
                             <div className="flex items-center gap-4">
                               <div className="text-right">
-                                <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">Received</p>
+                                <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">Recovered</p>
                                 <div className="flex items-center gap-1.5 justify-end">
                                   <span className="text-sm font-black text-blue-600 tabular-nums">{totalPaid.toLocaleString()}</span>
                                   <span className="text-[9px] font-bold text-slate-400">XAF</span>
@@ -378,24 +379,48 @@ export const InternLedgerTable = ({
                               </div>
                               <div className="w-px h-8 bg-blue-50" />
                               <div className="text-right">
-                                <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">Balance</p>
-                                <div className="flex items-center gap-1.5 justify-end">
-                                  <span className={cn(
-                                    "text-sm font-black tabular-nums",
-                                    rate === 0 && totalPaid === 0 ? "text-amber-500" : balance > 0 ? "text-blue-500" : "text-blue-600"
-                                  )}>
-                                    {rate === 0 && totalPaid === 0 ? "NO RATE" : balance <= 0 ? "SETTLED" : `${balance.toLocaleString()}`}
-                                  </span>
-                                  {balance > 0 && <span className="text-[9px] font-bold text-slate-400">XAF</span>}
+                                <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">Status</p>
+                                <div className="flex items-center gap-2 justify-end">
+                                  {debt > 0 ? (
+                                    <>
+                                      <span className="text-sm font-black text-rose-600 tabular-nums">{debt.toLocaleString()}</span>
+                                      <div className="p-1.5 rounded-lg bg-rose-50 text-rose-500 shadow-sm border border-rose-100" title="Arrears Found">
+                                        <AlertCircle size={14} className="animate-pulse" />
+                                      </div>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <span className={cn(
+                                        "text-sm font-black",
+                                        netBalance === 0 ? "text-emerald-600" : "text-blue-600"
+                                      )}>
+                                        {netBalance === 0 ? "SETTLED" : "CURRENT"}
+                                      </span>
+                                      <div className={cn(
+                                        "p-1.5 rounded-lg shadow-sm border",
+                                        netBalance === 0 
+                                          ? "bg-emerald-50 text-emerald-600 border-emerald-100" 
+                                          : "bg-blue-50 text-blue-600 border-blue-100"
+                                      )}>
+                                        <ShieldCheck size={14} />
+                                      </div>
+                                    </>
+                                  )}
                                 </div>
                               </div>
                             </div>
-                            <div className="w-full max-w-[120px] h-1.5 bg-slate-100 rounded-full mt-1 overflow-hidden">
+                            <div className="w-full max-w-[140px] h-1.5 bg-slate-50 rounded-full mt-1 overflow-hidden shadow-inner border border-slate-100">
                               <div 
-                                className="h-full bg-gradient-to-r from-blue-400 to-indigo-500 transition-all duration-500" 
+                                className={cn(
+                                  "h-full transition-all duration-700 rounded-full shadow-lg",
+                                  debt > 0 ? "bg-gradient-to-r from-rose-400 to-rose-600" : "bg-gradient-to-r from-emerald-400 to-blue-500"
+                                )}
                                 style={{ width: `${totalDue > 0 ? Math.min((totalPaid / totalDue) * 100, 100) : (totalPaid > 0 ? 100 : 0)}%` }} 
                               />
                             </div>
+                            <p className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter mt-1">
+                               {netBalance > 0 ? `${netBalance.toLocaleString()} XAF Lifetime Remaining` : "Full Contract Settled"}
+                            </p>
                           </div>
                         </td>
 
@@ -419,150 +444,52 @@ export const InternLedgerTable = ({
           </div>
         </div>
 
-        {/* Bottom Metrics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <motion.div 
-            whileHover={{ y: -5 }}
-            className="bg-gradient-to-br from-indigo-700 to-blue-900 p-8 rounded-[2.5rem] text-white shadow-2xl shadow-blue-500/20 relative overflow-hidden group"
-          >
-            <div className="relative z-10 space-y-6">
-              <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-xl flex items-center justify-center shadow-inner"><TrendingUp size={28}/></div>
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-100 mb-1">Actual Collections</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-black tabular-nums">{totals.totalCollected.toLocaleString()}</span>
-                  <span className="text-lg font-bold opacity-40">XAF</span>
-                </div>
-                <div className="flex items-center gap-2 mt-4 text-[10px] font-bold text-blue-100/60 uppercase">
-                  <CheckCircle2 size={12} />
-                  Net received to date
-                </div>
+        {/* Set Amount Dialog */}
+        <Dialog open={isAmountModalOpen} onOpenChange={setIsAmountModalOpen}>
+          <DialogContent className="sm:max-w-md bg-white rounded-[2rem] border-none shadow-2xl p-0 overflow-hidden">
+            <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 p-8 text-white relative">
+              <div className="relative z-10">
+                <DialogTitle className="text-xl font-black mb-1 text-white">Set Month Payment</DialogTitle>
+                <DialogDescription className="text-blue-200 text-xs font-medium">Recording collection for {modalContext?.applicant.name}</DialogDescription>
               </div>
+              <DollarSign className="absolute -right-4 -bottom-4 text-white/10" size={120} />
             </div>
-            <ArrowUpRight className="absolute -right-8 -bottom-8 opacity-[0.05] group-hover:scale-110 transition-transform duration-1000" size={200} />
-          </motion.div>
-
-          <motion.div 
-            whileHover={{ y: -5 }}
-            className="bg-white p-8 rounded-[2.5rem] border border-blue-100 shadow-xl shadow-blue-500/5 relative overflow-hidden group"
-          >
-            <div className="relative z-10 space-y-6">
-              <div className="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-600 shadow-inner"><PiggyBank size={28}/></div>
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Recovery Required</p>
-                  <Tooltip>
-                    <TooltipTrigger><Info size={12} className="text-slate-300" /></TooltipTrigger>
-                    <TooltipContent className="bg-slate-900 text-white max-w-[200px] rounded-xl text-[10px] p-2">
-                      Total outstanding debt based on contract values.
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-black text-rose-600 tabular-nums">{totals.outstanding.toLocaleString()}</span>
-                  <span className="text-lg font-bold text-slate-400">XAF</span>
-                </div>
-                <div className="w-full h-2.5 bg-slate-100 rounded-full mt-4 overflow-hidden shadow-inner">
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: `${totals.collectionRate}%` }}
-                    className="h-full bg-gradient-to-r from-emerald-400 to-blue-500 rounded-full shadow-lg" 
+            
+            <div className="p-8 space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="amount" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Amount (XAF)</Label>
+                <div className="relative">
+                  <Wallet className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+                  <Input
+                    id="amount"
+                    type="number"
+                    value={customAmount}
+                    onChange={(e) => setCustomAmount(e.target.value)}
+                    className="pl-12 h-14 rounded-2xl border-slate-100 bg-slate-50 focus:bg-white text-lg font-black tabular-nums transition-all"
+                    autoFocus
                   />
                 </div>
               </div>
-            </div>
-            <Clock className="absolute -right-4 -top-4 opacity-[0.03] group-hover:translate-x-3 group-hover:-translate-y-3 transition-transform duration-1000" size={150} />
-          </motion.div>
-
-          <motion.div 
-            whileHover={{ y: -5 }}
-            className="bg-white p-8 rounded-[2.5rem] border border-blue-100 shadow-xl shadow-blue-500/5 relative overflow-hidden group"
-          >
-            <div className="relative z-10 space-y-6">
-              <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 shadow-inner"><DollarSign size={28}/></div>
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Projected Asset Value</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-black text-slate-900 tabular-nums">{totals.totalExpected.toLocaleString()}</span>
-                  <span className="text-lg font-bold text-slate-400 decoration-blue-500/30">XAF</span>
-                </div>
-                <div className="flex items-center gap-2 mt-4 text-[10px] font-bold text-slate-400 uppercase">
-                  <TrendingUp size={12} className="text-blue-500" />
-                  Total Contractual Worth
-                </div>
+              
+              <div className="flex gap-3">
+                <Button 
+                  variant="ghost" 
+                  onClick={() => setIsAmountModalOpen(false)}
+                  className="flex-1 h-14 rounded-2xl font-bold text-slate-500 hover:bg-slate-100 uppercase text-[10px] tracking-widest"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleModalSubmit}
+                  className="flex-[2] h-14 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase text-[10px] tracking-[0.2em] shadow-lg shadow-indigo-200"
+                >
+                  Log Payment
+                </Button>
               </div>
             </div>
-            <ShieldCheck className="absolute -right-8 -bottom-8 opacity-[0.03] group-hover:scale-110 transition-transform duration-1000" size={180} />
-          </motion.div>
-
-          <motion.div 
-            whileHover={{ y: -5 }}
-            className="bg-white p-8 rounded-[2.5rem] border border-blue-100 shadow-xl shadow-blue-500/5 relative overflow-hidden group"
-          >
-            <div className="relative z-10 space-y-6">
-              <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 shadow-inner"><Wallet size={28}/></div>
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Workforce Load</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-black text-slate-900 tabular-nums">{filteredData.length}</span>
-                  <span className="text-lg font-bold text-slate-400 underline decoration-blue-500/30 decoration-4">Nodes</span>
-                </div>
-                <div className="flex items-center gap-2 mt-4 text-[10px] font-bold text-slate-400 uppercase">
-                  <Briefcase size={12} className="text-blue-500" />
-                  Active Billing Accounts
-                </div>
-              </div>
-            </div>
-            <Briefcase className="absolute -right-8 -bottom-8 opacity-[0.03] group-hover:scale-110 transition-transform duration-1000" size={180} />
-          </motion.div>
-        </div>
+          </DialogContent>
+        </Dialog>
       </div>
-      
-      {/* Set Amount Dialog */}
-      <Dialog open={isAmountModalOpen} onOpenChange={setIsAmountModalOpen}>
-        <DialogContent className="sm:max-w-md bg-white rounded-[2rem] border-none shadow-2xl p-0 overflow-hidden">
-          <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 p-8 text-white relative">
-            <div className="relative z-10">
-              <DialogTitle className="text-xl font-black mb-1 text-white">Set Month Payment</DialogTitle>
-              <DialogDescription className="text-blue-200 text-xs font-medium">Recording collection for {modalContext?.applicant.name}</DialogDescription>
-            </div>
-            <DollarSign className="absolute -right-4 -bottom-4 text-white/10" size={120} />
-          </div>
-          
-          <div className="p-8 space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="amount" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Amount (XAF)</Label>
-              <div className="relative">
-                <Wallet className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                <Input
-                  id="amount"
-                  type="number"
-                  value={customAmount}
-                  onChange={(e) => setCustomAmount(e.target.value)}
-                  className="pl-12 h-14 rounded-2xl border-slate-100 bg-slate-50 focus:bg-white text-lg font-black tabular-nums transition-all"
-                  autoFocus
-                />
-              </div>
-            </div>
-            
-            <div className="flex gap-3">
-              <Button 
-                variant="ghost" 
-                onClick={() => setIsAmountModalOpen(false)}
-                className="flex-1 h-14 rounded-2xl font-bold text-slate-500 hover:bg-slate-100 uppercase text-[10px] tracking-widest"
-              >
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleModalSubmit}
-                className="flex-[2] h-14 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase text-[10px] tracking-[0.2em] shadow-lg shadow-indigo-200"
-              >
-                Log Payment
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </TooltipProvider>
   );
 };
