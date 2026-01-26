@@ -91,7 +91,7 @@ export function ApplyButton({
     const updatesUrl = type === "program" 
       ? `/programs/${id}/updates` 
       : type === "internship" 
-        ? `/dashboard/applied-internships` 
+        ? `/intern/workspace` 
         : `/events/${id}`;
 
     const buttonLabel = type === "internship" 
