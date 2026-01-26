@@ -106,6 +106,20 @@ export const createSupabaseServerClient = async () => {
       get(name: string) {
         return cookieStore.get(name)?.value;
       },
+      set(name: string, value: string, options: CookieOptions) {
+        try {
+          cookieStore.set({ name, value, ...options });
+        } catch (error) {
+          // This can fail in Server Components, but we ignore it there
+        }
+      },
+      remove(name: string, options: CookieOptions) {
+        try {
+          cookieStore.set({ name, value: "", ...options });
+        } catch (error) {
+          // This can fail in Server Components, but we ignore it there
+        }
+      },
     },
     global: {
       fetch: fetchWithRetry,

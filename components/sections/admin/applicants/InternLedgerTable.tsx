@@ -314,7 +314,7 @@ export const InternLedgerTable = ({
 
                         {/* Toggles Column */}
                         <td className="px-6 py-5">
-                          <div className="flex flex-center justify-center gap-3">
+                          <div className="flex items-center justify-center gap-3">
                             {Array.from({ length: months }).map((_, i) => {
                               const isPaid = ledger.some(p => p.month === i + 1 && p.status === 'paid');
                               const key = `${app.id}-${i}`;
@@ -502,8 +502,8 @@ export const InternLedgerTable = ({
         <DialogContent className="sm:max-w-md bg-white rounded-[2rem] border-none shadow-2xl p-0 overflow-hidden">
           <div className="bg-gradient-to-br from-indigo-700 to-blue-900 p-8 text-white relative">
             <div className="relative z-10">
-              <h3 className="text-xl font-black mb-1">Set Month Payment</h3>
-              <p className="text-blue-200 text-xs font-medium">Recording collection for {modalContext?.applicant.name}</p>
+              <DialogTitle className="text-xl font-black mb-1 text-white">Set Month Payment</DialogTitle>
+              <DialogDescription className="text-blue-200 text-xs font-medium">Recording collection for {modalContext?.applicant.name}</DialogDescription>
             </div>
             <DollarSign className="absolute -right-4 -bottom-4 text-white/10" size={120} />
           </div>

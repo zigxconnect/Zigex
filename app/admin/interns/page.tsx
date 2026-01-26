@@ -239,10 +239,13 @@ function InternsPageComponent() {
       
       // 2. Confirm state
       setApplicants(prev =>
-        prev.map(app => app.id === applicantId ? { 
-          ...app, 
-          status: updatedData.status || newStatus 
-        } : app)
+        prev.map(app => {
+          if (app.id !== applicantId) return app;
+          return { 
+            ...app, 
+            status: updatedData?.status || newStatus 
+          };
+        })
       );
 
       return Promise.resolve();
@@ -291,8 +294,8 @@ function InternsPageComponent() {
         // Map backend keys to frontend keys correctly
         return {
           ...a,
-          paymentLedger: serverData.payment_ledger || serverData.paymentLedger || ledger,
-          isPaid: serverData.payment_completed ?? serverData.is_paid_acknowledgement ?? a.isPaid
+          paymentLedger: serverData?.payment_ledger || serverData?.paymentLedger || ledger,
+          isPaid: serverData?.payment_completed ?? serverData?.is_paid_acknowledgement ?? a.isPaid
         };
       }));
 

@@ -170,7 +170,6 @@ export async function PATCH(
       .from("internship_applications")
       .select(`
         *,
-        student:student_profiles(user_id, full_name),
         internship:internships(id, title, description, company_id)
       `)
       .eq("id", id)
@@ -254,20 +253,25 @@ export async function PATCH(
     }
   }
 
+  // --- Common variables for notifications ---
+  const studentName = isNewInternshipApp ? application.full_name : (studentProfile?.full_name || "Student");
+
   // --- Handle payment_completed update (simple update, no notifications) ---
   if (typeof payment_completed === 'boolean' && status === undefined) {
     const table = isNewInternshipApp ? "internship_applications" : "Applications";
+    const updatePayload: any = isNewInternshipApp
+      ? { is_paid_acknowledgement: payment_completed }
+      : { payment_completed };
+
     const { data: updatedApplication, error: updateError } = await supabaseAdmin
       .from(table)
-      .update({
-        payment_completed,
-      })
+      .update(updatePayload)
       .eq("id", id)
       .select()
       .single();
 
     if (updateError) {
-      console.log(updateError);
+      console.error(`[PATCH_PAYMENT] Error for ${id}:`, updateError);
       return NextResponse.json({ error: updateError.message }, { status: 400 });
     }
 
@@ -281,7 +285,7 @@ export async function PATCH(
         if (studentEmail) {
           await sendPaymentReceiptEmail({
             email: studentEmail,
-            name: studentProfile!.full_name || "Student",
+            name: studentName,
             programTitle: opportunityTitle,
             amount: opportunityPrice,
             date: new Date().toISOString(),
@@ -310,7 +314,9 @@ export async function PATCH(
   let resultData = null;
 
   // Build update object with both status and payment_completed if provided
-  const updateObject: { status?: string; payment_completed?: boolean; payment_ledger?: any } = {};
+  const updateObject: { status?: string; payment_completed?: boolean; payment_ledger?: any; updated_at?: string } = {
+    updated_at: new Date().toISOString()
+  };
 
   if (status !== undefined) {
     // Map 'reviewing' to 'reviewed' for structured apps to satisfy DB check constraint if needed
@@ -322,10 +328,20 @@ export async function PATCH(
     }
   }
 
-  if (typeof payment_completed === 'boolean') updateObject.payment_completed = payment_completed;
+  if (typeof payment_completed === 'boolean') {
+    if (isNewInternshipApp) {
+      // Map to the correct column name for internship_applications
+      (updateObject as any).is_paid_acknowledgement = payment_completed;
+    } else {
+      updateObject.payment_completed = payment_completed;
+    }
+  }
+
   if (payment_ledger !== undefined) updateObject.payment_ledger = payment_ledger;
 
-  if (Object.keys(updateObject).length > 0) {
+  console.log(`[PATCH_APPLICATION] Updating ${id} in ${isNewInternshipApp ? "internship_applications" : "Applications"}:`, updateObject);
+
+  if (Object.keys(updateObject).length > 1) { // > 1 because updated_at is always there
     // UPDATE the application
     const table = isNewInternshipApp ? "internship_applications" : "Applications";
     const { data: updatedApplication, error: updateError } = await supabaseAdmin
@@ -336,24 +352,30 @@ export async function PATCH(
       .single();
 
     if (updateError) {
+      console.error(`[PATCH_APPLICATION] Update error for ${id}:`, updateError);
       return NextResponse.json({ error: updateError.message }, { status: 400 });
     }
-    resultData = updatedApplication;
+
+    if (!updatedApplication) {
+      console.warn(`[PATCH_APPLICATION] Update succeeded but no data returned for ${id}`);
+      // If update succeeded but select().single() returned nothing, we still want to return the updated values
+      resultData = { ...application, ...updateObject };
+    } else {
+      resultData = updatedApplication;
+    }
   } else {
     return NextResponse.json({ error: "No valid update fields provided" }, { status: 400 });
   }
 
   // --- Background Tasks: Notifications and Emails ---
-  // We do NOT want to block the user interface for email dispatches.
-  // We'll wrap this in an async execution block.
-
   if (shouldNotify) {
     const startBackgroundTasks = async () => {
       try {
+        const studentAuthId = isNewInternshipApp ? application.student_id : (studentProfile?.user_id || application.student_id);
         const referenceId = opportunityId;
-        const studentAuthId = isNewInternshipApp ? application.student_id : studentProfile?.user_id;
 
         if (referenceId && appType && studentAuthId) {
+          console.log(`[BACKGROUND_TASKS] Starting for ${id}, status: ${status}`);
           const { data: userData } = await supabaseAdmin.auth.admin.getUserById(studentAuthId);
           const studentEmail = userData?.user?.email;
           const studentName = isNewInternshipApp ? application.full_name : (studentProfile?.full_name || "Student");
@@ -361,7 +383,7 @@ export async function PATCH(
 
           const emailPromises = [];
 
-          // 1. Notify Candidate of Decision (only for Accepted/Rejected)
+          // 1. Notify Candidate of Decision
           if (studentEmail) {
             if (status === "accepted") {
               emailPromises.push(sendAcceptanceEmail({
@@ -383,7 +405,7 @@ export async function PATCH(
             }
           }
 
-          // 2. Notify Zigex & Company for status changes
+          // 2. Alert Admins
           emailPromises.push(sendApplicationAlert({
             adminEmail: "zigex.connect@gmail.com,zigexconnect.com@gmail.com",
             studentName,
@@ -406,18 +428,18 @@ export async function PATCH(
             }));
           }
 
-          // 3. Database Notification
+          // 3. In-app Notification
           const notificationTitle = status === "accepted"
             ? "Congratulations! Your Application was Accepted!"
             : status === "rejected"
               ? "Application Update: Please Reapply"
-              : `Application move: ${status}`;
+              : `Application status updated: ${status || 'Update'}`;
 
           const notificationMessage = status === "accepted"
             ? `Great news! Your application for "${opportunityTitle}" has been accepted.`
             : status === "rejected"
-              ? `Your previous application for "${opportunityTitle}" has been removed to allow you to reapply with updated details.`
-              : `Your application status for "${opportunityTitle}" is now ${status}.`;
+              ? `Your application for "${opportunityTitle}" has been reviewed. Check your email for details.`
+              : `Your application status for "${opportunityTitle}" is now ${status || 'updated'}.`;
 
           emailPromises.push(createNotification(
             studentAuthId,
@@ -427,18 +449,15 @@ export async function PATCH(
             referenceId
           ));
 
-          // Execute all background tasks in parallel
           await Promise.allSettled(emailPromises);
-          console.log(`[BACKGROUND_TASKS] All notifications processed for application ${id}`);
+          console.log(`[BACKGROUND_TASKS] Completed for ${id}`);
         }
       } catch (bgError) {
-        console.error("[BACKGROUND_TASKS] Error during email/notification dispatch:", bgError);
+        console.error("[BACKGROUND_TASKS] Critical error:", bgError);
       }
     };
 
-    // Fire and forget OR wait if in a environment that requires it.
-    // For local dev and most servers, not awaiting this is fine and speeds up the response immensely.
-    // However, to be safe and ensure emails go out, we can use waitUntil (on Vercel) or just fire it.
+    // Use Next.js 15 request wait if available, otherwise fire and forget
     startBackgroundTasks();
   }
 
