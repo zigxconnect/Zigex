@@ -8,7 +8,7 @@ import {
   CreditCard, Wallet, PiggyBank, FileSpreadsheet,
   ArrowUpRight, Loader2, Info, Clock, AlertCircle,
   FileJson, ChevronRight, X,
-  ShieldCheck
+  ShieldCheck, Sparkles, Target
 } from "lucide-react";
 import { format } from "date-fns";
 import Image from "next/image";
