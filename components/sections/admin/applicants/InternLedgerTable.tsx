@@ -67,15 +67,13 @@ export const InternLedgerTable = ({
     // Total amount actually received (sum of individual month amounts)
     const totalPaid = ledger.reduce((sum, p) => sum + (p.status === 'paid' ? (p.amount ?? rate) : 0), 0);
     
-    // Total amount expected for the whole duration
-    // Projected as: Actual Paid + (Unpaid Months * Standard Rate)
-    const paidMonthsCount = ledger.filter(p => p.status === 'paid').length;
-    const remainingMonths = Math.max(0, months - paidMonthsCount);
-    const totalExpected = totalPaid + (remainingMonths * rate);
+    // Total Contract Value: Standard rate multiplied by months
+    const totalContractValue = months * rate;
     
-    const balance = Math.max(0, totalExpected - totalPaid);
+    // Balance is the difference between what they should pay total and what they have paid
+    const balance = totalContractValue > 0 ? Math.max(0, totalContractValue - totalPaid) : 0;
     
-    return { months, rate, totalDue: totalExpected, totalPaid, balance, ledger };
+    return { months, rate, totalDue: totalContractValue, totalPaid, balance, ledger };
   }, []);
 
   const filteredData = useMemo(() => {
