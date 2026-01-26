@@ -25,6 +25,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -500,7 +501,7 @@ export const InternLedgerTable = ({
       {/* Set Amount Dialog */}
       <Dialog open={isAmountModalOpen} onOpenChange={setIsAmountModalOpen}>
         <DialogContent className="sm:max-w-md bg-white rounded-[2rem] border-none shadow-2xl p-0 overflow-hidden">
-          <div className="bg-gradient-to-br from-indigo-700 to-blue-900 p-8 text-white relative">
+          <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 p-8 text-white relative">
             <div className="relative z-10">
               <DialogTitle className="text-xl font-black mb-1 text-white">Set Month Payment</DialogTitle>
               <DialogDescription className="text-blue-200 text-xs font-medium">Recording collection for {modalContext?.applicant.name}</DialogDescription>

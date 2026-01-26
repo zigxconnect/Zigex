@@ -223,8 +223,8 @@ export const ApplicantActions = ({
                 disabled={isSubmittingUpdate}
                 className={cn(
                   "relative overflow-hidden rounded-2xl h-14 w-full font-bold text-sm",
-                  "bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700",
-                  "text-white shadow-xl shadow-emerald-200 border-none",
+                  "bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800",
+                  "text-white shadow-xl shadow-blue-200 border-none",
                   "transition-all duration-300 hover:scale-[1.01] active:scale-[0.99]",
                   "group"
                 )}
@@ -279,7 +279,7 @@ export const ApplicantActions = ({
         return (
           <div className="space-y-8 w-full">
             {/* Success Banner */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 p-6 text-white">
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 p-6 text-white shadow-xl shadow-blue-200">
               <div className="absolute top-0 right-0 -mr-8 -mt-8">
                 <PartyPopper size={100} className="text-white/10" />
               </div>
