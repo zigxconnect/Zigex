@@ -2,7 +2,7 @@
 
 import { createServerActionClient, supabaseAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { sendEmail } from "@/lib/email";
+import { sendEmail, sendSupervisorWelcomeEmail } from "@/lib/email";
 
 /**
  * Fetches all supervisors. 
@@ -82,6 +82,8 @@ export async function assignSupervisor(applicationId: string, supervisorId: stri
         let success = false;
         let updateError = null;
 
+        let assignmentResult = null;
+
         // Try new table first
         const { data: newData, error: newError } = await supabaseAdmin
             .from("internship_applications")
@@ -91,6 +93,7 @@ export async function assignSupervisor(applicationId: string, supervisorId: stri
 
         if (!newError && newData && newData.length > 0) {
             success = true;
+            assignmentResult = newData;
         } else {
             updateError = newError;
             // Try legacy table
@@ -102,6 +105,7 @@ export async function assignSupervisor(applicationId: string, supervisorId: stri
 
             if (!legacyError && legacyData && legacyData.length > 0) {
                 success = true;
+                assignmentResult = legacyData;
             } else {
                 updateError = legacyError || updateError;
             }
@@ -144,7 +148,7 @@ export async function assignSupervisor(applicationId: string, supervisorId: stri
         revalidatePath("/intern/workspace");
         revalidatePath("/supervisor");
 
-        return { success: true, data };
+        return { success: true, data: assignmentResult };
     } catch (err: any) {
         console.error("Critical error in assignSupervisor:", err);
         return { success: false, error: err.message };
@@ -432,19 +436,28 @@ export async function promoteToSupervisor(userData: any) {
             return { success: false, error: error.message };
         }
 
-        // Send Welcome Email
+        // Fetch Company Name for context
+        let companyName = "Zigex Partner";
+        if (userData.company_id) {
+            const { data: company } = await supabaseAdmin
+                .from("company_profiles")
+                .select("company_name")
+                .eq("id", userData.company_id)
+                .single();
+            if (company?.company_name) {
+                companyName = company.company_name;
+            }
+        }
+
+        // Send Premium Welcome Email
         try {
-            await sendEmail({
-                to: userData.email,
-                subject: "🚀 Welcome to the Mentorship Team | Zigex",
-                heading: `Congratulations, ${userData.full_name.split(' ')[0]}!`,
-                message: `You have been officially added as a **Supervisor** on the Zigex platform. \n\nIn this role, you will be able to supervise internships, bootcamps, and other professional programs. We are excited to have you share your expertise and guide the next generation of talent.\n\nYou can access your new management dashboard to see your assigned students and review their progress logs.`,
-                ctaText: "Go to Supervisor Hub",
-                ctaLink: "https://zigexconnect.com/supervisor",
-                statusBadge: "Role Promoted",
-                statusColor: "#155DFC",
-                companyName: "Zigex Mentorship"
+            await sendSupervisorWelcomeEmail({
+                email: userData.email,
+                name: userData.full_name,
+                companyName: companyName,
+                dashboardLink: "https://zigexconnect.com/supervisor"
             });
+            console.log(`[EMAIL] Premium Supervisor welcome sent to ${userData.email}`);
         } catch (emailErr) {
             console.error("Welcome email failed:", emailErr);
         }

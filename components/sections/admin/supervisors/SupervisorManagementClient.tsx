@@ -317,7 +317,7 @@ function AddSupervisorModal({ isOpen, onClose, companyId }: { isOpen: boolean; o
       });
 
       if (result.success) {
-        toast.success(`${selectedUser.full_name} is now a supervisor!`);
+        toast.success(`🎉 Welcome email sent! ${selectedUser.full_name} is now a supervisor.`);
         onClose();
         router.refresh();
       } else {

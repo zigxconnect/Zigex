@@ -630,3 +630,124 @@ export const sendVerificationEmail = async (params: {
     throw error;
   }
 };
+
+/**
+ * Sends a premium, Duolingo-inspired Supervisor Welcome Email
+ */
+export const sendSupervisorWelcomeEmail = async (params: {
+  email: string;
+  name: string;
+  companyName: string;
+  dashboardLink: string;
+}) => {
+  const transporter = createTransporter();
+  if (!transporter) return;
+
+  const firstName = params.name.split(" ")[0];
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to Zigex!</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap');
+    body { margin: 0; padding: 0; background-color: #f7f7f7; font-family: 'Nunito', sans-serif; }
+    .wrapper { width: 100%; table-layout: fixed; background-color: #f7f7f7; padding-bottom: 60px; }
+    .main-table { background-color: #ffffff; margin: 0 auto; width: 100%; max-width: 600px; border-radius: 20px; overflow: hidden; border: 2px solid #e5e5e5; }
+    .header { background-color: #155DFC; padding: 40px 20px; text-align: center; }
+    .content { padding: 40px 30px; text-align: center; }
+    .button { display: inline-block; background-color: #58cc02; color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 16px; font-weight: 800; font-size: 18px; text-transform: uppercase; letter-spacing: 0.8px; box-shadow: 0 4px 0 #46a302; transition: all 0.2s; }
+    .button:hover { transform: translateY(2px); box-shadow: 0 2px 0 #46a302; }
+    .card { background-color: #f0f9ff; border: 2px solid #155DFC; border-radius: 16px; padding: 20px; margin: 20px 0; text-align: left; }
+    .info-icon { font-size: 24px; display: inline-block; vertical-align: top; margin-top: 2px; }
+    .footer-text { color: #888888; font-size: 11px; font-weight: 700; text-transform: uppercase; margin: 0; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <table class="main-table" cellspacing="0" cellpadding="0">
+      
+      <!-- Colorful Header -->
+      <tr>
+        <td class="header">
+          <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 900; letter-spacing: -1px; text-shadow: 0 2px 0 rgba(0,0,0,0.1);">You're In! 🎉</h1>
+        </td>
+      </tr>
+
+      <!-- Body Content -->
+      <tr>
+        <td class="content">
+          
+           <!-- Fun Bubble -->
+           <div style="margin-bottom: 25px;">
+             <span style="display: inline-block; background-color: #ffc800; color: #734b00; padding: 8px 16px; border-radius: 50px; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 3px 0 #eebb00;">New Role Unlocked</span>
+           </div>
+
+          <h2 style="color: #3c3c3c; margin: 0 0 15px; font-weight: 800; font-size: 24px;">Congratulations, ${firstName}!</h2>
+          
+          <p style="color: #777777; font-size: 16px; line-height: 1.6; margin: 0 0 25px;">
+            You've been officially added as a <strong>Supervisor</strong> on the Zigex Platform by <strong style="color: #155DFC;">${params.companyName}</strong>.
+          </p>
+
+          <!-- Info Card -->
+          <div class="card">
+            <table width="100%">
+              <tr>
+                <td width="40" valign="top">
+                  <span class="info-icon">🛡️</span>
+                </td>
+                <td>
+                  <p style="margin: 0; font-weight: 800; color: #155DFC; font-size: 15px;">What's Next?</p>
+                  <p style="margin: 5px 0 0; font-size: 14px; color: #4b5563; line-height: 1.5;">
+                    Visit your dashboard to see your assigned interns, review their logs, and guide them to success.
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- Big CTA Button -->
+          <div style="margin: 35px 0;">
+            <a href="${params.dashboardLink}" class="button">
+              View My Dashboard
+            </a>
+          </div>
+
+          <p style="color: #afafaf; font-size: 14px; margin-top: 30px;">
+            Happy Mentoring,<br>
+            <strong>The Zigex Team</strong>
+          </p>
+
+        </td>
+      </tr>
+      
+      <!-- Footer Stripe -->
+      <tr>
+        <td style="background-color: #e5e5e5; padding: 15px; text-align: center;">
+          <p class="footer-text">© ${new Date().getFullYear()} Zigex Platform</p>
+        </td>
+      </tr>
+
+    </table>
+  </div>
+</body>
+</html>
+  `;
+
+  try {
+    const result = await transporter.sendMail({
+      from: `"Zigex Supervisor Team" <${GMAIL_USER}>`,
+      to: params.email,
+      subject: `🎉 Congratulations! You're now a Supervisor at ${params.companyName}`,
+      html
+    });
+    console.log(`[EMAIL] Supervisor welcome sent to ${params.email}. MessageId: ${result.messageId}`);
+    return { success: true };
+  } catch (error: any) {
+    console.error(`[EMAIL] Failed to send supervisor welcome to ${params.email}:`, error.message);
+    throw error;
+  }
+};
