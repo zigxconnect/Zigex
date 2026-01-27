@@ -38,14 +38,16 @@ export function SupervisorAssignment({
       try {
         console.log("SupervisorAssignment: Loading supervisors for company:", companyId);
         const data = await getSupervisors(companyId);
-        setSupervisors(data);
+        console.log("SupervisorAssignment: Fetched supervisors:", data);
+        setSupervisors(data || []);
       } catch (error) {
         console.error("Failed to load supervisors", error);
+        toast.error("Failed to load supervisor list");
       } finally {
         setIsLoading(false);
       }
     }
-    loadSupervisors();
+    if (companyId) loadSupervisors();
   }, [companyId]);
 
   const handleAssign = async (supervisor: any) => {
@@ -57,10 +59,10 @@ export function SupervisorAssignment({
         toast.success(`Assigned to ${supervisor.full_name}`);
         if (onAssigned) onAssigned(supervisor);
       } else {
-        toast.error("Failed to assign supervisor");
+        toast.error("Failed to assign supervisor: " + (result.error || "Unknown error"));
       }
     } catch (error) {
-      toast.error("An error occurred");
+      toast.error("An error occurred during assignment");
     } finally {
       setIsAssigning(false);
     }
@@ -112,30 +114,56 @@ export function SupervisorAssignment({
             <ChevronDown size={16} className="text-slate-400" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-64 rounded-2xl p-2 shadow-2xl border-blue-50">
+        <DropdownMenuContent 
+          align="center" 
+          side="bottom"
+          className="w-[280px] rounded-2xl p-2 shadow-2xl border-blue-50 bg-white z-[110]"
+        >
+          <style dangerouslySetInnerHTML={{ __html: `
+            .blue-scroll::-webkit-scrollbar { width: 4px; }
+            .blue-scroll::-webkit-scrollbar-track { background: #f8fafc; }
+            .blue-scroll::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
+            .blue-scroll::-webkit-scrollbar-thumb:hover { background: #2563eb; }
+          `}} />
           {isLoading ? (
-            <div className="p-4 text-center">
-              <Loader2 size={20} className="animate-spin mx-auto text-blue-600" />
+            <div className="p-8 text-center">
+              <Loader2 size={24} className="animate-spin mx-auto text-blue-600 mb-2" />
+              <p className="text-[10px] font-bold text-slate-400 uppercase">Fetching Tutors...</p>
             </div>
           ) : supervisors.length === 0 ? (
-            <div className="p-4 text-center text-xs text-slate-400 font-bold uppercase">No tutors found</div>
-          ) : (
-            supervisors.map((s) => (
-              <DropdownMenuItem 
-                key={s.id} 
-                onClick={() => handleAssign(s)}
-                className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-blue-50 focus:bg-blue-50 group"
+            <div className="p-8 text-center space-y-3">
+              <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center mx-auto">
+                <Shield size={20} className="text-slate-300" />
+              </div>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">No supervisors available</p>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-blue-600 text-[10px] font-black uppercase"
+                onClick={() => window.location.reload()}
               >
-                <div className="w-8 h-8 rounded-lg overflow-hidden border border-slate-100 shrink-0">
-                  <Image src={s.avatar_url || "/default-avatar.svg"} alt={s.full_name} width={32} height={32} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-sm text-slate-700 truncate group-hover:text-blue-700 transition-colors">{s.full_name}</p>
-                  <p className="text-[10px] text-slate-400 font-medium truncate italic">{s.field_expertise?.join(", ") || "General Mentor"}</p>
-                </div>
-                {selectedId === s.id && <Check size={16} className="text-blue-600 shrink-0" />}
-              </DropdownMenuItem>
-            ))
+                Refresh Page
+              </Button>
+            </div>
+          ) : (
+            <div className="max-h-[300px] overflow-y-auto blue-scroll">
+              {supervisors.map((s) => (
+                <DropdownMenuItem 
+                  key={s.id} 
+                  onClick={() => handleAssign(s)}
+                  className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-blue-50 focus:bg-blue-50 group transition-colors"
+                >
+                  <div className="w-8 h-8 rounded-lg overflow-hidden border border-slate-100 shrink-0">
+                    <Image src={s.avatar_url || "/default-avatar.svg"} alt={s.full_name} width={32} height={32} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-sm text-slate-700 truncate group-hover:text-blue-700 transition-colors">{s.full_name}</p>
+                    <p className="text-[10px] text-slate-400 font-medium truncate italic">{s.field_expertise?.join(", ") || "General Mentor"}</p>
+                  </div>
+                  {selectedId === s.id && <Check size={16} className="text-blue-600 shrink-0" />}
+                </DropdownMenuItem>
+              ))}
+            </div>
           )}
         </DropdownMenuContent>
       </DropdownMenu>

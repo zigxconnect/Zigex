@@ -22,6 +22,7 @@ type ApplicantDetailProps = {
   applicant: Applicant;
   companyId: string;
   onUpdateStatus: (newStatus: ApplicantStatus) => void;
+  onUpdateSupervisor?: (supervisor: any) => void;
 };
 
 // Animated info card component
@@ -104,6 +105,7 @@ export const ApplicantDetail = ({
   applicant,
   companyId,
   onUpdateStatus,
+  onUpdateSupervisor,
 }: ApplicantDetailProps) => {
   const firstName = applicant.name.split(' ')[0] || applicant.name;
 
@@ -262,6 +264,7 @@ export const ApplicantDetail = ({
               applicant={applicant}
               companyId={companyId}
               onUpdateStatus={onUpdateStatus}
+              onUpdateSupervisor={onUpdateSupervisor}
             />
           </div>
         </Section>

@@ -17,12 +17,14 @@ type ApplicantActionsProps = {
   applicant: Applicant
   companyId: string
   onUpdateStatus: (newStatus: ApplicantStatus) => void
+  onUpdateSupervisor?: (supervisor: any) => void
 }
 
 export const ApplicantActions = ({
   applicant,
   companyId,
   onUpdateStatus,
+  onUpdateSupervisor,
 }: ApplicantActionsProps) => {
   const { status } = applicant
   const [isScheduling, setIsScheduling] = useState(false)
@@ -305,6 +307,7 @@ export const ApplicantActions = ({
                   applicationId={applicant.id} 
                   currentSupervisorId={applicant.supervisorId} 
                   companyId={companyId}
+                  onAssigned={onUpdateSupervisor}
                />
             </div>
 

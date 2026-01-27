@@ -127,6 +127,14 @@ function ApplicantsPageComponent() {
     }
   };
 
+  const handleUpdateSupervisor = (applicantId: string, supervisor: any) => {
+    setApplicants((prev) =>
+      prev.map((app) =>
+        app.id === applicantId ? { ...app, supervisorId: supervisor.id, supervisor } : app
+      )
+    );
+  };
+
   const handleDeleteApplicant = async (id: string) => {
     // Optimistic UI Update
     const originalApplicants = [...applicants];
@@ -364,6 +372,9 @@ function ApplicantsPageComponent() {
                   companyId={companyId || ""}
                   onUpdateStatus={(newStatus) =>
                     handleUpdateStatus(selectedApplicant.id, newStatus)
+                  }
+                  onUpdateSupervisor={(supervisor) => 
+                    handleUpdateSupervisor(selectedApplicant.id, supervisor)
                   }
                 />
               </div>

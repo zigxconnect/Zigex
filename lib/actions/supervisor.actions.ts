@@ -78,16 +78,38 @@ export async function assignSupervisor(applicationId: string, supervisorId: stri
             .eq("id", supervisorId)
             .single();
 
-        // 3. Perform the assignment
-        const { data, error } = await supabaseAdmin
+        // 3. Perform the assignment - Attempt both tables for maximum resilience
+        let success = false;
+        let updateError = null;
+
+        // Try new table first
+        const { data: newData, error: newError } = await supabaseAdmin
             .from("internship_applications")
             .update({ supervisor_id: supervisorId })
             .eq("id", applicationId)
             .select();
 
-        if (error) {
-            console.error("Error assigning supervisor:", error);
-            return { success: false, error: error.message };
+        if (!newError && newData && newData.length > 0) {
+            success = true;
+        } else {
+            updateError = newError;
+            // Try legacy table
+            const { data: legacyData, error: legacyError } = await supabaseAdmin
+                .from("Applications")
+                .update({ supervisor_id: supervisorId })
+                .eq("id", applicationId)
+                .select();
+
+            if (!legacyError && legacyData && legacyData.length > 0) {
+                success = true;
+            } else {
+                updateError = legacyError || updateError;
+            }
+        }
+
+        if (!success) {
+            console.error("Error assigning supervisor:", updateError);
+            return { success: false, error: updateError?.message || "Application not found in any table" };
         }
 
         // 4. Send Notification Email

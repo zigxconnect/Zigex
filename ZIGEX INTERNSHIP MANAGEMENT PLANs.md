@@ -39,13 +39,31 @@ ADD SUPERVISOR BY GMAIL OR IF NOT IN PLATFORM SEND THEM A MESSAGE OR MAIL TO SIG
 
 see student sheets and filter departments or by school to see marks [task marks, attendance marks, tutor feedback (in future using gemini and ai to be able to agrregrate all ffeedback from the tutor and give overall feedback for that student)] 
 
-
-
 - it should be easy for both admins/tutors to get to student via whatsapp/gamil
 - admin should be able to post intern of the week  in another feature post that i want you to add for companies that they can post random things form their ashboard, like info , ijust a post with some media , picture or audio then text  other interns shoul be able to like and interact with that
 
+## NEW RULES & ENHANCEMENTS
 
+### 1. Community Integration
+- **Discord Hub**: All interns are automatically granted access to the Zigex Community Discord.
+- **Real-time Collaboration**: Interns can use the `#project-showcase` and `#dev-hub` channels to collaborate with peers and mentors.
+- **No-Database Chat**: The dashboard community tab (powered by WidgetBot) serves as the primary gateway for quick interactions.
 
+### 2. Project Showcasing
+- **Monthly Milestone**: Every intern must post at least one "Project Started" per month on their profile.
+- **Dynamic Previews**: These projects will feature dynamic OpenGraph metadata for professional sharing on LinkedIn/Twitter.
+- **Feed Visibility**: High-quality intern projects will be featured on the main Zigex Feed to increase visibility to potential employers.
 
+### 3. Mentor Access
+- **"Get Mentor" Sidebar**: Interns have direct access to the Mentor stack in their sidebar.
+- **Guidance Sessions**: Interns can request 1-on-1 guidance from experts in their specific field (ML, Backend, etc.).
 
-​     
+### 4. Professional Identity
+- **Dynamic Profiles**: Student profiles now prioritize "Projects Started" and "About Me" sections for a more professional look.
+- **Verified Badges**: Verified interns will receive a "Verified Builder" badge on their profile and project cards.
+
+## NEXT STEPS (Sprint 2)
+- [ ] Implement the "Intern Management" tab in the student dashboard.
+- [ ] Build the Supervisor Dashboard for task assignment and attendance.
+- [ ] Integrate the Daily Report submission and Logbook generation.
+- [ ] Connect the payment verification system for curriculum access.
