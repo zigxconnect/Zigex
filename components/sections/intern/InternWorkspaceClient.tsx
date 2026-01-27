@@ -36,6 +36,9 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { DailyReportModal } from "./DailyReportModal";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 interface InternWorkspaceClientProps {
   data: {
@@ -64,6 +67,34 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
 
   const isPaid = application?.payment_ledger?.length > 0;
   const progressPercent = Math.min(Math.round((logs.length / 30) * 100), 100);
+
+  const router = useRouter();
+
+  useEffect(() => {
+    const supabase = createClient();
+    
+    // Listen for changes to the current application (e.g., supervisor assignment)
+    const channel = supabase
+      .channel(`application-${application?.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'internship_applications',
+          filter: `id=eq.${application?.id}`
+        },
+        (payload) => {
+          console.log('[REALTIME] Application update detected:', payload);
+          router.refresh();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [application?.id, router]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-blue-50/30 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">

@@ -25,6 +25,9 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { LogReviewModal } from "./LogReviewModal";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 interface SupervisorDashboardClientProps {
   data: {
@@ -47,6 +50,57 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
 
   const pendingReviews = recentLogs.filter(l => l.status === "pending" || !l.status).length;
   const approvedCount = recentLogs.filter(l => l.status === "approved").length;
+
+  const router = useRouter();
+
+  useEffect(() => {
+    const supabase = createClient();
+    const supervisorId = data.profile?.id;
+
+    if (!supervisorId) return;
+
+    // Listen for new/updated intern assignments
+    const assignmentsChannel = supabase
+      .channel(`supervisor-assignments-${supervisorId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'internship_applications',
+          filter: `supervisor_id=eq.${supervisorId}`
+        },
+        () => {
+          console.log('[REALTIME] New intern assignment or update detected');
+          router.refresh();
+        }
+      )
+      .subscribe();
+
+    // Listen for new logs from any of the assigned interns
+    const logsChannel = supabase
+      .channel(`supervisor-logs-${supervisorId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'intern_logs'
+          // Ideally we'd filter by student_id IN (...) but Supabase doesn't support IN filter in Realtime yet
+          // So we listen to all INSERTs and let router.refresh() handle the filtering via the server action
+        },
+        () => {
+          console.log('[REALTIME] New intern log detected');
+          router.refresh();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(assignmentsChannel);
+      supabase.removeChannel(logsChannel);
+    };
+  }, [data.profile?.id, router]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-blue-50/30 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
