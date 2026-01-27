@@ -56,7 +56,7 @@ interface InternWorkspaceClientProps {
 const tabs = [
   { id: "overview", label: "Overview", icon: Layout },
   { id: "curriculum", label: "Curriculum", icon: BookOpen },
-  { id: "announcements", label: "News", icon: Megaphone },
+  { id: "announcements", label: "Announcements", icon: Megaphone },
   { id: "reports", label: "Reports", icon: FileText },
   { id: "payments", label: "Payments", icon: CreditCard },
 ];
@@ -64,12 +64,18 @@ const tabs = [
 export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
   const [activeTab, setActiveTab] = useState("overview");
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
+  const [unreadAnnouncements, setUnreadAnnouncements] = useState(0);
   const { application, curriculum, logs } = data;
   const internship = application?.internships;
   const company = internship?.company_profiles;
   const supervisor = application?.supervisor_profiles;
 
-  const isPaid = application?.payment_ledger?.length > 0;
+  const paymentLedger = application?.payment_ledger || [];
+  const totalPaid = paymentLedger
+    .filter((r: any) => r.status === 'paid')
+    .reduce((sum: number, r: any) => sum + (r.amount || 0), 0);
+  
+  const isPaid = totalPaid > 0;
   
   // Check if today's log already exists (client-side check for better UX)
   const todayStr = format(new Date(), "yyyy-MM-dd");
@@ -107,6 +113,46 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
       supabase.removeChannel(channel);
     };
   }, [application?.id, router]);
+
+  // Real-time Announcements Listener
+  useEffect(() => {
+    const supabase = createClient();
+    const companyId = application?.internships?.company_id;
+
+    const announcementsChannel = supabase
+      .channel('announcements-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'announcements',
+        },
+        (payload) => {
+          const newAnnouncement = payload.new as any;
+          
+          // Check if relevant: Global (company_id is null) or specific to student's company
+          const isRelevant = !newAnnouncement.company_id || newAnnouncement.company_id === companyId;
+          
+          if (isRelevant && activeTab !== "announcements") {
+            setUnreadAnnouncements(prev => prev + 1);
+            // Optional: Play sound or show browser notification
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(announcementsChannel);
+    };
+  }, [application?.internships?.company_id, activeTab]);
+
+  // Reset unread count when switching to announcements tab
+  useEffect(() => {
+    if (activeTab === "announcements") {
+      setUnreadAnnouncements(0);
+    }
+  }, [activeTab]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-blue-50/30 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
@@ -157,11 +203,14 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
             {/* Action Buttons - Full Width on Mobile */}
             <div className="flex gap-3">
               <Button 
+                asChild
                 variant="outline" 
-                className="flex-1 sm:flex-none rounded-xl border-blue-100 dark:border-slate-700 font-semibold text-xs h-11 px-4 hover:bg-blue-50 dark:hover:bg-slate-800 transition-all"
+                className="flex-1 sm:flex-none rounded-xl border-blue-100 dark:border-slate-700 font-semibold text-xs h-11 px-4 hover:bg-blue-50 dark:hover:bg-slate-800 transition-all cursor-pointer"
               >
-                <Download size={14} className="mr-2" />
-                Logbook
+                <a href={`/api/internships/logbook/${application.id}?print=true`} target="_blank" rel="noopener noreferrer">
+                  <Download size={14} className="mr-2" />
+                  Logbook
+                </a>
               </Button>
               <Button 
                 onClick={() => !hasLoggedToday && !needsPaymentAcknowledgment && setIsLogModalOpen(true)}
@@ -215,7 +264,14 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                       : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
                   )}
                 >
-                  <Icon size={16} className={cn(isActive && "text-blue-600")} />
+                  <div className="relative">
+                    <Icon size={16} className={cn(isActive && "text-blue-600")} />
+                    {tab.id === "announcements" && unreadAnnouncements > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white dark:ring-slate-900 animate-pulse">
+                        {unreadAnnouncements}
+                      </span>
+                    )}
+                  </div>
                   <span>{tab.label}</span>
                   {isActive && (
                     <motion.div
@@ -588,12 +644,12 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                       </div>
                       <div>
                         <p className="text-xs text-blue-200 font-semibold mb-1">Total Paid</p>
-                        <p className="text-xl sm:text-2xl font-bold">0 <span className="text-sm font-normal opacity-70">FCFA</span></p>
+                        <p className="text-xl sm:text-2xl font-bold">{totalPaid.toLocaleString()} <span className="text-sm font-normal opacity-70">FCFA</span></p>
                       </div>
                       <div className="col-span-2 sm:col-span-1">
                         <p className="text-xs text-blue-200 font-semibold mb-1">Status</p>
                         <Badge className="bg-white/20 text-white border-0 font-semibold px-3 py-1 rounded-lg">
-                          {isPaid ? "Active" : "Awaiting Payment"}
+                          {totalPaid >= (internship?.monthly_rate * (application.duration_months || 1)) ? "Completed" : isPaid ? "Active" : "Awaiting"}
                         </Badge>
                       </div>
                     </div>
@@ -602,14 +658,93 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                   <Trophy size={60} className="absolute right-4 top-4 text-white/10" />
                 </div>
 
-                {/* Payment Info */}
+                {/* Payment History Table */}
+                <div className="bg-white dark:bg-slate-900 border border-blue-50 dark:border-slate-800 rounded-2xl overflow-hidden">
+                  <div className="p-5 border-b border-blue-50 dark:border-slate-800">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Transaction History</h3>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-slate-50 dark:bg-slate-800/50">
+                          <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Month</th>
+                          <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Date</th>
+                          <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Amount</th>
+                          <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
+                          <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-right">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {paymentLedger.length > 0 ? (
+                          paymentLedger.map((record: any, idx: number) => (
+                            <tr key={idx} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                              <td className="px-6 py-4">
+                                <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                                  {new Date(0, record.month - 1).toLocaleString('en-US', { month: 'long' })}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4">
+                                <span className="text-xs text-slate-500">
+                                  {record.date ? format(new Date(record.date), "MMM dd, yyyy") : "---"}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4">
+                                <span className="text-sm font-black text-slate-900 dark:text-white">
+                                  {record.amount?.toLocaleString()} XAF
+                                </span>
+                              </td>
+                              <td className="px-6 py-4">
+                                <Badge className={cn(
+                                  "text-[10px] font-bold px-2 py-0.5 rounded-md border-0 capitalize",
+                                  record.status === 'paid' ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500"
+                                )}>
+                                  {record.status}
+                                </Badge>
+                              </td>
+                              <td className="px-6 py-4 text-right">
+                                {record.status === 'paid' && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    asChild
+                                    className="h-8 rounded-lg text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-[10px] font-black uppercase tracking-wider"
+                                  >
+                                    <a 
+                                      href={`/api/internships/receipt/${application.id}?month=${record.month}`} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                    >
+                                      <Download size={14} className="mr-1.5" />
+                                      Receipt
+                                    </a>
+                                  </Button>
+                                )}
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={5} className="px-6 py-12 text-center">
+                              <div className="flex flex-col items-center gap-2">
+                                <CreditCard size={32} className="text-slate-200" />
+                                <p className="text-sm text-slate-400 font-medium">No payment history found</p>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Payment Instructions */}
                 <div className="bg-white dark:bg-slate-900 border border-blue-50 dark:border-slate-800 rounded-2xl p-5 sm:p-6">
                   <div className="flex items-start gap-4 p-4 rounded-xl bg-amber-50/50 dark:bg-amber-500/5 border border-amber-100 dark:border-amber-500/20">
                     <AlertCircle size={20} className="text-amber-600 shrink-0 mt-0.5" />
                     <div>
                       <p className="text-sm font-semibold text-amber-800 dark:text-amber-400 mb-1">Payment Instructions</p>
                       <p className="text-xs text-amber-700 dark:text-amber-300/80">
-                        To activate your full workspace and unlock all resources, please follow the payment instructions provided during your interview. Contact your supervisor if you need assistance.
+                        To activate your full workspace and unlock all resources, please ensure your monthly allowance is processed by the administration. Download your official receipts above for your records.
                       </p>
                     </div>
                   </div>

@@ -9,7 +9,7 @@ import { FeedTabs } from "@/components/feed/FeedTabs";
 import { useVideoModal } from "@/hooks/UseVideoModal";
 import { LiveVideoModal } from "@/components/sections/dashboard/Video/LiveVideoModal";
 import { Search, TrendingUp, ChevronRight, Sparkles, Loader2, ArrowUp } from "lucide-react";
-import type { FeedItem, Internship, Program, Event } from "@/lib/types/feed";
+import type { FeedItem, Internship, Program, Event, Announcement } from "@/lib/types/feed";
 import { useFeedStore } from "@/lib/zustand/store";
 
 interface FeedContentProps {
@@ -17,6 +17,7 @@ interface FeedContentProps {
     internships: Internship[];
     events: Event[];
     programs: Program[];
+    announcements: Announcement[];
   };
   error: string | null;
 }
@@ -71,6 +72,11 @@ export function FeedContent({ initialData, error }: FeedContentProps) {
         _type: "programs" as const,
         is_live: liveIds.has(p.id),
       })),
+      announcements: data.announcements.map((a) => ({
+        ...a,
+        _type: "announcements" as const,
+        is_live: false,
+      })),
     }),
     [data, liveIds]
   );
@@ -81,6 +87,7 @@ export function FeedContent({ initialData, error }: FeedContentProps) {
       ...transformedData.internships,
       ...transformedData.events,
       ...transformedData.programs,
+      ...transformedData.announcements,
     ];
     return combined.sort((a, b) => {
       const dateA = new Date((a as any).start_date || (a as any).created_at || 0);
@@ -135,6 +142,7 @@ export function FeedContent({ initialData, error }: FeedContentProps) {
       internships: transformedData.internships.length,
       programs: transformedData.programs.length,
       events: transformedData.events.length,
+      announcements: transformedData.announcements.length,
     }),
     [allContentSorted, transformedData, liveIds]
   );

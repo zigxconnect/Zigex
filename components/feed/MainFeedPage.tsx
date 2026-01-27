@@ -25,7 +25,7 @@ export default async function MainFeedPage({
     getHappeningNowContent()
   ]);
 
-  const { internships, events, programs, error } = feedData;
+  const { internships, events, programs, announcements, error } = feedData;
 
   return (
     <div className="w-full mt-6">
@@ -41,7 +41,7 @@ export default async function MainFeedPage({
       {/* Feed Content - Client Component */}
       <Suspense fallback={<LoadingSkeleton />}>
         <FeedContent
-          initialData={{ internships, events, programs }}
+          initialData={{ internships, events, programs, announcements }}
           error={error}
         />
       </Suspense>

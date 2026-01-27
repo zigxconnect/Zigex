@@ -2,7 +2,7 @@
 
 import { createServerActionClient, supabaseAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { sendEmail, sendSupervisorWelcomeEmail } from "@/lib/email";
+import { sendEmail, sendSupervisorWelcomeEmail, sendSupervisorAssignmentEmail } from "@/lib/email";
 
 /**
  * Fetches all supervisors. 
@@ -118,23 +118,22 @@ export async function assignSupervisor(applicationId: string, supervisorId: stri
 
         // 4. Send Notification Email
         if (supervisor && appData) {
-            const internship = (appData.internships as any);
-            const companyName = internship?.company_profiles?.company_name || "Zigex Partner";
-            const programTitle = internship?.title || "Internship Program";
-            const studentName = (appData.student as any)?.full_name || "a newer learner";
+            // Handle array or object from join
+            const internshipsData = Array.isArray(appData.internships) ? appData.internships[0] : appData.internships;
+            const studentData = Array.isArray(appData.student) ? appData.student[0] : appData.student;
+
+            const companyName = (internshipsData as any)?.company_profiles?.company_name || "Zigex Partner";
+            const programTitle = (internshipsData as any)?.title || "Internship Program";
+            const studentName = (studentData as any)?.full_name || "a newer learner";
 
             try {
-                await sendEmail({
-                    to: supervisor.email,
-                    subject: `📋 New Student Assignment: ${studentName}`,
-                    heading: `Hello ${supervisor.full_name.split(' ')[0]}!`,
-                    message: `You have been assigned as the official supervisor for **${studentName}** in the "**${programTitle}**" program by **${companyName}** on the Zigex platform.\n\nYou can now track their progress, review their daily logs, and provide guidance throughout their journey.`,
-                    ctaText: "View My Students",
-                    ctaLink: "https://zigexconnect.com/supervisor",
-                    statusBadge: "New Assignment",
-                    statusColor: "#10B981",
-                    opportunityTitle: programTitle,
-                    companyName: companyName
+                await sendSupervisorAssignmentEmail({
+                    email: supervisor.email,
+                    name: supervisor.full_name,
+                    studentName: studentName,
+                    programTitle: programTitle,
+                    companyName: companyName,
+                    dashboardLink: "https://zigexconnect.com/supervisor"
                 });
             } catch (emailErr) {
                 console.error("Assignment email failed:", emailErr);
@@ -231,9 +230,7 @@ export async function getSupervisorDashboardData() {
         const { data: interns } = await supabaseAdmin
             .from("internship_applications")
             .select(`
-          id,
-          status,
-          created_at,
+          *,
           internship:internships(id, title),
           student:student_profiles(id, user_id, full_name, avatar_url)
         `)
@@ -260,15 +257,131 @@ export async function getSupervisorDashboardData() {
             recentLogs = data || [];
         }
 
+        // Fetch Tasks
+        const { data: tasks } = await supabaseAdmin
+            .from("internship_tasks")
+            .select("*")
+            .in("internship_id", interns?.map(i => i.internship_id).filter(Boolean) || [])
+            .order("created_at", { ascending: false });
+
+        // Fetch Today's Attendance
+        const today = new Date().toISOString().split("T")[0];
+        const { data: attendance } = await supabaseAdmin
+            .from("intern_attendance")
+            .select("*")
+            .eq("attendance_date", today)
+            .eq("supervisor_id", profile.id);
+
         return {
             profile,
             interns: interns || [],
-            recentLogs: recentLogs
+            recentLogs: recentLogs,
+            tasks: tasks || [],
+            attendance: attendance || []
         };
     } catch (err) {
         console.error("[SUPERVISOR_HUB] Unexpected runtime error:", err);
         return null;
     }
+}
+
+/**
+ * Server Action to assign a task to an internship.
+ */
+export async function assignInternshipTask(taskData: {
+    internship_id: string;
+    title: string;
+    description: string;
+    due_date?: string;
+    priority?: string;
+}) {
+    const supabase = await createServerActionClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    const { data, error } = await supabase
+        .from("internship_tasks")
+        .insert([taskData])
+        .select()
+        .single();
+
+    if (error) {
+        console.error("Error creating task:", error);
+        return { success: false, error: error.message };
+    }
+
+    revalidatePath("/supervisor");
+    return { success: true, data };
+}
+
+/**
+ * Server Action to delete a task.
+ */
+export async function deleteInternshipTask(taskId: string) {
+    const supabase = await createServerActionClient();
+    const { error } = await supabase
+        .from("internship_tasks")
+        .delete()
+        .eq("id", taskId);
+
+    if (error) {
+        console.error("Error deleting task:", error);
+        return { success: false, error: error.message };
+    }
+
+    revalidatePath("/supervisor");
+    return { success: true };
+}
+
+/**
+ * Server Action to mark intern attendance.
+ * Validates the time window (3pm to 12am).
+ */
+export async function markInternAttendance(studentId: string, internshipId: string, status: string = "present") {
+    const now = new Date();
+    const hour = now.getHours();
+
+    // Check time window: 15:00 - 00:00 (3pm - 12am)
+    if (hour < 15 && hour >= 0) {
+        // Technically 12am to 3pm is restricted
+        return { success: false, error: "Attendance can only be confirmed between 3:00 PM and Midnight." };
+    }
+
+    const supabase = await createServerActionClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // Get supervisor profile
+    const { data: profile } = await supabase
+        .from("supervisor_profiles")
+        .select("id")
+        .eq("user_id", user?.id)
+        .single();
+
+    if (!profile) return { success: false, error: "Supervisor profile not found." };
+
+    const today = now.toISOString().split("T")[0];
+
+    const { data, error } = await supabase
+        .from("intern_attendance")
+        .upsert({
+            student_id: studentId,
+            internship_id: internshipId,
+            supervisor_id: profile.id,
+            attendance_date: today,
+            status,
+            confirmed_at: now.toISOString()
+        })
+        .select()
+        .single();
+
+    if (error) {
+        console.error("Error marking attendance:", error);
+        return { success: false, error: error.message };
+    }
+
+    revalidatePath("/supervisor");
+    return { success: true, data };
 }
 
 /**

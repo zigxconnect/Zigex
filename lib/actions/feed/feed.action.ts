@@ -17,6 +17,7 @@ export type Internship = {
   created_at: string;
   cover_image_url?: string;
   company: {
+    id: string;
     company_name: string;
     logo_url: string;
     cover_image_url: string;
@@ -33,6 +34,7 @@ export type Event = {
   event_picture_url?: string;
   created_at: string;
   company: {
+    id: string;
     company_name: string;
     logo_url: string;
   };
@@ -49,6 +51,7 @@ export type Program = {
   program_picture_url?: string;
   created_at: string;
   company: {
+    id: string;
     company_name: string;
     logo_url: string;
   };
@@ -124,6 +127,7 @@ export const getInternships = cache(async (searchQuery?: string) => {
           created_at,
           cover_image_url,
           company: company_profiles (
+            id,
             company_name,
             logo_url,
             cover_image_url
@@ -156,7 +160,7 @@ export const getEvents = cache(async (searchQuery?: string) => {
 
     let query = supabase
       .from("event")
-      .select("*, company:company_profiles (company_name, logo_url)")
+      .select("*, company:company_profiles (id, company_name, logo_url)")
       .order("created_at", { ascending: false });
 
     if (searchQuery) {
@@ -188,7 +192,7 @@ export const getPrograms = cache(async (searchQuery?: string) => {
 
     let query = supabase
       .from("programs")
-      .select("*, company:company_profiles (company_name, logo_url)");
+      .select("*, company:company_profiles (id, company_name, logo_url)");
     // REMOVED: .order("created_at", { ascending: false });
     // Sorting will be handled in the code now.
 

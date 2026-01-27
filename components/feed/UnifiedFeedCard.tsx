@@ -63,6 +63,8 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
         return normalizeImageSrc((item as any).program_picture_url);
       case "events":
         return normalizeImageSrc((item as any).event_picture_url);
+      case "announcements":
+        return normalizeImageSrc((item as any).image_url);
       default:
         return "/placeholder.png";
     }
@@ -148,16 +150,18 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
               </span>
             </div>
 
-            {isOpen ? (
-              <div className="bg-[#16A34A] px-4 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">
-                <Unlock size={12} className="text-black" />
-                <span className="text-black text-xs font-bold uppercase tracking-tight">OPEN</span>
-              </div>
-            ) : (
-              <div className="bg-destructive px-4 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">
-                <Lock size={12} className="text-white" />
-                <span className="text-white text-xs font-bold uppercase tracking-tight">CLOSED</span>
-              </div>
+            {item._type !== "announcements" && (
+              isOpen ? (
+                <div className="bg-[#16A34A] px-4 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">
+                  <Unlock size={12} className="text-black" />
+                  <span className="text-black text-xs font-bold uppercase tracking-tight">OPEN</span>
+                </div>
+              ) : (
+                <div className="bg-destructive px-4 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">
+                  <Lock size={12} className="text-white" />
+                  <span className="text-white text-xs font-bold uppercase tracking-tight">CLOSED</span>
+                </div>
+              )
             )}
           </div>
 

@@ -6,7 +6,7 @@ import { Search } from "lucide-react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
-type TabId = "all" | "live" | "internships" | "programs" | "events";
+type TabId = "all" | "live" | "internships" | "programs" | "events" | "announcements";
 
 interface FeedTabsProps {
   counts?: {
@@ -15,6 +15,7 @@ interface FeedTabsProps {
     internships: number;
     programs: number;
     events: number;
+    announcements: number;
   };
   isLoading?: boolean;
 }
@@ -39,6 +40,10 @@ const tabs = [
   {
     id: "events" as TabId,
     label: "Events",
+  },
+  {
+    id: "announcements" as TabId,
+    label: "Announcements",
   },
 ];
 
