@@ -91,60 +91,80 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState<number>(0);
-  const navItems = [
+  const categories = [
     {
-      href: "/feed",
-      icon: Globe,
-      label: "Browse",
-      matchPaths: ["/feed", "/feed/", "/programs/"],
-      excludePaths: ["/feed/projects"]
+      title: "Discover",
+      items: [
+        {
+          href: "/feed",
+          icon: Globe,
+          label: "Browse",
+          matchPaths: ["/feed", "/feed/", "/programs/"],
+          excludePaths: ["/feed/projects"]
+        },
+        {
+          href: "/dashboard/projects",
+          icon: Briefcase,
+          label: "Projects",
+          matchPaths: ["/dashboard/projects", "/dashboard/projects/", "/feed/projects/"],
+        },
+        {
+          href: "/dashboard/blog",
+          icon: Newspaper,
+          label: "News",
+          matchPaths: ["/dashboard/blog", "/dashboard/blog/"],
+        },
+      ]
     },
     {
-      href: "/dashboard/student",
-      icon: Users,
-      label: "ZigX",
-      matchPaths: ["/dashboard/student", "/dashboard/student/"],
+      title: "Collaboration",
+      items: [
+        {
+          href: "/dashboard/student",
+          icon: Users,
+          label: "ZigX",
+          matchPaths: ["/dashboard/student", "/dashboard/student/"],
+        },
+        {
+          href: "/dashboard/community",
+          icon: MessageSquare,
+          label: "Community",
+          matchPaths: ["/dashboard/community", "/dashboard/community/"],
+        },
+      ]
     },
     {
-      href: `/profile/${slugifyUsername(user?.profile?.username) || "username"}`,
-      icon: User,
-      label: "My Profile",
-      matchPaths: ["/profile/"],
+      title: "Workspace",
+      items: [
+        {
+          href: "/intern/workspace",
+          icon: Briefcase,
+          label: "Intern Workspace",
+          matchPaths: ["/intern/workspace"],
+        },
+        {
+          href: "/supervisor",
+          icon: ShieldCheck,
+          label: "Supervisor Hub",
+          matchPaths: ["/supervisor"],
+        },
+      ]
     },
     {
-      href: "/dashboard/projects",
-      icon: Briefcase,
-      label: "Projects",
-      matchPaths: ["/dashboard/projects", "/dashboard/projects/", "/feed/projects/"],
-    },
-    {
-      href: "/dashboard/blog",
-      icon: Newspaper,
-      label: "News",
-      matchPaths: ["/dashboard/blog", "/dashboard/blog/"],
-    },
-    // {
-    //   href: "/dashboard/community",
-    //   icon: MessageSquare,
-    //   label: "Community",
-    //   matchPaths: ["/dashboard/community", "/dashboard/community/"],
-    // },
-    // {
-    //   href: "/intern/workspace",
-    //   icon: Briefcase,
-    //   label: "Intern Workspace",
-    //   matchPaths: ["/intern/workspace"],
-    // },
-    // {
-    //   href: "/supervisor",
-    //   icon: ShieldCheck,
-    //   label: "Supervisor Hub",
-    //   matchPaths: ["/supervisor"],
-    // },
+      title: "Account",
+      items: [
+        {
+          href: `/profile/${slugifyUsername(user?.profile?.username) || "username"}`,
+          icon: User,
+          label: "My Profile",
+          matchPaths: ["/profile/"],
+        },
+      ]
+    }
   ];
 
   if (showUploadLive) {
-    navItems.push({
+    categories[0].items.push({
       href: "/upload-live",
       icon: Zap,
       label: "Upload Live",
@@ -301,24 +321,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="flex-1 flex flex-col min-h-0 bg-sidebar">
           {/* Regular Navigation Items */}
           <div className="flex-1 px-4 py-4 overflow-y-auto custom-scrollbar">
-            <div className="space-y-2">
-              <div className="mb-6">
-                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-1">
-                  Navigation
-                </h4>
-                <div className="space-y-1">
-                  {navItems.map((item) => (
-                    <AnimatedNavLink
-                      key={item.href}
-                      href={item.href}
-                      icon={item.icon}
-                      label={item.label}
-                      isActive={isRouteActive(item.href, item.matchPaths, item.excludePaths)}
-                      onClick={handleNavClick}
-                    />
-                  ))}
+            <div className="space-y-6">
+              {categories.map((category) => (
+                <div key={category.title} className="mb-2">
+                  <h4 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-3 px-3">
+                    {category.title}
+                  </h4>
+                  <div className="space-y-1">
+                    {category.items.map((item) => (
+                      <AnimatedNavLink
+                        key={item.href}
+                        href={item.href}
+                        icon={item.icon}
+                        label={item.label}
+                        isActive={isRouteActive(item.href, item.matchPaths, item.excludePaths)}
+                        onClick={handleNavClick}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
+              ))}
 
               {/* AI Assistant Section - Always Visible */}
               {/* AI Assistant Section */}
