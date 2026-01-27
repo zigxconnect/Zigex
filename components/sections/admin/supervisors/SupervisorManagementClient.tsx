@@ -58,17 +58,22 @@ export function SupervisorManagementClient({ supervisors, companyId }: Superviso
     s.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleRemoveSupervisor = async (supervisor: any) => {
-    if (!confirm(`Remove ${supervisor.full_name} as a supervisor? They will be unassigned from all interns.`)) {
-      return;
-    }
+  const [supervisorToDelete, setSupervisorToDelete] = useState<any>(null);
+
+  const handleRemoveClick = (supervisor: any) => {
+    setSupervisorToDelete(supervisor);
+  };
+
+  const confirmRemoveSupervisor = async () => {
+    if (!supervisorToDelete) return;
 
     setIsLoading(true);
     try {
-      const result = await removeSupervisor(supervisor.id);
+      const result = await removeSupervisor(supervisorToDelete.id);
       if (result.success) {
-        toast.success(`${supervisor.full_name} removed from supervisors`);
+        toast.success(`${supervisorToDelete.full_name} removed from supervisors`);
         router.refresh();
+        setSupervisorToDelete(null);
       } else {
         toast.error(result.error || "Failed to remove supervisor");
       }
@@ -78,6 +83,8 @@ export function SupervisorManagementClient({ supervisors, companyId }: Superviso
       setIsLoading(false);
     }
   };
+
+
 
   const handleEditClick = (supervisor: any) => {
     setSelectedSupervisor(supervisor);
@@ -243,7 +250,7 @@ export function SupervisorManagementClient({ supervisors, companyId }: Superviso
                         <Edit2 size={14} className="mr-2" /> Edit Profile
                       </DropdownMenuItem>
                       <DropdownMenuItem 
-                        onClick={() => handleRemoveSupervisor(supervisor)}
+                        onClick={() => handleRemoveClick(supervisor)}
                         className="rounded-lg text-red-600 focus:text-red-600 focus:bg-red-50"
                       >
                         <Trash2 size={14} className="mr-2" /> Remove
@@ -555,6 +562,79 @@ function EditSupervisorModal({ isOpen, onClose, supervisor }: { isOpen: boolean;
             {isSubmitting ? <Loader2 className="animate-spin mr-1.5" size={14} /> : <CheckCircle2 size={14} className="mr-1.5" />}
             Save Changes
           </Button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+// ===== DELETE SUPERVISOR MODAL =====
+function DeleteSupervisorModal({ 
+  isOpen, 
+  onClose, 
+  onConfirm, 
+  supervisorName, 
+  isLoading 
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  onConfirm: () => void; 
+  supervisorName: string;
+  isLoading: boolean;
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+      />
+
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 10 }}
+        className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden border border-red-100 dark:border-red-900/30"
+      >
+        <div className="p-8 text-center">
+          <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-2xl flex items-center justify-center mx-auto mb-6 text-red-500">
+            <Trash2 size={32} />
+          </div>
+          
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+            Remove Supervisor?
+          </h3>
+          
+          <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-6">
+            Are you sure you want to remove <strong className="text-slate-900 dark:text-white">{supervisorName}</strong>? 
+            They will be unassigned from all current interns. This action cannot be undone.
+          </p>
+
+          <div className="flex flex-col gap-3">
+            <Button 
+              onClick={onConfirm}
+              disabled={isLoading}
+              className="w-full rounded-xl bg-red-500 hover:bg-red-600 text-white h-12 font-bold text-xs uppercase tracking-widest shadow-lg shadow-red-500/20 disabled:opacity-50 transition-all active:scale-[0.98]"
+            >
+              {isLoading ? (
+                <Loader2 className="animate-spin mr-2" size={16} />
+              ) : (
+                <Trash2 size={16} className="mr-2" />
+              )}
+              Yes, Remove
+            </Button>
+            
+            <Button 
+              onClick={onClose} 
+              variant="ghost" 
+              className="w-full rounded-xl h-12 font-bold text-xs uppercase tracking-widest text-slate-400 hover:text-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800"
+            >
+              Cancel
+            </Button>
+          </div>
         </div>
       </motion.div>
     </div>
