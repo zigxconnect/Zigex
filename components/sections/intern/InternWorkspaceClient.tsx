@@ -26,7 +26,8 @@ import {
   ChevronRight,
   CreditCard,
   Target,
-  Layers
+  Layers,
+  Megaphone
 } from "lucide-react";
 import { format } from "date-fns";
 import Image from "next/image";
@@ -37,6 +38,7 @@ import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { DailyReportModal } from "./DailyReportModal";
 import { createClient } from "@/lib/supabase/client";
+import { InternAnnouncementBoard } from "@/components/sections/intern/InternAnnouncementBoard";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -47,12 +49,14 @@ interface InternWorkspaceClientProps {
     logs: any[];
     tasks: any[];
     notes: any[];
+    announcements?: any[];
   };
 }
 
 const tabs = [
   { id: "overview", label: "Overview", icon: Layout },
   { id: "curriculum", label: "Curriculum", icon: BookOpen },
+  { id: "announcements", label: "News", icon: Megaphone },
   { id: "reports", label: "Reports", icon: FileText },
   { id: "payments", label: "Payments", icon: CreditCard },
 ];
@@ -363,6 +367,11 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                   </div>
                 </div>
               </div>
+            )}
+
+            {/* ===== ANNOUNCEMENTS TAB ===== */}
+            {activeTab === "announcements" && (
+              <InternAnnouncementBoard announcements={data.announcements || []} />
             )}
 
             {/* ===== CURRICULUM TAB ===== */}

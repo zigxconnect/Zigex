@@ -63,7 +63,7 @@ This plan outlines the staged development of the Intern Management System on the
 
 ### 3.3 Community Features
 - [ ] **Intern of the Week**: Interface to post highlights to the feed.
-- [ ] **Broadcast System**: Post info/media updates to the intern community.
+- [x] **Broadcast System**: Post info/media updates to the intern community.
 
 ---
 
@@ -71,8 +71,8 @@ This plan outlines the staged development of the Intern Management System on the
 *Focus: Finalizing evaluations, community features, and certificate issuance.*
 
 ### 4.1 Community & Engagement
-- [ ] **Intern Group Chat**: Integration of Discord/WidgetBot for real-time collaboration.
-- [ ] **Announcement Board**: Company-wide broadcasts for interns.
+- [x] **Intern Group Chat**: Integration of Discord/WidgetBot for real-time collaboration.
+- [x] **Announcement Board**: Company-wide broadcasts for interns.
 
 ### 4.2 Evaluation System
 - [ ] **Supervisor Evaluation Interface**: Detailed rating system for interns.

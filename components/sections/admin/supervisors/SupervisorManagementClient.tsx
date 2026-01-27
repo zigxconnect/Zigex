@@ -119,6 +119,19 @@ export function SupervisorManagementClient({ supervisors, companyId }: Superviso
         )}
       </AnimatePresence>
 
+      {/* Delete Supervisor Modal - ADDED THIS */}
+      <AnimatePresence>
+        {supervisorToDelete && (
+          <DeleteSupervisorModal 
+            isOpen={!!supervisorToDelete}
+            onClose={() => setSupervisorToDelete(null)}
+            onConfirm={confirmRemoveSupervisor}
+            supervisorName={supervisorToDelete.full_name}
+            isLoading={isLoading}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <header className="bg-white dark:bg-slate-900 border-b border-blue-100/50 dark:border-slate-800">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">

@@ -17,6 +17,7 @@ import {
   GraduationCap,
   Sparkles,
   ShieldCheck,
+  Megaphone,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -38,6 +39,7 @@ const navigationGroups = [
     links: [
       { href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
       { href: "/admin/analytics", icon: TrendingUp, label: "Analytics", badge: "New" },
+      { href: "/admin/announcements", icon: Megaphone, label: "Announcements" },
     ],
   },
   {

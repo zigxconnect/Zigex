@@ -132,12 +132,40 @@ export async function getInternshipWorkspaceData() {
     .eq("internship_id", application.internship_id)
     .order("updated_at", { ascending: false });
 
+  // 6. Fetch Announcements (Global + Company)
+  const companyId = application.internships?.company_id;
+
+  let announcementQuery = supabase
+    .from("announcements")
+    .select(`
+      *,
+      author:author_id (
+        full_name,
+        avatar_url
+      ),
+      company:company_id (
+        company_name,
+        logo_url
+      )
+    `)
+    .order("is_pinned", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (companyId) {
+    announcementQuery = announcementQuery.or(`company_id.is.null,company_id.eq.${companyId}`);
+  } else {
+    announcementQuery = announcementQuery.is("company_id", null);
+  }
+
+  const { data: announcements } = await announcementQuery;
+
   return {
     application,
     curriculum: curriculum || [],
     logs: logs || [],
     tasks: tasks || [],
-    notes: notes || []
+    notes: notes || [],
+    announcements: announcements || []
   };
 }
 
