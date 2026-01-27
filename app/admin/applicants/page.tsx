@@ -23,6 +23,7 @@ function ApplicantsPageComponent() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "ledger">("grid");
+  const [companyId, setCompanyId] = useState<string | null>(null);
 
   const handleUpdatePaymentLedger = async (appId: string, ledger: PaymentRecord[]) => {
     try {
@@ -58,6 +59,13 @@ function ApplicantsPageComponent() {
         const data: Applicant[] = await response.json();
         console.log("Applicants fetched:", data.length);
         setApplicants(data);
+
+        // Fetch company profile to get ID
+        const companyResp = await fetch("/api/companies/profiles");
+        if (companyResp.ok) {
+           const companyData = await companyResp.json();
+           setCompanyId(companyData.id);
+        }
 
         // Handle URL selection
         if (selectedIdFromUrl) {
@@ -353,6 +361,7 @@ function ApplicantsPageComponent() {
               <div className="animate-in fade-in zoom-in-95 duration-500">
                 <ApplicantDetail
                   applicant={selectedApplicant}
+                  companyId={companyId || ""}
                   onUpdateStatus={(newStatus) =>
                     handleUpdateStatus(selectedApplicant.id, newStatus)
                   }

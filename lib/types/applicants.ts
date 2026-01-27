@@ -73,4 +73,13 @@ export type Applicant = {
   monthlyRate?: number;
   paymentLedger?: PaymentRecord[];
   programId?: string | null;
+
+  // Supervisor
+  supervisorId?: string | null;
+  supervisor?: {
+    id: string;
+    full_name: string;
+    avatar_url?: string;
+  };
 };
+

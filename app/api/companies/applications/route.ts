@@ -39,6 +39,7 @@ export async function GET(request: Request) {
         internship:internships(id, title, description, monthly_rate),
         program:programs(id, title, description, price_xaf),
         event:event(id, title, description),
+        supervisor:supervisor_profiles(id, full_name, avatar_url),
         student:student_profiles (
           id,
           user_id,
@@ -91,7 +92,8 @@ export async function GET(request: Request) {
             .from("internship_applications")
             .select(`
               *,
-              internship:internships(id, title, description)
+              internship:internships(id, title, description),
+              supervisor:supervisor_profiles(id, full_name, avatar_url)
             `)
             .in("internship_id", internshipIds)
             .order("created_at", { ascending: false });
@@ -159,6 +161,7 @@ export async function GET(request: Request) {
       const internship = Array.isArray(app.internship) ? app.internship[0] : app.internship;
       const program = Array.isArray(app.program) ? app.program[0] : app.program;
       const event = Array.isArray(app.event) ? app.event[0] : app.event;
+      const supervisor = Array.isArray(app.supervisor) ? app.supervisor[0] : app.supervisor;
       const opportunity = internship || program || event;
 
       // Robust email lookup
@@ -199,6 +202,12 @@ export async function GET(request: Request) {
         monthlyRate: internship?.monthly_rate || program?.price_xaf || 0,
         paymentLedger: app.payment_ledger || [],
         programId: app.program_id || null,
+        supervisorId: app.supervisor_id,
+        supervisor: supervisor ? {
+          id: supervisor.id,
+          full_name: supervisor.full_name,
+          avatar_url: supervisor.avatar_url
+        } : undefined
       };
 
     });
@@ -207,6 +216,7 @@ export async function GET(request: Request) {
     const formattedStructured: Applicant[] = structuredInternshipApps.map((app: any) => {
       const student = Array.isArray(app.student) ? app.student[0] : app.student;
       const internship = Array.isArray(app.internship) ? app.internship[0] : app.internship;
+      const supervisor = Array.isArray(app.supervisor) ? app.supervisor[0] : app.supervisor;
 
       // Robust email lookup
       const email = student?.email || authEmailMap[app.student_id] || authEmailMap[student?.user_id] || "No email";
@@ -240,8 +250,15 @@ export async function GET(request: Request) {
         isPaid: app.is_paid_acknowledgement, // this indicates they acknowledged payment terms
         monthlyRate: internship?.monthly_rate || 0,
         paymentLedger: app.payment_ledger || [],
+        supervisorId: app.supervisor_id,
+        supervisor: supervisor ? {
+          id: supervisor.id,
+          full_name: supervisor.full_name,
+          avatar_url: supervisor.avatar_url
+        } : undefined
       };
     });
+
 
     // Combine and Sort by date
     const allApplicants = [...formattedLegacy, ...formattedStructured].sort(

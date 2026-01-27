@@ -20,6 +20,7 @@ import { format } from "date-fns";
 
 type ApplicantDetailProps = {
   applicant: Applicant;
+  companyId: string;
   onUpdateStatus: (newStatus: ApplicantStatus) => void;
 };
 
@@ -101,6 +102,7 @@ const Section = ({
 
 export const ApplicantDetail = ({
   applicant,
+  companyId,
   onUpdateStatus,
 }: ApplicantDetailProps) => {
   const firstName = applicant.name.split(' ')[0] || applicant.name;
@@ -258,6 +260,7 @@ export const ApplicantDetail = ({
           <div className="bg-gradient-to-br from-slate-50 to-blue-50/30 rounded-3xl border-2 border-slate-100 overflow-hidden">
             <ApplicantActions
               applicant={applicant}
+              companyId={companyId}
               onUpdateStatus={onUpdateStatus}
             />
           </div>

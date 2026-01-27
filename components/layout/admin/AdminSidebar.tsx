@@ -16,6 +16,7 @@ import {
   BookOpen,
   GraduationCap,
   Sparkles,
+  ShieldCheck,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -46,6 +47,7 @@ const navigationGroups = [
       { href: "/admin/applicants", icon: Users, label: "Applicants" },
       { href: "/admin/interns", icon: GraduationCap, label: "Interns", badge: "New" },
       { href: "/admin/accepted", icon: CheckCheck, label: "Hires" },
+      { href: "/admin/supervisors", icon: ShieldCheck, label: "Supervisors" },
       { href: "/admin/programs/content", icon: BookOpen, label: "Content" },
     ],
   },

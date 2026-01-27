@@ -11,14 +11,17 @@ import {
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
+import { SupervisorAssignment } from "./SupervisorAssignment"
 
 type ApplicantActionsProps = {
   applicant: Applicant
+  companyId: string
   onUpdateStatus: (newStatus: ApplicantStatus) => void
 }
 
 export const ApplicantActions = ({
   applicant,
+  companyId,
   onUpdateStatus,
 }: ApplicantActionsProps) => {
   const { status } = applicant
@@ -296,6 +299,15 @@ export const ApplicantActions = ({
               </div>
             </div>
             
+            {/* Supervisor Assignment */}
+            <div className="p-6 rounded-3xl bg-slate-50 border border-slate-100">
+               <SupervisorAssignment 
+                  applicationId={applicant.id} 
+                  currentSupervisorId={applicant.supervisorId} 
+                  companyId={companyId}
+               />
+            </div>
+
             <div className="text-center">
               <p className="text-sm text-slate-500">Connect with your new team member</p>
             </div>

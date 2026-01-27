@@ -1,15 +1,15 @@
 "use client";
 
-import { Menu, Bell } from "lucide-react";
+import { Menu, Bell, Briefcase, Newspaper, MessageSquare, Layout } from "lucide-react";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { NotificationDropdown } from "./NotificationDropdown";
 import { Logo } from "@/components/layout/Logo";
 import Link from "next/link";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import NameInitials from "@/components/NameInitials";
-import { slugifyUsername } from "@/lib/utils";
+import { slugifyUsername, cn } from "@/lib/utils";
 
 interface DashboardHeaderProps {
   user?: any;
@@ -22,6 +22,7 @@ export const DashboardHeader = ({
 }: DashboardHeaderProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
 
   const userName = user?.name || user?.profile?.name || "Guest User";
   const userRole = user?.role || user?.profile?.role || "Student";
@@ -30,13 +31,18 @@ export const DashboardHeader = ({
     user?.profile?.avatar_url ||
     user?.avatarUrl
 
-
+  const middleNavItems = [
+  
+    { href: "/dashboard/supervisor", label: "Supervisor", icon: Newspaper },
+    { href: "/dashboard/community", label: "Community", icon: MessageSquare },
+    { href: "/intern/workspace", label: "Workspace", icon: Briefcase },
+  ];
 
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border shadow-sm transition-all duration-300">
       <div className="flex items-center justify-between px-4 lg:px-6 py-3 max-w-full mx-auto">
         {/* Left Side - Mobile Menu & Logo */}
-        <div className="flex items-center gap-3 lg:gap-4">
+        <div className="flex items-center gap-3 lg:gap-4 flex-1">
           {/* Mobile Menu Button */}
           <button
             onClick={onMenuClick}
@@ -57,8 +63,31 @@ export const DashboardHeader = ({
           </Link>
         </div>
 
+        {/* Middle Section - Desktop Navigation */}
+        <nav className="hidden xl:flex items-center justify-center gap-2 flex-1">
+          {middleNavItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300",
+                  isActive 
+                    ? "bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                )}
+              >
+                <Icon size={16} className={cn(isActive && "text-primary")} />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
         {/* Right Side - Notifications, User & Logout */}
-        <div className="flex items-center gap-3 lg:gap-4">
+        <div className="flex items-center gap-3 lg:gap-4 flex-1 justify-end">
           {/* Notifications Dropdown */}
           <div className="flex-shrink-0">
             <NotificationDropdown />
@@ -88,8 +117,6 @@ export const DashboardHeader = ({
               <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide leading-tight">{userRole}</p>
             </div>
           </Link>
-
-
         </div>
       </div>
     </header>

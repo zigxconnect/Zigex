@@ -154,6 +154,7 @@ function InternsPageComponent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterDomain, setFilterDomain] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "table" | "ledger">("table");
+  const [companyId, setCompanyId] = useState<string | null>(null);
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -182,6 +183,13 @@ function InternsPageComponent() {
       );
       console.log("[INTERNS] Total apps:", data.length, "Internship apps:", internshipApps.length);
       setApplicants(internshipApps);
+
+      // Fetch company profile to get ID
+      const companyResp = await fetch("/api/companies/profiles");
+      if (companyResp.ok) {
+         const companyData = await companyResp.json();
+         setCompanyId(companyData.id);
+      }
     } catch (err: any) {
       console.error("Fetch error:", err);
       setError(err.message || "Could not connect to the server.");
@@ -716,6 +724,7 @@ function InternsPageComponent() {
             {selectedApplicant && (
               <ApplicantDetail
                 applicant={selectedApplicant}
+                companyId={companyId || ""}
                 onUpdateStatus={(newStatus) => handleUpdateStatus(selectedApplicant.id, newStatus)}
               />
             )}

@@ -16,6 +16,7 @@ import {
   X,
   LogOut,
   MessageSquare,
+  ShieldCheck,
 } from "lucide-react";
 import { AiOutlineWechat } from "react-icons/ai";
 import { Button } from "@/components/ui/button";
@@ -122,12 +123,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: "News",
       matchPaths: ["/dashboard/blog", "/dashboard/blog/"],
     },
-    {
-      href: "/dashboard/community",
-      icon: MessageSquare,
-      label: "Community",
-      matchPaths: ["/dashboard/community", "/dashboard/community/"],
-    },
+    // {
+    //   href: "/dashboard/community",
+    //   icon: MessageSquare,
+    //   label: "Community",
+    //   matchPaths: ["/dashboard/community", "/dashboard/community/"],
+    // },
+    // {
+    //   href: "/intern/workspace",
+    //   icon: Briefcase,
+    //   label: "Intern Workspace",
+    //   matchPaths: ["/intern/workspace"],
+    // },
+    // {
+    //   href: "/supervisor",
+    //   icon: ShieldCheck,
+    //   label: "Supervisor Hub",
+    //   matchPaths: ["/supervisor"],
+    // },
   ];
 
   if (showUploadLive) {
