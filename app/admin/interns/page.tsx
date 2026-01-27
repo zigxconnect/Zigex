@@ -17,6 +17,7 @@ import { Applicant, ApplicantStatus, PaymentRecord } from "@/lib/types/applicant
 import { ApplicantDetail } from "@/components/sections/admin/applicants/ApplicantDetail";
 import { ApplicantsTable } from "@/components/sections/admin/applicants/ApplicantsTable";
 import { InternLedgerTable } from "@/components/sections/admin/applicants/InternLedgerTable";
+import { InternManagementTable } from "@/components/sections/admin/applicants/InternManagementTable";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -153,7 +154,7 @@ function InternsPageComponent() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterDomain, setFilterDomain] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"grid" | "table" | "ledger">("table");
+  const [viewMode, setViewMode] = useState<"grid" | "table" | "ledger" | "management">("table");
   const [companyId, setCompanyId] = useState<string | null>(null);
 
   const searchParams = useSearchParams();
@@ -503,6 +504,20 @@ function InternsPageComponent() {
                 <TrendingUp size={16} className="mr-2" />
                 Ledger
               </Button>
+              <Button 
+                variant={viewMode === "management" ? "outline" : "ghost"}
+                size="sm"
+                className={cn(
+                  "rounded-xl h-10 px-4 font-medium transition-all duration-200",
+                  viewMode === "management" 
+                    ? "bg-white shadow-md text-blue-600" 
+                    : "text-slate-500 hover:text-slate-700"
+                )}
+                onClick={() => setViewMode("management")}
+              >
+                <CheckCircle2 size={16} className="mr-2" />
+                Management
+              </Button>
             </div>
             
             <Button 
@@ -711,6 +726,14 @@ function InternsPageComponent() {
                 applicants={filteredApplicants}
                 onDelete={handleDeleteApplicant}
                 onUpdatePayment={handleUpdatePaymentLedger}
+              />
+            )}
+
+            {viewMode === "management" && (
+              <InternManagementTable 
+                applicants={applicants}
+                companyId={companyId || ""}
+                onSelect={handleSelectApplicant}
               />
             )}
           </>
