@@ -3,6 +3,8 @@
  * 100% Free, No Domain Required, Works Server-Side!
  */
 
+"use server";
+
 import nodemailer from 'nodemailer';
 
 // Configuration - Strip ALL whitespace from app password
@@ -12,18 +14,17 @@ const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD?.replace(/\s+/g, '');
 // Create transporter with optimized settings
 const createTransporter = () => {
   if (!GMAIL_USER || !GMAIL_APP_PASSWORD) {
-    console.error("[EMAIL] Not configured! Set GMAIL_USER and GMAIL_APP_PASSWORD in .env.local");
-    console.error("[EMAIL] GMAIL_USER:", GMAIL_USER ? "SET" : "MISSING");
-    console.error("[EMAIL] GMAIL_APP_PASSWORD:", GMAIL_APP_PASSWORD ? "SET" : "MISSING");
-    return null;
+    const errorMsg = "[EMAIL CONFIG ERROR] GMAIL_USER or GMAIL_APP_PASSWORD is missing in .env.local";
+    console.error(errorMsg);
+    throw new Error(errorMsg); // Throw error to be caught by caller
   }
 
   console.log(`[EMAIL] Creating transporter for: ${GMAIL_USER}`);
 
   return nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // Use TLS
+    port: 465, // Use secure port 465 for Gmail (SSL)
+    secure: true, 
     auth: {
       user: GMAIL_USER,
       pass: GMAIL_APP_PASSWORD,
@@ -32,10 +33,6 @@ const createTransporter = () => {
     connectionTimeout: 10000, // 10 seconds
     greetingTimeout: 10000,
     socketTimeout: 15000,
-    // Pool connections for faster subsequent emails
-    pool: true,
-    maxConnections: 3,
-    maxMessages: 100,
   });
 };
 
