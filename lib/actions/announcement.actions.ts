@@ -83,19 +83,20 @@ export async function deleteAnnouncement(id: string) {
     return { success: true };
 }
 
-const supabase = await createServerActionClient();
+export async function togglePinAnnouncement(id: string, currentStatus: boolean) {
+    const supabase = await createServerActionClient();
 
-const { error } = await supabase
-    .from("announcements")
-    .update({ is_pinned: !currentStatus })
-    .eq("id", id);
+    const { error } = await supabase
+        .from("announcements")
+        .update({ is_pinned: !currentStatus })
+        .eq("id", id);
 
-if (error) {
-    console.error("Error toggling pin:", error);
-    return { success: false, error: error.message };
-}
+    if (error) {
+        console.error("Error toggling pin:", error);
+        return { success: false, error: error.message };
+    }
 
-revalidatePath("/admin/announcements");
-revalidatePath("/dashboard/announcements");
-return { success: true };
+    revalidatePath("/admin/announcements");
+    revalidatePath("/dashboard/announcements");
+    return { success: true };
 }
