@@ -18,6 +18,7 @@ import { AiOutlineWechat } from "react-icons/ai";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface MobileTabBarProps {
   user: any;
@@ -149,41 +150,35 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
               >
                 <div className="relative">
                   <div
-                    className={`
-                      p-2 rounded-xl transition-all duration-300 active:scale-95
-                      ${isActive
-                        ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-sidebar-primary/25'
-                        : 'text-sidebar-foreground/60 group-active:bg-sidebar-accent/50'
-                      }
-                    `}
+                    className={cn(
+                      "p-2.5 rounded-2xl transition-all duration-200 active:scale-90 flex items-center justify-center relative",
+                      isActive
+                        ? "bg-blue-600 text-white shadow-lg shadow-blue-500/25"
+                        : "text-slate-400 group-active:bg-slate-100"
+                    )}
                   >
                     <Icon
-                      size={20}
-                      className={`
-                        ${isActive ? 'text-sidebar-primary-foreground' : 'text-sidebar-foreground/60 group-active:text-sidebar-primary'}
-                      `}
+                      size={24}
+                      strokeWidth={isActive ? 2.5 : 2}
+                      className="transition-transform duration-200"
                     />
                   </div>
 
                   {/* Notification Badge */}
                   {showBadge && (
-                    <div className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 shadow-md">
+                    <div className="absolute -top-1 -right-1 bg-white text-blue-600 text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 shadow-md border border-blue-600">
                       {unreadCount > 99 ? '99+' : unreadCount}
-                    </div>
-                  )}
-
-                  {item.label === "ZAi" && (
-                    <div className="absolute -top-3 -right-4 bg-sidebar-primary text-sidebar-primary-foreground text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-sm z-10 tracking-wide">
-                      BETA
                     </div>
                   )}
                 </div>
 
                 <span
-                  className={`
-                    text-[10px] font-semibold tracking-tight mt-1 transition-colors duration-200
-                    ${isActive ? 'text-sidebar-primary' : 'text-sidebar-foreground/60 group-active:text-sidebar-primary'}
-                  `}
+                  className={cn(
+                    "text-[10px] font-semibold tracking-tight mt-1 transition-all duration-200",
+                    isActive 
+                      ? "text-blue-600 dark:text-blue-400 font-bold" 
+                      : "text-slate-400"
+                  )}
                 >
                   {item.label}
                 </span>

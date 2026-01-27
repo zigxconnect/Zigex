@@ -73,13 +73,13 @@ export const DashboardHeader = ({
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300",
+                  "flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-300",
                   isActive 
-                    ? "bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20" 
+                    ? "bg-primary text-white shadow-md shadow-primary/25" 
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 )}
               >
-                <Icon size={16} className={cn(isActive && "text-primary")} />
+                <Icon size={18} className={cn(isActive ? "text-white" : "text-muted-foreground group-hover:text-primary")} />
                 <span>{item.label}</span>
               </Link>
             );
