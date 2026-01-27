@@ -1,7 +1,8 @@
 "use server";
 
-import { createServerActionClient } from "@/lib/supabase/server";
+import { createServerActionClient, supabaseAdmin } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
 /**
  * Server Action to fetch a list of all published internships for the dashboard.
@@ -132,22 +133,12 @@ export async function getInternshipWorkspaceData() {
     .eq("internship_id", application.internship_id)
     .order("updated_at", { ascending: false });
 
-  // 6. Fetch Announcements (Global + Company)
+  // 6. Fetch Announcements (Global + Company) without joins to avoid PGRST200
   const companyId = application.internships?.company_id;
 
   let announcementQuery = supabase
     .from("announcements")
-    .select(`
-      *,
-      author:author_id (
-        full_name,
-        avatar_url
-      ),
-      company:company_id (
-        company_name,
-        logo_url
-      )
-    `)
+    .select("*")
     .order("is_pinned", { ascending: false })
     .order("created_at", { ascending: false });
 
@@ -157,7 +148,31 @@ export async function getInternshipWorkspaceData() {
     announcementQuery = announcementQuery.is("company_id", null);
   }
 
-  const { data: announcements } = await announcementQuery;
+  const { data: rawAnnouncements } = await announcementQuery;
+
+  // Enrich announcements manually
+  let announcements: any[] = [];
+  if (rawAnnouncements && rawAnnouncements.length > 0) {
+    const authorIds = Array.from(new Set(rawAnnouncements.map((a: any) => a.author_id).filter(Boolean)));
+    const companyIds = Array.from(new Set(rawAnnouncements.map((a: any) => a.company_id).filter(Boolean)));
+
+    const [authorsRes, companiesRes] = await Promise.all([
+      supabaseAdmin.from("user_profiles").select("user_id, full_name, avatar_url, email").in("user_id", authorIds),
+      supabaseAdmin.from("company_profiles").select("id, company_name, logo_url").in("id", companyIds)
+    ]);
+
+    const authorMap = new Map();
+    authorsRes.data?.forEach((p: any) => authorMap.set(p.user_id, p));
+
+    const companyMap = new Map();
+    companiesRes.data?.forEach((c: any) => companyMap.set(c.id, c));
+
+    announcements = rawAnnouncements.map((ann: any) => ({
+      ...ann,
+      author: authorMap.get(ann.author_id) || { full_name: "Zigex Admin" },
+      company: ann.company_id ? companyMap.get(ann.company_id) : null
+    }));
+  }
 
   return {
     application,
@@ -171,6 +186,7 @@ export async function getInternshipWorkspaceData() {
 
 /**
  * Server Action to submit a daily internship log/report.
+ * Ensures that a student can only submit one log per day per internship.
  */
 export async function submitInternshipLog(formData: {
   internship_id: string;
@@ -182,8 +198,22 @@ export async function submitInternshipLog(formData: {
   const supabase = await createServerActionClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) throw new Error("Unauthorized");
+  if (!user) return { success: false, error: "Unauthorized" };
 
+  // 1. Check if a log already exists for this date
+  const { data: existingLog } = await supabase
+    .from("intern_logs")
+    .select("id")
+    .eq("student_id", user.id)
+    .eq("internship_id", formData.internship_id)
+    .eq("log_date", formData.log_date)
+    .single();
+
+  if (existingLog) {
+    return { success: false, error: "You have already submitted a log for today." };
+  }
+
+  // 2. Insert new log
   const { data, error } = await supabase
     .from("intern_logs")
     .insert({
@@ -204,6 +234,29 @@ export async function submitInternshipLog(formData: {
   }
 
   return { success: true, data };
+}
+
+/**
+ * Server Action to acknowledge payment terms for a paid internship.
+ */
+export async function acknowledgePaidInternship(applicationId: string) {
+  const supabase = await createServerActionClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) return { success: false, error: "Unauthorized" };
+
+  const { error } = await supabase
+    .from("internship_applications")
+    .update({ is_paid_acknowledgement: true })
+    .eq("id", applicationId);
+
+  if (error) {
+    console.error("Error acknowledging paid internship:", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/intern/workspace");
+  return { success: true };
 }
 
 

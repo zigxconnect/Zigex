@@ -70,6 +70,14 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
   const supervisor = application?.supervisor_profiles;
 
   const isPaid = application?.payment_ledger?.length > 0;
+  
+  // Check if today's log already exists (client-side check for better UX)
+  const todayStr = format(new Date(), "yyyy-MM-dd");
+  const hasLoggedToday = logs.some((log: any) => log.log_date === todayStr);
+
+  const isPaidInternship = internship?.monthly_rate > 0;
+  const needsPaymentAcknowledgment = !application?.is_paid_acknowledgement && isPaidInternship;
+
   const progressPercent = Math.min(Math.round((logs.length / 30) * 100), 100);
 
   const router = useRouter();
@@ -156,11 +164,33 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                 Logbook
               </Button>
               <Button 
-                onClick={() => setIsLogModalOpen(true)}
-                className="flex-1 sm:flex-none rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs h-11 px-4 shadow-md shadow-blue-500/20 transition-all active:scale-[0.98]"
+                onClick={() => !hasLoggedToday && !needsPaymentAcknowledgment && setIsLogModalOpen(true)}
+                disabled={hasLoggedToday || needsPaymentAcknowledgment}
+                className={cn(
+                  "flex-1 sm:flex-none rounded-xl font-semibold text-xs h-11 px-4 shadow-md transition-all active:scale-[0.98]",
+                  hasLoggedToday 
+                    ? "bg-green-100 text-green-700 cursor-not-allowed shadow-none" 
+                    : needsPaymentAcknowledgment
+                    ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20"
+                )}
               >
-                <Plus size={14} className="mr-2" />
-                Daily Log
+                {hasLoggedToday ? (
+                  <>
+                    <CheckCircle2 size={14} className="mr-2" />
+                    Done Today
+                  </>
+                ) : needsPaymentAcknowledgment ? (
+                  <>
+                    <Lock size={14} className="mr-2" />
+                    Locked
+                  </>
+                ) : (
+                  <>
+                    <Plus size={14} className="mr-2" />
+                    Daily Log
+                  </>
+                )}
               </Button>
             </div>
           </div>
@@ -215,6 +245,41 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
             {activeTab === "overview" && (
               <div className="space-y-6">
                 
+                {/* Payment Acknowledgment Banner (Persistent until accepted) */}
+                {needsPaymentAcknowledgment && (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-amber-500 to-orange-600 p-8 text-white shadow-xl shadow-amber-500/20 mb-6"
+                  >
+                    <div className="relative z-10 flex flex-col sm:flex-row items-center gap-6">
+                      <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center shrink-0">
+                        <CreditCard size={32} className="text-white" />
+                      </div>
+                      <div className="flex-1 text-center sm:text-left">
+                        <h3 className="text-xl font-black mb-1">Paid Internship Acknowledgment</h3>
+                        <p className="text-sm text-amber-50 font-medium">
+                          This is a paid internship ({internship?.monthly_rate?.toLocaleString()} FCFA/month). 
+                          Please acknowledge that you agree to the payment terms to unlock your daily logs.
+                        </p>
+                      </div>
+                      <Button 
+                        onClick={async () => {
+                          const { acknowledgePaidInternship } = await import("@/lib/actions/intenship.actions");
+                          const res = await acknowledgePaidInternship(application.id);
+                          if (res.success) {
+                            router.refresh();
+                          }
+                        }}
+                        className="bg-white text-orange-600 hover:bg-amber-50 font-black rounded-2xl px-8 h-12 shadow-lg"
+                      >
+                        I AGREE & ACKNOWLEDGE
+                      </Button>
+                    </div>
+                    <div className="absolute -right-8 -bottom-8 w-40 h-40 bg-white/10 rounded-full blur-2xl" />
+                  </motion.div>
+                )}
+
                 {/* Progress Banner */}
                 <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-blue-600 to-blue-700 p-5 sm:p-8 text-white">
                   <div className="relative z-10">

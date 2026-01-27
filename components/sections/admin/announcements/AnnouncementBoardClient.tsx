@@ -25,6 +25,8 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
+import { CheckCircle2 } from "lucide-react";
 
 interface Announcement {
     id: string;
@@ -55,6 +57,7 @@ export function AnnouncementBoardClient({ announcements }: AnnouncementBoardClie
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
     const [isGlobal, setIsGlobal] = useState(true); // Default to Zigex Global? Depending on actual use case. Assuming admin context.
+    const [imageFile, setImageFile] = useState<File | null>(null);
 
     const handleCreate = async () => {
         if (!title.trim() || !content.trim()) {
@@ -64,12 +67,34 @@ export function AnnouncementBoardClient({ announcements }: AnnouncementBoardClie
 
         setIsLoading(true);
         try {
+            let imageUrl = undefined;
+
+            if (imageFile) {
+                const supabase = createClient();
+                const fileExt = imageFile.name.split('.').pop();
+                const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+                const filePath = `${fileName}`;
+
+                const { error: uploadError } = await supabase.storage
+                    .from('announcements')
+                    .upload(filePath, imageFile);
+
+                if (uploadError) {
+                    console.error("Upload error:", uploadError);
+                     // If bucket doesn't exist or RLS issue, we might want to continue without image or warn
+                     // But for now let's warn
+                     toast.warning("Failed to upload image. Posting without it.");
+                } else {
+                     const { data: { publicUrl } } = supabase.storage.from('announcements').getPublicUrl(filePath);
+                     imageUrl = publicUrl;
+                }
+            }
+
             const res = await createAnnouncement({
                 title,
                 content,
-                // If isGlobal is false, we might want to attach current company ID if available in context, 
-                // but for now let's keep it simple: null = global.
-                company_id: undefined // undefined means global in our action for now unless we pass specific ID
+                company_id: undefined,
+                image_url: imageUrl
             });
 
             if (res.success) {
@@ -77,6 +102,7 @@ export function AnnouncementBoardClient({ announcements }: AnnouncementBoardClie
                 setIsCreateOpen(false);
                 setTitle("");
                 setContent("");
+                setImageFile(null);
                 router.refresh();
             } else {
                 toast.error(res.error || "Failed to post announcement");
@@ -148,6 +174,26 @@ export function AnnouncementBoardClient({ announcements }: AnnouncementBoardClie
                                     onChange={(e) => setContent(e.target.value)}
                                 />
                             </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Attachment (Optional)</label>
+                                <div className="flex items-center gap-4">
+                                    <Input 
+                                        type="file" 
+                                        accept="image/*"
+                                        onChange={(e) => {
+                                            if (e.target.files?.[0]) {
+                                                setImageFile(e.target.files[0]);
+                                            }
+                                        }}
+                                        className="cursor-pointer text-xs"
+                                    />
+                                </div>
+                                {imageFile && (
+                                    <p className="text-xs text-green-600 flex items-center mt-1">
+                                        <CheckCircle2 className="w-3 h-3 mr-1"/> Selected: {imageFile.name}
+                                    </p>
+                                )}
+                            </div>
                         </div>
                         <div className="flex justify-end gap-3">
                             <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
@@ -173,9 +219,18 @@ export function AnnouncementBoardClient({ announcements }: AnnouncementBoardClie
                 ) : (
                     announcements.map((announcement) => (
                         <Card key={announcement.id} className={cn(
-                            "transition-all duration-200 hover:shadow-md",
+                            "transition-all duration-200 hover:shadow-md overflow-hidden",
                             announcement.is_pinned && "border-blue-200 bg-blue-50/30 dark:border-blue-900/50 dark:bg-blue-900/10"
                         )}>
+                            {announcement.image_url && (
+                                <div className="w-full h-48 sm:h-64 relative bg-slate-100">
+                                    <img 
+                                        src={announcement.image_url} 
+                                        alt={announcement.title}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                            )}
                             <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-2">

@@ -13,6 +13,7 @@ interface Announcement {
     content: string;
     is_pinned: boolean;
     created_at: string;
+    image_url?: string;
     author: {
         full_name: string;
         avatar_url: string;
@@ -69,13 +70,26 @@ export function InternAnnouncementBoard({ announcements }: InternAnnouncementBoa
                                     ? "bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/20 dark:to-slate-900 border-blue-200 dark:border-blue-800"
                                     : "bg-white dark:bg-slate-900"
                             )}>
-                                {announcement.is_pinned && (
-                                    <div className="absolute top-0 right-0 p-3">
-                                        <Pin className="w-4 h-4 text-blue-500 rotate-45 fill-blue-500/20" />
+                                {announcement.image_url && (
+                                    <div className="w-full h-48 sm:h-64 relative bg-slate-100 dark:bg-slate-800">
+                                        <img 
+                                            src={announcement.image_url} 
+                                            alt={announcement.title}
+                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                                     </div>
                                 )}
                                 
-                                <CardHeader className="pb-3">
+                                {announcement.is_pinned && (
+                                    <div className="absolute top-0 right-0 p-3 z-10">
+                                        <div className="bg-white/90 backdrop-blur-sm p-1.5 rounded-full shadow-sm">
+                                            <Pin className="w-3.5 h-3.5 text-blue-600 rotate-45 fill-blue-600/20" />
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                <CardHeader className="pb-3 relative">
                                     <div className="flex items-center gap-3 mb-2">
                                         {announcement.company ? (
                                             <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[10px] uppercase font-bold px-2 py-1 rounded-md flex items-center gap-1.5 tracking-wider">

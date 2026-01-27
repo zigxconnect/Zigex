@@ -6,7 +6,7 @@ import { createSupabaseServerClient, supabaseAdmin } from "@/lib/supabase/server
 import { unstable_cache } from "next/cache";
 import { isUUID } from "@/lib/utils";
 
-export type FeedType = "internships" | "programs" | "events";
+export type FeedType = "internships" | "programs" | "events" | "announcements";
 
 /**
  * Get a single feed item by ID
@@ -112,6 +112,27 @@ const fetchFeedItemById = async (idOrSlug: string) => {
         data: { ...event, _type: "events" as FeedType },
         error: null,
       };
+    }
+
+    // Try to find in announcements
+    if (isIdUUID) {
+      const { data: announcement, error: announcementError } = await supabaseAdmin
+        .from("announcements")
+        .select(`
+          *,
+          company_profiles (
+            id, company_name, logo_url, cover_image_url, location, website_url
+          )
+        `)
+        .eq("id", idOrSlug)
+        .maybeSingle();
+
+      if (announcement && !announcementError) {
+        return {
+          data: { ...announcement, _type: "announcements" as FeedType },
+          error: null,
+        };
+      }
     }
 
     // If no match found with space replacement, try with the original slug pattern

@@ -12,7 +12,7 @@ type ProgramWithStatus = Program & { isOpen: boolean };
 
 interface FeedItem {
   id: string;
-  type: 'internship' | 'event' | 'program';
+  type: 'internship' | 'event' | 'program' | 'announcement';
   title: string;
   description: string;
   image?: string;
@@ -23,7 +23,7 @@ interface FeedItem {
   participants?: number;
   tags?: string[];
   category?: string;
-  raw: Internship | Event | ProgramWithStatus;
+  raw: Internship | Event | ProgramWithStatus | any;
   isOpen: boolean;
   closedReason?: string;
   isPinned?: boolean;
@@ -49,12 +49,13 @@ export default function PersonalizedFeed({ userId, userSkills = [], university }
   const loadFeedData = async () => {
     setIsLoading(true);
     try {
-      const { internships, events, programs } = await getAllFeedData();
+      const { internships, events, programs, announcements } = await getAllFeedData(undefined, userId);
       
-      const transformedItems = transformAndCombineFeed( // Removed await
+      const transformedItems = transformAndCombineFeed(
         internships,
         events,
-        programs as ProgramWithStatus[]
+        programs as ProgramWithStatus[],
+        announcements
       );
       setFeedItems(transformedItems);
     } catch (error) {
@@ -64,13 +65,30 @@ export default function PersonalizedFeed({ userId, userSkills = [], university }
     }
   };
 
-  // SOLVED: Removed `async` as there are no `await` calls inside.
   const transformAndCombineFeed = (
     internships: Internship[],
     events: Event[],
-    programs: ProgramWithStatus[]
+    programs: ProgramWithStatus[],
+    announcements: any[] = []
   ): FeedItem[] => {
     let allItems: FeedItem[] = [];
+
+    // Transform Announcements
+    for (const ann of announcements) {
+      allItems.push({
+        id: ann.id,
+        type: 'announcement',
+        title: ann.title,
+        description: ann.content,
+        image: ann.image_url,
+        companyName: ann.company?.company_name || 'Zigex Admin',
+        companyLogo: ann.company?.logo_url || ann.author?.avatar_url,
+        tags: ['Announcement'],
+        raw: ann,
+        isOpen: true,
+        isPinned: ann.is_pinned
+      });
+    }
 
     // Step 1: Transform all items into a unified FeedItem format
     for (const program of programs) {
@@ -108,8 +126,6 @@ export default function PersonalizedFeed({ userId, userSkills = [], university }
         category: internship.category,
         tags: [internship.type, internship.category].filter(Boolean),
         raw: internship,
-        // LOGICAL FLAW ADDRESSED: This is a placeholder. For true accuracy, the `isOpen` status
-        // for internships should also be calculated on the server in `getAllFeedData`.
         isOpen: true, 
       });
     }
@@ -128,33 +144,23 @@ export default function PersonalizedFeed({ userId, userSkills = [], university }
           month: 'short', day: 'numeric', year: 'numeric',
         }),
         raw: event,
-        // LOGICAL FLAW ADDRESSED: Like internships, this assumes events are always open.
-        // The server action should be updated in the future to provide this status.
         isOpen: true, 
       });
     }
 
-    // Step 2: Explicitly find and separate the pinned item
-    const pinnedItem = allItems.find(item => item.isPinned);
-    
-    // Step 3: Get all other items
-    let otherItems = allItems.filter(item => !item.isPinned);
+    // Sort: Pinned items first, then by date (created_at)
+    allItems.sort((a, b) => {
+      // Pinned items take priority
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      
+      // Then sort by date
+      const dateA = new Date((a.raw as any).created_at).getTime();
+      const dateB = new Date((b.raw as any).created_at).getTime();
+      return dateB - dateA;
+    });
 
-    // Step 4: Separate the remaining programs from internships/events
-    const remainingPrograms = otherItems.filter(item => item.type === 'program');
-    const nonProgramItems = otherItems.filter(item => item.type !== 'program');
-
-    // Step 5: Sort the internships/events by date
-    nonProgramItems.sort((a, b) => new Date((b.raw as any).created_at).getTime() - new Date((a.raw as any).created_at).getTime());
-    
-    // Step 6: Construct the final list, guaranteeing the pinned item is first.
-    const finalList = [
-      ...(pinnedItem ? [pinnedItem] : []), // Pinned item is always first
-      ...remainingPrograms,                   // Then the rest of the programs (already sorted by open/closed status from the server)
-      ...nonProgramItems,                     // Finally, internships and events sorted by date
-    ];
-
-    return finalList;
+    return allItems;
   };
 
   const handleLoadMore = () => {
