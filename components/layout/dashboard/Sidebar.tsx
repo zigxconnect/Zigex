@@ -136,18 +136,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
     {
       title: "Workspace",
       items: [
-        {
+        ...(user?.permissions?.isIntern ? [{
           href: "/intern/workspace",
           icon: Briefcase,
           label: "Intern Workspace",
           matchPaths: ["/intern/workspace"],
-        },
-        {
+        }] : []),
+        ...(user?.permissions?.isSupervisor ? [{
           href: "/supervisor",
           icon: ShieldCheck,
           label: "Supervisor Hub",
           matchPaths: ["/supervisor"],
-        },
+        }] : []),
       ]
     },
     {

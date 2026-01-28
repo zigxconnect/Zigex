@@ -189,10 +189,10 @@ export async function getSupervisorDashboardData() {
 
         console.log(`[SUPERVISOR_HUB] Loading dashboard for: ${user.email} (ID: ${user.id})`);
 
-        // 1. Try finding by User ID
+        // 1. Try finding by User ID - Robust query without join first to avoid failures if company_id is missing
         let { data: profile } = await supabaseAdmin
             .from("supervisor_profiles")
-            .select("*, company:company_profiles(id, company_name, logo_url)")
+            .select("*")
             .eq("user_id", user.id)
             .maybeSingle();
 
@@ -201,7 +201,7 @@ export async function getSupervisorDashboardData() {
             console.log(`[SUPERVISOR_HUB] ID mismatch for ${user.id}, trying email lookup: ${user.email}`);
             const { data: emailProfile } = await supabaseAdmin
                 .from("supervisor_profiles")
-                .select("*, company:company_profiles(id, company_name, logo_url)")
+                .select("*")
                 .ilike("email", user.email) // Case insensitive lookup
                 .maybeSingle();
 
@@ -223,6 +223,20 @@ export async function getSupervisorDashboardData() {
             console.error(`[SUPERVISOR_HUB] Access Denied: No supervisor profile exists for email ${user.email} or ID ${user.id}`);
             return null;
         }
+
+        // 3. Manual Company Join (Resilient to missing company_id column)
+        let companyInfo = null;
+        if (profile.company_id) {
+            const { data: company } = await supabaseAdmin
+                .from("company_profiles")
+                .select("id, company_name, logo_url")
+                .eq("id", profile.company_id)
+                .single();
+            companyInfo = company;
+        }
+
+        // Attach company info to profile object
+        (profile as any).company = companyInfo;
 
         console.log(`[SUPERVISOR_HUB] Access granted to ${profile.full_name}`);
 

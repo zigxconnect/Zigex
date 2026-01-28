@@ -32,10 +32,9 @@ export const DashboardHeader = ({
     user?.avatarUrl
 
   const middleNavItems = [
-  
-    { href: "/dashboard/supervisor", label: "Supervisor", icon: Newspaper },
+    ...(user?.permissions?.isSupervisor ? [{ href: "/supervisor", label: "Supervisor", icon: Newspaper }] : []),
     { href: "/dashboard/community", label: "Community", icon: MessageSquare },
-    { href: "/intern/workspace", label: "Workspace", icon: Briefcase },
+    ...(user?.permissions?.isIntern ? [{ href: "/intern/workspace", label: "Workspace", icon: Briefcase }] : []),
   ];
 
   return (
