@@ -163,12 +163,12 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
                        </span>
                     </td>
 
-                    {/* Attendance Column: [Present Count] / [Days Since Start] */}
+                    {/* Attendance Column: [Present Count] only */}
                     <td className="px-6 py-5">
                       <div className="flex flex-col items-center gap-1.5">
                         <div className="flex items-baseline gap-1">
                            <span className="text-sm font-black text-slate-900">{summary.attendanceCount}</span>
-                           <span className="text-[10px] font-bold text-slate-400">/ {Math.max(1, daysWorked)}d</span>
+                           <span className="text-[10px] font-bold text-slate-400">Total Days</span>
                         </div>
                         <div className="h-1.5 w-16 bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
                            <div 
@@ -179,16 +179,15 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
                       </div>
                     </td>
 
-                    {/* Avg Mark Column (Natural Number / 5) */}
+                    {/* Weekly Marks Column (Cumulative/Raw Count) */}
                     <td className="px-6 py-5">
                       <div className="flex flex-col items-center">
                         <div className="flex items-center gap-1.5">
                            <Star size={14} className={cn("text-amber-500", summary.averageMark > 0 && "fill-amber-500")} />
                            <span className="text-sm font-black text-slate-900">{summary.averageMark}</span>
-                           <span className="text-[10px] font-bold text-slate-400">/ 5</span>
                         </div>
                         <p className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest mt-1">
-                          {summary.averageMark >= 4 ? "Excellent" : summary.averageMark >= 3 ? "Good" : summary.averageMark > 0 ? "Satisfactory" : "No Data"}
+                          Weekly Mark
                         </p>
                       </div>
                     </td>
@@ -302,16 +301,16 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
 
                    <div className="bg-slate-900 rounded-[2rem] p-8 text-white shadow-2xl relative overflow-hidden group">
                       <div className="relative z-10">
-                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Final Grade Projection</h4>
+                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Cumulative Performance</h4>
                         <div className="flex items-baseline gap-2">
                           <span className="text-5xl font-black text-white">{selectedIntern ? (summaries[selectedIntern.id]?.averageMark || 0) : 0}</span>
-                          <span className="text-xl font-bold text-slate-500">/ 5</span>
+                          <span className="text-xl font-bold text-slate-500">Points</span>
                         </div>
                         <div className="mt-8 flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10">
                            <div className="flex items-center gap-3">
                               <Star size={16} className="text-amber-400" />
                               <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
-                                {(summaries[selectedIntern?.id || '']?.averageMark || 0) >= 4 ? "Exceptional" : "Improving"}
+                                Awarded by Supervisor
                               </span>
                            </div>
                            <TrendingUp size={16} className="text-emerald-400" />
@@ -377,10 +376,10 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
                                   <div className="lg:w-40 text-center space-y-2 shrink-0">
                                      <div className="flex items-baseline justify-center gap-1">
                                         <span className="text-3xl font-black text-slate-900">{eval_item.overall_rating}</span>
-                                        <span className="text-sm font-bold text-slate-400">/ 5.0</span>
+                                        <span className="text-sm font-bold text-slate-400">Score</span>
                                      </div>
                                      <div className="flex items-center justify-center gap-1 text-[9px] font-black uppercase tracking-widest text-emerald-600">
-                                        <Award size={10} /> Verified Mark
+                                        <Award size={10} /> Validated
                                      </div>
                                   </div>
                                </motion.div>
