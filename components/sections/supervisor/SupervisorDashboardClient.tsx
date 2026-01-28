@@ -437,7 +437,7 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
               </div>
 
                 <div className={cn(
-                  "grid gap-4",
+                  "grid gap-3 md:grid-cols-2",
                   !isAttendanceWindow() && "opacity-60 grayscale pointer-events-none"
                 )}>
                   {interns.map((intern) => {
@@ -447,43 +447,43 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
 
                     return (
                       <div key={intern.id} className={cn(
-                        "bg-white dark:bg-slate-900 border transition-all rounded-3xl p-5 flex flex-col sm:flex-row sm:items-center gap-6",
-                        isPresent ? "border-green-200 bg-green-50/20 shadow-sm" : "border-slate-100"
+                        "bg-white dark:bg-slate-900 border transition-all rounded-2xl p-3 flex items-center gap-4",
+                        isPresent ? "border-green-200 bg-green-50/20 shadow-sm" : "border-slate-100/50 hover:border-slate-200"
                       )}>
-                        <div className="flex items-center gap-4 flex-1">
-                          <div className="w-14 h-14 rounded-2xl overflow-hidden ring-4 ring-white shadow-lg">
-                            <Image src={student?.avatar_url || "/default-avatar.svg"} alt="" width={56} height={56} className="object-cover" />
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className="w-10 h-10 rounded-xl overflow-hidden ring-2 ring-white dark:ring-slate-800 shadow-sm flex-shrink-0">
+                            <Image src={student?.avatar_url || "/default-avatar.svg"} alt="" width={40} height={40} className="object-cover" />
                           </div>
-                          <div>
-                            <h4 className="font-black text-slate-900 dark:text-white uppercase tracking-tight">{student?.full_name}</h4>
-                            <p className="text-xs text-slate-500 font-medium">
-                              {intern.internship?.title || "Internship Program"}
+                          <div className="min-w-0">
+                            <h4 className="font-bold text-xs text-slate-900 dark:text-white uppercase tracking-tight truncate">{student?.full_name}</h4>
+                            <p className="text-[10px] text-slate-500 font-medium truncate">
+                              {intern.internship?.title || "Internship"}
                             </p>
                           </div>
                         </div>
                         
-                        <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-3">
                             <span className={cn(
-                              "text-[10px] font-black uppercase tracking-widest",
-                              isPresent ? "text-green-600" : "text-slate-400"
+                              "text-[9px] font-black uppercase tracking-widest",
+                              isPresent ? "text-green-600" : "text-slate-300"
                             )}>
                               {isPresent ? "Present" : "Absent"}
                             </span>
                             
                             <button
-                              onClick={() => handleToggleAttendance(student?.user_id)}
+                              onClick={() => student?.user_id && handleToggleAttendance(student.user_id)}
                               className={cn(
-                                "w-14 h-14 rounded-2xl flex items-center justify-center transition-all border-2",
+                                "w-10 h-10 rounded-xl flex items-center justify-center transition-all border-2",
                                 isPresent 
-                                  ? "bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/20" 
+                                  ? "bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/10" 
                                   : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-800 text-slate-300 hover:border-blue-200"
                               )}
                             >
                               <div className={cn(
-                                "w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all",
-                                isPresent ? "bg-white border-white text-blue-600" : "bg-slate-50 border-slate-200"
+                                "w-5 h-5 rounded flex items-center justify-center transition-all",
+                                isPresent ? "bg-white text-blue-600" : "bg-transparent border border-slate-200"
                               )}>
-                                {isPresent && <Check size={16} strokeWidth={4} />}
+                                {isPresent && <Check size={14} strokeWidth={4} />}
                               </div>
                             </button>
                         </div>
@@ -494,23 +494,23 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
 
                 {/* Batch Submission Button */}
                 <div className="pt-8 flex justify-center">
-                   <Button 
-                    onClick={handleSubmitBatchAttendance}
-                    disabled={!isAttendanceWindow() || isSubmittingBatch || interns.length === 0}
-                    className={cn(
-                      "rounded-3xl h-16 px-12 font-black text-sm transition-all shadow-xl",
-                      isAttendanceWindow() 
-                        ? "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20" 
-                        : "bg-slate-200 text-slate-400"
-                    )}
-                   >
-                     {isSubmittingBatch ? (
-                       <Loader2 className="animate-spin mr-2" />
-                     ) : (
-                       <CheckCircle2 className="mr-2" size={20} />
+                    <Button 
+                     onClick={handleSubmitBatchAttendance}
+                     disabled={!isAttendanceWindow() || isSubmittingBatch || interns.length === 0}
+                     className={cn(
+                       "rounded-2xl h-14 px-10 font-black text-xs transition-all shadow-xl uppercase tracking-tighter",
+                       isAttendanceWindow() 
+                         ? "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20" 
+                         : "bg-slate-200 text-slate-400"
                      )}
-                     SEND ATTENDANCE TO {data.profile?.company?.company_name || 'COMPANY'}
-                   </Button>
+                    >
+                      {isSubmittingBatch ? (
+                        <Loader2 className="animate-spin mr-2" />
+                      ) : (
+                        <CheckCircle2 className="mr-2" size={18} />
+                      )}
+                      SUBMIT ATTENDANCE TO {data.profile?.company?.company_name || 'COMPANY'}
+                    </Button>
                 </div>
             </motion.div>
           )}
