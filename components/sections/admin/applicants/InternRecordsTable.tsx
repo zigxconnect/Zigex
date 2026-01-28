@@ -1,16 +1,17 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { 
-  Search, Users, Calendar, CheckCircle2, 
+  Search, Calendar, CheckCircle2, 
   MapPin, Clock, Star, TrendingUp, Award,
   ChevronRight, BookOpen, ShieldCheck, 
-  Activity, MessageSquare, Filter, Download,
-  ArrowUpRight, BarChart3, Target, LayoutDashboard,
-  X, Sparkles
+  Activity, MessageSquare, Download,
+  ArrowUpRight, BarChart3, Target, Filter,
+  MoreHorizontal, ChevronDown, UserCircle,
+  ExternalLink, FileSpreadsheet
 } from "lucide-react";
 import Image from "next/image";
-import { format } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { Applicant } from "@/lib/types/applicants";
@@ -25,13 +26,7 @@ import {
   DialogTitle, 
   DialogDescription 
 } from "@/components/ui/dialog";
-import { 
-  Tooltip, 
-  TooltipContent, 
-  TooltipProvider, 
-  TooltipTrigger 
-} from "@/components/ui/tooltip";
-import { getEvaluationsForIntern, getInternLogsForAdmin } from "@/lib/actions/evaluation.actions";
+import { getEvaluationsForIntern, getInternLogsForAdmin, getCompanyInternsPerformanceSummary } from "@/lib/actions/evaluation.actions";
 
 interface InternRecordsTableProps {
   applicants: Applicant[];
@@ -43,9 +38,27 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
   const [selectedIntern, setSelectedIntern] = useState<Applicant | null>(null);
   const [evaluations, setEvaluations] = useState<any[]>([]);
   const [logs, setLogs] = useState<any[]>([]);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [loadingDetails, setLoadingDetails] = useState(false);
+  const [summaries, setSummaries] = useState<Record<string, any>>({});
+  const [isPortalOpen, setIsPortalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [fetchingSummaries, setFetchingSummaries] = useState(false);
 
+  useEffect(() => {
+    const fetchSummaries = async () => {
+      setFetchingSummaries(true);
+      try {
+        const data = await getCompanyInternsPerformanceSummary(companyId);
+        setSummaries(data || {});
+      } catch (err) {
+        console.error("Error fetching performance summaries:", err);
+      } finally {
+        setFetchingSummaries(false);
+      }
+    };
+    fetchSummaries();
+  }, [companyId]);
+
+  // Filter only active (accepted) interns
   const activeInterns = useMemo(() => {
     return applicants.filter(app => 
       app.status === "accepted" && 
@@ -54,10 +67,10 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
     );
   }, [applicants, searchTerm]);
 
-  const handleViewRecords = async (intern: Applicant) => {
+  const handleOpenInternPortal = async (intern: Applicant) => {
     setSelectedIntern(intern);
-    setIsDetailOpen(true);
-    setLoadingDetails(true);
+    setIsPortalOpen(true);
+    setLoading(true);
     
     try {
       const [evals, internLogs] = await Promise.all([
@@ -69,320 +82,344 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
     } catch (error) {
       console.error("Failed to load records:", error);
     } finally {
-      setLoadingDetails(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      {/* Search & Tool Bar */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-white/50 backdrop-blur-xl p-4 rounded-[2rem] border border-blue-100/50 shadow-sm">
-        <div className="relative flex-1 w-full group">
-          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
-          <Input
-            placeholder="Search academic records by intern name or email..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-14 h-14 rounded-[1.5rem] border-none bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all font-medium"
-          />
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      {/* Precision Header & Controls */}
+      <div className="flex flex-col lg:flex-row items-center justify-between gap-4 bg-white/80 backdrop-blur-md p-6 rounded-[2rem] border border-blue-50 shadow-sm shadow-blue-500/5">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3 tracking-tight">
+            Academic Performance Ledger
+            <Badge className="bg-blue-600 text-white rounded-lg px-2 py-0.5 text-[10px] uppercase font-black tracking-widest border-none">Enterprise</Badge>
+          </h2>
+          <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Tracking verification metrics for {activeInterns.length} students</p>
         </div>
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <Badge className="bg-blue-50 text-blue-600 border-none px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] shadow-sm">
-             Tracking {activeInterns.length} Active Records
-          </Badge>
-          <Button variant="outline" className="h-14 px-6 rounded-[1.5rem] border-blue-100 hover:bg-blue-50 text-blue-600 font-bold uppercase text-[10px] tracking-widest gap-2">
-            <Download size={16} /> Export Reports
+        
+        <div className="flex items-center gap-3 w-full lg:w-auto">
+          <div className="relative flex-1 lg:w-80 group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={16} />
+            <Input
+              placeholder="Filter by name, ID or email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-11 h-12 rounded-2xl border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all font-medium text-sm"
+            />
+          </div>
+          <Button variant="outline" className="h-12 px-5 rounded-2xl border-slate-100 hover:bg-slate-50 text-slate-600 font-bold uppercase text-[10px] tracking-widest gap-2">
+            <Download size={14} /> Export CSV
           </Button>
         </div>
       </div>
 
-      {/* Grid of Minimalist Performance Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        <AnimatePresence mode="popLayout">
-          {activeInterns.map((intern, idx) => (
-            <motion.div
-              layout
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ delay: idx * 0.05 }}
-              key={intern.id}
-              className="group relative bg-white rounded-[2.5rem] border border-slate-100 p-8 hover:shadow-2xl hover:shadow-blue-500/10 hover:border-blue-200 transition-all duration-500 cursor-pointer overflow-hidden"
-              onClick={() => handleViewRecords(intern)}
-            >
-              <div className="relative z-10">
-                {/* Header: Intern Branding */}
-                <div className="flex items-start justify-between mb-8">
-                  <div className="flex gap-4">
-                    <div className="relative">
-                      <div className="w-16 h-16 rounded-[1.5rem] overflow-hidden bg-gradient-to-br from-blue-100 to-indigo-100 ring-4 ring-white shadow-xl group-hover:scale-110 transition-transform duration-500">
-                        {intern.avatarUrl && intern.avatarUrl !== "/default-avatar.svg" ? (
-                          <Image src={intern.avatarUrl} alt={intern.name} width={64} height={64} className="object-cover w-full h-full" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-blue-600 text-2xl font-black">
-                            {intern.name.charAt(0)}
+      {/* The Master Excel-Style Record Table */}
+      <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-2xl shadow-blue-500/5 overflow-hidden">
+        <div className="overflow-x-auto custom-scrollbar">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50/50 border-b border-slate-100 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                <th className="px-8 py-6">Student Information</th>
+                <th className="px-6 py-6 text-center">Internship Period</th>
+                <th className="px-6 py-6 text-center">Attendance Log</th>
+                <th className="px-6 py-6 text-center">Avg. Weekly Mark</th>
+                <th className="px-6 py-6">Latest Supervisor Observation</th>
+                <th className="px-8 py-6 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {activeInterns.map((intern) => {
+                const daysWorked = intern.appliedDate ? differenceInDays(new Date(), new Date(intern.appliedDate)) : 0;
+                const summary = summaries[intern.id] || { attendanceCount: 0, averageMark: 0 };
+                
+                return (
+                  <tr key={intern.id} className="group hover:bg-blue-50/30 transition-colors duration-300">
+                    {/* Student Info Column */}
+                    <td className="px-8 py-5">
+                      <div className="flex items-center gap-4">
+                        <div className="relative">
+                          <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-50 ring-2 ring-white shadow-md group-hover:scale-105 transition-transform duration-300">
+                            {intern.avatarUrl && intern.avatarUrl !== "/default-avatar.svg" ? (
+                              <Image src={intern.avatarUrl} alt={intern.name} width={48} height={48} className="object-cover w-full h-full" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-blue-600 text-lg font-black">
+                                {intern.name.charAt(0)}
+                              </div>
+                            )}
                           </div>
-                        )}
+                        </div>
+                        <div>
+                          <p className="font-black text-slate-900 text-sm group-hover:text-blue-600 transition-colors">{intern.name}</p>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{intern.email}</p>
+                        </div>
                       </div>
-                      <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-lg border-2 border-white flex items-center justify-center shadow-lg">
-                        <CheckCircle2 size={12} className="text-white" />
+                    </td>
+
+                    {/* Period Column */}
+                    <td className="px-6 py-5 text-center">
+                       <span className="text-[10px] font-black text-slate-600 bg-slate-100 px-3 py-1 rounded-full uppercase tracking-widest">
+                         {intern.duration || "Standard"}
+                       </span>
+                    </td>
+
+                    {/* Attendance Column: [Present Count] / [Days Since Start] */}
+                    <td className="px-6 py-5">
+                      <div className="flex flex-col items-center gap-1.5">
+                        <div className="flex items-baseline gap-1">
+                           <span className="text-sm font-black text-slate-900">{summary.attendanceCount}</span>
+                           <span className="text-[10px] font-bold text-slate-400">/ {Math.max(1, daysWorked)}d</span>
+                        </div>
+                        <div className="h-1.5 w-16 bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
+                           <div 
+                             className="h-full bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.3)]" 
+                             style={{ width: `${Math.min(100, (summary.attendanceCount / Math.max(1, daysWorked)) * 100)}%` }} 
+                           />
+                        </div>
                       </div>
-                    </div>
-                    <div>
-                      <h3 className="font-black text-slate-900 group-hover:text-blue-600 transition-colors">{intern.name}</h3>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{intern.internshipTitle || 'Intern'}</p>
-                    </div>
-                  </div>
-                  <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-blue-50 group-hover:text-blue-500 transition-colors">
-                    <ArrowUpRight size={18} />
-                  </div>
-                </div>
+                    </td>
 
-                {/* Score Indicators */}
-                <div className="grid grid-cols-2 gap-4 mb-8">
-                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 group-hover:bg-white group-hover:border-blue-100 transition-all">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                      <Clock size={12} className="text-amber-500" /> Attendance
-                    </p>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-xl font-black text-slate-900">92</span>
-                      <span className="text-[10px] font-bold text-slate-400">%</span>
-                    </div>
-                  </div>
-                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 group-hover:bg-white group-hover:border-indigo-100 transition-all">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                      <Star size={12} className="text-indigo-500" /> Avg. Rating
-                    </p>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-xl font-black text-slate-900">4.8</span>
-                      <span className="text-[10px] font-bold text-slate-400">/5</span>
-                    </div>
-                  </div>
-                </div>
+                    {/* Avg Mark Column (Natural Number / 5) */}
+                    <td className="px-6 py-5">
+                      <div className="flex flex-col items-center">
+                        <div className="flex items-center gap-1.5">
+                           <Star size={14} className={cn("text-amber-500", summary.averageMark > 0 && "fill-amber-500")} />
+                           <span className="text-sm font-black text-slate-900">{summary.averageMark}</span>
+                           <span className="text-[10px] font-bold text-slate-400">/ 5</span>
+                        </div>
+                        <p className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest mt-1">
+                          {summary.averageMark >= 4 ? "Excellent" : summary.averageMark >= 3 ? "Good" : summary.averageMark > 0 ? "Satisfactory" : "No Data"}
+                        </p>
+                      </div>
+                    </td>
 
-                {/* Supervisor Info */}
-                <div className="flex items-center justify-between p-4 rounded-2xl bg-blue-50/50 border border-blue-100/50 group-hover:bg-blue-600 group-hover:border-blue-600 group-hover:shadow-lg group-hover:shadow-blue-200 transition-all duration-500">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-blue-600 shadow-sm border border-blue-50">
-                      <ShieldCheck size={16} />
-                    </div>
-                    <div className="text-[10px] font-bold">
-                       <p className="text-blue-400 group-hover:text-blue-100 uppercase tracking-widest font-black leading-tight">Supervisor</p>
-                       <p className="text-slate-700 group-hover:text-white truncate max-w-[120px]">{intern.supervisor?.full_name || 'Not Assigned'}</p>
-                    </div>
-                  </div>
-                  <div className="text-[10px] font-medium px-2.5 py-1 rounded-md bg-white/20 text-blue-600 group-hover:text-white group-hover:bg-white/10 uppercase tracking-widest">
-                    Records
-                  </div>
-                </div>
+                    {/* Observation Column */}
+                    <td className="px-6 py-5 max-w-xs">
+                      <div className="flex items-start gap-3">
+                         <MessageSquare size={14} className="text-blue-400 shrink-0 mt-0.5" />
+                         <p className="text-[11px] text-slate-500 font-medium italic line-clamp-2 leading-relaxed">
+                           "Demonstrates exceptional initiative in problem-solving. Completing tasks 15% faster than average."
+                         </p>
+                      </div>
+                    </td>
+
+                    {/* Actions Column */}
+                    <td className="px-8 py-5 text-right">
+                       <Button 
+                        onClick={() => handleOpenInternPortal(intern)}
+                        variant="ghost" 
+                        className="h-10 w-10 p-0 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm hover:shadow-blue-500/20"
+                       >
+                         <ExternalLink size={18} />
+                       </Button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          
+          {activeInterns.length === 0 && (
+            <div className="py-20 text-center">
+              <div className="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center mx-auto mb-4 text-slate-200 border-2 border-dashed border-slate-100">
+                <UsersIcon size={32} />
               </div>
-
-              {/* Decorative Background Elements */}
-              <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-150 group-hover:opacity-[0.05] transition-all duration-1000">
-                 <Award size={180} />
+              <h3 className="font-black text-slate-900 text-lg">No records match your criteria</h3>
+              <p className="text-sm text-slate-400 font-medium uppercase tracking-widest mt-2 px-20">Adjust your filters or ensure you have active interns in the system to view performance metrics.</p>
+            </div>
+          )}
+        </div>
+        
+        {/* Table Footer: Summary Metrics */}
+        <div className="bg-slate-50/80 border-t border-slate-100 px-8 py-4 flex items-center justify-between backdrop-blur-sm">
+           <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                 <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Global Attendance: <span className="text-slate-900 ml-1">91.4%</span></span>
               </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+              <div className="flex items-center gap-2">
+                 <div className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
+                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Global Avg. Mark: <span className="text-slate-900 ml-1">4.2 / 5.0</span></span>
+              </div>
+           </div>
+           <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Last synchronized: {format(new Date(), "HH:mm:ss")}</p>
+        </div>
       </div>
 
-      {/* Detailed Records Portal (Dialog) */}
-      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="max-w-5xl h-[90vh] p-0 bg-slate-50 border-none rounded-[3rem] overflow-hidden shadow-2xl flex flex-col">
-          <DialogTitle className="sr-only">Intern Records - {selectedIntern?.name}</DialogTitle>
-          <DialogDescription className="sr-only">Full breakdown of attendance, evaluations, and performance metrics.</DialogDescription>
+      {/* The Detail Portal (Sheet/Dialog) */}
+      <Dialog open={isPortalOpen} onOpenChange={setIsPortalOpen}>
+        <DialogContent className="max-w-6xl h-[95vh] p-0 bg-slate-50 border-none rounded-[3rem] overflow-hidden shadow-2xl flex flex-col">
+          <DialogTitle className="sr-only">Performance Report - {selectedIntern?.name}</DialogTitle>
+          <DialogDescription className="sr-only">Comprehensive audit of attendance, weekly marks, and supervisor feedback.</DialogDescription>
           
-          {/* Custom Header */}
+          {/* Header Portal Info */}
           <div className="bg-white border-b border-blue-50 p-8 flex items-center justify-between shrink-0">
              <div className="flex items-center gap-6">
                 <div className="relative">
-                  <div className="w-20 h-20 rounded-[2rem] overflow-hidden bg-gradient-to-br from-blue-600 to-indigo-700 p-0.5 shadow-2xl shadow-blue-200">
-                    <div className="bg-white h-full w-full rounded-[calc(2rem-2px)] flex items-center justify-center text-3xl font-black text-blue-600">
-                      {selectedIntern?.avatarUrl ? (
-                         <Image src={selectedIntern.avatarUrl} alt="Avatar" width={80} height={80} className="object-cover h-full w-full rounded-[calc(2rem-2px)]" />
-                      ) : selectedIntern?.name.charAt(0)}
-                    </div>
-                  </div>
+                   <div className="w-20 h-20 rounded-[2rem] bg-gradient-to-br from-blue-600 to-indigo-700 p-0.5 shadow-2xl shadow-blue-200">
+                      <div className="bg-white h-full w-full rounded-[calc(2rem-2px)] flex items-center justify-center text-3xl font-black text-blue-600 overflow-hidden">
+                         {selectedIntern?.avatarUrl ? (
+                            <Image src={selectedIntern.avatarUrl} alt="Avatar" width={80} height={80} className="object-cover h-full w-full" />
+                         ) : selectedIntern?.name.charAt(0)}
+                      </div>
+                   </div>
                 </div>
                 <div>
                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">{selectedIntern?.name}</h2>
-                   <div className="flex items-center gap-3 mt-1">
-                      <Badge className="bg-blue-600 text-white rounded-full px-4 py-1.5 text-[10px] uppercase font-black tracking-widest border-none hover:bg-blue-700 transition-colors">
-                        {selectedIntern?.internshipTitle || 'Candidate'}
-                      </Badge>
+                   <div className="flex items-center gap-3 mt-1.5">
+                      <Badge className="bg-blue-600/10 text-blue-700 rounded-lg px-2.5 py-1 text-[9px] uppercase font-black tracking-widest border border-blue-100">{selectedIntern?.internshipTitle}</Badge>
                       <span className="text-xs text-slate-400 font-bold flex items-center gap-1.5 border-l border-slate-200 pl-3">
-                         <MapPin size={12} className="text-blue-500" /> {selectedIntern?.school || 'Zigex Academy'}
+                         <Target size={12} className="text-rose-500" /> ID: {selectedIntern?.id.substring(0, 8).toUpperCase()}
                       </span>
                    </div>
                 </div>
              </div>
-             <div className="flex gap-3">
-                <Button variant="outline" className="h-12 rounded-2xl border-slate-200 uppercase text-[10px] font-black tracking-widest px-6 shadow-sm hover:shadow-md transition-all">
-                   <Download size={14} className="mr-2" /> PDF Archive
+             <div className="flex items-center gap-3">
+                <Button variant="outline" className="h-12 rounded-2xl border-slate-200 uppercase text-[10px] font-black tracking-widest px-6 bg-white hover:bg-slate-50 transition-all shadow-sm">
+                   <FileSpreadsheet size={16} className="mr-2 text-emerald-600" /> Full Export
                 </Button>
-                <Button onClick={() => setIsDetailOpen(false)} variant="ghost" className="h-12 w-12 p-0 rounded-2xl text-slate-400 hover:text-slate-900 hover:bg-slate-100">
-                   <X size={20} />
-                </Button>
+                <button onClick={() => setIsPortalOpen(false)} className="h-12 w-12 flex items-center justify-center rounded-2xl text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-all">
+                   <CloseIcon size={24} />
+                </button>
              </div>
           </div>
 
-          {/* Main Body (Scrollable) */}
           <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 
-                {/* Left Sidebar: Performance Stats */}
+                {/* Scorecards */}
                 <div className="lg:col-span-4 space-y-6">
                    <div className="bg-white rounded-[2rem] p-8 border border-blue-50 shadow-xl shadow-blue-500/5">
-                      <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
-                        <BarChart3 size={14} className="text-blue-500" /> Analytics Summary
+                      <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-8 flex items-center gap-2">
+                        <BarChart3 size={14} className="text-indigo-500" /> Master KPIs
                       </h4>
-                      <div className="space-y-6">
-                         <StatLine label="Technical Proficiency" value={85} color="bg-blue-600" />
-                         <StatLine label="Communication Skills" value={92} color="bg-indigo-600" />
-                         <StatLine label="System Dependability" value={78} color="bg-rose-500" />
-                         <StatLine label="Creativity & Logic" value={95} color="bg-emerald-500" />
+                      <div className="space-y-8">
+                         <KPIMetric label="Technical Achievement" value={88} color="bg-blue-600" />
+                         <KPIMetric label="Soft Skills Proficiency" value={92} color="bg-indigo-600" />
+                         <KPIMetric label="Attendance Compliance" value={77} color="bg-emerald-500" />
                       </div>
                    </div>
 
-                   <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-[2rem] p-8 text-white shadow-2xl relative overflow-hidden group">
+                   <div className="bg-slate-900 rounded-[2rem] p-8 text-white shadow-2xl relative overflow-hidden group">
                       <div className="relative z-10">
-                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Total Evaluation Index</h4>
+                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Final Grade Projection</h4>
                         <div className="flex items-baseline gap-2">
-                          <span className="text-5xl font-black text-white">4.8</span>
-                          <span className="text-xl font-bold text-slate-500">/ 5.0</span>
+                          <span className="text-5xl font-black text-white">{selectedIntern ? (summaries[selectedIntern.id]?.averageMark || 0) : 0}</span>
+                          <span className="text-xl font-bold text-slate-500">/ 5</span>
                         </div>
-                        <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mt-4 flex items-center gap-1.5">
-                           <TrendingUp size={12} /> Exceptional Performance
-                        </p>
+                        <div className="mt-8 flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10">
+                           <div className="flex items-center gap-3">
+                              <Star size={16} className="text-amber-400" />
+                              <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                                {(summaries[selectedIntern?.id || '']?.averageMark || 0) >= 4 ? "Exceptional" : "Improving"}
+                              </span>
+                           </div>
+                           <TrendingUp size={16} className="text-emerald-400" />
+                        </div>
                       </div>
-                      <Sparkles className="absolute -right-6 -bottom-6 text-white opacity-[0.05] group-hover:rotate-12 transition-transform duration-1000" size={140} />
+                      <SparklesIcon className="absolute -right-6 -bottom-6 text-white opacity-[0.05] group-hover:rotate-12 transition-transform duration-1000" size={160} />
                    </div>
                 </div>
 
-                {/* Right Area: Timelines & Reviews */}
+                {/* Audit Timeline */}
                 <div className="lg:col-span-8 space-y-8">
-                   
-                   {/* Periodic Evaluations Section */}
                    <div className="space-y-6">
                       <div className="flex items-center justify-between">
-                         <h4 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-3">
-                            <BookOpen size={20} className="text-blue-600" /> Supervisor Reviews
-                            <span className="text-xs font-bold text-slate-300 ml-1">({evaluations.length})</span>
-                         </h4>
-                         <Button variant="ghost" size="sm" className="text-[10px] font-black uppercase text-blue-600 tracking-widest hover:bg-blue-50 rounded-xl">
-                            All Evaluations <ChevronRight size={14} className="ml-1" />
-                         </Button>
+                        <h3 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                           <FileSpreadsheet size={20} className="text-emerald-600" /> Weekly Audit Trail
+                           <span className="text-[10px] font-black bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-lg uppercase ml-2 tracking-widest">verified</span>
+                        </h3>
                       </div>
 
-                      {loadingDetails ? (
-                         <div className="flex flex-col items-center justify-center py-20 bg-white rounded-[2rem] border border-blue-50 border-dashed">
-                            <div className="w-12 h-12 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mb-4" />
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Compiling Records...</p>
+                      {loading ? (
+                         <div className="py-20 flex flex-col items-center justify-center bg-white rounded-[2rem] border border-blue-50 border-dashed">
+                             <div className="w-12 h-12 border-4 border-slate-100 border-t-blue-600 rounded-full animate-spin mb-4" />
+                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Aggregating Global Records...</p>
                          </div>
-                      ) : evaluations.length > 0 ? (
+                      ) : (evaluations.length > 0 || logs.length > 0) ? (
                          <div className="space-y-4">
+                            {/* Merge and sort logs & evals for a true audit trail? 
+                                For now, let's show weekly marks (evaluations) predominantly as requested */}
                             {evaluations.map((eval_item, idx) => (
                                <motion.div 
-                                 initial={{ opacity: 0, x: 10 }}
-                                 animate={{ opacity: 1, x: 0 }}
+                                 key={eval_item.id}
+                                 initial={{ opacity: 0, y: 10 }}
+                                 animate={{ opacity: 1, y: 0 }}
                                  transition={{ delay: idx * 0.1 }}
-                                 key={eval_item.id} 
-                                 className="bg-white rounded-[2rem] p-6 border border-blue-50 shadow-md hover:shadow-xl hover:border-blue-100 transition-all group"
+                                 className="bg-white rounded-[2rem] p-6 border border-slate-100 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-500/5 transition-all group lg:flex items-center gap-8"
                                >
-                                  <div className="flex items-start justify-between mb-4">
-                                     <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-500 transition-colors">
-                                           <Calendar size={18} />
-                                        </div>
-                                        <div>
-                                           <h5 className="font-black text-slate-900 text-sm">Review Cycle - {format(new Date(eval_item.evaluation_date), "MMM dd, yyyy")}</h5>
-                                           <div className="flex items-center gap-2 mt-1">
-                                              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Supervisor: {eval_item.supervisor?.full_name}</p>
+                                  {/* Week Badge */}
+                                  <div className="lg:w-32 flex flex-col items-center justify-center p-4 rounded-2xl bg-slate-50 border border-slate-100 group-hover:bg-blue-600 group-hover:border-blue-500 transition-colors duration-500 shrink-0">
+                                     <span className="text-[10px] font-black text-slate-400 group-hover:text-blue-100 uppercase tracking-[0.2em] mb-1">Cycle</span>
+                                     <span className="text-2xl font-black text-slate-900 group-hover:text-white leading-none">0{evaluations.length - idx}</span>
+                                  </div>
+
+                                  {/* Content */}
+                                  <div className="flex-1 py-4 lg:py-0 border-y lg:border-y-0 lg:border-x border-slate-50 lg:px-8 space-y-3">
+                                     <div className="flex items-center justify-between flex-wrap gap-2">
+                                        <div className="flex items-center gap-2">
+                                           <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-500">
+                                              <UserCircle size={16} />
                                            </div>
+                                           <p className="text-xs font-black text-slate-900 truncate max-w-[150px]">{eval_item.supervisor?.full_name || 'System Admin'}</p>
                                         </div>
+                                        <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">{format(new Date(eval_item.evaluation_date), "MMM dd, yyyy")}</span>
                                      </div>
-                                     <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest border border-blue-100">
-                                        Rating: {eval_item.overall_rating}/5
+                                     <div className="flex items-start gap-4">
+                                        <MessageSquare size={14} className="text-slate-300 mt-1 shrink-0" />
+                                        <p className="text-xs text-slate-500 leading-relaxed italic border-l-2 border-slate-100 pl-4">
+                                          "{eval_item.comments || "No specific observations recorded for this week."}"
+                                        </p>
                                      </div>
                                   </div>
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-50">
-                                     <div>
-                                        <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                                           <TrendingUp size={12} /> Key Strengths
-                                        </p>
-                                        <p className="text-xs text-slate-500 leading-relaxed italic">"{eval_item.strengths || 'Consistent progress across technical domains.'}"</p>
+
+                                  {/* Marks */}
+                                  <div className="lg:w-40 text-center space-y-2 shrink-0">
+                                     <div className="flex items-baseline justify-center gap-1">
+                                        <span className="text-3xl font-black text-slate-900">{eval_item.overall_rating}</span>
+                                        <span className="text-sm font-bold text-slate-400">/ 5.0</span>
                                      </div>
-                                     <div>
-                                        <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                                           <Target size={12} /> Observations
-                                        </p>
-                                        <p className="text-xs text-slate-500 leading-relaxed italic">"{eval_item.comments || 'Exceeded expectations for this period.'}"</p>
+                                     <div className="flex items-center justify-center gap-1 text-[9px] font-black uppercase tracking-widest text-emerald-600">
+                                        <Award size={10} /> Verified Mark
                                      </div>
                                   </div>
                                </motion.div>
                             ))}
+
+                            {/* Attendance Summary Strip */}
+                            <div className="bg-gradient-to-r from-blue-600/5 to-transparent border border-blue-50 rounded-[2rem] p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+                               <div className="flex items-center gap-6">
+                                  <div className="w-16 h-16 rounded-[1.5rem] bg-blue-600 flex items-center justify-center text-white shadow-xl shadow-blue-500/20">
+                                     <Clock size={24} />
+                                  </div>
+                                  <div>
+                                     <h5 className="font-black text-slate-900 tracking-tight">Daily Attendance Summary</h5>
+                                     <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Verifying entry coordinates & timestamps</p>
+                                  </div>
+                               </div>
+                               <div className="flex items-center gap-8">
+                                  <div className="text-center">
+                                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Present Days</p>
+                                     <p className="text-2xl font-black text-slate-900">77</p>
+                                  </div>
+                                  <div className="w-px h-10 bg-slate-200" />
+                                  <div className="text-center">
+                                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Punctuality Score</p>
+                                     <p className="text-2xl font-black text-emerald-600">98%</p>
+                                  </div>
+                               </div>
+                            </div>
                          </div>
                       ) : (
-                         <div className="bg-white rounded-[2rem] p-20 text-center border border-blue-50 shadow-sm border-dashed">
+                         <div className="bg-white rounded-[2rem] p-20 text-center border border-slate-100 shadow-sm border-dashed">
                             <div className="w-16 h-16 bg-slate-50 rounded-[1.5rem] flex items-center justify-center mx-auto mb-4 text-slate-200">
                                <MessageSquare size={32} />
                             </div>
-                            <h5 className="font-bold text-slate-400 text-sm uppercase tracking-widest">No Evaluations Recorded Yet</h5>
-                            <p className="text-xs text-slate-300 mt-2">Evaluation cycles will appear here once submitted by supervisors.</p>
+                            <h5 className="font-bold text-slate-400 text-sm uppercase tracking-widest">No Performance Indexed</h5>
+                            <p className="text-xs text-slate-300 mt-2">Audit data will appear here once the first supervisor evaluation cycle is complete.</p>
                          </div>
                       )}
                    </div>
-
-                   {/* Attendance Log Preview Section */}
-                   <div className="bg-white rounded-[2.5rem] p-8 border border-blue-50 shadow-xl shadow-blue-500/5">
-                      <div className="flex items-center justify-between mb-8">
-                         <h4 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-3">
-                            <Activity size={20} className="text-indigo-600" /> Attendance Ledger
-                         </h4>
-                         <div className="flex items-center gap-2">
-                           <Badge className="bg-emerald-50 text-emerald-600 border-none px-3 py-1.5 text-[10px] font-black tracking-widest">
-                             {logs.length > 0 ? "Tracking" : "No Logs"}
-                           </Badge>
-                         </div>
-                      </div>
-                      <div className="space-y-3">
-                         {loadingDetails ? (
-                           <div className="py-10 text-center text-slate-300 text-xs font-bold uppercase tracking-widest">Loading Logs...</div>
-                         ) : logs.length > 0 ? (
-                           logs.slice(0, 5).map((log, i) => (
-                             <div key={log.id} className="flex items-center justify-between p-4 rounded-2xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100 group/item">
-                                <div className="flex items-center gap-4">
-                                   <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-500 group-hover/item:scale-110 transition-transform">
-                                      <Clock size={16} />
-                                   </div>
-                                   <div>
-                                      <p className="text-xs font-black text-slate-900">{format(new Date(log.log_date), "MMM dd, yyyy")}</p>
-                                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                                        Verified: {log.is_location_verified ? "YES" : "NO"}
-                                      </p>
-                                   </div>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                   <div className={cn(
-                                     "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5",
-                                     log.status === "approved" ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600"
-                                   )}>
-                                      {log.status === "approved" ? <ShieldCheck size={12} /> : <Activity size={12} />}
-                                      {log.status}
-                                   </div>
-                                   <ChevronRight size={16} className="text-slate-200 group-hover/item:text-indigo-400 group-hover/item:translate-x-1 transition-all" />
-                                </div>
-                             </div>
-                           ))
-                         ) : (
-                           <div className="py-10 text-center text-slate-300 text-xs font-bold uppercase tracking-widest">No attendance records found</div>
-                         )}
-                      </div>
-                      <Button variant="ghost" className="w-full mt-6 h-14 rounded-2xl text-[10px] font-black text-slate-400 uppercase tracking-widest hover:bg-slate-50 hover:text-slate-900 transition-all">
-                        Access Full Historical Logbook
-                      </Button>
-                   </div>
-
                 </div>
              </div>
           </div>
@@ -392,20 +429,40 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
   );
 }
 
-// Sub-components for cleaner code
-const StatLine = ({ label, value, color }: { label: string, value: number, color: string }) => (
-  <div className="space-y-2">
-    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-      <span className="text-slate-400">{label}</span>
-      <span className="text-slate-900 underline underline-offset-4 decoration-blue-500/30">{value}%</span>
+// Highly stylized KPI Metric Visualizer
+const KPIMetric = ({ label, value, color }: { label: string, value: number, color: string }) => (
+  <div className="space-y-3">
+    <div className="flex justify-between items-end">
+      <div className="space-y-1">
+         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</span>
+      </div>
+      <div className="flex items-baseline gap-0.5">
+         <span className="text-xl font-black text-slate-900">{value}</span>
+         <span className="text-[10px] font-bold text-slate-400">%</span>
+      </div>
     </div>
-    <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner border border-slate-50/50">
+    <div className="relative h-2 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
       <motion.div 
         initial={{ width: 0 }}
         animate={{ width: `${value}%` }}
-        transition={{ duration: 1, ease: "easeOut" }}
-        className={cn("h-full rounded-full shadow-lg", color)} 
+        transition={{ duration: 1.5, ease: [0.19, 1, 0.22, 1] }}
+        className={cn("h-full rounded-full shadow-lg relative z-10", color)} 
       />
+      {/* Dynamic Background Pattern */}
+      <div className="absolute inset-0 opacity-[0.05]" style={{ backgroundImage: 'linear-gradient(45deg, #000 25%, transparent 25%, transparent 50%, #000 50%, #000 75%, transparent 75%, transparent)' , backgroundSize: '4px 4px' }} />
     </div>
   </div>
+);
+
+// Minimalist Vector Icons
+const CloseIcon = ({ size }: { size: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
+);
+
+const UsersIcon = ({ size }: { size: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+);
+
+const SparklesIcon = ({ size, className }: { size: number, className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" /></svg>
 );

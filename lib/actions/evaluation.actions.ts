@@ -114,3 +114,48 @@ export async function getInternLogsForAdmin(studentId: string, internshipId?: st
 
     return data;
 }
+
+export async function getCompanyInternsPerformanceSummary(companyId: string) {
+    const supabase = await createServerActionClient();
+
+    // 1. Get all accepted internship applications for this company
+    const { data: applications, error: appError } = await supabase
+        .from("internship_applications")
+        .select("id, student_id, internship_id")
+        .eq("status", "accepted");
+
+    if (appError || !applications) return {};
+
+    const studentIds = applications.map(a => a.student_id);
+
+    // 2. Get summaries of logs (attendance)
+    const { data: logs, error: logsError } = await supabase
+        .from("intern_logs")
+        .select("student_id, id")
+        .in("student_id", studentIds);
+
+    // 3. Get summaries of evaluations (marks)
+    const { data: evals, error: evalsError } = await supabase
+        .from("intern_evaluations")
+        .select("student_id, overall_rating")
+        .in("student_id", studentIds);
+
+    const summary: Record<string, { attendanceCount: number; averageMark: number; latestObservation: string }> = {};
+
+    applications.forEach(app => {
+        const studentLogs = (logs || []).filter(l => l.student_id === app.student_id);
+        const studentEvals = (evals || []).filter(e => e.student_id === app.student_id);
+
+        const avgMark = studentEvals.length > 0
+            ? Math.round(studentEvals.reduce((acc, curr) => acc + curr.overall_rating, 0) / studentEvals.length)
+            : 0;
+
+        summary[app.id] = {
+            attendanceCount: studentLogs.length,
+            averageMark: avgMark,
+            latestObservation: "" // We could fetch this too but let's keep it simple for now or fetch it if needed
+        };
+    });
+
+    return summary;
+}
