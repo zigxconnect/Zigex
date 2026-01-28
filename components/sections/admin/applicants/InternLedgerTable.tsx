@@ -330,7 +330,17 @@ export const InternLedgerTable = ({
                     <Briefcase size={28} />
                  </div>
                  <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Guaranteed Pipeline</p>
+                    <div className="flex items-center gap-2 mb-1">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Outstanding Balance</p>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info size={12} className="text-slate-300 cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-slate-900 text-white max-w-[200px] rounded-xl text-[10px] p-2 border-none">
+                            Projected revenue that is yet to be collected for the full duration of active internships (Unrealized Assets).
+                          </TooltipContent>
+                        </Tooltip>
+                     </div>
                     <div className="flex items-baseline gap-2">
                        <span className="text-4xl font-black text-slate-900 tabular-nums">
                           {totals.totalRemaining.toLocaleString()}
@@ -340,7 +350,7 @@ export const InternLedgerTable = ({
                  </div>
                  <div className="flex items-center gap-2 pt-4 border-t border-slate-50 text-[10px] font-bold text-blue-400 uppercase tracking-widest">
                     <ArrowUpRight size={12} />
-                    Unrealized Assets
+                    Contract Assets
                  </div>
               </div>
               <FileSpreadsheet className="absolute -right-6 -bottom-6 opacity-[0.03] text-slate-900" size={120} />
