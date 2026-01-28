@@ -41,6 +41,7 @@ import { createClient } from "@/lib/supabase/client";
 import { InternAnnouncementBoard } from "@/components/sections/intern/InternAnnouncementBoard";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { toast } from "sonner";
 
 interface InternWorkspaceClientProps {
   data: {
@@ -146,6 +147,37 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
       supabase.removeChannel(announcementsChannel);
     };
   }, [application?.internships?.company_id, activeTab]);
+
+  // Real-time Logs Listener (for Approval Status)
+  useEffect(() => {
+    const supabase = createClient();
+    
+    const logsChannel = supabase
+      .channel(`logs-${application?.student_id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'intern_logs',
+          filter: `student_id=eq.${application?.student_id}`
+        },
+        (payload) => {
+          console.log('[REALTIME] Log update detected:', payload);
+          router.refresh();
+          
+          // If approved, show a nice toast (optional but good for UX)
+          if (payload.new && (payload.new as any).status === 'approved') {
+            toast.success("Your daily report has been confirmed by your supervisor!");
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(logsChannel);
+    };
+  }, [application?.student_id, router]);
 
   // Reset unread count when switching to announcements tab
   useEffect(() => {
@@ -584,7 +616,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                             log.status === "rejected" ? "bg-red-50 text-red-600 border-red-100" :
                             "bg-amber-50 text-amber-600 border-amber-100"
                           )}>
-                            {log.status || "Pending"}
+                            {log.status === "approved" ? "Confirmed" : (log.status || "Pending")}
                           </Badge>
                         </div>
                         <p className="text-sm font-medium text-slate-700 dark:text-slate-300 line-clamp-2 mb-4">
