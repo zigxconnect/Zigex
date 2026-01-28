@@ -90,17 +90,22 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
   // Initialize pending attendance from existing data
   useEffect(() => {
     if (attendance && interns) {
-      const initialMap: Record<string, string> = {};
-      interns.forEach(intern => {
-        const student = Array.isArray(intern.student) ? intern.student[0] : intern.student;
-        const record = attendance.find(a => a.student_id === student?.user_id);
-        if (record) {
-          initialMap[student?.user_id] = record.status;
-        } else {
-          initialMap[student?.user_id] = "absent"; // default
-        }
+      setPendingAttendance(prev => {
+        const newMap = { ...prev };
+        interns.forEach(intern => {
+          const student = Array.isArray(intern.student) ? intern.student[0] : intern.student;
+          const studentId = student?.user_id;
+          if (!studentId) return;
+
+          const record = attendance.find(a => a.student_id === studentId);
+          
+          // Only overwrite if not already in local state OR if record changed to 'present'
+          if (!newMap[studentId] || (record && record.status === 'present')) {
+             newMap[studentId] = record ? record.status : "absent";
+          }
+        });
+        return newMap;
       });
-      setPendingAttendance(initialMap);
     }
   }, [attendance, interns]);
 
@@ -445,16 +450,18 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                     
                     // Check if already submitted in DB (prop data)
                     const confirmedRecord = attendance.find(a => a.student_id === student?.user_id);
-                    const isSubmitted = !!confirmedRecord;
+                    
+                    // Only lock "Submitted" state if they were marked PRESENT or if we are outside the window
+                    const isLocked = !!confirmedRecord && confirmedRecord.status === 'present';
 
-                    // Use pending state if not submitted, otherwise use confirmed state
-                    const status = isSubmitted ? confirmedRecord.status : (pendingAttendance[student?.user_id] || "absent");
+                    // Use pending state for UI toggling
+                    const status = pendingAttendance[student?.user_id] || "absent";
                     const isPresent = status === "present";
 
                     return (
                       <div key={intern.id} className={cn(
                         "bg-white dark:bg-slate-900 border transition-all rounded-2xl p-3 flex items-center gap-4",
-                        isSubmitted ? "opacity-60 grayscale bg-slate-50 dark:bg-slate-800/50" : (isPresent ? "border-green-200 bg-green-50/20 shadow-sm" : "border-slate-100/50 hover:border-slate-200")
+                        isLocked ? "opacity-60 grayscale bg-slate-50 dark:bg-slate-800/50" : (isPresent ? "border-green-200 bg-green-50/20 shadow-sm" : "border-slate-100/50 hover:border-slate-200")
                       )}>
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                           <div className="w-10 h-10 rounded-xl overflow-hidden ring-2 ring-white dark:ring-slate-800 shadow-sm flex-shrink-0">
@@ -473,15 +480,15 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                               "text-[9px] font-black uppercase tracking-widest",
                               isPresent ? "text-green-600" : "text-slate-300"
                             )}>
-                              {isSubmitted ? (isPresent ? "Submitted" : "Absent") : (isPresent ? "Present" : "Absent")}
+                              {isLocked ? "Submitted" : (isPresent ? "Present" : "Absent")}
                             </span>
                             
                             <button
-                              disabled={isSubmitted || !isAttendanceWindow()}
-                              onClick={() => student?.user_id && !isSubmitted && handleToggleAttendance(student.user_id)}
+                              disabled={isLocked || !isAttendanceWindow()}
+                              onClick={() => student?.user_id && !isLocked && handleToggleAttendance(student.user_id)}
                               className={cn(
                                 "w-10 h-10 rounded-xl flex items-center justify-center transition-all border-2",
-                                isSubmitted 
+                                isLocked 
                                   ? "bg-slate-200 border-slate-200 text-slate-400 cursor-not-allowed" 
                                   : (isPresent 
                                       ? "bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/10" 
@@ -490,7 +497,7 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                             >
                               <div className={cn(
                                 "w-5 h-5 rounded flex items-center justify-center transition-all",
-                                isSubmitted 
+                                isLocked 
                                   ? "bg-transparent" // Gray Check
                                   : (isPresent ? "bg-white text-blue-600" : "bg-transparent border border-slate-200")
                               )}>
@@ -507,10 +514,8 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                 <div className="pt-8 flex justify-center">
                     <Button 
                      onClick={handleSubmitBatchAttendance}
-                     disabled={!isAttendanceWindow() || isSubmittingBatch || interns.length === 0 || interns.every(i => {
-                        const s = Array.isArray(i.student) ? i.student[0] : i.student;
-                        return attendance.some(a => a.student_id === s?.user_id);
-                     })}
+                     onClick={handleSubmitBatchAttendance}
+                     disabled={!isAttendanceWindow() || isSubmittingBatch || interns.length === 0}
                      className={cn(
                        "rounded-2xl h-14 px-10 font-black text-xs transition-all shadow-xl uppercase tracking-tighter",
                        isAttendanceWindow() 

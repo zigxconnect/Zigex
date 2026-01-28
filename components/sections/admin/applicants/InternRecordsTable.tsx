@@ -44,6 +44,7 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
   const [fetchingSummaries, setFetchingSummaries] = useState(false);
 
   useEffect(() => {
+    if (!companyId) return;
     const fetchSummaries = async () => {
       setFetchingSummaries(true);
       try {
@@ -197,7 +198,7 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
                       <div className="flex items-start gap-3">
                          <MessageSquare size={14} className="text-blue-400 shrink-0 mt-0.5" />
                          <p className="text-[11px] text-slate-500 font-medium italic line-clamp-2 leading-relaxed">
-                           "Demonstrates exceptional initiative in problem-solving. Completing tasks 15% faster than average."
+                           "{summary.latestObservation || "Consolidating performance metrics and supervisor feedback."}"
                          </p>
                       </div>
                     </td>
@@ -293,9 +294,9 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
                         <BarChart3 size={14} className="text-indigo-500" /> Master KPIs
                       </h4>
                       <div className="space-y-8">
-                         <KPIMetric label="Technical Achievement" value={88} color="bg-blue-600" />
-                         <KPIMetric label="Soft Skills Proficiency" value={92} color="bg-indigo-600" />
-                         <KPIMetric label="Attendance Compliance" value={77} color="bg-emerald-500" />
+                         <KPIMetric label="Technical Achievement" value={selectedIntern ? Math.min(100, (summaries[selectedIntern.id]?.totalMarks || 0) * 4) : 0} color="bg-blue-600" />
+                         <KPIMetric label="Soft Skills Proficiency" value={85} color="bg-indigo-600" />
+                         <KPIMetric label="Attendance Compliance" value={selectedIntern ? Math.min(100, Math.round(((summaries[selectedIntern.id]?.attendanceCount || 0) / Math.max(1, selectedIntern.appliedDate ? differenceInDays(new Date(), new Date(selectedIntern.appliedDate)) : 30)) * 100)) : 0} color="bg-emerald-500" />
                       </div>
                    </div>
 
@@ -399,14 +400,16 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
                                <div className="flex items-center gap-8">
                                   <div className="text-center">
                                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Present Days</p>
-                                     <p className="text-2xl font-black text-slate-900">77</p>
+                                     <p className="text-2xl font-black text-slate-900">{selectedIntern ? summaries[selectedIntern.id]?.attendanceCount || 0 : 0}</p>
                                   </div>
                                   <div className="w-px h-10 bg-slate-200" />
                                   <div className="text-center">
                                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Punctuality Score</p>
-                                     <p className="text-2xl font-black text-emerald-600">98%</p>
-                                  </div>
-                               </div>
+                                     <p className="text-2xl font-black text-emerald-600">
+                                        {selectedIntern ? Math.round(((summaries[selectedIntern.id]?.attendanceCount || 0) / Math.max(1, selectedIntern.appliedDate ? differenceInDays(new Date(), new Date(selectedIntern.appliedDate)) : 30)) * 100) : 0}%
+                                      </p>
+                                   </div>
+                                </div>
                             </div>
                          </div>
                       ) : (

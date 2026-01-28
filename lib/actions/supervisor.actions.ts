@@ -505,12 +505,12 @@ export async function submitBatchAttendance(records: { studentId: string, intern
 
     const { data, error } = await supabase
         .from("intern_attendance")
-        .upsert(attendanceData)
+        .upsert(attendanceData, { onConflict: 'student_id,attendance_date' })
         .select();
 
     if (error) {
-        console.error("Error submitting batch attendance:", error);
-        return { success: false, error: error.message };
+        console.error("Error submitting batch attendance:", JSON.stringify(error, null, 2));
+        return { success: false, error: error.message || "Unknown error occurred" };
     }
 
     revalidatePath("/supervisor");

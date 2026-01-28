@@ -116,43 +116,68 @@ export async function getInternLogsForAdmin(studentId: string, internshipId?: st
 }
 
 export async function getCompanyInternsPerformanceSummary(companyId: string) {
+    if (!companyId) return {}; // Existing null check for companyId
     const supabase = await createServerActionClient();
 
-    // 1. Get all accepted internship applications for this company
-    const { data: applications, error: appError } = await supabase
-        .from("internship_applications")
-        .select("id, student_id, internship_id")
-        .eq("status", "accepted");
+    // 1. Get all accepted internship applications for this company from BOTH tables
+    const [structuredRes, legacyRes] = await Promise.all([
+        supabase
+            .from("internship_applications")
+            .select("id, student_id, internship_id, internships!inner(company_id)")
+            .eq("status", "accepted")
+            .eq("internships.company_id", companyId),
+        supabase
+            .from("Applications")
+            .select("id, student_id, internship_id")
+            .eq("status", "accepted")
+            .eq("company_id", companyId)
+        // Note: In legacy, some might be programs, but we filter for internships later or just count all if they have evaluations
+    ]);
 
-    if (appError || !applications) return {};
+    const applications = [
+        ...(structuredRes.data || []),
+        ...(legacyRes.data || [])
+    ];
 
-    const studentIds = applications.map(a => a.student_id);
+    if (applications.length === 0) return {};
+
+    const studentIds = [...new Set(applications.map(a => a.student_id))];
+    const internshipIds = [...new Set(applications.map(a => a.internship_id).filter(Boolean))];
 
     // 2. Get verified attendance records
-    const { data: attendance, error: attError } = await supabase
+    const { data: attendance } = await supabase
         .from("intern_attendance")
-        .select("student_id, status")
-        .eq("status", "present")
-        .in("student_id", studentIds);
+        .select("student_id, internship_id, status")
+        .in("student_id", studentIds)
+        .eq("status", "present"); // Filter for present status
 
     // 3. Get summaries of evaluations (marks)
-    const { data: evals, error: evalsError } = await supabase
+    const { data: evals } = await supabase
         .from("intern_evaluations")
-        .select("student_id, overall_rating")
-        .in("student_id", studentIds);
+        .select("student_id, internship_id, overall_rating, comments, evaluation_date")
+        .in("student_id", studentIds)
+        .order("evaluation_date", { ascending: false });
 
     const summary: Record<string, { attendanceCount: number; totalMarks: number; latestObservation: string }> = {};
 
     applications.forEach(app => {
-        const studentAttendance = (attendance || []).filter(a => a.student_id === app.student_id);
-        const studentEvals = (evals || []).filter(e => e.student_id === app.student_id);
+        // Correctly filter by student AND internship to avoid cross-pollination
+        // Relax matching to student_id if internship_id is missing for either application or record
+        const studentAttendance = (attendance || []).filter(a =>
+            a.student_id === app.student_id &&
+            (!app.internship_id || !a.internship_id || a.internship_id === app.internship_id)
+        );
+        const studentEvals = (evals || []).filter(e =>
+            e.student_id === app.student_id &&
+            (!app.internship_id || !e.internship_id || e.internship_id === app.internship_id)
+        );
 
         const totalMarks = studentEvals.reduce((acc, curr) => acc + curr.overall_rating, 0);
 
         summary[app.id] = {
             attendanceCount: studentAttendance.length,
             totalMarks: totalMarks,
-            latestObservation: "" // We could fetch this too but let's keep it simple for now or fetch it if needed
+            latestObservation: studentEvals[0]?.comments || "Consistent performance tracked."
         };
     });
 
