@@ -123,7 +123,7 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
                 <th className="px-8 py-6">Student Information</th>
                 <th className="px-6 py-6 text-center">Internship Period</th>
                 <th className="px-6 py-6 text-center">Attendance Log</th>
-                <th className="px-6 py-6 text-center">Avg. Weekly Mark</th>
+                <th className="px-6 py-6 text-center">Total Marks</th>
                 <th className="px-6 py-6">Latest Supervisor Observation</th>
                 <th className="px-8 py-6 text-right">Actions</th>
               </tr>
@@ -131,7 +131,7 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
             <tbody className="divide-y divide-slate-50">
               {activeInterns.map((intern) => {
                 const daysWorked = intern.appliedDate ? differenceInDays(new Date(), new Date(intern.appliedDate)) : 0;
-                const summary = summaries[intern.id] || { attendanceCount: 0, averageMark: 0 };
+                const summary = summaries[intern.id] || { attendanceCount: 0, totalMarks: 0 };
                 
                 return (
                   <tr key={intern.id} className="group hover:bg-blue-50/30 transition-colors duration-300">
@@ -179,15 +179,15 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
                       </div>
                     </td>
 
-                    {/* Weekly Marks Column (Cumulative/Raw Count) */}
+                    {/* Total Marks Column (Cumulative Count) */}
                     <td className="px-6 py-5">
                       <div className="flex flex-col items-center">
                         <div className="flex items-center gap-1.5">
-                           <Star size={14} className={cn("text-amber-500", summary.averageMark > 0 && "fill-amber-500")} />
-                           <span className="text-sm font-black text-slate-900">{summary.averageMark}</span>
+                           <Star size={14} className={cn("text-amber-500", summary.totalMarks > 0 && "fill-amber-500")} />
+                           <span className="text-sm font-black text-slate-900">{summary.totalMarks}</span>
                         </div>
                         <p className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest mt-1">
-                          Weekly Mark
+                          Total Marks
                         </p>
                       </div>
                     </td>
@@ -238,7 +238,7 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
               </div>
               <div className="flex items-center gap-2">
                  <div className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
-                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Global Avg. Mark: <span className="text-slate-900 ml-1">4.2 / 5.0</span></span>
+                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Global Cumulative Marks: <span className="text-slate-900 ml-1">Synced</span></span>
               </div>
            </div>
            <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Last synchronized: {format(new Date(), "HH:mm:ss")}</p>
@@ -301,16 +301,16 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
 
                    <div className="bg-slate-900 rounded-[2rem] p-8 text-white shadow-2xl relative overflow-hidden group">
                       <div className="relative z-10">
-                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Cumulative Performance</h4>
+                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Total Evaluation Points</h4>
                         <div className="flex items-baseline gap-2">
-                          <span className="text-5xl font-black text-white">{selectedIntern ? (summaries[selectedIntern.id]?.averageMark || 0) : 0}</span>
+                          <span className="text-5xl font-black text-white">{selectedIntern ? (summaries[selectedIntern.id]?.totalMarks || 0) : 0}</span>
                           <span className="text-xl font-bold text-slate-500">Points</span>
                         </div>
                         <div className="mt-8 flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10">
                            <div className="flex items-center gap-3">
                               <Star size={16} className="text-amber-400" />
                               <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
-                                Awarded by Supervisor
+                                Validated by Supervisors
                               </span>
                            </div>
                            <TrendingUp size={16} className="text-emerald-400" />
@@ -325,7 +325,7 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
                    <div className="space-y-6">
                       <div className="flex items-center justify-between">
                         <h3 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-                           <FileSpreadsheet size={20} className="text-emerald-600" /> Weekly Audit Trail
+                           <FileSpreadsheet size={20} className="text-emerald-600" /> Detailed Audit Trail
                            <span className="text-[10px] font-black bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-lg uppercase ml-2 tracking-widest">verified</span>
                         </h3>
                       </div>

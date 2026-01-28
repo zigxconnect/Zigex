@@ -140,19 +140,17 @@ export async function getCompanyInternsPerformanceSummary(companyId: string) {
         .select("student_id, overall_rating")
         .in("student_id", studentIds);
 
-    const summary: Record<string, { attendanceCount: number; averageMark: number; latestObservation: string }> = {};
+    const summary: Record<string, { attendanceCount: number; totalMarks: number; latestObservation: string }> = {};
 
     applications.forEach(app => {
         const studentLogs = (logs || []).filter(l => l.student_id === app.student_id);
         const studentEvals = (evals || []).filter(e => e.student_id === app.student_id);
 
-        const avgMark = studentEvals.length > 0
-            ? Math.round(studentEvals.reduce((acc, curr) => acc + curr.overall_rating, 0) / studentEvals.length)
-            : 0;
+        const totalMarks = studentEvals.reduce((acc, curr) => acc + curr.overall_rating, 0);
 
         summary[app.id] = {
             attendanceCount: studentLogs.length,
-            averageMark: avgMark,
+            totalMarks: totalMarks,
             latestObservation: "" // We could fetch this too but let's keep it simple for now or fetch it if needed
         };
     });
