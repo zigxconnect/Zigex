@@ -41,7 +41,8 @@ import { toast } from "sonner";
 import { 
   markInternAttendance, 
   assignInternshipTask, 
-  deleteInternshipTask 
+  deleteInternshipTask,
+  submitBatchAttendance
 } from "@/lib/actions/supervisor.actions";
 
 interface SupervisorDashboardClientProps {
@@ -70,6 +71,10 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
     priority: "medium"
   });
   const [isSubmittingTask, setIsSubmittingTask] = useState(false);
+  
+  // Attendance Batch State
+  const [pendingAttendance, setPendingAttendance] = useState<Record<string, string>>({});
+  const [isSubmittingBatch, setIsSubmittingBatch] = useState(false);
 
   const { interns, recentLogs, tasks, attendance } = data;
   const router = useRouter();
@@ -81,6 +86,23 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
 
   const pendingReviews = recentLogs.filter(l => l.status === "pending" || !l.status).length;
   const approvedCount = recentLogs.filter(l => l.status === "approved").length;
+
+  // Initialize pending attendance from existing data
+  useEffect(() => {
+    if (attendance && interns) {
+      const initialMap: Record<string, string> = {};
+      interns.forEach(intern => {
+        const student = Array.isArray(intern.student) ? intern.student[0] : intern.student;
+        const record = attendance.find(a => a.student_id === student?.user_id);
+        if (record) {
+          initialMap[student?.user_id] = record.status;
+        } else {
+          initialMap[student?.user_id] = "absent"; // default
+        }
+      });
+      setPendingAttendance(initialMap);
+    }
+  }, [attendance, interns]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -102,12 +124,46 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
   }, [data.profile?.id, router]);
 
   const handleMarkAttendance = async (studentId: string, internshipId: string, status: string) => {
+    // Single update fallback if needed, but we'll use batch below
     const res = await markInternAttendance(studentId, internshipId, status);
     if (res.success) {
-      toast.success("Attendance marked successfully");
+      toast.success("Attendance updated");
       router.refresh();
     } else {
-      toast.error(res.error || "Failed to mark attendance");
+      toast.error(res.error || "Failed to update attendance");
+    }
+  };
+
+  const handleToggleAttendance = (studentId: string) => {
+    setPendingAttendance(prev => ({
+      ...prev,
+      [studentId]: prev[studentId] === "present" ? "absent" : "present"
+    }));
+  };
+
+  const handleSubmitBatchAttendance = async () => {
+    setIsSubmittingBatch(true);
+    try {
+      const records = interns.map(intern => {
+        const student = Array.isArray(intern.student) ? intern.student[0] : intern.student;
+        return {
+          studentId: student?.user_id,
+          internshipId: intern.internship_id,
+          status: pendingAttendance[student?.user_id] || "absent"
+        };
+      });
+
+      const res = await submitBatchAttendance(records);
+      if (res.success) {
+        toast.success(`Success: ${res.count} records sent to company!`);
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to send attendance");
+      }
+    } catch (err) {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setIsSubmittingBatch(false);
     }
   };
 
@@ -380,59 +436,82 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                 <div className="absolute right-[-5%] top-[-10%] w-60 h-60 bg-blue-50 dark:bg-blue-500/5 rounded-full blur-3xl -z-0" />
               </div>
 
-              <div className="grid gap-4">
-                {interns.map((intern) => {
-                  const student = Array.isArray(intern.student) ? intern.student[0] : intern.student;
-                  const record = attendance.find(a => a.student_id === student?.user_id);
-                  const isMarked = !!record;
+                <div className={cn(
+                  "grid gap-4",
+                  !isAttendanceWindow() && "opacity-60 grayscale pointer-events-none"
+                )}>
+                  {interns.map((intern) => {
+                    const student = Array.isArray(intern.student) ? intern.student[0] : intern.student;
+                    const status = pendingAttendance[student?.user_id] || "absent";
+                    const isPresent = status === "present";
 
-                  return (
-                    <div key={intern.id} className={cn(
-                      "bg-white dark:bg-slate-900 border transition-all rounded-3xl p-5 flex flex-col sm:flex-row sm:items-center gap-6",
-                      isMarked ? "border-green-200 bg-green-50/20" : "border-slate-100"
-                    )}>
-                      <div className="flex items-center gap-4 flex-1">
-                        <div className="w-14 h-14 rounded-2xl overflow-hidden ring-4 ring-white shadow-lg">
-                          <Image src={student?.avatar_url || "/default-avatar.svg"} alt="" width={56} height={56} className="object-cover" />
-                        </div>
-                        <div>
-                          <h4 className="font-black text-slate-900 dark:text-white uppercase tracking-tight">{student?.full_name}</h4>
-                          <p className="text-xs text-slate-500 font-medium">
-                            {intern.internship?.title || "Internship Program"}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-3">
-                        {isMarked ? (
-                          <div className="flex items-center gap-3 bg-green-100 text-green-700 px-6 py-3 rounded-2xl font-black text-xs">
-                            <Check size={16} />
-                            PRESENT • {format(new Date(record.confirmed_at), "HH:mm")}
+                    return (
+                      <div key={intern.id} className={cn(
+                        "bg-white dark:bg-slate-900 border transition-all rounded-3xl p-5 flex flex-col sm:flex-row sm:items-center gap-6",
+                        isPresent ? "border-green-200 bg-green-50/20 shadow-sm" : "border-slate-100"
+                      )}>
+                        <div className="flex items-center gap-4 flex-1">
+                          <div className="w-14 h-14 rounded-2xl overflow-hidden ring-4 ring-white shadow-lg">
+                            <Image src={student?.avatar_url || "/default-avatar.svg"} alt="" width={56} height={56} className="object-cover" />
                           </div>
-                        ) : (
-                          <>
-                            <Button 
-                              onClick={() => handleMarkAttendance(student?.user_id, intern.internship_id, "absent")}
-                              disabled={!isAttendanceWindow()}
-                              variant="ghost" 
-                              className="rounded-2xl h-12 px-6 font-bold text-slate-400 hover:bg-red-50 hover:text-red-600 transition-all border border-slate-100"
+                          <div>
+                            <h4 className="font-black text-slate-900 dark:text-white uppercase tracking-tight">{student?.full_name}</h4>
+                            <p className="text-xs text-slate-500 font-medium">
+                              {intern.internship?.title || "Internship Program"}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-6">
+                            <span className={cn(
+                              "text-[10px] font-black uppercase tracking-widest",
+                              isPresent ? "text-green-600" : "text-slate-400"
+                            )}>
+                              {isPresent ? "Present" : "Absent"}
+                            </span>
+                            
+                            <button
+                              onClick={() => handleToggleAttendance(student?.user_id)}
+                              className={cn(
+                                "w-14 h-14 rounded-2xl flex items-center justify-center transition-all border-2",
+                                isPresent 
+                                  ? "bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/20" 
+                                  : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-800 text-slate-300 hover:border-blue-200"
+                              )}
                             >
-                              ABSENT
-                            </Button>
-                            <Button 
-                              onClick={() => handleMarkAttendance(student?.user_id, intern.internship_id, "present")}
-                              disabled={!isAttendanceWindow()}
-                              className="rounded-2xl h-12 px-8 font-black text-xs bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20 transition-all active:scale-[0.98]"
-                            >
-                              MARK PRESENT
-                            </Button>
-                          </>
-                        )}
+                              <div className={cn(
+                                "w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all",
+                                isPresent ? "bg-white border-white text-blue-600" : "bg-slate-50 border-slate-200"
+                              )}>
+                                {isPresent && <Check size={16} strokeWidth={4} />}
+                              </div>
+                            </button>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+
+                {/* Batch Submission Button */}
+                <div className="pt-8 flex justify-center">
+                   <Button 
+                    onClick={handleSubmitBatchAttendance}
+                    disabled={!isAttendanceWindow() || isSubmittingBatch || interns.length === 0}
+                    className={cn(
+                      "rounded-3xl h-16 px-12 font-black text-sm transition-all shadow-xl",
+                      isAttendanceWindow() 
+                        ? "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20" 
+                        : "bg-slate-200 text-slate-400"
+                    )}
+                   >
+                     {isSubmittingBatch ? (
+                       <Loader2 className="animate-spin mr-2" />
+                     ) : (
+                       <CheckCircle2 className="mr-2" size={20} />
+                     )}
+                     SEND ATTENDANCE TO COMPANY
+                   </Button>
+                </div>
             </motion.div>
           )}
 

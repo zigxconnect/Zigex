@@ -226,42 +226,92 @@ export async function getSupervisorDashboardData() {
 
         console.log(`[SUPERVISOR_HUB] Access granted to ${profile.full_name}`);
 
-        // Get assigned interns (accepted applications)
-        const { data: interns } = await supabaseAdmin
+        // Get assigned interns from BOTH tables for maximum coverage
+        // 1. Structured Applications
+        const { data: structApps, error: structError } = await supabaseAdmin
             .from("internship_applications")
             .select(`
-          *,
-          internship:internships(id, title),
-          student:student_profiles(id, user_id, full_name, avatar_url)
-        `)
+                *,
+                internship:internships(id, title)
+            `)
             .eq("supervisor_id", profile.id)
             .eq("status", "accepted");
 
-        // Get recent logs for these interns
-        const internUserIds = interns?.map(i => {
-            const student = Array.isArray(i.student) ? i.student[0] : i.student;
-            return student?.user_id;
-        }).filter(Boolean) as string[] || [];
-
-        let recentLogs = [];
-        if (internUserIds.length > 0) {
-            const { data } = await supabaseAdmin
-                .from("intern_logs")
+        // 2. Legacy Applications
+        let legacyApps: any[] = [];
+        try {
+            const { data: lApps, error: lError } = await supabaseAdmin
+                .from("Applications")
                 .select(`
-              *,
-              student:student_profiles(full_name, avatar_url)
-            `)
+                    *,
+                    internship:internships(id, title)
+                `)
+                .eq("supervisor_id", profile.id)
+                .eq("status", "accepted");
+
+            if (!lError && lApps) legacyApps = lApps;
+        } catch (e) {
+            console.warn("[SUPERVISOR_HUB] Legacy Applications table not accessible");
+        }
+
+        // Combine all accepted applications
+        const rawApps = [...(structApps || []), ...legacyApps];
+        console.log(`[SUPERVISOR_HUB] Found ${rawApps.length} total accepted apps for supervisor ${profile.id}`);
+
+        // Robust Manual Join for Student Profiles
+        const studentUserIds = rawApps.map(app => app.student_id || app.user_id).filter(Boolean);
+        let studentProfiles: any[] = [];
+
+        if (studentUserIds.length > 0) {
+            const { data: profiles } = await supabaseAdmin
+                .from("student_profiles")
+                .select("id, user_id, full_name, avatar_url")
+                .in("user_id", studentUserIds);
+            studentProfiles = profiles || [];
+        }
+
+        // Map them together
+        const interns = rawApps.map(app => {
+            const student = studentProfiles.find(p => p.user_id === (app.student_id || app.user_id));
+            return {
+                ...app,
+                // Ensure internship info is present even if join failed
+                internship: app.internship || { id: app.internship_id, title: "Internship Program" },
+                student: student || {
+                    full_name: app.full_name || "New Intern",
+                    user_id: app.student_id || app.user_id,
+                    avatar_url: "/default-avatar.svg"
+                }
+            };
+        });
+
+        const internUserIds = studentUserIds as string[];
+
+        // Get recent logs for these interns
+        let recentLogs: any[] = [];
+        if (internUserIds.length > 0) {
+            const { data: logs, error: logsError } = await supabaseAdmin
+                .from("intern_logs")
+                .select("*")
                 .in("student_id", internUserIds)
                 .order("log_date", { ascending: false })
                 .limit(20);
-            recentLogs = data || [];
+
+            if (logs) {
+                // Enrich logs with student profiles manually
+                recentLogs = logs.map(log => ({
+                    ...log,
+                    student: studentProfiles.find(p => p.user_id === log.student_id) || { full_name: "Intern" }
+                }));
+            }
         }
 
-        // Fetch Tasks
+        // Fetch Tasks (Linked by Internship ID)
+        const internshipIds = rawApps.map(i => i.internship_id).filter(Boolean);
         const { data: tasks } = await supabaseAdmin
             .from("internship_tasks")
             .select("*")
-            .in("internship_id", interns?.map(i => i.internship_id).filter(Boolean) || [])
+            .in("internship_id", internshipIds)
             .order("created_at", { ascending: false });
 
         // Fetch Today's Attendance
@@ -382,6 +432,55 @@ export async function markInternAttendance(studentId: string, internshipId: stri
 
     revalidatePath("/supervisor");
     return { success: true, data };
+}
+
+/**
+ * Server Action to submit attendance for multiple interns at once.
+ */
+export async function submitBatchAttendance(records: { studentId: string, internshipId: string, status: string }[]) {
+    const now = new Date();
+    const hour = now.getHours();
+
+    // Check time window: 15:00 - 00:00 (3pm - 12am)
+    if (hour < 15 && hour >= 0) {
+        return { success: false, error: "Attendance can only be confirmed between 3:00 PM and Midnight." };
+    }
+
+    const supabase = await createServerActionClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // Get supervisor profile
+    const { data: profile } = await supabase
+        .from("supervisor_profiles")
+        .select("id")
+        .eq("user_id", user?.id)
+        .single();
+
+    if (!profile) return { success: false, error: "Supervisor profile not found." };
+
+    const today = now.toISOString().split("T")[0];
+
+    const attendanceData = records.map(r => ({
+        student_id: r.studentId,
+        internship_id: r.internshipId,
+        supervisor_id: profile.id,
+        attendance_date: today,
+        status: r.status,
+        confirmed_at: now.toISOString()
+    }));
+
+    const { data, error } = await supabase
+        .from("intern_attendance")
+        .upsert(attendanceData)
+        .select();
+
+    if (error) {
+        console.error("Error submitting batch attendance:", error);
+        return { success: false, error: error.message };
+    }
+
+    revalidatePath("/supervisor");
+    return { success: true, count: data?.length || 0 };
 }
 
 /**
