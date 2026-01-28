@@ -203,7 +203,7 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
 
   const isAttendanceWindow = () => {
     const hour = new Date().getHours();
-    return hour >= 15 || hour < 0; // 3pm to 12am (approx)
+    return hour >= 15; // 3pm onwards
   };
 
   return (
@@ -442,13 +442,19 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                 )}>
                   {interns.map((intern) => {
                     const student = Array.isArray(intern.student) ? intern.student[0] : intern.student;
-                    const status = pendingAttendance[student?.user_id] || "absent";
+                    
+                    // Check if already submitted in DB (prop data)
+                    const confirmedRecord = attendance.find(a => a.student_id === student?.user_id);
+                    const isSubmitted = !!confirmedRecord;
+
+                    // Use pending state if not submitted, otherwise use confirmed state
+                    const status = isSubmitted ? confirmedRecord.status : (pendingAttendance[student?.user_id] || "absent");
                     const isPresent = status === "present";
 
                     return (
                       <div key={intern.id} className={cn(
                         "bg-white dark:bg-slate-900 border transition-all rounded-2xl p-3 flex items-center gap-4",
-                        isPresent ? "border-green-200 bg-green-50/20 shadow-sm" : "border-slate-100/50 hover:border-slate-200"
+                        isSubmitted ? "opacity-60 grayscale bg-slate-50 dark:bg-slate-800/50" : (isPresent ? "border-green-200 bg-green-50/20 shadow-sm" : "border-slate-100/50 hover:border-slate-200")
                       )}>
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                           <div className="w-10 h-10 rounded-xl overflow-hidden ring-2 ring-white dark:ring-slate-800 shadow-sm flex-shrink-0">
@@ -467,21 +473,26 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                               "text-[9px] font-black uppercase tracking-widest",
                               isPresent ? "text-green-600" : "text-slate-300"
                             )}>
-                              {isPresent ? "Present" : "Absent"}
+                              {isSubmitted ? (isPresent ? "Submitted" : "Absent") : (isPresent ? "Present" : "Absent")}
                             </span>
                             
                             <button
-                              onClick={() => student?.user_id && handleToggleAttendance(student.user_id)}
+                              disabled={isSubmitted || !isAttendanceWindow()}
+                              onClick={() => student?.user_id && !isSubmitted && handleToggleAttendance(student.user_id)}
                               className={cn(
                                 "w-10 h-10 rounded-xl flex items-center justify-center transition-all border-2",
-                                isPresent 
-                                  ? "bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/10" 
-                                  : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-800 text-slate-300 hover:border-blue-200"
+                                isSubmitted 
+                                  ? "bg-slate-200 border-slate-200 text-slate-400 cursor-not-allowed" 
+                                  : (isPresent 
+                                      ? "bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/10" 
+                                      : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-800 text-slate-300 hover:border-blue-200")
                               )}
                             >
                               <div className={cn(
                                 "w-5 h-5 rounded flex items-center justify-center transition-all",
-                                isPresent ? "bg-white text-blue-600" : "bg-transparent border border-slate-200"
+                                isSubmitted 
+                                  ? "bg-transparent" // Gray Check
+                                  : (isPresent ? "bg-white text-blue-600" : "bg-transparent border border-slate-200")
                               )}>
                                 {isPresent && <Check size={14} strokeWidth={4} />}
                               </div>
@@ -496,7 +507,10 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                 <div className="pt-8 flex justify-center">
                     <Button 
                      onClick={handleSubmitBatchAttendance}
-                     disabled={!isAttendanceWindow() || isSubmittingBatch || interns.length === 0}
+                     disabled={!isAttendanceWindow() || isSubmittingBatch || interns.length === 0 || interns.every(i => {
+                        const s = Array.isArray(i.student) ? i.student[0] : i.student;
+                        return attendance.some(a => a.student_id === s?.user_id);
+                     })}
                      className={cn(
                        "rounded-2xl h-14 px-10 font-black text-xs transition-all shadow-xl uppercase tracking-tighter",
                        isAttendanceWindow() 

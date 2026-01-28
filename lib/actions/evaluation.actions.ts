@@ -128,10 +128,11 @@ export async function getCompanyInternsPerformanceSummary(companyId: string) {
 
     const studentIds = applications.map(a => a.student_id);
 
-    // 2. Get summaries of logs (attendance)
-    const { data: logs, error: logsError } = await supabase
-        .from("intern_logs")
-        .select("student_id, id")
+    // 2. Get verified attendance records
+    const { data: attendance, error: attError } = await supabase
+        .from("intern_attendance")
+        .select("student_id, status")
+        .eq("status", "present")
         .in("student_id", studentIds);
 
     // 3. Get summaries of evaluations (marks)
@@ -143,13 +144,13 @@ export async function getCompanyInternsPerformanceSummary(companyId: string) {
     const summary: Record<string, { attendanceCount: number; totalMarks: number; latestObservation: string }> = {};
 
     applications.forEach(app => {
-        const studentLogs = (logs || []).filter(l => l.student_id === app.student_id);
+        const studentAttendance = (attendance || []).filter(a => a.student_id === app.student_id);
         const studentEvals = (evals || []).filter(e => e.student_id === app.student_id);
 
         const totalMarks = studentEvals.reduce((acc, curr) => acc + curr.overall_rating, 0);
 
         summary[app.id] = {
-            attendanceCount: studentLogs.length,
+            attendanceCount: studentAttendance.length,
             totalMarks: totalMarks,
             latestObservation: "" // We could fetch this too but let's keep it simple for now or fetch it if needed
         };
