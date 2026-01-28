@@ -192,7 +192,7 @@ export async function getSupervisorDashboardData() {
         // 1. Try finding by User ID
         let { data: profile } = await supabaseAdmin
             .from("supervisor_profiles")
-            .select("*")
+            .select("*, company:company_profiles(id, company_name, logo_url)")
             .eq("user_id", user.id)
             .maybeSingle();
 
@@ -201,7 +201,7 @@ export async function getSupervisorDashboardData() {
             console.log(`[SUPERVISOR_HUB] ID mismatch for ${user.id}, trying email lookup: ${user.email}`);
             const { data: emailProfile } = await supabaseAdmin
                 .from("supervisor_profiles")
-                .select("*")
+                .select("*, company:company_profiles(id, company_name, logo_url)")
                 .ilike("email", user.email) // Case insensitive lookup
                 .maybeSingle();
 

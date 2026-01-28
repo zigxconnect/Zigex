@@ -509,7 +509,7 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                      ) : (
                        <CheckCircle2 className="mr-2" size={20} />
                      )}
-                     SEND ATTENDANCE TO COMPANY
+                     SEND ATTENDANCE TO {data.profile?.company?.company_name || 'COMPANY'}
                    </Button>
                 </div>
             </motion.div>
