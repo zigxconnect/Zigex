@@ -128,34 +128,34 @@ export async function getCompanyInternsPerformanceSummary(companyId: string) {
             .eq("internships.company_id", companyId),
         supabase
             .from("Applications")
-            .select("id, student_id, internship_id")
+            .select("id, student_id, internship_id, student:student_profiles(user_id)")
             .eq("status", "accepted")
             .eq("company_id", companyId)
         // Note: In legacy, some might be programs, but we filter for internships later or just count all if they have evaluations
     ]);
 
+    // Map all to a consistent format with 'uid'
     const applications = [
-        ...(structuredRes.data || []),
-        ...(legacyRes.data || [])
+        ...(structuredRes.data || []).map(a => ({ id: a.id, uid: a.student_id, internship_id: a.internship_id })),
+        ...(legacyRes.data || []).map(a => ({ id: a.id, uid: (a.student as any)?.user_id || a.student_id, internship_id: a.internship_id }))
     ];
 
     if (applications.length === 0) return {};
 
-    const studentIds = [...new Set(applications.map(a => a.student_id))];
-    const internshipIds = [...new Set(applications.map(a => a.internship_id).filter(Boolean))];
+    const studentUids = [...new Set(applications.map(a => a.uid))];
 
-    // 2. Get verified attendance records
+    // 2. Get verified attendance records (using AUTH UIDs)
     const { data: attendance } = await supabase
         .from("intern_attendance")
         .select("student_id, internship_id, status")
-        .in("student_id", studentIds)
-        .eq("status", "present"); // Filter for present status
+        .in("student_id", studentUids)
+        .eq("status", "present");
 
     // 3. Get summaries of evaluations (marks)
     const { data: evals } = await supabase
         .from("intern_evaluations")
         .select("student_id, internship_id, overall_rating, comments, evaluation_date")
-        .in("student_id", studentIds)
+        .in("student_id", studentUids)
         .order("evaluation_date", { ascending: false });
 
     const summary: Record<string, { attendanceCount: number; totalMarks: number; latestObservation: string }> = {};
@@ -164,11 +164,11 @@ export async function getCompanyInternsPerformanceSummary(companyId: string) {
         // Correctly filter by student AND internship to avoid cross-pollination
         // Relax matching to student_id if internship_id is missing for either application or record
         const studentAttendance = (attendance || []).filter(a =>
-            a.student_id === app.student_id &&
+            a.student_id === app.uid &&
             (!app.internship_id || !a.internship_id || a.internship_id === app.internship_id)
         );
         const studentEvals = (evals || []).filter(e =>
-            e.student_id === app.student_id &&
+            e.student_id === app.uid &&
             (!app.internship_id || !e.internship_id || e.internship_id === app.internship_id)
         );
 
