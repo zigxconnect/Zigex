@@ -246,7 +246,12 @@ export async function getSupervisorDashboardData() {
             .from("internship_applications")
             .select(`
                 *,
-                internship:internships(id, title)
+                internship:internships(
+                    id, 
+                    title, 
+                    company_id,
+                    company_profiles(id, company_name, logo_url)
+                )
             `)
             .eq("supervisor_id", profile.id)
             .eq("status", "accepted");
@@ -258,7 +263,12 @@ export async function getSupervisorDashboardData() {
                 .from("Applications")
                 .select(`
                     *,
-                    internship:internships(id, title)
+                    internship:internships(
+                        id, 
+                        title, 
+                        company_id,
+                        company_profiles(id, company_name, logo_url)
+                    )
                 `)
                 .eq("supervisor_id", profile.id)
                 .eq("status", "accepted");
@@ -335,6 +345,16 @@ export async function getSupervisorDashboardData() {
             .select("*")
             .eq("attendance_date", today)
             .eq("supervisor_id", profile.id);
+
+        // 4. Final Company Name Fallback (Check interns if profile company is missing)
+        if (!companyInfo && interns.length > 0) {
+            // Try to find company from first intern's internship
+            const firstIntern = interns[0];
+            if (firstIntern?.internship?.company_profiles) {
+                companyInfo = firstIntern.internship.company_profiles;
+                (profile as any).company = companyInfo;
+            }
+        }
 
         return {
             profile,
