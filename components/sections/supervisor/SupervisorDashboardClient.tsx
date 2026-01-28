@@ -337,7 +337,7 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                           </div>
                           <div className="flex flex-col items-end gap-2">
                              <Badge className={cn("text-[9px] font-black uppercase tracking-widest border-0", isPending ? "bg-amber-100 text-amber-600" : "bg-green-100 text-green-600")}>
-                                {log.status || "Pending"}
+                                {log.status === "approved" ? "Confirmed" : (log.status || "Pending")}
                              </Badge>
                              <Button 
                               onClick={() => { setSelectedLog(log); setIsReviewModalOpen(true); }}

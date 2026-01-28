@@ -43,7 +43,7 @@ export function LogReviewModal({ isOpen, onClose, log }: LogReviewModalProps) {
     try {
       const result = await reviewInternshipLog(log.id, status, feedback);
       if (result.success) {
-        toast.success(`Report ${status} successfully`);
+        toast.success(`Report ${status === "approved" ? "confirmed" : status} successfully`);
         onClose();
         router.refresh();
       } else {
