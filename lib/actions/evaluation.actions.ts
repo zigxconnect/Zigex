@@ -18,7 +18,7 @@ export async function createEvaluation(data: {
     period_start?: string;
     period_end?: string;
 }) {
-    const supabase = createServerActionClient();
+    const supabase = await createServerActionClient();
 
     // Verify permissions (supervisor check)
     const { data: { user } } = await supabase.auth.getUser();
@@ -53,7 +53,7 @@ export async function createEvaluation(data: {
 }
 
 export async function getEvaluationsForIntern(studentId: string) {
-    const supabase = createServerActionClient();
+    const supabase = await createServerActionClient();
 
     const { data, error } = await supabase
         .from("intern_evaluations")
@@ -73,7 +73,7 @@ export async function getEvaluationsForIntern(studentId: string) {
 }
 
 export async function getEvaluationsByInternship(internshipId: string) {
-    const supabase = createServerActionClient();
+    const supabase = await createServerActionClient();
 
     const { data, error } = await supabase
         .from("intern_evaluations")
@@ -86,6 +86,29 @@ export async function getEvaluationsByInternship(internshipId: string) {
 
     if (error) {
         console.error("Error fetching evaluations:", error);
+        return [];
+    }
+
+    return data;
+}
+
+export async function getInternLogsForAdmin(studentId: string, internshipId?: string) {
+    const supabase = await createServerActionClient();
+
+    let query = supabase
+        .from("intern_logs")
+        .select("*")
+        .eq("student_id", studentId)
+        .order("log_date", { ascending: false });
+
+    if (internshipId) {
+        query = query.eq("internship_id", internshipId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+        console.error("Error fetching intern logs:", error);
         return [];
     }
 
