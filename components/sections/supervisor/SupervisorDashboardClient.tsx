@@ -25,7 +25,9 @@ import {
   ListTodo,
   Trash2,
   Send,
-  Loader2
+  Loader2,
+  Award,
+  Edit
 } from "lucide-react";
 import { format } from "date-fns";
 import Image from "next/image";
@@ -39,10 +41,11 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { 
-  markInternAttendance, 
+  markInternAttendance,
   assignInternshipTask, 
   deleteInternshipTask,
-  submitBatchAttendance
+  submitBatchAttendance,
+  submitWeeklyEvaluation
 } from "@/lib/actions/supervisor.actions";
 
 interface SupervisorDashboardClientProps {
@@ -52,11 +55,12 @@ interface SupervisorDashboardClientProps {
     recentLogs: any[];
     tasks: any[];
     attendance: any[];
+    evaluations: any[];
   };
 }
 
 export function SupervisorDashboardClient({ data }: SupervisorDashboardClientProps) {
-  const [activeTab, setActiveTab] = useState<"overview" | "attendance" | "tasks">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "attendance" | "tasks" | "evaluations">("overview");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLog, setSelectedLog] = useState<any>(null);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
@@ -76,7 +80,7 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
   const [pendingAttendance, setPendingAttendance] = useState<Record<string, string>>({});
   const [isSubmittingBatch, setIsSubmittingBatch] = useState(false);
 
-  const { interns, recentLogs, tasks, attendance } = data;
+  const { interns, recentLogs, tasks, attendance, evaluations } = data;
   const router = useRouter();
 
   const filteredInterns = interns.filter(i => {
@@ -211,6 +215,83 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
     return hour >= 15; // 3pm onwards
   };
 
+  // Evaluation Form State
+  const [isEvalModalOpen, setIsEvalModalOpen] = useState(false);
+  const [newEval, setNewEval] = useState<{
+    id?: string;
+    internship_id: string;
+    student_id: string;
+    rating: number;
+    feedback: string;
+  }>({
+    internship_id: "",
+    student_id: "",
+    rating: 5,
+    feedback: ""
+  });
+  const [isSubmittingEval, setIsSubmittingEval] = useState(false);
+  const [showLimitModal, setShowLimitModal] = useState(false);
+  const [existingEval, setExistingEval] = useState<any>(null);
+
+  const isWithinWeeklyLimit = (dateString: string) => {
+    if (!dateString) return false;
+    const lastDate = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - lastDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays <= 7;
+  };
+
+  const handleSubmitEvaluation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newEval.internship_id || !newEval.student_id || !newEval.feedback) {
+      toast.error("Please fill in all fields.");
+      return;
+    }
+
+    const wordCount = newEval.feedback.trim().split(/\s+/).filter(Boolean).length;
+    if (wordCount < 8) {
+      toast.error(`Feedback must be at least 8 words. Current: ${wordCount}`);
+      return;
+    }
+
+    setIsSubmittingEval(true);
+    try {
+      const res = await submitWeeklyEvaluation(newEval);
+      if (res.success) {
+        toast.success(newEval.id ? "Evaluation updated successfully!" : "Evaluation submitted successfully!");
+        setIsEvalModalOpen(false);
+        setNewEval({ id: undefined, internship_id: "", student_id: "", rating: 5, feedback: "" } as any);
+        router.refresh();
+      } else if (res.error === "WEEKLY_LIMIT_REACHED") {
+        // Carry existing eval data for editing
+        setExistingEval(res.existingEval);
+        setShowLimitModal(true);
+      } else {
+        toast.error(res.error || "Failed to submit evaluation");
+      }
+    } catch (err) {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setIsSubmittingEval(false);
+    }
+  };
+
+
+  const startEditing = () => {
+    if (existingEval) {
+      setNewEval({
+        id: existingEval.id,
+        internship_id: existingEval.internship_id,
+        student_id: existingEval.student_id,
+        rating: existingEval.overall_rating,
+        feedback: existingEval.comments
+      });
+      setShowLimitModal(false);
+      setIsEvalModalOpen(true);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-blue-50/30 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 pb-20">
       
@@ -245,7 +326,8 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
               {[
                 { id: "overview", icon: LayoutDashboard, label: "Overview" },
                 { id: "attendance", icon: ClipboardCheck, label: "Attendance" },
-                { id: "tasks", icon: ListTodo, label: "Tasks" }
+                { id: "tasks", icon: ListTodo, label: "Tasks" },
+                { id: "evaluations", icon: Award, label: "Evaluations" }
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -514,7 +596,6 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                 <div className="pt-8 flex justify-center">
                     <Button 
                      onClick={handleSubmitBatchAttendance}
-                     onClick={handleSubmitBatchAttendance}
                      disabled={!isAttendanceWindow() || isSubmittingBatch || interns.length === 0}
                      className={cn(
                        "rounded-2xl h-14 px-10 font-black text-xs transition-all shadow-xl uppercase tracking-tighter",
@@ -597,6 +678,152 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
               </div>
             </motion.div>
           )}
+
+          {activeTab === "evaluations" && (
+            <motion.div 
+              key="evaluations"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-8"
+            >
+               {/* Controls */}
+               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-black text-slate-900 dark:text-white underline decoration-blue-500 decoration-3">Weekly Evaluations</h2>
+                  <p className="text-sm text-slate-500 mt-1 font-medium">Evaluate student performance and provide detailed feedback</p>
+                </div>
+                <Button 
+                  onClick={() => setIsEvalModalOpen(true)}
+                  className="rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs px-6 h-12 shadow-lg shadow-blue-500/20"
+                >
+                  <Plus size={16} className="mr-2" /> NEW EVALUATION
+                </Button>
+              </div>
+
+              {/* Intern Evaluation Status Card */}
+              <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-sm">
+                 <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-6">Intern Progress Overview</h3>
+                 <div className="space-y-6">
+                    {interns.map(intern => {
+                      const student = Array.isArray(intern.student) ? intern.student[0] : intern.student;
+                      const lastEval = evaluations.find(e => e.student_id === student?.user_id);
+                      const hasWeeklyEval = lastEval && isWithinWeeklyLimit(lastEval.evaluation_date);
+
+                      return (
+                        <div key={intern.id} className="flex flex-col md:flex-row md:items-center gap-6 p-6 rounded-3xl border border-slate-50 dark:border-slate-800 hover:bg-slate-50/50 transition-colors">
+                           <div className="flex items-center gap-4 flex-shrink-0">
+                             <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-white shadow-md">
+                               <Image src={student?.profile_photo || "/default-avatar.svg"} alt="" width={56} height={56} className="object-cover" />
+                             </div>
+                             <div>
+                               <h4 className="font-bold text-slate-900 dark:text-white">{student?.full_name}</h4>
+                               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{intern.internship?.title}</p>
+                             </div>
+                           </div>
+
+                           <div className="flex-1 min-w-0">
+                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Most Recent Feedback</p>
+                              {lastEval ? (
+                                <div className="space-y-2">
+                                   <div className="flex items-center gap-2">
+                                      {Array.from({ length: 5 }).map((_, i) => (
+                                        <Star key={i} size={12} className={cn(i < lastEval.overall_rating ? "text-amber-500 fill-amber-500" : "text-slate-200")} />
+                                      ))}
+                                      <span className="text-[10px] font-bold text-slate-400 ml-2">{format(new Date(lastEval.created_at), "MMM dd, yyyy")}</span>
+                                   </div>
+                                   <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 italic leading-relaxed">
+                                      "{lastEval.comments}"
+                                   </p>
+                                </div>
+                              ) : (
+                                <p className="text-xs text-slate-400 italic">No evaluations recorded yet.</p>
+                              )}
+                           </div>
+
+                           <Button 
+                             onClick={() => {
+                               if (hasWeeklyEval) {
+                                 setNewEval({
+                                   id: lastEval.id,
+                                   internship_id: intern.internship_id,
+                                   student_id: student?.user_id,
+                                   rating: lastEval.overall_rating,
+                                   feedback: lastEval.comments
+                                 });
+                               } else {
+                                 setNewEval({
+                                   internship_id: intern.internship_id,
+                                   student_id: student?.user_id,
+                                   rating: 5,
+                                   feedback: ""
+                                 });
+                               }
+                               setIsEvalModalOpen(true);
+                             }}
+                             variant="outline" 
+                             className={cn(
+                               "rounded-xl h-10 px-4 text-[10px] font-black uppercase transition-all",
+                               hasWeeklyEval 
+                                ? "bg-slate-100 border-slate-200 text-slate-600 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200" 
+                                : "border-slate-200 text-slate-600 hover:bg-blue-600 hover:text-white hover:border-blue-600"
+                             )}
+                           >
+                             {hasWeeklyEval ? (
+                               <span className="flex items-center gap-2">
+                                 <Edit size={12} /> Edit
+                               </span>
+                             ) : "Evaluate Now"}
+                           </Button>
+                        </div>
+                      )
+                    })}
+                 </div>
+              </div>
+
+              {/* History Table */}
+              <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2.5rem] overflow-hidden shadow-sm">
+                 <div className="p-8 border-b border-slate-50 dark:border-slate-800">
+                    <h3 className="text-lg font-black text-slate-900 dark:text-white">Evaluation History</h3>
+                 </div>
+                 <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                       <thead className="bg-slate-50/50 dark:bg-slate-800/50">
+                          <tr>
+                             <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Intern</th>
+                             <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Rating</th>
+                             <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Date</th>
+                             <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Action</th>
+                          </tr>
+                       </thead>
+                       <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                          {evaluations.map(e => (
+                             <tr key={e.id} className="hover:bg-slate-50/30 transition-colors">
+                                <td className="px-8 py-4 font-bold text-sm text-slate-900 dark:text-white">{e.student?.full_name}</td>
+                                <td className="px-8 py-4">
+                                   <div className="flex gap-0.5">
+                                      {Array.from({ length: 5 }).map((_, i) => (
+                                        <Star key={i} size={10} className={cn(i < e.overall_rating ? "text-amber-500 fill-amber-500" : "text-slate-200")} />
+                                      ))}
+                                   </div>
+                                </td>
+                                <td className="px-8 py-4 text-xs font-bold text-slate-500">{format(new Date(e.created_at), "MMM dd, yyyy")}</td>
+                                <td className="px-8 py-4 text-right">
+                                   <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-lg text-slate-300 hover:text-blue-600"><Eye size={14} /></Button>
+                                </td>
+                             </tr>
+                          ))}
+                       </tbody>
+                    </table>
+                    {evaluations.length === 0 && (
+                      <div className="p-20 text-center">
+                         <p className="text-slate-400 font-bold text-sm italic">No evaluations found.</p>
+                      </div>
+                    )}
+                 </div>
+              </div>
+            </motion.div>
+          )}
         </AnimatePresence>
       </main>
 
@@ -626,8 +853,9 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                     required
                   >
                     <option value="">Select Intern...</option>
+                    <option value="all" className="font-bold text-blue-600">🚀 All Interns (Assign to everyone)</option>
                     {interns.map(i => (
-                      <option key={i.id} value={i.internship_id}>
+                      <option key={i.id} value={i.id}>
                         {(Array.isArray(i.student) ? i.student[0] : i.student)?.full_name}
                       </option>
                     ))}
@@ -698,6 +926,155 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                    </Button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* NEW EVALUATION MODAL */}
+      <AnimatePresence>
+        {isEvalModalOpen && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+            <motion.div 
+               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+               onClick={() => setIsEvalModalOpen(false)}
+               className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden p-8"
+            >
+              <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-6">Weekly Evaluation 📈</h3>
+              <form onSubmit={handleSubmitEvaluation} className="space-y-6">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Target Intern</label>
+                  <select 
+                    value={newEval.student_id}
+                    onChange={(e) => {
+                      const intern = interns.find(i => (Array.isArray(i.student) ? i.student[0] : i.student)?.user_id === e.target.value);
+                      setNewEval({...newEval, student_id: e.target.value, internship_id: intern?.internship_id || ""});
+                    }}
+                    className="w-full h-12 rounded-2xl border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 text-sm font-bold focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="">Select Intern...</option>
+                    {interns.map(i => (
+                      <option key={i.id} value={(Array.isArray(i.student) ? i.student[0] : i.student)?.user_id}>
+                        {(Array.isArray(i.student) ? i.student[0] : i.student)?.full_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1 text-center block w-full">Performance Rating</label>
+                  <div className="flex items-center justify-center gap-4">
+                     {[1, 2, 3, 4, 5].map((star) => (
+                       <button
+                         key={star}
+                         type="button"
+                         onClick={() => setNewEval({...newEval, rating: star})}
+                         className="transition-transform active:scale-90"
+                       >
+                         <Star 
+                           size={32} 
+                           className={cn(
+                             "transition-colors",
+                             star <= newEval.rating ? "text-amber-500 fill-amber-500" : "text-slate-200"
+                           )} 
+                         />
+                       </button>
+                     ))}
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-end px-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Student Feedback</label>
+                    <span className={cn(
+                      "text-[9px] font-bold",
+                      newEval.feedback.trim().split(/\s+/).filter(Boolean).length >= 8 ? "text-green-500" : "text-rose-500"
+                    )}>
+                      {newEval.feedback.trim().split(/\s+/).filter(Boolean).length} / 8 words
+                    </span>
+                  </div>
+                  <Textarea 
+                    value={newEval.feedback}
+                    onChange={(e) => setNewEval({...newEval, feedback: e.target.value})}
+                    placeholder="Provide a detailed evaluation of the student's progress, strengths, and areas for growth (min 8 words)..."
+                    className="min-h-[200px] rounded-2xl border-slate-100 bg-slate-50 text-sm font-medium resize-none shadow-none focus-visible:ring-1 leading-relaxed"
+                    required
+                  />
+                </div>
+
+                <div className="pt-4 flex gap-3">
+                   <Button 
+                    type="button"
+                    onClick={() => {
+                        setIsEvalModalOpen(false);
+                        setNewEval({ id: undefined, internship_id: "", student_id: "", rating: 5, feedback: "" } as any);
+                    }}
+                    variant="ghost" 
+                    className="flex-1 rounded-2xl h-14 font-black hover:bg-slate-50"
+                   >
+                     CANCEL
+                   </Button>
+                   <Button 
+                    type="submit"
+                    disabled={isSubmittingEval || newEval.feedback.trim().split(/\s+/).filter(Boolean).length < 8}
+                    className="flex-[2] rounded-2xl h-14 font-black bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-500/20"
+                   >
+                     {isSubmittingEval ? <Loader2 className="animate-spin" /> : (newEval.id ? "UPDATE EVALUATION" : "SUBMIT EVALUATION")}
+                   </Button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* WEEKLY LIMIT MODAL */}
+      <AnimatePresence>
+        {showLimitModal && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+            <motion.div 
+               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+               onClick={() => setShowLimitModal(false)}
+               className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden p-10 text-center"
+            >
+              <div className="w-20 h-20 bg-amber-50 rounded-3xl flex items-center justify-center mx-auto mb-6 text-amber-500">
+                <AlertCircle size={40} />
+              </div>
+              <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">Weekly Limit Reached</h3>
+              <p className="text-slate-500 text-sm font-medium leading-relaxed mb-8">
+                You have already evaluated this student this week. Evaluations are recorded once per week to track gradual progress.
+              </p>
+              <div className="space-y-3">
+                <Button 
+                    onClick={startEditing}
+                    className="w-full rounded-2xl h-14 font-black bg-blue-600 text-white hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/10"
+                >
+                    EDIT EXISTING FEEDBACK
+                </Button>
+                <Button 
+                    onClick={() => {
+                        setShowLimitModal(false);
+                        setIsEvalModalOpen(false);
+                    }}
+                    variant="ghost"
+                    className="w-full rounded-2xl h-14 font-black text-slate-400 hover:text-slate-600"
+                >
+                    CLOSE
+                </Button>
+              </div>
             </motion.div>
           </div>
         )}

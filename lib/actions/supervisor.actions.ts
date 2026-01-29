@@ -340,11 +340,26 @@ export async function getSupervisorDashboardData() {
 
         // Fetch Today's Attendance
         const today = new Date().toISOString().split("T")[0];
-        const { data: attendance } = await supabaseAdmin
-            .from("intern_attendance")
-            .select("*")
-            .eq("attendance_date", today)
-            .eq("supervisor_id", profile.id);
+        const [attendanceRes, evaluationsRes] = await Promise.all([
+            supabaseAdmin
+                .from("intern_attendance")
+                .select("*")
+                .eq("attendance_date", today)
+                .eq("supervisor_id", profile.id),
+
+            // Fetch recent evaluations
+            supabaseAdmin
+                .from("intern_evaluations")
+                .select("*")
+                .eq("supervisor_id", profile.id)
+                .order("created_at", { ascending: false })
+        ]);
+
+        const attendance = attendanceRes.data || [];
+        const evaluations = (evaluationsRes.data || []).map(evalItem => ({
+            ...evalItem,
+            student: studentProfiles.find(p => p.user_id === evalItem.student_id) || { full_name: "Intern" }
+        }));
 
         // 4. Final Company Name Fallback (Check interns if profile company is missing)
         if (!companyInfo && interns.length > 0) {
@@ -361,7 +376,8 @@ export async function getSupervisorDashboardData() {
             interns: interns || [],
             recentLogs: recentLogs,
             tasks: tasks || [],
-            attendance: attendance || []
+            attendance: attendance || [],
+            evaluations: evaluations || []
         };
     } catch (err) {
         console.error("[SUPERVISOR_HUB] Unexpected runtime error:", err);
@@ -372,31 +388,158 @@ export async function getSupervisorDashboardData() {
 /**
  * Server Action to assign a task to an internship.
  */
+import { sendTaskAssignmentEmail } from "../mail";
+
 export async function assignInternshipTask(taskData: {
-    internship_id: string;
+    internship_id: string; // can be "all"
     title: string;
     description: string;
     due_date?: string;
     priority?: string;
 }) {
-    const supabase = await createServerActionClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    try {
+        const supabase = await createServerActionClient();
+        const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user) return { success: false, error: "Unauthorized" };
+        if (!user) return { success: false, error: "Unauthorized" };
 
-    const { data, error } = await supabase
-        .from("internship_tasks")
-        .insert([taskData])
-        .select()
-        .single();
+        // Get supervisor profile
+        const { data: profile } = await supabase
+            .from("supervisor_profiles")
+            .select("id, full_name")
+            .eq("user_id", user.id)
+            .single();
 
-    if (error) {
-        console.error("Error creating task:", error);
-        return { success: false, error: error.message };
+        if (!profile) return { success: false, error: "Supervisor profile not found." };
+
+        let tasksToCreate: any[] = [];
+        let recipients: any[] = [];
+
+        // Sanitize payload
+        const taskPayload = {
+            title: taskData.title,
+            description: taskData.description,
+            due_date: taskData.due_date || null,
+            priority: taskData.priority || "medium",
+            status: "pending"
+        };
+
+        if (taskData.internship_id === "all") {
+            // Fetch all ACTIVE interns for this supervisor
+            const { data: interns, error: internsError } = await supabase
+                .from("internship_applications")
+                .select(`
+                    id,
+                    internship_id,
+                    student_id,
+                    student:student_profiles (
+                        user_id,
+                        full_name,
+                        email
+                    )
+                `)
+                .eq("supervisor_id", profile.id)
+                .eq("status", "accepted");
+
+            if (internsError) {
+                return { success: false, error: "Failed to fetch interns for bulk assignment" };
+            }
+
+            if (!interns || interns.length === 0) {
+                return { success: false, error: "No active interns found." };
+            }
+
+            tasksToCreate = interns.map(intern => ({
+                internship_id: intern.internship_id,
+                student_id: intern.student_id,
+                ...taskPayload
+            }));
+
+            recipients = interns.map(intern => {
+                const student = Array.isArray(intern.student) ? intern.student[0] : intern.student;
+                return student;
+            }).filter(Boolean);
+
+        } else {
+            // Single Assignment - taskData.internship_id is the APPLICATION ID
+
+            // 1. Fetch the Application to get the real Program ID (internship_id) and Student ID
+            const { data: application, error: appError } = await supabase
+                .from("internship_applications")
+                .select(`
+                    id,
+                    internship_id,
+                    student_id,
+                    student:student_profiles (
+                        user_id,
+                        full_name,
+                        email
+                    )
+                `)
+                .eq("id", taskData.internship_id)
+                .single();
+
+            if (appError || !application) {
+                console.error("Application lookup failed:", appError);
+                return { success: false, error: "Intern assignment target not found." };
+            }
+
+            tasksToCreate = [{
+                internship_id: application.internship_id, // Link to the Program
+                student_id: application.student_id,       // Link to the specific Student
+                ...taskPayload
+            }];
+
+            if (application.student) {
+                const student = Array.isArray(application.student) ? application.student[0] : application.student;
+                if (student) recipients.push(student);
+            }
+        }
+
+        const { data, error } = await supabase
+            .from("internship_tasks")
+            .insert(tasksToCreate)
+            .select();
+
+        if (error) {
+            console.error("Error creating task:", error);
+            // Fallback: If student_id column doesn't exist, try inserting without it (Global Program Assignment)
+            if (error.message?.includes("student_id") || error.message?.includes("column \"student_id\"")) {
+                console.warn("Retrying task insert without student_id (Schema mismatch)");
+                const fallbackTasks = tasksToCreate.map(({ student_id, ...rest }) => rest);
+                const { error: fallbackError } = await supabase
+                    .from("internship_tasks")
+                    .insert(fallbackTasks)
+                    .select();
+
+                if (fallbackError) {
+                    return { success: false, error: fallbackError.message };
+                }
+            } else {
+                return { success: false, error: error.message };
+            }
+        }
+
+        // Send Email Notifications (Fire and Forget)
+        Promise.all(recipients.map(recipient => {
+            if (!recipient.email) return Promise.resolve();
+            return sendTaskAssignmentEmail({
+                email: recipient.email,
+                name: recipient.full_name,
+                taskTitle: taskData.title,
+                taskDescription: taskData.description,
+                dueDate: taskData.due_date,
+                priority: taskData.priority,
+                supervisorName: profile.full_name || "Supervisor"
+            });
+        })).catch(err => console.error("Error sending bulk emails:", err));
+
+        revalidatePath("/supervisor");
+        return { success: true, count: data.length };
+    } catch (err: any) {
+        console.error("Critical error in assignInternshipTask:", err);
+        return { success: false, error: err.message || "Internal Server Error" };
     }
-
-    revalidatePath("/supervisor");
-    return { success: true, data };
 }
 
 /**
@@ -716,6 +859,109 @@ export async function promoteToSupervisor(userData: any) {
         return { success: true, data };
     } catch (err: any) {
         console.error("Promotion failed:", err);
+        return { success: false, error: err.message };
+    }
+}
+
+/**
+ * Server Action to submit a weekly evaluation for an intern.
+ */
+export async function submitWeeklyEvaluation(evaluationData: {
+    id?: string;
+    internship_id: string;
+    student_id: string;
+    rating: number;
+    feedback: string;
+}) {
+    try {
+        const supabase = await createServerActionClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) return { success: false, error: "Unauthorized" };
+
+        // Get supervisor profile
+        const { data: profile } = await supabase
+            .from("supervisor_profiles")
+            .select("id")
+            .eq("user_id", user.id)
+            .single();
+
+        if (!profile) return { success: false, error: "Supervisor profile not found." };
+
+        // Word count check (at least 8 words)
+        const wordCount = evaluationData.feedback.trim().split(/\s+/).filter(Boolean).length;
+        if (wordCount < 8) {
+            return { success: false, error: `Feedback must be at least 8 words. You have ${wordCount} words.` };
+        }
+
+        // 1. Strict Weekly Throttling Check
+        // We find the LATEST evaluation for this student/supervisor pair
+        const { data: latestEvals } = await supabase
+            .from("intern_evaluations")
+            .select("*")
+            .eq("student_id", evaluationData.student_id)
+            .eq("supervisor_id", profile.id)
+            .order("evaluation_date", { ascending: false })
+            .limit(1);
+
+        const lastEval = latestEvals?.[0];
+        const now = new Date();
+
+        if (lastEval) {
+            const lastDate = new Date(lastEval.evaluation_date);
+            const diffTime = Math.abs(now.getTime() - lastDate.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            // If a record exists and it's within the 7-day window, 
+            // the user MUST provide an ID to update, otherwise they are blocked from creating a new one.
+            if (diffDays <= 7 && !evaluationData.id) {
+                return {
+                    success: false,
+                    error: "WEEKLY_LIMIT_REACHED",
+                    existingEval: lastEval,
+                    message: `Weekly limit reached. You posted on ${lastEval.evaluation_date}. You can edit that feedback, but you can only create a new weekly record once every 7 days.`
+                };
+            }
+        }
+
+        let result;
+        if (evaluationData.id) {
+            // UPDATING existing feedback
+            // We DON'T update the evaluation_date to keep the 7-day window relative to the original post
+            result = await supabase
+                .from("intern_evaluations")
+                .update({
+                    overall_rating: evaluationData.rating,
+                    comments: evaluationData.feedback
+                })
+                .eq("id", evaluationData.id)
+                .select()
+                .single();
+        } else {
+            // CREATING new feedback
+            result = await supabase
+                .from("intern_evaluations")
+                .insert([{
+                    internship_id: evaluationData.internship_id,
+                    student_id: evaluationData.student_id,
+                    supervisor_id: profile.id,
+                    overall_rating: evaluationData.rating,
+                    comments: evaluationData.feedback,
+                    evaluation_date: now.toISOString().split('T')[0]
+                }])
+                .select()
+                .single();
+        }
+
+        if (result.error) {
+            console.error("Error submitting evaluation:", result.error);
+            return { success: false, error: result.error.message };
+        }
+
+        revalidatePath("/supervisor");
+        return { success: true, data: result.data };
+    } catch (err: any) {
+        console.error("Critical error in submitWeeklyEvaluation:", err);
         return { success: false, error: err.message };
     }
 }
