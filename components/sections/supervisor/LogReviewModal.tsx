@@ -17,11 +17,12 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { reviewInternshipLog } from "@/lib/actions/supervisor.actions";
+import { reviewInternshipLog, markLogAsRead } from "@/lib/actions/supervisor.actions";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { useEffect } from "react";
 
 interface LogReviewModalProps {
   isOpen: boolean;
@@ -33,6 +34,16 @@ export function LogReviewModal({ isOpen, onClose, log }: LogReviewModalProps) {
   const [feedback, setFeedback] = useState(log?.supervisor_feedback || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    if (isOpen && log?.id && !log.read_at) {
+      markLogAsRead(log.id).then((res) => {
+        if (res.success) {
+          router.refresh();
+        }
+      });
+    }
+  }, [isOpen, log?.id, log?.read_at, router]);
 
   if (!isOpen || !log) return null;
 

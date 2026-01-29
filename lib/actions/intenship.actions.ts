@@ -3,6 +3,8 @@
 import { createServerActionClient, supabaseAdmin } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { sendReportSubmissionEmail } from "@/lib/email";
+import { createNotification } from "@/lib/notifications";
 
 /**
  * Server Action to fetch a list of all published internships for the dashboard.
@@ -174,13 +176,23 @@ export async function getInternshipWorkspaceData() {
     }));
   }
 
+  // 7. Calculate unread announcements
+  const { data: readRecords } = await supabaseAdmin
+    .from("announcement_reads")
+    .select("announcement_id")
+    .eq("student_id", user.id);
+
+  const readIds = new Set(readRecords?.map((r: any) => r.announcement_id) || []);
+  const unreadCount = announcements.filter((a: any) => !readIds.has(a.id)).length;
+
   return {
     application,
     curriculum: curriculum || [],
     logs: logs || [],
     tasks: tasks || [],
     notes: notes || [],
-    announcements: announcements || []
+    announcements: announcements || [],
+    unreadCount
   };
 }
 
@@ -231,6 +243,64 @@ export async function submitInternshipLog(formData: {
   if (error) {
     console.error("Error submitting log:", error);
     return { success: false, error: error.message };
+  }
+
+  // 3. Notify Supervisor
+  try {
+    // Fetch application to find assigned supervisor
+    const { data: application } = await supabaseAdmin
+      .from("internship_applications")
+      .select("supervisor_id")
+      .eq("student_id", user.id)
+      .eq("internship_id", formData.internship_id)
+      .single();
+
+    if (application?.supervisor_id) {
+      // Fetch student name and supervisor profile in parallel for reliability
+      const [studentRes, supervisorRes] = await Promise.all([
+        supabaseAdmin.from("student_profiles").select("full_name").eq("user_id", user.id).single(),
+        supabaseAdmin.from("supervisor_profiles").select("full_name, email, user_id").eq("id", application.supervisor_id).single()
+      ]);
+
+      const studentName = studentRes.data?.full_name || "An Intern";
+      const supervisor = supervisorRes.data;
+
+      if (supervisor) {
+        let targetEmail = supervisor.email;
+
+        // Fallback if email is missing (Auth Admin lookup)
+        if (!targetEmail && supervisor.user_id) {
+          const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(supervisor.user_id);
+          if (authUser?.user?.email) {
+            targetEmail = authUser.user.email;
+          }
+        }
+
+        if (targetEmail) {
+          await sendReportSubmissionEmail({
+            email: targetEmail,
+            supervisorName: supervisor.full_name,
+            studentName: studentName,
+            reportDate: formData.log_date,
+            reportSummary: formData.learning_log
+          });
+          console.log(`[LOG_SUBMIT] Notification sent to supervisor ${targetEmail}`);
+
+          // Add Real-time Notification for Supervisor
+          if (supervisor.user_id) {
+            await createNotification({
+              userId: supervisor.user_id,
+              title: "New Report Submitted 📜",
+              message: `${studentName} has submitted a new learning log for ${formData.log_date}.`,
+              type: "new_log_submitted",
+              referenceId: data.id
+            });
+          }
+        }
+      }
+    }
+  } catch (notifyErr) {
+    console.error("[LOG_SUBMIT] Failed to notify supervisor:", notifyErr);
   }
 
   return { success: true, data };

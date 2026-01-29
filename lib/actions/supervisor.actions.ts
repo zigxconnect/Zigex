@@ -3,6 +3,7 @@
 import { createServerActionClient, supabaseAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { sendEmail, sendSupervisorWelcomeEmail, sendSupervisorAssignmentEmail } from "@/lib/email";
+import { createNotification } from "@/lib/notifications";
 
 /**
  * Fetches all supervisors. 
@@ -13,39 +14,24 @@ export async function getSupervisors(companyId?: string) {
     try {
         console.log(`[SERVER_ACTION] getSupervisors called. CompanyId: ${companyId}`);
 
-        // 1. Fetch EVERYTHING first - this avoids any "column missing" errors in the query itself
-        // unless the basic table is missing.
+        // If no companyId is provided, we should probably return nothing or only global ones.
+        // For the admin dashboard, we expect a companyId.
+        if (!companyId || companyId === "undefined" || companyId === "") {
+            console.warn("[SERVER_ACTION] No companyId provided to getSupervisors. Returning empty list for security.");
+            return [];
+        }
+
         const { data, error } = await supabaseAdmin
             .from("supervisor_profiles")
-            .select("*");
+            .select("*")
+            .eq("company_id", companyId);
 
         if (error) {
-            console.error("[SERVER_ACTION] Error fetching all supervisors:", error);
+            console.error("[SERVER_ACTION] Error fetching supervisors:", error);
             return [];
         }
 
-        if (!data || data.length === 0) {
-            console.log("[SERVER_ACTION] No supervisors found in database.");
-            return [];
-        }
-
-        console.log(`[SERVER_ACTION] Found ${data.length} total supervisors.`);
-
-        // 2. Filter in Javascript if company_id is provided AND if it exists in the data
-        if (companyId && companyId !== "" && companyId !== "undefined") {
-            // Check if ANY record has company_id
-            const hasCompanyColumn = data.some(s => s.hasOwnProperty('company_id'));
-
-            if (hasCompanyColumn) {
-                const filtered = data.filter(s => String(s.company_id) === String(companyId));
-                console.log(`[SERVER_ACTION] Filtered to ${filtered.length} supervisors for company ${companyId}`);
-                // If we found specific ones for the company, return them.
-                // Otherwise, return ALL as a fallback to ensure the list is never empty during setup.
-                return filtered.length > 0 ? filtered : data;
-            }
-        }
-
-        return data;
+        return data || [];
     } catch (err) {
         console.error("[SERVER_ACTION] Critical error in getSupervisors:", err);
         return [];
@@ -54,9 +40,37 @@ export async function getSupervisors(companyId?: string) {
 
 /**
  * Assigns a supervisor to an internship application and sends a notification email.
+ * SECURITY: Verifies both the supervisor and application belong to the caller's company.
  */
 export async function assignSupervisor(applicationId: string, supervisorId: string) {
     try {
+        // SECURITY: Get the caller's company
+        const supabase = await createServerActionClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return { success: false, error: "Unauthorized" };
+
+        const { data: companyProfile } = await supabaseAdmin
+            .from("company_profiles")
+            .select("id")
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+        if (!companyProfile) {
+            return { success: false, error: "Only company administrators can assign supervisors." };
+        }
+
+        // SECURITY: Verify the supervisor belongs to the caller's company
+        const { data: supervisorCheck } = await supabaseAdmin
+            .from("supervisor_profiles")
+            .select("company_id")
+            .eq("id", supervisorId)
+            .single();
+
+        if (!supervisorCheck || supervisorCheck.company_id !== companyProfile.id) {
+            console.warn(`[SECURITY] User ${user.id} attempted to assign supervisor ${supervisorId} from company ${supervisorCheck?.company_id}`);
+            return { success: false, error: "You can only assign supervisors from your own company." };
+        }
+
         // 1. Fetch application details to get company and program info
         const { data: appData } = await supabaseAdmin
             .from("internship_applications")
@@ -64,12 +78,22 @@ export async function assignSupervisor(applicationId: string, supervisorId: stri
                 id,
                 internships (
                     title,
+                    company_id,
                     company_profiles (company_name)
                 ),
                 student:student_profiles(full_name)
             `)
             .eq("id", applicationId)
             .single();
+
+        // SECURITY: Verify the application belongs to the caller's company
+        if (appData) {
+            const internshipsData = Array.isArray(appData.internships) ? appData.internships[0] : appData.internships;
+            if ((internshipsData as any)?.company_id !== companyProfile.id) {
+                console.warn(`[SECURITY] User ${user.id} attempted to assign to application from different company`);
+                return { success: false, error: "You can only manage applications for your own company." };
+            }
+        }
 
         // 2. Fetch supervisor email
         const { data: supervisor } = await supabaseAdmin
@@ -83,6 +107,7 @@ export async function assignSupervisor(applicationId: string, supervisorId: stri
         let updateError = null;
 
         let assignmentResult = null;
+
 
         // Try new table first
         const { data: newData, error: newError } = await supabaseAdmin
@@ -135,6 +160,18 @@ export async function assignSupervisor(applicationId: string, supervisorId: stri
                     companyName: companyName,
                     dashboardLink: "https://zigexconnect.com/supervisor"
                 });
+
+                // Add Real-time Notification for Student
+                const studentUserId = (appData as any).student?.user_id || (appData as any).student_id;
+                if (studentUserId) {
+                    await createNotification({
+                        userId: studentUserId,
+                        title: "Supervisor Assigned 👨‍🏫",
+                        message: `${supervisor.full_name} has been assigned as your supervisor for your ${programTitle} internship.`,
+                        type: "supervisor_assigned",
+                        referenceId: applicationId
+                    });
+                }
             } catch (emailErr) {
                 console.error("Assignment email failed:", emailErr);
             }
@@ -313,6 +350,7 @@ export async function getSupervisorDashboardData() {
 
         // Get recent logs for these interns
         let recentLogs: any[] = [];
+        let unreadLogsCount = 0;
         if (internUserIds.length > 0) {
             const { data: logs, error: logsError } = await supabaseAdmin
                 .from("intern_logs")
@@ -327,6 +365,9 @@ export async function getSupervisorDashboardData() {
                     ...log,
                     student: studentProfiles.find(p => p.user_id === log.student_id) || { full_name: "Intern" }
                 }));
+
+                // Calculate unread logs (those without read_at timestamp)
+                unreadLogsCount = logs.filter(log => !log.read_at).length;
             }
         }
 
@@ -375,6 +416,7 @@ export async function getSupervisorDashboardData() {
             profile,
             interns: interns || [],
             recentLogs: recentLogs,
+            unreadLogsCount,
             tasks: tasks || [],
             attendance: attendance || [],
             evaluations: evaluations || []
@@ -560,10 +602,24 @@ export async function assignInternshipTask(taskData: {
         // Await all emails to ensure they are sent before the function returns
         try {
             await Promise.all(recipients.map(async (recipient: any) => {
-                if (!recipient.email) return;
+                let targetEmail = recipient.email;
+
+                // Fallback: If email is missing in profile, fetch from Auth
+                if (!targetEmail && recipient.user_id) {
+                    const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(recipient.user_id);
+                    if (authUser?.user?.email) {
+                        targetEmail = authUser.user.email;
+                    }
+                }
+
+                if (!targetEmail) {
+                    console.warn(`[SUPERVISOR_ACTIONS] No email found for student ${recipient.full_name} (${recipient.user_id})`);
+                    return;
+                }
+
                 try {
                     await sendTaskAssignmentEmail({
-                        email: recipient.email,
+                        email: targetEmail,
                         name: recipient.full_name,
                         taskTitle: taskData.title,
                         taskDescription: taskData.description,
@@ -571,8 +627,17 @@ export async function assignInternshipTask(taskData: {
                         priority: taskData.priority,
                         supervisorName: profile.full_name || "Supervisor"
                     });
+
+                    // Add Real-time Notification
+                    await createNotification({
+                        userId: recipient.user_id,
+                        title: "New Milestone Assigned 🚀",
+                        message: `A new task "${taskData.title}" has been assigned to you by ${profile.full_name}.`,
+                        type: "task_assigned",
+                        referenceId: taskData.internship_id === "all" ? undefined : taskData.internship_id
+                    });
                 } catch (err) {
-                    console.error(`[SUPERVISOR_ACTIONS] Failed to send email to ${recipient.email}:`, err);
+                    console.error(`[SUPERVISOR_ACTIONS] Failed to send email/notification to ${targetEmail}:`, err);
                 }
             }));
             console.log("[SUPERVISOR_ACTIONS] All emails processed.");
@@ -778,6 +843,48 @@ export async function reviewInternshipLog(logId: string, status: "approved" | "r
 
     revalidatePath("/supervisor");
     revalidatePath("/intern/workspace");
+
+    // Add Real-time Notification for Student
+    try {
+        const { data: logData } = await supabaseAdmin
+            .from("intern_logs")
+            .select("student_id, log_date")
+            .eq("id", logId)
+            .single();
+
+        if (logData) {
+            await createNotification({
+                userId: logData.student_id,
+                title: status === "approved" ? "Report Approved ✅" : "Report Rejected ❌",
+                message: `Your report for ${logData.log_date} has been ${status}. ${feedback ? `Feedback: ${feedback}` : ""}`,
+                type: "log_reviewed",
+                referenceId: logId
+            });
+        }
+    } catch (notifyErr) {
+        console.error("Failed to skip notify student about log review:", notifyErr);
+    }
+
+    return { success: true, data };
+}
+
+/**
+ * Server Action to mark an internship log as read by the supervisor.
+ */
+export async function markLogAsRead(logId: string) {
+    const { data, error } = await supabaseAdmin
+        .from("intern_logs")
+        .update({ read_at: new Date().toISOString() })
+        .eq("id", logId)
+        .is("read_at", null) // Only update if not already read
+        .select();
+
+    if (error) {
+        console.error("Error marking log as read:", error);
+        return { success: false, error: error.message };
+    }
+
+    revalidatePath("/supervisor");
     return { success: true, data };
 }
 
@@ -834,6 +941,7 @@ export async function getSupervisorsWithStats(companyId?: string) {
 
 /**
  * Update supervisor profile.
+ * SECURITY: Verifies caller owns the company before allowing updates.
  */
 export async function updateSupervisorProfile(
     supervisorId: string,
@@ -844,6 +952,33 @@ export async function updateSupervisorProfile(
         whatsapp?: string;
     }
 ) {
+    // SECURITY: Get the caller's company
+    const supabase = await createServerActionClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    const { data: companyProfile } = await supabaseAdmin
+        .from("company_profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+    if (!companyProfile) {
+        return { success: false, error: "Only company administrators can update supervisors." };
+    }
+
+    // SECURITY: Verify the supervisor belongs to the caller's company
+    const { data: supervisor } = await supabaseAdmin
+        .from("supervisor_profiles")
+        .select("company_id")
+        .eq("id", supervisorId)
+        .single();
+
+    if (!supervisor || supervisor.company_id !== companyProfile.id) {
+        console.warn(`[SECURITY] User ${user.id} attempted to update supervisor ${supervisorId} from company ${supervisor?.company_id}`);
+        return { success: false, error: "You can only update supervisors from your own company." };
+    }
+
     const { data, error } = await supabaseAdmin
         .from("supervisor_profiles")
         .update(updates)
@@ -866,8 +1001,37 @@ export async function updateSupervisorProfile(
 
 /**
  * Remove supervisor status.
+ * SECURITY: Verifies caller owns the company before allowing deletion.
  */
 export async function removeSupervisor(supervisorId: string) {
+    // SECURITY: Get the caller's company
+    const supabase = await createServerActionClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    const { data: companyProfile } = await supabaseAdmin
+        .from("company_profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+    if (!companyProfile) {
+        return { success: false, error: "Only company administrators can remove supervisors." };
+    }
+
+    // SECURITY: Verify the supervisor belongs to the caller's company
+    const { data: supervisor } = await supabaseAdmin
+        .from("supervisor_profiles")
+        .select("company_id")
+        .eq("id", supervisorId)
+        .single();
+
+    if (!supervisor || supervisor.company_id !== companyProfile.id) {
+        console.warn(`[SECURITY] User ${user.id} attempted to remove supervisor ${supervisorId} from company ${supervisor?.company_id}`);
+        return { success: false, error: "You can only remove supervisors from your own company." };
+    }
+
+    // Unassign supervisor from all applications
     await supabaseAdmin
         .from("internship_applications")
         .update({ supervisor_id: null })
@@ -892,18 +1056,52 @@ export async function removeSupervisor(supervisorId: string) {
 
 /**
  * Promote a user to supervisor.
+ * SECURITY: Verifies caller is authorized for the target company.
  */
 export async function promoteToSupervisor(userData: any) {
     try {
-        console.log(`[PROMOTE] Attempting to promote ${userData.email} to supervisor...`);
+        // Robustness: If email is missing, fetch from Auth
+        let targetEmail = userData.email;
+        if (!targetEmail && userData.user_id) {
+            const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userData.user_id);
+            if (authUser?.user?.email) {
+                targetEmail = authUser.user.email;
+            }
+        }
 
-        // Use a safe approach: Check if company_id should being included
-        const { company_id, ...baseData } = userData;
+        console.log(`[PROMOTE] Attempting to promote ${targetEmail || "unknown"} (ID: ${userData.user_id}) to supervisor...`);
 
-        // Try with company_id first
+        // SECURITY: Get the caller's company
+        const supabase = await createServerActionClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return { success: false, error: "Unauthorized" };
+
+        const { data: companyProfile } = await supabaseAdmin
+            .from("company_profiles")
+            .select("id, company_name")
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+        if (!companyProfile) {
+            return { success: false, error: "Only company administrators can add supervisors." };
+        }
+
+        // SECURITY: Force the company_id to be the caller's company
+        // This prevents any attempt to add a supervisor to another company
+        if (userData.company_id && userData.company_id !== companyProfile.id) {
+            console.warn(`[SECURITY] User ${user.id} tried to add supervisor to company ${userData.company_id} but owns ${companyProfile.id}`);
+        }
+
+        const secureUserData = {
+            ...userData,
+            email: targetEmail, // Use the resolved email
+            company_id: companyProfile.id // Force to caller's company
+        };
+
+        // Insert the supervisor
         const { data, error } = await supabaseAdmin
             .from("supervisor_profiles")
-            .insert([userData])
+            .insert([secureUserData])
             .select()
             .single();
 
@@ -911,6 +1109,7 @@ export async function promoteToSupervisor(userData: any) {
             // Fallback: If company_id col is missing, insert without it
             if (error.code === '42703' || error.code === 'PGRST204' || error.message.includes('company_id')) {
                 console.warn("[PROMOTE] company_id column missing. Retrying without it.");
+                const { company_id, ...baseData } = secureUserData;
                 const { data: retryData, error: retryError } = await supabaseAdmin
                     .from("supervisor_profiles")
                     .insert([baseData])
@@ -923,25 +1122,12 @@ export async function promoteToSupervisor(userData: any) {
             return { success: false, error: error.message };
         }
 
-        // Fetch Company Name for context
-        let companyName = "Zigex Partner";
-        if (userData.company_id) {
-            const { data: company } = await supabaseAdmin
-                .from("company_profiles")
-                .select("company_name")
-                .eq("id", userData.company_id)
-                .single();
-            if (company?.company_name) {
-                companyName = company.company_name;
-            }
-        }
-
         // Send Premium Welcome Email
         try {
             await sendSupervisorWelcomeEmail({
                 email: userData.email,
                 name: userData.full_name,
-                companyName: companyName,
+                companyName: companyProfile.company_name || "Zigex Partner",
                 dashboardLink: "https://zigexconnect.com/supervisor"
             });
             console.log(`[EMAIL] Premium Supervisor welcome sent to ${userData.email}`);
@@ -1056,6 +1242,21 @@ export async function submitWeeklyEvaluation(evaluationData: {
         }
 
         revalidatePath("/supervisor");
+        revalidatePath("/intern/workspace");
+
+        // Add Real-time Notification for Student
+        try {
+            await createNotification({
+                userId: evaluationData.student_id,
+                title: evaluationData.id ? "Evaluation Updated 📈" : "New Weekly Evaluation 📈",
+                message: `Your supervisor has ${evaluationData.id ? "updated your" : "submitted a new"} weekly evaluation. Overall Rating: ${evaluationData.rating}/5.`,
+                type: "evaluation_submitted",
+                referenceId: evaluationData.internship_id
+            });
+        } catch (notifyErr) {
+            console.error("Failed to notify student about evaluation:", notifyErr);
+        }
+
         return { success: true, data: result.data };
     } catch (err: any) {
         console.error("Critical error in submitWeeklyEvaluation:", err);

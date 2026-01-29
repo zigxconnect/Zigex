@@ -275,10 +275,19 @@ export async function PATCH(
       return NextResponse.json({ error: updateError.message }, { status: 400 });
     }
 
-    // Trigger receipt email if payment is confirmed
     if (payment_completed === true && shouldNotify) {
       try {
         const studentAuthId = studentProfile!.user_id;
+
+        // Add Real-time Notification
+        await createNotification(
+          studentAuthId,
+          "Payment Confirmed! 💰",
+          `Your payment for "${opportunityTitle}" has been confirmed. You now have full access to your workspace.`,
+          "internship",
+          id
+        );
+
         const { data: userData } = await supabaseAdmin.auth.admin.getUserById(studentAuthId);
         const studentEmail = userData?.user?.email;
 

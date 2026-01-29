@@ -40,6 +40,7 @@ import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { DailyReportModal } from "./DailyReportModal";
 import { createClient } from "@/lib/supabase/client";
+import { markAnnouncementsAsRead } from "@/lib/actions/announcement.actions";
 import { InternAnnouncementBoard } from "@/components/sections/intern/InternAnnouncementBoard";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -57,20 +58,32 @@ interface InternWorkspaceClientProps {
   };
 }
 
-const tabs = [
+const getTabs = (reportsCount: number, paymentsCount: number, tasksCount: number, unreadAnnouncements: number, hasPendingReport: boolean) => [
   { id: "overview", label: "Overview", icon: Layout },
-  { id: "tasks", label: "Tasks", icon: CheckCheck },
+  { id: "tasks", label: "Tasks", icon: CheckCheck, badge: tasksCount > 0 ? tasksCount : undefined },
   { id: "curriculum", label: "Curriculum", icon: BookOpen },
-  { id: "announcements", label: "Announcements", icon: Megaphone },
-  { id: "reports", label: "Reports", icon: FileText },
-  { id: "payments", label: "Payments", icon: CreditCard },
+  { id: "announcements", label: "Announcements", icon: Megaphone, badge: unreadAnnouncements > 0 ? unreadAnnouncements : undefined },
+  { 
+    id: "reports", 
+    label: "Reports", 
+    icon: FileText, 
+    badge: reportsCount > 0 ? reportsCount : undefined,
+    badgeColor: hasPendingReport ? "bg-red-500" : "bg-blue-600"
+  },
+  { 
+    id: "payments", 
+    label: "Payments", 
+    icon: CreditCard, 
+    badge: paymentsCount > 0 ? paymentsCount : undefined,
+    badgeColor: "bg-blue-600"
+  },
 ];
 
 export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
   const [activeTab, setActiveTab] = useState("overview");
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
-  const [unreadAnnouncements, setUnreadAnnouncements] = useState(0);
-  const { application, curriculum, logs, tasks: initialTasks } = data;
+  const [unreadAnnouncements, setUnreadAnnouncements] = useState(data.unreadCount || 0);
+  const { application, curriculum, logs, tasks: initialTasks, announcements = [] } = data;
   const [tasks, setTasks] = useState(initialTasks || []);
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [isTaskDetailsOpen, setIsTaskDetailsOpen] = useState(false);
@@ -121,6 +134,22 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
       supabase.removeChannel(channel);
     };
   }, [application?.id, router]);
+
+  // Handle Tab Change and Mark Announcements as Read
+  useEffect(() => {
+    if (activeTab === "announcements" && unreadAnnouncements > 0) {
+      const studentId = application?.student_id;
+      const announcementIds = announcements.map((a: any) => a.id);
+      
+      if (studentId && announcementIds.length > 0) {
+        markAnnouncementsAsRead(studentId, announcementIds).then(res => {
+          if (res.success) {
+            setUnreadAnnouncements(0);
+          }
+        });
+      }
+    }
+  }, [activeTab, unreadAnnouncements, application?.student_id, announcements]);
 
   // Real-time Announcements Listener
   useEffect(() => {
@@ -182,11 +211,6 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
         (payload) => {
           console.log('[REALTIME] Log update detected:', payload);
           router.refresh();
-          
-          // If approved, show a nice toast (optional but good for UX)
-          if (payload.new && (payload.new as any).status === 'approved') {
-            toast.success("Your daily report has been confirmed by your supervisor!");
-          }
         }
       )
       .subscribe();
@@ -216,9 +240,6 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
           if (payload.eventType === 'INSERT') {
             const newTask = payload.new as any;
             setTasks(prev => [newTask, ...prev]);
-            toast.info("New Milestone Assigned!", {
-              description: newTask.title,
-            });
           } else if (payload.eventType === 'UPDATE') {
             const updatedTask = payload.new as any;
             setTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
@@ -230,10 +251,71 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
       )
       .subscribe();
 
+    // Listen for Payment Confirmation
+    const paymentChannel = supabase
+      .channel(`payments-${application?.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'payment_ledger',
+          filter: `application_id=eq.${application?.id}`
+        },
+        (payload) => {
+          console.log('[REALTIME] Payment update detected:', payload);
+          router.refresh();
+        }
+      )
+      .subscribe();
+
+    // Listen for Evaluation Updates
+    const evaluationChannel = supabase
+      .channel(`evaluations-${application?.student_id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'intern_evaluations',
+          filter: `student_id=eq.${application?.student_id}`
+        },
+        (payload) => {
+          console.log('[REALTIME] Evaluation update detected:', payload);
+          router.refresh();
+        }
+      )
+      .subscribe();
+
+    // Listen for Generic Notifications
+    const notificationChannel = supabase
+      .channel(`intern-notifications-${application?.student_id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${application?.student_id}`
+        },
+        (payload) => {
+          const newNotif = payload.new as any;
+          toast.info(newNotif.title, {
+            description: newNotif.message,
+            duration: 8000,
+          });
+          router.refresh();
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(tasksChannel);
+      supabase.removeChannel(paymentChannel);
+      supabase.removeChannel(evaluationChannel);
+      supabase.removeChannel(notificationChannel);
     };
-  }, [application?.student_id]);
+  }, [application?.student_id, application?.id, router]);
 
   // Reset unread count when switching to announcements tab
   useEffect(() => {
@@ -354,7 +436,13 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
       <nav className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-blue-50 dark:border-slate-800">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-1 py-3 overflow-x-auto hide-scrollbar custom-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
-            {tabs.map((tab) => {
+            {getTabs(
+              logs.length, 
+              paymentLedger.filter((p: any) => p.status === 'paid').length, 
+              tasks.filter(t => !t.is_read).length, 
+              unreadAnnouncements,
+              logs.some(l => l.status !== 'approved')
+            ).map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
               return (
@@ -370,14 +458,13 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                 >
                   <div className="relative">
                     <Icon size={16} className={cn(isActive && "text-blue-600")} />
-                    {tab.id === "announcements" && unreadAnnouncements > 0 && (
-                      <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white ring-2 ring-white dark:ring-slate-900 border border-white dark:border-slate-900 shadow-sm animate-pulse">
-                        {unreadAnnouncements}
-                      </span>
-                    )}
-                    {tab.id === "tasks" && tasksCount > 0 && (
-                      <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white ring-2 ring-white dark:ring-slate-900">
-                        {tasksCount}
+                    {tab.badge !== undefined && tab.badge > 0 && (
+                      <span className={cn(
+                        "absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold text-white ring-2 ring-white dark:ring-slate-900 border border-white dark:border-slate-900 shadow-sm",
+                        tab.id === "announcements" ? "animate-pulse" : "",
+                        tab.badgeColor || "bg-blue-600"
+                      )}>
+                        {tab.badge}
                       </span>
                     )}
                   </div>
@@ -747,14 +834,23 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                           <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
                             {format(new Date(log.log_date), "MMM dd, yyyy")}
                           </span>
-                          <Badge className={cn(
-                            "rounded-md px-2 py-0.5 text-[10px] font-semibold border",
-                            log.status === "approved" ? "bg-green-50 text-green-600 border-green-100" : 
-                            log.status === "rejected" ? "bg-red-50 text-red-600 border-red-100" :
-                            "bg-amber-50 text-amber-600 border-amber-100"
-                          )}>
-                            {log.status === "approved" ? "Confirmed" : (log.status || "Pending")}
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            <CheckCheck 
+                              size={16} 
+                              className={cn(
+                                (log.read_at && log.status === "approved") ? "text-blue-500" : "text-slate-300"
+                              )} 
+                              strokeWidth={3}
+                            />
+                            <Badge className={cn(
+                              "rounded-md px-2 py-0.5 text-[10px] font-semibold border",
+                              log.status === "approved" ? "bg-green-50 text-green-600 border-green-100" : 
+                              log.status === "rejected" ? "bg-red-50 text-red-600 border-red-100" :
+                              "bg-amber-50 text-amber-600 border-amber-100"
+                            )}>
+                              {log.status === "approved" ? "Confirmed" : (log.status || "Pending")}
+                            </Badge>
+                          </div>
                         </div>
                         <p className="text-sm font-medium text-slate-700 dark:text-slate-300 line-clamp-2 mb-4">
                           {log.learning_log?.substring(0, 80)}...

@@ -893,3 +893,74 @@ export const sendTaskAssignmentEmail = async (params: {
     console.error(`[EMAIL ERROR] Failed to send task notification to ${email}:`, error);
   }
 };
+
+/**
+ * Sends attendance reminder to supervisors
+ */
+export const sendAttendanceReminderEmail = async (params: {
+  email: string;
+  name: string;
+}) => {
+  const transporter = createTransporter();
+  if (!transporter) return;
+
+  const firstName = params.name.split(" ")[0];
+
+  const html = generateEmailHTML({
+    heading: "Attendance Reminder",
+    message: `Hi ${firstName},\n\nIt's 3:00 PM! This is your daily reminder to take attendance for your interns.\n\nPlease log in to the Supervisor Hub and mark today's attendance.`,
+    ctaText: "Take Attendance",
+    ctaLink: "https://zigexconnect.com/supervisor",
+    statusBadge: "ACTION REQUIRED",
+    statusColor: "#F59E0B",
+    companyName: "SEED INC"
+  });
+
+  try {
+    await transporter.sendMail({
+      from: `"SEED INC Reminders" <${GMAIL_USER}>`,
+      to: params.email,
+      subject: "🕒 Reminder: Time to Take Attendance",
+      html
+    });
+    console.log(`[EMAIL] Attendance reminder sent to ${params.email}`);
+  } catch (error) {
+    console.error(`[EMAIL ERROR] Failed to send attendance reminder to ${params.email}:`, error);
+  }
+};
+
+/**
+ * Sends a notification to the supervisor when an intern submits a daily report.
+ */
+export const sendReportSubmissionEmail = async (params: {
+  email: string;
+  supervisorName: string;
+  studentName: string;
+  reportDate: string;
+  reportSummary: string;
+}) => {
+  const transporter = createTransporter();
+  if (!transporter) return;
+
+  const html = generateEmailHTML({
+    heading: "New Report Submitted",
+    message: `Hi ${params.supervisorName},\n\n${params.studentName} has just submitted their daily report for ${params.reportDate}.\n\nReport Preview:\n"${params.reportSummary.length > 150 ? params.reportSummary.substring(0, 150) + "..." : params.reportSummary}"\n\nPlease review and confirm this report in your dashboard.`,
+    ctaText: "Review Report",
+    ctaLink: "https://zigexconnect.com/supervisor",
+    statusBadge: "NEW SUBMISSION",
+    statusColor: "#3B82F6",
+    companyName: "SEED INC"
+  });
+
+  try {
+    await transporter.sendMail({
+      from: `"SEED INC Notifications" <${GMAIL_USER}>`,
+      to: params.email,
+      subject: `New Report: ${params.studentName} (${params.reportDate})`,
+      html
+    });
+    console.log(`[EMAIL] Report notification sent to ${params.email}`);
+  } catch (error) {
+    console.error(`[EMAIL ERROR] Failed to send report notification to ${params.email}:`, error);
+  }
+};

@@ -15,7 +15,6 @@ import {
   MapPin,
   GraduationCap,
   User,
-  Sparkles,
   Target,
   MessageSquare,
   Shield,
@@ -142,9 +141,15 @@ export default function InternshipApplicationModal({
         return !value ? "Please select your level" : "";
       case "date_of_birth":
         if (!value) return "Date of birth is required";
-        const age = (new Date().getFullYear() - new Date(value).getFullYear());
-        if (age < 16) return "You must be at least 16 years old";
-        if (age > 60) return "Please enter a valid date of birth";
+        const today = new Date();
+        const birthDate = new Date(value);
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+        if (age < 13) return "You must be at least 13 years old";
+        if (age > 80) return "Please enter a valid date of birth";
         return "";
       case "address":
         if (!value.trim()) return "Address is required";
@@ -317,11 +322,11 @@ export default function InternshipApplicationModal({
           </div>
           
           <div className="relative z-10">
-            <div className="w-20 h-20 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center mb-6 mx-auto shadow-xl shadow-emerald-200">
+            <div className="w-20 h-20 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center mb-6 mx-auto shadow-xl shadow-emerald-200/50">
               <CheckCircle2 className="w-10 h-10 text-white" />
             </div>
-            <h2 className="text-3xl font-black text-slate-900 mb-3">
-              You're In! 🎉
+            <h2 className="text-3xl font-black text-slate-900 mb-3 tracking-tight">
+              Application Sent! 🎉
             </h2>
             <p className="text-slate-600 mb-8 leading-relaxed">
               Your application for <span className="font-bold text-primary">{internshipTitle}</span> has been successfully submitted to {companyName}.
@@ -352,26 +357,26 @@ export default function InternshipApplicationModal({
         className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh]"
       >
         {/* Premium Header */}
-        <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-primary/90 text-white p-6 shrink-0">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-500/20 rounded-full blur-2xl" />
+        <div className="relative bg-gradient-to-br from-[#155DFC] via-[#174EDD] to-[#1A3CB9] text-white p-6 shrink-0 shadow-lg">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-3xl -mr-12 -mt-12" />
+          <div className="absolute bottom-0 left-0 w-32 h-32 bg-sky-400/20 rounded-full blur-2xl -ml-12 -mb-12" />
           
           <div className="relative z-10 flex items-start justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20">
+              <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-inner">
                 <Briefcase className="w-7 h-7 text-white" />
               </div>
               <div>
-                <h2 className="text-xl font-black tracking-tight">Internship Application</h2>
-                <p className="text-white/70 text-sm font-medium mt-0.5 flex items-center gap-2">
-                  <Building2 size={14} />
+                <h2 className="text-2xl font-black tracking-tight leading-tight">Apply for Internship</h2>
+                <p className="text-blue-100/80 text-sm font-medium mt-1 flex items-center gap-2">
+                  <Building2 size={16} />
                   {internshipTitle}
                 </p>
               </div>
             </div>
             <button 
               onClick={handleClose} 
-              className="p-2.5 hover:bg-white/10 rounded-xl transition-all duration-200 group"
+              className="p-2.5 hover:bg-white/10 rounded-2xl transition-all duration-300 group"
             >
               <X className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
             </button>
@@ -447,13 +452,13 @@ export default function InternshipApplicationModal({
                   transition={{ duration: 0.3 }}
                   className="space-y-6"
                 >
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-200">
+                  <div className="flex items-center gap-4 mb-8">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#155DFC] to-[#1A3CB9] flex items-center justify-center shadow-xl shadow-blue-500/20">
                       <User className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-black text-slate-900">Personal Information</h3>
-                      <p className="text-sm text-slate-500">Let's start with the basics</p>
+                      <h3 className="text-2xl font-black text-slate-900 tracking-tight">Personal Details</h3>
+                      <p className="text-sm text-slate-500 font-medium">Tell us about yourself</p>
                     </div>
                   </div>
 
@@ -530,13 +535,13 @@ export default function InternshipApplicationModal({
                   transition={{ duration: 0.3 }}
                   className="space-y-6"
                 >
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-200">
+                  <div className="flex items-center gap-4 mb-8">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#8b5cf6] to-[#6d28d9] flex items-center justify-center shadow-xl shadow-violet-500/20">
                       <Target className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-black text-slate-900">Career Goals</h3>
-                      <p className="text-sm text-slate-500">Tell us about your aspirations</p>
+                      <h3 className="text-2xl font-black text-slate-900 tracking-tight">Career Goals</h3>
+                      <p className="text-sm text-slate-500 font-medium">Your aspirations & skillsets</p>
                     </div>
                   </div>
 
@@ -636,20 +641,20 @@ export default function InternshipApplicationModal({
                   transition={{ duration: 0.3 }}
                   className="space-y-6"
                 >
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-200">
+                  <div className="flex items-center gap-4 mb-8">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#10b981] to-[#059669] flex items-center justify-center shadow-xl shadow-emerald-500/20">
                       <Shield className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-black text-slate-900">Almost There!</h3>
-                      <p className="text-sm text-slate-500">Review and confirm your application</p>
+                      <h3 className="text-2xl font-black text-slate-900 tracking-tight">Review & Confirm</h3>
+                      <p className="text-sm text-slate-500 font-medium">One last check before submitting</p>
                     </div>
                   </div>
 
                   {/* Summary Card */}
-                  <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl p-5 border border-slate-200">
-                    <h4 className="text-sm font-bold text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
-                      <Sparkles size={14} className="text-amber-500" />
+                  <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50 transition-colors group-hover:bg-blue-100/50 rounded-bl-full -mr-12 -mt-12" />
+                    <h4 className="text-xs font-bold text-blue-600 uppercase tracking-[0.2em] mb-6 flex items-center gap-2 relative z-10">
                       Application Summary
                     </h4>
                     <div className="grid grid-cols-2 gap-4 text-sm">

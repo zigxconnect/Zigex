@@ -27,7 +27,8 @@ import {
   Send,
   Loader2,
   Award,
-  Edit
+  Edit,
+  CheckCheck
 } from "lucide-react";
 import { format } from "date-fns";
 import Image from "next/image";
@@ -54,6 +55,7 @@ interface SupervisorDashboardClientProps {
     profile: any;
     interns: any[];
     recentLogs: any[];
+    unreadLogsCount?: number;
     tasks: any[];
     attendance: any[];
     evaluations: any[];
@@ -88,7 +90,7 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
   const [pendingAttendance, setPendingAttendance] = useState<Record<string, string>>({});
   const [isSubmittingBatch, setIsSubmittingBatch] = useState(false);
 
-  const { interns, recentLogs, tasks, attendance, evaluations } = data;
+  const { interns, recentLogs, tasks, attendance, evaluations, unreadLogsCount = 0 } = data;
   const router = useRouter();
 
   const filteredInterns = interns.filter(i => {
@@ -135,8 +137,30 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
       .on('postgres_changes', { event: '*', schema: 'public', table: 'intern_attendance' }, () => router.refresh())
       .subscribe();
 
+    const notificationChannel = supabase
+      .channel(`supervisor-notifications-${supervisorId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${data.profile.user_id}`
+        },
+        (payload) => {
+          const newNotif = payload.new as any;
+          toast.info(newNotif.title, {
+            description: newNotif.message,
+            duration: 8000,
+          });
+          router.refresh();
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(notificationChannel);
     };
   }, [data.profile?.id, router]);
 
@@ -401,7 +425,7 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
                   className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all",
+                    "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all relative",
                     activeTab === tab.id 
                       ? "bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm" 
                       : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
@@ -409,6 +433,11 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                 >
                   <tab.icon size={14} />
                   <span className="hidden sm:inline">{tab.label}</span>
+                  {tab.id === "overview" && unreadLogsCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-600 text-white text-[8px] flex items-center justify-center rounded-full animate-pulse border-2 border-white dark:border-slate-800">
+                      {unreadLogsCount}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
@@ -438,8 +467,15 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                   <p className="text-2xl font-black text-slate-900 dark:text-white">{interns.length}</p>
                 </div>
                 <div className="bg-white dark:bg-slate-900 border border-blue-50 dark:border-slate-800 rounded-3xl p-5 shadow-sm">
-                  <div className="w-10 h-10 bg-amber-50 dark:bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-600 mb-4">
-                    <Clock size={20} />
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="w-10 h-10 bg-amber-50 dark:bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-600">
+                      <Clock size={20} />
+                    </div>
+                    {unreadLogsCount > 0 && (
+                      <Badge className="bg-blue-600 text-white border-0 text-[10px] font-bold px-1.5 py-0 rounded-full h-5 min-w-5 flex items-center justify-center">
+                        {unreadLogsCount}
+                      </Badge>
+                    )}
                   </div>
                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Pending logs</p>
                   <p className="text-2xl font-black text-amber-600 uppercase">{pendingReviews}</p>
@@ -464,7 +500,14 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                 {/* Intern List */}
                 <div className="lg:col-span-2 space-y-4">
                   <div className="flex items-center justify-between mb-2">
-                    <h2 className="text-lg font-black text-slate-900 dark:text-white">Recent Submissions</h2>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-lg font-black text-slate-900 dark:text-white">Recent Submissions</h2>
+                      {unreadLogsCount > 0 && (
+                        <span className="bg-blue-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full animate-bounce">
+                          {unreadLogsCount} NEW
+                        </span>
+                      )}
+                    </div>
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                       <Input 
@@ -490,10 +533,19 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                               <Calendar size={10} /> {format(new Date(log.log_date), "MMM dd, yyyy")}
                             </p>
                           </div>
-                          <div className="flex flex-col items-end gap-2">
-                             <Badge className={cn("text-[9px] font-black uppercase tracking-widest border-0", isPending ? "bg-amber-100 text-amber-600" : "bg-green-100 text-green-600")}>
-                                {log.status === "approved" ? "Confirmed" : (log.status || "Pending")}
-                             </Badge>
+                          <div className="flex flex-col items-end gap-2 text-right">
+                             <div className="flex items-center gap-1.5">
+                                <CheckCheck 
+                                   size={16} 
+                                   className={cn(
+                                      (log.read_at && log.status === "approved") ? "text-blue-500" : "text-slate-300"
+                                   )} 
+                                   strokeWidth={3}
+                                />
+                                <Badge className={cn("text-[9px] font-black uppercase tracking-widest border-0", isPending ? "bg-amber-100 text-amber-600" : "bg-green-100 text-green-600")}>
+                                   {log.status === "approved" ? "Confirmed" : (log.status || "Pending")}
+                                </Badge>
+                             </div>
                              <Button 
                               onClick={() => { setSelectedLog(log); setIsReviewModalOpen(true); }}
                               variant="ghost" 

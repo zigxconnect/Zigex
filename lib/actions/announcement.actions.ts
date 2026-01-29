@@ -3,15 +3,25 @@
 import { createServerActionClient, supabaseAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
-export async function getAnnouncements() {
+export async function getAnnouncements(companyId?: string) {
     const supabase = await createServerActionClient();
 
-    // 1. Fetch announcements without any joins to avoid PGRST200
-    const { data: announcements, error } = await supabase
+    // 1. Fetch announcements
+    let query = supabase
         .from("announcements")
         .select("*")
         .order("is_pinned", { ascending: false })
         .order("created_at", { ascending: false });
+
+    // If companyId is provided (supervisor view), restrict to that company OR global (optional)
+    // Actually, user said "i am not suppose to see other companies", so only their company.
+    // However, they might still need to see global ones? User says "i am just suppose to submit announcement as the company i am sign in as".
+    // For FETCHING, let's keep it restricted if companyId is present.
+    if (companyId) {
+        query = query.eq("company_id", companyId);
+    }
+
+    const { data: announcements, error } = await query;
 
     if (error) {
         console.error("Error fetching announcements:", error);
@@ -73,14 +83,49 @@ export async function createAnnouncement(payload: {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: "Unauthorized - No user session found" };
 
+    // SECURITY: Determine the user's authorized company
+    // Check company_profiles (company admin) and supervisor_profiles (supervisor)
+    const [{ data: companyProfile }, { data: supervisor }] = await Promise.all([
+        supabaseAdmin.from("company_profiles").select("id").eq("user_id", user.id).maybeSingle(),
+        supabaseAdmin.from("supervisor_profiles").select("company_id").eq("user_id", user.id).maybeSingle(),
+    ]);
+
+    // The user's authorized company is their own company OR their assigned company as a supervisor
+    const authorizedCompanyId = companyProfile?.id || supervisor?.company_id;
+
+    // SECURITY: If user belongs to a company, FORCE that company_id
+    // This prevents any attempt to post as a different company via client manipulation
+    let finalCompanyId: string | null = null;
+    if (authorizedCompanyId) {
+        // User is bound to a company - they MUST post as that company
+        finalCompanyId = authorizedCompanyId;
+
+        // Block if client tried to submit a different company_id
+        if (payload.company_id && payload.company_id !== authorizedCompanyId) {
+            console.warn(`[SECURITY] User ${user.id} tried to post as company ${payload.company_id} but belongs to ${authorizedCompanyId}`);
+            // Silently use their real company instead of blocking (to prevent information leakage)
+        }
+    }
+    // If user has no company, they cannot post (platform admins might be an exception in future)
+    if (!finalCompanyId) {
+        return { success: false, error: "You must be associated with a company to post announcements." };
+    }
+
+    // SECURITY: Basic XSS sanitization for user input
+    const sanitizeString = (str: string) => str
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#x27;");
+
     const { data, error } = await supabase
         .from("announcements")
         .insert({
-            title: payload.title,
-            content: payload.content,
+            title: sanitizeString(payload.title.trim()),
+            content: sanitizeString(payload.content.trim()),
             is_pinned: payload.is_pinned || false,
             author_id: user.id,
-            company_id: payload.company_id || null,
+            company_id: finalCompanyId,
             image_url: payload.image_url || null,
             tagged_student_id: payload.tagged_student_id || null,
         })
@@ -99,6 +144,32 @@ export async function createAnnouncement(payload: {
 
 export async function deleteAnnouncement(id: string) {
     const supabase = await createServerActionClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    // SECURITY: Get the user's authorized company
+    const [{ data: companyProfile }, { data: supervisor }] = await Promise.all([
+        supabaseAdmin.from("company_profiles").select("id").eq("user_id", user.id).maybeSingle(),
+        supabaseAdmin.from("supervisor_profiles").select("company_id").eq("user_id", user.id).maybeSingle(),
+    ]);
+    const authorizedCompanyId = companyProfile?.id || supervisor?.company_id;
+
+    // SECURITY: Verify the announcement belongs to the user's company
+    const { data: announcement } = await supabaseAdmin
+        .from("announcements")
+        .select("company_id")
+        .eq("id", id)
+        .single();
+
+    if (!announcement) {
+        return { success: false, error: "Announcement not found" };
+    }
+
+    // Block deletion if announcement belongs to a different company
+    if (announcement.company_id !== authorizedCompanyId) {
+        console.warn(`[SECURITY] User ${user.id} attempted to delete announcement ${id} belonging to company ${announcement.company_id}`);
+        return { success: false, error: "You can only delete announcements from your own company." };
+    }
 
     const { error } = await supabase
         .from("announcements")
@@ -117,6 +188,31 @@ export async function deleteAnnouncement(id: string) {
 
 export async function togglePinAnnouncement(id: string, currentStatus: boolean) {
     const supabase = await createServerActionClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    // SECURITY: Get the user's authorized company
+    const [{ data: companyProfile }, { data: supervisor }] = await Promise.all([
+        supabaseAdmin.from("company_profiles").select("id").eq("user_id", user.id).maybeSingle(),
+        supabaseAdmin.from("supervisor_profiles").select("company_id").eq("user_id", user.id).maybeSingle(),
+    ]);
+    const authorizedCompanyId = companyProfile?.id || supervisor?.company_id;
+
+    // SECURITY: Verify the announcement belongs to the user's company
+    const { data: announcement } = await supabaseAdmin
+        .from("announcements")
+        .select("company_id")
+        .eq("id", id)
+        .single();
+
+    if (!announcement) {
+        return { success: false, error: "Announcement not found" };
+    }
+
+    if (announcement.company_id !== authorizedCompanyId) {
+        console.warn(`[SECURITY] User ${user.id} attempted to modify announcement ${id} belonging to company ${announcement.company_id}`);
+        return { success: false, error: "You can only modify announcements from your own company." };
+    }
 
     const { error } = await supabase
         .from("announcements")
@@ -221,4 +317,74 @@ export async function getAllStudents() {
     }
 
     return data;
+}
+
+export async function getCompany(id: string) {
+    const { data, error } = await supabaseAdmin
+        .from("company_profiles")
+        .select("id, company_name, logo_url")
+        .eq("id", id)
+        .single();
+
+    if (error) return null;
+    return data;
+}
+
+export async function getStudentsForCompany(companyId: string) {
+    const { data, error } = await supabaseAdmin
+        .from("internship_applications")
+        .select(`
+            student:student_profiles(user_id, full_name, avatar_url, email)
+        `)
+        .eq("status", "accepted")
+        .eq("internship.company_id", companyId);
+
+    if (error) {
+        console.error("Error fetching students for company:", error);
+        return [];
+    }
+
+    const students = data.map((d: any) => d.student).filter(Boolean);
+    const uniqueStudents = Array.from(new Map(students.map((s: any) => [s.user_id, s])).values());
+
+    return uniqueStudents;
+}
+
+export async function markAnnouncementsAsRead(studentId: string, announcementIds: string[]) {
+    const { error } = await supabaseAdmin
+        .from("announcement_reads")
+        .upsert(
+            announcementIds.map(id => ({
+                announcement_id: id,
+                student_id: studentId
+            })),
+            { onConflict: 'announcement_id,student_id' }
+        );
+
+    if (error) {
+        console.error("Error marking announcements as read:", error);
+        return { success: false, error: error.message };
+    }
+
+    revalidatePath("/intern/workspace");
+    return { success: true };
+}
+
+export async function getUnreadAnnouncementsCount(studentId: string) {
+    // 1. Get total announcements applicable to student
+    const announcements = await getAnnouncementsForStudent(studentId);
+    if (announcements.length === 0) return 0;
+
+    const announcementIds = announcements.map(a => a.id);
+
+    // 2. Get read announcements
+    const { data: readRecords } = await supabaseAdmin
+        .from("announcement_reads")
+        .select("announcement_id")
+        .eq("student_id", studentId)
+        .in("announcement_id", announcementIds);
+
+    const readIds = new Set(readRecords?.map(r => r.announcement_id) || []);
+
+    return announcementIds.filter(id => !readIds.has(id)).length;
 }

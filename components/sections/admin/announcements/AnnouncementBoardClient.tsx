@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -53,9 +53,22 @@ interface AnnouncementBoardClientProps {
     announcements: Announcement[];
     companies?: { id: string; company_name: string; logo_url: string; }[];
     students?: { user_id: string; full_name: string; avatar_url: string; }[];
+    /** 
+     * SECURITY: When true, the user is restricted to their own company.
+     * The 'Publish As' dropdown will be hidden and posts will automatically
+     * be attributed to their defaultCompanyId.
+     */
+    isCompanyUser?: boolean;
+    defaultCompanyId?: string;
 }
 
-export function AnnouncementBoardClient({ announcements, companies = [], students = [] }: AnnouncementBoardClientProps) {
+export function AnnouncementBoardClient({ 
+    announcements, 
+    companies = [], 
+    students = [],
+    isCompanyUser = false,
+    defaultCompanyId
+}: AnnouncementBoardClientProps) {
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
@@ -63,9 +76,16 @@ export function AnnouncementBoardClient({ announcements, companies = [], student
     // Form State
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
-    const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
+    const [selectedCompanyId, setSelectedCompanyId] = useState<string>(defaultCompanyId || "");
     const [selectedStudentId, setSelectedStudentId] = useState<string>("");
     const [imageFile, setImageFile] = useState<File | null>(null);
+
+    // Update selected company if defaultCompanyId changes
+    useEffect(() => {
+        if (defaultCompanyId) {
+            setSelectedCompanyId(defaultCompanyId);
+        }
+    }, [defaultCompanyId]);
 
     const handleCreate = async () => {
         if (!title.trim() || !content.trim()) {
@@ -168,6 +188,12 @@ export function AnnouncementBoardClient({ announcements, companies = [], student
                             </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4 py-4">
+                            {/* 
+                            SECURITY: Company selector is ONLY shown if isCompanyUser is false.
+                            For company admins and supervisors, they can ONLY post as their own company.
+                            The defaultCompanyId is automatically used on the server-side as a fallback.
+                        */}
+                        {!isCompanyUser && (
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Publish As</label>
                                 <select 
@@ -175,12 +201,20 @@ export function AnnouncementBoardClient({ announcements, companies = [], student
                                     value={selectedCompanyId}
                                     onChange={(e) => setSelectedCompanyId(e.target.value)}
                                 >
-                                    <option value="">Zigex Global (Default)</option>
+                                    {/* Only show companies the user has access to */}
                                     {companies.map(c => (
                                         <option key={c.id} value={c.id}>{c.company_name}</option>
                                     ))}
                                 </select>
                             </div>
+                        )}
+                        {isCompanyUser && companies.length > 0 && (
+                            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
+                                <p className="text-xs text-blue-700 dark:text-blue-300 font-medium">
+                                    Posting as: <span className="font-bold">{companies[0]?.company_name}</span>
+                                </p>
+                            </div>
+                        )}
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Title</label>
                                 <Input 
