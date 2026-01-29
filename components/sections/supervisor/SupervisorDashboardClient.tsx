@@ -210,6 +210,7 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
   };
 
   const isAttendanceWindow = () => {
+    const hour = new Date().getHours();
     return hour >= 15; // 3pm onwards
   };
 
