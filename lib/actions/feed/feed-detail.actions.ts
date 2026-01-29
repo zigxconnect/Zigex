@@ -2,36 +2,60 @@
 "use server";
 
 import { cache } from "react";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseServerClient, supabaseAdmin } from "@/lib/supabase/server";
+import { unstable_cache } from "next/cache";
+import { isUUID } from "@/lib/utils";
 
-export type FeedType = "internships" | "programs" | "events";
+export type FeedType = "internships" | "programs" | "events" | "announcements";
 
 /**
  * Get a single feed item by ID
- * Searches across all feed types
+ * Searches across all feed types using cached admin query
  */
-export const getFeedItemById = cache(async (id: string) => {
+// Helper to match slug in SQL
+const matchSlug = (table: string, slug: string) => {
+  // This is a bit of a hack since we don't have a slug column.
+  // We'll replace dashes with spaces and use ILIKE.
+  // It won't be perfect for titles with actual dashes but it's a good fallback.
+  return `title.ilike.${slug.replace(/-/g, ' ')}`;
+};
+
+/**
+ * Get a single feed item by ID or Slug
+ * Searches across all feed types using cached admin query
+ */
+const fetchFeedItemById = async (idOrSlug: string) => {
   try {
-    const supabase = await createSupabaseServerClient();
+    const isIdUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
+
+    // Helper function to create a search pattern from slug
+    // Converts "seed-cohort-test-2026" to pattern that matches "Seed Cohort Test 2026"
+    const createSearchPattern = (slug: string) => {
+      // Replace dashes with wildcards for flexible matching
+      // Also handle numbers that might be at the end (like years)
+      return slug.replace(/-/g, ' ').trim();
+    };
+
+    const searchTerm = isIdUUID ? idOrSlug : createSearchPattern(idOrSlug);
 
     // Try to find in internships
-    const { data: internship, error: internshipError } = await supabase
+    let internshipQuery = supabaseAdmin
       .from("internships")
-      .select(
-        `
+      .select(`
         *,
         company_profiles (
-          id,
-          company_name,
-          logo_url,
-          cover_image_url,
-          location,
-          website_url
+          id, company_name, logo_url, cover_image_url, location, website_url
         )
-      `
-      )
-      .eq("id", id)
-      .single();
+      `);
+
+    if (isIdUUID) {
+      internshipQuery = internshipQuery.eq("id", idOrSlug);
+    } else {
+      // Use case-insensitive search that matches the unslugified title
+      internshipQuery = internshipQuery.ilike("title", `%${searchTerm}%`);
+    }
+
+    const { data: internship, error: internshipError } = await internshipQuery.maybeSingle();
 
     if (internship && !internshipError) {
       return {
@@ -41,23 +65,22 @@ export const getFeedItemById = cache(async (id: string) => {
     }
 
     // Try to find in programs
-    const { data: program, error: programError } = await supabase
+    let programQuery = supabaseAdmin
       .from("programs")
-      .select(
-        `
+      .select(`
         *,
         company_profiles (
-          id,
-          company_name,
-          logo_url,
-          cover_image_url,
-          location,
-          website_url
+          id, company_name, logo_url, cover_image_url, location, website_url
         )
-      `
-      )
-      .eq("id", id)
-      .single();
+      `);
+
+    if (isIdUUID) {
+      programQuery = programQuery.eq("id", idOrSlug);
+    } else {
+      programQuery = programQuery.ilike("title", `%${searchTerm}%`);
+    }
+
+    const { data: program, error: programError } = await programQuery.maybeSingle();
 
     if (program && !programError) {
       return {
@@ -67,23 +90,22 @@ export const getFeedItemById = cache(async (id: string) => {
     }
 
     // Try to find in events
-    const { data: event, error: eventError } = await supabase
+    let eventQuery = supabaseAdmin
       .from("event")
-      .select(
-        `
+      .select(`
         *,
         company_profiles (
-          id,
-          company_name,
-          logo_url,
-          cover_image_url,
-          location,
-          website_url
+          id, company_name, logo_url, cover_image_url, location, website_url
         )
-      `
-      )
-      .eq("id", id)
-      .single();
+      `);
+
+    if (isIdUUID) {
+      eventQuery = eventQuery.eq("id", idOrSlug);
+    } else {
+      eventQuery = eventQuery.ilike("title", `%${searchTerm}%`);
+    }
+
+    const { data: event, error: eventError } = await eventQuery.maybeSingle();
 
     if (event && !eventError) {
       return {
@@ -92,6 +114,67 @@ export const getFeedItemById = cache(async (id: string) => {
       };
     }
 
+    // Try to find in announcements
+    if (isIdUUID) {
+      const { data: announcement, error: announcementError } = await supabaseAdmin
+        .from("announcements")
+        .select(`
+          *,
+          company_profiles (
+            id, company_name, logo_url, cover_image_url, location, website_url
+          )
+        `)
+        .eq("id", idOrSlug)
+        .maybeSingle();
+
+      if (announcement && !announcementError) {
+        return {
+          data: { ...announcement, _type: "announcements" as FeedType },
+          error: null,
+        };
+      }
+    }
+
+    // If no match found with space replacement, try with the original slug pattern
+    // This handles cases where the title might contain actual dashes
+    if (!isIdUUID) {
+      console.log(`[FEED_LOOKUP] No match for "${searchTerm}", trying fallback patterns...`);
+
+      // Try internships with original slug pattern
+      const { data: internshipFallback } = await supabaseAdmin
+        .from("internships")
+        .select(`*, company_profiles (id, company_name, logo_url, cover_image_url, location, website_url)`)
+        .ilike("title", `%${idOrSlug.replace(/-/g, '%')}%`)
+        .maybeSingle();
+
+      if (internshipFallback) {
+        return { data: { ...internshipFallback, _type: "internships" as FeedType }, error: null };
+      }
+
+      // Try programs with original slug pattern
+      const { data: programFallback } = await supabaseAdmin
+        .from("programs")
+        .select(`*, company_profiles (id, company_name, logo_url, cover_image_url, location, website_url)`)
+        .ilike("title", `%${idOrSlug.replace(/-/g, '%')}%`)
+        .maybeSingle();
+
+      if (programFallback) {
+        return { data: { ...programFallback, _type: "programs" as FeedType }, error: null };
+      }
+
+      // Try events with original slug pattern  
+      const { data: eventFallback } = await supabaseAdmin
+        .from("event")
+        .select(`*, company_profiles (id, company_name, logo_url, cover_image_url, location, website_url)`)
+        .ilike("title", `%${idOrSlug.replace(/-/g, '%')}%`)
+        .maybeSingle();
+
+      if (eventFallback) {
+        return { data: { ...eventFallback, _type: "events" as FeedType }, error: null };
+      }
+    }
+
+    console.log(`[FEED_LOOKUP] No item found for slug/id: "${idOrSlug}"`);
     return {
       data: null,
       error: "Item not found",
@@ -103,7 +186,17 @@ export const getFeedItemById = cache(async (id: string) => {
       error: "Failed to fetch item",
     };
   }
-});
+};
+
+
+export const getFeedItemById = unstable_cache(
+  fetchFeedItemById,
+  ["feed-item-details"],
+  {
+    revalidate: 300,
+    tags: ["feed-item"],
+  }
+);
 
 /**
  * Get related programs from the same company
@@ -242,6 +335,108 @@ export const getCompanyRelatedItems = cache(
 );
 
 /**
+ * Get the current user's application status for an opportunity
+ * Returns the application status if the user has applied, null otherwise
+ */
+export async function getApplicationStatus(
+  opportunityId: string,
+  opportunityType: FeedType
+): Promise<{
+  hasApplied: boolean;
+  status: string | null;
+  paymentCompleted?: boolean;
+  applicationId?: string;
+}> {
+  try {
+    const supabase = await createSupabaseServerClient();
+
+    // Get current user
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return { hasApplied: false, status: null };
+    }
+
+    // Get student profile
+    const { data: studentProfile, error: profileError } = await supabase
+      .from("student_profiles")
+      .select("id")
+      .eq("user_id", user.id)
+      .single();
+
+    if (profileError || !studentProfile) {
+      return { hasApplied: false, status: null };
+    }
+
+    // Map feed type to application type
+    const applicationTypeMap: Record<FeedType, string> = {
+      internships: "internship",
+      programs: "program",
+      events: "event",
+    };
+
+    const applicationType = applicationTypeMap[opportunityType];
+
+    // Map feed type to the correct foreign key column
+    const foreignKeyMap: Record<FeedType, string> = {
+      internships: "internship_id",
+      programs: "program_id",
+      events: "event_id",
+    };
+
+    const foreignKey = foreignKeyMap[opportunityType];
+
+    // Check legacy Applications table
+    const { data: application, error: applicationError } = await supabase
+      .from("Applications")
+      .select("id, status, payment_completed")
+      .eq("student_id", studentProfile.id)
+      .eq("application_type", applicationType)
+      .eq(foreignKey, opportunityId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (application && !applicationError) {
+      return {
+        hasApplied: true,
+        status: application.status,
+        paymentCompleted: application.payment_completed || false,
+        applicationId: application.id,
+      };
+    }
+
+    // If it's an internship, also check the new internship_applications table
+    if (opportunityType === "internships") {
+      const { data: sApp, error: sAppError } = await supabase
+        .from("internship_applications")
+        .select("id, status, is_paid_acknowledgement")
+        .eq("internship_id", opportunityId)
+        .eq("student_id", user.id)
+        .maybeSingle();
+
+      if (sApp && !sAppError) {
+        return {
+          hasApplied: true,
+          status: sApp.status,
+          paymentCompleted: sApp.is_paid_acknowledgement, // conceptually similar for acknowledgment
+          applicationId: sApp.id,
+        };
+      }
+    }
+
+    return { hasApplied: false, status: null };
+
+  } catch (error) {
+    console.error("Error checking application status:", error);
+    return { hasApplied: false, status: null };
+  }
+}
+
+/**
  * Check if the opportunity is still open based on dates
  * Note: This is async to comply with "use server" requirements
  */
@@ -253,9 +448,13 @@ export async function isOpportunityOpen(
 
   try {
     if (type === "internships") {
-      // Check if there's an application deadline
-      if (item.application_deadline) {
-        const deadline = new Date(item.application_deadline);
+      // Check if there's a deadline (database column is 'deadline')
+      const deadlineField = item.deadline || item.application_deadline;
+      if (deadlineField) {
+        const deadline = new Date(deadlineField);
+        // Set deadline to end of day to be generous
+        deadline.setHours(23, 59, 59, 999);
+
         if (now > deadline) {
           return {
             isOpen: false,
@@ -264,13 +463,14 @@ export async function isOpportunityOpen(
         }
       }
 
-      // Check if there's a start date in the past (assuming internship has started)
-      if (item.start_date) {
-        const startDate = new Date(item.start_date);
-        if (now > startDate) {
+      // Check if internship has ended (if end_date exists)
+      if (item.end_date) {
+        const endDate = new Date(item.end_date);
+        endDate.setHours(23, 59, 59, 999);
+        if (now > endDate) {
           return {
             isOpen: false,
-            reason: "Internship has already started",
+            reason: "Internship has already ended",
           };
         }
       }
@@ -282,6 +482,7 @@ export async function isOpportunityOpen(
       // Check application deadline
       if (item.application_deadline) {
         const deadline = new Date(item.application_deadline);
+        deadline.setHours(23, 59, 59, 999);
         if (now > deadline) {
           return {
             isOpen: false,
@@ -293,6 +494,7 @@ export async function isOpportunityOpen(
       // Check if program has ended
       if (item.end_date) {
         const endDate = new Date(item.end_date);
+        endDate.setHours(23, 59, 59, 999);
         if (now > endDate) {
           return { isOpen: false, reason: "Program has ended" };
         }
@@ -313,6 +515,7 @@ export async function isOpportunityOpen(
       // Check if event has ended
       if (item.end_date) {
         const endDate = new Date(item.end_date);
+        endDate.setHours(23, 59, 59, 999);
         if (now > endDate) {
           return { isOpen: false, reason: "Event has ended" };
         }
@@ -321,6 +524,7 @@ export async function isOpportunityOpen(
       // Check registration deadline
       if (item.registration_deadline) {
         const deadline = new Date(item.registration_deadline);
+        deadline.setHours(23, 59, 59, 999);
         if (now > deadline) {
           return {
             isOpen: false,

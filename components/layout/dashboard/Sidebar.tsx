@@ -16,11 +16,13 @@ import {
   X,
   LogOut,
   MessageSquare,
+  ShieldCheck,
 } from "lucide-react";
 import { AiOutlineWechat } from "react-icons/ai";
 import { Button } from "@/components/ui/button";
 import AnimatedNavLink from "@/components/customButtons/AnimatedNavLink";
 import NameInitials from "@/components/NameInitials";
+import { slugifyUsername, cn } from "@/lib/utils";
 // import AnimatedNavLink from "@/components/sections/dashboard/AnimatedNavLink";
 
 interface SidebarProps {
@@ -89,48 +91,80 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState<number>(0);
-  const navItems = [
+  const categories = [
     {
-      href: "/feed",
-      icon: Globe,
-      label: "Browse",
-      matchPaths: ["/feed", "/feed/"],
-      excludePaths: ["/feed/projects"]
+      title: "Discover",
+      items: [
+        {
+          href: "/feed",
+          icon: Globe,
+          label: "Browse",
+          matchPaths: ["/feed", "/feed/", "/programs/"],
+          excludePaths: ["/feed/projects"]
+        },
+        {
+          href: "/dashboard/projects",
+          icon: Briefcase,
+          label: "Projects",
+          matchPaths: ["/dashboard/projects", "/dashboard/projects/", "/feed/projects/"],
+        },
+        {
+          href: "/dashboard/blog",
+          icon: Newspaper,
+          label: "News",
+          matchPaths: ["/dashboard/blog", "/dashboard/blog/"],
+        },
+      ]
     },
     {
-      href: "/dashboard/student",
-      icon: Users,
-      label: "ZigX",
-      matchPaths: ["/dashboard/student", "/dashboard/student/"],
+      title: "Collaboration",
+      items: [
+        {
+          href: "/dashboard/student",
+          icon: Users,
+          label: "ZigX",
+          matchPaths: ["/dashboard/student", "/dashboard/student/"],
+        },
+        {
+          href: "/dashboard/community",
+          icon: MessageSquare,
+          label: "Community",
+          matchPaths: ["/dashboard/community", "/dashboard/community/"],
+        },
+      ]
     },
     {
-      href: `/profile/${user?.profile?.username || "username"}`,
-      icon: User,
-      label: "My Profile",
-      matchPaths: ["/profile/"],
+      title: "Workspace",
+      items: [
+        ...(user?.permissions?.isIntern ? [{
+          href: "/intern/workspace",
+          icon: Briefcase,
+          label: "Intern Workspace",
+          matchPaths: ["/intern/workspace"],
+        }] : []),
+        ...(user?.permissions?.isSupervisor ? [{
+          href: "/supervisor",
+          icon: ShieldCheck,
+          label: "Supervisor Hub",
+          matchPaths: ["/supervisor"],
+        }] : []),
+      ]
     },
     {
-      href: "/dashboard/projects",
-      icon: Briefcase,
-      label: "Projects",
-      matchPaths: ["/dashboard/projects", "/dashboard/projects/", "/feed/projects/"],
-    },
-    {
-      href: "/dashboard/blog",
-      icon: Newspaper,
-      label: "News",
-      matchPaths: ["/dashboard/blog", "/dashboard/blog/"],
-    },
-    {
-      href: "/dashboard/community",
-      icon: MessageSquare,
-      label: "Community",
-      matchPaths: ["/dashboard/community", "/dashboard/community/"],
-    },
+      title: "Account",
+      items: [
+        {
+          href: `/profile/${slugifyUsername(user?.profile?.username) || "username"}`,
+          icon: User,
+          label: "My Profile",
+          matchPaths: ["/profile/"],
+        },
+      ]
+    }
   ];
 
   if (showUploadLive) {
-    navItems.push({
+    categories[0].items.push({
       href: "/upload-live",
       icon: Zap,
       label: "Upload Live",
@@ -243,16 +277,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="flex-shrink-0 p-4 lg:p-6 border-b border-sidebar-border bg-sidebar-accent/20">
           <div className="flex items-center gap-4">
             <div className="relative w-16 h-16 rounded-full overflow-hidden border-3 border-card shadow-lg flex-shrink-0">
-              {userAvatar ? <Image
-                src={userAvatar}
+              <Image
+                src={userAvatar || "https://i.ibb.co/8n8d37H4/white-logo-4x.png"}
                 alt={`${userName}'s Avatar`}
                 width={64}
                 height={64}
-                className="w-full h-full object-cover"
+                className={cn(
+                  "w-full h-full object-cover",
+                  !userAvatar && "bg-gradient-to-br from-blue-600 to-indigo-700 p-3"
+                )}
                 priority
-              /> :
-                <NameInitials name={userName} />
-              }
+              />
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-bold text-sidebar-foreground truncate text-base">
@@ -286,24 +321,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="flex-1 flex flex-col min-h-0 bg-sidebar">
           {/* Regular Navigation Items */}
           <div className="flex-1 px-4 py-4 overflow-y-auto custom-scrollbar">
-            <div className="space-y-2">
-              <div className="mb-6">
-                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-1">
-                  Navigation
-                </h4>
-                <div className="space-y-1">
-                  {navItems.map((item) => (
-                    <AnimatedNavLink
-                      key={item.href}
-                      href={item.href}
-                      icon={item.icon}
-                      label={item.label}
-                      isActive={isRouteActive(item.href, item.matchPaths, item.excludePaths)}
-                      onClick={handleNavClick}
-                    />
-                  ))}
+            <div className="space-y-6">
+              {categories.map((category) => (
+                <div key={category.title} className="mb-2">
+                  <h4 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-3 px-3">
+                    {category.title}
+                  </h4>
+                  <div className="space-y-1">
+                    {category.items.map((item) => (
+                      <AnimatedNavLink
+                        key={item.href}
+                        href={item.href}
+                        icon={item.icon}
+                        label={item.label}
+                        isActive={isRouteActive(item.href, item.matchPaths, item.excludePaths)}
+                        onClick={handleNavClick}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
+              ))}
 
               {/* AI Assistant Section - Always Visible */}
               {/* AI Assistant Section */}

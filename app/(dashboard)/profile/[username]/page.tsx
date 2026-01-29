@@ -1,6 +1,7 @@
 // just some updates
 import React from "react";
 import { supabaseAdmin, createServerActionClient } from "@/lib/supabase/server";
+import { unslugifyUsername, slugifyUsername } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -38,10 +39,11 @@ export default async function ProfilePage({ params }: Props) {
   }
 
   // Fetch the profile being viewed by username
+  const unslugified = unslugifyUsername(username);
   const { data, error } = await supabaseAdmin
     .from("student_profiles")
     .select("*")
-    .eq("username", username)
+    .or(`username.eq."${username}",username.eq."${unslugified}"`)
     .maybeSingle();
 
   if (error || !data) {
@@ -55,15 +57,20 @@ export default async function ProfilePage({ params }: Props) {
     );
   }
 
+  // Force slugified URL if profile username contains spaces
+  if (username.includes(" ")) {
+    redirect(`/profile/${slugifyUsername(username)}`);
+  }
+
   // Verify this is the current user's profile
   const myProfile = await supabase
     .from("student_profiles")
-    .select("*")
+    .select("id, username")
     .eq("user_id", authUser.id)
     .maybeSingle();
 
-  if (myProfile.error || !myProfile.data || myProfile.data.username !== username) {
-    redirect(`/dashboard/student/${username}`);
+  if (myProfile.error || !myProfile.data || myProfile.data.id !== data.id) {
+    redirect(`/dashboard/student/${slugifyUsername(username)}`);
   }
 
   const skills = data.hard_skills || [];
@@ -82,13 +89,13 @@ export default async function ProfilePage({ params }: Props) {
       .select("id", { count: "exact", head: true })
       .eq("student_id", data.id)
       .eq("application_type", "program")
-      .eq("status", "rsvp_confirmed"),
+      .eq("status", "accepted"),
     supabaseAdmin
       .from("Applications")
       .select("id", { count: "exact", head: true })
       .eq("student_id", data.id)
       .eq("application_type", "event")
-      .eq("status", "rsvp_confirmed"),
+      .eq("status", "accepted"),
   ]);
 
   const internshipsApplied = internRes?.count ?? 0;
@@ -193,24 +200,33 @@ export default async function ProfilePage({ params }: Props) {
               <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-4 border-white shadow-md"></div>
             </div>
 
-            {/* QR Code Button */}
-            <QRCodeButton
-              linkedinUrl={linkedinUrl}
-              whatsappUrl={null}
-              email={data.email}
-              fullName={data.full_name}
-              profileUrl={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.zigexconnect.com'}/profile/${username}`}
-              isOwner={true}
-            />
+            {/* Actions: Edit Profile (Desktop) & QR Code */}
+            <div className="flex items-center gap-3 pb-1">
+                <EditProfileButton
+                  isOwner={true}
+                  userId={authUser.id}
+                  profileData={data}
+                  className="px-4 py-2 md:px-6 md:py-2 text-xs md:text-sm"
+                />
+              <QRCodeButton
+                linkedinUrl={linkedinUrl}
+                whatsappUrl={null}
+                email={data.email}
+                fullName={data.full_name}
+                profileUrl={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.zigexconnect.com'}/profile/${slugifyUsername(username)}`}
+                isOwner={true}
+              />
+            </div>
           </div>
 
           {/* Content Area */}
           <div className="pt-12 md:pt-14 lg:pt-16 px-4 lg:px-6 pb-4 lg:pb-6">
             {/* User Info and Actions */}
             <div className="flex flex-col gap-4">
-              {/* Name and Location */}
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
+              <div className="flex justify-between items-start gap-4">
+                {/* Name and Location */}
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
                   <h1 className="text-xl md:text-2xl lg:text-3xl font-heading font-bold text-foreground tracking-tight">
                     {data.full_name || "Your Profile"}
                   </h1>
@@ -233,18 +249,17 @@ export default async function ProfilePage({ params }: Props) {
                   </p>
                 </div>
 
-                {/* Similar Students Sidebar */}
                 <SimilarStudentsSidebar students={similarStudents} />
               </div>
+              
+
+            </div>
+
+
 
               {/* Action Buttons and Social Links */}
               <div className="flex items-center gap-4 flex-wrap mt-2">
                 <div className="flex items-center gap-3">
-                  <EditProfileButton
-                    isOwner={true}
-                    userId={authUser.id}
-                    profileData={data}
-                  />
                   <Link
                     href="/dashboard/projects"
                     className="px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold uppercase tracking-wider transition-all duration-200 hover:scale-105 active:scale-95"

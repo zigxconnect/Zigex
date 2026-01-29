@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { createClient } from "@supabase/supabase-js";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
@@ -21,11 +21,30 @@ if (!supabaseServiceRoleKey) {
   );
 }
 
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
+const fetchWithRetry = async (url: any, options: any) => {
+  const MAX_RETRIES = 3;
+  for (let i = 0; i < MAX_RETRIES; i++) {
+    try {
+      return await fetch(url, options);
+    } catch (error: any) {
+      if (i === MAX_RETRIES - 1) throw error;
+      const isTimeout = error.cause?.code === 'UND_ERR_CONNECT_TIMEOUT' || error.name === 'AbortError';
+      // Only retry on network/timeout errors, though usually "fetch failed" covers these in Node
+      // Exponential backoff: 500, 1000, 2000ms
+      await new Promise(r => setTimeout(r, 500 * Math.pow(2, i)));
+    }
+  }
+  return fetch(url, options);
+}
+
+export const supabaseAdmin = createSupabaseClient(supabaseUrl, supabaseServiceRoleKey, {
   auth: {
     autoRefreshToken: false,
     persistSession: false,
   },
+  global: {
+    fetch: fetchWithRetry,
+  }
 });
 
 /**
@@ -34,16 +53,16 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
 export async function createServerActionClient() {
   const cookieStore = await cookies();
 
-    const anonUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const anonUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-    if (!anonUrl || !anonKey) {
-      throw new Error(
-        'CRITICAL: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set in environment variables.'
-      );
-    }
+  if (!anonUrl || !anonKey) {
+    throw new Error(
+      'CRITICAL: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set in environment variables.'
+    );
+  }
 
-    return createServerClient(anonUrl, anonKey,
+  return createServerClient(anonUrl, anonKey,
     {
       cookies: {
         async get(name: string) {
@@ -52,14 +71,17 @@ export async function createServerActionClient() {
         async set(name: string, value: string, options: CookieOptions) {
           try {
             (await cookieStore).set({ name, value, ...options });
-          } catch (error) {}
+          } catch (error) { }
         },
         async remove(name: string, options: CookieOptions) {
           try {
             (await cookieStore).set({ name, value: "", ...options });
-          } catch (error) {}
+          } catch (error) { }
         },
       },
+      global: {
+        fetch: fetchWithRetry,
+      }
     }
   );
 }
@@ -84,6 +106,25 @@ export const createSupabaseServerClient = async () => {
       get(name: string) {
         return cookieStore.get(name)?.value;
       },
+      set(name: string, value: string, options: CookieOptions) {
+        try {
+          cookieStore.set({ name, value, ...options });
+        } catch (error) {
+          // This can fail in Server Components, but we ignore it there
+        }
+      },
+      remove(name: string, options: CookieOptions) {
+        try {
+          cookieStore.set({ name, value: "", ...options });
+        } catch (error) {
+          // This can fail in Server Components, but we ignore it there
+        }
+      },
     },
+    global: {
+      fetch: fetchWithRetry,
+    }
   });
 };
+
+export { createSupabaseServerClient as createClient };

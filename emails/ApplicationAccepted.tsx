@@ -16,12 +16,14 @@ interface ApplicationAcceptedEmailProps {
   studentName: string;
   opportunityTitle: string;
   type: "internship" | "program" | "event";
+  companyName?: string;
 }
 
 export const ApplicationAcceptedEmail = ({
   studentName,
   opportunityTitle,
   type,
+  companyName,
 }: ApplicationAcceptedEmailProps) => {
   const previewText = `Congratulations! You've been accepted for ${opportunityTitle}`;
 
@@ -44,16 +46,16 @@ export const ApplicationAcceptedEmail = ({
             </Text>
             <Section className="text-center mt-[32px] mb-[32px]">
               <Button
-                className="bg-[#000000] rounded text-white text-[12px] font-semibold no-underline text-center px-5 py-3"
-                href="https://www.zigexconnect.com/dashboard"
+                className="bg-[#155DFC] rounded-xl text-white text-[14px] font-bold no-underline text-center px-6 py-4"
+                href="https://zigexconnect.com/applications"
               >
-                View Dashboard
+                View Application
               </Button>
             </Section>
             <Text className="text-black text-[14px] leading-[24px]">
               Best regards,
               <br />
-              The ZigX Team
+              The {companyName || "SEED INC"} Team
             </Text>
           </Container>
         </Body>

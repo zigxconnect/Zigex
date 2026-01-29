@@ -4,6 +4,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { cache } from "react";
+import { getAnnouncementsForStudent } from "../announcement.actions";
 
 // Types
 export type Internship = {
@@ -14,7 +15,9 @@ export type Internship = {
   category: string;
   description?: string;
   created_at: string;
-  company_profiles: {
+  cover_image_url?: string;
+  company: {
+    id: string;
     company_name: string;
     logo_url: string;
     cover_image_url: string;
@@ -22,7 +25,7 @@ export type Internship = {
 };
 
 export type Event = {
-  id:string;
+  id: string;
   title: string;
   start_date: string;
   end_date: string;
@@ -31,6 +34,7 @@ export type Event = {
   event_picture_url?: string;
   created_at: string;
   company: {
+    id: string;
     company_name: string;
     logo_url: string;
   };
@@ -47,6 +51,7 @@ export type Program = {
   program_picture_url?: string;
   created_at: string;
   company: {
+    id: string;
     company_name: string;
     logo_url: string;
   };
@@ -120,7 +125,9 @@ export const getInternships = cache(async (searchQuery?: string) => {
           category,
           description,
           created_at,
-          company_profiles (
+          cover_image_url,
+          company: company_profiles (
+            id,
             company_name,
             logo_url,
             cover_image_url
@@ -153,7 +160,7 @@ export const getEvents = cache(async (searchQuery?: string) => {
 
     let query = supabase
       .from("event")
-      .select("*, company:company_profiles (company_name, logo_url)")
+      .select("*, company:company_profiles (id, company_name, logo_url)")
       .order("created_at", { ascending: false });
 
     if (searchQuery) {
@@ -185,9 +192,9 @@ export const getPrograms = cache(async (searchQuery?: string) => {
 
     let query = supabase
       .from("programs")
-      .select("*, company:company_profiles (company_name, logo_url)");
-      // REMOVED: .order("created_at", { ascending: false });
-      // Sorting will be handled in the code now.
+      .select("*, company:company_profiles (id, company_name, logo_url)");
+    // REMOVED: .order("created_at", { ascending: false });
+    // Sorting will be handled in the code now.
 
     if (searchQuery) {
       query = query.or(
@@ -246,14 +253,15 @@ export const getPrograms = cache(async (searchQuery?: string) => {
  * This is the main function to use in your components
  * Uses React cache to deduplicate requests
  */
-export const getAllFeedData = cache(async (searchQuery?: string) => {
+export const getAllFeedData = cache(async (searchQuery?: string, studentId?: string) => {
   try {
     // Fetch all data in parallel for better performance
-    const [internshipsResult, eventsResult, programsResult] =
+    const [internshipsResult, eventsResult, programsResult, announcements] =
       await Promise.all([
         getInternships(searchQuery),
         getEvents(searchQuery),
         getPrograms(searchQuery),
+        studentId ? getAnnouncementsForStudent(studentId) : Promise.resolve([])
       ]);
 
     // Collect any errors
@@ -267,6 +275,7 @@ export const getAllFeedData = cache(async (searchQuery?: string) => {
       internships: internshipsResult.data,
       events: eventsResult.data,
       programs: programsResult.data,
+      announcements: announcements || [],
       error: errors.length > 0 ? errors.join(", ") : null,
     };
   } catch (error) {
@@ -275,6 +284,7 @@ export const getAllFeedData = cache(async (searchQuery?: string) => {
       internships: [],
       events: [],
       programs: [],
+      announcements: [],
       error: "Failed to fetch feed data",
     };
   }

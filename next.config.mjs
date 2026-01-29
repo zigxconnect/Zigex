@@ -38,6 +38,7 @@ const nextConfig = {
   serverExternalPackages: ['@supabase/supabase-js'],
 
   output: 'standalone',
+  outputFileTracingRoot: process.cwd(),
 
   // Images configuration
   images: {
@@ -126,5 +127,4 @@ const nextConfig = {
 
 
 
-nextConfig.turbopack = {};
 export default withPWA(nextConfig);

@@ -1,6 +1,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { isUUID } from "@/lib/utils";
 
 export async function GET(
     request: Request,
@@ -30,22 +31,28 @@ export async function GET(
     );
 
     try {
-        const { data: event, error } = await supabase
+        const isIdUuid = isUUID(id);
+        let query = supabase
             .from("event")
-            .select(
-                `
-        *,
-        company:company_profiles (
-          company_name,
-          logo_url,
-          email,
-          cover_image_url,
-          website_url
-        )
-      `
-            )
-            .eq("id", id)
-            .single();
+            .select(`
+                *,
+                company:company_profiles (
+                  company_name,
+                  logo_url,
+                  email,
+                  cover_image_url,
+                  website_url
+                )
+            `);
+
+        if (isIdUuid) {
+            query = query.eq("id", id);
+        } else {
+            // Restore spaces from dashes for the title lookup
+            query = query.ilike("title", `%${id.replace(/-/g, '%')}%`);
+        }
+
+        const { data: event, error } = await query.maybeSingle();
 
         if (error) {
             console.error("Supabase query error:", error);

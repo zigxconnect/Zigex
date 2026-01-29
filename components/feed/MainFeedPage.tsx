@@ -4,6 +4,7 @@ import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { HappeningNowGrid } from "@/components/layout/dashboard/HappeningNow";
 import { FeedContent } from "@/components/feed/FeedContent";
 import { getAllFeedData } from "@/lib/actions/feed/feed.action";
+import { getHappeningNowContent } from "@/lib/actions/happening-now.actions";
 
 interface MainFeedPageProps {
   searchQuery?: string;
@@ -19,9 +20,12 @@ export default async function MainFeedPage({
   searchQuery,
 }: MainFeedPageProps) {
   // Fetch data on the server with React cache deduplication
-  const { internships, events, programs, error } = await getAllFeedData(
-    searchQuery
-  );
+  const [feedData, happeningNowData] = await Promise.all([
+    getAllFeedData(searchQuery),
+    getHappeningNowContent()
+  ]);
+
+  const { internships, events, programs, announcements, error } = feedData;
 
   return (
     <div className="w-full mt-6">
@@ -31,13 +35,13 @@ export default async function MainFeedPage({
           <div className="h-48 animate-pulse bg-gray-100 rounded-lg mb-6" />
         }
       >
-        <HappeningNowGrid />
+        <HappeningNowGrid initialData={happeningNowData} />
       </Suspense>
 
       {/* Feed Content - Client Component */}
       <Suspense fallback={<LoadingSkeleton />}>
         <FeedContent
-          initialData={{ internships, events, programs }}
+          initialData={{ internships, events, programs, announcements }}
           error={error}
         />
       </Suspense>

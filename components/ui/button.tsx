@@ -20,9 +20,17 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/90 focus:ring-secondary",
         "secondary-outline":
           "border border-warning bg-background text-warning hover:bg-warning/10 focus:ring-warning",
+        outline:
+          "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        destructive:
+          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
       },
       size: {
-        default: "h-auto",
+        default: "h-auto py-2.5 px-6",
+        sm: "h-8 rounded-md px-3 text-xs",
+        lg: "h-10 rounded-md px-8",
+        icon: "h-9 w-9 p-0",
       },
     },
     defaultVariants: {

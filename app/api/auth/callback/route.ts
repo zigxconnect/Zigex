@@ -8,6 +8,7 @@ import { NextResponse } from "next/server";
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
+  const next = searchParams.get("next") ?? "/dashboard";
 
   if (code) {
     const cookieStore = await cookies();
@@ -72,13 +73,11 @@ export async function GET(request: Request) {
         }
 
         if (studentProfile && studentProfile.profile_status === "complete") {
-          return NextResponse.redirect(`${origin}/dashboard`);
+          return NextResponse.redirect(`${origin}${next}`);
         }
 
         if (!studentProfile) {
-          console.log(
-            `New student via OAuth: ${user.email}. Creating profile.`
-          );
+
           const metadata = (user.user_metadata || {}) as Record<
             string,
             unknown
@@ -95,6 +94,7 @@ export async function GET(request: Request) {
           });
         }
 
+        // If profile is incomplete or new, force redirect to completion flow
         return NextResponse.redirect(`${origin}/create-profile`);
       }
     } catch (err) {

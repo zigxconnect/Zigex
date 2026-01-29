@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { InternshipCard } from "./InternshipCard";
 import { EventCard } from "./EventCard";
 import { ProgramCard } from "./ProgramCard";
-import { Briefcase, GraduationCap, Calendar, Sparkles, Search, AlertTriangle } from "lucide-react";
+import { Briefcase, GraduationCap, Calendar, Search, AlertTriangle } from "lucide-react";
 import { Internship, Event, Program } from "@/lib/types/dashoard";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { useVideoModal } from "@/hooks/UseVideoModal";
@@ -251,14 +251,14 @@ export const InternshipListings = ({
     {
       id: "live" as TabId,
       label: "Live",
-      icon: Sparkles,
+      icon: Search,
       count: liveIds.size,
       color: "red",
     },
     {
       id: "all" as TabId,
       label: "All",
-      icon: Sparkles,
+      icon: Search,
       count: allContentSorted.length,
       color: "gray",
     },

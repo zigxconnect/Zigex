@@ -18,12 +18,12 @@ export async function GET(request: Request) {
         set(name: string, value: string, options: CookieOptions) {
           try {
             cookieStore.set({ name, value, ...options });
-          } catch (error) {}
+          } catch (error) { }
         },
         remove(name: string, options: CookieOptions) {
           try {
             cookieStore.set({ name, value: "", ...options });
-          } catch (error) {}
+          } catch (error) { }
         },
       },
     }
@@ -52,6 +52,8 @@ export async function GET(request: Request) {
         location,
         type,
         category,
+        description,
+        cover_image_url,
         company_profiles (
           company_name,
           logo_url,

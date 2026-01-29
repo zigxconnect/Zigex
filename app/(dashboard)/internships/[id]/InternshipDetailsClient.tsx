@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { MapPin, Building2, ExternalLink, Clock, Briefcase, Users, X, CheckCircle2 } from "lucide-react";
+import { MapPin, Building2, ExternalLink, Clock, Briefcase, Users, X, CheckCircle2, Calendar } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShareButton } from "@/components/sections/dashboard/ShareButton";
@@ -11,6 +11,8 @@ import DynamicForm from "@/components/sections/dashboard/Application/application
 import { useFetchDetails } from "@/hooks/useFetchDetails";
 import { InternshipDetailsLoadingSkeleton } from "@/components/SinglePageLoadingSkeleton";
 import { normalizeImageSrc } from "@/lib/utils";
+import InternshipApplicationModal from "@/components/feed/details/appyButton/InternshipApplicationModal";
+import { DollarSign } from "lucide-react";
 
 const DetailItem = ({
   label,
@@ -57,13 +59,19 @@ interface InternshipWithCompany {
   location: string;
   duration?: string;
   department?: string;
-  internship_picture_url?: string;
+  cover_image_url?: string;
   company_id?: string;
   company?: {
     id: string;
     company_name: string;
     logo_url?: string;
   };
+  deadline?: string;
+  start_date?: string;
+  end_date?: string;
+  is_paid?: boolean;
+  compensation_amount?: string;
+  category?: string;
 }
 
 function useOtherPrograms(internship: InternshipWithCompany | null) {
@@ -141,7 +149,7 @@ export default function InternshipDetailsClient({ id }: { id: string }) {
               <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
                 <div className="relative h-64 sm:h-80 lg:h-96 bg-gradient-to-br from-blue-100 to-indigo-100">
                   <Image
-                    src={normalizeImageSrc(internship.internship_picture_url)}
+                    src={normalizeImageSrc(internship.cover_image_url)}
                     alt={internship.title}
                     fill
                     className="object-cover"
@@ -152,14 +160,27 @@ export default function InternshipDetailsClient({ id }: { id: string }) {
                       title={internship.title}
                       description={internship.description || "Check out this internship opportunity"}
                       url={`/internship/${internship.id}`}
-                      imageUrl={normalizeImageSrc(internship.internship_picture_url)}
+                      imageUrl={normalizeImageSrc(internship.cover_image_url)}
                       type="internship"
                     />
                   </div>
                   <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-600 text-white text-xs font-semibold rounded-full mb-3">
-                      <Briefcase size={14} />
-                      Internship
+                    <div className="flex flex-wrap gap-2 mb-3">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-600 text-white text-xs font-semibold rounded-full">
+                          <Briefcase size={14} />
+                          Internship
+                        </div>
+                        {internship.is_paid && (
+                           <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-xs font-semibold rounded-full shadow-sm">
+                            <DollarSign size={14} />
+                            Paid
+                          </div>
+                        )}
+                        {!internship.is_paid && internship.is_paid !== undefined && (
+                           <div className="inline-flex items-center gap-2 px-3 py-1 bg-gray-500 text-white text-xs font-semibold rounded-full shadow-sm">
+                            Free
+                          </div>
+                        )}
                     </div>
                     <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-2 drop-shadow-lg">
                       {internship.title}
@@ -318,30 +339,47 @@ export default function InternshipDetailsClient({ id }: { id: string }) {
                   <div className="p-5">
                     <DetailItem 
                       label="Duration" 
-                      value={internship.duration} 
+                      value={internship.duration || null} 
                       icon={Clock}
                     />
                     <DetailItem 
-                      label="Location" 
-                      value={internship.location} 
-                      icon={MapPin}
+                      label="Deadline" 
+                      value={formatDate(internship.deadline) || "Not specified"} 
+                      icon={Calendar}
                     />
-                    <DetailItem 
-                      label="Department" 
-                      value={internship.department} 
-                      icon={Users}
-                    />
+                    {internship.is_paid && (
+                       <DetailItem 
+                        label="Compensation" 
+                        value={internship.compensation_amount || "Paid"} 
+                        icon={DollarSign}
+                      />
+                    )}
                   </div>
                 </Card>
 
-                <Button
-                  className="w-full text-base py-6 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-0"
-                  onClick={() => setShowModal(true)}
-                  variant="primary"
-                >
-                  Apply Now 
-                  <ExternalLink size={18} className="ml-2" />
-                </Button>
+                {(() => {
+                  const isDeadlinePassed = (() => {
+                    if (!internship.deadline) return false;
+                    const deadline = new Date(internship.deadline);
+                    deadline.setHours(23, 59, 59, 999);
+                    return deadline < new Date();
+                  })();
+                  
+                  return (
+                    <Button
+                      className={`w-full text-base py-6 font-semibold shadow-lg transition-all duration-300 transform hover:scale-[1.02] border-0 ${
+                        isDeadlinePassed ? "bg-gray-400 cursor-not-allowed" : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-blue-200/50"
+                      }`}
+                      onClick={() => !isDeadlinePassed && setShowModal(true)}
+                      disabled={isDeadlinePassed}
+                      variant={isDeadlinePassed ? "secondary" : "primary"}
+                    >
+                      {isDeadlinePassed ? "Applications Closed" : "Apply Now"}
+                      {!isDeadlinePassed && <ExternalLink size={18} className="ml-2" />}
+                      {isDeadlinePassed && <X size={18} className="ml-2" />}
+                    </Button>
+                  );
+                })()}
 
                 <Card className="border-blue-200 bg-blue-50/50 shadow-md">
                   <div className="p-4">
@@ -365,46 +403,40 @@ export default function InternshipDetailsClient({ id }: { id: string }) {
 
         <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 px-4 pb-4 pt-3 bg-gradient-to-t from-white via-white to-transparent">
           <div className="max-w-lg mx-auto">
-            <Button
-              className="w-full py-4 text-base font-semibold shadow-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-0 transform hover:scale-[1.02] transition-all duration-300"
-              onClick={() => setShowModal(true)}
-              variant="primary"
-            >
-              <Briefcase size={20} className="mr-2" />
-              Apply for Internship
-              <ExternalLink size={18} className="ml-2" />
-            </Button>
+            {(() => {
+              const isDeadlinePassed = (() => {
+                if (!internship.deadline) return false;
+                const deadline = new Date(internship.deadline);
+                deadline.setHours(23, 59, 59, 999);
+                return deadline < new Date();
+              })();
+              return (
+                <Button
+                  className={`w-full py-4 text-base font-semibold shadow-2xl border-0 transform hover:scale-[1.02] transition-all duration-300 ${
+                    isDeadlinePassed ? "bg-gray-400" : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                  }`}
+                  onClick={() => !isDeadlinePassed && setShowModal(true)}
+                  disabled={isDeadlinePassed}
+                  variant={isDeadlinePassed ? "secondary" : "primary"}
+                >
+                  <Briefcase size={20} className="mr-2" />
+                  {isDeadlinePassed ? "Applications Closed" : "Apply for Internship"}
+                  {!isDeadlinePassed && <ExternalLink size={18} className="ml-2" />}
+                </Button>
+              );
+            })()}
           </div>
         </div>
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div 
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
-            onClick={() => setShowModal(false)}
-          />
-          <div className="flex min-h-full items-center justify-center p-4">
-            <div className="relative w-full max-w-2xl transform transition-all duration-300 animate-in fade-in zoom-in-95">
-              <button
-                onClick={() => setShowModal(false)}
-                className="absolute -top-4 -right-4 z-10 w-10 h-10 rounded-full bg-white shadow-lg hover:bg-gray-100 flex items-center justify-center transition-all duration-200 hover:scale-110 group border-2 border-gray-200"
-              >
-                <X size={20} className="text-gray-600 group-hover:text-gray-900" />
-              </button>
-              <div className="bg-white rounded-2xl shadow-2xl max-h-[85vh] overflow-y-auto custom-scrollbar">
-                <style jsx global>{`
-                  .custom-scrollbar::-webkit-scrollbar { width: 8px; }
-                  .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
-                  .custom-scrollbar::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #2563eb 0%, #4f46e5 100%); border-radius: 10px; }
-                  .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #1d4ed8 0%, #4338ca 100%); }
-                  .custom-scrollbar { scrollbar-width: thin; scrollbar-color: #2563eb #f1f5f9; }
-                `}</style>
-                <DynamicForm type="internship" id={internship.id} />
-              </div>
-            </div>
-          </div>
-        </div>
+        <InternshipApplicationModal
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          internshipId={internship.id}
+          internshipTitle={internship.title}
+          companyName={company?.company_name || ""}
+        />
       )}
     </>
   );

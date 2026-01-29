@@ -5,11 +5,11 @@ import React, {
   createContext,
   useContext,
   useEffect,
+  useCallback,
   ReactNode,
 } from "react";
 import { usePathname } from "next/navigation";
 
-// Define the shape of the context
 interface SidebarContextType {
   isOpen: boolean;
   isMobile: boolean;
@@ -17,51 +17,56 @@ interface SidebarContextType {
   closeSidebar: () => void;
 }
 
-// Create the context with a default value
-const SidebarContext = createContext<SidebarContextType>({
-  isOpen: true,
-  isMobile: false,
-  toggleSidebar: () => {},
-  closeSidebar: () => {},
-});
+const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 
-// Custom hook for easy access to the context
-export const useAdminSidebar = () => useContext(SidebarContext);
+export const useAdminSidebar = () => {
+  const context = useContext(SidebarContext);
+  if (!context) {
+    throw new Error("useAdminSidebar must be used within an AdminLayoutProvider");
+  }
+  return context;
+};
 
-// The provider component
 export const AdminLayoutProvider = ({ children }: { children: ReactNode }) => {
   const [isOpen, setIsOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const pathname = usePathname();
 
-  // Effect to handle screen resizing for mobile view
+  const checkScreenSize = useCallback(() => {
+    const mobile = window.innerWidth < 1024;
+    setIsMobile(mobile);
+    // On first load or resize, only force close if mobile
+    if (mobile) {
+      setIsOpen(false);
+    } else {
+      setIsOpen(true);
+    }
+  }, []);
+
   useEffect(() => {
-    const checkScreenSize = () => {
-      const mobile = window.innerWidth < 1024;
-      setIsMobile(mobile);
-      // Automatically close sidebar on mobile, open on desktop
-      setIsOpen(!mobile);
-    };
     checkScreenSize();
     window.addEventListener("resize", checkScreenSize);
     return () => window.removeEventListener("resize", checkScreenSize);
-  }, []);
+  }, [checkScreenSize]);
 
-  // Effect to close sidebar on route change on mobile
+  // Close sidebar automatically when route changes on mobile
   useEffect(() => {
-    if (isMobile) {
+    if (isMobile && isOpen) {
       setIsOpen(false);
     }
-  }, [pathname, isMobile]);
+  }, [pathname, isMobile]); // Removed isOpen from dependency to prevent unnecessary triggers
 
-  const toggleSidebar = () => setIsOpen(!isOpen);
-  const closeSidebar = () => setIsOpen(false);
+  const toggleSidebar = useCallback(() => setIsOpen((prev) => !prev), []);
+  const closeSidebar = useCallback(() => setIsOpen(false), []);
 
   return (
     <SidebarContext.Provider
       value={{ isOpen, isMobile, toggleSidebar, closeSidebar }}
     >
-      <div className="min-h-screen bg-gray-50/50">{children}</div>
+      <div className="min-h-screen bg-[#F6F8FF] selection:bg-primary/10 selection:text-primary">
+        {children}
+      </div>
     </SidebarContext.Provider>
   );
 };
+

@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft, Calendar, User, Tag, Clock } from 'lucide-react'
 import { Metadata } from 'next'
+import BlogFeedbackForm from '@/components/blog/BlogFeedbackForm'
 
 // Query for metadata
 const METADATA_QUERY = `*[_type == "post" && slug.current == $slug][0]{
@@ -213,6 +214,11 @@ export default async function BlogPost({
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Feedback Form */}
+            <div className="not-prose">
+              <BlogFeedbackForm postTitle={post.title} postSlug={slug} />
             </div>
           </article>
 

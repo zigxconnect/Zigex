@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Search, X, TrendingUp, Clock, Sparkles } from "lucide-react";
+import { Search, X, TrendingUp, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface DashboardSearchProps {
@@ -219,7 +219,7 @@ export const DashboardSearch = ({
                             onClick={() => handleSearch(suggestion)}
                             className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-gray-50 transition-colors text-gray-700 text-sm flex items-center gap-3 group"
                           >
-                            <Sparkles
+                            <TrendingUp
                               size={14}
                               className="text-gray-400 group-hover:text-blue-600"
                             />

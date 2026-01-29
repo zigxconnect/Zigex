@@ -110,7 +110,7 @@ export const DeveloperAvatarOverlap: React.FC<DeveloperAvatarOverlapProps> = ({
                   />
                 ) : (
                   <div
-                    className={`w-full h-full ${dev.color || 'bg-gradient-to-br from-blue-600 to-blue-500'} flex items-center justify-center text-white font-bold`}
+                    className={`w-full h-full ${dev.color || 'bg-primary'} flex items-center justify-center text-primary-foreground font-bold`}
                   >
                     {dev.initials}
                   </div>

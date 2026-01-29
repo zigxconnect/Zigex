@@ -1,13 +1,13 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { isUUID } from "@/lib/utils";
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-
 
   if (!id) {
     return NextResponse.json(
@@ -38,12 +38,15 @@ export async function GET(
   );
 
   try {
-    const { data: internship, error } = await supabase
+    const isIdUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+    let query = supabase
       .from("internships")
       .select(
         `
         *,
         company_profiles (
+          id,
           company_name,
           logo_url,
           email,
@@ -51,11 +54,17 @@ export async function GET(
           website_url
         )
       `
-      )
-      .eq("id", id)
-      .single();
+      );
 
-    if (error) {
+    if (isIdUUID) {
+      query = query.eq("id", id);
+    } else {
+      query = query.ilike("title", `%${id.replace(/-/g, '%')}%`);
+    }
+
+    const { data: internship, error } = await query.maybeSingle();
+
+    if (error || !internship) {
       console.error("Supabase query error:", error);
 
       return NextResponse.json(

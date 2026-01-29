@@ -6,23 +6,37 @@ import { FormField } from "@/components/uiComponent/FormField";
 import { Input } from "@/components/uiComponent/input";
 import { CreatableMultiSelect } from "@/components/uiComponent/CreatableMultiSelect";
 
-// These now act as *suggestions*, not a restrictive list.
-const hardSkillsSuggestions = [
-  { value: "JavaScript", label: "JavaScript" },
-  { value: "Python", label: "Python" },
-  { value: "React", label: "React" },
-  { value: "Node.js", label: "Node.js" },
-  { value: "SQL", label: "SQL" },
+// Beginner-friendly suggestions for interests/skills they want to develop
+const interestsSuggestions = [
+  { value: "Web Development", label: "Web Development" },
+  { value: "Mobile Apps", label: "Mobile Apps" },
+  { value: "Data Science", label: "Data Science" },
+  { value: "UI/UX Design", label: "UI/UX Design" },
+  { value: "Machine Learning", label: "Machine Learning" },
+  { value: "Cybersecurity", label: "Cybersecurity" },
+  { value: "Cloud Computing", label: "Cloud Computing" },
+  { value: "Blockchain", label: "Blockchain" },
+  { value: "Project Management", label: "Project Management" },
+  { value: "Digital Marketing", label: "Digital Marketing" },
 ];
-const softSkillsSuggestions = [
-  { value: "Communication", label: "Communication" },
-  { value: "Teamwork", label: "Teamwork" },
-  { value: "Problem-Solving", label: "Problem-Solving" },
+
+const personalitySuggestions = [
+  { value: "Creative Thinker", label: "Creative Thinker" },
+  { value: "Team Player", label: "Team Player" },
+  { value: "Problem Solver", label: "Problem Solver" },
+  { value: "Quick Learner", label: "Quick Learner" },
+  { value: "Detail-Oriented", label: "Detail-Oriented" },
+  { value: "Leadership", label: "Leadership" },
+  { value: "Adaptable", label: "Adaptable" },
+  { value: "Self-Motivated", label: "Self-Motivated" },
 ];
+
 const languageSuggestions = [
   { value: "English", label: "English" },
   { value: "French", label: "French" },
   { value: "Spanish", label: "Spanish" },
+  { value: "Arabic", label: "Arabic" },
+  { value: "Mandarin", label: "Mandarin" },
 ];
 
 export const Step3Skills = () => {
@@ -34,14 +48,25 @@ export const Step3Skills = () => {
 
   return (
     <div className="space-y-8">
-      <FormField label="Hard Skills" error={errors.hard_skills}>
+      {/* Encouraging intro for beginners */}
+      <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 mb-6">
+        <p className="text-sm text-blue-800">
+          <span className="font-semibold">💡 New to tech?</span> No worries! Share what you&apos;re excited to learn or areas you&apos;re curious about. You don&apos;t need to be an expert – we&apos;re here to help you grow!
+        </p>
+      </div>
+
+      <FormField 
+        label="What areas interest you?" 
+        error={errors.hard_skills}
+      >
+        <p className="text-xs text-gray-500 mb-2">Select topics you&apos;d like to explore or skills you&apos;re learning</p>
         <Controller
           control={control}
           name="hard_skills"
           render={({ field }) => (
             <CreatableMultiSelect
-              placeholder="Select or type a skill..."
-              options={hardSkillsSuggestions}
+              placeholder="Type or select your interests..."
+              options={interestsSuggestions}
               value={field.value || []}
               onChange={field.onChange}
             />
@@ -49,14 +74,18 @@ export const Step3Skills = () => {
         />
       </FormField>
 
-      <FormField label="Soft Skills" error={errors.soft_skills}>
+      <FormField 
+        label="How would you describe yourself?" 
+        error={errors.soft_skills}
+      >
+        <p className="text-xs text-gray-500 mb-2">Choose traits that describe your personality and working style</p>
         <Controller
           control={control}
           name="soft_skills"
           render={({ field }) => (
             <CreatableMultiSelect
-              placeholder="Select or type a skill..."
-              options={softSkillsSuggestions}
+              placeholder="Select your strengths..."
+              options={personalitySuggestions}
               value={field.value || []}
               onChange={field.onChange}
             />
@@ -64,13 +93,13 @@ export const Step3Skills = () => {
         />
       </FormField>
 
-      <FormField label="Languages" error={errors.languages}>
+      <FormField label="Languages you speak" error={errors.languages}>
         <Controller
           control={control}
           name="languages"
           render={({ field }) => (
             <CreatableMultiSelect
-              placeholder="Select or type a language..."
+              placeholder="Select languages..."
               options={languageSuggestions}
               value={field.value || []}
               onChange={field.onChange}
@@ -79,14 +108,18 @@ export const Step3Skills = () => {
         />
       </FormField>
 
-      {/* --- URL Inputs Remain the Same --- */}
+      {/* Optional Links Section */}
       <div className="space-y-6 border-t border-gray-200 pt-8">
+        <p className="text-sm text-gray-600 font-medium">
+          📎 Got any online profiles? Add them here (all optional)
+        </p>
+        
         <FormField
-          label="Portfolio URL (Optional)"
+          label="Website or Portfolio"
           error={errors.portfolio_url}
         >
           <Input
-            placeholder="https://your-portfolio.com"
+            placeholder="https://your-site.com"
             {...register("portfolio_url", {
               pattern: {
                 value: /^https:\/\//,
@@ -94,13 +127,14 @@ export const Step3Skills = () => {
               },
             })}
           />
-          <p className="text-xs text-gray-500 mt-1">
-            Must start with https://
+          <p className="text-xs text-gray-400 mt-1">
+            Your personal website, blog, or portfolio
           </p>
         </FormField>
-        <FormField label="GitHub URL (Optional)" error={errors.github_url}>
+
+        <FormField label="GitHub" error={errors.github_url}>
           <Input
-            placeholder="https://github.com/your-username"
+            placeholder="https://github.com/username"
             {...register("github_url", {
               pattern: {
                 value: /^https:\/\//,
@@ -108,13 +142,11 @@ export const Step3Skills = () => {
               },
             })}
           />
-          <p className="text-xs text-gray-500 mt-1">
-            Must start with https://
-          </p>
         </FormField>
-        <FormField label="LinkedIn URL (Optional)" error={errors.linkedin_url}>
+
+        <FormField label="LinkedIn" error={errors.linkedin_url}>
           <Input
-            placeholder="https://linkedin.com/in/your-profile"
+            placeholder="https://linkedin.com/in/yourname"
             {...register("linkedin_url", {
               pattern: {
                 value: /^https:\/\//,
@@ -122,9 +154,6 @@ export const Step3Skills = () => {
               },
             })}
           />
-          <p className="text-xs text-gray-500 mt-1">
-            Must start with https://
-          </p>
         </FormField>
       </div>
     </div>

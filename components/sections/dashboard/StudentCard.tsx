@@ -1,18 +1,31 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Heart, MapPin, CheckCircle2, Linkedin } from "lucide-react";
+import { 
+  Heart, 
+  MapPin, 
+  CheckCircle2, 
+  Linkedin, 
+  Rocket,
+  ChevronRight,
+  Target,
+  Users
+} from "lucide-react";
+import { slugifyUsername, cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 interface StudentProps {
   id: string;
   username?: string;
   full_name?: string | null;
   avatar_url?: string | null;
+  cover_image?: string | null;
   university?: string | null;
   hard_skills?: string[] | null;
   soft_skills?: string[] | null;
   linkedin_url?: string | null;
+  about?: string | null;
 }
 
 interface StudentStats {
@@ -20,38 +33,31 @@ interface StudentStats {
   programsApplied?: number;
   eventsApplied?: number;
   projectsCreated?: number;
+  currentProgram?: string;
 }
 
 const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = ({ student, stats: initialStats }) => {
-  if (!student) {
-    return null;
-  }
+  if (!student) return null;
 
   const [isLiked, setIsLiked] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
   const [stats, setStats] = useState<StudentStats>(initialStats || {});
-  const [isLoadingStats, setIsLoadingStats] = useState(!initialStats);
-  const cardRef = useRef<HTMLDivElement>(null);
-
-  const initials =
-    student.full_name?.split(" ")
-      .map((n) => n[0])
-      .slice(0, 2)
-      .join("")
-      .toUpperCase() || "ST";
-
+  
+  const studentColor = "from-blue-600 to-indigo-700";
   const primarySkills = (student.hard_skills || []).slice(0, 3);
+
+  // Use full_name for the slug if available, replacing spaces with underscores. 
+  // This matches the format expected by the unslugification logic in the page lookup.
+  const nameSlug = student.full_name ? student.full_name.trim().replace(/\s+/g, '_').toLowerCase() : '';
+  const usernameSlug = slugifyUsername(student.username);
+  
+  // Prefer the name-based slug if full_name exists, as users are identifying by name.
+  // Fallback to username slug, then ID.
+  const finalSlug = nameSlug || usernameSlug || student.id;
+  const profileLink = `/dashboard/student/${finalSlug}`;
 
   useEffect(() => {
     if (initialStats) {
       setStats(initialStats);
-      setIsLoadingStats(false);
-      return;
-    }
-
-    if (!student.id) {
-      setIsLoadingStats(false);
       return;
     }
 
@@ -64,180 +70,144 @@ const StudentCard: React.FC<{ student: StudentProps; stats?: StudentStats }> = (
         }
       } catch (error) {
         console.error('Failed to fetch student stats:', error);
-      } finally {
-        setIsLoadingStats(false);
       }
     };
 
-    fetchStats();
+    if (student.id) fetchStats();
   }, [student.id, initialStats]);
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setTimeout(() => setIsVisible(true), Math.random() * 200);
-          }
-        });
-      },
-      { threshold: 0.1 }
-    );
-
-    if (cardRef.current) {
-      observer.observe(cardRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, []);
-
-  const handleLike = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsLiked(!isLiked);
-    setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
-  };
-
   return (
-    <Link href={`/dashboard/student/${student.username || student.id}`} className="block no-underline mb-6 last:mb-0">
-      <div 
-        ref={cardRef}
-        className={`
-          relative w-full bg-white rounded-2xl shadow-md border border-gray-100 hover:shadow-xl hover:border-blue-200 transition-all duration-500 overflow-hidden group
-          ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}
-        `}
-      >
-        {/* Decorative Background Element */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-full -mr-16 -mt-16 transition-all duration-500 group-hover:scale-150 group-hover:bg-blue-100 opacity-50" />
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-50px" }}
+      className="w-full mb-6 last:mb-0"
+    >
+      <Link href={profileLink} className="block group relative bg-white rounded-3xl border border-slate-100 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] hover:shadow-xl hover:shadow-blue-900/5 hover:-translate-y-1 hover:border-blue-100 transition-all duration-300 overflow-hidden">
         
-        <div className="flex flex-col md:flex-row items-center md:items-stretch gap-6 p-6">
-          {/* Avatar Section - Larger and with nice border */}
-          <div className="relative shrink-0">
-            <div className="relative w-28 h-28 md:w-32 md:h-32 rounded-2xl overflow-hidden border-4 border-white shadow-lg ring-1 ring-gray-100 group-hover:ring-blue-400 transition-all duration-300">
-              {student.avatar_url ? (
-                <img 
-                  src={student.avatar_url} 
-                  alt={student.full_name || "Student"} 
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center font-bold text-3xl">
-                  {initials}
-                </div>
-              )}
-            </div>
-            {/* Status Indicator */}
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 border-4 border-white rounded-full shadow-sm" />
-          </div>
+        {/* 1. Compact Header */}
+        <div className="relative h-24 sm:h-32 w-full overflow-hidden">
+          <div className={cn(
+            "absolute inset-0 bg-gradient-to-r transition-all duration-700 opacity-90",
+            studentColor
+          )} />
+          <img 
+            src={student.cover_image || "https://images.unsplash.com/photo-1557683316-973673baf926?w=800&q=80"} 
+            alt="Cover" 
+            className="w-full h-full object-cover mix-blend-overlay group-hover:scale-105 transition-transform duration-700"
+            onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1557683316-973673baf926?w=800&q=80"; }}
+          />
+          <div className="absolute inset-0 bg-black/10" />
+        </div>
 
-          {/* Content Section */}
-          <div className="flex-1 flex flex-col min-w-0 text-center md:text-left">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="min-w-0">
-                <div className="flex items-center justify-center md:justify-start gap-2 mb-1">
-                  <h3 className="text-xl md:text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors truncate">
-                    {student.full_name || student.username || "Unnamed Student"}
-                  </h3>
-                  <CheckCircle2 size={20} className="text-blue-500 shrink-0" />
-                </div>
-                
-                <div className="flex items-center justify-center md:justify-start gap-1.5 text-gray-500 mb-2">
-                  <MapPin size={16} className="shrink-0 text-blue-400" />
-                  <p className="text-sm md:text-base font-medium truncate">
-                    {student.university || "University not specified"}
-                  </p>
-                </div>
-              </div>
-
-              {/* Socials & Connect */}
-              <div className="flex items-center justify-center md:justify-end gap-3" onClick={(e) => e.preventDefault()}>
-                {student.linkedin_url && (
-                  <Link
-                    href={student.linkedin_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all duration-300 border border-blue-100 hover:border-blue-600 hover:-translate-y-1 shadow-sm"
-                    title="Connect on LinkedIn"
-                  >
-                    <Linkedin size={20} />
-                  </Link>
-                )}
-                <button
-                  onClick={handleLike}
-                  className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 border hover:-translate-y-1 shadow-sm ${
-                    isLiked 
-                    ? 'bg-red-50 text-red-600 border-red-100 hover:bg-red-600 hover:text-white hover:border-red-600' 
-                    : 'bg-gray-50 text-gray-400 border-gray-100 hover:bg-red-50 hover:text-red-600 hover:border-red-100'
-                  }`}
-                >
-                  <Heart size={20} className={isLiked ? "fill-current" : ""} />
-                </button>
+        {/* 2. Content Body */}
+        <div className="px-5 pb-5 sm:px-8 sm:pb-8 relative">
+          
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
+            {/* Avatar - Left aligned overlapping */}
+            <div className="-mt-10 sm:-mt-12 flex-shrink-0 relative z-10">
+              <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl border-[4px] border-white shadow-md overflow-hidden bg-slate-100">
+                 <img
+                   src={student.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(student.full_name || 'ZX')}`}
+                   alt={student.full_name || "Talent"}
+                   className="w-full h-full object-cover"
+                   onError={(e) => { (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(student.full_name || 'ZX')}`; }}
+                 />
               </div>
             </div>
 
-            {/* Bio Snippet */}
-            <p className="text-sm md:text-base text-gray-600 mt-3 leading-relaxed max-w-2xl line-clamp-2 italic">
-              "Passionate innovator from {student.university?.split(' ')[0] || 'the academy'}. Building a career in {primarySkills[0] || 'modern technology'} and making an impact."
-            </p>
+            {/* Info Section */}
+            <div className="flex-1 pt-1 sm:pt-4 min-w-0">
+               <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg sm:text-2xl font-bold text-slate-900 leading-tight group-hover:text-blue-600 transition-colors">
+                      {student.full_name || "Studio Member"}
+                    </h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <p className="text-xs sm:text-sm font-medium text-slate-500">@{usernameSlug || nameSlug || "student"}</p>
+                      <div className="w-1 h-1 rounded-full bg-slate-300" />
+                      <div className="flex items-center gap-1 text-xs sm:text-sm font-medium text-slate-500">
+                         <MapPin size={12} className="text-slate-400" />
+                         <span className="truncate max-w-[150px]">{student.university || "Global Ecosystem"}</span>
+                      </div>
+                    </div>
+                  </div>
 
-            {/* Bottom Meta Bar */}
-            <div className="mt-auto pt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-t border-gray-50 mt-6">
-              {/* Skills container */}
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
-                {primarySkills.map((skill, i) => (
-                  <span 
-                    key={i} 
-                    className="px-3 py-1 bg-blue-50/50 text-blue-700 text-[11px] font-bold rounded-lg border border-blue-100/50 uppercase tracking-wider"
-                  >
-                    {skill}
-                  </span>
-                ))}
-                {student.soft_skills?.[0] && (
-                  <span className="px-3 py-1 bg-indigo-50/50 text-indigo-700 text-[11px] font-bold rounded-lg border border-indigo-100/50 uppercase tracking-wider">
-                    {student.soft_skills[0]}
-                  </span>
-                )}
-              </div>
+                  {/* Quick Actions (Desktop) */}
+                  <div className="hidden sm:flex items-center gap-2">
+                     <button 
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsLiked(!isLiked); }}
+                        className={cn(
+                          "w-8 h-8 rounded-full flex items-center justify-center transition-all",
+                          isLiked ? "bg-rose-50 text-rose-500" : "bg-slate-50 text-slate-400 hover:bg-slate-100"
+                        )}
+                     >
+                        <Heart size={16} className={isLiked ? "fill-current" : ""} />
+                     </button>
+                     {student.linkedin_url && (
+                       <a
+                         href={student.linkedin_url}
+                         target="_blank"
+                         onClick={(e) => e.stopPropagation()}
+                         className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition-colors"
+                       >
+                         <Linkedin size={16} />
+                       </a>
+                     )}
+                  </div>
+               </div>
 
-              {/* Stats Highlights */}
-              <div className="flex items-center justify-center gap-4 sm:gap-6 flex-wrap">
-                <div className="text-center min-w-[60px]">
-                  <p className="text-base sm:text-lg font-bold text-gray-900 leading-none">{stats?.projectsCreated || 0}</p>
-                  <p className="text-[9px] sm:text-[10px] font-semibold text-gray-400 uppercase tracking-widest mt-1">Projects</p>
-                </div>
-                <div className="hidden sm:block w-px h-8 bg-gray-100" />
-                <div className="text-center min-w-[60px]">
-                  <p className="text-base sm:text-lg font-bold text-gray-900 leading-none">{stats?.internshipsApplied || 0}</p>
-                  <p className="text-[9px] sm:text-[10px] font-semibold text-gray-400 uppercase tracking-widest mt-1">Exp</p>
-                </div>
-                <div className="hidden sm:block w-px h-8 bg-gray-100" />
-                <div className="text-center min-w-[60px]">
-                  <p className="text-base sm:text-lg font-bold text-gray-900 leading-none">{stats?.eventsApplied || 0}</p>
-                  <p className="text-[9px] sm:text-[10px] font-semibold text-gray-400 uppercase tracking-widest mt-1">Events</p>
-                </div>
-              </div>
+               {/* Bio Snippet */}
+               <p className="mt-3 text-sm text-slate-600 line-clamp-2 leading-relaxed">
+                  {student.about || `Building the future of the African tech landscape through ${primarySkills[0] || 'Innovation'}.`}
+               </p>
+
+               {/* Current Program Badge */}
+               {stats?.currentProgram && (
+                 <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-100 rounded-lg">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                    </span>
+                    <span className="text-xs font-bold text-green-700 uppercase tracking-wide">
+                      Attending {stats.currentProgram}
+                    </span>
+                 </div>
+               )}
+
+               {/* Skills & Stats Row */}
+               <div className="mt-4 flex flex-wrap items-center gap-y-3 gap-x-4">
+                  <div className="flex flex-wrap gap-2">
+                    {primarySkills.map((skill, i) => (
+                      <span
+                        key={i}
+                        className="px-2.5 py-1 bg-slate-50 border border-slate-100 text-slate-600 text-[10px] sm:text-xs font-semibold rounded-lg uppercase tracking-wider"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                  
+                  <div className="flex-1 border-t border-slate-100 min-w-[50px] sm:hidden" />
+                  
+                  {/* Compact Stats */}
+                  <div className="flex items-center gap-4 text-xs font-semibold text-slate-500 ml-auto sm:ml-0">
+                     <div className="flex items-center gap-1.5" title="Projects Created">
+                        <Rocket size={14} className="text-amber-500" />
+                        <span>{stats?.projectsCreated || 0}</span>
+                     </div>
+                     <div className="flex items-center gap-1.5" title="Events Attended">
+                        <Users size={14} className="text-blue-500" />
+                        <span>{stats?.eventsApplied || 0}</span>
+                     </div>
+                  </div>
+               </div>
             </div>
           </div>
         </div>
-      </div>
-    </Link>
+      </Link>
+    </motion.div>
   );
 };
-
-interface StatItemProps {
-  value: number;
-  label: string;
-  color?: string;
-}
-
-const StatItem: React.FC<StatItemProps> = ({ value, label, color = "text-gray-600" }) => (
-  <div className="text-center">
-    <div className={`text-lg font-bold ${color}`}>
-      {value}
-    </div>
-    <div className="text-[10px] text-gray-500 font-medium">{label}</div>
-  </div>
-);
 
 export default StudentCard;

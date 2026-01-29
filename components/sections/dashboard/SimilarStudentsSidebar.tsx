@@ -2,11 +2,13 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { Linkedin, MessageCircle, Mail, X, Users, AtSign, ArrowRight } from "lucide-react";
+import { Linkedin, MessageCircle, Mail, X, Users, AtSign, ArrowRight, CheckCircle2, ChevronRight, Inbox } from "lucide-react";
 import StackedAvatars from "./StackedAvatars";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
 import DeveloperAvatarOverlap from "@/components/ui/DeveloperAvatarOverlap";
+import { slugifyUsername, cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface SimilarStudent {
   id: string;
@@ -29,25 +31,15 @@ export default function SimilarStudentsSidebar({
   const [open, setOpen] = useState(false);
   const router = useRouter();
   
-  // Helper to pick best avatar source
-  function pickAvatar(s: SimilarStudent) {
-    const anyS = s as any;
-    if (s.avatar_url) return s.avatar_url;
-    if (anyS.profile_picture) return anyS.profile_picture;
-    if (anyS.profile?.avatar_url) return anyS.profile.avatar_url;
-    if (anyS.user?.user_metadata?.avatar_url) return anyS.user.user_metadata.avatar_url;
-    // fallback generated avatar
-    const seed = encodeURIComponent(s.full_name || s.id || "unknown");
-    return `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
-  }
+  const avatarFallback = "https://i.ibb.co/8n8d37H4/white-logo-4x.png";
 
   return (
     <>
-      {/* Stacked Avatars - removed fixed positioning */}
+      {/* Mobile Trigger (Stacked Avatars) */}
       <div className="lg:hidden">
         {students && students.length > 0 ? (
           <StackedAvatars
-            avatars={students.map(s => ({ src: s.avatar_url, name: s.full_name }))}
+            avatars={students.map(s => ({ src: s.avatar_url || avatarFallback, name: s.full_name }))}
             maxVisible={3}
             moreCount={students.length > 3 ? students.length - 3 : 0}
             onClick={() => setOpen(true)}
@@ -56,237 +48,183 @@ export default function SimilarStudentsSidebar({
       </div>
 
       {/* Mobile Drawer */}
-      {open && (
-        <div
-          className="fixed inset-0 z-50 bg-black/40 flex justify-end lg:hidden"
-          onClick={() => setOpen(false)}
-        >
-          <div
-            className="w-full max-w-md h-full bg-card p-4 overflow-y-auto animate-slideRight custom-scroll"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-heading font-bold text-foreground">People you may know</h3>
-              <button onClick={() => setOpen(false)} className="p-2 hover:bg-muted rounded-full">
-                <X size={18} className="text-foreground" />
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              {students.length === 0 && (
-                <p className="text-sm text-gray-500">No similar students found.</p>
-              )}
-
-              {students.map((s) => (
-                <article key={s.id} className="flex items-center gap-3 p-3 cursor-pointer rounded-xl hover:bg-muted transition"
-                 onClick={() => router.push(`/dashboard/student/${s.username || s.id}`)}
-                >
-                  <div className="w-12 h-12 rounded-full overflow-hidden bg-primary flex items-center justify-center text-white font-bold">
-                    {(() => {
-                      const src = pickAvatar(s);
-                      return src ? (
-                        <img 
-                          src={src} 
-                          alt={s.full_name || "S"} 
-                          className="w-full h-full object-cover"
-                          loading="lazy" 
-                        />
-                      ) : (
-                        (s.full_name || "?").split(" ").map(n => n[0]).slice(0,2).join("")
-                      )
-                    })()}
-                  </div>
-                {/* <p className="text-4xl bg-red-600 w-23 h-43 text-white">{s.avatar_url}</p> */}
-
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-semibold text-sm text-foreground">{s.username || s.full_name || 'Unnamed'}</div>
-                        <div className="text-xs text-muted-foreground">{s.university}</div>
-                      </div>
-                      <div className="text-xs text-muted-foreground">{(s.hard_skills || []).slice(0,2).join(', ')}</div>
+      <AnimatePresence>
+        {open && (
+          <div className="fixed inset-0 z-[9999] lg:hidden">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+              onClick={() => setOpen(false)}
+            />
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-white shadow-2xl overflow-y-auto custom-scrollbar"
+            >
+              <div className="p-8">
+                <div className="flex items-center justify-between mb-10">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-100">
+                      <AtSign size={20} />
                     </div>
-
-                    <div className="mt-2 flex gap-2">
-                      {s.linkedin_url && (
-                        <Link href={s.linkedin_url} target="_blank" rel="noreferrer" className="px-2 py-1 bg-muted text-foreground rounded-md text-xs font-semibold hover:bg-primary hover:text-white transition-colors"> 
-                          <AtSign size={14} />
-                        </Link>
-                      )}
-
-                      {s.phone && (
-                        <Link href={`https://wa.me/${s.phone.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="px-2 py-1 bg-muted text-foreground rounded-md text-xs font-semibold hover:bg-green-500 hover:text-white transition-colors"> 
-                          <MessageCircle size={14} />
-                        </Link>
-                      )}
-
-                      {s.email && (
-                        <Link href={`mailto:${s.email}`} className="px-2 py-1 bg-muted text-foreground rounded-md text-xs font-semibold hover:bg-primary hover:text-white transition-colors"> 
-                          <Mail size={14} />
-                        </Link>
-                      )}
-
-                     
-                      <button className="px-2 py-1 bg-gray-100 text-gray-700 rounded-md text-xs font-semibold hover:bg-gray-200">@</button>
+                    <div>
+                      <h3 className="text-xl font-black text-slate-900 tracking-tight leading-none mb-1">Peer Network</h3>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Connect with explorers</p>
                     </div>
                   </div>
-                </article>
-              ))}
-            </div>
-
-            <div className="mt-8 pt-4 border-t border-border">
-              <Link href="/feed/mentorship" className="block group transition-all duration-300">
-                <div className="bg-blue-50/30 rounded-2xl p-5 border border-blue-100/50">
-                  <DeveloperAvatarOverlap 
-                    size="sm"
-                    title="Need a Mentor?"
-                    subtitle="Connect with industrial experts"
-                  />
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="text-[10px] font-black text-blue-700 uppercase tracking-[0.2em]">Get Mentor</span>
-                    <ArrowRight size={14} className="text-blue-600" />
-                  </div>
+                  <button onClick={() => setOpen(false)} className="p-3 bg-slate-50 text-slate-400 hover:bg-slate-100 rounded-2xl transition-all">
+                    <X size={20} />
+                  </button>
                 </div>
-              </Link>
-            </div>
 
-            <div className="mt-6 text-center">
-              <button onClick={() => setOpen(false)} className="w-full py-3 rounded-xl border border-border font-bold text-sm text-muted-foreground hover:bg-muted transition-colors">Close</button>
+                <div className="space-y-4">
+                  {students.map((s, index) => (
+                    <motion.article 
+                      key={s.id}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: index * 0.05 }}
+                      onClick={() => {
+                        setOpen(false);
+                        router.push(`/dashboard/student/${slugifyUsername(s.username || s.id)}`);
+                      }}
+                      className="group flex flex-col p-6 rounded-[2rem] border border-slate-50 bg-slate-50/30 hover:bg-white hover:border-blue-100 hover:shadow-xl hover:shadow-blue-50/50 transition-all duration-300 cursor-pointer"
+                    >
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="relative w-14 h-14 rounded-2xl overflow-hidden bg-blue-600 border-2 border-white shadow-md">
+                          <Image 
+                            src={s.avatar_url || avatarFallback} 
+                            alt={s.full_name || "S"} 
+                            fill 
+                            className={cn("object-cover", !s.avatar_url && "p-2")} 
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <span className="font-black text-slate-900 truncate tracking-tight">{s.full_name || 'Unnamed'}</span>
+                            <div className="bg-blue-600 rounded-full p-0.5"><CheckCircle2 size={8} className="text-white fill-current" /></div>
+                          </div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">{s.university || "Zigex Voyager"}</p>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {(s.hard_skills || []).slice(0, 3).map((skill, i) => (
+                          <span key={i} className="px-3 py-1 bg-white border border-slate-100 rounded-lg text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </motion.article>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:block space-y-8 h-fit">
+        <div className="bg-white rounded-[2.5rem] border border-slate-100 p-8 shadow-sm">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-slate-900 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-slate-100">
+                <Users size={18} />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-slate-900 tracking-tight leading-none mb-1">Recommended</h3>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">People you may know</p>
+              </div>
             </div>
+            <Link href="/dashboard/student" title="View All" className="p-2.5 bg-slate-50 text-slate-400 hover:bg-blue-600 hover:text-white rounded-xl transition-all">
+               <ArrowRight size={18} />
+            </Link>
+          </div>
+
+          <div className="space-y-2">
+            {students.length === 0 && (
+              <div className="text-center py-10 opacity-50">
+                <Inbox className="w-10 h-10 mx-auto mb-2 text-slate-200" />
+                <p className="text-[10px] font-black uppercase tracking-widest">Finding matches...</p>
+              </div>
+            )}
+
+            {students.map((s) => (
+              <div
+                key={s.id}
+                onClick={() => router.push(`/dashboard/student/${slugifyUsername(s.username || s.id)}`)}
+                className="group flex items-center gap-4 p-4 rounded-2xl hover:bg-slate-50 transition-all duration-300 cursor-pointer relative"
+              >
+                <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-blue-600 border border-slate-100 shadow-sm shrink-0 group-hover:scale-105 transition-transform duration-500">
+                  <Image 
+                    src={s.avatar_url || avatarFallback} 
+                    alt={s.full_name || "S"} 
+                    fill 
+                    className={cn("object-cover", !s.avatar_url && "p-2")} 
+                  />
+                </div>
+
+                <div className="flex-1 min-w-0">
+                   <div className="flex items-center gap-1.5 mb-0.5">
+                      <span className="font-black text-sm text-slate-900 truncate tracking-tight group-hover:text-blue-600 transition-colors">
+                        {s.full_name || 'Unnamed'}
+                      </span>
+                      <CheckCircle2 size={10} className="text-blue-600 shrink-0" />
+                   </div>
+                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest truncate">{s.university || "Global Voyager"}</p>
+                </div>
+                
+                <div className="opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0">
+                   <ChevronRight size={16} className="text-blue-600" strokeWidth={3} />
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <div className="mt-8 pt-8 border-t border-slate-50">
+             <Link href="/dashboard/student" className="w-full h-12 rounded-2xl border border-slate-100 flex items-center justify-center text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all duration-300">
+                Discover More Peers
+             </Link>
           </div>
         </div>
-      )}
 
-    
-      <aside className="hidden lg:block fixed top-28 right-6 w-80 lg:w-96 h-[calc(100vh-7rem)] overflow-y-auto p-4 bg-card rounded-3xl border border-border custom-scroll">
-        <div className="flex items-center justify-between mb-3">
-
-       
-          <h3 className="text-lg font-heading font-bold text-foreground">Recommendations</h3>
-          <span className="text-xs text-muted-foreground">Connect • Explore</span>
-        </div>
-
-        <p className="text-sm text-muted-foreground mb-4">We found people who share at least a few of your skills. You can connect with them.</p>
-
-        <div className="space-y-3">
-          {students.length === 0 && (
-            <p className="text-sm text-muted-foreground">No matches right now.</p>
-          )}
-
-          {students.map((s) => (
-            <div
-              key={s.id}
-              role="link"
-              tabIndex={0}
-              onClick={() => router.push(`/dashboard/student/${s.username || s.id}`)}
-              onKeyDown={(e) => { if (e.key === 'Enter') router.push(`/dashboard/student/${s.username || s.id}`); }}
-              className="flex items-start gap-3 p-3 rounded-xl hover:bg-muted/50 transition cursor-pointer border border-transparent hover:border-border"
-            >
-              <div className="w-12 h-12 rounded-full overflow-hidden bg-primary flex items-center justify-center text-white font-bold shrink-0">
-                {s.avatar_url ? (
-                  <Image src={s.avatar_url} alt={s.full_name || "S"} width={48} height={48} className="object-cover" />
-                ) : (
-                  (s.full_name || "?").split(" ").map(n => n[0]).slice(0,2).join("")
-                )}
+        {/* Exclusive Mentorship Promo Block */}
+        <div className="relative bg-gradient-to-br from-blue-600 to-indigo-700 rounded-[2.5rem] p-8 text-white overflow-hidden shadow-2xl shadow-blue-200/50 group">
+           <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-[60px]" />
+           <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-6">
+                 <div className="w-8 h-8 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center">
+                    <Users size={16} />
+                 </div>
+                 <span className="text-[10px] font-black uppercase tracking-[0.2em]">Elevate Talent</span>
               </div>
-
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-semibold text-foreground">{s.username || s.full_name || 'Unnamed'}</div>
-                    <div className="text-xs text-muted-foreground">{s.university}</div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {/* subtle social style buttons (external links are safe because outer element is not an <a>) */}
-                    {s.linkedin_url && (
-                      <a 
-                        href={s.linkedin_url} 
-                        target="_blank" 
-                        rel="noreferrer" 
-                        className="p-1.5 rounded-lg bg-muted text-foreground hover:bg-primary hover:text-white transition-all"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <AtSign size={15} />
-                      </a>
-                    )}
-                    {s.email && (
-                      <a 
-                        href={`mailto:${s.email}`} 
-                        className="p-1.5 rounded-lg bg-muted text-foreground hover:bg-primary hover:text-white transition-all"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Mail size={15} />
-                      </a>
-                    )}
-                  </div>
-                </div>
-
-                <div className="mt-2 flex items-center justify-between">
-                  <div className="text-xs text-muted-foreground">{(s.hard_skills || []).slice(0,3).join(', ')}</div>
-                  <div className="flex items-center gap-2">
-                    <button className="px-3 py-1 bg-primary text-primary-foreground rounded-full text-xs font-semibold hover:scale-105">Message</button>
-                    <button className="px-2 py-1 border border-border rounded-md text-xs hover:bg-muted">View</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
+              <h4 className="text-2xl font-black leading-tight mb-4 tracking-tighter">Need expert guidance?</h4>
+              <p className="text-white/70 text-sm font-medium mb-8 leading-relaxed">Connect with our industry mentors to accelerate your professional journey.</p>
+              
+              <Link href="/feed/mentorship" className="inline-flex items-center gap-2 px-6 py-3 bg-white text-blue-600 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-black/10 hover:scale-105 transition-transform">
+                 <span>Learn More</span>
+                 <ArrowRight size={14} />
+              </Link>
+           </div>
         </div>
-
-        <div className="mt-4 text-center border-b border-border pb-6">
-          <Link href="/dashboard/student" className="text-sm text-primary font-semibold">See more recommendations</Link>
-        </div>
-
-        {/* Get Mentor Section */}
-        <div className="mt-8 pt-2">
-          <Link href="/feed/mentorship" className="block group transition-all duration-300">
-            <div className="bg-blue-50/50 rounded-[2rem] p-6 border border-blue-100/50 group-hover:bg-blue-50 group-hover:border-blue-200 transition-all">
-              <DeveloperAvatarOverlap 
-                size="sm"
-                title="Elite Mentors"
-                subtitle="Get career guidance from experts"
-              />
-              <div className="mt-4 flex items-center justify-between">
-                <span className="text-sm font-black text-blue-700 uppercase tracking-widest">Get Mentor</span>
-                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white group-hover:translate-x-1 transition-transform">
-                  <ArrowRight size={14} />
-                </div>
-              </div>
-            </div>
-          </Link>
-        </div>
-
-
-        <style jsx>{`
-          @keyframes slideRight {
-            from { transform: translateX(100%); opacity: 0 }
-            to { transform: translateX(0); opacity: 1 }
-          }
-          .animate-slideRight { animation: slideRight 240ms ease-out; }
-
-          /* Custom scrollbar styling */
-          .custom-scroll::-webkit-scrollbar {
-            width: 8px;
-          }
-          
-          .custom-scroll::-webkit-scrollbar-track {
-            background: transparent;
-            margin: 8px 0;
-          }
-          
-          .custom-scroll::-webkit-scrollbar-thumb {
-            background: var(--primary);
-            border-radius: 999px;
-            border: 2px solid rgba(255,255,255,0.6);
-          }
-          
-          /* Firefox */
-          .custom-scroll {
-            scrollbar-width: thin;
-            scrollbar-color: var(--primary) transparent;
-          }
-        `}</style>
       </aside>
+
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 5px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #e2e8f0;
+          border-radius: 10px;
+        }
+      `}</style>
     </>
   );
 }

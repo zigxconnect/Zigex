@@ -7,12 +7,25 @@
 export type ApplicantStatus =
   | "pending"
   | "reviewed"
+  | "reviewing"
   | "accepted"
   | "rejected"
   | "rsvp_confirmed";
 
+
+export type ApplicationType = "internship" | "program" | "event";
+
+export type PaymentRecord = {
+  month: number;
+  status: 'paid' | 'unpaid';
+  amount: number;
+  date?: string;
+  transactionId?: string;
+};
+
 /**
  * Defines the structure for a single applicant object used throughout the frontend.
+ * Includes ALL form fields that candidates submit.
  */
 export type Applicant = {
   id: string;
@@ -22,8 +35,51 @@ export type Applicant = {
   phone: string;
   internshipTitle: string;
   internshipId: string | null;
+  opportunityDescription?: string;
   appliedDate: string;
   status: ApplicantStatus;
   resumeUrl: string | null;
-  coverLetter: string | null; // This property holds the cover_letter_url
+  coverLetter: string | null;
+
+  // Application Type
+  applicationType: ApplicationType;
+
+  // Form Fields - Internship
+  duration?: string;
+  department?: string;
+  workMode?: string;
+  school?: string;
+  schoolLevel?: string;
+  dateOfBirth?: string;
+  address?: string;
+  domain?: string;
+  experienceLevel?: string;
+  reason?: string;
+
+  // Form Fields - Program/Event
+  level?: string;
+  expectations?: string;
+  comments?: string;
+
+  // Form Fields - Event RSVP
+  rsvpStatus?: boolean;
+
+  // User Info
+  studentId?: string;
+  userId?: string;
+
+  // Financials & Ledger
+  isPaid?: boolean;
+  monthlyRate?: number;
+  paymentLedger?: PaymentRecord[];
+  programId?: string | null;
+
+  // Supervisor
+  supervisorId?: string | null;
+  supervisor?: {
+    id: string;
+    full_name: string;
+    avatar_url?: string;
+  };
 };
+

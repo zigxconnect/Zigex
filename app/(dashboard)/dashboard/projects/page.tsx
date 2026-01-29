@@ -7,6 +7,7 @@ import MyMonthProject from '@/components/uiComponent/ProjectCard';
 import CreateProjectButton from '@/components/project/CreateProjectButton';
 import { getRawProfileInfo } from '@/lib/actions/profile.actions';
 import { Badge } from "@/components/ui/badge";
+import { slugifyUsername } from '@/lib/utils';
 
 export const revalidate = 60;
 
@@ -175,7 +176,7 @@ export default async function DashboardProjectsPage() {
                       {/* Link to visit owner's profile */}
                       {p.student_profiles && (
                         <div className="mt-3 px-4">
-                          <a href={`/dashboard/student/${p.student_profiles.username || p.student_profiles.id}`}
+                          <a href={`/dashboard/student/${slugifyUsername(p.student_profiles.username) || p.student_profiles.id}`}
                             className="inline-flex items-center gap-2 text-sm sm:text-base text-gray-700 hover:text-blue-600 font-semibold group/link transition-colors duration-200">
                             <span className="flex items-center gap-1.5">
                               View {p.student_profiles.full_name}&apos;s profile

@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import React from "react";
 import { Select } from "@/components/uiComponent/Select";
 import { Textarea } from "@/components/uiComponent/Textarea";
+import { ImageUpload } from "@/components/feed/project-form/ImageUpload";
+import { createClient } from "@/lib/supabase/client";
 
 // Helper UI Components
 
@@ -112,10 +114,18 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
     initialData?.type || "onsite"
   );
 
-  const [compensation, setCompensation] = useState(
-    initialData?.compensation || ""
+  const [compensationAmount, setCompensationAmount] = useState(
+    initialData?.compensation_amount || ""
   );
-  const [isPaid, setIsPaid] = useState(Boolean(initialData?.compensation));
+  const [monthlyRate, setMonthlyRate] = useState(
+    initialData?.monthly_rate || 0
+  );
+  const [isPaid, setIsPaid] = useState(Boolean(initialData?.is_paid));
+  const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(initialData?.cover_image_url || null);
+  const [endDate, setEndDate] = useState(
+    formatDateForInput(initialData?.end_date)
+  );
 
   const addSkill = () => {
     const trimmed = skillInput.trim();
@@ -128,48 +138,78 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-
-    const internshipData = {
-      id: isEditMode ? initialData.id : undefined,
-      title,
-      description,
-      location,
-      category,
-      start_date: startDate ? new Date(startDate).toISOString() : null,
-      deadline: deadline ? new Date(deadline).toISOString() : null,
-      type: internshipType,
-      required_skills: requiredSkills,
-      compensation: isPaid ? compensation : null,
-    };
+    console.log("Submit button clicked! isEditMode:", isEditMode);
 
     try {
+      const formData = new FormData();
+
+      // Helper for date validation
+      const validateDate = (dateStr: string, name: string) => {
+        if (!dateStr) return null;
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) {
+          throw new Error(`Invalid ${name} date selected.`);
+        }
+        return d.toISOString();
+      };
+
+      // Add all fields to FormData
+      formData.append("title", title);
+      formData.append("description", description);
+      formData.append("location", location);
+      formData.append("category", category);
+      formData.append("start_date", validateDate(startDate, "start") || "");
+      formData.append("end_date", validateDate(endDate, "end") || "");
+      formData.append("deadline", validateDate(deadline, "deadline") || "");
+      formData.append("type", internshipType);
+      formData.append("is_paid", String(isPaid));
+      formData.append("compensation_amount", isPaid ? compensationAmount : "");
+      formData.append("monthly_rate", String(monthlyRate));
+      formData.append("required_skills", JSON.stringify(requiredSkills));
+
+      if (coverImage) {
+        formData.append("cover_image", coverImage);
+        console.log("Added new cover image to form data");
+      } else if (coverImageUrl) {
+        formData.append("cover_image_url", coverImageUrl);
+      }
+
       const endpoint = isEditMode
         ? `/api/companies/internships/${initialData.id}`
         : "/api/companies/internships";
       const method = isEditMode ? "PATCH" : "POST";
 
+      console.log(`Sending ${method} request to ${endpoint}...`);
+
       const response = await fetch(endpoint, {
         method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(internshipData),
+        body: formData, // Sending FormData instead of JSON
       });
 
-      const result = await response.json();
-      if (!response.ok) {
-        console.error("API Error:", result);
-        throw new Error(
-          result.error?.message || result.error || "Failed to submit form"
-        );
+      console.log("API response status:", response.status);
+
+      let result;
+      try {
+        result = await response.json();
+        console.log("API response data:", result);
+      } catch (err) {
+        console.error("Failed to parse JSON response:", err);
+        throw new Error("The server returned an invalid response. Please try again.");
       }
 
-      toast.success(
-        `Internship ${isEditMode ? "updated" : "published"} successfully!`
-      );
+      if (!response.ok) {
+        throw new Error(result?.error?.message || result?.error || "Failed to submit form");
+      }
 
-      router.push("/admin/postings");
-      router.refresh();
+      toast.success(`Internship ${isEditMode ? "updated" : "published"} successfully!`);
+      
+      setTimeout(() => {
+        router.push("/admin/postings");
+        router.refresh();
+      }, 1000);
     } catch (error: any) {
-      toast.error(error.message || "An unexpected error occurred.");
+      console.error("Form submission error details:", error);
+      toast.error(error.message || "An unexpected error occurred. Please check your internet connection.");
     } finally {
       setIsSubmitting(false);
     }
@@ -227,6 +267,13 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
             required
           />
         </FormField>
+        <FormField label="End Date">
+          <Input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+          />
+        </FormField>
         <FormField label="Application Deadline" required>
           <Input
             type="date"
@@ -235,6 +282,20 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
             required
           />
         </FormField>
+      </FormSection>
+
+      <FormSection title="Visuals">
+         <div className="md:col-span-2">
+            <ImageUpload 
+              previewUrl={coverImage ? URL.createObjectURL(coverImage) : coverImageUrl}
+              onImageChange={(file) => setCoverImage(file)}
+              onRemove={() => {
+                setCoverImage(null);
+                setCoverImageUrl(null);
+              }}
+              maxSize="5MB"
+            />
+         </div>
       </FormSection>
 
       <FormSection title="Job Details">
@@ -300,14 +361,24 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
             </div>
           </div>
           {isPaid && (
-            <FormField label="Compensation Details">
-              <Input
-                type="text"
-                value={compensation}
-                onChange={(e) => setCompensation(e.target.value)}
-                placeholder="e.g., $20/hour, $3000 stipend"
-              />
-            </FormField>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField label="Monthly Stipend (Paid to Intern)">
+                <Input
+                  type="text"
+                  value={compensationAmount}
+                  onChange={(e) => setCompensationAmount(e.target.value)}
+                  placeholder="e.g., 50,000 FCFA"
+                />
+              </FormField>
+              <FormField label="Program Fee (Paid by Intern)">
+                <Input
+                  type="number"
+                  value={monthlyRate}
+                  onChange={(e) => setMonthlyRate(parseInt(e.target.value) || 0)}
+                  placeholder="e.g., 25000"
+                />
+              </FormField>
+            </div>
           )}
         </div>
       </FormSection>

@@ -2,67 +2,28 @@
 
 import { useState, useEffect } from "react";
 import { Play, Eye, Clock, Zap, Loader2, AlertCircle } from "lucide-react";
-import { getHappeningNowContent, type HappeningNowItem } from "@/lib/actions/happening-now.actions";
+import { type HappeningNowItem } from "@/lib/actions/happening-now.actions";
 import { getRandomViewCount, formatSimpleViewCount } from "@/lib/utils/randomViews";
 
-export const HappeningNowGrid = () => {
+export const HappeningNowGrid = ({ initialData = [] }: { initialData?: HappeningNowItem[] }) => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<HappeningNowItem | null>(null);
-  const [data, setData] = useState<HappeningNowItem[]>([]);
+  const data = initialData;
   const [viewCounts, setViewCounts] = useState<Record<string, number>>({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        const result = await getHappeningNowContent();
-        setData(result || []);
-        
-        // Generate random view counts for each item
-        const newViewCounts: Record<string, number> = {};
-        (result || []).forEach((item) => {
-          newViewCounts[item.id] = getRandomViewCount();
-        });
-        setViewCounts(newViewCounts);
-        setError(null);
-      } catch (err) {
-        console.error("Error loading happening now:", err);
-        setError("Failed to load content");
-        setData([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+    // Generate random view counts for each item on client mount
+    const newViewCounts: Record<string, number> = {};
+    data.forEach((item) => {
+      newViewCounts[item.id] = getRandomViewCount();
+    });
+    setViewCounts(newViewCounts);
+  }, [data]);
 
-    loadData();
-  }, []);
 
-  // Loading state
-  if (loading) {
-    return (
-      <div className="w-full mb-12">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="relative">
-              <Zap className="w-8 h-8 text-primary fill-primary animate-pulse" />
-            </div>
-            <h2 className="text-3xl font-bold text-foreground">Happening Now</h2>
-          </div>
-          <div className="flex items-center justify-center h-64 bg-muted/30 rounded-lg">
-            <div className="flex flex-col items-center gap-2">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              <p className="text-muted-foreground">Loading happening now...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
-  // Error state
-  if (error || data.length === 0) {
+  // Empty state
+  if (data.length === 0) {
     return (
       <div className="w-full mb-12">
         <div className="max-w-7xl mx-auto px-4">
@@ -76,7 +37,7 @@ export const HappeningNowGrid = () => {
             <div className="flex flex-col items-center gap-2 text-center">
               <AlertCircle className="w-8 h-8 text-destructive" />
               <p className="text-destructive">
-                {error || "No happening now content available"}
+                No happening now content available
               </p>
             </div>
           </div>

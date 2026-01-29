@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import StackedAvatars from './StackedAvatars';
+import { slugifyUsername } from '@/lib/utils';
 
 interface StackedAvatarsWrapperProps {
   avatars: Array<{ src?: string; name: string }>;
@@ -19,7 +20,7 @@ export default function StackedAvatarsWrapper({
   const router = useRouter();
 
   const handleClick = () => {
-    router.push(`/dashboard/student/${studentId}`);
+    router.push(`/dashboard/student/${slugifyUsername(studentId)}`);
   };
 
   return (

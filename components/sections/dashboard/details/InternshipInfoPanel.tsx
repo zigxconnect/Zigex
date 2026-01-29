@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Tag } from "@/components/uiComponent/Tag";
 
-import { Sparkles, TriangleAlert } from "lucide-react";
+import { TriangleAlert } from "lucide-react";
 
 const DetailItem = ({
   label,
@@ -82,7 +82,7 @@ export const InternshipInfoPanel = ({
           variant="secondary"
           className="w-full text-base py-3 gap-2 font-medium"
         >
-          <Sparkles size={18} /> Smart Apply
+          <img src="https://zigexconnect.com/small.png" className="w-5 h-5" alt="Zigex" /> Smart Apply
         </Button>
       </div>
       <Card>

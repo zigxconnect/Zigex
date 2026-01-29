@@ -32,20 +32,26 @@
   }
 
 
-  }
+}
 
-  body {
-    background-color: rgb(var(--background) / 1);
-    color: rgb(var(--foreground) / 1);
-    font-family: var(--font-sans);
-    font-feature-settings:
-      "rlig" 1,
-      "calt" 1;
-  }
-  
-  h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-heading);
-  }
+body {
+  background-color: rgb(var(--background) / 1);
+  color: rgb(var(--foreground) / 1);
+  font-family: var(--font-sans);
+  font-feature-settings:
+    "rlig" 1,
+    "calt" 1;
+  overflow-x: hidden;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+}
 
 
 :root {
@@ -53,32 +59,35 @@
   --background: #F6F8FF;
   /* Charcoal Foreground */
   --foreground: #000000;
-  
+
   /* Zigex Signal Blue */
   --card: #ffffff;
   --card-foreground: #000000;
   --popover: #ffffff;
   --popover-foreground: #000000;
-  
+
   /* Zigex Signal Blue */
   --primary: #155DFC;
   --primary-foreground: #ffffff;
 
   /* Light Signal Blue Accent */
   --light-blue: #5d8df5;
-  
+
   /* Deep Signal Blue */
   --secondary: #1A3CB9;
   --secondary-foreground: #ffffff;
-  
+
   /* Slate Gray - REPLACED with Cool Blue/Gray for "No Gray Backgrounds" rule */
-  --muted: #F0F4FF; /* Was #6B7280 (text) / #F1F5F9 (bg) - now Cloud White tint */
-  --muted-foreground: #64748B; /* Slate 500 - keeps text readable but cool toned */
-  
+  --muted: #F0F4FF;
+  /* Was #6B7280 (text) / #F1F5F9 (bg) - now Cloud White tint */
+  --muted-foreground: #64748B;
+  /* Slate 500 - keeps text readable but cool toned */
+
   /* Slate Gray for accents roughly - REPLACED */
-  --accent: #E0EAFF; /* Light Periwinkle */
+  --accent: #E0EAFF;
+  /* Light Periwinkle */
   --accent-foreground: #155DFC;
-  
+
   /* Error Red */
   --destructive: #DC2626;
   --destructive-foreground: #ffffff;
@@ -88,10 +97,11 @@
   --warning: #F59E0B;
   --info: #38BDF8;
 
-  --border: #E0E7FF; /* Cool Blue Border */
+  --border: #E0E7FF;
+  /* Cool Blue Border */
   --input: #E0E7FF;
   --ring: #155DFC;
-  
+
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
   --radius-lg: 1rem;
@@ -102,7 +112,7 @@
   --chart-3: #16A34A;
   --chart-4: #F59E0B;
   --chart-5: #DC2626;
-  
+
   --sidebar: #F6F8FF;
   --sidebar-foreground: #000000;
   --sidebar-primary: #155DFC;
@@ -126,7 +136,7 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -158,11 +168,11 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  
+
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-info: var(--info);
-  
+
   --image-gradient-primary: var(--gradient-primary);
   --image-gradient-dark: var(--gradient-dark);
   --image-gradient-mesh: var(--gradient-mesh);
@@ -171,40 +181,42 @@
 .dark {
   /* Dark Mode Adaptation */
   /* Main Background - Dark Charcoal */
-  --background: #0F172A; /* Slate 900 */
+  --background: #0F172A;
+  /* Slate 900 */
   --foreground: #F6F8FF;
-  
-  --card: #1E293B; /* Slate 800 */
+
+  --card: #1E293B;
+  /* Slate 800 */
   --card-foreground: #F6F8FF;
   --popover: #1E293B;
   --popover-foreground: #F6F8FF;
-  
+
   /* Keep Signal Blue as Primary */
   --primary: #155DFC;
   --primary-foreground: #ffffff;
-  
+
   --secondary: #1A3CB9;
   --secondary-foreground: #ffffff;
-  
+
   --muted: #1E293B;
   --muted-foreground: #94A3B8;
-  
+
   --accent: #1E293B;
   --accent-foreground: #F6F8FF;
-  
+
   --destructive: #DC2626;
   --destructive-foreground: #ffffff;
-  
+
   --border: #1E293B;
   --input: #1E293B;
   --ring: #155DFC;
-  
+
   --chart-1: #155DFC;
   --chart-2: #1A3CB9;
   --chart-3: #16A34A;
   --chart-4: #F59E0B;
   --chart-5: #DC2626;
-  
+
   --sidebar: #0F172A;
   --sidebar-foreground: #F6F8FF;
   --sidebar-primary: #155DFC;
@@ -229,64 +241,130 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
 
-  /* Custom Scrollbar Styles */
+  /* Custom Scrollbar Styles - Premium Minimal Design */
   .custom-scrollbar::-webkit-scrollbar {
-    width: 8px; /* Width of the entire scrollbar */
+    width: 6px;
+    height: 6px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
-    background: var(--muted); /* Color of the tracking area */
-    border-radius: 10px;
+    background: transparent;
+    margin: 8px 0;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background-color: var(--muted-foreground); /* Color of the scroll thumb */
-    border-radius: 10px; /* Roundness of the scroll thumb */
-    border: 2px solid var(--muted); /* Creates padding around the thumb */
+    background-color: rgba(100, 116, 139, 0.2);
+    border-radius: 10px;
+    transition: background-color 0.2s ease;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background-color: var(--primary); /* Color of the scroll thumb on hover */
+    background-color: rgba(100, 116, 139, 0.4);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:active {
+    background-color: var(--primary);
   }
 
   /* For Firefox */
   .custom-scrollbar {
     scrollbar-width: thin;
-    scrollbar-color: var(--muted-foreground) var(--muted);
+    scrollbar-color: rgba(100, 116, 139, 0.2) transparent;
   }
-  /*
- * Hide scrollbar for Chrome, Safari and Opera.
- */
-  .custom-scrollbar::-webkit-scrollbar {
+
+  /* Hide scrollbar variant */
+  .hide-scrollbar::-webkit-scrollbar {
     display: none;
   }
 
-  /*
- * Hide scrollbar for IE, Edge and Firefox.
- */
-  .custom-scrollbar {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
+
 
   /* This makes the phone input look like your other shadcn/ui inputs */
   .PhoneInputInput {
     display: flex;
     height: 40px;
     width: 100%;
-    border-radius: 0.375rem; /* 6px */
-    border: 1px solid hsl(214.3 31.8% 91.4%); /* Corresponds to input border color */
+    border-radius: 0.375rem;
+    /* 6px */
+    border: 1px solid hsl(214.3 31.8% 91.4%);
+    /* Corresponds to input border color */
     background-color: transparent;
     padding: 0.5rem 0.75rem;
-    font-size: 0.875rem; /* 14px */
+    font-size: 0.875rem;
+    /* 14px */
   }
 
   .PhoneInputInput:focus {
-    outline: 2px solid hsl(215 20.2% 65.1%); /* Corresponds to ring color */
+    outline: 2px solid hsl(215 20.2% 65.1%);
+    /* Corresponds to ring color */
     outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  @keyframes gradient-xy {
+
+    0%,
+    100% {
+      background-size: 400% 400%;
+      background-position: left center;
+    }
+
+    50% {
+      background-size: 400% 400%;
+      background-position: right center;
+    }
+  }
+
+  .animate-gradient-xy {
+    animation: gradient-xy 3s ease infinite;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-button {
+    display: none;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #155DFC;
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #1A3CB9;
+    background-clip: content-box;
+  }
+
+  /* Firefox */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #155DFC transparent;
   }
 }

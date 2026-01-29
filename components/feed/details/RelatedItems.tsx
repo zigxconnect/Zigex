@@ -4,7 +4,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
-import { normalizeImageSrc } from "@/lib/utils";
+import { normalizeImageSrc, slugify } from "@/lib/utils";
 import { Calendar, Clock, ArrowRight, LayoutGrid } from "lucide-react";
 import { Badge } from "@/components/uiComponent/Badge";
 // import { Badge } from "@/components/ui/badge";
@@ -96,7 +96,7 @@ function RelatedItemCard({
   };
 
   return (
-    <Link href={`/feed/${item.id}`}>
+    <Link href={`/feed/${slugify(item.title)}`}>
       <Card className="group overflow-hidden border border-border shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 h-full bg-card">
         {/* Image */}
         <div className="relative h-48 bg-muted overflow-hidden">
@@ -107,7 +107,7 @@ function RelatedItemCard({
             className="object-cover group-hover:scale-105 transition-transform duration-500"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-          
+
           {/* Type Badge */}
           <Badge className="absolute top-3 left-3 bg-white/95 text-primary backdrop-blur-sm border-0 font-bold shadow-sm">
             {type === "internships" ? "Internship" : type === "programs" ? "Program" : "Event"}
