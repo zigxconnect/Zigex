@@ -136,15 +136,25 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
           schema: 'public',
           table: 'announcements',
         },
-        (payload) => {
+        async (payload) => {
           const newAnnouncement = payload.new as any;
           
           // Check if relevant: Global (company_id is null) or specific to student's company
           const isRelevant = !newAnnouncement.company_id || newAnnouncement.company_id === companyId;
           
-          if (isRelevant && activeTab !== "announcements") {
-            setUnreadAnnouncements(prev => prev + 1);
-            // Optional: Play sound or show browser notification
+          if (isRelevant) {
+            // Re-fetch enriched announcements or manually refresh to get company info
+            router.refresh();
+
+            if (activeTab !== "announcements") {
+              setUnreadAnnouncements(prev => prev + 1);
+            }
+
+            // Notification with company info
+            toast.info("New Announcement", {
+              description: newAnnouncement.title,
+              icon: <Megaphone className="h-4 w-4 text-blue-600" />
+            });
           }
         }
       )
@@ -153,7 +163,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
     return () => {
       supabase.removeChannel(announcementsChannel);
     };
-  }, [application?.internships?.company_id, activeTab]);
+  }, [application?.internships?.company_id, activeTab, router]);
 
   // Real-time Logs Listener (for Approval Status)
   useEffect(() => {
@@ -361,9 +371,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                   <div className="relative">
                     <Icon size={16} className={cn(isActive && "text-blue-600")} />
                     {tab.id === "announcements" && unreadAnnouncements > 0 && (
-                      <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white dark:ring-slate-900 animate-pulse">
-                        {unreadAnnouncements}
-                      </span>
+                      <span className="absolute -top-1 -right-1 flex h-2 w-2 items-center justify-center rounded-full bg-blue-600 ring-2 ring-white dark:ring-slate-900 animate-ping" />
                     )}
                     {tab.id === "tasks" && tasksCount > 0 && (
                       <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white ring-2 ring-white dark:ring-slate-900">
