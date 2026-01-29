@@ -388,7 +388,7 @@ export async function getSupervisorDashboardData() {
 /**
  * Server Action to assign a task to an internship.
  */
-import { sendTaskAssignmentEmail } from "../mail";
+import { sendTaskAssignmentEmail } from "@/lib/email";
 
 export async function assignInternshipTask(taskData: {
     internship_id: string; // can be "all" or specific application ID
@@ -582,17 +582,63 @@ export async function assignInternshipTask(taskData: {
 }
 
 /**
- * Server Action to delete a task.
+ * Server Action to delete a task (supports bulk deletion for broadcast groups).
  */
-export async function deleteInternshipTask(taskId: string) {
+export async function deleteInternshipTask(taskId: string, deleteAllGroup: boolean = false) {
+    const supabase = await createServerActionClient();
+
+    if (deleteAllGroup) {
+        // Fetch the task first to get the fingerprint
+        const { data: task } = await supabaseAdmin
+            .from("internship_tasks")
+            .select("*")
+            .eq("id", taskId)
+            .single();
+
+        if (task) {
+            const { error } = await supabase
+                .from("internship_tasks")
+                .delete()
+                .eq("title", task.title)
+                .eq("description", task.description)
+                .eq("supervisor_id", task.supervisor_id);
+
+            if (error) return { success: false, error: error.message };
+        }
+    } else {
+        const { error } = await supabase
+            .from("internship_tasks")
+            .delete()
+            .eq("id", taskId);
+
+        if (error) {
+            console.error("Error deleting task:", error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    revalidatePath("/supervisor");
+    return { success: true };
+}
+
+/**
+ * Server Action to update a task.
+ */
+export async function updateInternshipTask(taskId: string, updates: Partial<{
+    title: string;
+    description: string;
+    due_date: string;
+    priority: string;
+    status: string;
+}>) {
     const supabase = await createServerActionClient();
     const { error } = await supabase
         .from("internship_tasks")
-        .delete()
+        .update(updates)
         .eq("id", taskId);
 
     if (error) {
-        console.error("Error deleting task:", error);
+        console.error("Error updating task:", error);
         return { success: false, error: error.message };
     }
 

@@ -839,3 +839,55 @@ export const sendSupervisorAssignmentEmail = async (params: {
     console.error(`[EMAIL] Failed to send assignment email:`, error.message);
   }
 };
+
+/**
+ * Sends a task assignment notification to a student.
+ */
+export const sendTaskAssignmentEmail = async (params: {
+  email: string;
+  name: string;
+  taskTitle: string;
+  taskDescription: string;
+  dueDate?: string;
+  priority?: string;
+  supervisorName: string;
+}) => {
+  const { email, name, taskTitle, taskDescription, dueDate, priority, supervisorName } = params;
+
+  try {
+    const transporter = createTransporter();
+
+    const html = generateEmailHTML({
+      heading: `New Task Assigned: ${taskTitle}`,
+      message: `
+        Hello ${name},<br/><br/>
+        Your supervisor, <strong>${supervisorName}</strong>, has assigned you a new task:
+        <br/><br/>
+        <strong>Task:</strong> ${taskTitle}<br/>
+        <strong>Description:</strong> ${taskDescription}<br/>
+        ${dueDate ? `<strong>Due Date:</strong> ${new Date(dueDate).toLocaleDateString()}<br/>` : ""}
+        ${priority ? `<strong>Priority:</strong> ${priority.toUpperCase()}<br/>` : ""}
+        <br/>
+        Please log in to your dashboard to view the details and track your progress.
+      `,
+      ctaText: "VIEW DASHBOARD",
+      ctaLink: "https://zigexconnect.com/intern/workspace",
+      statusBadge: priority?.toUpperCase() || "NEW TASK",
+      statusColor: priority === "high" ? "#EF4444" : "#3B82F6",
+      opportunityTitle: taskTitle,
+      opportunityType: "Task Assignment",
+      companyName: "SEED INC"
+    });
+
+    await transporter.sendMail({
+      from: `"${supervisorName} via SEED INC" <${GMAIL_USER}>`,
+      to: email,
+      subject: `[Task Notification] ${taskTitle}`,
+      html: html,
+    });
+
+    console.log(`[EMAIL] Task notification sent to ${email}`);
+  } catch (error) {
+    console.error(`[EMAIL ERROR] Failed to send task notification to ${email}:`, error);
+  }
+};

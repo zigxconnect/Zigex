@@ -44,6 +44,7 @@ import {
   markInternAttendance,
   assignInternshipTask, 
   deleteInternshipTask,
+  updateInternshipTask,
   submitBatchAttendance,
   submitWeeklyEvaluation
 } from "@/lib/actions/supervisor.actions";
@@ -75,6 +76,12 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
     priority: "medium"
   });
   const [isSubmittingTask, setIsSubmittingTask] = useState(false);
+
+  // Edit/Delete State
+  const [editingTask, setEditingTask] = useState<any>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<any>(null);
   
   // Attendance Batch State
   const [pendingAttendance, setPendingAttendance] = useState<Record<string, string>>({});
@@ -201,14 +208,69 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
     }
   };
 
-  const handleDeleteTask = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this task?")) return;
-    const res = await deleteInternshipTask(id);
-    if (res.success) {
-      toast.success("Task deleted");
-      router.refresh();
+  const handleUpdateTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTask?.title || !editingTask?.id) {
+      toast.error("Title is required");
+      return;
     }
+
+    setIsSubmittingTask(true);
+    const res = await updateInternshipTask(editingTask.id, {
+      title: editingTask.title,
+      description: editingTask.description,
+      due_date: editingTask.due_date,
+      priority: editingTask.priority,
+    });
+
+    if (res.success) {
+      toast.success("Task updated successfully");
+      setIsEditModalOpen(false);
+      setEditingTask(null);
+      router.refresh();
+    } else {
+      toast.error(res.error || "Failed to update task");
+    }
+    setIsSubmittingTask(false);
   };
+
+  const handleDeleteTaskFinal = async () => {
+    if (!taskToDelete) return;
+
+    setIsSubmittingTask(true);
+    const isBroadcast = taskToDelete.assignedTo?.length > 1;
+    
+    // Delete the task (and its group if it's a broadcast)
+    const res = await deleteInternshipTask(taskToDelete.id, isBroadcast);
+    if (res.success) {
+      toast.success(isBroadcast ? "Broadcast tasks deleted" : "Task deleted");
+      setIsDeleteModalOpen(false);
+      setTaskToDelete(null);
+      router.refresh();
+    } else {
+      toast.error(res.error || "Failed to delete task");
+    }
+    setIsSubmittingTask(false);
+  };
+
+  // Group tasks to avoid duplicates when assigning to "all"
+  const groupedTasks = React.useMemo(() => {
+    const map = new Map();
+    tasks.forEach(task => {
+      // Create a unique key based on content and date
+      const key = `${task.title}-${task.description}-${task.due_date}-${task.supervisor_id}`;
+      if (!map.has(key)) {
+        map.set(key, { 
+          ...task, 
+          assignedTo: [task.student_id]
+        });
+      } else {
+        const existing = map.get(key);
+        existing.assignedTo.push(task.student_id);
+      }
+    });
+    return Array.from(map.values());
+  }, [tasks]);
 
   const isAttendanceWindow = () => {
     const hour = new Date().getHours();
@@ -639,17 +701,48 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
 
               {/* Task Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {tasks.length > 0 ? tasks.map((task) => {
-                  const targetIntern = interns.find(i => i.internship_id === task.internship_id);
+                {groupedTasks.length > 0 ? groupedTasks.map((task: any) => {
+                  const isBroadcast = task.assignedTo?.length > 1;
+                  const firstInternId = task.student_id;
+                  const targetIntern = interns.find(i => {
+                     const s = Array.isArray(i.student) ? i.student[0] : i.student;
+                     return s?.user_id === firstInternId;
+                  });
                   const internName = targetIntern ? (Array.isArray(targetIntern.student) ? targetIntern.student[0] : targetIntern.student)?.full_name : "General Task";
                   
                   return (
-                    <div key={task.id} className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2rem] p-6 hover:shadow-xl transition-all border-b-4 border-b-blue-500 flex flex-col">
+                    <div key={task.id} className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2rem] p-6 hover:shadow-xl transition-all border-b-4 border-b-blue-500 flex flex-col group/task relative">
                       <div className="flex justify-between items-start mb-4">
-                        <Badge className="bg-blue-50 text-blue-600 border-0 font-black text-[9px] uppercase tracking-widest px-2 py-1">
-                           {task.priority || "Medium"}
-                        </Badge>
-                        <button onClick={() => handleDeleteTask(task.id)} className="text-slate-300 hover:text-red-500 transition-colors p-1"><Trash2 size={14} /></button>
+                        <div className="flex gap-2">
+                           <Badge className="bg-blue-50 text-blue-600 border-0 font-black text-[9px] uppercase tracking-widest px-2 py-1">
+                              {task.priority || "Medium"}
+                           </Badge>
+                           {isBroadcast && (
+                             <Badge className="bg-amber-50 text-amber-600 border-0 font-black text-[9px] uppercase tracking-widest px-2 py-1">
+                                BROADCAST
+                             </Badge>
+                           )}
+                        </div>
+                        <div className="flex items-center gap-1 opacity-0 group-hover/task:opacity-100 transition-opacity">
+                          <button 
+                            onClick={() => {
+                              setEditingTask(task);
+                              setIsEditModalOpen(true);
+                            }} 
+                            className="text-slate-300 hover:text-blue-500 transition-colors p-1.5 rounded-full hover:bg-blue-50"
+                          >
+                            <Edit size={14} />
+                          </button>
+                          <button 
+                            onClick={() => {
+                              setTaskToDelete(task);
+                              setIsDeleteModalOpen(true);
+                            }} 
+                            className="text-slate-300 hover:text-red-500 transition-colors p-1.5 rounded-full hover:bg-red-50"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
                       </div>
                       <h4 className="font-black text-slate-900 dark:text-white capitalize mb-2 line-clamp-1">{task.title}</h4>
                       <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-3 mb-6 leading-relaxed flex-1">
@@ -660,7 +753,9 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                            <div className="w-6 h-6 rounded-md bg-slate-100 flex items-center justify-center">
                               <User size={12} className="text-slate-400" />
                            </div>
-                           <span className="text-[10px] font-bold text-slate-500 uppercase truncate max-w-[100px]">{internName}</span>
+                           <span className="text-[10px] font-bold text-slate-500 uppercase truncate max-w-[120px]">
+                              {isBroadcast ? `Assigned to ${task.assignedTo.length} Interns` : internName}
+                           </span>
                          </div>
                          <div className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-md">
                            {task.due_date ? format(new Date(task.due_date), "MMM dd") : "No Due Date"}
@@ -1073,6 +1168,133 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                     className="w-full rounded-2xl h-14 font-black text-slate-400 hover:text-slate-600"
                 >
                     CLOSE
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+      {/* EDIT TASK MODAL */}
+      <AnimatePresence>
+        {isEditModalOpen && editingTask && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+            <motion.div 
+               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+               onClick={() => setIsEditModalOpen(false)}
+               className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden p-8"
+            >
+              <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-6">Edit Task 📝</h3>
+              <form onSubmit={handleUpdateTask} className="space-y-6">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Task Title</label>
+                  <Input 
+                    value={editingTask.title}
+                    onChange={(e) => setEditingTask({...editingTask, title: e.target.value})}
+                    placeholder="e.g. Implement the Authentication System"
+                    className="h-12 rounded-2xl border-slate-100 bg-slate-50 text-sm font-bold focus-visible:ring-1"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Detailed Description</label>
+                  <Textarea 
+                    value={editingTask.description}
+                    onChange={(e) => setEditingTask({...editingTask, description: e.target.value})}
+                    placeholder="Provide specific instructions for the student..."
+                    className="min-h-[120px] rounded-2xl border-slate-100 bg-slate-50 text-sm font-medium resize-none shadow-none focus-visible:ring-1"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Due Date</label>
+                    <Input 
+                      type="date"
+                      value={editingTask.due_date ? editingTask.due_date.split('T')[0] : ''}
+                      onChange={(e) => setEditingTask({...editingTask, due_date: e.target.value})}
+                      className="h-12 rounded-2xl border-slate-100 bg-slate-50 text-sm font-bold focus-visible:ring-1"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Priority Level</label>
+                    <select 
+                      value={editingTask.priority}
+                      onChange={(e) => setEditingTask({...editingTask, priority: e.target.value})}
+                      className="w-full h-12 rounded-2xl border-slate-100 bg-slate-50 px-4 text-sm font-bold focus:ring-1 focus:ring-blue-500"
+                    >
+                      <option value="low">Low Priority</option>
+                      <option value="medium">Medium Priority</option>
+                      <option value="high">High Priority</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="pt-6 flex gap-3">
+                   <Button 
+                    type="button"
+                    onClick={() => setIsEditModalOpen(false)}
+                    variant="ghost" 
+                    className="flex-1 rounded-2xl h-14 font-black hover:bg-slate-50"
+                   >
+                     CANCEL
+                   </Button>
+                   <Button 
+                    type="submit"
+                    disabled={isSubmittingTask}
+                    className="flex-[2] rounded-2xl h-14 font-black bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-500/20"
+                   >
+                     {isSubmittingTask ? <Loader2 className="animate-spin" /> : "UPDATE TASK"}
+                   </Button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* DELETE TASK CONFIRMATION MODAL */}
+      <AnimatePresence>
+        {isDeleteModalOpen && taskToDelete && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+            <motion.div 
+               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+               onClick={() => setIsDeleteModalOpen(false)}
+               className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden p-10 text-center"
+            >
+              <div className="w-20 h-20 bg-red-50 rounded-3xl flex items-center justify-center mx-auto mb-6 text-red-500">
+                <Trash2 size={40} />
+              </div>
+              <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">Delete this task?</h3>
+              <p className="text-slate-500 text-sm font-medium leading-relaxed mb-8">
+                This action cannot be undone. {taskToDelete.assignedTo?.length > 1 ? `This will delete the task for all ${taskToDelete.assignedTo.length} assigned interns.` : 'This will remove the task from the student\'s dashboard.'}
+              </p>
+              <div className="space-y-3">
+                <Button 
+                    onClick={handleDeleteTaskFinal}
+                    disabled={isSubmittingTask}
+                    className="w-full rounded-2xl h-14 font-black bg-red-600 text-white hover:bg-red-700 transition-all shadow-lg shadow-red-500/10"
+                >
+                    {isSubmittingTask ? <Loader2 className="animate-spin text-white" /> : "YES, DELETE TASK"}
+                </Button>
+                <Button 
+                    onClick={() => setIsDeleteModalOpen(false)}
+                    variant="ghost"
+                    className="w-full rounded-2xl h-14 font-black text-slate-400 hover:text-slate-600"
+                >
+                    CANCEL
                 </Button>
               </div>
             </motion.div>
