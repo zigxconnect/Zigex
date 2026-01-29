@@ -407,15 +407,25 @@ export async function assignInternshipTask(taskData: {
             return { success: false, error: "Unauthorized" };
         }
 
-        // Get supervisor profile - using Admin for reliability in link verification
-        const { data: profile } = await supabaseAdmin
+        // 1. Get supervisor profile (with robust fallback like in Dashboard)
+        let { data: profile } = await supabaseAdmin
             .from("supervisor_profiles")
-            .select("id, full_name")
+            .select("id, full_name, company_id")
             .eq("user_id", user.id)
             .maybeSingle();
 
+        if (!profile && user.email) {
+            console.log(`[SUPERVISOR_ACTIONS] ID lookup failed for ${user.id}, trying email: ${user.email}`);
+            const { data: emailProfile } = await supabaseAdmin
+                .from("supervisor_profiles")
+                .select("id, full_name, company_id")
+                .ilike("email", user.email)
+                .maybeSingle();
+            profile = emailProfile;
+        }
+
         if (!profile) {
-            console.error("[SUPERVISOR_ACTIONS] No supervisor profile for user", user.id);
+            console.error("[SUPERVISOR_ACTIONS] No supervisor profile found for user", user.id);
             return { success: false, error: "Supervisor profile not found. Please refresh." };
         }
 
@@ -434,75 +444,97 @@ export async function assignInternshipTask(taskData: {
 
         if (taskData.internship_id === "all") {
             console.log("[SUPERVISOR_ACTIONS] Bulk assignment selected");
-            // Fetch all ACTIVE interns for this supervisor from both tables
+
+            // 2. Fetch applications separately (Resilient to join errors)
             const [structRes, legacyRes] = await Promise.all([
                 supabaseAdmin
                     .from("internship_applications")
-                    .select("id, internship_id, student_id, student:student_profiles(user_id, full_name, email)")
+                    .select("id, internship_id, student_id")
                     .eq("supervisor_id", profile.id)
                     .eq("status", "accepted"),
                 supabaseAdmin
                     .from("Applications")
-                    .select("id, internship_id, student_id, student:student_profiles(user_id, full_name, email)")
+                    .select("id, internship_id, student_id")
                     .eq("supervisor_id", profile.id)
                     .eq("status", "accepted")
             ]);
 
-            const allInterns = [...(structRes.data || []), ...(legacyRes.data || [])];
+            const allApps = [...(structRes.data || []), ...(legacyRes.data || [])];
+            console.log(`[SUPERVISOR_ACTIONS] Found ${allApps.length} total applications`);
 
-            if (allInterns.length === 0) {
+            if (allApps.length === 0) {
                 console.warn("[SUPERVISOR_ACTIONS] No active interns found for supervisor", profile.id);
                 return { success: false, error: "No active interns found." };
             }
 
-            // Deduplicate if needed (though usually they shouldn't be in both)
+            // 3. Manual Join for Student Profiles
+            const studentIds = allApps.map(i => i.student_id).filter(Boolean);
+            let studentProfiles: any[] = [];
+            if (studentIds.length > 0) {
+                const { data: profiles } = await supabaseAdmin
+                    .from("student_profiles")
+                    .select("user_id, full_name, email")
+                    .in("user_id", studentIds);
+                studentProfiles = profiles || [];
+            }
+
+            // 4. Map Applications to Students & Deduplicate
             const uniqueMap = new Map();
-            allInterns.forEach(i => uniqueMap.set(i.student_id, i));
-            const uniqueInterns = Array.from(uniqueMap.values());
+            allApps.forEach(app => {
+                const student = studentProfiles.find(p => p.user_id === app.student_id);
+                if (student) {
+                    if (!uniqueMap.has(app.student_id)) {
+                        uniqueMap.set(app.student_id, {
+                            internship_id: app.internship_id,
+                            student_id: app.student_id,
+                            ...taskPayload
+                        });
+                        if (student.email) recipients.push(student);
+                    }
+                }
+            });
 
-            tasksToCreate = uniqueInterns.map(i => ({
-                internship_id: i.internship_id,
-                student_id: i.student_id,
-                ...taskPayload
-            }));
-
-            recipients = uniqueInterns.map(i => {
-                const s = Array.isArray(i.student) ? i.student[0] : i.student;
-                return s;
-            }).filter(Boolean);
+            tasksToCreate = Array.from(uniqueMap.values());
 
         } else {
             console.log("[SUPERVISOR_ACTIONS] Single assignment to app ID:", taskData.internship_id);
+
             // Try structured first
-            let { data: application } = await supabaseAdmin
+            let { data: app } = await supabaseAdmin
                 .from("internship_applications")
-                .select("id, internship_id, student_id, student:student_profiles(user_id, full_name, email)")
+                .select("id, internship_id, student_id")
                 .eq("id", taskData.internship_id)
                 .maybeSingle();
 
             // Try legacy if not found
-            if (!application) {
+            if (!app) {
                 const { data: legacyApp } = await supabaseAdmin
                     .from("Applications")
-                    .select("id, internship_id, student_id, student:student_profiles(user_id, full_name, email)")
+                    .select("id, internship_id, student_id")
                     .eq("id", taskData.internship_id)
                     .maybeSingle();
-                application = legacyApp;
+                app = legacyApp;
             }
 
-            if (!application) {
+            if (!app) {
                 console.error("[SUPERVISOR_ACTIONS] Application not found:", taskData.internship_id);
                 return { success: false, error: "Target intern record not found." };
             }
 
+            // Fetch student profile manually
+            const { data: student } = await supabaseAdmin
+                .from("student_profiles")
+                .select("user_id, full_name, email")
+                .eq("user_id", app.student_id)
+                .maybeSingle();
+
             tasksToCreate = [{
-                internship_id: application.internship_id,
-                student_id: application.student_id,
+                internship_id: app.internship_id,
+                student_id: app.student_id,
                 ...taskPayload
             }];
 
-            const s = Array.isArray(application.student) ? application.student[0] : application.student;
-            if (s) recipients.push(s);
+            if (student) recipients.push(student);
         }
 
         console.log(`[SUPERVISOR_ACTIONS] Attempting to insert ${tasksToCreate.length} tasks`);
