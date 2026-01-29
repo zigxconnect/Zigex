@@ -559,7 +559,6 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                 <div className="pt-8 flex justify-center">
                     <Button 
                      onClick={handleSubmitBatchAttendance}
-                     onClick={handleSubmitBatchAttendance}
                      disabled={!isAttendanceWindow() || isSubmittingBatch || interns.length === 0}
                      className={cn(
                        "rounded-2xl h-14 px-10 font-black text-xs transition-all shadow-xl uppercase tracking-tighter",
