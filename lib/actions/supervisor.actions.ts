@@ -397,117 +397,122 @@ export async function assignInternshipTask(taskData: {
     due_date?: string;
     priority?: string;
 }) {
-    const supabase = await createServerActionClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    try {
+        const supabase = await createServerActionClient();
+        const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user) return { success: false, error: "Unauthorized" };
+        if (!user) return { success: false, error: "Unauthorized" };
 
-    // Get supervisor profile
-    const { data: profile } = await supabase
-        .from("supervisor_profiles")
-        .select("id, full_name")
-        .eq("user_id", user.id)
-        .single();
-
-    if (!profile) return { success: false, error: "Supervisor profile not found." };
-
-    let tasksToCreate: any[] = [];
-    let recipients: any[] = [];
-
-    if (taskData.internship_id === "all") {
-        // Fetch all ACTIVE interns for this supervisor
-        // We look for accepted applications managed by this supervisor
-        const { data: interns, error: internsError } = await supabase
-            .from("internship_applications")
-            .select(`
-                id,
-                student:student_profiles (
-                    user_id,
-                    full_name,
-                    email
-                )
-            `)
-            .eq("supervisor_id", profile.id)
-            .eq("status", "accepted");
-
-        if (internsError) {
-            return { success: false, error: "Failed to fetch interns for bulk assignment" };
-        }
-
-        if (!interns || interns.length === 0) {
-            return { success: false, error: "No active interns found." };
-        }
-
-        tasksToCreate = interns.map(intern => ({
-            internship_id: intern.id,
-            title: taskData.title,
-            description: taskData.description,
-            due_date: taskData.due_date,
-            priority: taskData.priority,
-            status: "pending"
-        }));
-
-        recipients = interns.map(intern => {
-            const student = Array.isArray(intern.student) ? intern.student[0] : intern.student;
-            return student;
-        }).filter(Boolean);
-
-    } else {
-        // Single Assignment
-        tasksToCreate = [{
-            internship_id: taskData.internship_id,
-            title: taskData.title,
-            description: taskData.description,
-            due_date: taskData.due_date,
-            priority: taskData.priority,
-            status: "pending"
-        }];
-
-        // Fetch single student details for email
-        const { data: intern } = await supabase
-            .from("internship_applications")
-            .select(`
-                student:student_profiles (
-                    user_id,
-                    full_name,
-                    email
-                )
-            `)
-            .eq("id", taskData.internship_id)
+        // Get supervisor profile
+        const { data: profile } = await supabase
+            .from("supervisor_profiles")
+            .select("id, full_name")
+            .eq("user_id", user.id)
             .single();
 
-        if (intern) {
-            const student = Array.isArray(intern.student) ? intern.student[0] : intern.student;
-            if (student) recipients.push(student);
+        if (!profile) return { success: false, error: "Supervisor profile not found." };
+
+        let tasksToCreate: any[] = [];
+        let recipients: any[] = [];
+
+        // Sanitize payload
+        const taskPayload = {
+            title: taskData.title,
+            description: taskData.description,
+            due_date: taskData.due_date || null,
+            priority: taskData.priority || "medium",
+            status: "pending"
+        };
+
+        if (taskData.internship_id === "all") {
+            // Fetch all ACTIVE interns for this supervisor
+            const { data: interns, error: internsError } = await supabase
+                .from("internship_applications")
+                .select(`
+                    id,
+                    student:student_profiles (
+                        user_id,
+                        full_name,
+                        email
+                    )
+                `)
+                .eq("supervisor_id", profile.id)
+                .eq("status", "accepted");
+
+            if (internsError) {
+                return { success: false, error: "Failed to fetch interns for bulk assignment" };
+            }
+
+            if (!interns || interns.length === 0) {
+                return { success: false, error: "No active interns found." };
+            }
+
+            tasksToCreate = interns.map(intern => ({
+                internship_id: intern.id,
+                ...taskPayload
+            }));
+
+            recipients = interns.map(intern => {
+                const student = Array.isArray(intern.student) ? intern.student[0] : intern.student;
+                return student;
+            }).filter(Boolean);
+
+        } else {
+            // Single Assignment
+            tasksToCreate = [{
+                internship_id: taskData.internship_id,
+                ...taskPayload
+            }];
+
+            // Fetch single student details for email
+            const { data: intern } = await supabase
+                .from("internship_applications")
+                .select(`
+                student:student_profiles (
+                    user_id,
+                    full_name,
+                    email
+                )
+            `)
+                .eq("id", taskData.internship_id)
+                .single();
+
+            if (intern) {
+                const student = Array.isArray(intern.student) ? intern.student[0] : intern.student;
+                if (student) recipients.push(student);
+            }
         }
+
+        const { data, error } = await supabase
+            .from("internship_tasks")
+            .insert(tasksToCreate)
+            .select();
+
+        if (error) {
+            console.error("Error creating task:", error);
+            return { success: false, error: error.message };
+        }
+
+        // Send Email Notifications (Fire and Forget)
+        Promise.all(recipients.map(recipient => {
+            if (!recipient.email) return Promise.resolve();
+            return sendTaskAssignmentEmail({
+                email: recipient.email,
+                name: recipient.full_name,
+                taskTitle: taskData.title,
+                taskDescription: taskData.description,
+                dueDate: taskData.due_date,
+                priority: taskData.priority,
+                supervisorName: profile.full_name || "Supervisor"
+            });
+        })).catch(err => console.error("Error sending bulk emails:", err));
+
+        revalidatePath("/supervisor");
+        return { success: true, count: data.length };
+    } catch (err: any) {
+        console.error("Critical error in assignInternshipTask:", err);
+        return { success: false, error: err.message || "Internal Server Error" };
     }
-
-    const { data, error } = await supabase
-        .from("internship_tasks")
-        .insert(tasksToCreate)
-        .select();
-
-    if (error) {
-        console.error("Error creating task:", error);
-        return { success: false, error: error.message };
-    }
-
-    // Send Email Notifications (Fire and Forget)
-    Promise.all(recipients.map(recipient => {
-        if (!recipient.email) return Promise.resolve();
-        return sendTaskAssignmentEmail({
-            email: recipient.email,
-            name: recipient.full_name,
-            taskTitle: taskData.title,
-            taskDescription: taskData.description,
-            dueDate: taskData.due_date,
-            priority: taskData.priority,
-            supervisorName: profile.full_name || "Supervisor"
-        });
-    })).catch(err => console.error("Error sending bulk emails:", err));
-
-    revalidatePath("/supervisor");
-    return { success: true, count: data.length };
 }
 
 /**

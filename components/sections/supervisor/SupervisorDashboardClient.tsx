@@ -855,7 +855,7 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                     <option value="">Select Intern...</option>
                     <option value="all" className="font-bold text-blue-600">🚀 All Interns (Assign to everyone)</option>
                     {interns.map(i => (
-                      <option key={i.id} value={i.internship_id}>
+                      <option key={i.id} value={i.id}>
                         {(Array.isArray(i.student) ? i.student[0] : i.student)?.full_name}
                       </option>
                     ))}
