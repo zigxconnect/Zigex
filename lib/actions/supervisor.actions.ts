@@ -388,8 +388,10 @@ export async function getSupervisorDashboardData() {
 /**
  * Server Action to assign a task to an internship.
  */
+import { sendTaskAssignmentEmail } from "../mail";
+
 export async function assignInternshipTask(taskData: {
-    internship_id: string;
+    internship_id: string; // can be "all"
     title: string;
     description: string;
     due_date?: string;
@@ -400,19 +402,112 @@ export async function assignInternshipTask(taskData: {
 
     if (!user) return { success: false, error: "Unauthorized" };
 
+    // Get supervisor profile
+    const { data: profile } = await supabase
+        .from("supervisor_profiles")
+        .select("id, full_name")
+        .eq("user_id", user.id)
+        .single();
+
+    if (!profile) return { success: false, error: "Supervisor profile not found." };
+
+    let tasksToCreate: any[] = [];
+    let recipients: any[] = [];
+
+    if (taskData.internship_id === "all") {
+        // Fetch all ACTIVE interns for this supervisor
+        // We look for accepted applications managed by this supervisor
+        const { data: interns, error: internsError } = await supabase
+            .from("internship_applications")
+            .select(`
+                id,
+                student:student_profiles (
+                    user_id,
+                    full_name,
+                    email
+                )
+            `)
+            .eq("supervisor_id", profile.id)
+            .eq("status", "accepted");
+
+        if (internsError) {
+            return { success: false, error: "Failed to fetch interns for bulk assignment" };
+        }
+
+        if (!interns || interns.length === 0) {
+            return { success: false, error: "No active interns found." };
+        }
+
+        tasksToCreate = interns.map(intern => ({
+            internship_id: intern.id,
+            title: taskData.title,
+            description: taskData.description,
+            due_date: taskData.due_date,
+            priority: taskData.priority,
+            status: "pending"
+        }));
+
+        recipients = interns.map(intern => {
+            const student = Array.isArray(intern.student) ? intern.student[0] : intern.student;
+            return student;
+        }).filter(Boolean);
+
+    } else {
+        // Single Assignment
+        tasksToCreate = [{
+            internship_id: taskData.internship_id,
+            title: taskData.title,
+            description: taskData.description,
+            due_date: taskData.due_date,
+            priority: taskData.priority,
+            status: "pending"
+        }];
+
+        // Fetch single student details for email
+        const { data: intern } = await supabase
+            .from("internship_applications")
+            .select(`
+                student:student_profiles (
+                    user_id,
+                    full_name,
+                    email
+                )
+            `)
+            .eq("id", taskData.internship_id)
+            .single();
+
+        if (intern) {
+            const student = Array.isArray(intern.student) ? intern.student[0] : intern.student;
+            if (student) recipients.push(student);
+        }
+    }
+
     const { data, error } = await supabase
         .from("internship_tasks")
-        .insert([taskData])
-        .select()
-        .single();
+        .insert(tasksToCreate)
+        .select();
 
     if (error) {
         console.error("Error creating task:", error);
         return { success: false, error: error.message };
     }
 
+    // Send Email Notifications (Fire and Forget)
+    Promise.all(recipients.map(recipient => {
+        if (!recipient.email) return Promise.resolve();
+        return sendTaskAssignmentEmail({
+            email: recipient.email,
+            name: recipient.full_name,
+            taskTitle: taskData.title,
+            taskDescription: taskData.description,
+            dueDate: taskData.due_date,
+            priority: taskData.priority,
+            supervisorName: profile.full_name || "Supervisor"
+        });
+    })).catch(err => console.error("Error sending bulk emails:", err));
+
     revalidatePath("/supervisor");
-    return { success: true, data };
+    return { success: true, count: data.length };
 }
 
 /**

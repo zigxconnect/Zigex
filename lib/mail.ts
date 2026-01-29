@@ -143,3 +143,39 @@ export const sendZigexWelcomeEmail = async (email: string, userName: string) => 
     console.error("Failed to send welcome email:", error);
   }
 };
+
+/**
+ * Sends a task assignment email to a student.
+ */
+import { TaskAssignmentEmail } from "@/emails/TaskAssignmentEmail";
+
+export const sendTaskAssignmentEmail = async (params: {
+  email: string;
+  name: string;
+  taskTitle: string;
+  taskDescription: string;
+  dueDate?: string;
+  priority?: string;
+  supervisorName: string;
+}) => {
+  if (!resend) return;
+  const { email, name, taskTitle, taskDescription, dueDate, priority, supervisorName } = params;
+
+  try {
+    await resend.emails.send({
+      from: "SEED INC Supervisors <notifications@zigexconnect.com>",
+      to: email,
+      subject: `New Task Assigned: ${taskTitle}`,
+      react: TaskAssignmentEmail({
+        studentName: name,
+        taskTitle,
+        taskDescription,
+        dueDate,
+        priority,
+        supervisorName
+      }),
+    });
+  } catch (error) {
+    console.error("Failed to send task assignment email:", error);
+  }
+};
