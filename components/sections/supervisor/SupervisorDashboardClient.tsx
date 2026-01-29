@@ -27,8 +27,7 @@ import {
   Send,
   Loader2,
   Award,
-  Edit,
-  CheckCheck
+  Edit
 } from "lucide-react";
 import { format } from "date-fns";
 import Image from "next/image";
@@ -45,7 +44,6 @@ import {
   markInternAttendance,
   assignInternshipTask, 
   deleteInternshipTask,
-  updateInternshipTask,
   submitBatchAttendance,
   submitWeeklyEvaluation
 } from "@/lib/actions/supervisor.actions";
@@ -55,7 +53,6 @@ interface SupervisorDashboardClientProps {
     profile: any;
     interns: any[];
     recentLogs: any[];
-    unreadLogsCount?: number;
     tasks: any[];
     attendance: any[];
     evaluations: any[];
@@ -65,7 +62,6 @@ interface SupervisorDashboardClientProps {
 export function SupervisorDashboardClient({ data }: SupervisorDashboardClientProps) {
   const [activeTab, setActiveTab] = useState<"overview" | "attendance" | "tasks" | "evaluations">("overview");
   const [searchTerm, setSearchTerm] = useState("");
-  const [taskSearchTerm, setTaskSearchTerm] = useState("");
   const [selectedLog, setSelectedLog] = useState<any>(null);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   
@@ -79,18 +75,12 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
     priority: "medium"
   });
   const [isSubmittingTask, setIsSubmittingTask] = useState(false);
-
-  // Edit/Delete State
-  const [editingTask, setEditingTask] = useState<any>(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [taskToDelete, setTaskToDelete] = useState<any>(null);
   
   // Attendance Batch State
   const [pendingAttendance, setPendingAttendance] = useState<Record<string, string>>({});
   const [isSubmittingBatch, setIsSubmittingBatch] = useState(false);
 
-  const { interns, recentLogs, tasks, attendance, evaluations, unreadLogsCount = 0 } = data;
+  const { interns, recentLogs, tasks, attendance, evaluations } = data;
   const router = useRouter();
 
   const filteredInterns = interns.filter(i => {
@@ -137,30 +127,8 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
       .on('postgres_changes', { event: '*', schema: 'public', table: 'intern_attendance' }, () => router.refresh())
       .subscribe();
 
-    const notificationChannel = supabase
-      .channel(`supervisor-notifications-${supervisorId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${data.profile.user_id}`
-        },
-        (payload) => {
-          const newNotif = payload.new as any;
-          toast.info(newNotif.title, {
-            description: newNotif.message,
-            duration: 8000,
-          });
-          router.refresh();
-        }
-      )
-      .subscribe();
-
     return () => {
       supabase.removeChannel(channel);
-      supabase.removeChannel(notificationChannel);
     };
   }, [data.profile?.id, router]);
 
@@ -233,74 +201,14 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
     }
   };
 
-  const handleUpdateTask = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingTask?.title || !editingTask?.id) {
-      toast.error("Title is required");
-      return;
-    }
-
-    setIsSubmittingTask(true);
-    const res = await updateInternshipTask(editingTask.id, {
-      title: editingTask.title,
-      description: editingTask.description,
-      due_date: editingTask.due_date,
-      priority: editingTask.priority,
-    });
-
+  const handleDeleteTask = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this task?")) return;
+    const res = await deleteInternshipTask(id);
     if (res.success) {
-      toast.success("Task updated successfully");
-      setIsEditModalOpen(false);
-      setEditingTask(null);
+      toast.success("Task deleted");
       router.refresh();
-    } else {
-      toast.error(res.error || "Failed to update task");
     }
-    setIsSubmittingTask(false);
   };
-
-  const handleDeleteTaskFinal = async () => {
-    if (!taskToDelete) return;
-
-    setIsSubmittingTask(true);
-    const isBroadcast = taskToDelete.assignedTo?.length > 1;
-    
-    // Delete the task (and its group if it's a broadcast)
-    const res = await deleteInternshipTask(taskToDelete.id, isBroadcast);
-    if (res.success) {
-      toast.success(isBroadcast ? "Broadcast tasks deleted" : "Task deleted");
-      setIsDeleteModalOpen(false);
-      setTaskToDelete(null);
-      router.refresh();
-    } else {
-      toast.error(res.error || "Failed to delete task");
-    }
-    setIsSubmittingTask(false);
-  };
-
-  // Group tasks to avoid duplicates when assigning to "all"
-  const groupedTasks = React.useMemo(() => {
-    const map = new Map();
-    tasks.forEach(task => {
-      // Create a unique key based on content and date
-      const key = `${task.title}-${task.description}-${task.due_date}-${task.supervisor_id}`;
-      if (!map.has(key)) {
-        map.set(key, { 
-          ...task, 
-          assignedTo: [task.student_id]
-        });
-      } else {
-        const existing = map.get(key);
-        existing.assignedTo.push(task.student_id);
-      }
-    });
-    return Array.from(map.values());
-  }, [tasks]);
-
-  const filteredGroupedTasks = groupedTasks.filter((task: any) => 
-    task.title?.toLowerCase().includes(taskSearchTerm.toLowerCase()) ||
-    task.description?.toLowerCase().includes(taskSearchTerm.toLowerCase())
-  );
 
   const isAttendanceWindow = () => {
     const hour = new Date().getHours();
@@ -425,7 +333,7 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
                   className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all relative",
+                    "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all",
                     activeTab === tab.id 
                       ? "bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm" 
                       : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
@@ -433,11 +341,6 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                 >
                   <tab.icon size={14} />
                   <span className="hidden sm:inline">{tab.label}</span>
-                  {tab.id === "overview" && unreadLogsCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-600 text-white text-[8px] flex items-center justify-center rounded-full animate-pulse border-2 border-white dark:border-slate-800">
-                      {unreadLogsCount}
-                    </span>
-                  )}
                 </button>
               ))}
             </div>
@@ -467,15 +370,8 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                   <p className="text-2xl font-black text-slate-900 dark:text-white">{interns.length}</p>
                 </div>
                 <div className="bg-white dark:bg-slate-900 border border-blue-50 dark:border-slate-800 rounded-3xl p-5 shadow-sm">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="w-10 h-10 bg-amber-50 dark:bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-600">
-                      <Clock size={20} />
-                    </div>
-                    {unreadLogsCount > 0 && (
-                      <Badge className="bg-blue-600 text-white border-0 text-[10px] font-bold px-1.5 py-0 rounded-full h-5 min-w-5 flex items-center justify-center">
-                        {unreadLogsCount}
-                      </Badge>
-                    )}
+                  <div className="w-10 h-10 bg-amber-50 dark:bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-600 mb-4">
+                    <Clock size={20} />
                   </div>
                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Pending logs</p>
                   <p className="text-2xl font-black text-amber-600 uppercase">{pendingReviews}</p>
@@ -500,14 +396,7 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                 {/* Intern List */}
                 <div className="lg:col-span-2 space-y-4">
                   <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-lg font-black text-slate-900 dark:text-white">Recent Submissions</h2>
-                      {unreadLogsCount > 0 && (
-                        <span className="bg-blue-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full animate-bounce">
-                          {unreadLogsCount} NEW
-                        </span>
-                      )}
-                    </div>
+                    <h2 className="text-lg font-black text-slate-900 dark:text-white">Recent Submissions</h2>
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                       <Input 
@@ -533,19 +422,10 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                               <Calendar size={10} /> {format(new Date(log.log_date), "MMM dd, yyyy")}
                             </p>
                           </div>
-                          <div className="flex flex-col items-end gap-2 text-right">
-                             <div className="flex items-center gap-1.5">
-                                <CheckCheck 
-                                   size={16} 
-                                   className={cn(
-                                      (log.read_at && log.status === "approved") ? "text-blue-500" : "text-slate-300"
-                                   )} 
-                                   strokeWidth={3}
-                                />
-                                <Badge className={cn("text-[9px] font-black uppercase tracking-widest border-0", isPending ? "bg-amber-100 text-amber-600" : "bg-green-100 text-green-600")}>
-                                   {log.status === "approved" ? "Confirmed" : (log.status || "Pending")}
-                                </Badge>
-                             </div>
+                          <div className="flex flex-col items-end gap-2">
+                             <Badge className={cn("text-[9px] font-black uppercase tracking-widest border-0", isPending ? "bg-amber-100 text-amber-600" : "bg-green-100 text-green-600")}>
+                                {log.status === "approved" ? "Confirmed" : (log.status || "Pending")}
+                             </Badge>
                              <Button 
                               onClick={() => { setSelectedLog(log); setIsReviewModalOpen(true); }}
                               variant="ghost" 
@@ -749,69 +629,27 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                   <h2 className="text-xl font-black text-slate-900 dark:text-white underline decoration-blue-500 decoration-3">Project Tasks</h2>
                   <p className="text-sm text-slate-500 mt-1 font-medium">Assign weekly milestones and track student activity</p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="relative w-64">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                    <Input 
-                      placeholder="Search tasks..." 
-                      value={taskSearchTerm}
-                      onChange={(e) => setTaskSearchTerm(e.target.value)}
-                      className="pl-10 h-10 rounded-xl border-slate-100 bg-white dark:bg-slate-800 dark:border-slate-800"
-                    />
-                  </div>
-                  <Button 
-                    onClick={() => setIsTaskModalOpen(true)}
-                    className="rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs px-6 h-12 shadow-lg shadow-blue-500/20 flex-shrink-0"
-                  >
-                    <Plus size={16} className="mr-2" /> NEW TASK
-                  </Button>
-                </div>
+                <Button 
+                  onClick={() => setIsTaskModalOpen(true)}
+                  className="rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs px-6 h-12 shadow-lg shadow-blue-500/20"
+                >
+                  <Plus size={16} className="mr-2" /> NEW TASK
+                </Button>
               </div>
 
               {/* Task Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredGroupedTasks.length > 0 ? filteredGroupedTasks.map((task: any) => {
-                  const isBroadcast = task.assignedTo?.length > 1;
-                  const firstInternId = task.student_id;
-                  const targetIntern = interns.find(i => {
-                     const s = Array.isArray(i.student) ? i.student[0] : i.student;
-                     return s?.user_id === firstInternId;
-                  });
+                {tasks.length > 0 ? tasks.map((task) => {
+                  const targetIntern = interns.find(i => i.internship_id === task.internship_id);
                   const internName = targetIntern ? (Array.isArray(targetIntern.student) ? targetIntern.student[0] : targetIntern.student)?.full_name : "General Task";
                   
                   return (
-                    <div key={task.id} className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2rem] p-6 hover:shadow-xl transition-all border-b-4 border-b-blue-500 flex flex-col group/task relative">
+                    <div key={task.id} className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2rem] p-6 hover:shadow-xl transition-all border-b-4 border-b-blue-500 flex flex-col">
                       <div className="flex justify-between items-start mb-4">
-                        <div className="flex gap-2">
-                           <Badge className="bg-blue-50 text-blue-600 border-0 font-black text-[9px] uppercase tracking-widest px-2 py-1">
-                              {task.priority || "Medium"}
-                           </Badge>
-                           {isBroadcast && (
-                             <Badge className="bg-amber-50 text-amber-600 border-0 font-black text-[9px] uppercase tracking-widest px-2 py-1">
-                                BROADCAST
-                             </Badge>
-                           )}
-                        </div>
-                        <div className="flex items-center gap-1 opacity-0 group-hover/task:opacity-100 transition-opacity">
-                          <button 
-                            onClick={() => {
-                              setEditingTask(task);
-                              setIsEditModalOpen(true);
-                            }} 
-                            className="text-slate-300 hover:text-blue-500 transition-colors p-1.5 rounded-full hover:bg-blue-50"
-                          >
-                            <Edit size={14} />
-                          </button>
-                          <button 
-                            onClick={() => {
-                              setTaskToDelete(task);
-                              setIsDeleteModalOpen(true);
-                            }} 
-                            className="text-slate-300 hover:text-red-500 transition-colors p-1.5 rounded-full hover:bg-red-50"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
+                        <Badge className="bg-blue-50 text-blue-600 border-0 font-black text-[9px] uppercase tracking-widest px-2 py-1">
+                           {task.priority || "Medium"}
+                        </Badge>
+                        <button onClick={() => handleDeleteTask(task.id)} className="text-slate-300 hover:text-red-500 transition-colors p-1"><Trash2 size={14} /></button>
                       </div>
                       <h4 className="font-black text-slate-900 dark:text-white capitalize mb-2 line-clamp-1">{task.title}</h4>
                       <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-3 mb-6 leading-relaxed flex-1">
@@ -822,9 +660,7 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                            <div className="w-6 h-6 rounded-md bg-slate-100 flex items-center justify-center">
                               <User size={12} className="text-slate-400" />
                            </div>
-                           <span className="text-[10px] font-bold text-slate-500 uppercase truncate max-w-[120px]">
-                              {isBroadcast ? `Assigned to ${task.assignedTo.length} Interns` : internName}
-                           </span>
+                           <span className="text-[10px] font-bold text-slate-500 uppercase truncate max-w-[100px]">{internName}</span>
                          </div>
                          <div className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-md">
                            {task.due_date ? format(new Date(task.due_date), "MMM dd") : "No Due Date"}
@@ -1237,133 +1073,6 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                     className="w-full rounded-2xl h-14 font-black text-slate-400 hover:text-slate-600"
                 >
                     CLOSE
-                </Button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-      {/* EDIT TASK MODAL */}
-      <AnimatePresence>
-        {isEditModalOpen && editingTask && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-            <motion.div 
-               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-               onClick={() => setIsEditModalOpen(false)}
-               className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
-            />
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden p-8"
-            >
-              <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-6">Edit Task 📝</h3>
-              <form onSubmit={handleUpdateTask} className="space-y-6">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Task Title</label>
-                  <Input 
-                    value={editingTask.title}
-                    onChange={(e) => setEditingTask({...editingTask, title: e.target.value})}
-                    placeholder="e.g. Implement the Authentication System"
-                    className="h-12 rounded-2xl border-slate-100 bg-slate-50 text-sm font-bold focus-visible:ring-1"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Detailed Description</label>
-                  <Textarea 
-                    value={editingTask.description}
-                    onChange={(e) => setEditingTask({...editingTask, description: e.target.value})}
-                    placeholder="Provide specific instructions for the student..."
-                    className="min-h-[120px] rounded-2xl border-slate-100 bg-slate-50 text-sm font-medium resize-none shadow-none focus-visible:ring-1"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Due Date</label>
-                    <Input 
-                      type="date"
-                      value={editingTask.due_date ? editingTask.due_date.split('T')[0] : ''}
-                      onChange={(e) => setEditingTask({...editingTask, due_date: e.target.value})}
-                      className="h-12 rounded-2xl border-slate-100 bg-slate-50 text-sm font-bold focus-visible:ring-1"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Priority Level</label>
-                    <select 
-                      value={editingTask.priority}
-                      onChange={(e) => setEditingTask({...editingTask, priority: e.target.value})}
-                      className="w-full h-12 rounded-2xl border-slate-100 bg-slate-50 px-4 text-sm font-bold focus:ring-1 focus:ring-blue-500"
-                    >
-                      <option value="low">Low Priority</option>
-                      <option value="medium">Medium Priority</option>
-                      <option value="high">High Priority</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="pt-6 flex gap-3">
-                   <Button 
-                    type="button"
-                    onClick={() => setIsEditModalOpen(false)}
-                    variant="ghost" 
-                    className="flex-1 rounded-2xl h-14 font-black hover:bg-slate-50"
-                   >
-                     CANCEL
-                   </Button>
-                   <Button 
-                    type="submit"
-                    disabled={isSubmittingTask}
-                    className="flex-[2] rounded-2xl h-14 font-black bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-500/20"
-                   >
-                     {isSubmittingTask ? <Loader2 className="animate-spin" /> : "UPDATE TASK"}
-                   </Button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* DELETE TASK CONFIRMATION MODAL */}
-      <AnimatePresence>
-        {isDeleteModalOpen && taskToDelete && (
-          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-            <motion.div 
-               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-               onClick={() => setIsDeleteModalOpen(false)}
-               className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
-            />
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden p-10 text-center"
-            >
-              <div className="w-20 h-20 bg-red-50 rounded-3xl flex items-center justify-center mx-auto mb-6 text-red-500">
-                <Trash2 size={40} />
-              </div>
-              <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">Delete this task?</h3>
-              <p className="text-slate-500 text-sm font-medium leading-relaxed mb-8">
-                This action cannot be undone. {taskToDelete.assignedTo?.length > 1 ? `This will delete the task for all ${taskToDelete.assignedTo.length} assigned interns.` : 'This will remove the task from the student\'s dashboard.'}
-              </p>
-              <div className="space-y-3">
-                <Button 
-                    onClick={handleDeleteTaskFinal}
-                    disabled={isSubmittingTask}
-                    className="w-full rounded-2xl h-14 font-black bg-red-600 text-white hover:bg-red-700 transition-all shadow-lg shadow-red-500/10"
-                >
-                    {isSubmittingTask ? <Loader2 className="animate-spin text-white" /> : "YES, DELETE TASK"}
-                </Button>
-                <Button 
-                    onClick={() => setIsDeleteModalOpen(false)}
-                    variant="ghost"
-                    className="w-full rounded-2xl h-14 font-black text-slate-400 hover:text-slate-600"
-                >
-                    CANCEL
                 </Button>
               </div>
             </motion.div>

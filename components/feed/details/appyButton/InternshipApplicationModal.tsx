@@ -18,8 +18,7 @@ import {
   Target,
   MessageSquare,
   Shield,
-  Rocket,
-  Star
+  Rocket
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -82,13 +81,9 @@ const FormField = ({ label, required, error, children, hint }: FormFieldProps) =
   </div>
 );
 
-const inputBaseClass = `
-  w-full px-4 py-3 rounded-xl border-2 border-slate-200 bg-white
-  text-slate-900 text-sm font-medium placeholder:text-slate-400
-  transition-all duration-200 outline-none
-  focus:border-primary focus:ring-4 focus:ring-primary/10
-  hover:border-slate-300
-`;
+const inputBaseClass = "w-full px-4 py-3 rounded-xl border border-slate-200 bg-white focus:bg-white focus:border-[#155DFC] focus:ring-4 focus:ring-[#155DFC]/10 transition-all duration-300 outline-none text-slate-900 font-medium placeholder:text-slate-400";
+const labelBaseClass = "block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2 ml-1";
+const helperTextClass = "mt-2 text-[11px] text-slate-400 font-medium flex items-center gap-1.5 ml-1";
 
 const selectBaseClass = `
   ${inputBaseClass}
@@ -148,8 +143,8 @@ export default function InternshipApplicationModal({
         if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
           age--;
         }
-        if (age < 13) return "You must be at least 13 years old";
-        if (age > 80) return "Please enter a valid date of birth";
+        if (age < 13) return "Applicants must be at least 13 years old.";
+        if (age > 80) return "Please enter a valid date of birth.";
         return "";
       case "address":
         if (!value.trim()) return "Address is required";
@@ -303,37 +298,23 @@ export default function InternshipApplicationModal({
         <motion.div 
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="bg-white rounded-3xl shadow-2xl p-8 md:p-12 text-center max-w-md w-full relative overflow-hidden"
+          className="bg-white rounded-3xl shadow-2xl relative overflow-hidden"
         >
-          {/* Confetti Background */}
-          <div className="absolute inset-0 opacity-10">
-            {[...Array(20)].map((_, i) => (
-              <div 
-                key={i}
-                className="absolute w-2 h-2 rounded-full"
-                style={{
-                  backgroundColor: ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b'][i % 4],
-                  top: `${Math.random() * 100}%`,
-                  left: `${Math.random() * 100}%`,
-                  animationDelay: `${Math.random() * 2}s`
-                }}
-              />
-            ))}
-          </div>
-          
-          <div className="relative z-10">
-            <div className="w-20 h-20 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center mb-6 mx-auto shadow-xl shadow-emerald-200/50">
-              <CheckCircle2 className="w-10 h-10 text-white" />
+          {/* Main Content */}
+          <div className="relative z-10 px-8 py-12 flex flex-col items-center text-center">
+            <div className="w-24 h-24 rounded-[2rem] bg-emerald-50 flex items-center justify-center mb-8 relative">
+              <div className="absolute inset-0 bg-emerald-100/50 rounded-[2rem] animate-ping opacity-20" />
+              <CheckCircle2 size={48} className="text-emerald-500 relative z-10" />
             </div>
-            <h2 className="text-3xl font-black text-slate-900 mb-3 tracking-tight">
-              Application Sent! 🎉
-            </h2>
-            <p className="text-slate-600 mb-8 leading-relaxed">
-              Your application for <span className="font-bold text-primary">{internshipTitle}</span> has been successfully submitted to {companyName}.
+            <h3 className="text-4xl font-black text-slate-900 mb-4 tracking-tight">
+              Application Successful!
+            </h3>
+            <p className="text-slate-600 text-lg max-w-md mx-auto leading-relaxed font-medium">
+              We've received your application for <span className="text-[#155DFC] font-bold">{internshipTitle}</span>. 
+              Our team will review it and get back to you within 3-5 business days.
             </p>
             <div className="bg-slate-50 rounded-2xl p-4 mb-6">
               <p className="text-sm text-slate-500">
-                <Star className="inline w-4 h-4 mr-1 text-amber-500" />
                 We'll notify you via email about the next steps.
               </p>
             </div>
@@ -392,7 +373,7 @@ export default function InternshipApplicationModal({
                 )}>
                   <div className={cn(
                     "w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold transition-all",
-                    step === s.id ? "bg-white text-slate-900" : step > s.id ? "bg-emerald-500 text-white" : "bg-white/20"
+                    step === s.id ? "bg-white text-slate-900" : step > s.id ? "bg-[#155DFC] text-white" : "bg-white/20"
                   )}>
                     {step > s.id ? <CheckCircle2 size={14} /> : s.id}
                   </div>
@@ -401,7 +382,7 @@ export default function InternshipApplicationModal({
                 {i < STEPS.length - 1 && (
                   <div className={cn(
                     "flex-1 h-0.5 rounded-full transition-all duration-500",
-                    step > s.id ? "bg-emerald-400" : "bg-white/20"
+                    step > s.id ? "bg-[#155DFC]" : "bg-white/20"
                   )} />
                 )}
               </React.Fragment>
@@ -452,13 +433,14 @@ export default function InternshipApplicationModal({
                   transition={{ duration: 0.3 }}
                   className="space-y-6"
                 >
-                  <div className="flex items-center gap-4 mb-8">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#155DFC] to-[#1A3CB9] flex items-center justify-center shadow-xl shadow-blue-500/20">
-                      <User className="w-6 h-6 text-white" />
+                  {/* Step Header */}
+                  <div className="flex items-center gap-4 mb-10">
+                    <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center border border-blue-100 shadow-sm">
+                      <User className="w-6 h-6 text-[#155DFC]" />
                     </div>
                     <div>
                       <h3 className="text-2xl font-black text-slate-900 tracking-tight">Personal Details</h3>
-                      <p className="text-sm text-slate-500 font-medium">Tell us about yourself</p>
+                      <p className="text-[13px] text-slate-500 font-medium">Professional identity and contact</p>
                     </div>
                   </div>
 
@@ -535,13 +517,14 @@ export default function InternshipApplicationModal({
                   transition={{ duration: 0.3 }}
                   className="space-y-6"
                 >
-                  <div className="flex items-center gap-4 mb-8">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#8b5cf6] to-[#6d28d9] flex items-center justify-center shadow-xl shadow-violet-500/20">
-                      <Target className="w-6 h-6 text-white" />
+                  {/* Step Header */}
+                  <div className="flex items-center gap-4 mb-10">
+                    <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center border border-blue-100 shadow-sm">
+                      <Target className="w-6 h-6 text-[#155DFC]" />
                     </div>
                     <div>
                       <h3 className="text-2xl font-black text-slate-900 tracking-tight">Career Goals</h3>
-                      <p className="text-sm text-slate-500 font-medium">Your aspirations & skillsets</p>
+                      <p className="text-[13px] text-slate-500 font-medium">Your aspirations and objectives</p>
                     </div>
                   </div>
 
@@ -641,38 +624,38 @@ export default function InternshipApplicationModal({
                   transition={{ duration: 0.3 }}
                   className="space-y-6"
                 >
-                  <div className="flex items-center gap-4 mb-8">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#10b981] to-[#059669] flex items-center justify-center shadow-xl shadow-emerald-500/20">
-                      <Shield className="w-6 h-6 text-white" />
+                  <div className="flex items-center gap-4 mb-10">
+                    <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center border border-blue-100 shadow-sm">
+                      <Shield className="w-6 h-6 text-[#155DFC]" />
                     </div>
                     <div>
-                      <h3 className="text-2xl font-black text-slate-900 tracking-tight">Review & Confirm</h3>
-                      <p className="text-sm text-slate-500 font-medium">One last check before submitting</p>
+                      <h3 className="text-2xl font-black text-slate-900 tracking-tight">Confirmation</h3>
+                      <p className="text-[13px] text-slate-500 font-medium">Final review and data verification</p>
                     </div>
                   </div>
 
                   {/* Summary Card */}
-                  <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50 transition-colors group-hover:bg-blue-100/50 rounded-bl-full -mr-12 -mt-12" />
-                    <h4 className="text-xs font-bold text-blue-600 uppercase tracking-[0.2em] mb-6 flex items-center gap-2 relative z-10">
-                      Application Summary
+                  <div className="bg-slate-50/50 rounded-2xl p-6 border border-slate-200 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full -mr-16 -mt-16" />
+                    <h4 className="text-[11px] font-black text-[#155DFC] uppercase tracking-widest mb-6 relative z-10">
+                      Internship Request Details
                     </h4>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-6 text-sm relative z-10">
                       <div>
-                        <span className="text-slate-500">Name:</span>
-                        <p className="font-semibold text-slate-900">{formData.full_name || "—"}</p>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Full Name</span>
+                        <p className="font-bold text-slate-900 leading-tight">{formData.full_name || "—"}</p>
                       </div>
                       <div>
-                        <span className="text-slate-500">School:</span>
-                        <p className="font-semibold text-slate-900">{formData.school} - Level {formData.school_level || "—"}</p>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Current Institution</span>
+                        <p className="font-bold text-slate-900 leading-tight">{formData.school} ({formData.school_level})</p>
                       </div>
                       <div>
-                        <span className="text-slate-500">Domain:</span>
-                        <p className="font-semibold text-slate-900">{formData.domain || "—"}</p>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Target Domain</span>
+                        <p className="font-bold text-slate-900 leading-tight">{formData.domain || "—"}</p>
                       </div>
                       <div>
-                        <span className="text-slate-500">Duration:</span>
-                        <p className="font-semibold text-slate-900">{formData.duration || "—"}</p>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Engagement Duration</span>
+                        <p className="font-bold text-slate-900 leading-tight">{formData.duration || "—"}</p>
                       </div>
                     </div>
                   </div>
@@ -773,7 +756,7 @@ export default function InternshipApplicationModal({
               className={cn(
                 "h-12 px-8 rounded-xl font-bold shadow-lg transition-all duration-300",
                 formData.is_paid_acknowledgement && !isSubmitting
-                  ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200"
+                  ? "bg-[#155DFC] hover:bg-[#1A3CB9] shadow-blue-500/20"
                   : "bg-slate-300 cursor-not-allowed"
               )}
             >
