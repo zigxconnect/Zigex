@@ -26,7 +26,8 @@ import {
   Trash2,
   Send,
   Loader2,
-  Award
+  Award,
+  Edit
 } from "lucide-react";
 import { format } from "date-fns";
 import Image from "next/image";
@@ -216,7 +217,13 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
 
   // Evaluation Form State
   const [isEvalModalOpen, setIsEvalModalOpen] = useState(false);
-  const [newEval, setNewEval] = useState({
+  const [newEval, setNewEval] = useState<{
+    id?: string;
+    internship_id: string;
+    student_id: string;
+    rating: number;
+    feedback: string;
+  }>({
     internship_id: "",
     student_id: "",
     rating: 5,
