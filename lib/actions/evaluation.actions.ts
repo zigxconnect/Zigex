@@ -128,30 +128,45 @@ export async function getCompanyInternsPerformanceSummary(companyId: string) {
             .eq("internships.company_id", companyId),
         supabase
             .from("Applications")
-            .select("id, student_id, internship_id, student:student_profiles(user_id)")
+            .select("id, student_id, internship_id")
             .eq("status", "accepted")
             .eq("company_id", companyId)
-        // Note: In legacy, some might be programs, but we filter for internships later or just count all if they have evaluations
     ]);
 
-    // Map all to a consistent format with 'uid'
-    const applications = [
-        ...(structuredRes.data || []).map(a => ({ id: a.id, uid: a.student_id, internship_id: a.internship_id })),
-        ...(legacyRes.data || []).map(a => ({ id: a.id, uid: (a.student as any)?.user_id || a.student_id, internship_id: a.internship_id }))
+    const rawApps = [
+        ...(structuredRes.data || []).map(a => ({ ...a, table: 'structured' })),
+        ...(legacyRes.data || []).map(a => ({ ...a, table: 'legacy' }))
     ];
 
-    if (applications.length === 0) return {};
+    if (rawApps.length === 0) return {};
+
+    // 2. Build a robust Student Profile Map (ID -> UserID)
+    // Legacy apps use profile id in student_id, structured use user_id
+    const distinctStudentIds = [...new Set(rawApps.map(a => a.student_id))];
+    const { data: studentProfiles } = await supabase
+        .from("student_profiles")
+        .select("id, user_id")
+        .or(`id.in.(${distinctStudentIds.join(',')}),user_id.in.(${distinctStudentIds.join(',')})`);
+
+    const applications = rawApps.map(app => {
+        const profile = studentProfiles?.find(p => p.id === app.student_id || p.user_id === app.student_id);
+        return {
+            appId: app.id,
+            uid: profile?.user_id || app.student_id, // Fallback to student_id if profile not found
+            internshipId: app.internship_id
+        };
+    });
 
     const studentUids = [...new Set(applications.map(a => a.uid))];
 
-    // 2. Get verified attendance records (using AUTH UIDs)
+    // 3. Get verified attendance records (using AUTH UIDs)
     const { data: attendance } = await supabase
         .from("intern_attendance")
         .select("student_id, internship_id, status")
         .in("student_id", studentUids)
         .eq("status", "present");
 
-    // 3. Get summaries of evaluations (marks)
+    // 4. Get summaries of evaluations (marks)
     const { data: evals } = await supabase
         .from("intern_evaluations")
         .select("student_id, internship_id, overall_rating, comments, evaluation_date")
@@ -165,16 +180,16 @@ export async function getCompanyInternsPerformanceSummary(companyId: string) {
         // Relax matching to student_id if internship_id is missing for either application or record
         const studentAttendance = (attendance || []).filter(a =>
             a.student_id === app.uid &&
-            (!app.internship_id || !a.internship_id || a.internship_id === app.internship_id)
+            (!app.internshipId || !a.internship_id || a.internship_id === app.internshipId)
         );
         const studentEvals = (evals || []).filter(e =>
             e.student_id === app.uid &&
-            (!app.internship_id || !e.internship_id || e.internship_id === app.internship_id)
+            (!app.internshipId || !e.internship_id || e.internship_id === app.internshipId)
         );
 
         const totalMarks = studentEvals.reduce((acc, curr) => acc + curr.overall_rating, 0);
 
-        summary[app.id] = {
+        summary[app.appId] = {
             attendanceCount: studentAttendance.length,
             totalMarks: totalMarks,
             latestObservation: studentEvals[0]?.comments || "Consistent performance tracked."
