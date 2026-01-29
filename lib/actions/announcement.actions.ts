@@ -182,3 +182,17 @@ export async function getAnnouncementsForStudent(studentId: string) {
         company: ann.company_id ? companyMap.get(ann.company_id) : null
     }));
 }
+
+export async function getAllCompanies() {
+    const { data, error } = await supabaseAdmin
+        .from("company_profiles")
+        .select("id, company_name, logo_url")
+        .order("company_name", { ascending: true });
+
+    if (error) {
+        console.error("Error fetching companies:", error);
+        return [];
+    }
+
+    return data;
+}

@@ -46,9 +46,10 @@ interface Announcement {
 
 interface AnnouncementBoardClientProps {
     announcements: Announcement[];
+    companies?: { id: string; company_name: string; logo_url: string; }[];
 }
 
-export function AnnouncementBoardClient({ announcements }: AnnouncementBoardClientProps) {
+export function AnnouncementBoardClient({ announcements, companies = [] }: AnnouncementBoardClientProps) {
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
@@ -56,7 +57,7 @@ export function AnnouncementBoardClient({ announcements }: AnnouncementBoardClie
     // Form State
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
-    const [isGlobal, setIsGlobal] = useState(true); // Default to Zigex Global? Depending on actual use case. Assuming admin context.
+    const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
     const [imageFile, setImageFile] = useState<File | null>(null);
 
     const handleCreate = async () => {
@@ -93,7 +94,7 @@ export function AnnouncementBoardClient({ announcements }: AnnouncementBoardClie
             const res = await createAnnouncement({
                 title,
                 content,
-                company_id: undefined,
+                company_id: selectedCompanyId || undefined,
                 image_url: imageUrl
             });
 
@@ -102,6 +103,7 @@ export function AnnouncementBoardClient({ announcements }: AnnouncementBoardClie
                 setIsCreateOpen(false);
                 setTitle("");
                 setContent("");
+                setSelectedCompanyId("");
                 setImageFile(null);
                 router.refresh();
             } else {
@@ -157,6 +159,19 @@ export function AnnouncementBoardClient({ announcements }: AnnouncementBoardClie
                             </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4 py-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Publish As</label>
+                                <select 
+                                    className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                    value={selectedCompanyId}
+                                    onChange={(e) => setSelectedCompanyId(e.target.value)}
+                                >
+                                    <option value="">Zigex Global (Default)</option>
+                                    {companies.map(c => (
+                                        <option key={c.id} value={c.id}>{c.company_name}</option>
+                                    ))}
+                                </select>
+                            </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Title</label>
                                 <Input 
