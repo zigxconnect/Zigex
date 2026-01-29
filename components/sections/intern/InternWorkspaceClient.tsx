@@ -27,7 +27,9 @@ import {
   CreditCard,
   Target,
   Layers,
-  Megaphone
+  Megaphone,
+  CheckCheck,
+  Search
 } from "lucide-react";
 import { format } from "date-fns";
 import Image from "next/image";
@@ -57,6 +59,7 @@ interface InternWorkspaceClientProps {
 
 const tabs = [
   { id: "overview", label: "Overview", icon: Layout },
+  { id: "tasks", label: "Tasks", icon: CheckCheck },
   { id: "curriculum", label: "Curriculum", icon: BookOpen },
   { id: "announcements", label: "Announcements", icon: Megaphone },
   { id: "reports", label: "Reports", icon: FileText },
@@ -67,7 +70,10 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
   const [activeTab, setActiveTab] = useState("overview");
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [unreadAnnouncements, setUnreadAnnouncements] = useState(0);
-  const { application, curriculum, logs } = data;
+  const { application, curriculum, logs, tasks: initialTasks } = data;
+  const [tasks, setTasks] = useState(initialTasks || []);
+  const [selectedTask, setSelectedTask] = useState<any>(null);
+  const [isTaskDetailsOpen, setIsTaskDetailsOpen] = useState(false);
   const internship = application?.internships;
   const company = internship?.company_profiles;
   const supervisor = application?.supervisor_profiles;
@@ -187,6 +193,22 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
     }
   }, [activeTab]);
 
+  const handleOpenTask = async (task: any) => {
+    setSelectedTask(task);
+    setIsTaskDetailsOpen(true);
+    
+    if (!task.is_read) {
+      const { markTaskAsRead } = await import("@/lib/actions/intenship.actions");
+      const res = await markTaskAsRead(task.id);
+      if (res.success) {
+        // Optimistic update
+        setTasks(prev => prev.map(t => t.id === task.id ? { ...t, is_read: true } : t));
+      }
+    }
+  };
+
+  const tasksCount = tasks.filter(t => !t.is_read).length;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-blue-50/30 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       {/* Daily Report Modal */}
@@ -302,6 +324,11 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                     {tab.id === "announcements" && unreadAnnouncements > 0 && (
                       <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white dark:ring-slate-900 animate-pulse">
                         {unreadAnnouncements}
+                      </span>
+                    )}
+                    {tab.id === "tasks" && tasksCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white ring-2 ring-white dark:ring-slate-900">
+                        {tasksCount}
                       </span>
                     )}
                   </div>
@@ -500,6 +527,92 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
             {/* ===== ANNOUNCEMENTS TAB ===== */}
             {activeTab === "announcements" && (
               <InternAnnouncementBoard announcements={data.announcements || []} />
+            )}
+
+            {/* ===== TASKS TAB ===== */}
+            {activeTab === "tasks" && (
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">Assigned Milestones</h2>
+                    <p className="text-sm text-slate-500">Track and manage your weekly assignments</p>
+                  </div>
+                </div>
+
+                {tasks.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {tasks.map((task) => (
+                      <motion.div
+                        key={task.id}
+                        whileHover={{ y: -4 }}
+                        onClick={() => handleOpenTask(task)}
+                        className="group relative cursor-pointer"
+                      >
+                        <div className={cn(
+                          "bg-white dark:bg-slate-900 border border-blue-100/50 dark:border-slate-800 rounded-[2rem] p-6 transition-all duration-300",
+                          !task.is_read ? "ring-2 ring-blue-500 shadow-xl shadow-blue-500/10" : "hover:border-blue-200 dark:hover:border-slate-700 hover:shadow-lg"
+                        )}>
+                          {/* Priority Badge */}
+                          <div className="flex items-center justify-between mb-4">
+                            <Badge className={cn(
+                              "text-[10px] font-bold px-3 py-1 rounded-full border-0",
+                              task.priority === "high" ? "bg-red-50 text-red-600" :
+                              task.priority === "medium" ? "bg-amber-50 text-amber-600" :
+                              "bg-blue-50 text-blue-600"
+                            )}>
+                              {task.priority?.toUpperCase()} PRIORITY
+                            </Badge>
+                            
+                            {/* WhatsApp Style Ticks */}
+                            <div className="flex items-center">
+                              <CheckCheck 
+                                size={18} 
+                                className={cn(
+                                  "transition-colors duration-500",
+                                  task.is_read ? "text-blue-500" : "text-slate-300"
+                                )} 
+                              />
+                            </div>
+                          </div>
+
+                          <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2 group-hover:text-blue-600 transition-colors">
+                            {task.title}
+                          </h3>
+                          <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-6">
+                            {task.description}
+                          </p>
+
+                          <div className="flex items-center justify-between pt-4 border-t border-slate-50 dark:border-slate-800">
+                            <div className="flex items-center gap-2">
+                              <Calendar size={14} className="text-slate-400" />
+                              <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase">
+                                Due {format(new Date(task.due_date), "MMM dd")}
+                              </span>
+                            </div>
+                            <Button variant="ghost" className="h-8 w-8 rounded-full p-0">
+                              <ChevronRight size={18} className="text-slate-300" />
+                            </Button>
+                          </div>
+
+                          {!task.is_read && (
+                            <span className="absolute top-4 right-4 h-2 w-2 bg-blue-600 rounded-full animate-ping" />
+                          )}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-[3rem] border-2 border-dashed border-blue-50 dark:border-slate-800">
+                    <div className="w-20 h-20 bg-blue-50 dark:bg-slate-800/50 rounded-3xl flex items-center justify-center mx-auto mb-6 text-blue-200">
+                      <CheckCheck size={40} />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No Tasks Found</h3>
+                    <p className="text-slate-400 max-w-xs mx-auto">
+                      Your supervisor hasn't assigned any milestones yet. Relax and check back later!
+                    </p>
+                  </div>
+                )}
+              </div>
             )}
 
             {/* ===== CURRICULUM TAB ===== */}
@@ -761,6 +874,78 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
           </motion.div>
         </AnimatePresence>
       </main>
+
+      {/* Task Details Modal */}
+      <AnimatePresence>
+        {isTaskDetailsOpen && selectedTask && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsTaskDetailsOpen(false)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-xl bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden"
+            >
+              <div className="p-8 sm:p-10">
+                <div className="flex items-center justify-between mb-8">
+                  <Badge className={cn(
+                    "text-[10px] font-black px-4 py-1.5 rounded-full border-0 tracking-widest",
+                    selectedTask.priority === "high" ? "bg-red-500 text-white" :
+                    selectedTask.priority === "medium" ? "bg-amber-500 text-white" :
+                    "bg-blue-600 text-white"
+                  )}>
+                    {selectedTask.priority?.toUpperCase()} PRIORITY
+                  </Badge>
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <Clock size={16} />
+                    <span className="text-xs font-bold uppercase tracking-wider">
+                      {format(new Date(selectedTask.due_date), "MMM dd, yyyy")}
+                    </span>
+                  </div>
+                </div>
+
+                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mb-4 leading-tight">
+                  {selectedTask.title}
+                </h2>
+                
+                <div className="space-y-4 mb-10 overflow-y-auto max-h-[300px] custom-scrollbar pr-4">
+                  <p className="text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
+                    {selectedTask.description}
+                  </p>
+                  {selectedTask.department && (
+                    <div className="flex items-center gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800 w-fit">
+                      <Layers size={14} className="text-blue-600" />
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{selectedTask.department}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-slate-100 dark:border-slate-800">
+                  <Button 
+                    onClick={() => setIsTaskDetailsOpen(false)}
+                    className="flex-1 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black h-14 shadow-xl shadow-blue-500/20"
+                  >
+                    GOT IT
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => setIsTaskDetailsOpen(false)}
+                    className="flex-1 rounded-2xl border-slate-100 dark:border-slate-800 font-bold h-14"
+                  >
+                    CLOSE
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

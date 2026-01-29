@@ -259,4 +259,28 @@ export async function acknowledgePaidInternship(applicationId: string) {
   return { success: true };
 }
 
+/**
+ * Server Action to mark an internship task as read by the intern.
+ */
+export async function markTaskAsRead(taskId: string) {
+  const supabase = await createServerActionClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) return { success: false, error: "Unauthorized" };
+
+  const { error } = await supabaseAdmin
+    .from("internship_tasks")
+    .update({ is_read: true })
+    .eq("id", taskId)
+    .eq("student_id", user.id);
+
+  if (error) {
+    console.error("Error marking task as read:", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/intern/workspace");
+  return { success: true };
+}
+
 
