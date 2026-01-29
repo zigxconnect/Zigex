@@ -514,6 +514,7 @@ export async function submitBatchAttendance(records: { studentId: string, intern
     }
 
     revalidatePath("/supervisor");
+    revalidatePath("/admin/interns");
     return { success: true, count: data?.length || 0 };
 }
 
