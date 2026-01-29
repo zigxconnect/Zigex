@@ -410,7 +410,7 @@ export async function assignInternshipTask(taskData: {
         // 1. Get supervisor profile (with robust fallback like in Dashboard)
         let { data: profile } = await supabaseAdmin
             .from("supervisor_profiles")
-            .select("id, full_name, company_id")
+            .select("id, full_name") // company_id does not exist on this table
             .eq("user_id", user.id)
             .maybeSingle();
 
@@ -418,7 +418,7 @@ export async function assignInternshipTask(taskData: {
             console.log(`[SUPERVISOR_ACTIONS] ID lookup failed for ${user.id}, trying email: ${user.email}`);
             const { data: emailProfile } = await supabaseAdmin
                 .from("supervisor_profiles")
-                .select("id, full_name, company_id")
+                .select("id, full_name")
                 .ilike("email", user.email)
                 .maybeSingle();
             profile = emailProfile;
@@ -479,22 +479,29 @@ export async function assignInternshipTask(taskData: {
             }
 
             // 4. Map Applications to Students & Deduplicate
-            const uniqueMap = new Map();
+            const uniqueTasksMap = new Map();
+            const uniqueRecipientsMap = new Map();
+
             allApps.forEach(app => {
                 const student = studentProfiles.find(p => p.user_id === app.student_id);
                 if (student) {
-                    if (!uniqueMap.has(app.student_id)) {
-                        uniqueMap.set(app.student_id, {
+                    // Task deduplication by student_id
+                    if (!uniqueTasksMap.has(app.student_id)) {
+                        uniqueTasksMap.set(app.student_id, {
                             internship_id: app.internship_id,
                             student_id: app.student_id,
                             ...taskPayload
                         });
-                        if (student.email) recipients.push(student);
+                    }
+                    // Email deduplication
+                    if (student.email && !uniqueRecipientsMap.has(student.email)) {
+                        uniqueRecipientsMap.set(student.email, student);
                     }
                 }
             });
 
-            tasksToCreate = Array.from(uniqueMap.values());
+            tasksToCreate = Array.from(uniqueTasksMap.values());
+            recipients = Array.from(uniqueRecipientsMap.values());
 
         } else {
             console.log("[SUPERVISOR_ACTIONS] Single assignment to app ID:", taskData.internship_id);
