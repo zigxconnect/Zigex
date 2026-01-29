@@ -223,6 +223,7 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
     feedback: ""
   });
   const [isSubmittingEval, setIsSubmittingEval] = useState(false);
+  const [showLimitModal, setShowLimitModal] = useState(false);
 
   const handleSubmitEvaluation = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -231,9 +232,9 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
       return;
     }
 
-    const wordCount = newEval.feedback.trim().split(/\s+/).length;
-    if (wordCount < 100) {
-      toast.error(`Feedback must be at least 100 words. Current: ${wordCount}`);
+    const wordCount = newEval.feedback.trim().split(/\s+/).filter(Boolean).length;
+    if (wordCount < 13) {
+      toast.error(`Feedback must be at least 13 words. Current: ${wordCount}`);
       return;
     }
 
@@ -245,6 +246,8 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
         setIsEvalModalOpen(false);
         setNewEval({ internship_id: "", student_id: "", rating: 5, feedback: "" });
         router.refresh();
+      } else if (res.error === "WEEKLY_LIMIT_REACHED") {
+        setShowLimitModal(true);
       } else {
         toast.error(res.error || "Failed to submit evaluation");
       }
@@ -937,15 +940,15 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Student Feedback</label>
                     <span className={cn(
                       "text-[9px] font-bold",
-                      newEval.feedback.trim().split(/\s+/).filter(Boolean).length >= 100 ? "text-green-500" : "text-rose-500"
+                      newEval.feedback.trim().split(/\s+/).filter(Boolean).length >= 13 ? "text-green-500" : "text-rose-500"
                     )}>
-                      {newEval.feedback.trim().split(/\s+/).filter(Boolean).length} / 100 words
+                      {newEval.feedback.trim().split(/\s+/).filter(Boolean).length} / 13 words
                     </span>
                   </div>
                   <Textarea 
                     value={newEval.feedback}
                     onChange={(e) => setNewEval({...newEval, feedback: e.target.value})}
-                    placeholder="Provide a detailed evaluation of the student's progress, strengths, and areas for growth (min 100 words)..."
+                    placeholder="Provide a detailed evaluation of the student's progress, strengths, and areas for growth (min 13 words)..."
                     className="min-h-[200px] rounded-2xl border-slate-100 bg-slate-50 text-sm font-medium resize-none shadow-none focus-visible:ring-1 leading-relaxed"
                     required
                   />
@@ -962,13 +965,49 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                    </Button>
                    <Button 
                     type="submit"
-                    disabled={isSubmittingEval || newEval.feedback.trim().split(/\s+/).filter(Boolean).length < 100}
+                    disabled={isSubmittingEval || newEval.feedback.trim().split(/\s+/).filter(Boolean).length < 13}
                     className="flex-[2] rounded-2xl h-14 font-black bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-500/20"
                    >
                      {isSubmittingEval ? <Loader2 className="animate-spin" /> : "SUBMIT EVALUATION"}
                    </Button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* WEEKLY LIMIT MODAL */}
+      <AnimatePresence>
+        {showLimitModal && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+            <motion.div 
+               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+               onClick={() => setShowLimitModal(false)}
+               className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden p-10 text-center"
+            >
+              <div className="w-20 h-20 bg-amber-50 rounded-3xl flex items-center justify-center mx-auto mb-6 text-amber-500">
+                <AlertCircle size={40} />
+              </div>
+              <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">Weekly Limit Reached</h3>
+              <p className="text-slate-500 text-sm font-medium leading-relaxed mb-8">
+                You have already evaluated this student this week. Evaluations are recorded once per week to track gradual progress.
+              </p>
+              <Button 
+                onClick={() => {
+                  setShowLimitModal(false);
+                  setIsEvalModalOpen(false);
+                }}
+                className="w-full rounded-2xl h-14 font-black bg-slate-900 text-white hover:bg-slate-800 transition-all"
+              >
+                UNDERSTOOD
+              </Button>
             </motion.div>
           </div>
         )}

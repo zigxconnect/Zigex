@@ -760,10 +760,30 @@ export async function submitWeeklyEvaluation(evaluationData: {
 
         if (!profile) return { success: false, error: "Supervisor profile not found." };
 
-        // Word count check (at least 100 words)
-        const wordCount = evaluationData.feedback.trim().split(/\s+/).length;
-        if (wordCount < 100) {
-            return { success: false, error: `Feedback must be at least 100 words. You have ${wordCount} words.` };
+        // Word count check (at least 13 words)
+        const wordCount = evaluationData.feedback.trim().split(/\s+/).filter(Boolean).length;
+        if (wordCount < 13) {
+            return { success: false, error: `Feedback must be at least 13 words. You have ${wordCount} words.` };
+        }
+
+        // Weekly submission check (prevent duplicates in the same week)
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+        const { data: existingEval } = await supabase
+            .from("intern_evaluations")
+            .select("id")
+            .eq("student_id", evaluationData.student_id)
+            .eq("supervisor_id", profile.id)
+            .gte("evaluation_date", sevenDaysAgo.toISOString().split('T')[0])
+            .maybeSingle();
+
+        if (existingEval) {
+            return {
+                success: false,
+                error: "WEEKLY_LIMIT_REACHED",
+                message: "You have already evaluated this student this week. Evaluations are accepted only once per week."
+            };
         }
 
         const { data, error } = await supabase
