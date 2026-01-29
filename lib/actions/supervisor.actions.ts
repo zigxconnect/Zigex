@@ -767,52 +767,62 @@ export async function submitWeeklyEvaluation(evaluationData: {
             return { success: false, error: `Feedback must be at least 8 words. You have ${wordCount} words.` };
         }
 
-        // If no ID provided, check for existing eval in the last 7 days
-        if (!evaluationData.id) {
-            const sevenDaysAgo = new Date();
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        // 1. Strict Weekly Throttling Check
+        // We find the LATEST evaluation for this student/supervisor pair
+        const { data: latestEvals } = await supabase
+            .from("intern_evaluations")
+            .select("*")
+            .eq("student_id", evaluationData.student_id)
+            .eq("supervisor_id", profile.id)
+            .order("evaluation_date", { ascending: false })
+            .limit(1);
 
-            const { data: existingEval } = await supabase
-                .from("intern_evaluations")
-                .select("*")
-                .eq("student_id", evaluationData.student_id)
-                .eq("supervisor_id", profile.id)
-                .gte("evaluation_date", sevenDaysAgo.toISOString().split('T')[0])
-                .maybeSingle();
+        const lastEval = latestEvals?.[0];
+        const now = new Date();
 
-            if (existingEval) {
+        if (lastEval) {
+            const lastDate = new Date(lastEval.evaluation_date);
+            const diffTime = Math.abs(now.getTime() - lastDate.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            // If a record exists and it's within the 7-day window, 
+            // the user MUST provide an ID to update, otherwise they are blocked from creating a new one.
+            if (diffDays <= 7 && !evaluationData.id) {
                 return {
                     success: false,
                     error: "WEEKLY_LIMIT_REACHED",
-                    existingEval: existingEval,
-                    message: "You have already evaluated this student this week. However, you can edit your existing feedback."
+                    existingEval: lastEval,
+                    message: `Weekly limit reached. You posted on ${lastEval.evaluation_date}. You can edit that feedback, but you can only create a new weekly record once every 7 days.`
                 };
             }
         }
 
-        const evaluationPayload = {
-            internship_id: evaluationData.internship_id,
-            student_id: evaluationData.student_id,
-            supervisor_id: profile.id,
-            overall_rating: evaluationData.rating,
-            comments: evaluationData.feedback,
-            evaluation_date: new Date().toISOString().split('T')[0]
-        };
-
         let result;
         if (evaluationData.id) {
-            // Update existing
+            // UPDATING existing feedback
+            // We DON'T update the evaluation_date to keep the 7-day window relative to the original post
             result = await supabase
                 .from("intern_evaluations")
-                .update(evaluationPayload)
+                .update({
+                    overall_rating: evaluationData.rating,
+                    comments: evaluationData.feedback,
+                    updated_at: new Date().toISOString()
+                })
                 .eq("id", evaluationData.id)
                 .select()
                 .single();
         } else {
-            // Insert new
+            // CREATING new feedback
             result = await supabase
                 .from("intern_evaluations")
-                .insert([evaluationPayload])
+                .insert([{
+                    internship_id: evaluationData.internship_id,
+                    student_id: evaluationData.student_id,
+                    supervisor_id: profile.id,
+                    overall_rating: evaluationData.rating,
+                    comments: evaluationData.feedback,
+                    evaluation_date: now.toISOString().split('T')[0]
+                }])
                 .select()
                 .single();
         }

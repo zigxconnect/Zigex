@@ -224,6 +224,16 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
   });
   const [isSubmittingEval, setIsSubmittingEval] = useState(false);
   const [showLimitModal, setShowLimitModal] = useState(false);
+  const [existingEval, setExistingEval] = useState<any>(null);
+
+  const isWithinWeeklyLimit = (dateString: string) => {
+    if (!dateString) return false;
+    const lastDate = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - lastDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays <= 7;
+  };
 
   const handleSubmitEvaluation = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -260,7 +270,6 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
     }
   };
 
-  const [existingEval, setExistingEval] = useState<any>(null);
 
   const startEditing = () => {
     if (existingEval) {
@@ -692,12 +701,13 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                     {interns.map(intern => {
                       const student = Array.isArray(intern.student) ? intern.student[0] : intern.student;
                       const lastEval = evaluations.find(e => e.student_id === student?.user_id);
-                      
+                      const hasWeeklyEval = lastEval && isWithinWeeklyLimit(lastEval.evaluation_date);
+
                       return (
                         <div key={intern.id} className="flex flex-col md:flex-row md:items-center gap-6 p-6 rounded-3xl border border-slate-50 dark:border-slate-800 hover:bg-slate-50/50 transition-colors">
                            <div className="flex items-center gap-4 flex-shrink-0">
                              <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-white shadow-md">
-                               <Image src={student?.avatar_url || "/default-avatar.svg"} alt="" width={56} height={56} className="object-cover" />
+                               <Image src={student?.profile_photo || "/default-avatar.svg"} alt="" width={56} height={56} className="object-cover" />
                              </div>
                              <div>
                                <h4 className="font-bold text-slate-900 dark:text-white">{student?.full_name}</h4>
@@ -726,18 +736,37 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
 
                            <Button 
                              onClick={() => {
-                               setNewEval({
-                                 internship_id: intern.internship_id,
-                                 student_id: student?.user_id,
-                                 rating: 5,
-                                 feedback: ""
-                               });
+                               if (hasWeeklyEval) {
+                                 setNewEval({
+                                   id: lastEval.id,
+                                   internship_id: intern.internship_id,
+                                   student_id: student?.user_id,
+                                   rating: lastEval.overall_rating,
+                                   feedback: lastEval.comments
+                                 });
+                               } else {
+                                 setNewEval({
+                                   internship_id: intern.internship_id,
+                                   student_id: student?.user_id,
+                                   rating: 5,
+                                   feedback: ""
+                                 });
+                               }
                                setIsEvalModalOpen(true);
                              }}
                              variant="outline" 
-                             className="rounded-xl h-10 px-4 text-[10px] font-black uppercase border-slate-200 text-slate-600 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all"
+                             className={cn(
+                               "rounded-xl h-10 px-4 text-[10px] font-black uppercase transition-all",
+                               hasWeeklyEval 
+                                ? "bg-slate-100 border-slate-200 text-slate-600 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200" 
+                                : "border-slate-200 text-slate-600 hover:bg-blue-600 hover:text-white hover:border-blue-600"
+                             )}
                            >
-                             Evaluate Now
+                             {hasWeeklyEval ? (
+                               <span className="flex items-center gap-2">
+                                 <Edit size={12} /> Edit
+                               </span>
+                             ) : "Evaluate Now"}
                            </Button>
                         </div>
                       )
