@@ -172,9 +172,10 @@ export async function getAnnouncementsForStudent(studentId: string) {
     const authorIds = Array.from(new Set(rawAnnouncements.map((a: any) => a.author_id).filter(Boolean)));
     const companyIds = Array.from(new Set(rawAnnouncements.map((a: any) => a.company_id).filter(Boolean)));
 
-    const [authorsRes, companiesRes] = await Promise.all([
+    const [authorsRes, companiesRes, studentsRes] = await Promise.all([
         supabaseAdmin.from("user_profiles").select("user_id, full_name, avatar_url").in("user_id", authorIds),
-        supabaseAdmin.from("company_profiles").select("id, company_name, logo_url").in("id", companyIds)
+        supabaseAdmin.from("company_profiles").select("id, company_name, logo_url").in("id", companyIds),
+        supabaseAdmin.from("student_profiles").select("user_id, full_name, avatar_url").in("user_id", rawAnnouncements.map((a: any) => a.tagged_student_id).filter(Boolean))
     ]);
 
     const authorMap = new Map();
@@ -183,10 +184,14 @@ export async function getAnnouncementsForStudent(studentId: string) {
     const companyMap = new Map();
     companiesRes.data?.forEach(c => companyMap.set(c.id, c));
 
+    const studentMap = new Map();
+    studentsRes.data?.forEach(s => studentMap.set(s.user_id, s));
+
     return rawAnnouncements.map((ann: any) => ({
         ...ann,
         author: authorMap.get(ann.author_id) || { full_name: "Zigex Admin" },
-        company: ann.company_id ? companyMap.get(ann.company_id) : null
+        company: ann.company_id ? companyMap.get(ann.company_id) : null,
+        tagged_student: ann.tagged_student_id ? studentMap.get(ann.tagged_student_id) : null
     }));
 }
 
