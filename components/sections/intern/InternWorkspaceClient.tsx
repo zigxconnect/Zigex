@@ -42,6 +42,7 @@ import { InternAnnouncementBoard } from "@/components/sections/intern/InternAnno
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { toast } from "sonner";
+import { InternActivityGraph } from "./InternActivityGraph";
 
 interface InternWorkspaceClientProps {
   data: {
@@ -368,35 +369,6 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                   </motion.div>
                 )}
 
-                {/* Progress Banner */}
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-blue-600 to-blue-700 p-5 sm:p-8 text-white">
-                  <div className="relative z-10">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-                      <div>
-                        <p className="text-blue-100 text-xs font-semibold uppercase tracking-wider mb-1">Internship Progress</p>
-                        <h3 className="text-xl sm:text-2xl font-bold">Keep up the great work!</h3>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
-                          <p className="text-3xl sm:text-4xl font-bold">{progressPercent}%</p>
-                          <p className="text-xs text-blue-200 font-medium">{logs.length}/30 days</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="h-2 bg-white/20 rounded-full overflow-hidden">
-                      <motion.div 
-                        initial={{ width: 0 }}
-                        animate={{ width: `${progressPercent}%` }}
-                        transition={{ duration: 1, delay: 0.3 }}
-                        className="h-full bg-white rounded-full"
-                      />
-                    </div>
-                  </div>
-                  {/* Decorative */}
-                  <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-white/5 rounded-full" />
-                  <div className="absolute -right-4 -top-4 w-20 h-20 bg-white/5 rounded-full" />
-                </div>
-
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                   {[
@@ -519,6 +491,9 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                     ))}
                   </div>
                 </div>
+
+                {/* Activity Graph */}
+                <InternActivityGraph logs={logs} />
               </div>
             )}
 
