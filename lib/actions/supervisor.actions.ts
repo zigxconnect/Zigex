@@ -391,136 +391,134 @@ export async function getSupervisorDashboardData() {
 import { sendTaskAssignmentEmail } from "../mail";
 
 export async function assignInternshipTask(taskData: {
-    internship_id: string; // can be "all"
+    internship_id: string; // can be "all" or specific application ID
     title: string;
     description: string;
     due_date?: string;
     priority?: string;
 }) {
     try {
+        console.log("[SUPERVISOR_ACTIONS] assignInternshipTask called", taskData);
         const supabase = await createServerActionClient();
         const { data: { user } } = await supabase.auth.getUser();
 
-        if (!user) return { success: false, error: "Unauthorized" };
+        if (!user) {
+            console.error("[SUPERVISOR_ACTIONS] No user found in auth session");
+            return { success: false, error: "Unauthorized" };
+        }
 
-        // Get supervisor profile
-        const { data: profile } = await supabase
+        // Get supervisor profile - using Admin for reliability in link verification
+        const { data: profile } = await supabaseAdmin
             .from("supervisor_profiles")
             .select("id, full_name")
             .eq("user_id", user.id)
-            .single();
+            .maybeSingle();
 
-        if (!profile) return { success: false, error: "Supervisor profile not found." };
+        if (!profile) {
+            console.error("[SUPERVISOR_ACTIONS] No supervisor profile for user", user.id);
+            return { success: false, error: "Supervisor profile not found. Please refresh." };
+        }
 
         let tasksToCreate: any[] = [];
         let recipients: any[] = [];
 
-        // Sanitize payload
+        // Common payload
         const taskPayload = {
             title: taskData.title,
             description: taskData.description,
             due_date: taskData.due_date || null,
             priority: taskData.priority || "medium",
-            status: "pending"
+            status: "pending",
+            supervisor_id: profile.id
         };
 
         if (taskData.internship_id === "all") {
-            // Fetch all ACTIVE interns for this supervisor
-            const { data: interns, error: internsError } = await supabase
-                .from("internship_applications")
-                .select(`
-                    id,
-                    internship_id,
-                    student_id,
-                    student:student_profiles (
-                        user_id,
-                        full_name,
-                        email
-                    )
-                `)
-                .eq("supervisor_id", profile.id)
-                .eq("status", "accepted");
+            console.log("[SUPERVISOR_ACTIONS] Bulk assignment selected");
+            // Fetch all ACTIVE interns for this supervisor from both tables
+            const [structRes, legacyRes] = await Promise.all([
+                supabaseAdmin
+                    .from("internship_applications")
+                    .select("id, internship_id, student_id, student:student_profiles(user_id, full_name, email)")
+                    .eq("supervisor_id", profile.id)
+                    .eq("status", "accepted"),
+                supabaseAdmin
+                    .from("Applications")
+                    .select("id, internship_id, student_id, student:student_profiles(user_id, full_name, email)")
+                    .eq("supervisor_id", profile.id)
+                    .eq("status", "accepted")
+            ]);
 
-            if (internsError) {
-                return { success: false, error: "Failed to fetch interns for bulk assignment" };
-            }
+            const allInterns = [...(structRes.data || []), ...(legacyRes.data || [])];
 
-            if (!interns || interns.length === 0) {
+            if (allInterns.length === 0) {
+                console.warn("[SUPERVISOR_ACTIONS] No active interns found for supervisor", profile.id);
                 return { success: false, error: "No active interns found." };
             }
 
-            tasksToCreate = interns.map(intern => ({
-                internship_id: intern.internship_id,
-                student_id: intern.student_id,
+            // Deduplicate if needed (though usually they shouldn't be in both)
+            const uniqueMap = new Map();
+            allInterns.forEach(i => uniqueMap.set(i.student_id, i));
+            const uniqueInterns = Array.from(uniqueMap.values());
+
+            tasksToCreate = uniqueInterns.map(i => ({
+                internship_id: i.internship_id,
+                student_id: i.student_id,
                 ...taskPayload
             }));
 
-            recipients = interns.map(intern => {
-                const student = Array.isArray(intern.student) ? intern.student[0] : intern.student;
-                return student;
+            recipients = uniqueInterns.map(i => {
+                const s = Array.isArray(i.student) ? i.student[0] : i.student;
+                return s;
             }).filter(Boolean);
 
         } else {
-            // Single Assignment - taskData.internship_id is the APPLICATION ID
-
-            // 1. Fetch the Application to get the real Program ID (internship_id) and Student ID
-            const { data: application, error: appError } = await supabase
+            console.log("[SUPERVISOR_ACTIONS] Single assignment to app ID:", taskData.internship_id);
+            // Try structured first
+            let { data: application } = await supabaseAdmin
                 .from("internship_applications")
-                .select(`
-                    id,
-                    internship_id,
-                    student_id,
-                    student:student_profiles (
-                        user_id,
-                        full_name,
-                        email
-                    )
-                `)
+                .select("id, internship_id, student_id, student:student_profiles(user_id, full_name, email)")
                 .eq("id", taskData.internship_id)
-                .single();
+                .maybeSingle();
 
-            if (appError || !application) {
-                console.error("Application lookup failed:", appError);
-                return { success: false, error: "Intern assignment target not found." };
+            // Try legacy if not found
+            if (!application) {
+                const { data: legacyApp } = await supabaseAdmin
+                    .from("Applications")
+                    .select("id, internship_id, student_id, student:student_profiles(user_id, full_name, email)")
+                    .eq("id", taskData.internship_id)
+                    .maybeSingle();
+                application = legacyApp;
+            }
+
+            if (!application) {
+                console.error("[SUPERVISOR_ACTIONS] Application not found:", taskData.internship_id);
+                return { success: false, error: "Target intern record not found." };
             }
 
             tasksToCreate = [{
-                internship_id: application.internship_id, // Link to the Program
-                student_id: application.student_id,       // Link to the specific Student
+                internship_id: application.internship_id,
+                student_id: application.student_id,
                 ...taskPayload
             }];
 
-            if (application.student) {
-                const student = Array.isArray(application.student) ? application.student[0] : application.student;
-                if (student) recipients.push(student);
-            }
+            const s = Array.isArray(application.student) ? application.student[0] : application.student;
+            if (s) recipients.push(s);
         }
 
-        const { data, error } = await supabase
+        console.log(`[SUPERVISOR_ACTIONS] Attempting to insert ${tasksToCreate.length} tasks`);
+        const { data, error } = await supabaseAdmin
             .from("internship_tasks")
             .insert(tasksToCreate)
             .select();
 
         if (error) {
-            console.error("Error creating task:", error);
-            // Fallback: If student_id column doesn't exist, try inserting without it (Global Program Assignment)
-            if (error.message?.includes("student_id") || error.message?.includes("column \"student_id\"")) {
-                console.warn("Retrying task insert without student_id (Schema mismatch)");
-                const fallbackTasks = tasksToCreate.map(({ student_id, ...rest }) => rest);
-                const { error: fallbackError } = await supabase
-                    .from("internship_tasks")
-                    .insert(fallbackTasks)
-                    .select();
-
-                if (fallbackError) {
-                    return { success: false, error: fallbackError.message };
-                }
-            } else {
-                return { success: false, error: error.message };
-            }
+            console.error("[SUPERVISOR_ACTIONS] Database error creating task:", error);
+            return { success: false, error: error.message };
         }
 
-        // Send Email Notifications (Fire and Forget)
+        console.log("[SUPERVISOR_ACTIONS] Tasks created successfully. Sending emails...");
+
+        // Fire and forget email sending with individual catch
         Promise.all(recipients.map(recipient => {
             if (!recipient.email) return Promise.resolve();
             return sendTaskAssignmentEmail({
@@ -531,14 +529,16 @@ export async function assignInternshipTask(taskData: {
                 dueDate: taskData.due_date,
                 priority: taskData.priority,
                 supervisorName: profile.full_name || "Supervisor"
-            });
-        })).catch(err => console.error("Error sending bulk emails:", err));
+            }).catch(e => console.error(`[SUPERVISOR_ACTIONS] Email failed for ${recipient.email}`, e));
+        }));
 
         revalidatePath("/supervisor");
-        return { success: true, count: data.length };
+        revalidatePath("/intern/workspace");
+
+        return { success: true, count: data?.length || 0 };
     } catch (err: any) {
-        console.error("Critical error in assignInternshipTask:", err);
-        return { success: false, error: err.message || "Internal Server Error" };
+        console.error("[SUPERVISOR_ACTIONS] Unexpected error in assignInternshipTask:", err);
+        return { success: false, error: err.message || "An internal server error occurred." };
     }
 }
 
