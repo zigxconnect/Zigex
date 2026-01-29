@@ -185,6 +185,28 @@ export async function getInternshipWorkspaceData() {
   const readIds = new Set(readRecords?.map((r: any) => r.announcement_id) || []);
   const unreadCount = announcements.filter((a: any) => !readIds.has(a.id)).length;
 
+  // 8. Fetch Fellow Interns for the same internship
+  const { data: fellowInterns } = await supabaseAdmin
+    .from("internship_applications")
+    .select(`
+      id,
+      student_id,
+      domain,
+      student_profiles:student_profiles (
+        full_name,
+        avatar_url,
+        user_id
+      )
+    `)
+    .eq("internship_id", application.internship_id)
+    .eq("status", "accepted");
+
+  // 9. Fetch Supervisors for the same company
+  const { data: colleaguesSupervisors } = await supabaseAdmin
+    .from("supervisor_profiles")
+    .select("*")
+    .eq("company_id", companyId);
+
   return {
     application,
     curriculum: curriculum || [],
@@ -192,7 +214,9 @@ export async function getInternshipWorkspaceData() {
     tasks: tasks || [],
     notes: notes || [],
     announcements: announcements || [],
-    unreadCount
+    unreadCount,
+    fellowInterns: fellowInterns || [],
+    fellowSupervisors: colleaguesSupervisors || []
   };
 }
 

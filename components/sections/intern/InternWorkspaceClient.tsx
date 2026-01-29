@@ -29,7 +29,10 @@ import {
   Layers,
   Megaphone,
   CheckCheck,
-  Search
+  Search,
+  Users,
+  Compass,
+  ArrowUpRight
 } from "lucide-react";
 import { format } from "date-fns";
 import Image from "next/image";
@@ -55,6 +58,9 @@ interface InternWorkspaceClientProps {
     tasks: any[];
     notes: any[];
     announcements?: any[];
+    unreadCount?: number;
+    fellowInterns: any[];
+    fellowSupervisors: any[];
   };
 }
 
@@ -83,10 +89,12 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
   const [activeTab, setActiveTab] = useState("overview");
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [unreadAnnouncements, setUnreadAnnouncements] = useState(data.unreadCount || 0);
-  const { application, curriculum, logs, tasks: initialTasks, announcements = [] } = data;
+  const { application, curriculum, logs, tasks: initialTasks, announcements = [], fellowInterns = [], fellowSupervisors = [] } = data;
   const [tasks, setTasks] = useState(initialTasks || []);
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [isTaskDetailsOpen, setIsTaskDetailsOpen] = useState(false);
+  const [isColleaguesModalOpen, setIsColleaguesModalOpen] = useState(false);
+  const [showDepartmentOnly, setShowDepartmentOnly] = useState(false);
   const internship = application?.internships;
   const company = internship?.company_profiles;
   const supervisor = application?.supervisor_profiles;
@@ -384,6 +392,37 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                   {company?.company_name} • {application?.duration}
                 </p>
               </div>
+
+              {/* Fellow Colleagues Avatars - TOP RIGHT */}
+              <button 
+                onClick={() => setIsColleaguesModalOpen(true)}
+                className="hidden md:flex flex-col items-end gap-2 group cursor-pointer"
+              >
+                <div className="flex -space-x-3 overflow-hidden">
+                  {(fellowInterns || []).slice(0, 5).map((intern: any, i: number) => (
+                    <div 
+                      key={intern.id} 
+                      className="inline-block h-10 w-10 rounded-full ring-2 ring-white dark:ring-slate-900 overflow-hidden bg-slate-100"
+                    >
+                      <Image 
+                        src={intern.student_profiles?.avatar_url || "/default-avatar.svg"} 
+                        alt={intern.student_profiles?.full_name || "Intern"} 
+                        width={40} 
+                        height={40} 
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  ))}
+                  {fellowInterns.length > 5 && (
+                    <div className="flex items-center justify-center h-10 w-10 rounded-full ring-2 ring-white dark:ring-slate-900 bg-blue-600 text-white text-[10px] font-black">
+                      +{fellowInterns.length - 5}
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5 text-blue-600 font-black text-[10px] uppercase tracking-widest group-hover:translate-x-1 transition-transform">
+                  Fellow Colleagues <ArrowRight size={10} />
+                </div>
+              </button>
             </div>
 
             {/* Action Buttons - Full Width on Mobile */}
@@ -1086,6 +1125,173 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                     CLOSE
                   </Button>
                 </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Colleagues Modal */}
+      <AnimatePresence>
+        {isColleaguesModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsColleaguesModalOpen(false)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-2xl bg-[#F6F8FF] dark:bg-slate-950 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+            >
+              {/* Header */}
+              <div className="bg-[#155DFC] p-8 text-white relative shrink-0">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl" />
+                <div className="relative z-10 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center">
+                      <Users className="text-white" size={24} />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-black tracking-tight">{internship?.title}</h3>
+                      <p className="text-xs text-blue-100 font-bold uppercase tracking-widest opacity-80">Fellow Colleagues</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => setIsColleaguesModalOpen(false)}
+                    className="p-2 hover:bg-white/10 rounded-xl transition-colors"
+                  >
+                    <Users size={20} className="rotate-45" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Filtering */}
+              <div className="p-6 bg-white dark:bg-slate-900 border-b border-blue-100/50 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0">
+                <div className="flex items-center gap-2">
+                  <Compass size={16} className="text-blue-600" />
+                  <span className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest">Network Explorer</span>
+                </div>
+                <Button 
+                  onClick={() => setShowDepartmentOnly(!showDepartmentOnly)}
+                  variant={showDepartmentOnly ? "default" : "outline"}
+                  className={cn(
+                    "rounded-xl h-10 px-6 text-[10px] font-black uppercase tracking-widest transition-all",
+                    showDepartmentOnly 
+                      ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" 
+                      : "border-blue-100 dark:border-slate-700 text-slate-500"
+                  )}
+                >
+                  {showDepartmentOnly ? `Only ${application.domain}` : "All Departments"}
+                </Button>
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto p-6 sm:p-8 custom-scrollbar space-y-8">
+                
+                {/* Fellow Interns Section */}
+                <div>
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <User size={12} /> Fellow Interns ({showDepartmentOnly ? fellowInterns.filter((i: any) => i.domain === application.domain).length : fellowInterns.length})
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {(showDepartmentOnly 
+                      ? fellowInterns.filter((i: any) => i.domain === application.domain)
+                      : fellowInterns
+                    ).map((intern: any) => (
+                      <motion.div 
+                        key={intern.id}
+                        whileHover={{ y: -2 }}
+                        className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-blue-50 dark:border-slate-800 flex items-center gap-4 group shadow-sm hover:shadow-md transition-all"
+                      >
+                        <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-100 shrink-0">
+                          <Image 
+                            src={intern.student_profiles?.avatar_url || "/default-avatar.svg"} 
+                            alt={intern.student_profiles?.full_name} 
+                            width={48} 
+                            height={48} 
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h5 className="font-bold text-slate-900 dark:text-white truncate text-sm">{intern.student_profiles?.full_name}</h5>
+                          <p className="text-[10px] text-blue-600 font-black uppercase tracking-widest mt-0.5">{intern.domain}</p>
+                        </div>
+                        <Button 
+                          asChild
+                          variant="ghost" 
+                          size="icon" 
+                          className="rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 shrink-0"
+                        >
+                          <a href={`/profile/${intern.student_profiles?.user_id}`}>
+                            <ArrowUpRight size={18} />
+                          </a>
+                        </Button>
+                      </motion.div>
+                    ))}
+                  </div>
+                  {fellowInterns.length === 0 && (
+                    <div className="text-center py-10 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border-2 border-dashed border-slate-100 dark:border-slate-800">
+                      <p className="text-xs font-bold text-slate-400">No other interns found yet.</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Supervisors Section */}
+                <div>
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <Shield size={12} /> Company Supervisors ({fellowSupervisors.length})
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {(fellowSupervisors || []).map((sup: any) => (
+                      <div 
+                        key={sup.id}
+                        className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-blue-50 dark:border-slate-800 flex items-center gap-4 group shadow-sm"
+                      >
+                        <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-100 shrink-0">
+                          <Image 
+                            src={sup.avatar_url || "/default-avatar.svg"} 
+                            alt={sup.full_name} 
+                            width={48} 
+                            height={48} 
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h5 className="font-bold text-slate-900 dark:text-white truncate text-sm">{sup.full_name}</h5>
+                          <p className="text-[10px] text-amber-600 font-black uppercase tracking-widest mt-0.5">
+                            {sup.role || "Lead Supervisor"}
+                          </p>
+                        </div>
+                        <Button 
+                          asChild
+                          variant="ghost" 
+                          size="icon" 
+                          className="rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-400 shrink-0"
+                        >
+                          <a href={`mailto:${sup.email}`}>
+                            <Mail size={16} />
+                          </a>
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Footer */}
+              <div className="p-6 bg-slate-50 dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 shrink-0">
+                <Button 
+                  onClick={() => setIsColleaguesModalOpen(false)}
+                  className="w-full h-12 rounded-xl bg-slate-900 dark:bg-white dark:text-slate-900 text-white font-black uppercase tracking-widest text-xs"
+                >
+                  Close Network
+                </Button>
               </div>
             </motion.div>
           </div>
