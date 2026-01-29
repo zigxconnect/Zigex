@@ -805,8 +805,7 @@ export async function submitWeeklyEvaluation(evaluationData: {
                 .from("intern_evaluations")
                 .update({
                     overall_rating: evaluationData.rating,
-                    comments: evaluationData.feedback,
-                    updated_at: new Date().toISOString()
+                    comments: evaluationData.feedback
                 })
                 .eq("id", evaluationData.id)
                 .select()
