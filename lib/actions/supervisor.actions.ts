@@ -740,6 +740,7 @@ export async function promoteToSupervisor(userData: any) {
  * Server Action to submit a weekly evaluation for an intern.
  */
 export async function submitWeeklyEvaluation(evaluationData: {
+    id?: string;
     internship_id: string;
     student_id: string;
     rating: number;
@@ -760,52 +761,69 @@ export async function submitWeeklyEvaluation(evaluationData: {
 
         if (!profile) return { success: false, error: "Supervisor profile not found." };
 
-        // Word count check (at least 13 words)
+        // Word count check (at least 8 words)
         const wordCount = evaluationData.feedback.trim().split(/\s+/).filter(Boolean).length;
-        if (wordCount < 13) {
-            return { success: false, error: `Feedback must be at least 13 words. You have ${wordCount} words.` };
+        if (wordCount < 8) {
+            return { success: false, error: `Feedback must be at least 8 words. You have ${wordCount} words.` };
         }
 
-        // Weekly submission check (prevent duplicates in the same week)
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        // If no ID provided, check for existing eval in the last 7 days
+        if (!evaluationData.id) {
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-        const { data: existingEval } = await supabase
-            .from("intern_evaluations")
-            .select("id")
-            .eq("student_id", evaluationData.student_id)
-            .eq("supervisor_id", profile.id)
-            .gte("evaluation_date", sevenDaysAgo.toISOString().split('T')[0])
-            .maybeSingle();
+            const { data: existingEval } = await supabase
+                .from("intern_evaluations")
+                .select("*")
+                .eq("student_id", evaluationData.student_id)
+                .eq("supervisor_id", profile.id)
+                .gte("evaluation_date", sevenDaysAgo.toISOString().split('T')[0])
+                .maybeSingle();
 
-        if (existingEval) {
-            return {
-                success: false,
-                error: "WEEKLY_LIMIT_REACHED",
-                message: "You have already evaluated this student this week. Evaluations are accepted only once per week."
-            };
+            if (existingEval) {
+                return {
+                    success: false,
+                    error: "WEEKLY_LIMIT_REACHED",
+                    existingEval: existingEval,
+                    message: "You have already evaluated this student this week. However, you can edit your existing feedback."
+                };
+            }
         }
 
-        const { data, error } = await supabase
-            .from("intern_evaluations")
-            .insert([{
-                internship_id: evaluationData.internship_id,
-                student_id: evaluationData.student_id,
-                supervisor_id: profile.id,
-                overall_rating: evaluationData.rating,
-                comments: evaluationData.feedback,
-                evaluation_date: new Date().toISOString().split('T')[0]
-            }])
-            .select()
-            .single();
+        const evaluationPayload = {
+            internship_id: evaluationData.internship_id,
+            student_id: evaluationData.student_id,
+            supervisor_id: profile.id,
+            overall_rating: evaluationData.rating,
+            comments: evaluationData.feedback,
+            evaluation_date: new Date().toISOString().split('T')[0]
+        };
 
-        if (error) {
-            console.error("Error submitting evaluation:", error);
-            return { success: false, error: error.message };
+        let result;
+        if (evaluationData.id) {
+            // Update existing
+            result = await supabase
+                .from("intern_evaluations")
+                .update(evaluationPayload)
+                .eq("id", evaluationData.id)
+                .select()
+                .single();
+        } else {
+            // Insert new
+            result = await supabase
+                .from("intern_evaluations")
+                .insert([evaluationPayload])
+                .select()
+                .single();
+        }
+
+        if (result.error) {
+            console.error("Error submitting evaluation:", result.error);
+            return { success: false, error: result.error.message };
         }
 
         revalidatePath("/supervisor");
-        return { success: true, data };
+        return { success: true, data: result.data };
     } catch (err: any) {
         console.error("Critical error in submitWeeklyEvaluation:", err);
         return { success: false, error: err.message };

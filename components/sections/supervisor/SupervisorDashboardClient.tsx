@@ -233,8 +233,8 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
     }
 
     const wordCount = newEval.feedback.trim().split(/\s+/).filter(Boolean).length;
-    if (wordCount < 13) {
-      toast.error(`Feedback must be at least 13 words. Current: ${wordCount}`);
+    if (wordCount < 8) {
+      toast.error(`Feedback must be at least 8 words. Current: ${wordCount}`);
       return;
     }
 
@@ -242,11 +242,13 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
     try {
       const res = await submitWeeklyEvaluation(newEval);
       if (res.success) {
-        toast.success("Evaluation submitted successfully!");
+        toast.success(newEval.id ? "Evaluation updated successfully!" : "Evaluation submitted successfully!");
         setIsEvalModalOpen(false);
-        setNewEval({ internship_id: "", student_id: "", rating: 5, feedback: "" });
+        setNewEval({ id: undefined, internship_id: "", student_id: "", rating: 5, feedback: "" } as any);
         router.refresh();
       } else if (res.error === "WEEKLY_LIMIT_REACHED") {
+        // Carry existing eval data for editing
+        setExistingEval(res.existingEval);
         setShowLimitModal(true);
       } else {
         toast.error(res.error || "Failed to submit evaluation");
@@ -255,6 +257,22 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
       toast.error("An unexpected error occurred");
     } finally {
       setIsSubmittingEval(false);
+    }
+  };
+
+  const [existingEval, setExistingEval] = useState<any>(null);
+
+  const startEditing = () => {
+    if (existingEval) {
+      setNewEval({
+        id: existingEval.id,
+        internship_id: existingEval.internship_id,
+        student_id: existingEval.student_id,
+        rating: existingEval.overall_rating,
+        feedback: existingEval.comments
+      });
+      setShowLimitModal(false);
+      setIsEvalModalOpen(true);
     }
   };
 
@@ -940,15 +958,15 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Student Feedback</label>
                     <span className={cn(
                       "text-[9px] font-bold",
-                      newEval.feedback.trim().split(/\s+/).filter(Boolean).length >= 13 ? "text-green-500" : "text-rose-500"
+                      newEval.feedback.trim().split(/\s+/).filter(Boolean).length >= 8 ? "text-green-500" : "text-rose-500"
                     )}>
-                      {newEval.feedback.trim().split(/\s+/).filter(Boolean).length} / 13 words
+                      {newEval.feedback.trim().split(/\s+/).filter(Boolean).length} / 8 words
                     </span>
                   </div>
                   <Textarea 
                     value={newEval.feedback}
                     onChange={(e) => setNewEval({...newEval, feedback: e.target.value})}
-                    placeholder="Provide a detailed evaluation of the student's progress, strengths, and areas for growth (min 13 words)..."
+                    placeholder="Provide a detailed evaluation of the student's progress, strengths, and areas for growth (min 8 words)..."
                     className="min-h-[200px] rounded-2xl border-slate-100 bg-slate-50 text-sm font-medium resize-none shadow-none focus-visible:ring-1 leading-relaxed"
                     required
                   />
@@ -957,7 +975,10 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                 <div className="pt-4 flex gap-3">
                    <Button 
                     type="button"
-                    onClick={() => setIsEvalModalOpen(false)}
+                    onClick={() => {
+                        setIsEvalModalOpen(false);
+                        setNewEval({ id: undefined, internship_id: "", student_id: "", rating: 5, feedback: "" } as any);
+                    }}
                     variant="ghost" 
                     className="flex-1 rounded-2xl h-14 font-black hover:bg-slate-50"
                    >
@@ -965,10 +986,10 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                    </Button>
                    <Button 
                     type="submit"
-                    disabled={isSubmittingEval || newEval.feedback.trim().split(/\s+/).filter(Boolean).length < 13}
+                    disabled={isSubmittingEval || newEval.feedback.trim().split(/\s+/).filter(Boolean).length < 8}
                     className="flex-[2] rounded-2xl h-14 font-black bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-500/20"
                    >
-                     {isSubmittingEval ? <Loader2 className="animate-spin" /> : "SUBMIT EVALUATION"}
+                     {isSubmittingEval ? <Loader2 className="animate-spin" /> : (newEval.id ? "UPDATE EVALUATION" : "SUBMIT EVALUATION")}
                    </Button>
                 </div>
               </form>
@@ -999,15 +1020,24 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
               <p className="text-slate-500 text-sm font-medium leading-relaxed mb-8">
                 You have already evaluated this student this week. Evaluations are recorded once per week to track gradual progress.
               </p>
-              <Button 
-                onClick={() => {
-                  setShowLimitModal(false);
-                  setIsEvalModalOpen(false);
-                }}
-                className="w-full rounded-2xl h-14 font-black bg-slate-900 text-white hover:bg-slate-800 transition-all"
-              >
-                UNDERSTOOD
-              </Button>
+              <div className="space-y-3">
+                <Button 
+                    onClick={startEditing}
+                    className="w-full rounded-2xl h-14 font-black bg-blue-600 text-white hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/10"
+                >
+                    EDIT EXISTING FEEDBACK
+                </Button>
+                <Button 
+                    onClick={() => {
+                        setShowLimitModal(false);
+                        setIsEvalModalOpen(false);
+                    }}
+                    variant="ghost"
+                    className="w-full rounded-2xl h-14 font-black text-slate-400 hover:text-slate-600"
+                >
+                    CLOSE
+                </Button>
+              </div>
             </motion.div>
           </div>
         )}
