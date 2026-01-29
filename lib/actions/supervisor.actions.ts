@@ -340,11 +340,26 @@ export async function getSupervisorDashboardData() {
 
         // Fetch Today's Attendance
         const today = new Date().toISOString().split("T")[0];
-        const { data: attendance } = await supabaseAdmin
-            .from("intern_attendance")
-            .select("*")
-            .eq("attendance_date", today)
-            .eq("supervisor_id", profile.id);
+        const [attendanceRes, evaluationsRes] = await Promise.all([
+            supabaseAdmin
+                .from("intern_attendance")
+                .select("*")
+                .eq("attendance_date", today)
+                .eq("supervisor_id", profile.id),
+
+            // Fetch recent evaluations
+            supabaseAdmin
+                .from("intern_evaluations")
+                .select("*")
+                .eq("supervisor_id", profile.id)
+                .order("created_at", { ascending: false })
+        ]);
+
+        const attendance = attendanceRes.data || [];
+        const evaluations = (evaluationsRes.data || []).map(evalItem => ({
+            ...evalItem,
+            student: studentProfiles.find(p => p.user_id === evalItem.student_id) || { full_name: "Intern" }
+        }));
 
         // 4. Final Company Name Fallback (Check interns if profile company is missing)
         if (!companyInfo && interns.length > 0) {
@@ -361,7 +376,8 @@ export async function getSupervisorDashboardData() {
             interns: interns || [],
             recentLogs: recentLogs,
             tasks: tasks || [],
-            attendance: attendance || []
+            attendance: attendance || [],
+            evaluations: evaluations || []
         };
     } catch (err) {
         console.error("[SUPERVISOR_HUB] Unexpected runtime error:", err);
@@ -716,6 +732,62 @@ export async function promoteToSupervisor(userData: any) {
         return { success: true, data };
     } catch (err: any) {
         console.error("Promotion failed:", err);
+        return { success: false, error: err.message };
+    }
+}
+
+/**
+ * Server Action to submit a weekly evaluation for an intern.
+ */
+export async function submitWeeklyEvaluation(evaluationData: {
+    internship_id: string;
+    student_id: string;
+    rating: number;
+    feedback: string;
+}) {
+    try {
+        const supabase = await createServerActionClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) return { success: false, error: "Unauthorized" };
+
+        // Get supervisor profile
+        const { data: profile } = await supabase
+            .from("supervisor_profiles")
+            .select("id")
+            .eq("user_id", user.id)
+            .single();
+
+        if (!profile) return { success: false, error: "Supervisor profile not found." };
+
+        // Word count check (at least 100 words)
+        const wordCount = evaluationData.feedback.trim().split(/\s+/).length;
+        if (wordCount < 100) {
+            return { success: false, error: `Feedback must be at least 100 words. You have ${wordCount} words.` };
+        }
+
+        const { data, error } = await supabase
+            .from("intern_evaluations")
+            .insert([{
+                internship_id: evaluationData.internship_id,
+                student_id: evaluationData.student_id,
+                supervisor_id: profile.id,
+                overall_rating: evaluationData.rating,
+                comments: evaluationData.feedback,
+                evaluation_date: new Date().toISOString().split('T')[0]
+            }])
+            .select()
+            .single();
+
+        if (error) {
+            console.error("Error submitting evaluation:", error);
+            return { success: false, error: error.message };
+        }
+
+        revalidatePath("/supervisor");
+        return { success: true, data };
+    } catch (err: any) {
+        console.error("Critical error in submitWeeklyEvaluation:", err);
         return { success: false, error: err.message };
     }
 }
