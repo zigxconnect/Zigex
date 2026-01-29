@@ -371,7 +371,9 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                   <div className="relative">
                     <Icon size={16} className={cn(isActive && "text-blue-600")} />
                     {tab.id === "announcements" && unreadAnnouncements > 0 && (
-                      <span className="absolute -top-1 -right-1 flex h-2 w-2 items-center justify-center rounded-full bg-blue-600 ring-2 ring-white dark:ring-slate-900 animate-ping" />
+                      <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white ring-2 ring-white dark:ring-slate-900 border border-white dark:border-slate-900 shadow-sm animate-pulse">
+                        {unreadAnnouncements}
+                      </span>
                     )}
                     {tab.id === "tasks" && tasksCount > 0 && (
                       <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white ring-2 ring-white dark:ring-slate-900">

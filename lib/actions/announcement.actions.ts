@@ -25,10 +25,11 @@ export async function getAnnouncements() {
     const companyIds = Array.from(new Set(announcements.map((a: any) => a.company_id).filter(Boolean)));
 
     // 3. Parallel fetch profiles and companies using supabaseAdmin to ensure access
-    const [adminProfilesRes, supervisorProfilesRes, companiesRes] = await Promise.all([
+    const [adminProfilesRes, supervisorProfilesRes, companiesRes, studentsRes] = await Promise.all([
         supabaseAdmin.from("user_profiles").select("user_id, full_name, avatar_url, email").in("user_id", authorIds),
         supabaseAdmin.from("supervisor_profiles").select("user_id, full_name, avatar_url, email").in("user_id", authorIds),
-        supabaseAdmin.from("company_profiles").select("id, company_name, logo_url").in("id", companyIds)
+        supabaseAdmin.from("company_profiles").select("id, company_name, logo_url").in("id", companyIds),
+        supabaseAdmin.from("student_profiles").select("user_id, full_name, avatar_url").in("user_id", announcements.map((a: any) => a.tagged_student_id).filter(Boolean))
     ]);
 
     // 4. Create lookup maps
@@ -39,6 +40,9 @@ export async function getAnnouncements() {
     const companyMap = new Map();
     companiesRes.data?.forEach((c: any) => companyMap.set(c.id, c));
 
+    const studentMap = new Map();
+    studentsRes.data?.forEach((s: any) => studentMap.set(s.user_id, s));
+
     // 5. Build enriched objects
     const enrichedAnnouncements = announcements.map((ann: any) => {
         const author = authorMap.get(ann.author_id) || {
@@ -47,8 +51,9 @@ export async function getAnnouncements() {
             email: ""
         };
         const company = ann.company_id ? companyMap.get(ann.company_id) : null;
+        const tagged_student = ann.tagged_student_id ? studentMap.get(ann.tagged_student_id) : null;
 
-        return { ...ann, author, company };
+        return { ...ann, author, company, tagged_student };
     });
 
     return enrichedAnnouncements;
@@ -60,6 +65,7 @@ export async function createAnnouncement(payload: {
     is_pinned?: boolean;
     company_id?: string;
     image_url?: string;
+    tagged_student_id?: string;
 }) {
     const supabase = await createServerActionClient();
 
@@ -76,6 +82,7 @@ export async function createAnnouncement(payload: {
             author_id: user.id,
             company_id: payload.company_id || null,
             image_url: payload.image_url || null,
+            tagged_student_id: payload.tagged_student_id || null,
         })
         .select()
         .single();
@@ -191,6 +198,20 @@ export async function getAllCompanies() {
 
     if (error) {
         console.error("Error fetching companies:", error);
+        return [];
+    }
+
+    return data;
+}
+
+export async function getAllStudents() {
+    const { data, error } = await supabaseAdmin
+        .from("student_profiles")
+        .select("user_id, full_name, avatar_url, email")
+        .order("full_name", { ascending: true });
+
+    if (error) {
+        console.error("Error fetching students:", error);
         return [];
     }
 

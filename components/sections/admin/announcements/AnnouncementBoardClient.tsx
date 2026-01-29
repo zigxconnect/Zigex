@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MoreVertical, Pin, PinOff, Trash2, Megaphone, Plus, AlertCircle, Building2 } from "lucide-react";
+import { MoreVertical, Pin, PinOff, Trash2, Megaphone, Plus, AlertCircle, Building2, Trophy, Sparkles } from "lucide-react";
 import {
     Dialog,
     DialogContent,
@@ -34,6 +34,7 @@ interface Announcement {
     content: string;
     is_pinned: boolean;
     created_at: string;
+    image_url?: string;
     author: {
         full_name: string;
         avatar_url: string;
@@ -42,14 +43,19 @@ interface Announcement {
         company_name: string;
         logo_url: string;
     } | null;
+    tagged_student?: {
+        full_name: string;
+        avatar_url: string;
+    } | null;
 }
 
 interface AnnouncementBoardClientProps {
     announcements: Announcement[];
     companies?: { id: string; company_name: string; logo_url: string; }[];
+    students?: { user_id: string; full_name: string; avatar_url: string; }[];
 }
 
-export function AnnouncementBoardClient({ announcements, companies = [] }: AnnouncementBoardClientProps) {
+export function AnnouncementBoardClient({ announcements, companies = [], students = [] }: AnnouncementBoardClientProps) {
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
@@ -58,6 +64,7 @@ export function AnnouncementBoardClient({ announcements, companies = [] }: Annou
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
     const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
+    const [selectedStudentId, setSelectedStudentId] = useState<string>("");
     const [imageFile, setImageFile] = useState<File | null>(null);
 
     const handleCreate = async () => {
@@ -95,6 +102,7 @@ export function AnnouncementBoardClient({ announcements, companies = [] }: Annou
                 title,
                 content,
                 company_id: selectedCompanyId || undefined,
+                tagged_student_id: selectedStudentId || undefined,
                 image_url: imageUrl
             });
 
@@ -104,6 +112,7 @@ export function AnnouncementBoardClient({ announcements, companies = [] }: Annou
                 setTitle("");
                 setContent("");
                 setSelectedCompanyId("");
+                setSelectedStudentId("");
                 setImageFile(null);
                 router.refresh();
             } else {
@@ -190,6 +199,22 @@ export function AnnouncementBoardClient({ announcements, companies = [] }: Annou
                                 />
                             </div>
                             <div className="space-y-2">
+                                <label className="text-sm font-medium flex items-center justify-between">
+                                    <span>Intern of the Week?</span>
+                                    <span className="text-[10px] text-amber-600 font-bold uppercase ring-1 ring-amber-100 px-2 py-0.5 rounded-full bg-amber-50">Award Badge</span>
+                                </label>
+                                <select 
+                                    className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                    value={selectedStudentId}
+                                    onChange={(e) => setSelectedStudentId(e.target.value)}
+                                >
+                                    <option value="">No Intern Selection</option>
+                                    {students.map(s => (
+                                        <option key={s.user_id} value={s.user_id}>{s.full_name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="space-y-2">
                                 <label className="text-sm font-medium">Attachment (Optional)</label>
                                 <div className="flex items-center gap-4">
                                     <Input 
@@ -261,6 +286,11 @@ export function AnnouncementBoardClient({ announcements, companies = [] }: Annou
                                         ) : (
                                             <span className="bg-purple-100 text-purple-700 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
                                                 <Megaphone className="h-3 w-3" /> Zigex Global
+                                            </span>
+                                        )}
+                                        {announcement.tagged_student && (
+                                            <span className="bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                                                <Trophy className="h-3 w-3" /> Intern of the Week
                                             </span>
                                         )}
                                     </div>

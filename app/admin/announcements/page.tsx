@@ -8,9 +8,10 @@ export const metadata: Metadata = {
 };
 
 export default async function AnnouncementsPage() {
-  const [announcements, companies] = await Promise.all([
+  const [announcements, companies, students] = await Promise.all([
     getAnnouncements(),
-    import("@/lib/actions/announcement.actions").then(mod => mod.getAllCompanies())
+    import("@/lib/actions/announcement.actions").then(mod => mod.getAllCompanies()),
+    import("@/lib/actions/announcement.actions").then(mod => mod.getAllStudents())
   ]);
 
   return (
@@ -19,7 +20,11 @@ export default async function AnnouncementsPage() {
       <p className="text-muted-foreground mb-8">Post updates, news, and important information for your interns and supervisors.</p>
       
       <div className="bg-white dark:bg-slate-900 rounded-xl border p-6 shadow-sm">
-        <AnnouncementBoardClient announcements={announcements} companies={companies} />
+        <AnnouncementBoardClient 
+            announcements={announcements} 
+            companies={companies} 
+            students={students}
+        />
       </div>
     </div>
   );

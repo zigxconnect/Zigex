@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Pin, Megaphone, Building2, Bell, Share2, MessageCircle, Heart, MoreHorizontal, Globe } from "lucide-react";
+import { Pin, Megaphone, Building2, Bell, Share2, MessageCircle, Heart, MoreHorizontal, Globe, Trophy, Sparkles } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -21,6 +21,10 @@ interface Announcement {
     company: {
         company_name: string;
         logo_url: string;
+    } | null;
+    tagged_student?: {
+        full_name: string;
+        avatar_url: string;
     } | null;
 }
 
@@ -126,6 +130,43 @@ export function InternAnnouncementBoard({ announcements }: InternAnnouncementBoa
                                     <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-line mb-4 font-medium">
                                         {announcement.content}
                                     </p>
+
+                                    {/* Tagged student: Intern of the Week */}
+                                    {announcement.tagged_student && (
+                                        <motion.div 
+                                            initial={{ scale: 0.95, opacity: 0 }}
+                                            animate={{ scale: 1, opacity: 1 }}
+                                            className="mb-6 p-4 rounded-3xl bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 flex items-center justify-between"
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className="relative">
+                                                    <div className="w-12 h-12 rounded-2xl overflow-hidden ring-4 ring-white dark:ring-slate-900">
+                                                        <img 
+                                                            src={announcement.tagged_student.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(announcement.tagged_student.full_name)}&background=random`} 
+                                                            alt={announcement.tagged_student.full_name} 
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    </div>
+                                                    <div className="absolute -top-2 -right-2 bg-amber-400 text-white p-1 rounded-lg">
+                                                        <Trophy size={12} />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span className="text-xs font-black uppercase text-amber-600 tracking-wider flex items-center gap-1">
+                                                            <Sparkles size={12} /> Intern of the Week
+                                                        </span>
+                                                    </div>
+                                                    <h4 className="font-black text-slate-900 dark:text-white leading-none mt-1">
+                                                        {announcement.tagged_student.full_name}
+                                                    </h4>
+                                                </div>
+                                            </div>
+                                            <div className="hidden sm:block text-[10px] font-black uppercase text-amber-500/50 mr-2">
+                                                Congratulations!
+                                            </div>
+                                        </motion.div>
+                                    )}
 
                                     {/* Media Preview */}
                                     {announcement.image_url && (
