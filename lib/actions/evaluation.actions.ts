@@ -194,6 +194,9 @@ export async function getCompanyInternsPerformanceSummary(companyId: string) {
 
     const summary: Record<string, { attendanceCount: number; totalMarks: number; latestObservation: string }> = {};
 
+    // Build a map of uid -> best stats (aggregate across all apps for same user)
+    const uidStatsMap: Record<string, { attendanceCount: number; totalMarks: number; latestObservation: string }> = {};
+
     applications.forEach(app => {
         const studentAttendance = (attendance || []).filter(a =>
             a.student_id === app.uid &&
@@ -207,13 +210,27 @@ export async function getCompanyInternsPerformanceSummary(companyId: string) {
         console.log(`[PERF_SUMMARY] Mapping student ${app.name} (${app.uid}): Attnd=${studentAttendance.length}, Evals=${studentEvals.length}`);
 
         const totalMarks = studentEvals.reduce((acc, curr) => acc + curr.overall_rating, 0);
-
-        summary[app.appId] = {
+        const stats = {
             attendanceCount: studentAttendance.length,
             totalMarks: totalMarks,
             latestObservation: studentEvals[0]?.comments || "Consistent performance tracked."
         };
+
+        // Key by application ID (for direct lookup)
+        summary[app.appId] = stats;
+
+        // Also key by user ID (fallback lookup)
+        // Keep the best stats if same user has multiple apps
+        if (!uidStatsMap[app.uid] || stats.attendanceCount > uidStatsMap[app.uid].attendanceCount) {
+            uidStatsMap[app.uid] = stats;
+        }
     });
 
+    // Merge uid-keyed entries into summary for fallback lookups
+    Object.entries(uidStatsMap).forEach(([uid, stats]) => {
+        summary[uid] = stats;
+    });
+
+    console.log(`[PERF_SUMMARY] Final summary keys count: ${Object.keys(summary).length}`);
     return summary;
 }

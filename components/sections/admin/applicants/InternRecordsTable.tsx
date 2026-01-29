@@ -49,6 +49,8 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
       setFetchingSummaries(true);
       try {
         const data = await getCompanyInternsPerformanceSummary(companyId);
+        console.log("[RECORDS_DEBUG] Fetched summaries:", data);
+        console.log("[RECORDS_DEBUG] Summary keys:", Object.keys(data || {}));
         setSummaries(data || {});
       } catch (err) {
         console.error("Error fetching performance summaries:", err);
@@ -132,7 +134,13 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
             <tbody className="divide-y divide-slate-50">
               {activeInterns.map((intern) => {
                 const daysWorked = intern.appliedDate ? differenceInDays(new Date(), new Date(intern.appliedDate)) : 0;
-                const summary = summaries[intern.id] || { attendanceCount: 0, totalMarks: 0 };
+                // Try lookup by application ID first, then by user ID as fallback
+                const summary = summaries[intern.id] || summaries[intern.userId || ""] || { attendanceCount: 0, totalMarks: 0 };
+                
+                // DEBUG: Log each intern's lookup
+                const foundByAppId = !!summaries[intern.id];
+                const foundByUserId = !!summaries[intern.userId || ""];
+                console.log(`[RECORDS_DEBUG] Intern: ${intern.name}, AppID: ${intern.id}, UserId: ${intern.userId}, FoundByAppId: ${foundByAppId}, FoundByUserId: ${foundByUserId}, Attnd: ${summary.attendanceCount}`);
                 
                 return (
                   <tr key={intern.id} className="group hover:bg-blue-50/30 transition-colors duration-300">
