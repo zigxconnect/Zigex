@@ -119,6 +119,8 @@ export async function getCompanyInternsPerformanceSummary(companyId: string) {
     if (!companyId) return {}; // Existing null check for companyId
     const supabase = await createServerActionClient();
 
+    console.log(`[PERF_SUMMARY] Fetching for company: ${companyId}`);
+
     // 1. Get all accepted internship applications for this company from BOTH tables
     const [structuredRes, legacyRes] = await Promise.all([
         supabase
@@ -138,46 +140,61 @@ export async function getCompanyInternsPerformanceSummary(companyId: string) {
         ...(legacyRes.data || []).map(a => ({ ...a, table: 'legacy' }))
     ];
 
+    console.log(`[PERF_SUMMARY] Found raw applications: ${rawApps.length}`);
     if (rawApps.length === 0) return {};
 
     // 2. Build a robust Student Profile Map (ID -> UserID)
-    // Legacy apps use profile id in student_id, structured use user_id
-    const distinctStudentIds = [...new Set(rawApps.map(a => a.student_id))];
-    const { data: studentProfiles } = await supabase
+    const distinctStudentIds = [...new Set(rawApps.map(a => a.student_id))].filter(Boolean);
+
+    // Improved profile lookup: Use separate queries for robustness
+    const { data: profilesById } = await supabase
         .from("student_profiles")
-        .select("id, user_id")
-        .or(`id.in.(${distinctStudentIds.join(',')}),user_id.in.(${distinctStudentIds.join(',')})`);
+        .select("id, user_id, full_name")
+        .in("id", distinctStudentIds);
+
+    const { data: profilesByUid } = await supabase
+        .from("student_profiles")
+        .select("id, user_id, full_name")
+        .in("user_id", distinctStudentIds);
+
+    const studentProfiles = [...(profilesById || []), ...(profilesByUid || [])];
+    console.log(`[PERF_SUMMARY] Profile resolution map size: ${studentProfiles.length}`);
 
     const applications = rawApps.map(app => {
-        const profile = studentProfiles?.find(p => p.id === app.student_id || p.user_id === app.student_id);
+        const profile = studentProfiles.find(p => p.id === app.student_id || p.user_id === app.student_id);
         return {
             appId: app.id,
-            uid: profile?.user_id || app.student_id, // Fallback to student_id if profile not found
-            internshipId: app.internship_id
+            uid: profile?.user_id || app.student_id,
+            internshipId: app.internship_id,
+            name: profile?.full_name || "Unknown"
         };
     });
 
     const studentUids = [...new Set(applications.map(a => a.uid))];
+    console.log(`[PERF_SUMMARY] Unique student UIDs to check: ${studentUids.length} (${studentUids.join(', ')})`);
 
-    // 3. Get verified attendance records (using AUTH UIDs)
-    const { data: attendance } = await supabase
+    // 3. Get verified attendance records
+    const { data: attendance, error: attError } = await supabase
         .from("intern_attendance")
         .select("student_id, internship_id, status")
         .in("student_id", studentUids)
         .eq("status", "present");
 
-    // 4. Get summaries of evaluations (marks)
-    const { data: evals } = await supabase
+    if (attError) console.error("[PERF_SUMMARY] Attendance fetch error:", attError);
+    console.log(`[PERF_SUMMARY] Fetched attendance records: ${attendance?.length || 0}`);
+
+    // 4. Get summaries of evaluations
+    const { data: evals, error: evalError } = await supabase
         .from("intern_evaluations")
         .select("student_id, internship_id, overall_rating, comments, evaluation_date")
         .in("student_id", studentUids)
         .order("evaluation_date", { ascending: false });
 
+    if (evalError) console.error("[PERF_SUMMARY] Evaluations fetch error:", evalError);
+
     const summary: Record<string, { attendanceCount: number; totalMarks: number; latestObservation: string }> = {};
 
     applications.forEach(app => {
-        // Correctly filter by student AND internship to avoid cross-pollination
-        // Relax matching to student_id if internship_id is missing for either application or record
         const studentAttendance = (attendance || []).filter(a =>
             a.student_id === app.uid &&
             (!app.internshipId || !a.internship_id || a.internship_id === app.internshipId)
@@ -186,6 +203,8 @@ export async function getCompanyInternsPerformanceSummary(companyId: string) {
             e.student_id === app.uid &&
             (!app.internshipId || !e.internship_id || e.internship_id === app.internshipId)
         );
+
+        console.log(`[PERF_SUMMARY] Mapping student ${app.name} (${app.uid}): Attnd=${studentAttendance.length}, Evals=${studentEvals.length}`);
 
         const totalMarks = studentEvals.reduce((acc, curr) => acc + curr.overall_rating, 0);
 
