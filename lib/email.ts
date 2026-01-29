@@ -16,8 +16,10 @@ const createTransporter = () => {
   if (!GMAIL_USER || !GMAIL_APP_PASSWORD) {
     const errorMsg = "[EMAIL CONFIG ERROR] GMAIL_USER or GMAIL_APP_PASSWORD is missing in .env.local";
     console.error(errorMsg);
-    throw new Error(errorMsg); // Throw error to be caught by caller
+    throw new Error(errorMsg);
   }
+
+  console.log(`[EMAIL] Creating transporter for ${GMAIL_USER}...`);
 
   console.log(`[EMAIL] Creating transporter for: ${GMAIL_USER}`);
 

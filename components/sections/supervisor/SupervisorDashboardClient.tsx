@@ -63,6 +63,7 @@ interface SupervisorDashboardClientProps {
 export function SupervisorDashboardClient({ data }: SupervisorDashboardClientProps) {
   const [activeTab, setActiveTab] = useState<"overview" | "attendance" | "tasks" | "evaluations">("overview");
   const [searchTerm, setSearchTerm] = useState("");
+  const [taskSearchTerm, setTaskSearchTerm] = useState("");
   const [selectedLog, setSelectedLog] = useState<any>(null);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   
@@ -271,6 +272,11 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
     });
     return Array.from(map.values());
   }, [tasks]);
+
+  const filteredGroupedTasks = groupedTasks.filter((task: any) => 
+    task.title?.toLowerCase().includes(taskSearchTerm.toLowerCase()) ||
+    task.description?.toLowerCase().includes(taskSearchTerm.toLowerCase())
+  );
 
   const isAttendanceWindow = () => {
     const hour = new Date().getHours();
@@ -691,17 +697,28 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                   <h2 className="text-xl font-black text-slate-900 dark:text-white underline decoration-blue-500 decoration-3">Project Tasks</h2>
                   <p className="text-sm text-slate-500 mt-1 font-medium">Assign weekly milestones and track student activity</p>
                 </div>
-                <Button 
-                  onClick={() => setIsTaskModalOpen(true)}
-                  className="rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs px-6 h-12 shadow-lg shadow-blue-500/20"
-                >
-                  <Plus size={16} className="mr-2" /> NEW TASK
-                </Button>
+                <div className="flex items-center gap-3">
+                  <div className="relative w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                    <Input 
+                      placeholder="Search tasks..." 
+                      value={taskSearchTerm}
+                      onChange={(e) => setTaskSearchTerm(e.target.value)}
+                      className="pl-10 h-10 rounded-xl border-slate-100 bg-white dark:bg-slate-800 dark:border-slate-800"
+                    />
+                  </div>
+                  <Button 
+                    onClick={() => setIsTaskModalOpen(true)}
+                    className="rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs px-6 h-12 shadow-lg shadow-blue-500/20 flex-shrink-0"
+                  >
+                    <Plus size={16} className="mr-2" /> NEW TASK
+                  </Button>
+                </div>
               </div>
 
               {/* Task Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {groupedTasks.length > 0 ? groupedTasks.map((task: any) => {
+                {filteredGroupedTasks.length > 0 ? filteredGroupedTasks.map((task: any) => {
                   const isBroadcast = task.assignedTo?.length > 1;
                   const firstInternId = task.student_id;
                   const targetIntern = interns.find(i => {

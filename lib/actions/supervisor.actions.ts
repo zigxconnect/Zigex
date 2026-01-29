@@ -557,19 +557,28 @@ export async function assignInternshipTask(taskData: {
 
         console.log("[SUPERVISOR_ACTIONS] Tasks created successfully. Sending emails...");
 
-        // Fire and forget email sending with individual catch
-        Promise.all(recipients.map(recipient => {
-            if (!recipient.email) return Promise.resolve();
-            return sendTaskAssignmentEmail({
-                email: recipient.email,
-                name: recipient.full_name,
-                taskTitle: taskData.title,
-                taskDescription: taskData.description,
-                dueDate: taskData.due_date,
-                priority: taskData.priority,
-                supervisorName: profile.full_name || "Supervisor"
-            }).catch(e => console.error(`[SUPERVISOR_ACTIONS] Email failed for ${recipient.email}`, e));
-        }));
+        // Await all emails to ensure they are sent before the function returns
+        try {
+            await Promise.all(recipients.map(async (recipient: any) => {
+                if (!recipient.email) return;
+                try {
+                    await sendTaskAssignmentEmail({
+                        email: recipient.email,
+                        name: recipient.full_name,
+                        taskTitle: taskData.title,
+                        taskDescription: taskData.description,
+                        dueDate: taskData.due_date,
+                        priority: taskData.priority,
+                        supervisorName: profile.full_name || "Supervisor"
+                    });
+                } catch (err) {
+                    console.error(`[SUPERVISOR_ACTIONS] Failed to send email to ${recipient.email}:`, err);
+                }
+            }));
+            console.log("[SUPERVISOR_ACTIONS] All emails processed.");
+        } catch (emailErr) {
+            console.error("[SUPERVISOR_ACTIONS] Error in email broadcast loop:", emailErr);
+        }
 
         revalidatePath("/supervisor");
         revalidatePath("/intern/workspace");
@@ -585,8 +594,6 @@ export async function assignInternshipTask(taskData: {
  * Server Action to delete a task (supports bulk deletion for broadcast groups).
  */
 export async function deleteInternshipTask(taskId: string, deleteAllGroup: boolean = false) {
-    const supabase = await createServerActionClient();
-
     if (deleteAllGroup) {
         // Fetch the task first to get the fingerprint
         const { data: task } = await supabaseAdmin
@@ -596,17 +603,21 @@ export async function deleteInternshipTask(taskId: string, deleteAllGroup: boole
             .single();
 
         if (task) {
-            const { error } = await supabase
+            // Use supabaseAdmin to ensure deletion bypasses RLS issues for supervisor
+            const { error } = await supabaseAdmin
                 .from("internship_tasks")
                 .delete()
                 .eq("title", task.title)
                 .eq("description", task.description)
                 .eq("supervisor_id", task.supervisor_id);
 
-            if (error) return { success: false, error: error.message };
+            if (error) {
+                console.error("Error deleting task group:", error);
+                return { success: false, error: error.message };
+            }
         }
     } else {
-        const { error } = await supabase
+        const { error } = await supabaseAdmin
             .from("internship_tasks")
             .delete()
             .eq("id", taskId);
