@@ -186,6 +186,45 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
     };
   }, [application?.student_id, router]);
 
+  // Real-time Tasks Listener
+  useEffect(() => {
+    const supabase = createClient();
+    
+    const tasksChannel = supabase
+      .channel(`tasks-${application?.student_id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'internship_tasks',
+          filter: `student_id=eq.${application?.student_id}`
+        },
+        (payload) => {
+          console.log('[REALTIME] Task change detected:', payload);
+          
+          if (payload.eventType === 'INSERT') {
+            const newTask = payload.new as any;
+            setTasks(prev => [newTask, ...prev]);
+            toast.info("New Milestone Assigned!", {
+              description: newTask.title,
+            });
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedTask = payload.new as any;
+            setTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
+          } else if (payload.eventType === 'DELETE') {
+            const deletedId = (payload.old as any).id;
+            setTasks(prev => prev.filter(t => t.id !== deletedId));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(tasksChannel);
+    };
+  }, [application?.student_id]);
+
   // Reset unread count when switching to announcements tab
   useEffect(() => {
     if (activeTab === "announcements") {

@@ -118,11 +118,11 @@ export async function getInternshipWorkspaceData() {
     .eq("internship_id", application.internship_id)
     .order("log_date", { ascending: false });
 
-  // 4. Fetch assigned tasks
+  // 4. Fetch assigned tasks - ONLY for this student
   const { data: tasks } = await supabase
     .from("internship_tasks")
     .select("*")
-    .eq("internship_id", application.internship_id)
+    .eq("student_id", user.id)
     .order("created_at", { ascending: false });
 
   // 5. Fetch notes

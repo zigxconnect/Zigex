@@ -629,6 +629,7 @@ export async function deleteInternshipTask(taskId: string, deleteAllGroup: boole
     }
 
     revalidatePath("/supervisor");
+    revalidatePath("/intern/workspace");
     return { success: true };
 }
 
