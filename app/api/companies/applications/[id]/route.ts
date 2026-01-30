@@ -401,7 +401,7 @@ export async function PATCH(
                 opportunityTitle,
                 opportunityType: appType,
                 companyName,
-                whatsappGroupLink: "https://chat.whatsapp.com/DXYGLpny3DwGs5pkb1fPAr",
+                whatsappGroupLink: "https://chat.whatsapp.com/K0RflJDzxyKDIM2yuvzTTQ?mode=gi_t",
               }));
             } else if (status === "rejected") {
               emailPromises.push(sendRejectionEmail({

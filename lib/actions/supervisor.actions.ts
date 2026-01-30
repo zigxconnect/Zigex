@@ -320,33 +320,38 @@ export async function getSupervisorDashboardData() {
         console.log(`[SUPERVISOR_HUB] Found ${rawApps.length} total accepted apps for supervisor ${profile.id}`);
 
         // Robust Manual Join for Student Profiles
-        const studentUserIds = rawApps.map(app => app.student_id || app.user_id).filter(Boolean);
-        let studentProfiles: any[] = [];
+        const allPossibleStudentIds = [
+            ...new Set([
+                ...rawApps.map(app => app.student_id),
+                ...rawApps.map((app: any) => app.user_id)
+            ])
+        ].filter(Boolean) as string[];
 
-        if (studentUserIds.length > 0) {
+        let studentProfiles: any[] = [];
+        if (allPossibleStudentIds.length > 0) {
             const { data: profiles } = await supabaseAdmin
                 .from("student_profiles")
                 .select("id, user_id, full_name, avatar_url")
-                .in("user_id", studentUserIds);
+                .or(`id.in.(${allPossibleStudentIds.map(id => `"${id}"`).join(",")}),user_id.in.(${allPossibleStudentIds.map(id => `"${id}"`).join(",")})`);
             studentProfiles = profiles || [];
         }
 
         // Map them together
         const interns = rawApps.map(app => {
-            const student = studentProfiles.find(p => p.user_id === (app.student_id || app.user_id));
+            const student = studentProfiles.find(p => p.id === app.student_id || p.user_id === app.student_id || p.id === (app as any).user_id || p.user_id === (app as any).user_id);
             return {
                 ...app,
                 // Ensure internship info is present even if join failed
                 internship: app.internship || { id: app.internship_id, title: "Internship Program" },
                 student: student || {
                     full_name: app.full_name || "New Intern",
-                    user_id: app.student_id || app.user_id,
+                    user_id: app.student_id || (app as any).user_id,
                     avatar_url: "/default-avatar.svg"
                 }
             };
         });
 
-        const internUserIds = studentUserIds as string[];
+        const internUserIds = allPossibleStudentIds;
 
         // Get recent logs for these interns
         let recentLogs: any[] = [];

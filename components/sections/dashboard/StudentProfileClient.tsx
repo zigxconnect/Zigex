@@ -28,7 +28,7 @@ import NoProjectMessage from "@/components/sections/dashboard/NoProjectMessage";
 import CreateProjectButton from "@/components/project/CreateProjectButton";
 import ProfileStories from "@/components/sections/dashboard/ProfileStories";
 import { ActiveInternshipActivityGraph } from "@/components/sections/profile/ActiveInternshipActivityGraph";
-import { cn, slugifyUsername } from "@/lib/utils";
+import { cn, slugifyUsername, normalizeImageSrc } from "@/lib/utils";
 
 interface StudentProfileClientProps {
   data: any;
@@ -65,8 +65,8 @@ export default function StudentProfileClient({
   // Fallback images using more reliable sources
   const defaultAvatar = "https://api.dicebear.com/7.x/initials/svg?seed=" + encodeURIComponent(data.full_name || "ZX");
   const defaultCover = "https://images.unsplash.com/photo-1557683316-973673baf926?w=1200&q=80";
-  const avatarUrl = data.avatar_url || defaultAvatar;
-  const coverImageUrl = data.cover_image || defaultCover;
+  const avatarUrl = normalizeImageSrc(data.avatar_url, defaultAvatar);
+  const coverImageUrl = normalizeImageSrc(data.cover_image, defaultCover);
   const linkedinUrl = data.linkedin_url;
   const whatsappUrl = data.phone ? `https://wa.me/${data.phone.replace(/\D/g, '')}` : null;
   const skills = data.hard_skills || [];

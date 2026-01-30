@@ -116,7 +116,7 @@ export async function getInternLogsForAdmin(studentId: string, internshipId?: st
 }
 
 export async function getCompanyInternsPerformanceSummary(companyId: string) {
-    if (!companyId) return {}; // Existing null check for companyId
+    if (!companyId) return {};
     const supabase = await createServerActionClient();
 
     console.log(`[PERF_SUMMARY] Fetching for company: ${companyId}`);
@@ -136,101 +136,110 @@ export async function getCompanyInternsPerformanceSummary(companyId: string) {
     ]);
 
     const rawApps = [
-        ...(structuredRes.data || []).map(a => ({ ...a, table: 'structured' })),
-        ...(legacyRes.data || []).map(a => ({ ...a, table: 'legacy' }))
+        ...(structuredRes.data || []).map(a => ({ ...a, table: 'structured' as const })),
+        ...(legacyRes.data || []).map(a => ({ ...a, table: 'legacy' as const }))
     ];
 
     console.log(`[PERF_SUMMARY] Found raw applications: ${rawApps.length}`);
     if (rawApps.length === 0) return {};
 
-    // 2. Build a robust Student Profile Map (ID -> UserID)
-    const distinctStudentIds = [...new Set(rawApps.map(a => a.student_id))].filter(Boolean);
+    // 2. Resolve basic IDs from applications
+    const initialStudentIds = [
+        ...new Set([
+            ...rawApps.map(a => a.student_id)
+        ])
+    ].filter(Boolean) as string[];
 
-    // Improved profile lookup: Use separate queries for robustness
-    const { data: profilesById } = await supabase
+    if (initialStudentIds.length === 0) return {};
+
+    // 3. Resolve student profiles first to get all unified IDs (id and user_id)
+    const { data: studentProfiles } = await supabase
         .from("student_profiles")
         .select("id, user_id, full_name")
-        .in("id", distinctStudentIds);
+        .or(`id.in.(${initialStudentIds.map(id => `"${id}"`).join(",")}),user_id.in.(${initialStudentIds.map(id => `"${id}"`).join(",")})`);
 
-    const { data: profilesByUid } = await supabase
-        .from("student_profiles")
-        .select("id, user_id, full_name")
-        .in("user_id", distinctStudentIds);
+    const profiles = studentProfiles || [];
 
-    const studentProfiles = [...(profilesById || []), ...(profilesByUid || [])];
-    console.log(`[PERF_SUMMARY] Profile resolution map size: ${studentProfiles.length}`);
+    // 4. Collect ALL associated IDs (both id and user_id) for accurate querying of attendance/evals
+    const allUnifiedIds = [
+        ...new Set([
+            ...profiles.map(p => p.id),
+            ...profiles.map(p => p.user_id)
+        ])
+    ].filter(Boolean) as string[];
 
-    const applications = rawApps.map(app => {
-        const profile = studentProfiles.find(p => p.id === app.student_id || p.user_id === app.student_id);
-        return {
-            appId: app.id,
-            uid: profile?.user_id || app.student_id,
-            internshipId: app.internship_id,
-            name: profile?.full_name || "Unknown"
-        };
+    // 5. Fetch attendance and evaluations using ALL unified IDs in parallel
+    const [attendanceRes, evaluationsRes] = await Promise.all([
+        supabase
+            .from("intern_attendance")
+            .select("student_id, status")
+            .in("student_id", allUnifiedIds)
+            .eq("status", "present"),
+        supabase
+            .from("intern_evaluations")
+            .select("student_id, overall_rating, comments, evaluation_date")
+            .in("student_id", allUnifiedIds)
+            .order("evaluation_date", { ascending: false })
+    ]);
+
+    const attendance = attendanceRes.data || [];
+    const evaluations = evaluationsRes.data || [];
+
+    // 6. Create a unified mapping and summary object
+    // We use a shared object reference for both profile.id and profile.user_id pointers
+    const perfSummaries: Record<string, { attendanceCount: number, totalMarks: number, name: string, latestObservation: string }> = {};
+
+    profiles.forEach(p => {
+        const summaryObj = { attendanceCount: 0, totalMarks: 0, name: p.full_name, latestObservation: "" };
+
+        if (p.id) perfSummaries[p.id] = summaryObj;
+        if (p.user_id) perfSummaries[p.user_id] = summaryObj;
     });
 
-    const studentUids = [...new Set(applications.map(a => a.uid))];
-    console.log(`[PERF_SUMMARY] Unique student UIDs to check: ${studentUids.length} (${studentUids.join(', ')})`);
+    // 7. Aggregate Attendance (using unified summaries)
+    attendance.forEach(record => {
+        const s = perfSummaries[record.student_id];
+        if (s) s.attendanceCount++;
+    });
 
-    // 3. Get verified attendance records
-    const { data: attendance, error: attError } = await supabase
-        .from("intern_attendance")
-        .select("student_id, internship_id, status")
-        .in("student_id", studentUids)
-        .eq("status", "present");
-
-    if (attError) console.error("[PERF_SUMMARY] Attendance fetch error:", attError);
-    console.log(`[PERF_SUMMARY] Fetched attendance records: ${attendance?.length || 0}`);
-
-    // 4. Get summaries of evaluations
-    const { data: evals, error: evalError } = await supabase
-        .from("intern_evaluations")
-        .select("student_id, internship_id, overall_rating, comments, evaluation_date")
-        .in("student_id", studentUids)
-        .order("evaluation_date", { ascending: false });
-
-    if (evalError) console.error("[PERF_SUMMARY] Evaluations fetch error:", evalError);
-
-    const summary: Record<string, { attendanceCount: number; totalMarks: number; latestObservation: string }> = {};
-
-    // Build a map of uid -> best stats (aggregate across all apps for same user)
-    const uidStatsMap: Record<string, { attendanceCount: number; totalMarks: number; latestObservation: string }> = {};
-
-    applications.forEach(app => {
-        const studentAttendance = (attendance || []).filter(a =>
-            a.student_id === app.uid &&
-            (!app.internshipId || !a.internship_id || a.internship_id === app.internshipId)
-        );
-        const studentEvals = (evals || []).filter(e =>
-            e.student_id === app.uid &&
-            (!app.internshipId || !e.internship_id || e.internship_id === app.internshipId)
-        );
-
-        console.log(`[PERF_SUMMARY] Mapping student ${app.name} (${app.uid}): Attnd=${studentAttendance.length}, Evals=${studentEvals.length}`);
-
-        const totalMarks = studentEvals.reduce((acc, curr) => acc + curr.overall_rating, 0);
-        const stats = {
-            attendanceCount: studentAttendance.length,
-            totalMarks: totalMarks,
-            latestObservation: studentEvals[0]?.comments || "Consistent performance tracked."
-        };
-
-        // Key by application ID (for direct lookup)
-        summary[app.appId] = stats;
-
-        // Also key by user ID (fallback lookup)
-        // Keep the best stats if same user has multiple apps
-        if (!uidStatsMap[app.uid] || stats.attendanceCount > uidStatsMap[app.uid].attendanceCount) {
-            uidStatsMap[app.uid] = stats;
+    // 8. Aggregate Evaluations (using unified summaries)
+    evaluations.forEach(record => {
+        const s = perfSummaries[record.student_id];
+        if (s) {
+            s.totalMarks += (record.overall_rating || 0);
+            if (!s.latestObservation) {
+                s.latestObservation = record.comments || "";
+            }
         }
     });
 
-    // Merge uid-keyed entries into summary for fallback lookups
-    Object.entries(uidStatsMap).forEach(([uid, stats]) => {
-        summary[uid] = stats;
+    // 9. Format final result keyed by application ID and also by student IDs for UI robustnes
+    const result: Record<string, { attendanceCount: number; totalMarks: number; latestObservation: string }> = {};
+
+    rawApps.forEach(app => {
+        const s = perfSummaries[app.student_id];
+        if (s) {
+            result[app.id] = {
+                attendanceCount: s.attendanceCount,
+                totalMarks: s.totalMarks,
+                latestObservation: s.latestObservation || ""
+            };
+        }
     });
 
-    console.log(`[PERF_SUMMARY] Final summary keys count: ${Object.keys(summary).length}`);
-    return summary;
+    // Add profile ID and user ID as keys for fallback
+    profiles.forEach(p => {
+        const s = perfSummaries[p.id] || perfSummaries[p.user_id];
+        if (s) {
+            const data = {
+                attendanceCount: s.attendanceCount,
+                totalMarks: s.totalMarks,
+                latestObservation: s.latestObservation || ""
+            };
+            if (p.id) result[p.id] = data;
+            if (p.user_id) result[p.user_id] = data;
+        }
+    });
+
+    return result;
 }

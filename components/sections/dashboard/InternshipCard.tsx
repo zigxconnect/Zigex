@@ -173,7 +173,7 @@ export const InternshipCard = ({
       >
         <div className="relative h-64 flex-shrink-0 overflow-hidden m-3 rounded-[1.8rem]">
           <Image
-            src={cover_image_url || "/intern.png"}
+            src={normalizeImageSrc(cover_image_url, "/intern.png")}
             alt={title}
             fill
             className="object-cover transition-transform duration-700 group-hover:scale-105"

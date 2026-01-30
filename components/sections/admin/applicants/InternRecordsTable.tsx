@@ -88,6 +88,39 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
       setLoading(false);
     }
   };
+  const handleExportCSV = () => {
+    if (activeInterns.length === 0) return;
+
+    const headers = ["Student Name", "Email", "School", "Applied Date", "Days Worked", "Attendance Log", "Total Marks", "Latest Observation"];
+    const csvRows = [headers.join(",")];
+
+    activeInterns.forEach(intern => {
+        const summary = summaries[intern.id] || summaries[intern.userId || ""] || { attendanceCount: 0, totalMarks: 0 };
+        const daysWorked = intern.appliedDate ? differenceInDays(new Date(), new Date(intern.appliedDate)) : 0;
+        
+        const row = [
+            `"${intern.name}"`,
+            `"${intern.email}"`,
+            `"${intern.school || ''}"`,
+            `"${format(new Date(intern.appliedDate), 'yyyy-MM-dd')}"`,
+            daysWorked,
+            summary.attendanceCount,
+            summary.totalMarks,
+            `"${(summary.latestObservation || "").replace(/"/g, '""')}"`
+        ];
+        csvRows.push(row.join(","));
+    });
+
+    const csvContent = csvRows.join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute("download", `intern_academic_records_${format(new Date(), "yyyyMMdd")}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -111,7 +144,11 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
               className="pl-11 h-12 rounded-2xl border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all font-medium text-sm"
             />
           </div>
-          <Button variant="outline" className="h-12 px-5 rounded-2xl border-slate-100 hover:bg-slate-50 text-slate-600 font-bold uppercase text-[10px] tracking-widest gap-2">
+          <Button 
+            onClick={handleExportCSV}
+            variant="outline" 
+            className="h-12 px-5 rounded-2xl border-slate-100 hover:bg-slate-50 text-slate-600 font-bold uppercase text-[10px] tracking-widest gap-2"
+          >
             <Download size={14} /> Export CSV
           </Button>
         </div>
@@ -136,11 +173,6 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
                 const daysWorked = intern.appliedDate ? differenceInDays(new Date(), new Date(intern.appliedDate)) : 0;
                 // Try lookup by application ID first, then by user ID as fallback
                 const summary = summaries[intern.id] || summaries[intern.userId || ""] || { attendanceCount: 0, totalMarks: 0 };
-                
-                // DEBUG: Log each intern's lookup
-                const foundByAppId = !!summaries[intern.id];
-                const foundByUserId = !!summaries[intern.userId || ""];
-                console.log(`[RECORDS_DEBUG] Intern: ${intern.name}, AppID: ${intern.id}, UserId: ${intern.userId}, FoundByAppId: ${foundByAppId}, FoundByUserId: ${foundByUserId}, Attnd: ${summary.attendanceCount}`);
                 
                 return (
                   <tr key={intern.id} className="group hover:bg-blue-50/30 transition-colors duration-300">
@@ -172,43 +204,63 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
                        </span>
                     </td>
 
-                    {/* Attendance Column: [Present Count] only */}
+                    {/* Attendance Column */}
                     <td className="px-6 py-5">
-                      <div className="flex flex-col items-center gap-1.5">
-                        <div className="flex items-baseline gap-1">
-                           <span className="text-sm font-black text-slate-900">{summary.attendanceCount}</span>
-                           <span className="text-[10px] font-bold text-slate-400">Total Days</span>
+                      {fetchingSummaries ? (
+                        <div className="flex flex-col items-center gap-2 animate-pulse">
+                          <div className="h-4 w-12 bg-slate-100 rounded" />
+                          <div className="h-1.5 w-16 bg-slate-100 rounded-full" />
                         </div>
-                        <div className="h-1.5 w-16 bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
-                           <div 
-                             className="h-full bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.3)]" 
-                             style={{ width: `${Math.min(100, (summary.attendanceCount / Math.max(1, daysWorked)) * 100)}%` }} 
-                           />
+                      ) : (
+                        <div className="flex flex-col items-center gap-1.5">
+                          <div className="flex items-baseline gap-1">
+                             <span className="text-sm font-black text-slate-900">{summary.attendanceCount}</span>
+                             <span className="text-[10px] font-bold text-slate-400">Total Days</span>
+                          </div>
+                          <div className="h-1.5 w-16 bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
+                             <div 
+                               className="h-full bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.3)]" 
+                               style={{ width: `${Math.min(100, (summary.attendanceCount / Math.max(1, daysWorked)) * 100)}%` }} 
+                             />
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </td>
 
-                    {/* Total Marks Column (Cumulative Count) */}
+                    {/* Total Marks Column */}
                     <td className="px-6 py-5">
-                      <div className="flex flex-col items-center">
-                        <div className="flex items-center gap-1.5">
-                           <Star size={14} className={cn("text-amber-500", summary.totalMarks > 0 && "fill-amber-500")} />
-                           <span className="text-sm font-black text-slate-900">{summary.totalMarks}</span>
+                      {fetchingSummaries ? (
+                        <div className="flex flex-col items-center gap-2 animate-pulse">
+                          <div className="h-4 w-16 bg-slate-100 rounded" />
                         </div>
-                        <p className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest mt-1">
-                          Total Marks
-                        </p>
-                      </div>
+                      ) : (
+                        <div className="flex flex-col items-center">
+                          <div className="flex items-center gap-1.5">
+                             <Star size={14} className={cn("text-amber-500", summary.totalMarks > 0 && "fill-amber-500")} />
+                             <span className="text-sm font-black text-slate-900">{summary.totalMarks}</span>
+                          </div>
+                          <p className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest mt-1">
+                            Total Marks
+                          </p>
+                        </div>
+                      )}
                     </td>
 
                     {/* Observation Column */}
                     <td className="px-6 py-5 max-w-xs">
-                      <div className="flex items-start gap-3">
-                         <MessageSquare size={14} className="text-blue-400 shrink-0 mt-0.5" />
-                         <p className="text-[11px] text-slate-500 font-medium italic line-clamp-2 leading-relaxed">
-                           "{summary.latestObservation || "Consolidating performance metrics and supervisor feedback."}"
-                         </p>
-                      </div>
+                      {fetchingSummaries ? (
+                        <div className="space-y-2 animate-pulse">
+                          <div className="h-3 w-full bg-slate-100 rounded" />
+                          <div className="h-3 w-2/3 bg-slate-100 rounded" />
+                        </div>
+                      ) : (
+                        <div className="flex items-start gap-3">
+                           <MessageSquare size={14} className="text-blue-400 shrink-0 mt-0.5" />
+                           <p className="text-[11px] text-slate-500 font-medium italic line-clamp-2 leading-relaxed">
+                             "{summary.latestObservation || "Consolidating performance metrics and supervisor feedback."}"
+                           </p>
+                        </div>
+                      )}
                     </td>
 
                     {/* Actions Column */}

@@ -210,7 +210,7 @@ export async function getInternshipWorkspaceData() {
   if (allStudentUserIds.length > 0) {
     const { data: profiles } = await supabaseAdmin
       .from("student_profiles")
-      .select("user_id, full_name, avatar_url")
+      .select("user_id, full_name, avatar_url, username")
       .in("user_id", allStudentUserIds);
     allStudentProfiles = profiles || [];
   }

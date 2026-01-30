@@ -6,6 +6,7 @@ import { Sparkles, TrendingUp, Users, Briefcase, Calendar, Loader2, MapPin, Arro
 import Image from 'next/image';
 import Link from 'next/link';
 import { getAllFeedData, type Internship, type Event, type Program } from '@/lib/actions/feed/feed.action';
+import { normalizeImageSrc } from '@/lib/utils';
 
 // The Program type from the server now includes `isOpen`
 type ProgramWithStatus = Program & { isOpen: boolean };
@@ -254,7 +255,7 @@ export default function PersonalizedFeed({ userId, userSkills = [], university }
                   {/* Avatar */}
                   <div className="flex-shrink-0 relative">
                     <div className={`w-12 h-12 rounded-full overflow-hidden shadow-md ring-2 ring-offset-2 dark:ring-offset-gray-900 transition-all duration-300 ${item.isOpen ? 'ring-blue-100 dark:ring-blue-900 hover:ring-blue-300 dark:hover:ring-blue-700 hover:scale-105' : 'ring-gray-200 dark:ring-gray-700'} ${item.isPinned ? 'ring-amber-300 dark:ring-amber-600 ring-offset-amber-50 dark:ring-offset-amber-900' : ''}`}>
-                      <Image src={item.companyLogo || 'https://i.ibb.co/xqCftyWn/seedLogo.webp'} alt={item.companyName} width={48} height={48} className="w-full h-full object-cover" />
+                      <Image src={normalizeImageSrc(item.companyLogo, 'https://i.ibb.co/xqCftyWn/seedLogo.webp')} alt={item.companyName} width={48} height={48} className="w-full h-full object-cover" />
                     </div>
                     
                     {item.isPinned && item.isOpen && (
@@ -300,7 +301,7 @@ export default function PersonalizedFeed({ userId, userSkills = [], university }
                     
                     {item.image && (
                       <div className={`relative w-full rounded-2xl overflow-hidden mb-3 group ${item.isOpen ? 'border-2 border-gray-200 dark:border-gray-700 shadow-md hover:shadow-xl' : 'border border-gray-300 dark:border-gray-600 opacity-60'}`} style={{ aspectRatio: '16/9' }}>
-                        <Image src={item.image} alt={item.title} fill className={`object-cover transition-all duration-500 ${item.isOpen ? 'group-hover:scale-110' : 'grayscale'}`} />
+                        <Image src={normalizeImageSrc(item.image)} alt={item.title} fill className={`object-cover transition-all duration-500 ${item.isOpen ? 'group-hover:scale-110' : 'grayscale'}`} />
                         {!item.isOpen && (
                           <div className="absolute inset-0 bg-gray-900/40 flex items-center justify-center backdrop-blur-[2px]">
                             <div className="bg-white/90 dark:bg-gray-800/90 px-4 py-2 rounded-full flex items-center gap-2 shadow-lg">

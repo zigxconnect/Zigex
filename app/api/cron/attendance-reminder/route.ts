@@ -1,76 +1,110 @@
-import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase/server';
-import { sendAttendanceReminderEmail } from '@/lib/email';
+import { NextResponse } from "next/server";
+import { supabaseAdmin } from "@/lib/supabase/server";
+import { sendAttendanceReminderEmail } from "@/lib/email";
 
-export const dynamic = 'force-dynamic';
+/**
+ * CRON JOB: Attendance Reminder
+ * Runs at 3 PM and 9 PM daily (configured via Vercel Cron or similar)
+ * 
+ * Logic:
+ * 1. Fetch all supervisors.
+ * 2. For each supervisor, find their assigned interns (accepted applications).
+ * 3. Check if attendance has been marked for those interns TODAY.
+ * 4. If any intern is missing attendance, send a reminder email to the supervisor.
+ */
 
 export async function GET(request: Request) {
     try {
-        // Basic security check to prevent unauthorized triggering
-        const { searchParams } = new URL(request.url);
-        const key = searchParams.get('key');
-        // Using a hardcoded key for simplicity in this context, 
-        // in production this should be an environment variable.
-        if (key !== 'zigex-cron-secret') {
+        // 1. Auth check (Simple secret token)
+        const authHeader = request.headers.get('authorization');
+        if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        console.log('[CRON] Starting attendance reminder job...');
+        console.log("[CRON] Starting Attendance Reminder Job...");
+        const today = new Date().toISOString().split('T')[0];
 
-        // Fetch all supervisors
-        const { data: supervisors, error } = await supabaseAdmin
-            .from('supervisor_profiles')
-            .select('user_id, full_name, email');
+        // 2. Fetch all supervisors
+        const { data: supervisors, error: supError } = await supabaseAdmin
+            .from("supervisor_profiles")
+            .select("id, email, full_name");
 
-        if (error) {
-            console.error('[CRON] DB Error:', error);
-            throw new Error(error.message);
-        }
-
-        console.log(`[CRON] Found ${supervisors?.length || 0} supervisors.`);
-
+        if (supError) throw supError;
         if (!supervisors || supervisors.length === 0) {
-            return NextResponse.json({ success: true, message: 'No supervisors found' });
+            return NextResponse.json({ message: "No supervisors found." });
         }
 
-        let sentCount = 0;
-        const errors: any[] = [];
+        let emailsSent = 0;
 
-        // Process emails in parallel
-        await Promise.all(supervisors.map(async (supervisor: any) => {
-            let email = supervisor.email;
+        // 3. Process each supervisor
+        for (const supervisor of supervisors) {
+            // Find assigned interns from BOTH tables
+            const [structuredApps, legacyApps] = await Promise.all([
+                supabaseAdmin
+                    .from("internship_applications")
+                    .select("id, student_id, student:student_profiles(full_name)")
+                    .eq("supervisor_id", supervisor.id)
+                    .eq("status", "accepted"),
+                supabaseAdmin
+                    .from("Applications")
+                    .select("id, student_id, student:student_profiles(full_name)")
+                    .eq("supervisor_id", supervisor.id)
+                    .eq("status", "accepted")
+            ]);
 
-            // Resilient: Fetch from Auth if missing in profile
-            if (!email && supervisor.user_id) {
-                const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(supervisor.user_id);
-                email = authUser?.user?.email;
-            }
+            const allApps = [
+                ...(structuredApps.data || []),
+                ...(legacyApps.data || [])
+            ];
 
-            if (email) {
-                try {
-                    await sendAttendanceReminderEmail({
-                        email,
-                        name: supervisor.full_name || 'Supervisor'
-                    });
-                    sentCount++;
-                } catch (err: any) {
-                    console.error(`[CRON] Failed to send to ${email}:`, err);
-                    errors.push({ email, error: err.message });
+            if (allApps.length === 0) continue;
+
+            const internsToRemind = [];
+
+            for (const app of allApps) {
+                // Check if attendance exists for today
+                const { data: attendance, error: attError } = await supabaseAdmin
+                    .from("intern_attendance")
+                    .select("id")
+                    .eq("student_id", app.student_id)
+                    .eq("attendance_date", today)
+                    .maybeSingle();
+
+                if (attError) {
+                    console.error(`[CRON] Error checking attendance for student ${app.student_id}:`, attError);
+                    continue;
                 }
-            } else {
-                console.warn(`[CRON] Skipping supervisor ${supervisor.full_name} (ID: ${supervisor.user_id}) - No email found.`);
-            }
-        }));
 
+                if (!attendance) {
+                    // Flatten student profile data
+                    const studentProfile = Array.isArray(app.student) ? app.student[0] : app.student;
+                    internsToRemind.push({
+                        name: studentProfile?.full_name || "Unknown Intern"
+                    });
+                }
+            }
+
+            // 4. Send email if there are interns missing attendance
+            if (internsToRemind.length > 0) {
+                await sendAttendanceReminderEmail({
+                    email: supervisor.email,
+                    name: supervisor.full_name,
+                    interns: internsToRemind,
+                    dashboardLink: "https://zigexconnect.com/supervisor"
+                });
+                emailsSent++;
+            }
+        }
+
+        console.log(`[CRON] Attendance Reminder Job finished. Total emails sent: ${emailsSent}`);
         return NextResponse.json({
             success: true,
-            sent: sentCount,
-            total: supervisors.length,
-            errors: errors.length > 0 ? errors : undefined
+            message: `Sent ${emailsSent} reminder emails.`,
+            date: today
         });
 
-    } catch (err: any) {
-        console.error('[CRON] Job failed:', err);
-        return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    } catch (error: any) {
+        console.error("[CRON] Attendance Reminder Job failed:", error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

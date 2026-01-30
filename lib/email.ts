@@ -6,6 +6,9 @@
 "use server";
 
 import nodemailer from 'nodemailer';
+import { render } from '@react-email/render';
+import AttendanceReminderEmail from '@/emails/AttendanceReminder';
+
 
 // Configuration - Strip ALL whitespace from app password
 const GMAIL_USER = process.env.GMAIL_USER;
@@ -799,20 +802,23 @@ export const sendSupervisorAssignmentEmail = async (params: {
           <p style="color: #64748b; font-size: 16px; line-height: 1.6; margin: 0 0 25px;">
             You have been assigned as the official supervisor for a new student on the Zigex Platform.
           </p>
+
           <div class="card">
             <span class="info-badge">Assignment Details</span>
             <p style="margin: 0; font-size: 14px; color: #64748b;">Student Name</p>
             <p style="margin: 4px 0 20px; font-size: 18px; font-weight: 800; color: #1e293b;">${params.studentName}</p>
-            
+
             <p style="margin: 0; font-size: 14px; color: #64748b;">Program</p>
             <p style="margin: 4px 0 20px; font-size: 16px; font-weight: 700; color: #1e293b;">${params.programTitle}</p>
-            
+
             <p style="margin: 0; font-size: 14px; color: #64748b;">Organization</p>
             <p style="margin: 4px 0 0; font-size: 16px; font-weight: 700; color: #155DFC;">${params.companyName}</p>
           </div>
+
           <div style="margin: 35px 0;">
             <a href="${params.dashboardLink}" class="button">Access Supervisor Hub</a>
           </div>
+
           <p style="color: #94a3b8; font-size: 14px; margin-top: 30px;">
             Thank you for helping shape the next generation of tech talent.<br>
             <strong>The Zigex Team</strong>
@@ -838,9 +844,43 @@ export const sendSupervisorAssignmentEmail = async (params: {
       html
     });
   } catch (error: any) {
-    console.error(`[EMAIL] Failed to send assignment email:`, error.message);
+    console.error(`[EMAIL] Failed to send assignment email: `, error.message);
   }
 };
+
+/**
+ * Sends an attendance reminder email via Gmail/Nodemailer
+ */
+export const sendAttendanceReminderEmail = async (params: {
+  email: string;
+  name: string;
+  interns: { name: string }[];
+  dashboardLink: string;
+}) => {
+  const transporter = createTransporter();
+  if (!transporter) return;
+
+  try {
+    const html = await render(AttendanceReminderEmail({
+      supervisorName: params.name,
+      interns: params.interns,
+      dashboardLink: params.dashboardLink
+    }));
+
+    await transporter.sendMail({
+      from: `"Zigex Supervisor Hub" <${GMAIL_USER}>`,
+      to: params.email,
+      subject: `⏰ Attendance Reminder: Don't forget to mark your interns today`,
+      html
+    });
+    console.log(`[EMAIL] Attendance reminder sent via Gmail to ${params.email}`);
+  } catch (error) {
+    console.error("[EMAIL] Failed to send attendance reminder via Gmail:", error);
+    throw error;
+  }
+};
+
+
 
 /**
  * Sends a task assignment notification to a student.
@@ -862,7 +902,7 @@ export const sendTaskAssignmentEmail = async (params: {
     const html = generateEmailHTML({
       heading: `New Task Assigned: ${taskTitle}`,
       message: `
-        Hello ${name},<br/><br/>
+        Hello ${name}, <br/><br/>
         Your supervisor, <strong>${supervisorName}</strong>, has assigned you a new task:
         <br/><br/>
         <strong>Task:</strong> ${taskTitle}<br/>
@@ -890,44 +930,11 @@ export const sendTaskAssignmentEmail = async (params: {
 
     console.log(`[EMAIL] Task notification sent to ${email}`);
   } catch (error) {
-    console.error(`[EMAIL ERROR] Failed to send task notification to ${email}:`, error);
+    console.error(`[EMAIL ERROR] Failed to send task notification to ${email}: `, error);
   }
 };
 
-/**
- * Sends attendance reminder to supervisors
- */
-export const sendAttendanceReminderEmail = async (params: {
-  email: string;
-  name: string;
-}) => {
-  const transporter = createTransporter();
-  if (!transporter) return;
 
-  const firstName = params.name.split(" ")[0];
-
-  const html = generateEmailHTML({
-    heading: "Attendance Reminder",
-    message: `Hi ${firstName},\n\nIt's 3:00 PM! This is your daily reminder to take attendance for your interns.\n\nPlease log in to the Supervisor Hub and mark today's attendance.`,
-    ctaText: "Take Attendance",
-    ctaLink: "https://zigexconnect.com/supervisor",
-    statusBadge: "ACTION REQUIRED",
-    statusColor: "#F59E0B",
-    companyName: "SEED INC"
-  });
-
-  try {
-    await transporter.sendMail({
-      from: `"SEED INC Reminders" <${GMAIL_USER}>`,
-      to: params.email,
-      subject: "🕒 Reminder: Time to Take Attendance",
-      html
-    });
-    console.log(`[EMAIL] Attendance reminder sent to ${params.email}`);
-  } catch (error) {
-    console.error(`[EMAIL ERROR] Failed to send attendance reminder to ${params.email}:`, error);
-  }
-};
 
 /**
  * Sends a notification to the supervisor when an intern submits a daily report.
@@ -944,7 +951,7 @@ export const sendReportSubmissionEmail = async (params: {
 
   const html = generateEmailHTML({
     heading: "New Report Submitted",
-    message: `Hi ${params.supervisorName},\n\n${params.studentName} has just submitted their daily report for ${params.reportDate}.\n\nReport Preview:\n"${params.reportSummary.length > 150 ? params.reportSummary.substring(0, 150) + "..." : params.reportSummary}"\n\nPlease review and confirm this report in your dashboard.`,
+    message: `Hi ${params.supervisorName}, <br/><br/>${params.studentName} has just submitted their daily report for ${params.reportDate}.<br/><br/>Report Preview:<br/>"${params.reportSummary.length > 150 ? params.reportSummary.substring(0, 150) + "..." : params.reportSummary}"<br/><br/>Please review and confirm this report in your dashboard.`,
     ctaText: "Review Report",
     ctaLink: "https://zigexconnect.com/supervisor",
     statusBadge: "NEW SUBMISSION",
@@ -961,6 +968,6 @@ export const sendReportSubmissionEmail = async (params: {
     });
     console.log(`[EMAIL] Report notification sent to ${params.email}`);
   } catch (error) {
-    console.error(`[EMAIL ERROR] Failed to send report notification to ${params.email}:`, error);
+    console.error(`[EMAIL ERROR] Failed to send report notification to ${params.email}: `, error);
   }
 };

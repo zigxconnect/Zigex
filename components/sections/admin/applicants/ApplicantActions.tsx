@@ -80,7 +80,7 @@ export const ApplicantActions = ({
     }
   }
 
-  const WHATSAPP_GROUP_LINK = "https://chat.whatsapp.com/DXYGLpny3DwGs5pkb1fPAr";
+  const WHATSAPP_GROUP_LINK = "https://chat.whatsapp.com/K0RflJDzxyKDIM2yuvzTTQ?mode=gi_t";
 
   const handleWhatsAppInvite = () => {
     const message = encodeURIComponent(`Hi ${applicant.name}, this is the ZIGEX recruitment team. Congratulations on your progress for the ${applicant.internshipTitle || 'opportunity'}! Join our official community here: ${WHATSAPP_GROUP_LINK}`);

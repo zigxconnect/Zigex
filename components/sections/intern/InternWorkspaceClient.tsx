@@ -35,6 +35,7 @@ import {
   ArrowUpRight
 } from "lucide-react";
 import { format } from "date-fns";
+import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -49,6 +50,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { InternActivityGraph } from "./InternActivityGraph";
+import { normalizeImageSrc } from "@/lib/utils";
 
 interface InternWorkspaceClientProps {
   data: {
@@ -374,7 +376,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                 <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 p-[2px] shadow-lg shadow-blue-500/20">
                   <div className="w-full h-full rounded-[14px] bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden">
                     {company?.logo_url ? (
-                      <Image src={company.logo_url} alt={company.company_name} width={64} height={64} className="object-cover" />
+                      <Image src={normalizeImageSrc(company.logo_url)} alt={company.company_name} width={64} height={64} className="object-cover" />
                     ) : (
                       <Shield size={24} className="text-blue-600" />
                     )}
@@ -386,7 +388,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                       {internship?.type || "Internship"}
                     </Badge>
                   </div>
-                  <h1 className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white truncate">
+                  <h1 className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white leading-tight sm:leading-snug mb-0.5">
                     {internship?.title || "Professional Internship"}
                   </h1>
                   <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium truncate">
@@ -402,18 +404,19 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
               >
                 <div className="flex -space-x-3 overflow-hidden">
                   {(fellowInterns || []).slice(0, 5).map((intern: any, i: number) => (
-                    <div 
+                    <Link 
                       key={intern.id} 
-                      className="inline-block h-10 w-10 rounded-full ring-2 ring-white dark:ring-slate-900 overflow-hidden bg-slate-100 shadow-sm"
+                      href={`/dashboard/student/${intern.student_profiles?.username || intern.student_profiles?.user_id}`}
+                      className="inline-block h-10 w-10 rounded-full ring-2 ring-white dark:ring-slate-900 overflow-hidden bg-slate-100 shadow-sm transition-transform hover:scale-110 hover:z-10"
                     >
                       <Image 
-                        src={intern.student_profiles?.avatar_url || "/default-avatar.svg"} 
+                        src={normalizeImageSrc(intern.student_profiles?.avatar_url, "/default-avatar.svg")} 
                         alt={intern.student_profiles?.full_name || "Intern"} 
                         width={40} 
                         height={40} 
                         className="h-full w-full object-cover"
                       />
-                    </div>
+                    </Link>
                   ))}
                   {fellowInterns.length > 5 && (
                     <div className="flex items-center justify-center h-10 w-10 rounded-full ring-2 ring-white dark:ring-slate-900 bg-blue-600 text-white text-[10px] font-black">
@@ -628,7 +631,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                         <div className="flex items-center gap-3">
                           <div className="w-12 h-12 rounded-xl overflow-hidden ring-2 ring-blue-100 dark:ring-slate-700">
                             <Image 
-                              src={supervisor.avatar_url || "/default-avatar.svg"} 
+                              src={normalizeImageSrc(supervisor.avatar_url, "/default-avatar.svg")} 
                               alt={supervisor.full_name} 
                               width={48} 
                               height={48} 
@@ -1246,7 +1249,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                       >
                         <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-100 shrink-0">
                           <Image 
-                            src={intern.student_profiles?.avatar_url || "/default-avatar.svg"} 
+                            src={normalizeImageSrc(intern.student_profiles?.avatar_url, "/default-avatar.svg")} 
                             alt={intern.student_profiles?.full_name} 
                             width={48} 
                             height={48} 
@@ -1263,9 +1266,9 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                           size="icon" 
                           className="rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 shrink-0"
                         >
-                          <a href={`/profile/${intern.student_profiles?.user_id}`}>
+                          <Link href={`/dashboard/student/${intern.student_profiles?.username || intern.student_profiles?.user_id}`}>
                             <ArrowUpRight size={18} />
-                          </a>
+                          </Link>
                         </Button>
                       </motion.div>
                     ))}
@@ -1290,7 +1293,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                       >
                         <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-100 shrink-0">
                           <Image 
-                            src={sup.avatar_url || "/default-avatar.svg"} 
+                            src={normalizeImageSrc(sup.avatar_url, "/default-avatar.svg")} 
                             alt={sup.full_name} 
                             width={48} 
                             height={48} 
