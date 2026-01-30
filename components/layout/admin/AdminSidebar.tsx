@@ -18,6 +18,8 @@ import {
   Sparkles,
   ShieldCheck,
   Megaphone,
+  Building2,
+  Crown,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -30,10 +32,12 @@ export interface CompanyProfile {
   company_name: string;
   industry?: string;
   logo_url?: string;
+  is_verified?: boolean;
+  is_super_admin?: boolean;
 }
 
-// Grouped navigation links
-const navigationGroups = [
+// Base navigation groups (for all verified companies)
+const baseNavigationGroups = [
   {
     title: "Overview",
     links: [
@@ -53,7 +57,6 @@ const navigationGroups = [
       { href: "/admin/programs/content", icon: BookOpen, label: "Content" },
     ],
   },
-
   {
     title: "Organization",
     links: [
@@ -63,6 +66,14 @@ const navigationGroups = [
   },
 ];
 
+// Super Admin only navigation group
+const superAdminNavigationGroup = {
+  title: "Super Admin",
+  links: [
+    { href: "/admin/companies", icon: Building2, label: "Manage Companies" },
+  ],
+};
+
 export const AdminSidebar = ({
   companyProfile,
 }: {
@@ -70,6 +81,11 @@ export const AdminSidebar = ({
 }) => {
   const { isOpen, isMobile, toggleSidebar } = useAdminSidebar();
   const pathname = usePathname();
+
+  // Build navigation groups based on user role
+  const navigationGroups = companyProfile.is_super_admin
+    ? [...baseNavigationGroups, superAdminNavigationGroup]
+    : baseNavigationGroups;
 
   return (
     <>
@@ -92,9 +108,13 @@ export const AdminSidebar = ({
           {navigationGroups.map((group) => (
             <div key={group.title} className="space-y-3">
               <h3 className={cn(
-                "px-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] transition-opacity duration-300",
+                "px-4 text-[10px] font-black uppercase tracking-[0.2em] transition-opacity duration-300",
+                group.title === "Super Admin" ? "text-amber-500" : "text-slate-400",
                 !isOpen && "lg:opacity-0"
               )}>
+                {group.title === "Super Admin" && (
+                  <Crown size={10} className="inline mr-1 mb-0.5" />
+                )}
                 {group.title}
               </h3>
               <nav className="space-y-1.5">
@@ -104,6 +124,8 @@ export const AdminSidebar = ({
                     (link.href !== "/admin/dashboard" &&
                       pathname.startsWith(link.href));
                   
+                  const isSuperAdminLink = group.title === "Super Admin";
+                  
                   return (
                     <Link
                       key={link.href}
@@ -112,17 +134,29 @@ export const AdminSidebar = ({
                       className={cn(
                         "group relative flex items-center gap-3 px-4 py-3 rounded-[1.25rem] text-sm font-bold transition-all duration-300",
                         isActive
-                          ? "bg-gradient-to-r from-primary to-secondary text-white shadow-xl shadow-primary/20 scale-[1.02]"
-                          : "text-slate-600 hover:bg-slate-50 hover:text-primary"
+                          ? isSuperAdminLink 
+                            ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-xl shadow-amber-500/20 scale-[1.02]"
+                            : "bg-gradient-to-r from-primary to-secondary text-white shadow-xl shadow-primary/20 scale-[1.02]"
+                          : isSuperAdminLink
+                            ? "text-amber-600 hover:bg-amber-50 hover:text-amber-700"
+                            : "text-slate-600 hover:bg-slate-50 hover:text-primary"
                       )}
                     >
                       <div className={cn(
                         "flex items-center justify-center w-8 h-8 rounded-xl transition-all duration-300",
-                        isActive ? "bg-white/20" : "bg-slate-50 group-hover:bg-primary/10"
+                        isActive 
+                          ? "bg-white/20" 
+                          : isSuperAdminLink 
+                            ? "bg-amber-50 group-hover:bg-amber-100" 
+                            : "bg-slate-50 group-hover:bg-primary/10"
                       )}>
                         <link.icon
                           size={18}
-                          className={isActive ? "text-white" : "text-slate-400 group-hover:text-primary"}
+                          className={isActive 
+                            ? "text-white" 
+                            : isSuperAdminLink 
+                              ? "text-amber-500 group-hover:text-amber-600" 
+                              : "text-slate-400 group-hover:text-primary"}
                         />
                       </div>
                       
@@ -180,4 +214,3 @@ export const AdminSidebar = ({
     </>
   );
 };
-

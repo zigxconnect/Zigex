@@ -19,6 +19,12 @@ export default async function AdminDashboardLayout({
     return redirect("/sign-in");
   }
 
+  // Check if company is verified - if not, show pending verification page
+  // But allow access to the pending-verification page itself
+  if (!companyProfile.is_verified && !companyProfile.is_super_admin) {
+    return redirect("/admin/pending-verification");
+  }
+
   const headerStats = await getHeaderStats(companyProfile.id);
 
   return (
@@ -48,3 +54,4 @@ export default async function AdminDashboardLayout({
     </AdminLayoutProvider>
   );
 }
+
