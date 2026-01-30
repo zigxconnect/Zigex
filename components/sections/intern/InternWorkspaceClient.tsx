@@ -368,41 +368,43 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
           {/* Mobile: Stacked Layout */}
           <div className="flex flex-col gap-6">
             
-            {/* Top Row: Logo + Badge */}
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 p-[2px] shadow-lg shadow-blue-500/20">
-                <div className="w-full h-full rounded-[14px] bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden">
-                  {company?.logo_url ? (
-                    <Image src={company.logo_url} alt={company.company_name} width={64} height={64} className="object-cover" />
-                  ) : (
-                    <Shield size={24} className="text-blue-600" />
-                  )}
+            {/* Top Row: Logo + Badge + Colleagues (Desktop) */}
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 p-[2px] shadow-lg shadow-blue-500/20">
+                  <div className="w-full h-full rounded-[14px] bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden">
+                    {company?.logo_url ? (
+                      <Image src={company.logo_url} alt={company.company_name} width={64} height={64} className="object-cover" />
+                    ) : (
+                      <Shield size={24} className="text-blue-600" />
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <Badge className="bg-blue-600 text-white border-0 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md">
-                    {internship?.type || "Internship"}
-                  </Badge>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge className="bg-blue-600 text-white border-0 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md">
+                      {internship?.type || "Internship"}
+                    </Badge>
+                  </div>
+                  <h1 className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white truncate">
+                    {internship?.title || "Professional Internship"}
+                  </h1>
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium truncate">
+                    {company?.company_name} • {application?.duration}
+                  </p>
                 </div>
-                <h1 className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white truncate">
-                  {internship?.title || "Professional Internship"}
-                </h1>
-                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium truncate">
-                  {company?.company_name} • {application?.duration}
-                </p>
               </div>
 
-              {/* Fellow Colleagues Avatars - TOP RIGHT */}
+              {/* Fellow Colleagues Avatars - Hidden on tiny screens, prominent on desktop */}
               <button 
                 onClick={() => setIsColleaguesModalOpen(true)}
-                className="hidden md:flex flex-col items-end gap-2 group cursor-pointer"
+                className="hidden sm:flex flex-col items-end gap-2 group cursor-pointer"
               >
                 <div className="flex -space-x-3 overflow-hidden">
                   {(fellowInterns || []).slice(0, 5).map((intern: any, i: number) => (
                     <div 
                       key={intern.id} 
-                      className="inline-block h-10 w-10 rounded-full ring-2 ring-white dark:ring-slate-900 overflow-hidden bg-slate-100"
+                      className="inline-block h-10 w-10 rounded-full ring-2 ring-white dark:ring-slate-900 overflow-hidden bg-slate-100 shadow-sm"
                     >
                       <Image 
                         src={intern.student_profiles?.avatar_url || "/default-avatar.svg"} 
@@ -424,6 +426,26 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                 </div>
               </button>
             </div>
+
+            {/* Mobile-Only Colleagues Button */}
+            <button 
+              onClick={() => setIsColleaguesModalOpen(true)}
+              className="sm:hidden flex items-center justify-between p-4 rounded-2xl bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800 transition-all active:scale-[0.98]"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex -space-x-2">
+                  {(fellowInterns || []).slice(0, 3).map((intern: any) => (
+                    <div key={intern.id} className="h-8 w-8 rounded-full ring-2 ring-white dark:ring-slate-900 overflow-hidden bg-white shadow-sm">
+                      <Image src={intern.student_profiles?.avatar_url || "/default-avatar.svg"} alt="avatar" width={32} height={32} className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+                <span className="text-[10px] font-black text-blue-700 dark:text-blue-400 uppercase tracking-widest">
+                  {fellowInterns.length} Colleagues Online
+                </span>
+              </div>
+              <ArrowRight size={14} className="text-blue-600" />
+            </button>
 
             {/* Action Buttons - Full Width on Mobile */}
             <div className="flex gap-3">
@@ -1176,18 +1198,32 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                   <Compass size={16} className="text-blue-600" />
                   <span className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest">Network Explorer</span>
                 </div>
-                <Button 
-                  onClick={() => setShowDepartmentOnly(!showDepartmentOnly)}
-                  variant={showDepartmentOnly ? "default" : "outline"}
-                  className={cn(
-                    "rounded-xl h-10 px-6 text-[10px] font-black uppercase tracking-widest transition-all",
-                    showDepartmentOnly 
-                      ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" 
-                      : "border-blue-100 dark:border-slate-700 text-slate-500"
-                  )}
-                >
-                  {showDepartmentOnly ? `Only ${application.domain}` : "All Departments"}
-                </Button>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <Button 
+                    onClick={() => setShowDepartmentOnly(false)}
+                    variant={!showDepartmentOnly ? "default" : "outline"}
+                    className={cn(
+                      "flex-1 sm:flex-none rounded-xl h-10 px-6 text-[10px] font-black uppercase tracking-widest transition-all",
+                      !showDepartmentOnly 
+                        ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" 
+                        : "border-blue-100 dark:border-slate-700 text-slate-500"
+                    )}
+                  >
+                    All Interns
+                  </Button>
+                  <Button 
+                    onClick={() => setShowDepartmentOnly(true)}
+                    variant={showDepartmentOnly ? "default" : "outline"}
+                    className={cn(
+                      "flex-1 sm:flex-none rounded-xl h-10 px-6 text-[10px] font-black uppercase tracking-widest transition-all",
+                      showDepartmentOnly 
+                        ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" 
+                        : "border-blue-100 dark:border-slate-700 text-slate-500"
+                    )}
+                  >
+                    My Program
+                  </Button>
+                </div>
               </div>
 
               {/* Content */}
@@ -1196,11 +1232,11 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                 {/* Fellow Interns Section */}
                 <div>
                   <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <User size={12} /> Fellow Interns ({showDepartmentOnly ? fellowInterns.filter((i: any) => i.domain === application.domain).length : fellowInterns.length})
+                    <User size={12} /> Fellow Interns ({showDepartmentOnly ? fellowInterns.filter((i: any) => i.isSameProgram).length : fellowInterns.length})
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {(showDepartmentOnly 
-                      ? fellowInterns.filter((i: any) => i.domain === application.domain)
+                      ? fellowInterns.filter((i: any) => i.isSameProgram)
                       : fellowInterns
                     ).map((intern: any) => (
                       <motion.div 

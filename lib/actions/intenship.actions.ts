@@ -185,21 +185,40 @@ export async function getInternshipWorkspaceData() {
   const readIds = new Set(readRecords?.map((r: any) => r.announcement_id) || []);
   const unreadCount = announcements.filter((a: any) => !readIds.has(a.id)).length;
 
-  // 8. Fetch Fellow Interns for the same internship
-  const { data: fellowInterns } = await supabaseAdmin
-    .from("internship_applications")
-    .select(`
-      id,
-      student_id,
-      domain,
-      student_profiles:student_profiles (
-        full_name,
-        avatar_url,
-        user_id
-      )
-    `)
-    .eq("internship_id", application.internship_id)
-    .eq("status", "accepted");
+  // 8. Fetch Fellow Interns - ULTRA ROBUST
+  // We fetch from BOTH tables and manually join to be safe
+  const [structAppsRes, legacyAppsRes] = await Promise.all([
+    supabaseAdmin
+      .from("internship_applications")
+      .select("id, internship_id, student_id, domain")
+      .eq("status", "accepted"),
+    supabaseAdmin
+      .from("Applications")
+      .select("id, internship_id, student_id, domain")
+      .eq("status", "accepted")
+      .catch(() => ({ data: [] })) // In case "Applications" doesn't exist or is inaccessible
+  ]);
+
+  const allRawApps = [...((structAppsRes.data as any[]) || []), ...((legacyAppsRes as any).data || [])];
+  const allStudentUserIds = Array.from(new Set(allRawApps.map(app => app.student_id).filter(Boolean)));
+
+  let allStudentProfiles: any[] = [];
+  if (allStudentUserIds.length > 0) {
+    const { data: profiles } = await supabaseAdmin
+      .from("student_profiles")
+      .select("user_id, full_name, avatar_url")
+      .in("user_id", allStudentUserIds);
+    allStudentProfiles = profiles || [];
+  }
+
+  const fellowInterns = allRawApps.map(app => {
+    const profile = allStudentProfiles.find(p => p.user_id === app.student_id);
+    return {
+      ...app,
+      isSameProgram: app.internship_id === application.internship_id,
+      student_profiles: profile || { full_name: "Member", avatar_url: "/default-avatar.svg", user_id: app.student_id }
+    };
+  }).filter(app => app.student_id !== user.id); // Exclude self
 
   // 9. Fetch Supervisors for the same company
   const { data: colleaguesSupervisors } = await supabaseAdmin
