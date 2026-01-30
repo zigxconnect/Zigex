@@ -13,6 +13,7 @@ import {
   LogOut,
   BrainCircuit,
   MessageSquare,
+  Newspaper,
 } from "lucide-react";
 import { AiOutlineWechat } from "react-icons/ai";
 import { useState, useEffect } from "react";
@@ -46,11 +47,17 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
       excludePaths: ["/feed/projects"]
     },
     {
-      href: "/dashboard/projects",
+      href: "/intern/workspace",
       icon: Briefcase,
-      label: "Projects",
-      matchPaths: ["/dashboard/projects", "/dashboard/projects/", "/feed/projects/"],
+      label: "Workspace",
+     
     },
+     {
+              href: "/dashboard/blog",
+              icon: Newspaper,
+              label: "News",
+              matchPaths: ["/dashboard/blog", "/dashboard/blog/"],
+            },
     {
       href: "/dashboard/student",
       icon: Users,
