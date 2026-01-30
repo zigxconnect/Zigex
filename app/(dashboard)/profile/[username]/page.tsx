@@ -77,13 +77,18 @@ export default async function ProfilePage({ params }: Props) {
   const skills = data.hard_skills || [];
   const soft = data.soft_skills || [];
 
-  // Fetch accepted application counts
-  const [internRes, progRes, eventRes] = await Promise.all([
+  // Fetch accepted application counts from BOTH legacy and modern tables
+  const [internResLegacy, internResModern, progRes, eventRes] = await Promise.all([
     supabaseAdmin
       .from("Applications")
       .select("id", { count: "exact", head: true })
       .eq("student_id", data.id)
       .eq("application_type", "internship")
+      .eq("status", "accepted"),
+    supabaseAdmin
+      .from("internship_applications")
+      .select("id", { count: "exact", head: true })
+      .or(`student_id.eq.${data.user_id},student_id.eq.${data.id}`)
       .eq("status", "accepted"),
     supabaseAdmin
       .from("Applications")
@@ -99,7 +104,7 @@ export default async function ProfilePage({ params }: Props) {
       .eq("status", "accepted"),
   ]);
 
-  const internshipsApplied = internRes?.count ?? 0;
+  const internshipsApplied = Math.max(internResLegacy?.count ?? 0, internResModern?.count ?? 0);
   const programsApplied = progRes?.count ?? 0;
   const eventsApplied = eventRes?.count ?? 0;
   const avatarUrl = data.avatar_url;
@@ -114,28 +119,43 @@ export default async function ProfilePage({ params }: Props) {
     logs: any[];
   } | null = null;
 
-  const { data: activeApp } = await supabaseAdmin
-    .from("internship_applications")
-    .select(`
-      id,
-      internship_id,
-      student_id,
-      domain,
-      status,
-      assigned_supervisor_id,
-      internships (
-        id, title, type, location, description,
-        company_profiles (
-          id, company_name, logo_url, cover_image_url
+  // Debug: Log the IDs we're searching with
+  console.log(`[ActiveInternship] Searching for user_id: ${data.user_id}, profile_id: ${data.id}`);
+
+  // Build the query - handle cases where user_id might be null/undefined
+  const studentIdFilters: string[] = [];
+  if (data.user_id) studentIdFilters.push(`student_id.eq.${data.user_id}`);
+  if (data.id) studentIdFilters.push(`student_id.eq.${data.id}`);
+  
+  let activeApp = null;
+  if (studentIdFilters.length > 0) {
+    // First, try a simpler query without the supervisor join (which may fail if column doesn't exist)
+    const { data: appData, error: appError } = await supabaseAdmin
+      .from("internship_applications")
+      .select(`
+        id,
+        internship_id,
+        student_id,
+        domain,
+        status,
+        internships (
+          id, title, type, location, description,
+          company_profiles (
+            id, company_name, logo_url, cover_image_url
+          )
         )
-      ),
-      supervisor_profiles (
-        id, full_name, avatar_url, role, email
-      )
-    `)
-    .eq("student_id", data.user_id)
-    .eq("status", "accepted")
-    .maybeSingle();
+      `)
+      .or(studentIdFilters.join(','))
+      .eq("status", "accepted")
+      .maybeSingle();
+    
+    activeApp = appData;
+    
+    // Debug logging
+    console.log(`[ActiveInternship] Query filters: ${studentIdFilters.join(' OR ')}`);
+    console.log(`[ActiveInternship] Query result:`, appData ? `Found app id: ${appData.id}, status: ${appData.status}, internship: ${JSON.stringify(appData.internships)}` : 'No result');
+    if (appError) console.error(`[ActiveInternship] Query error:`, appError);
+  }
 
   if (activeApp?.internships) {
     // Fetch logs for activity graph
@@ -144,14 +164,32 @@ export default async function ProfilePage({ params }: Props) {
       .select("id, log_date")
       .eq("application_id", activeApp.id);
 
+    // Try to get supervisor info if assigned (may not exist yet)
+    let supervisorInfo = null;
+    try {
+      // Check if there's a supervisor assignment for this intern's domain
+      const { data: supervisorData } = await supabaseAdmin
+        .from("supervisor_profiles")
+        .select("id, full_name, avatar_url, role, email")
+        .eq("domain", (activeApp as any).domain)
+        .maybeSingle();
+      supervisorInfo = supervisorData;
+    } catch (e) {
+      console.log(`[ActiveInternship] No supervisor found for domain: ${(activeApp as any).domain}`);
+    }
+
     activeInternshipInfo = {
       internship: activeApp.internships,
       company: (activeApp.internships as any)?.company_profiles || null,
-      supervisor: activeApp.supervisor_profiles || null,
+      supervisor: supervisorInfo,
       logs: logsData || []
     };
+    console.log(`[ActiveInternship] SUCCESS - Found internship: ${(activeApp.internships as any)?.title}`);
+  } else {
+    console.log(`[ActiveInternship] No active internship found for this user`);
   }
   // ========== END ACTIVE INTERNSHIP DETECTION ==========
+
 
   // Fetch similar students
   const { data: candidatesData } = await supabaseAdmin
