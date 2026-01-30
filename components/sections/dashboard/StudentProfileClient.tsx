@@ -27,6 +27,7 @@ import AnimatedConnectButtons from "@/components/customButtons/AnimatedConnectBu
 import NoProjectMessage from "@/components/sections/dashboard/NoProjectMessage";
 import CreateProjectButton from "@/components/project/CreateProjectButton";
 import ProfileStories from "@/components/sections/dashboard/ProfileStories";
+import { ActiveInternshipActivityGraph } from "@/components/sections/profile/ActiveInternshipActivityGraph";
 import { cn, slugifyUsername } from "@/lib/utils";
 
 interface StudentProfileClientProps {
@@ -42,6 +43,12 @@ interface StudentProfileClientProps {
   myProfile: any;
   username: string;
   applicationsList?: { type: string; status: string; title: string, id: string }[];
+  activeInternshipInfo?: {
+    internship: any;
+    company: any;
+    supervisor: any;
+    logs: any[];
+  } | null;
 }
 
 export default function StudentProfileClient({
@@ -52,7 +59,8 @@ export default function StudentProfileClient({
   similarStudents,
   myProfile,
   username,
-  applicationsList = []
+  applicationsList = [],
+  activeInternshipInfo = null
 }: StudentProfileClientProps) {
   // Fallback images using more reliable sources
   const defaultAvatar = "https://api.dicebear.com/7.x/initials/svg?seed=" + encodeURIComponent(data.full_name || "ZX");
@@ -235,6 +243,55 @@ export default function StudentProfileClient({
                  {data.about || "This user hasn't written a bio yet, but they are an active member of the Zigex ecosystem, participating in events and building projects."}
                </p>
             </section>
+
+             {/* ===== ACTIVE INTERNSHIP SECTION ===== */}
+             {activeInternshipInfo && (
+               <section className="bg-white rounded-3xl border border-blue-200 shadow-lg overflow-hidden">
+                 {/* Internship Header */}
+                 <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-white relative">
+                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -mr-12 -mt-12" />
+                   <div className="relative z-10 flex items-center gap-4">
+                     <div className="w-14 h-14 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 shadow-lg overflow-hidden">
+                       {activeInternshipInfo.company?.logo_url ? (
+                         <Image src={activeInternshipInfo.company.logo_url} alt="Company" width={56} height={56} className="w-full h-full object-cover" />
+                       ) : (
+                         <Briefcase size={24} className="text-white" />
+                       )}
+                     </div>
+                     <div>
+                       <p className="text-[10px] font-bold uppercase tracking-widest text-blue-100 mb-0.5">Currently Interning At</p>
+                       <h2 className="text-lg sm:text-xl font-black tracking-tight">{activeInternshipInfo.company?.company_name || "Company"}</h2>
+                       <p className="text-xs font-medium text-blue-100 mt-0.5">{activeInternshipInfo.internship?.title}</p>
+                     </div>
+                   </div>
+                 </div>
+
+                 {/* Supervisor Info */}
+                 {activeInternshipInfo.supervisor && (
+                   <div className="p-5 border-b border-slate-100 flex items-center gap-4">
+                     <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-100 shadow-md">
+                       <Image 
+                         src={activeInternshipInfo.supervisor.avatar_url || "/default-avatar.svg"} 
+                         alt={activeInternshipInfo.supervisor.full_name} 
+                         width={48} 
+                         height={48} 
+                         className="w-full h-full object-cover" 
+                       />
+                     </div>
+                     <div className="flex-1">
+                       <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Supervised By</p>
+                       <h4 className="text-base font-bold text-slate-900">{activeInternshipInfo.supervisor.full_name}</h4>
+                       <p className="text-xs font-medium text-slate-500">{activeInternshipInfo.supervisor.role || "Lead Supervisor"}</p>
+                     </div>
+                   </div>
+                 )}
+
+                 {/* Activity Graph */}
+                 <div className="p-5">
+                   <ActiveInternshipActivityGraph logs={activeInternshipInfo.logs} />
+                 </div>
+               </section>
+             )}
 
              {/* Engagement Status Section */}
              {(participatingPrograms.length > 0 || participatingEvents.length > 0 || pendingApplications.length > 0) && (

@@ -168,6 +168,52 @@ export default async function StudentDetailPage({ params }: Props) {
     id: app.program_id || app.event_id
   })) || [];
 
+  // ========== ACTIVE INTERNSHIP DETECTION ==========
+  let activeInternshipInfo: {
+    internship: any;
+    company: any;
+    supervisor: any;
+    logs: any[];
+  } | null = null;
+
+  const { data: activeApp } = await supabaseAdmin
+    .from("internship_applications")
+    .select(`
+      id,
+      internship_id,
+      student_id,
+      domain,
+      status,
+      assigned_supervisor_id,
+      internships (
+        id, title, type, location, description,
+        company_profiles (
+          id, company_name, logo_url, cover_image_url
+        )
+      ),
+      supervisor_profiles (
+        id, full_name, avatar_url, role, email
+      )
+    `)
+    .eq("student_id", data.user_id)
+    .eq("status", "accepted")
+    .maybeSingle();
+
+  if (activeApp?.internships) {
+    const { data: logsData } = await supabaseAdmin
+      .from("internship_daily_logs")
+      .select("id, log_date")
+      .eq("application_id", activeApp.id);
+
+    activeInternshipInfo = {
+      internship: activeApp.internships,
+      company: (activeApp.internships as any)?.company_profiles || null,
+      supervisor: activeApp.supervisor_profiles || null,
+      logs: logsData || []
+    };
+  }
+  // ========== END ACTIVE INTERNSHIP DETECTION ==========
+
   return (
     <StudentProfileClient
       data={data}
@@ -178,6 +224,7 @@ export default async function StudentDetailPage({ params }: Props) {
       myProfile={myProfile}
       username={username}
       applicationsList={applicationsList}
+      activeInternshipInfo={activeInternshipInfo}
     />
   );
 }
