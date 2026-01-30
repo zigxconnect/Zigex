@@ -186,20 +186,24 @@ export async function getInternshipWorkspaceData() {
   const unreadCount = announcements.filter((a: any) => !readIds.has(a.id)).length;
 
   // 8. Fetch Fellow Interns - ULTRA ROBUST
-  // We fetch from BOTH tables and manually join to be safe
-  const [structAppsRes, legacyAppsRes] = await Promise.all([
-    supabaseAdmin
-      .from("internship_applications")
-      .select("id, internship_id, student_id, domain")
-      .eq("status", "accepted"),
-    supabaseAdmin
+  const { data: structApps } = await supabaseAdmin
+    .from("internship_applications")
+    .select("id, internship_id, student_id, domain")
+    .eq("status", "accepted");
+
+  let legacyApps: any[] = [];
+  try {
+    const { data: legacyData } = await supabaseAdmin
       .from("Applications")
       .select("id, internship_id, student_id, domain")
-      .eq("status", "accepted")
-      .catch(() => ({ data: [] })) // In case "Applications" doesn't exist or is inaccessible
-  ]);
+      .eq("status", "accepted");
+    legacyApps = legacyData || [];
+  } catch (e) {
+    // Silently fail for legacy table if it doesn't exist
+    legacyApps = [];
+  }
 
-  const allRawApps = [...((structAppsRes.data as any[]) || []), ...((legacyAppsRes as any).data || [])];
+  const allRawApps = [...(structApps || []), ...legacyApps];
   const allStudentUserIds = Array.from(new Set(allRawApps.map(app => app.student_id).filter(Boolean)));
 
   let allStudentProfiles: any[] = [];
