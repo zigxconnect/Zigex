@@ -238,6 +238,9 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
             <option>Marketing</option>
             <option>Data Science</option>
             <option>Design</option>
+            <option>Product Management</option>
+            <option>Project Management</option>
+            <option>Embedded Systems & IoT</option>
           </Select>
         </FormField>
         <FormField label="Location" required>
