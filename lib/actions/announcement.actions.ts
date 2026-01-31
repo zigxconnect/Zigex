@@ -69,6 +69,39 @@ export async function getAnnouncements(companyId?: string) {
     return enrichedAnnouncements;
 }
 
+export async function getAnnouncementById(id: string) {
+    const supabase = await createServerActionClient();
+
+    // 1. Fetch the announcement
+    const { data: announcement, error } = await supabase
+        .from("announcements")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+    if (error || !announcement) {
+        console.error("Error fetching announcement:", error);
+        return null;
+    }
+
+    // 2. Parallel fetch related profiles
+    const [authorRes, companyRes, studentRes] = await Promise.all([
+        supabaseAdmin.from("user_profiles").select("user_id, full_name, avatar_url, email").eq("user_id", announcement.author_id).maybeSingle(),
+        announcement.company_id ? supabaseAdmin.from("company_profiles").select("id, company_name, logo_url").eq("id", announcement.company_id).maybeSingle() : { data: null },
+        announcement.tagged_student_id ? supabaseAdmin.from("student_profiles").select("user_id, full_name, avatar_url").eq("user_id", announcement.tagged_student_id).maybeSingle() : { data: null }
+    ]);
+
+    // 3. Construct enriched object
+    const enrichedAnnouncement = {
+        ...announcement,
+        author: authorRes.data || { full_name: "Zigex Admin", avatar_url: null, email: "" },
+        company: companyRes.data || null,
+        tagged_student: studentRes.data || null
+    };
+
+    return enrichedAnnouncement;
+}
+
 export async function createAnnouncement(payload: {
     title: string;
     content: string;
