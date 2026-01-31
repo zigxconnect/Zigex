@@ -267,7 +267,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-20 lg:top-16 left-0 h-[calc(100vh-5rem)] lg:h-[calc(100vh-4rem)] w-80 bg-sidebar border-r border-sidebar-border shadow-lg z-40
+          fixed top-20 lg:top-16 left-0 h-[calc(100vh-5rem)] lg:h-[calc(100vh-4rem)] w-80 bg-sidebar border-r border-sidebar-border shadow-lg z-50
           transform transition-transform duration-300 ease-in-out
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
           lg:translate-x-0 flex flex-col
