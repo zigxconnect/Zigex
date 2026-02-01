@@ -1,27 +1,14 @@
-import { createServerClient } from "@supabase/ssr";
+import { createSupabaseServerClient } from "../supabase/server"; // Ensure this path is correct
 import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 
-import { supabaseAdmin } from "../supabase/server"; // Ensure this path is correct
+import { supabaseAdmin } from "../supabase/server";
 
 export async function authMiddleware(request: Request) {
-  // --- START OF CORRECTED LOGIC ---
-
-  // 1. Create a Supabase client that can read the request's cookies.
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-      },
-    }
-  );
+  // 1. Create a Supabase client using the standard factory
+  const supabase = await createSupabaseServerClient();
 
   // 2. Get the user directly from the cookie session.
-  // This replaces the old logic of looking for a Bearer token.
   const {
     data: { user },
     error,
@@ -29,10 +16,11 @@ export async function authMiddleware(request: Request) {
 
   // 3. If there's an error or no user, the session is invalid. Deny access.
   if (error || !user) {
-    return {
-      error: "Unauthorized: Invalid or missing session cookie",
-      status: 401,
-    };
+    console.error(`[AUTH_MIDDLEWARE] Session failure for user ${user?.id || 'unknown'}:`, error?.message || "No user found");
+    return NextResponse.json(
+      { error: `Unauthorized: ${error?.message || "Invalid session"}` },
+      { status: 401 }
+    );
   }
 
   // --- END OF CORRECTED LOGIC ---
@@ -52,10 +40,10 @@ export async function authMiddleware(request: Request) {
       // No rows found, treat as not a company
     } else {
       console.error("Supabase company profile error:", companyError);
-      return {
-        error: "Internal server error: Could not fetch company profile",
-        status: 500,
-      };
+      return NextResponse.json(
+        { error: "Internal server error: Could not fetch company profile" },
+        { status: 500 }
+      );
     }
   }
   if (companyProfile) {
@@ -75,10 +63,10 @@ export async function authMiddleware(request: Request) {
       // No rows found, treat as not a student
     } else {
       console.error("Supabase student profile error:", studentError);
-      return {
-        error: "Internal server error: Could not fetch student profile",
-        status: 500,
-      };
+      return NextResponse.json(
+        { error: "Internal server error: Could not fetch student profile" },
+        { status: 500 }
+      );
     }
   }
   if (studentProfile) {
@@ -88,5 +76,9 @@ export async function authMiddleware(request: Request) {
 
   // 5. If the user is authenticated but has NEITHER a company nor a student profile,
   // they are unauthorized to perform actions.
-  return { error: "Unauthorized: User profile not found", status: 401 };
+  console.warn(`[AUTH_MIDDLEWARE] Authenticated user ${user.id} has no company or student profile record.`);
+  return NextResponse.json(
+    { error: "Unauthorized: Profile record (company/student) not found for this account" },
+    { status: 401 }
+  );
 }

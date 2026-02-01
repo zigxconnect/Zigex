@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, X, Image as ImageIcon, Type, ChevronLeft, ChevronRight, Share2, User } from 'lucide-react';
+import { Plus, X, Image as ImageIcon, Type, ChevronLeft, ChevronRight, Share2, User, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -69,6 +69,7 @@ interface Story {
   created_at: string;
   userSlug?: string;
   fontSize?: string;
+  isAnnouncement?: boolean;
 }
 
 const STORY_COLORS = [
@@ -128,58 +129,57 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
   const fetchStories = async () => {
     try {
       setLoading(true);
-      // Fetch active stories (expires_at > now)
-      // Note: RLS already filters by expires_at, but good to be explicit
-      const { data, error } = await supabase
+
+      // 1. Fetch active user stories
+      const storiesPromise = supabase
         .from('stories')
         .select('*')
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      // 2. Fetch recent announcements (last 5, acting as stories)
+      const announcementsPromise = supabase
+        .from('announcements')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(5);
 
-      // We need to join with profile data. 
-      // Ideally 'stories' should relation to 'profiles' table if it exists. 
-      // But user_id references auth.users. 
-      // We will assume 'currentUser' has info for the current user.
-      // For others, we might need a way to get names. 
-      // For now, let's map what we can. 
-      // If we don't have a public profile table linked, we might show "User".
-      // But let's assume 'currentUser' has data for US, and others we might fetch or mock names if distinct.
-      // Actually, let's look at the data structure. 'user_id' is the key.
+      const [storiesRes, announcementsRes] = await Promise.all([storiesPromise, announcementsPromise]);
 
-      // Enhancement: Fetch profiles for these users
-      const userIds = Array.from(new Set(data?.map(s => s.user_id) || []));
-      
-      // Fetch specific profiles from student_profiles
-      let profilesMap: Record<string, { name: string, avatar: string, username?: string }> = {};
-      
-      if (userIds.length > 0) {
-        const { data: profiles, error: profilesError } = await supabase
-          .from('student_profiles')
-          .select('user_id, full_name, avatar_url, username')
-          .in('user_id', userIds);
-          
-        if (!profilesError && profiles) {
-          profiles.forEach((p: any) => {
-            profilesMap[p.user_id] = {
-              name: p.full_name || 'App User',
-              avatar: p.avatar_url || '',
-              username: p.username
-            };
-          });
-        }
-      }
-      
-      const formattedStories: Story[] = (data || []).map((s: any) => {
+      if (storiesRes.error) throw storiesRes.error;
+      const storiesData = storiesRes.data || [];
+      const announcementsData = announcementsRes.data || [];
+
+      // 3. Prepare IDs for profile fetching
+      const userIds = Array.from(new Set(storiesData.map(s => s.user_id)));
+      const companyIds = Array.from(new Set(announcementsData.map(a => a.company_id).filter(Boolean))) as string[];
+
+      // 4. Fetch Profiles
+      const [profilesRes, companiesRes] = await Promise.all([
+        userIds.length > 0 
+          ? supabase.from('student_profiles').select('user_id, full_name, avatar_url, username').in('user_id', userIds) 
+          : { data: [] },
+        companyIds.length > 0 
+          ? supabase.from('company_profiles').select('id, company_name, logo_url').in('id', companyIds) 
+          : { data: [] }
+      ]);
+
+      const profilesMap: Record<string, any> = {};
+      profilesRes.data?.forEach((p: any) => { profilesMap[p.user_id] = p; });
+
+      const companiesMap: Record<string, any> = {};
+      companiesRes.data?.forEach((c: any) => { companiesMap[c.id] = c; });
+
+      // 5. Map User Stories
+      const formattedUserStories: Story[] = storiesData.map((s: any) => {
         const isMe = s.user_id === currentUser?.profile?.user_id;
         const profile = profilesMap[s.user_id];
         
         return {
             id: s.id,
             userId: s.user_id,
-            userName: isMe ? (currentUser?.name || 'Me') : (profile?.name || 'App User'),
-            userAvatar: isMe ? (currentUser?.avatarUrl || '') : (profile?.avatar || `https://i.pravatar.cc/150?u=${s.user_id}`),
+            userName: isMe ? (currentUser?.name || 'Me') : (profile?.full_name || 'App User'),
+            userAvatar: isMe ? (currentUser?.avatarUrl || '') : (profile?.avatar_url || `https://i.pravatar.cc/150?u=${s.user_id}`),
             userSlug: isMe ? (currentUser?.profile?.username) : (profile?.username),
             type: s.type as StoryType,
             content: s.content,
@@ -193,8 +193,40 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
         };
       });
 
-      // Enrich with current user details if missing (for my stories specifically)
-      setStories(formattedStories);
+      // 6. Map Announcements to Stories
+      const formattedAnnouncementStories: Story[] = announcementsData.map((a: any) => {
+        const company = a.company_id ? companiesMap[a.company_id] : null;
+        const companyName = company ? company.company_name : "Zigex Global";
+        const companyLogo = company?.logo_url;
+
+        // Use image_url if present, else text content
+        const type: StoryType = a.image_url ? 'image' : 'text';
+        
+        return {
+          id: `announcement-${a.id}`,
+          userId: a.company_id || 'zigex-global',
+          userName: companyName,
+          userAvatar: companyLogo || '', 
+          userSlug: company ? company.company_name.toLowerCase().replace(/\s+/g, '') : 'zigex',
+          type: type,
+          content: a.image_url || a.content,
+          caption: a.image_url ? a.content : undefined,
+          timestamp: formatWhatsAppTime(a.created_at),
+          viewed: false,
+          color: 'bg-gradient-to-br from-blue-700 to-slate-900',
+          fontSize: 'text-xl',
+          likes: 0,
+          created_at: a.created_at,
+          isAnnouncement: true, // Flag for specific styling and logic
+        };
+      });
+
+      // 7. Merge and Sort
+      const allStories = [...formattedAnnouncementStories, ...formattedUserStories].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+
+      setStories(allStories);
     } catch (error) {
       console.error("Error fetching stories:", error);
     } finally {
@@ -500,7 +532,9 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
               "relative flex-none w-[140px] h-[220px] rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300 border border-border/50 group",
               story.viewed 
                 ? "ring-1 ring-border" 
-                : "ring-2 ring-offset-2 ring-offset-background ring-transparent bg-gradient-to-tr from-blue-600 to-indigo-500 p-[2px]" 
+                : (story as any).isAnnouncement 
+                  ? "ring-2 ring-offset-2 ring-offset-background ring-transparent bg-gradient-to-tr from-blue-700 to-sky-400 p-[2px]" // Blue for Official
+                  : "ring-2 ring-offset-2 ring-offset-background ring-transparent bg-gradient-to-tr from-orange-500 to-pink-500 p-[2px]" // Gradient for Users
             )}
             onClick={() => handleStoryClick(story)}
             whileHover={{ scale: 1.03, y: -2 }}
@@ -523,7 +557,10 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
 
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent z-10 opacity-80 group-hover:opacity-100 transition-opacity" />
 
-                <div className="absolute top-3 left-3 z-20 rounded-full border-2 border-primary/20 bg-background/10 backdrop-blur-sm overflow-hidden w-10 h-10 shadow-lg group-hover:scale-110 transition-transform">
+                <div className={cn(
+                   "absolute top-3 left-3 z-20 rounded-full border-2 bg-background/10 backdrop-blur-sm overflow-hidden w-10 h-10 shadow-lg group-hover:scale-110 transition-transform",
+                   (story as any).isAnnouncement ? "border-blue-500" : "border-primary/20"
+                )}>
                   <Avatar className="w-full h-full">
                     <AvatarImage src={story.userAvatar} />
                     <AvatarFallback>{story.userName[0]}</AvatarFallback>
@@ -531,7 +568,12 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
                 </div>
                 
                 <div className="absolute bottom-3 left-3 right-3 z-20">
-                  <p className="text-white text-sm font-bold truncate drop-shadow-lg group-hover:translate-x-1 transition-transform">{story.userName}</p>
+                  <p className="text-white text-sm font-bold truncate drop-shadow-lg group-hover:translate-x-1 transition-transform">
+                      {story.userName}
+                      {(story as any).isAnnouncement && (
+                         <span className="block text-[10px] text-blue-300 font-medium uppercase tracking-wider mt-0.5">Official Update</span>
+                      )}
+                  </p>
                 </div>
             </div>
           </motion.div>
@@ -649,17 +691,27 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
 
                  {/* ... rest of viewer (messages etc) ... */}
                  <div className="absolute bottom-20 sm:bottom-10 left-6 right-6 z-50 flex gap-4 justify-between items-center">
+                    {/* Profile / Details Button */}
                     <Button 
                       className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-full h-12 gap-2 backdrop-blur-md transition-all shadow-lg text-sm sm:text-base font-medium"
                       onClick={(e) => {
                         e.stopPropagation();
                         // Navigate using username if available, else fallback to userId
-                        const target = slugifyUsername(selectedStory.userSlug || selectedStory.userId);
-                        window.location.href = `/dashboard/student/${target}`; 
+                        if (selectedStory.isAnnouncement) {
+                            // Extract ID from "announcement-{id}"
+                            const announcementId = selectedStory.id.replace('announcement-', '');
+                            window.location.href = `/feed/announcements/${announcementId}`;
+                        } else {
+                            const target = slugifyUsername(selectedStory.userSlug || selectedStory.userId);
+                            window.location.href = `/dashboard/student/${target}`; 
+                        }
                       }}
                     >
-                      <User size={18} />
-                      View Profile
+                      {/* Change Icon based on type */}
+                      {selectedStory.isAnnouncement ? <ExternalLink size={18} /> : <User size={18} />}
+                      
+                      {/* Change Text based on type */}
+                      {selectedStory.isAnnouncement ? "View Details" : "View Profile"}
                     </Button>
 
                     <Button 

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "../../../../lib/supabase/server";
+import { createClient, supabaseAdmin } from "@/lib/supabase/server";
 import { authMiddleware } from "@/lib/middleware/auth";
 import { eventSchema } from "@/lib/validation/event";
 
@@ -26,7 +26,8 @@ export async function GET(request: Request) {
   }
 
   // Fetch events from Supabase
-  const { data, error } = await supabaseAdmin
+  const supabase = await createClient();
+  const { data, error } = await supabase
     .from("event")
     .select("*")
     .eq("company_id", company.id)
@@ -88,6 +89,7 @@ export async function POST(request: Request) {
     const imageName = `${sanitizePathComponent(dataobject.title)}-${Date.now()}.${imageExt}`;
     const imagePath = `${sanitizePathComponent(company.company_name)}/events/${imageName}`;
 
+    const supabase = await createClient();
     const { error: uploadError } = await supabaseAdmin.storage
       .from("company-assets")
       .upload(imagePath, eventImage, { cacheControl: "3600", upsert: false });
@@ -111,7 +113,7 @@ export async function POST(request: Request) {
       company_id: company.id,
     });
 
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from("event")
       .insert([validatedData])
       .select()
@@ -129,7 +131,7 @@ export async function POST(request: Request) {
     // --- NOTIFICATION & EMAIL LOGIC ---
     try {
       // 1. Get subscribed users
-      const { data: users, error: userError } = await supabaseAdmin.rpc("get_subscribed_emails");
+      const { data: users, error: userError } = await (await createClient()).rpc("get_subscribed_emails");
 
       let recipients = users || [];
       if (userError) {
@@ -146,10 +148,11 @@ export async function POST(request: Request) {
           const { NewPostEmail } = await import("@/emails/NewPostEmail");
 
           // Use "notifications@zigexconnect.com" as 'to' and everyone else as 'bcc'
+          const limitedRecipients = recipientEmails.slice(0, 50);
           await resend.emails.send({
             from: "ZIGEX <notifications@zigexconnect.com>",
             to: "notifications@zigexconnect.com",
-            bcc: recipientEmails,
+            bcc: limitedRecipients,
             subject: `New Event Posted: ${data.title}`,
             react: NewPostEmail({
               postTitle: data.title,
@@ -175,7 +178,7 @@ export async function POST(request: Request) {
           reference_id: data.id,
         }));
 
-        const { error: notifError } = await supabaseAdmin.from("notifications").insert(notifications);
+        const { error: notifError } = await (await createClient()).from("notifications").insert(notifications);
         if (notifError) console.error("Failed to create notifications:", notifError);
       }
     } catch (innerErr) {
@@ -226,7 +229,8 @@ export async function DELETE(request: Request) {
       );
     }
 
-    const { data: existingEvent, error: fetchError } = await supabaseAdmin
+    const supabase = await createClient();
+    const { data: existingEvent, error: fetchError } = await supabase
       .from("event")
       .select("id, event_picture_url")
       .eq("id", id)
@@ -242,7 +246,7 @@ export async function DELETE(request: Request) {
       );
     }
 
-    const { error: deleteError } = await supabaseAdmin
+    const { error: deleteError } = await supabase
       .from("event")
       .delete()
       .eq("id", id);

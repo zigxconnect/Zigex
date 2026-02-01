@@ -1,35 +1,13 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase/server";
-
-// Helper function to create the Supabase client (your code, with async fixes)
-async function createSupabaseClient() {
-  const cookieStore = await cookies();
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-        async set(name: string, value: string, options: CookieOptions) {
-          await cookieStore.set({ name, value, ...options });
-        },
-        async remove(name: string, options: CookieOptions) {
-          await cookieStore.set({ name, value: "", ...options });
-        },
-      },
-    }
-  );
-}
+import { supabaseAdmin, createClient } from "@/lib/supabase/server";
 
 /**
  * GET: Securely fetches a hybrid list of personal and global notifications.
  */
 export async function GET(request: Request) {
-  const supabase = await createSupabaseClient();
+  const supabase = await createClient();
   try {
     const {
       data: { user },
@@ -105,7 +83,7 @@ export async function GET(request: Request) {
  * POST: Securely marks notifications as read.
  */
 export async function POST(request: Request) {
-  const supabase = await createSupabaseClient();
+  const supabase = await createClient();
   try {
     const {
       data: { user },

@@ -3,7 +3,12 @@
  * 100% Free, No Domain Required, Works Server-Side!
  */
 
+"use server";
+
 import nodemailer from 'nodemailer';
+import { render } from '@react-email/render';
+import AttendanceReminderEmail from '@/emails/AttendanceReminder';
+
 
 // Configuration - Strip ALL whitespace from app password
 const GMAIL_USER = process.env.GMAIL_USER;
@@ -12,18 +17,19 @@ const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD?.replace(/\s+/g, '');
 // Create transporter with optimized settings
 const createTransporter = () => {
   if (!GMAIL_USER || !GMAIL_APP_PASSWORD) {
-    console.error("[EMAIL] Not configured! Set GMAIL_USER and GMAIL_APP_PASSWORD in .env.local");
-    console.error("[EMAIL] GMAIL_USER:", GMAIL_USER ? "SET" : "MISSING");
-    console.error("[EMAIL] GMAIL_APP_PASSWORD:", GMAIL_APP_PASSWORD ? "SET" : "MISSING");
-    return null;
+    const errorMsg = "[EMAIL CONFIG ERROR] GMAIL_USER or GMAIL_APP_PASSWORD is missing in .env.local";
+    console.error(errorMsg);
+    throw new Error(errorMsg);
   }
+
+  console.log(`[EMAIL] Creating transporter for ${GMAIL_USER}...`);
 
   console.log(`[EMAIL] Creating transporter for: ${GMAIL_USER}`);
 
   return nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // Use TLS
+    port: 465, // Use secure port 465 for Gmail (SSL)
+    secure: true,
     auth: {
       user: GMAIL_USER,
       pass: GMAIL_APP_PASSWORD,
@@ -32,10 +38,6 @@ const createTransporter = () => {
     connectionTimeout: 10000, // 10 seconds
     greetingTimeout: 10000,
     socketTimeout: 15000,
-    // Pool connections for faster subsequent emails
-    pool: true,
-    maxConnections: 3,
-    maxMessages: 100,
   });
 };
 
@@ -628,5 +630,344 @@ export const sendVerificationEmail = async (params: {
   } catch (error: any) {
     console.error(`[EMAIL] Failed to send verification email to ${params.email}:`, error.message);
     throw error;
+  }
+};
+
+/**
+ * Sends a premium, Duolingo-inspired Supervisor Welcome Email
+ */
+export const sendSupervisorWelcomeEmail = async (params: {
+  email: string;
+  name: string;
+  companyName: string;
+  dashboardLink: string;
+}) => {
+  const transporter = createTransporter();
+  if (!transporter) return;
+
+  const firstName = params.name.split(" ")[0];
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to Zigex!</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap');
+    body { margin: 0; padding: 0; background-color: #f7f7f7; font-family: 'Nunito', sans-serif; }
+    .wrapper { width: 100%; table-layout: fixed; background-color: #f7f7f7; padding-bottom: 60px; }
+    .main-table { background-color: #ffffff; margin: 0 auto; width: 100%; max-width: 600px; border-radius: 20px; overflow: hidden; border: 2px solid #e5e5e5; }
+    .header { background-color: #155DFC; padding: 40px 20px; text-align: center; }
+    .content { padding: 40px 30px; text-align: center; }
+    .button { display: inline-block; background-color: #58cc02; color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 16px; font-weight: 800; font-size: 18px; text-transform: uppercase; letter-spacing: 0.8px; box-shadow: 0 4px 0 #46a302; transition: all 0.2s; }
+    .button:hover { transform: translateY(2px); box-shadow: 0 2px 0 #46a302; }
+    .card { background-color: #f0f9ff; border: 2px solid #155DFC; border-radius: 16px; padding: 20px; margin: 20px 0; text-align: left; }
+    .info-icon { font-size: 24px; display: inline-block; vertical-align: top; margin-top: 2px; }
+    .footer-text { color: #888888; font-size: 11px; font-weight: 700; text-transform: uppercase; margin: 0; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <table class="main-table" cellspacing="0" cellpadding="0">
+      
+      <!-- Colorful Header -->
+      <tr>
+        <td class="header">
+          <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 900; letter-spacing: -1px; text-shadow: 0 2px 0 rgba(0,0,0,0.1);">You're In! 🎉</h1>
+        </td>
+      </tr>
+
+      <!-- Body Content -->
+      <tr>
+        <td class="content">
+          
+           <!-- Fun Bubble -->
+           <div style="margin-bottom: 25px;">
+             <span style="display: inline-block; background-color: #ffc800; color: #734b00; padding: 8px 16px; border-radius: 50px; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 3px 0 #eebb00;">New Role Unlocked</span>
+           </div>
+
+          <h2 style="color: #3c3c3c; margin: 0 0 15px; font-weight: 800; font-size: 24px;">Congratulations, ${firstName}!</h2>
+          
+          <p style="color: #777777; font-size: 16px; line-height: 1.6; margin: 0 0 25px;">
+            You've been officially added as a <strong>Supervisor</strong> on the Zigex Platform by <strong style="color: #155DFC;">${params.companyName}</strong>.
+          </p>
+
+          <!-- Info Card -->
+          <div class="card">
+            <table width="100%">
+              <tr>
+                <td width="40" valign="top">
+                  <span class="info-icon">🛡️</span>
+                </td>
+                <td>
+                  <p style="margin: 0; font-weight: 800; color: #155DFC; font-size: 15px;">What's Next?</p>
+                  <p style="margin: 5px 0 0; font-size: 14px; color: #4b5563; line-height: 1.5;">
+                    Visit your dashboard to see your assigned interns, review their logs, and guide them to success.
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- Big CTA Button -->
+          <div style="margin: 35px 0;">
+            <a href="${params.dashboardLink}" class="button">
+              View My Dashboard
+            </a>
+          </div>
+
+          <p style="color: #afafaf; font-size: 14px; margin-top: 30px;">
+            Happy Mentoring,<br>
+            <strong>The Zigex Team</strong>
+          </p>
+
+        </td>
+      </tr>
+      
+      <!-- Footer Stripe -->
+      <tr>
+        <td style="background-color: #e5e5e5; padding: 15px; text-align: center;">
+          <p class="footer-text">© ${new Date().getFullYear()} Zigex Platform</p>
+        </td>
+      </tr>
+
+    </table>
+  </div>
+</body>
+</html>
+  `;
+
+  try {
+    const result = await transporter.sendMail({
+      from: `"Zigex Supervisor Team" <${GMAIL_USER}>`,
+      to: params.email,
+      subject: `🎉 Congratulations! You're now a Supervisor at ${params.companyName}`,
+      html
+    });
+    console.log(`[EMAIL] Supervisor welcome sent to ${params.email}. MessageId: ${result.messageId}`);
+    return { success: true };
+  } catch (error: any) {
+    console.error(`[EMAIL] Failed to send supervisor welcome to ${params.email}:`, error.message);
+    throw error;
+  }
+};
+
+/**
+ * Sends a premium notification for new student assignment
+ */
+export const sendSupervisorAssignmentEmail = async (params: {
+  email: string;
+  name: string;
+  studentName: string;
+  programTitle: string;
+  companyName: string;
+  dashboardLink: string;
+}) => {
+  const transporter = createTransporter();
+  if (!transporter) return;
+
+  const firstName = params.name.split(" ")[0];
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap');
+    body { margin: 0; padding: 0; background-color: #f7f7f7; font-family: 'Nunito', sans-serif; }
+    .wrapper { width: 100%; table-layout: fixed; background-color: #f7f7f7; padding-bottom: 60px; }
+    .main-table { background-color: #ffffff; margin: 0 auto; width: 100%; max-width: 600px; border-radius: 24px; overflow: hidden; border: 2px solid #e5e5e5; }
+    .header { background-color: #1a1a2e; padding: 40px 20px; text-align: center; }
+    .content { padding: 40px 30px; text-align: center; }
+    .button { display: inline-block; background-color: #155DFC; color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 16px; font-weight: 800; font-size: 18px; text-transform: uppercase; letter-spacing: 0.8px; box-shadow: 0 4px 0 #0d3eb3; transition: all 0.2s; }
+    .card { background-color: #f8fafc; border: 2px solid #e2e8f0; border-radius: 20px; padding: 25px; margin: 25px 0; text-align: left; }
+    .info-badge { display: inline-block; background-color: #10b98122; color: #10b981; padding: 6px 14px; border-radius: 50px; font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <table class="main-table" cellspacing="0" cellpadding="0">
+      <tr>
+        <td class="header">
+          <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 900; letter-spacing: 1px;">New Assignment 📋</h1>
+        </td>
+      </tr>
+      <tr>
+        <td class="content">
+          <h2 style="color: #1e293b; margin: 0 0 15px; font-weight: 800; font-size: 22px;">Hello ${firstName}!</h2>
+          <p style="color: #64748b; font-size: 16px; line-height: 1.6; margin: 0 0 25px;">
+            You have been assigned as the official supervisor for a new student on the Zigex Platform.
+          </p>
+
+          <div class="card">
+            <span class="info-badge">Assignment Details</span>
+            <p style="margin: 0; font-size: 14px; color: #64748b;">Student Name</p>
+            <p style="margin: 4px 0 20px; font-size: 18px; font-weight: 800; color: #1e293b;">${params.studentName}</p>
+
+            <p style="margin: 0; font-size: 14px; color: #64748b;">Program</p>
+            <p style="margin: 4px 0 20px; font-size: 16px; font-weight: 700; color: #1e293b;">${params.programTitle}</p>
+
+            <p style="margin: 0; font-size: 14px; color: #64748b;">Organization</p>
+            <p style="margin: 4px 0 0; font-size: 16px; font-weight: 700; color: #155DFC;">${params.companyName}</p>
+          </div>
+
+          <div style="margin: 35px 0;">
+            <a href="${params.dashboardLink}" class="button">Access Supervisor Hub</a>
+          </div>
+
+          <p style="color: #94a3b8; font-size: 14px; margin-top: 30px;">
+            Thank you for helping shape the next generation of tech talent.<br>
+            <strong>The Zigex Team</strong>
+          </p>
+        </td>
+      </tr>
+      <tr>
+        <td style="background-color: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
+          <p style="color: #94a3b8; font-size: 11px; font-weight: 700; text-transform: uppercase;">© ${new Date().getFullYear()} Zigex Connect</p>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>
+  `;
+
+  try {
+    await transporter.sendMail({
+      from: `"Zigex Supervisor Alerts" <${GMAIL_USER}>`,
+      to: params.email,
+      subject: `📋 New Student Assigned: ${params.studentName}`,
+      html
+    });
+  } catch (error: any) {
+    console.error(`[EMAIL] Failed to send assignment email: `, error.message);
+  }
+};
+
+/**
+ * Sends an attendance reminder email via Gmail/Nodemailer
+ */
+export const sendAttendanceReminderEmail = async (params: {
+  email: string;
+  name: string;
+  interns: { name: string }[];
+  dashboardLink: string;
+}) => {
+  const transporter = createTransporter();
+  if (!transporter) return;
+
+  try {
+    const html = await render(AttendanceReminderEmail({
+      supervisorName: params.name,
+      interns: params.interns,
+      dashboardLink: params.dashboardLink
+    }));
+
+    await transporter.sendMail({
+      from: `"Zigex Supervisor Hub" <${GMAIL_USER}>`,
+      to: params.email,
+      subject: `⏰ Attendance Reminder: Don't forget to mark your interns today`,
+      html
+    });
+    console.log(`[EMAIL] Attendance reminder sent via Gmail to ${params.email}`);
+  } catch (error) {
+    console.error("[EMAIL] Failed to send attendance reminder via Gmail:", error);
+    throw error;
+  }
+};
+
+
+
+/**
+ * Sends a task assignment notification to a student.
+ */
+export const sendTaskAssignmentEmail = async (params: {
+  email: string;
+  name: string;
+  taskTitle: string;
+  taskDescription: string;
+  dueDate?: string;
+  priority?: string;
+  supervisorName: string;
+}) => {
+  const { email, name, taskTitle, taskDescription, dueDate, priority, supervisorName } = params;
+
+  try {
+    const transporter = createTransporter();
+
+    const html = generateEmailHTML({
+      heading: `New Task Assigned: ${taskTitle}`,
+      message: `
+        Hello ${name}, <br/><br/>
+        Your supervisor, <strong>${supervisorName}</strong>, has assigned you a new task:
+        <br/><br/>
+        <strong>Task:</strong> ${taskTitle}<br/>
+        <strong>Description:</strong> ${taskDescription}<br/>
+        ${dueDate ? `<strong>Due Date:</strong> ${new Date(dueDate).toLocaleDateString()}<br/>` : ""}
+        ${priority ? `<strong>Priority:</strong> ${priority.toUpperCase()}<br/>` : ""}
+        <br/>
+        Please log in to your dashboard to view the details and track your progress.
+      `,
+      ctaText: "VIEW DASHBOARD",
+      ctaLink: "https://zigexconnect.com/intern/workspace",
+      statusBadge: priority?.toUpperCase() || "NEW TASK",
+      statusColor: priority === "high" ? "#EF4444" : "#3B82F6",
+      opportunityTitle: taskTitle,
+      opportunityType: "Task Assignment",
+      companyName: "SEED INC"
+    });
+
+    await transporter.sendMail({
+      from: `"${supervisorName} via SEED INC" <${GMAIL_USER}>`,
+      to: email,
+      subject: `[Task Notification] ${taskTitle}`,
+      html: html,
+    });
+
+    console.log(`[EMAIL] Task notification sent to ${email}`);
+  } catch (error) {
+    console.error(`[EMAIL ERROR] Failed to send task notification to ${email}: `, error);
+  }
+};
+
+
+
+/**
+ * Sends a notification to the supervisor when an intern submits a daily report.
+ */
+export const sendReportSubmissionEmail = async (params: {
+  email: string;
+  supervisorName: string;
+  studentName: string;
+  reportDate: string;
+  reportSummary: string;
+}) => {
+  const transporter = createTransporter();
+  if (!transporter) return;
+
+  const html = generateEmailHTML({
+    heading: "New Report Submitted",
+    message: `Hi ${params.supervisorName}, <br/><br/>${params.studentName} has just submitted their daily report for ${params.reportDate}.<br/><br/>Report Preview:<br/>"${params.reportSummary.length > 150 ? params.reportSummary.substring(0, 150) + "..." : params.reportSummary}"<br/><br/>Please review and confirm this report in your dashboard.`,
+    ctaText: "Review Report",
+    ctaLink: "https://zigexconnect.com/supervisor",
+    statusBadge: "NEW SUBMISSION",
+    statusColor: "#3B82F6",
+    companyName: "SEED INC"
+  });
+
+  try {
+    await transporter.sendMail({
+      from: `"SEED INC Notifications" <${GMAIL_USER}>`,
+      to: params.email,
+      subject: `New Report: ${params.studentName} (${params.reportDate})`,
+      html
+    });
+    console.log(`[EMAIL] Report notification sent to ${params.email}`);
+  } catch (error) {
+    console.error(`[EMAIL ERROR] Failed to send report notification to ${params.email}: `, error);
   }
 };

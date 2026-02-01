@@ -23,7 +23,7 @@ interface ZigexOnboardingWelcomeProps {
 
 export const ZigexOnboardingWelcome = ({
   userName,
-  communityLink = "https://chat.whatsapp.com/DXYGLpny3DwGs5pkb1fPAr",
+  communityLink = "https://chat.whatsapp.com/K0RflJDzxyKDIM2yuvzTTQ?mode=gi_t",
 }: ZigexOnboardingWelcomeProps) => {
   const previewText = `Welcome to SEED INC, ${userName}! Your journey starts now.`;
 

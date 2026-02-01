@@ -85,6 +85,8 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
         return (item as any).program_picture_url || "/intern.png";
       case "events":
         return (item as any).event_picture_url || "/placeholder.png";
+      case "announcements":
+        return (item as any).image_url || "/announcement.png";
     }
   };
 
@@ -245,7 +247,7 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
 
 
             {/* Get Started Button - After Curriculum */}
-            {(opportunityStatus.isOpen || applicationStatus.hasApplied) && (
+            {item._type !== "announcements" && (opportunityStatus.isOpen || applicationStatus.hasApplied) && (
               <section id="getStarted" className="mt-6 sm:mt-8">
                 <ApplyButton
                   isOpen={opportunityStatus.isOpen}

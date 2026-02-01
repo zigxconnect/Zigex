@@ -6,13 +6,14 @@ import { Sparkles, TrendingUp, Users, Briefcase, Calendar, Loader2, MapPin, Arro
 import Image from 'next/image';
 import Link from 'next/link';
 import { getAllFeedData, type Internship, type Event, type Program } from '@/lib/actions/feed/feed.action';
+import { normalizeImageSrc } from '@/lib/utils';
 
 // The Program type from the server now includes `isOpen`
 type ProgramWithStatus = Program & { isOpen: boolean };
 
 interface FeedItem {
   id: string;
-  type: 'internship' | 'event' | 'program';
+  type: 'internship' | 'event' | 'program' | 'announcement';
   title: string;
   description: string;
   image?: string;
@@ -23,7 +24,7 @@ interface FeedItem {
   participants?: number;
   tags?: string[];
   category?: string;
-  raw: Internship | Event | ProgramWithStatus;
+  raw: Internship | Event | ProgramWithStatus | any;
   isOpen: boolean;
   closedReason?: string;
   isPinned?: boolean;
@@ -49,12 +50,13 @@ export default function PersonalizedFeed({ userId, userSkills = [], university }
   const loadFeedData = async () => {
     setIsLoading(true);
     try {
-      const { internships, events, programs } = await getAllFeedData();
+      const { internships, events, programs, announcements } = await getAllFeedData(undefined, userId);
       
-      const transformedItems = transformAndCombineFeed( // Removed await
+      const transformedItems = transformAndCombineFeed(
         internships,
         events,
-        programs as ProgramWithStatus[]
+        programs as ProgramWithStatus[],
+        announcements
       );
       setFeedItems(transformedItems);
     } catch (error) {
@@ -64,13 +66,30 @@ export default function PersonalizedFeed({ userId, userSkills = [], university }
     }
   };
 
-  // SOLVED: Removed `async` as there are no `await` calls inside.
   const transformAndCombineFeed = (
     internships: Internship[],
     events: Event[],
-    programs: ProgramWithStatus[]
+    programs: ProgramWithStatus[],
+    announcements: any[] = []
   ): FeedItem[] => {
     let allItems: FeedItem[] = [];
+
+    // Transform Announcements
+    for (const ann of announcements) {
+      allItems.push({
+        id: ann.id,
+        type: 'announcement',
+        title: ann.title,
+        description: ann.content,
+        image: ann.image_url,
+        companyName: ann.company?.company_name || 'Zigex Admin',
+        companyLogo: ann.company?.logo_url || ann.author?.avatar_url,
+        tags: ['Announcement'],
+        raw: ann,
+        isOpen: true,
+        isPinned: ann.is_pinned
+      });
+    }
 
     // Step 1: Transform all items into a unified FeedItem format
     for (const program of programs) {
@@ -108,8 +127,6 @@ export default function PersonalizedFeed({ userId, userSkills = [], university }
         category: internship.category,
         tags: [internship.type, internship.category].filter(Boolean),
         raw: internship,
-        // LOGICAL FLAW ADDRESSED: This is a placeholder. For true accuracy, the `isOpen` status
-        // for internships should also be calculated on the server in `getAllFeedData`.
         isOpen: true, 
       });
     }
@@ -128,33 +145,23 @@ export default function PersonalizedFeed({ userId, userSkills = [], university }
           month: 'short', day: 'numeric', year: 'numeric',
         }),
         raw: event,
-        // LOGICAL FLAW ADDRESSED: Like internships, this assumes events are always open.
-        // The server action should be updated in the future to provide this status.
         isOpen: true, 
       });
     }
 
-    // Step 2: Explicitly find and separate the pinned item
-    const pinnedItem = allItems.find(item => item.isPinned);
-    
-    // Step 3: Get all other items
-    let otherItems = allItems.filter(item => !item.isPinned);
+    // Sort: Pinned items first, then by date (created_at)
+    allItems.sort((a, b) => {
+      // Pinned items take priority
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      
+      // Then sort by date
+      const dateA = new Date((a.raw as any).created_at).getTime();
+      const dateB = new Date((b.raw as any).created_at).getTime();
+      return dateB - dateA;
+    });
 
-    // Step 4: Separate the remaining programs from internships/events
-    const remainingPrograms = otherItems.filter(item => item.type === 'program');
-    const nonProgramItems = otherItems.filter(item => item.type !== 'program');
-
-    // Step 5: Sort the internships/events by date
-    nonProgramItems.sort((a, b) => new Date((b.raw as any).created_at).getTime() - new Date((a.raw as any).created_at).getTime());
-    
-    // Step 6: Construct the final list, guaranteeing the pinned item is first.
-    const finalList = [
-      ...(pinnedItem ? [pinnedItem] : []), // Pinned item is always first
-      ...remainingPrograms,                   // Then the rest of the programs (already sorted by open/closed status from the server)
-      ...nonProgramItems,                     // Finally, internships and events sorted by date
-    ];
-
-    return finalList;
+    return allItems;
   };
 
   const handleLoadMore = () => {
@@ -248,7 +255,7 @@ export default function PersonalizedFeed({ userId, userSkills = [], university }
                   {/* Avatar */}
                   <div className="flex-shrink-0 relative">
                     <div className={`w-12 h-12 rounded-full overflow-hidden shadow-md ring-2 ring-offset-2 dark:ring-offset-gray-900 transition-all duration-300 ${item.isOpen ? 'ring-blue-100 dark:ring-blue-900 hover:ring-blue-300 dark:hover:ring-blue-700 hover:scale-105' : 'ring-gray-200 dark:ring-gray-700'} ${item.isPinned ? 'ring-amber-300 dark:ring-amber-600 ring-offset-amber-50 dark:ring-offset-amber-900' : ''}`}>
-                      <Image src={item.companyLogo || 'https://i.ibb.co/xqCftyWn/seedLogo.webp'} alt={item.companyName} width={48} height={48} className="w-full h-full object-cover" />
+                      <Image src={normalizeImageSrc(item.companyLogo, 'https://i.ibb.co/xqCftyWn/seedLogo.webp')} alt={item.companyName} width={48} height={48} className="w-full h-full object-cover" />
                     </div>
                     
                     {item.isPinned && item.isOpen && (
@@ -294,7 +301,7 @@ export default function PersonalizedFeed({ userId, userSkills = [], university }
                     
                     {item.image && (
                       <div className={`relative w-full rounded-2xl overflow-hidden mb-3 group ${item.isOpen ? 'border-2 border-gray-200 dark:border-gray-700 shadow-md hover:shadow-xl' : 'border border-gray-300 dark:border-gray-600 opacity-60'}`} style={{ aspectRatio: '16/9' }}>
-                        <Image src={item.image} alt={item.title} fill className={`object-cover transition-all duration-500 ${item.isOpen ? 'group-hover:scale-110' : 'grayscale'}`} />
+                        <Image src={normalizeImageSrc(item.image)} alt={item.title} fill className={`object-cover transition-all duration-500 ${item.isOpen ? 'group-hover:scale-110' : 'grayscale'}`} />
                         {!item.isOpen && (
                           <div className="absolute inset-0 bg-gray-900/40 flex items-center justify-center backdrop-blur-[2px]">
                             <div className="bg-white/90 dark:bg-gray-800/90 px-4 py-2 rounded-full flex items-center gap-2 shadow-lg">

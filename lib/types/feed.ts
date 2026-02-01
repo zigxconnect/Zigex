@@ -1,5 +1,5 @@
 // lib/types/feed.ts
-export type FeedType = "internships" | "programs" | "events";
+export type FeedType = "internships" | "programs" | "events" | "announcements";
 
 export interface BaseFeedItem {
   id: string;
@@ -20,7 +20,6 @@ export interface Internship extends BaseFeedItem {
   duration?: string;
   department?: string;
   type?: string;
-  internship_picture_url?: string;
   cover_image_url?: string;
   logo_url?: string;
 }
@@ -49,7 +48,16 @@ export interface Event extends BaseFeedItem {
   registration_deadline?: string;
 }
 
-export type FeedItem = (Internship | Program | Event) & { _type: FeedType };
+export interface Announcement extends BaseFeedItem {
+  id: string;
+  title: string;
+  content: string;
+  image_url?: string;
+  author_id?: string;
+  _type: "announcements";
+}
+
+export type FeedItem = (Internship | Program | Event | Announcement) & { _type: FeedType };
 
 export interface FeedConfig {
   type: FeedType;
@@ -76,5 +84,11 @@ export const FEED_CONFIGS: Record<FeedType, FeedConfig> = {
     apiEndpoint: "/api/students/events",
     label: "Events",
     color: "green",
+  },
+  announcements: {
+    type: "announcements",
+    apiEndpoint: "/api/announcements", // Placeholder
+    label: "Announcements",
+    color: "amber",
   },
 };

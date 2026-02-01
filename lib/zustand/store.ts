@@ -2,7 +2,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-type TabId = "all" | "live" | "internships" | "programs" | "events";
+type TabId = "all" | "live" | "internships" | "programs" | "events" | "announcements";
 
 interface FeedState {
   activeTab: TabId;

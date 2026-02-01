@@ -5,6 +5,9 @@ import { ProgramDetailedInviteEmail } from "@/emails/ProgramDetailedInvite";
 import ApplicationConfirmationEmail from "@/emails/ApplicationConfirmationEmail";
 import { ZigexApplicationAlertEmail } from "@/emails/ZigexApplicationAlert";
 import { ZigexOnboardingWelcome } from "@/emails/ZigexOnboardingWelcome";
+import { TaskAssignmentEmail } from "@/emails/TaskAssignmentEmail";
+import { AttendanceReminderEmail } from "@/emails/AttendanceReminder";
+
 
 const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
@@ -37,8 +40,7 @@ export const sendCandidateStatusEmail = async (params: {
           programTitle: opportunityTitle,
           programDescription: opportunityDescription || "",
           companyName,
-          // Use the specific WhatsApp link for Weekend of Code or default to it
-          whatsappGroupLink: "https://chat.whatsapp.com/DXYGLpny3DwGs5pkb1fPAr",
+          whatsappGroupLink: "https://chat.whatsapp.com/K0RflJDzxyKDIM2yuvzTTQ?mode=gi_t",
         }),
       });
     } else if (status === "rejected") {
@@ -135,7 +137,7 @@ export const sendZigexWelcomeEmail = async (email: string, userName: string) => 
       subject: `Welcome to SEED INC, ${userName}! 🚀`,
       react: ZigexOnboardingWelcome({
         userName,
-        communityLink: "https://chat.whatsapp.com/DXYGLpny3DwGs5pkb1fPAr"
+        communityLink: "https://chat.whatsapp.com/K0RflJDzxyKDIM2yuvzTTQ?mode=gi_t"
       }),
     });
     console.log(`[MAIL-JOB] Welcome email sent to ${email}`);
@@ -143,3 +145,68 @@ export const sendZigexWelcomeEmail = async (email: string, userName: string) => 
     console.error("Failed to send welcome email:", error);
   }
 };
+
+/**
+ * Sends a task assignment email to a student.
+ */
+
+export const sendTaskAssignmentEmail = async (params: {
+  email: string;
+  name: string;
+  taskTitle: string;
+  taskDescription: string;
+  dueDate?: string;
+  priority?: string;
+  supervisorName: string;
+}) => {
+  if (!resend) return;
+  const { email, name, taskTitle, taskDescription, dueDate, priority, supervisorName } = params;
+
+  try {
+    await resend.emails.send({
+      from: "SEED INC Supervisors <notifications@zigexconnect.com>",
+      to: email,
+      subject: `New Task Assigned: ${taskTitle}`,
+      react: TaskAssignmentEmail({
+        studentName: name,
+        taskTitle,
+        taskDescription,
+        dueDate,
+        priority,
+        supervisorName
+      }),
+    });
+  } catch (error) {
+    console.error("Failed to send task assignment email:", error);
+  }
+};
+
+/**
+ * Sends an attendance reminder email to a supervisor.
+ */
+export const sendAttendanceReminderEmail = async (params: {
+  email: string;
+  name: string;
+  interns: { name: string }[];
+  dashboardLink: string;
+}) => {
+  if (!resend) return;
+  const { email, name, interns, dashboardLink } = params;
+
+  try {
+    await resend.emails.send({
+      from: "SEED INC Supervisors <notifications@zigexconnect.com>",
+      to: email,
+      subject: `Attendance Reminder: Action Required today`,
+      react: AttendanceReminderEmail({
+        supervisorName: name,
+        interns,
+        dashboardLink
+      }),
+    });
+    console.log(`[MAIL] Attendance reminder sent to ${email}`);
+  } catch (error) {
+    console.error("Failed to send attendance reminder email:", error);
+  }
+};
+

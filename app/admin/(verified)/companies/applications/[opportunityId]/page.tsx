@@ -4,16 +4,16 @@ import { Button } from "@/components/ui/button";
 
 interface Application {
   id: string;
-  applicant_name: string;
-  applicant_email: string;
-  status: "pending" | "approved" | "rejected";
-  submitted_at: string;
-  // Add more fields as needed
+  name: string;
+  email: string;
+  status: "pending" | "reviewed" | "reviewing" | "accepted" | "rejected" | "rsvp_confirmed";
+  appliedDate: string;
 }
 
 const statusOptions = [
-  { value: "pending", label: "Pending Review" },
-  { value: "approved", label: "Approved" },
+  { value: "pending", label: "Pending" },
+  { value: "reviewing", label: "Reviewing" },
+  { value: "accepted", label: "Accepted" },
   { value: "rejected", label: "Rejected" },
 ];
 
@@ -28,7 +28,12 @@ export default function ApplicationsPage({ params: paramsPromise }: { params: Pr
     fetch(`/api/companies/applications?opportunityId=${opportunityId}`)
       .then(res => res.json())
       .then(data => {
-        setApplications(data.applications || []);
+        // The API returns an array of applicants directly
+        setApplications(Array.isArray(data) ? data : (data.applications || []));
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Failed to fetch applications:", err);
         setLoading(false);
       });
   }, [opportunityId]);
@@ -69,9 +74,9 @@ export default function ApplicationsPage({ params: paramsPromise }: { params: Pr
           <tbody>
             {applications.map(app => (
               <tr key={app.id} className="border-b last:border-b-0">
-                <td className="p-3">{app.applicant_name}</td>
-                <td className="p-3">{app.applicant_email}</td>
-                <td className="p-3">{new Date(app.submitted_at).toLocaleString()}</td>
+                <td className="p-3">{app.name}</td>
+                <td className="p-3">{app.email}</td>
+                <td className="p-3">{new Date(app.appliedDate).toLocaleString()}</td>
                 <td className="p-3">
                   <select
                     value={app.status}

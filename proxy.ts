@@ -37,6 +37,17 @@ export async function proxy(request: NextRequest) {
     }
   );
 
+  // === SECURITY HEADERS ===
+  const headers = response.headers;
+  headers.set("X-Frame-Options", "SAMEORIGIN");
+  headers.set("X-Content-Type-Options", "nosniff");
+  headers.set("X-XSS-Protection", "1; mode=block");
+  headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  headers.set(
+    "Permissions-Policy",
+    "camera=(), microphone=(), geolocation=(self), payment=()"
+  );
+
   const {
     data: { user },
   } = await supabase.auth.getUser();

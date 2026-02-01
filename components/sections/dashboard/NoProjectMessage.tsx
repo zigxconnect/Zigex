@@ -120,5 +120,6 @@ Post your project on ZigX: https://zigexconnect.com`;
         )}
       </div>
     </motion.div>
+
   );
 }
