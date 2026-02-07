@@ -57,6 +57,8 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 import { InternActivityGraph } from "./InternActivityGraph";
 import { normalizeImageSrc } from "@/lib/utils";
+import { getInternCurriculum, CurriculumModule } from "@/lib/data/intern-curriculum";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 interface InternWorkspaceClientProps {
   data: {
@@ -107,6 +109,13 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
   const internship = application?.internships;
   const company = internship?.company_profiles;
   const supervisor = application?.supervisor_profiles;
+
+  const [expandedModule, setExpandedModule] = useState<string | null>(null);
+
+  // Get dummy curriculum if DB one is empty
+  const displayCurriculum = (curriculum && curriculum.length > 0) 
+    ? curriculum 
+    : getInternCurriculum(application?.domain || "", application?.experience_level || "beginner")?.modules || [];
 
   const paymentLedger = application?.payment_ledger || [];
   const totalPaid = paymentLedger
@@ -940,79 +949,100 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                   </div>
                   <div className="flex items-center gap-2 px-3 py-1 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-500/20">
                     <BookOpen size={12} />
-                    <span className="text-[9px] font-black uppercase tracking-widest">{curriculum.length} Learning Modules</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest">{displayCurriculum.length} Learning Modules</span>
                   </div>
                 </div>
 
-                {curriculum.length > 0 ? (
-                  <div className="space-y-6">
-                    {curriculum.map((item, idx) => (
-                      <motion.div 
-                        key={item.id} 
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: idx * 0.05 }}
-                        className="group"
-                      >
-                        <div className={cn(
-                          "relative flex flex-col sm:flex-row gap-6 p-6 sm:p-8 rounded-[2.5rem] border-2 transition-all duration-300",
-                          idx === 0 
-                            ? "bg-blue-50/30 border-blue-200 dark:bg-blue-600/5 dark:border-blue-500/30 shadow-xl shadow-blue-500/5" 
-                            : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-500/5"
-                        )}>
-                          <div className={cn(
-                            "w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg shrink-0 transition-transform group-hover:scale-110 shadow-sm",
-                            idx === 0 
-                              ? "bg-blue-600 text-white" 
-                              : "bg-slate-100 dark:bg-slate-800 text-slate-500"
-                          )}>
-                            {idx + 1}
-                          </div>
-                          
-                          <div className="flex-1 min-w-0">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                              <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight group-hover:text-blue-600 transition-colors">
-                                {item.title}
-                              </h3>
-                              <div className="flex items-center gap-2">
+                {displayCurriculum.length > 0 ? (
+                  <div className="space-y-4">
+                    <Accordion type="single" collapsible className="w-full space-y-4">
+                      {displayCurriculum.map((item: any, idx) => (
+                        <AccordionItem 
+                          key={item.id || idx} 
+                          value={`module-${idx}`}
+                          className="border-2 rounded-[2.5rem] overflow-hidden transition-all bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-blue-200"
+                        >
+                          <AccordionTrigger className="px-6 py-6 sm:px-8 hover:no-underline group">
+                            <div className="flex items-center gap-6 text-left">
+                              <div className={cn(
+                                "w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg shrink-0 transition-transform group-hover:scale-110 shadow-sm",
+                                idx === 0 ? "bg-blue-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500"
+                              )}>
+                                {idx + 1}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight group-hover:text-blue-600 transition-colors">
+                                  {item.title}
+                                </h3>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">
+                                  Duration: <span className="text-blue-600">{item.duration || "Self-paced"}</span>
+                                </p>
+                              </div>
+                            </div>
+                          </AccordionTrigger>
+                          <AccordionContent className="px-6 pb-8 sm:px-8 pt-2">
+                            <div className="pl-[72px] space-y-6">
+                              <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-3xl">
+                                {item.description}
+                              </p>
+
+                              {item.topics && item.topics.length > 0 && (
+                                <div className="space-y-3">
+                                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">What you'll learn</h4>
+                                  <div className="flex flex-wrap gap-2">
+                                    {item.topics.map((topic: string, tidx: number) => (
+                                      <span key={tidx} className="px-3 py-1 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg text-xs font-semibold">
+                                        {topic}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {item.project && (
+                                <div className="p-6 rounded-3xl bg-blue-50/50 dark:bg-blue-600/5 border border-blue-100 dark:border-blue-500/20">
+                                  <div className="flex items-center gap-2 mb-4">
+                                    <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-white">
+                                      <Rocket size={14} />
+                                    </div>
+                                    <h4 className="font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-xs">Module Project</h4>
+                                  </div>
+                                  <h5 className="text-lg font-black text-slate-900 dark:text-white mb-2">{item.project.title}</h5>
+                                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">{item.project.description}</p>
+                                  
+                                  {item.project.deliverables && (
+                                    <div className="space-y-2">
+                                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Deliverables</p>
+                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        {item.project.deliverables.map((del: string, didx: number) => (
+                                          <div key={didx} className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                                            <div className="w-4 h-4 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
+                                              <Check size={10} strokeWidth={3} />
+                                            </div>
+                                            {del}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              <div className="flex items-center gap-4 pt-4">
+                                <Button className="rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black text-[9px] h-10 px-6 uppercase tracking-widest shadow-xl transition-all active:scale-95">
+                                  Launch Module
+                                </Button>
                                 {item.video_url && (
-                                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 text-[10px] font-black uppercase">
-                                    <Video size={12} /> Video
-                                  </div>
-                                )}
-                                {item.resources && (
-                                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase">
-                                    <FileText size={12} /> Resources
-                                  </div>
+                                  <Button variant="outline" className="rounded-xl border-slate-200 dark:border-slate-700 font-black text-[9px] h-10 px-6 uppercase tracking-widest">
+                                    <Video size={12} className="mr-2" /> Watch Video
+                                  </Button>
                                 )}
                               </div>
                             </div>
-                            
-                            <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 font-medium leading-relaxed mb-6 max-w-3xl">
-                              {item.description}
-                            </p>
-                            
-                            <div className="flex items-center gap-4">
-                              <Button className="rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black text-[9px] h-10 px-5 uppercase tracking-widest shadow-xl transition-all active:scale-95 whitespace-nowrap">
-                                Launch Module
-                              </Button>
-                              <div className="h-8 w-px bg-slate-100 dark:bg-slate-800 mx-2" />
-                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                                Status: <span className="text-blue-600 dark:text-blue-400">{idx === 0 ? "In Progress" : "Upcoming"}</span>
-                              </p>
-                            </div>
-                          </div>
-
-                          {idx === 0 && (
-                            <div className="absolute top-6 right-6">
-                               <div className="px-3 py-1 bg-blue-600 text-white rounded-lg text-[9px] font-black uppercase tracking-wider animate-pulse">
-                                 Active Module
-                               </div>
-                            </div>
-                          )}
-                        </div>
-                      </motion.div>
-                    ))}
+                          </AccordionContent>
+                        </AccordionItem>
+                      ))}
+                    </Accordion>
                   </div>
                 ) : (
                   <div className="text-center py-24 bg-white dark:bg-slate-900 rounded-[3rem] border-2 border-dashed border-slate-100">
