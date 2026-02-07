@@ -32,7 +32,12 @@ import {
   Search,
   Users,
   Compass,
-  ArrowUpRight
+  ArrowUpRight,
+  Zap,
+  Cpu,
+  Notebook,
+  Rocket,
+  Check
 } from "lucide-react";
 import { format } from "date-fns";
 import Link from "next/link";
@@ -366,129 +371,177 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
       </AnimatePresence>
 
       {/* ===== HEADER ===== */}
-      <header className="relative bg-white dark:bg-slate-900 border-b border-blue-100/50 dark:border-slate-800">
+      <header className="relative overflow-hidden bg-white dark:bg-slate-950 border-b border-blue-100/30 dark:border-slate-800/50">
+        {/* Decorative Background Elements */}
+        <div className="absolute top-0 right-0 -tr-1/4 w-[500px] h-[500px] bg-blue-50/50 dark:bg-blue-600/5 rounded-full blur-3xl -z-10" />
+        <div className="absolute bottom-0 left-0 -bl-1/4 w-[300px] h-[300px] bg-indigo-50/30 dark:bg-indigo-600/5 rounded-full blur-3xl -z-10" />
+        
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
-          
-          {/* Mobile: Stacked Layout */}
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-8">
             
-            {/* Top Row: Logo + Badge + Colleagues (Desktop) */}
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 p-[2px] shadow-lg shadow-blue-500/20">
-                  <div className="w-full h-full rounded-[14px] bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden">
+            
+            {/* Main Info Row */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="flex items-center gap-5 sm:gap-6">
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="relative group shrink-0"
+                >
+                  <div className="absolute -inset-1 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500" />
+                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white dark:bg-slate-900 border border-blue-50 dark:border-slate-800 flex items-center justify-center overflow-hidden shadow-inner">
                     {company?.logo_url ? (
-                      <Image src={normalizeImageSrc(company.logo_url)} alt={company.company_name} width={64} height={64} className="object-cover" />
+                      <Image 
+                        src={normalizeImageSrc(company.logo_url)} 
+                        alt={company.company_name} 
+                        width={80} 
+                        height={80} 
+                        className="w-full h-full object-cover p-2" 
+                      />
                     ) : (
-                      <Shield size={24} className="text-blue-600" />
+                      <Shield size={32} className="text-blue-600/50" />
                     )}
                   </div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Badge className="bg-blue-600 text-white border-0 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md">
-                      {internship?.type || "Internship"}
+                </motion.div>
+
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge className="bg-blue-600/10 text-blue-600 dark:bg-blue-400/10 dark:text-blue-400 border-0 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg">
+                      {internship?.type || "Professional Track"}
                     </Badge>
                   </div>
-                  <h1 className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white leading-tight sm:leading-snug mb-0.5">
+                  <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-tight mb-1">
                     {internship?.title || "Professional Internship"}
                   </h1>
-                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium truncate">
-                    {company?.company_name} • {application?.duration}
-                  </p>
+                  <div className="flex flex-wrap items-center gap-y-1 gap-x-3 text-slate-500 dark:text-slate-400 font-bold text-[10px] sm:text-xs">
+                    <span className="flex items-center gap-1.5">
+                      <Layout size={12} className="text-blue-500" />
+                      {company?.company_name}
+                    </span>
+                    <span className="w-1 h-1 bg-slate-300 dark:bg-slate-700 rounded-full" />
+                    <span className="flex items-center gap-1.5">
+                      <Calendar size={14} className="text-indigo-500" />
+                      {application?.duration}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              {/* Fellow Colleagues Avatars - Hidden on tiny screens, prominent on desktop */}
+              <div className="hidden md:flex items-center gap-3">
+                <Button 
+                  onClick={() => setIsLogbookPreviewOpen(true)}
+                  variant="outline" 
+                  className="rounded-2xl border-slate-200 dark:border-slate-800 font-black text-[10px] h-11 px-5 hover:bg-slate-50 dark:hover:bg-slate-900 hover:border-blue-200 transition-all whitespace-nowrap"
+                >
+                  <FileText size={14} className="mr-2 text-blue-600" />
+                  LOGBOOK PREVIEW
+                </Button>
+                <Button 
+                  onClick={() => !hasLoggedToday && !needsPaymentAcknowledgment && setIsLogModalOpen(true)}
+                  disabled={hasLoggedToday || needsPaymentAcknowledgment}
+                  className={cn(
+                    "rounded-2xl font-black text-[10px] h-11 px-6 shadow-xl transition-all active:scale-[0.98] whitespace-nowrap",
+                    hasLoggedToday 
+                      ? "bg-emerald-50 text-emerald-600 cursor-not-allowed border border-emerald-100" 
+                      : needsPaymentAcknowledgment
+                      ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                      : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/30"
+                  )}
+                >
+                  {hasLoggedToday ? (
+                    <span className="flex items-center gap-2">
+                      <CheckCheck size={14} /> LOGGED TODAY
+                    </span>
+                  ) : needsPaymentAcknowledgment ? (
+                    <span className="flex items-center gap-2">
+                       <Lock size={14} /> WORKSPACE LOCKED
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <Plus size={14} /> SUBMIT DAILY LOG
+                    </span>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {/* Bottom Row: Colleagues + Mobile Pulse */}
+            <div className="flex items-center justify-between border-t border-slate-50 dark:border-slate-800/50 pt-8 sm:pt-10">
               <button 
                 onClick={() => setIsColleaguesModalOpen(true)}
-                className="hidden sm:flex flex-col items-end gap-2 group cursor-pointer"
+                className="flex items-center gap-4 group transition-all"
               >
-                <div className="flex -space-x-3 overflow-hidden">
+                <div className="flex -space-x-1 sm:-space-x-1.5">
                   {(fellowInterns || []).slice(0, 5).map((intern: any, i: number) => (
-                    <Link 
+                    <div 
                       key={intern.id} 
-                      href={`/dashboard/student/${intern.student_profiles?.username || intern.student_profiles?.user_id}`}
-                      className="inline-block h-10 w-10 rounded-full ring-2 ring-white dark:ring-slate-900 overflow-hidden bg-slate-100 shadow-sm transition-transform hover:scale-110 hover:z-10"
+                      className="relative h-9 w-9 sm:h-10 sm:w-10 rounded-xl ring-2 ring-white dark:ring-slate-950 overflow-hidden bg-slate-100 shadow-sm transition-transform group-hover:translate-x-1 group-hover:scale-105"
+                      style={{ transitionDelay: `${i * 50}ms`, zIndex: 10 - i }}
                     >
                       <Image 
-                        src={normalizeImageSrc(intern.student_profiles?.avatar_url, "/default-avatar.svg")} 
+                        src={normalizeImageSrc(intern.student_profiles?.avatar_url, "/logo.png")} 
                         alt={intern.student_profiles?.full_name || "Intern"} 
-                        width={40} 
-                        height={40} 
-                        className="h-full w-full object-cover"
+                        fill
+                        className="object-cover"
                       />
-                    </Link>
+                    </div>
                   ))}
                   {fellowInterns.length > 5 && (
-                    <div className="flex items-center justify-center h-10 w-10 rounded-full ring-2 ring-white dark:ring-slate-900 bg-blue-600 text-white text-[10px] font-black">
+                    <div className="relative flex items-center justify-center h-9 w-9 sm:h-10 sm:w-10 rounded-xl ring-2 ring-white dark:ring-slate-950 bg-blue-600 text-white text-[10px] font-black shadow-lg z-0 transition-transform group-hover:translate-x-1">
                       +{fellowInterns.length - 5}
                     </div>
                   )}
                 </div>
-                <div className="flex items-center gap-1.5 text-blue-600 font-black text-[10px] uppercase tracking-widest group-hover:translate-x-1 transition-transform">
-                  Fellow Colleagues <ArrowRight size={10} />
+                <div>
+                  <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest leading-none mb-1">Collaborative Network</p>
+                  <p className="text-xs font-bold text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">
+                    Meet your {fellowInterns.length} fellow cohorts
+                  </p>
                 </div>
               </button>
+
+              <div className="flex items-center gap-3">
+                <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Active Workspace</span>
+                </div>
+              </div>
             </div>
 
-            {/* Mobile-Only Colleagues Button */}
-            <button 
-              onClick={() => setIsColleaguesModalOpen(true)}
-              className="sm:hidden flex items-center justify-between p-4 rounded-2xl bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800 transition-all active:scale-[0.98]"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex -space-x-2">
-                  {(fellowInterns || []).slice(0, 3).map((intern: any) => (
-                    <div key={intern.id} className="h-8 w-8 rounded-full ring-2 ring-white dark:ring-slate-900 overflow-hidden bg-white shadow-sm">
-                      <Image src={intern.student_profiles?.avatar_url || "/default-avatar.svg"} alt="avatar" width={32} height={32} className="w-full h-full object-cover" />
-                    </div>
-                  ))}
-                </div>
-                <span className="text-[10px] font-black text-blue-700 dark:text-blue-400 uppercase tracking-widest">
-                  {fellowInterns.length} Colleagues Online
-                </span>
-              </div>
-              <ArrowRight size={14} className="text-blue-600" />
-            </button>
-
-            {/* Action Buttons - Full Width on Mobile */}
-            <div className="flex gap-3">
+            {/* Mobile Actions (Visible Only on Mobile) */}
+            <div className="flex md:hidden flex-col gap-2.5">
               <Button 
                 onClick={() => setIsLogbookPreviewOpen(true)}
                 variant="outline" 
-                className="flex-1 sm:flex-none rounded-xl border-blue-100 dark:border-slate-700 font-semibold text-xs h-11 px-4 hover:bg-blue-50 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                className="w-full rounded-2xl border-blue-100 dark:border-slate-800 font-black text-[10px] h-12 whitespace-nowrap"
               >
                 <FileText size={14} className="mr-2 text-blue-600" />
-                Logbook
+                LOGBOOK PREVIEW
               </Button>
               <Button 
                 onClick={() => !hasLoggedToday && !needsPaymentAcknowledgment && setIsLogModalOpen(true)}
                 disabled={hasLoggedToday || needsPaymentAcknowledgment}
                 className={cn(
-                  "flex-1 sm:flex-none rounded-xl font-semibold text-xs h-11 px-4 shadow-md transition-all active:scale-[0.98]",
+                  "w-full rounded-2xl font-black text-[10px] h-12 shadow-lg whitespace-nowrap",
                   hasLoggedToday 
-                    ? "bg-green-100 text-green-700 cursor-not-allowed shadow-none" 
+                    ? "bg-emerald-50 text-emerald-600 border border-emerald-100" 
                     : needsPaymentAcknowledgment
-                    ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20"
+                    ? "bg-slate-100 text-slate-400"
+                    : "bg-blue-600 text-white shadow-blue-500/20"
                 )}
               >
                 {hasLoggedToday ? (
-                  <>
-                    <CheckCircle2 size={14} className="mr-2" />
-                    Done Today
-                  </>
+                  <span className="flex items-center gap-2">
+                    <CheckCheck size={14} /> LOGGED TODAY
+                  </span>
                 ) : needsPaymentAcknowledgment ? (
-                  <>
-                    <Lock size={14} className="mr-2" />
-                    Locked
-                  </>
+                  <span className="flex items-center gap-2">
+                     <Lock size={14} /> WORKSPACE LOCKED
+                  </span>
                 ) : (
-                  <>
-                    <Plus size={14} className="mr-2" />
-                    Daily Log
-                  </>
+                  <span className="flex items-center gap-2">
+                    <Plus size={14} /> SUBMIT DAILY LOG
+                  </span>
                 )}
               </Button>
             </div>
@@ -514,10 +567,10 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    "relative flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl font-semibold text-xs sm:text-sm whitespace-nowrap transition-all duration-200",
+                    "relative flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest whitespace-nowrap transition-all duration-200",
                     isActive 
                       ? "text-blue-600 dark:text-blue-400" 
-                      : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                      : "text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
                   )}
                 >
                   <div className="relative">
@@ -587,7 +640,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                             router.refresh();
                           }
                         }}
-                        className="bg-white text-orange-600 hover:bg-amber-50 font-black rounded-2xl px-8 h-12 shadow-lg"
+                        className="bg-white text-orange-600 hover:bg-amber-50 font-black rounded-2xl px-6 h-11 text-[10px] uppercase tracking-widest shadow-lg whitespace-nowrap"
                       >
                         I AGREE & ACKNOWLEDGE
                       </Button>
@@ -597,123 +650,176 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                 )}
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                   {[
-                    { label: "Duration", value: application?.duration || "N/A", icon: Calendar },
-                    { label: "Daily Logs", value: logs.length.toString(), icon: FileText },
-                    { label: "Domain", value: application?.domain || "General", icon: Layers },
-                    { label: "Level", value: application?.experience_level || "Entry", icon: Target },
+                    { label: "Active Phase", value: application?.duration || "N/A", icon: Compass, color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-500/10" },
+                    { label: "Work Ledger", value: `${logs.length} Entries`, icon: Notebook, color: "text-indigo-600", bg: "bg-indigo-50 dark:bg-indigo-500/10" },
+                    { label: "Specialization", value: application?.domain || "General", icon: Cpu, color: "text-purple-600", bg: "bg-purple-50 dark:bg-purple-500/10" },
+                    { label: "Success Rate", value: "94% Tracking", icon: Zap, color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-500/10" },
                   ].map((stat, i) => (
-                    <div key={i} className="bg-white dark:bg-slate-900 border border-blue-50 dark:border-slate-800 rounded-2xl p-4 sm:p-5">
-                      <stat.icon size={18} className="text-blue-600 mb-3" />
-                      <p className="text-[10px] sm:text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">{stat.label}</p>
-                      <p className="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">{stat.value}</p>
-                    </div>
+                    <motion.div 
+                      key={i}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.1 }}
+                      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                      className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[1.5rem] p-5 shadow-sm hover:shadow-xl hover:shadow-blue-500/5 transition-all"
+                    >
+                      <div className={cn("inline-flex items-center justify-center p-2.5 rounded-xl mb-4", stat.bg)}>
+                        <stat.icon size={18} className={stat.color} />
+                      </div>
+                      <p className="text-[9px] text-slate-400 font-black uppercase tracking-[0.1em] mb-1">{stat.label}</p>
+                      <p className="text-sm font-black text-slate-900 dark:text-white tracking-tight">{stat.value}</p>
+                    </motion.div>
                   ))}
                 </div>
 
-                {/* Two Column: Description + Supervisor */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Main Information Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                   
-                  {/* Description */}
-                  <div className="lg:col-span-2 bg-white dark:bg-slate-900 border border-blue-50 dark:border-slate-800 rounded-2xl p-5 sm:p-8">
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-3">About This Internship</h3>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  {/* Detailed Description */}
+                  <div className="lg:col-span-8 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2rem] p-7 sm:p-9 shadow-sm">
+                    <div className="flex items-center gap-3 mb-5">
+                      <div className="w-1 h-5 bg-blue-600 rounded-full" />
+                      <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">Mission Briefing</h3>
+                    </div>
+                    <p className="text-[13px] text-slate-500 dark:text-slate-400 leading-relaxed font-medium mb-8">
                       {internship?.description || "This internship provides hands-on experience in your chosen field, allowing you to develop practical skills while working alongside industry professionals."}
                     </p>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Technical Environment</p>
+                        <div className="flex flex-wrap gap-1">
+                          {(application?.skills || ["Professionalism", "Execution", "Strategy"]).map((skill: string, i: number) => (
+                            <span key={i} className="px-2 py-0.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[9px] font-bold text-slate-500 dark:text-slate-400 capitalize">
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Experience Focus</p>
+                        <p className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                          {application?.experience_level || "Industry Standards"}
+                        </p>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Supervisor Card */}
-                  <div className="bg-white dark:bg-slate-900 border border-blue-50 dark:border-slate-800 rounded-2xl p-5 sm:p-6">
-                    <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-4">Your Supervisor</p>
-                    {supervisor ? (
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-xl overflow-hidden ring-2 ring-blue-100 dark:ring-slate-700">
-                            <Image 
-                              src={normalizeImageSrc(supervisor.avatar_url, "/default-avatar.svg")} 
-                              alt={supervisor.full_name} 
-                              width={48} 
-                              height={48} 
-                              className="w-full h-full object-cover"
-                            />
+                  {/* High Tech Supervisor Card */}
+                  <div className="lg:col-span-4 flex flex-col gap-6">
+                    <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-[2rem] p-7 text-white shadow-2xl overflow-hidden relative group">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:scale-150 transition-transform duration-700" />
+                      <p className="text-[9px] font-black text-blue-100 uppercase tracking-[0.2em] mb-5 relative opacity-80">Assigned Supervisor</p>
+                      
+                      {supervisor ? (
+                        <div className="space-y-5 relative">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl overflow-hidden ring-4 ring-white/10 dark:ring-slate-100 shadow-xl bg-slate-800">
+                              <Image 
+                                src={normalizeImageSrc(supervisor.avatar_url, "/logo.png")} 
+                                alt={supervisor.full_name} 
+                                width={48} 
+                                height={48} 
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <div>
+                              <h4 className="font-black text-base tracking-tight leading-none mb-1 text-white">{supervisor.full_name}</h4>
+                              <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Lead Strategist</p>
+                            </div>
                           </div>
-                          <div>
-                            <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-tight text-sm">{supervisor.full_name}</h4>
-                            <p className="text-[10px] text-blue-600 font-black uppercase tracking-widest leading-none mt-1">Lead Supervisor</p>
-                          </div>
-                        </div>
-                        {supervisor.field_expertise?.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
-                            {supervisor.field_expertise.map((field: string, i: number) => (
-                              <Badge key={i} className="bg-blue-50 text-blue-600 border-0 text-[9px] font-bold px-2 py-0.5 rounded-md">
-                                {field}
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
-                        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed italic border-l-2 border-blue-100 pl-3">
-                          "{supervisor.bio || "Available for guidance and feedback."}"
-                        </p>
-                        <div className="flex gap-2">
-                          <Button 
-                            asChild
-                            variant="outline" 
-                            size="sm" 
-                            className="flex-1 rounded-xl h-10 text-[10px] font-bold uppercase tracking-wider border-blue-50 hover:bg-blue-50 hover:text-blue-600 transition-all shadow-sm"
-                          >
-                            <a href={`mailto:${supervisor.email}`}><Mail size={12} className="mr-1.5" /> Email</a>
-                          </Button>
-                          {supervisor.whatsapp && (
-                            <Button 
+                          
+                          <p className="text-[13px] font-medium text-white/70 leading-relaxed italic line-clamp-3">
+                            "{supervisor.bio || "Available for guidance throughout your professional journey."}"
+                          </p>
+                          
+                          <div className="pt-2 flex gap-2">
+                             <Button 
                               asChild
-                              variant="outline" 
-                              size="sm" 
-                              className="flex-1 rounded-xl h-10 text-[10px] font-bold uppercase tracking-wider border-green-50 hover:bg-green-50 hover:text-green-600 transition-all shadow-sm"
+                              className="flex-1 rounded-xl h-10 bg-white dark:bg-slate-900 text-slate-950 dark:text-white font-black text-[9px] uppercase tracking-widest hover:bg-slate-100 dark:hover:bg-slate-800 whitespace-nowrap px-4"
                             >
-                              <a href={`https://wa.me/${supervisor.whatsapp.replace(/\+/g, '')}`} target="_blank" rel="noopener noreferrer">
-                                <MessageSquare size={12} className="mr-1.5" /> WhatsApp
-                              </a>
+                              <a href={`mailto:${supervisor.email}`}><Mail size={12} className="mr-2" /> Connect</a>
                             </Button>
-                          )}
+                            {supervisor.whatsapp && (
+                              <Button 
+                                asChild
+                                className="w-10 h-10 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-all p-0 flex items-center justify-center shrink-0 border-0 shadow-lg shadow-blue-500/20"
+                              >
+                                <a href={`https://wa.me/${supervisor.whatsapp.replace(/\+/g, '')}`} target="_blank" rel="noopener noreferrer">
+                                  <MessageSquare size={16} />
+                                </a>
+                              </Button>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ) : (
-                      <div className="text-center py-6">
-                        <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center mx-auto mb-3 text-slate-300">
-                          <User size={24} />
+                      ) : (
+                        <div className="text-center py-10">
+                          <div className="w-14 h-14 bg-white/5 dark:bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/10">
+                            <User size={24} className="text-slate-500" />
+                          </div>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Awaiting Command</p>
                         </div>
-                        <p className="text-xs text-slate-400 font-semibold">Awaiting Assignment</p>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                {/* Onboarding Checklist */}
-                <div className="bg-white dark:bg-slate-900 border border-blue-50 dark:border-slate-800 rounded-2xl p-5 sm:p-6">
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Onboarding Status</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* Milestone Progress Tracker */}
+                <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2rem] p-7 shadow-sm">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-7">
+                    <div>
+                      <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">Milestone Roadmap</h3>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Onboarding & Activation Coverage</p>
+                    </div>
+                    <div className="flex items-center gap-2 px-4 py-1.5 bg-blue-50 dark:bg-blue-900/10 rounded-xl">
+                      <div className="w-16 h-1.5 bg-blue-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-blue-600 transition-all duration-1000" 
+                          style={{ width: `${([isPaid, !!supervisor, logs.length > 0].filter(Boolean).length / 3) * 100}%` }} 
+                        />
+                      </div>
+                      <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">
+                        {Math.round(([isPaid, !!supervisor, logs.length > 0].filter(Boolean).length / 3) * 100)}% Complete
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {[
-                      { label: "Payment Confirmed", done: isPaid },
-                      { label: "Supervisor Assigned", done: !!supervisor },
-                      { label: "First Log Submitted", done: logs.length > 0 },
+                      { label: "Financial Verification", desc: "Payment sequence completed", done: isPaid, icon: CreditCard },
+                      { label: "Strategic Alignment", desc: "Supervisor contact established", done: !!supervisor, icon: Target },
+                      { label: "Execution Start", desc: "Initial engagement log recorded", done: logs.length > 0, icon: Rocket },
                     ].map((item, i) => (
                       <div key={i} className={cn(
-                        "flex items-center gap-3 p-4 rounded-xl border transition-colors",
+                        "relative overflow-hidden p-6 rounded-[1.5rem] border-2 transition-all group",
                         item.done 
-                          ? "bg-blue-50/50 dark:bg-blue-500/5 border-blue-100 dark:border-blue-500/20" 
-                          : "bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-700"
+                          ? "bg-emerald-50/30 border-emerald-100 dark:bg-emerald-500/5 dark:border-emerald-500/20" 
+                          : "bg-slate-50/50 border-slate-100 dark:bg-slate-900/50 dark:border-slate-800"
                       )}>
-                        <div className={cn(
-                          "w-8 h-8 rounded-lg flex items-center justify-center",
-                          item.done ? "bg-blue-600 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-400"
-                        )}>
-                          {item.done ? <CheckCircle2 size={16} /> : <Clock size={16} />}
+                        <div className="flex items-start gap-4">
+                          <div className={cn(
+                            "w-10 h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110",
+                            item.done ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "bg-slate-200 dark:bg-slate-700 text-slate-400"
+                          )}>
+                            <item.icon size={18} />
+                          </div>
+                          <div>
+                            <p className={cn(
+                              "text-sm font-black tracking-tight mb-0.5",
+                              item.done ? "text-emerald-900 dark:text-emerald-400" : "text-slate-600 dark:text-slate-400"
+                            )}>{item.label}</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-tight">{item.desc}</p>
+                          </div>
                         </div>
-                        <span className={cn(
-                          "text-sm font-semibold",
-                          item.done ? "text-blue-700 dark:text-blue-400" : "text-slate-500"
-                        )}>{item.label}</span>
+                        {item.done && (
+                          <div className="absolute top-2 right-2">
+                            <div className="w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
+                              <Check size={12} className="text-white" />
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -731,84 +837,93 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
 
             {/* ===== TASKS TAB ===== */}
             {activeTab === "tasks" && (
-              <div className="space-y-6">
+              <div className="space-y-8">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
-                    <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">Assigned Milestones</h2>
-                    <p className="text-sm text-slate-500">Track and manage your weekly assignments</p>
+                    <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Milestone Track</h2>
+                    <p className="text-sm font-medium text-slate-500">Execution roadmap and assigned objectives</p>
+                  </div>
+                  <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-500/10 rounded-2xl border border-blue-100 dark:border-blue-500/20">
+                    <Target size={14} className="text-blue-600" />
+                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{tasks.length} Active Objectives</span>
                   </div>
                 </div>
 
                 {tasks.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {tasks.map((task) => (
+                    {tasks.map((task, i) => (
                       <motion.div
                         key={task.id}
-                        whileHover={{ y: -4 }}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.1 }}
+                        whileHover={{ y: -6, transition: { duration: 0.2 } }}
                         onClick={() => handleOpenTask(task)}
-                        className="group relative cursor-pointer"
+                        className="group relative"
                       >
                         <div className={cn(
-                          "bg-white dark:bg-slate-900 border border-blue-100/50 dark:border-slate-800 rounded-[2rem] p-6 transition-all duration-300",
-                          !task.is_read ? "ring-2 ring-blue-500 shadow-xl shadow-blue-500/10" : "hover:border-blue-200 dark:hover:border-slate-700 hover:shadow-lg"
+                          "h-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-7 transition-all duration-300 shadow-sm overflow-hidden flex flex-col cursor-pointer",
+                          !task.is_read ? "ring-2 ring-blue-500 shadow-xl shadow-blue-500/10" : "hover:shadow-2xl hover:shadow-blue-500/5 hover:border-blue-200"
                         )}>
-                          {/* Priority Badge */}
-                          <div className="flex items-center justify-between mb-4">
-                            <Badge className={cn(
-                              "text-[10px] font-bold px-3 py-1 rounded-full border-0",
-                              task.priority === "high" ? "bg-red-50 text-red-600" :
-                              task.priority === "medium" ? "bg-amber-50 text-amber-600" :
-                              "bg-blue-50 text-blue-600"
+                          <div className="flex items-start justify-between mb-6">
+                            <div className={cn(
+                              "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border",
+                              task.priority === "high" ? "bg-rose-50 text-rose-600 border-rose-100" :
+                              task.priority === "medium" ? "bg-amber-50 text-amber-600 border-amber-100" :
+                              "bg-sky-50 text-sky-600 border-sky-100"
                             )}>
-                              {task.priority?.toUpperCase()} PRIORITY
-                            </Badge>
-                            
-                            {/* WhatsApp Style Ticks */}
-                            <div className="flex items-center">
-                              <CheckCheck 
+                              {task.priority || "Standard"} Priority
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                               <CheckCheck 
                                 size={18} 
-                                className={cn(
-                                  "transition-colors duration-500",
-                                  task.is_read ? "text-blue-500" : "text-slate-300"
-                                )} 
+                                className={cn("transition-colors duration-500", task.is_read ? "text-blue-500" : "text-slate-200")} 
                               />
                             </div>
                           </div>
 
-                          <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2 group-hover:text-blue-600 transition-colors">
+                          <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2 leading-tight group-hover:text-blue-600 transition-colors">
                             {task.title}
                           </h3>
-                          <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-6">
+                          <p className="text-sm text-slate-500 dark:text-slate-400 font-medium line-clamp-3 mb-8 flex-1">
                             {task.description}
                           </p>
 
-                          <div className="flex items-center justify-between pt-4 border-t border-slate-50 dark:border-slate-800">
+                          <div className="pt-6 border-t border-slate-50 dark:border-slate-800/50 flex items-center justify-between mt-auto">
                             <div className="flex items-center gap-2">
-                              <Calendar size={14} className="text-slate-400" />
-                              <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase">
-                                Due {format(new Date(task.due_date), "MMM dd")}
-                              </span>
+                              <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
+                                <Calendar size={12} className="text-slate-400" />
+                              </div>
+                              <div>
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">Deadline</p>
+                                <p className="text-[11px] font-black text-slate-900 dark:text-white uppercase">
+                                  {format(new Date(task.due_date), "MMM dd")}
+                                </p>
+                              </div>
                             </div>
-                            <Button variant="ghost" className="h-8 w-8 rounded-full p-0">
-                              <ChevronRight size={18} className="text-slate-300" />
-                            </Button>
+                            <div className="w-10 h-10 rounded-2xl bg-blue-50 group-hover:bg-blue-600 group-hover:text-white text-blue-600 flex items-center justify-center transition-all">
+                              <ArrowUpRight size={18} />
+                            </div>
                           </div>
 
                           {!task.is_read && (
-                            <span className="absolute top-4 right-4 h-2 w-2 bg-blue-600 rounded-full animate-ping" />
+                            <div className="absolute top-4 right-4 flex items-center gap-2">
+                               <div className="h-2 w-2 bg-blue-600 rounded-full animate-ping" />
+                               <span className="text-[8px] font-black text-blue-600 uppercase tracking-widest">New</span>
+                            </div>
                           )}
                         </div>
                       </motion.div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-[3rem] border-2 border-dashed border-blue-50 dark:border-slate-800">
-                    <div className="w-20 h-20 bg-blue-50 dark:bg-slate-800/50 rounded-3xl flex items-center justify-center mx-auto mb-6 text-blue-200">
-                      <CheckCheck size={40} />
+                  <div className="text-center py-24 bg-white dark:bg-slate-900 rounded-[3rem] border-2 border-dashed border-slate-100 dark:border-slate-800/50">
+                    <div className="w-24 h-24 bg-blue-50/50 dark:bg-slate-800/30 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 text-blue-200">
+                      <Zap size={40} className="text-slate-200 dark:text-slate-700" />
                     </div>
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No Tasks Found</h3>
-                    <p className="text-slate-400 max-w-xs mx-auto">
-                      Your supervisor hasn't assigned any milestones yet. Relax and check back later!
+                    <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">Zero Objectives</h3>
+                    <p className="text-sm font-medium text-slate-400 max-w-xs mx-auto">
+                      All systems operating normally. No pending milestones assigned at this time.
                     </p>
                   </div>
                 )}
@@ -817,57 +932,95 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
 
             {/* ===== CURRICULUM TAB ===== */}
             {activeTab === "curriculum" && (
-              <div className="space-y-6">
+              <div className="space-y-8">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
-                    <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">Learning Roadmap</h2>
-                    <p className="text-sm text-slate-500">Master your field week by week</p>
+                    <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Curriculum Roadmap</h2>
+                    <p className="text-sm font-medium text-slate-500">Structured learning path for technical mastery</p>
                   </div>
-                  <Badge className="bg-blue-50 text-blue-600 border-blue-100 px-3 py-1 rounded-lg font-semibold text-xs self-start sm:self-auto">
-                    {curriculum.length} Modules
-                  </Badge>
+                  <div className="flex items-center gap-2 px-3 py-1 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-500/20">
+                    <BookOpen size={12} />
+                    <span className="text-[9px] font-black uppercase tracking-widest">{curriculum.length} Learning Modules</span>
+                  </div>
                 </div>
 
                 {curriculum.length > 0 ? (
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     {curriculum.map((item, idx) => (
-                      <div key={item.id} className="group">
+                      <motion.div 
+                        key={item.id} 
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.05 }}
+                        className="group"
+                      >
                         <div className={cn(
-                          "flex gap-4 p-5 rounded-2xl border transition-all",
+                          "relative flex flex-col sm:flex-row gap-6 p-6 sm:p-8 rounded-[2.5rem] border-2 transition-all duration-300",
                           idx === 0 
-                            ? "bg-blue-50/50 dark:bg-blue-500/5 border-blue-200 dark:border-blue-500/30" 
-                            : "bg-white dark:bg-slate-900 border-blue-50 dark:border-slate-800 hover:border-blue-200 dark:hover:border-slate-700"
+                            ? "bg-blue-50/30 border-blue-200 dark:bg-blue-600/5 dark:border-blue-500/30 shadow-xl shadow-blue-500/5" 
+                            : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-500/5"
                         )}>
                           <div className={cn(
-                            "w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shrink-0",
+                            "w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg shrink-0 transition-transform group-hover:scale-110 shadow-sm",
                             idx === 0 
-                              ? "bg-blue-600 text-white shadow-md shadow-blue-500/30" 
+                              ? "bg-blue-600 text-white" 
                               : "bg-slate-100 dark:bg-slate-800 text-slate-500"
                           )}>
                             {idx + 1}
                           </div>
+                          
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-2 mb-2">
-                              <h3 className="font-bold text-slate-900 dark:text-white">{item.title}</h3>
-                              <div className="flex items-center gap-1.5 shrink-0">
-                                {item.video_url && <Video size={14} className="text-slate-400" />}
-                                {item.resources && <FileText size={14} className="text-slate-400" />}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                              <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight group-hover:text-blue-600 transition-colors">
+                                {item.title}
+                              </h3>
+                              <div className="flex items-center gap-2">
+                                {item.video_url && (
+                                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 text-[10px] font-black uppercase">
+                                    <Video size={12} /> Video
+                                  </div>
+                                )}
+                                {item.resources && (
+                                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase">
+                                    <FileText size={12} /> Resources
+                                  </div>
+                                )}
                               </div>
                             </div>
-                            <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-3">{item.description}</p>
-                            <Button variant="ghost" size="sm" className="text-blue-600 font-semibold text-xs p-0 h-auto hover:bg-transparent group/btn">
-                              Start Learning <ArrowRight size={12} className="ml-1 transition-transform group-hover/btn:translate-x-0.5" />
-                            </Button>
+                            
+                            <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 font-medium leading-relaxed mb-6 max-w-3xl">
+                              {item.description}
+                            </p>
+                            
+                            <div className="flex items-center gap-4">
+                              <Button className="rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black text-[9px] h-10 px-5 uppercase tracking-widest shadow-xl transition-all active:scale-95 whitespace-nowrap">
+                                Launch Module
+                              </Button>
+                              <div className="h-8 w-px bg-slate-100 dark:bg-slate-800 mx-2" />
+                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                                Status: <span className="text-blue-600 dark:text-blue-400">{idx === 0 ? "In Progress" : "Upcoming"}</span>
+                              </p>
+                            </div>
                           </div>
+
+                          {idx === 0 && (
+                            <div className="absolute top-6 right-6">
+                               <div className="px-3 py-1 bg-blue-600 text-white rounded-lg text-[9px] font-black uppercase tracking-wider animate-pulse">
+                                 Active Module
+                               </div>
+                            </div>
+                          )}
                         </div>
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-16 bg-white dark:bg-slate-900 rounded-2xl border-2 border-dashed border-blue-100 dark:border-slate-800">
-                    <BookOpen size={40} className="text-slate-200 dark:text-slate-700 mx-auto mb-4" />
-                    <p className="text-slate-400 font-semibold">No modules available yet</p>
-                    <p className="text-xs text-slate-400 mt-1">Check back soon for your curriculum</p>
+                  <div className="text-center py-24 bg-white dark:bg-slate-900 rounded-[3rem] border-2 border-dashed border-slate-100">
+                    <BookOpen size={48} className="text-slate-200 dark:text-slate-700 mx-auto mb-6" />
+                    <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">Curriculum Locked</h3>
+                    <p className="text-sm font-medium text-slate-400 max-w-xs mx-auto">
+                      Your specialized learning path is currently being finalized. Prepare for activation.
+                    </p>
                   </div>
                 )}
               </div>
@@ -883,10 +1036,10 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                   </div>
                   <Button 
                     onClick={() => setIsLogModalOpen(true)}
-                    className="rounded-xl bg-blue-600 hover:bg-blue-700 h-11 px-5 font-semibold text-xs shadow-md shadow-blue-500/20 transition-all active:scale-[0.98]"
+                    className="rounded-xl bg-blue-600 hover:bg-blue-700 h-10 px-5 font-black text-[10px] uppercase tracking-widest shadow-md shadow-blue-500/20 transition-all active:scale-[0.98] whitespace-nowrap"
                   >
-                    <Plus size={14} className="mr-2" />
-                    New Report
+                    <Plus size={14} className="mr-1.5" />
+                    NEW REPORT
                   </Button>
                 </div>
 
@@ -907,13 +1060,13 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                               strokeWidth={3}
                             />
                             <Badge className={cn(
-                              "rounded-md px-2 py-0.5 text-[10px] font-semibold border",
-                              log.status === "approved" ? "bg-green-50 text-green-600 border-green-100" : 
-                              log.status === "rejected" ? "bg-red-50 text-red-600 border-red-100" :
-                              "bg-amber-50 text-amber-600 border-amber-100"
-                            )}>
-                              {log.status === "approved" ? "Confirmed" : (log.status || "Pending")}
-                            </Badge>
+                               "rounded-lg px-2 py-0.5 text-[9px] font-black uppercase tracking-widest border-0",
+                               log.status === "approved" ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10" : 
+                               log.status === "rejected" ? "bg-rose-50 text-rose-600 dark:bg-rose-500/10" :
+                               "bg-amber-50 text-amber-600 dark:bg-amber-500/10"
+                             )}>
+                               {log.status === "approved" ? "Confirmed" : (log.status || "Pending")}
+                             </Badge>
                           </div>
                         </div>
                         <p className="text-sm font-medium text-slate-700 dark:text-slate-300 line-clamp-2 mb-4">
@@ -1159,6 +1312,14 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
       {/* Colleagues Modal */}
       <AnimatePresence>
         {isColleaguesModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsColleaguesModalOpen(false)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -1216,7 +1377,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                         : "border-blue-100 dark:border-slate-700 text-slate-500"
                     )}
                   >
-                    My Program
+                    My Department
                   </Button>
                 </div>
               </div>
@@ -1229,39 +1390,47 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                   <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                     <User size={12} /> Fellow Interns ({showDepartmentOnly ? fellowInterns.filter((i: any) => i.isSameProgram).length : fellowInterns.length})
                   </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                     {(showDepartmentOnly 
                       ? fellowInterns.filter((i: any) => i.isSameProgram)
                       : fellowInterns
                     ).map((intern: any) => (
                       <motion.div 
                         key={intern.id}
-                        whileHover={{ y: -2 }}
-                        className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-blue-50 dark:border-slate-800 flex items-center gap-4 group shadow-sm hover:shadow-md transition-all"
+                        whileHover={{ y: -4, scale: 1.02 }}
+                        className="p-4 rounded-[2rem] bg-white dark:bg-slate-900 border border-blue-50/50 dark:border-slate-800 flex flex-col items-center text-center gap-3 group shadow-sm hover:shadow-xl hover:shadow-blue-500/5 transition-all"
                       >
-                        <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-100 shrink-0">
+                        <div className="w-14 h-14 rounded-2xl overflow-hidden ring-4 ring-slate-50 dark:ring-slate-800 shadow-sm transition-transform group-hover:scale-105">
                           <Image 
-                            src={normalizeImageSrc(intern.student_profiles?.avatar_url, "/default-avatar.svg")} 
+                            src={normalizeImageSrc(intern.student_profiles?.avatar_url, "/logo.png")} 
                             alt={intern.student_profiles?.full_name} 
-                            width={48} 
-                            height={48} 
+                            width={56} 
+                            height={56} 
                             className="w-full h-full object-cover"
                           />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h5 className="font-bold text-slate-900 dark:text-white truncate text-sm">{intern.student_profiles?.full_name}</h5>
-                          <p className="text-[10px] text-blue-600 font-black uppercase tracking-widest mt-0.5">{intern.domain}</p>
+                          <h5 className="font-black text-slate-900 dark:text-white truncate text-[11px] mb-1">{intern.student_profiles?.full_name}</h5>
+                          <p className="text-[8px] text-blue-600 font-bold uppercase tracking-[0.05em] px-2 py-0.5 bg-blue-50 dark:bg-blue-900/20 rounded-full inline-block">{intern.domain}</p>
                         </div>
-                        <Button 
-                          asChild
-                          variant="ghost" 
-                          size="icon" 
-                          className="rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 shrink-0"
-                        >
-                          <Link href={`/dashboard/student/${intern.student_profiles?.username || intern.student_profiles?.user_id}`}>
-                            <ArrowUpRight size={18} />
-                          </Link>
-                        </Button>
+                        
+                        <div className="flex flex-col gap-1.5 pt-1 w-full">
+                          <Button 
+                             asChild
+                             variant="outline"
+                             className="w-full rounded-xl h-8 border-blue-100 dark:border-slate-800 text-[8px] font-black uppercase tracking-widest hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600"
+                          >
+                            <a href={`mailto:${intern.student_profiles?.email}`}><Mail size={10} className="mr-1.5" /> Mail</a>
+                          </Button>
+                          <Button 
+                             asChild
+                             className="w-full rounded-xl h-8 bg-blue-600 hover:bg-blue-700 text-[8px] font-black uppercase tracking-widest dark:text-white shadow-lg shadow-blue-500/10"
+                          >
+                             <Link href={`/dashboard/student/${intern.student_profiles?.username || intern.student_profiles?.user_id}`}>
+                               <ArrowUpRight size={10} className="mr-1.5" /> Portal
+                             </Link>
+                          </Button>
+                        </div>
                       </motion.div>
                     ))}
                   </div>
@@ -1277,37 +1446,46 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                   <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                     <Shield size={12} /> Company Supervisors ({fellowSupervisors.length})
                   </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                     {(fellowSupervisors || []).map((sup: any) => (
                       <div 
                         key={sup.id}
-                        className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-blue-50 dark:border-slate-800 flex items-center gap-4 group shadow-sm"
+                        className="p-4 rounded-[2rem] bg-white dark:bg-slate-900 border border-blue-50/50 dark:border-slate-800 flex flex-col items-center text-center gap-3 group shadow-sm"
                       >
-                        <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-100 shrink-0">
+                        <div className="w-14 h-14 rounded-2xl overflow-hidden ring-4 ring-slate-50 dark:ring-slate-800 shadow-sm transition-transform group-hover:scale-105">
                           <Image 
-                            src={normalizeImageSrc(sup.avatar_url, "/default-avatar.svg")} 
+                            src={normalizeImageSrc(sup.avatar_url, "/logo.png")} 
                             alt={sup.full_name} 
-                            width={48} 
-                            height={48} 
+                            width={56} 
+                            height={56} 
                             className="w-full h-full object-cover"
                           />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h5 className="font-bold text-slate-900 dark:text-white truncate text-sm">{sup.full_name}</h5>
-                          <p className="text-[10px] text-amber-600 font-black uppercase tracking-widest mt-0.5">
+                          <h5 className="font-black text-slate-900 dark:text-white truncate text-[11px] mb-1">{sup.full_name}</h5>
+                          <p className="text-[8px] text-amber-600 font-bold uppercase tracking-[0.05em] px-2 py-0.5 bg-amber-50 dark:bg-amber-900/20 rounded-full inline-block">
                             {sup.role || "Lead Supervisor"}
                           </p>
                         </div>
-                        <Button 
-                          asChild
-                          variant="ghost" 
-                          size="icon" 
-                          className="rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-400 shrink-0"
-                        >
-                          <a href={`mailto:${sup.email}`}>
-                            <Mail size={16} />
-                          </a>
-                        </Button>
+                        <div className="flex flex-col gap-1.5 pt-1 w-full">
+                          <Button 
+                             asChild
+                             variant="outline"
+                             className="w-full rounded-xl h-8 border-blue-100 dark:border-slate-800 text-[8px] font-black uppercase tracking-widest hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600"
+                          >
+                             <a href={`mailto:${sup.email}`}><Mail size={10} className="mr-1.5" /> Mail</a>
+                          </Button>
+                          {sup.whatsapp && (
+                            <Button 
+                               asChild
+                               className="w-full rounded-xl h-8 bg-blue-600 hover:bg-blue-700 text-[8px] font-black uppercase tracking-widest dark:text-white shadow-lg shadow-blue-500/10"
+                            >
+                               <a href={`https://wa.me/${sup.whatsapp.replace(/\+/g, '')}`} target="_blank" rel="noopener noreferrer">
+                                 <MessageSquare size={10} className="mr-1.5" /> WhatsApp
+                               </a>
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -1325,6 +1503,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                 </Button>
               </div>
             </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
