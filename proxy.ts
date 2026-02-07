@@ -98,6 +98,7 @@ export async function proxy(request: NextRequest) {
     "/api/auth/resend-otp",
     "/api/auth/callback",
     "/api/auth/company/register",
+    "/api/cron/reminders",
     // add more public API endpoints as needed
   ];
   if (!user) {

@@ -61,6 +61,12 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
     fetchSummaries();
   }, [companyId]);
 
+  // Helper function to look up summary with proper ID fallbacks
+  const getSummary = (intern: Applicant | null) => {
+    if (!intern) return { attendanceCount: 0, totalMarks: 0, latestObservation: "" };
+    return summaries[intern.id] || summaries[intern.userId || ""] || summaries[intern.studentId || ""] || { attendanceCount: 0, totalMarks: 0, latestObservation: "" };
+  };
+
   // Filter only active (accepted) interns
   const activeInterns = useMemo(() => {
     return applicants.filter(app => 
@@ -75,10 +81,20 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
     setIsPortalOpen(true);
     setLoading(true);
     
+    const targetStudentId = intern.userId || intern.studentId || "";
+
+    if (!targetStudentId) {
+      console.warn("No valid student ID found for intern:", intern);
+      setEvaluations([]);
+      setLogs([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       const [evals, internLogs] = await Promise.all([
-        getEvaluationsForIntern(intern.userId || ""),
-        getInternLogsForAdmin(intern.userId || "", intern.internshipId)
+        getEvaluationsForIntern(targetStudentId),
+        getInternLogsForAdmin(targetStudentId, intern.internshipId || undefined)
       ]);
       setEvaluations(evals || []);
       setLogs(internLogs || []);
@@ -95,7 +111,7 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
     const csvRows = [headers.join(",")];
 
     activeInterns.forEach(intern => {
-        const summary = summaries[intern.id] || summaries[intern.userId || ""] || { attendanceCount: 0, totalMarks: 0 };
+        const summary = getSummary(intern);
         const daysWorked = intern.appliedDate ? differenceInDays(new Date(), new Date(intern.appliedDate)) : 0;
         
         const row = [
@@ -172,7 +188,8 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
               {activeInterns.map((intern) => {
                 const daysWorked = intern.appliedDate ? differenceInDays(new Date(), new Date(intern.appliedDate)) : 0;
                 // Try lookup by application ID first, then by user ID as fallback
-                const summary = summaries[intern.id] || summaries[intern.userId || ""] || { attendanceCount: 0, totalMarks: 0 };
+                // Try all ID fallbacks: application ID, userId (auth user), studentId (profile id)
+                const summary = summaries[intern.id] || summaries[intern.userId || ""] || summaries[intern.studentId || ""] || { attendanceCount: 0, totalMarks: 0 };
                 
                 return (
                   <tr key={intern.id} className="group hover:bg-blue-50/30 transition-colors duration-300">
@@ -354,9 +371,9 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
                         <BarChart3 size={14} className="text-indigo-500" /> Master KPIs
                       </h4>
                       <div className="space-y-8">
-                         <KPIMetric label="Technical Achievement" value={selectedIntern ? Math.min(100, (summaries[selectedIntern.id]?.totalMarks || 0) * 4) : 0} color="bg-blue-600" />
+                         <KPIMetric label="Technical Achievement" value={selectedIntern ? Math.min(100, (getSummary(selectedIntern).totalMarks || 0) * 4) : 0} color="bg-blue-600" />
                          <KPIMetric label="Soft Skills Proficiency" value={85} color="bg-indigo-600" />
-                         <KPIMetric label="Attendance Compliance" value={selectedIntern ? Math.min(100, Math.round(((summaries[selectedIntern.id]?.attendanceCount || 0) / Math.max(1, selectedIntern.appliedDate ? differenceInDays(new Date(), new Date(selectedIntern.appliedDate)) : 30)) * 100)) : 0} color="bg-emerald-500" />
+                         <KPIMetric label="Attendance Compliance" value={selectedIntern ? Math.min(100, Math.round(((getSummary(selectedIntern).attendanceCount || 0) / Math.max(1, selectedIntern.appliedDate ? differenceInDays(new Date(), new Date(selectedIntern.appliedDate)) : 30)) * 100)) : 0} color="bg-emerald-500" />
                       </div>
                    </div>
 
@@ -364,7 +381,7 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
                       <div className="relative z-10">
                         <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Total Evaluation Points</h4>
                         <div className="flex items-baseline gap-2">
-                          <span className="text-5xl font-black text-white">{selectedIntern ? (summaries[selectedIntern.id]?.totalMarks || 0) : 0}</span>
+                          <span className="text-5xl font-black text-white">{selectedIntern ? (getSummary(selectedIntern).totalMarks || 0) : 0}</span>
                           <span className="text-xl font-bold text-slate-500">Points</span>
                         </div>
                         <div className="mt-8 flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10">
@@ -460,13 +477,13 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
                                <div className="flex items-center gap-8">
                                   <div className="text-center">
                                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Present Days</p>
-                                     <p className="text-2xl font-black text-slate-900">{selectedIntern ? summaries[selectedIntern.id]?.attendanceCount || 0 : 0}</p>
+                                     <p className="text-2xl font-black text-slate-900">{selectedIntern ? getSummary(selectedIntern).attendanceCount || 0 : 0}</p>
                                   </div>
                                   <div className="w-px h-10 bg-slate-200" />
                                   <div className="text-center">
                                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Punctuality Score</p>
                                      <p className="text-2xl font-black text-emerald-600">
-                                        {selectedIntern ? Math.round(((summaries[selectedIntern.id]?.attendanceCount || 0) / Math.max(1, selectedIntern.appliedDate ? differenceInDays(new Date(), new Date(selectedIntern.appliedDate)) : 30)) * 100) : 0}%
+                                        {selectedIntern ? Math.round(((getSummary(selectedIntern).attendanceCount || 0) / Math.max(1, selectedIntern.appliedDate ? differenceInDays(new Date(), new Date(selectedIntern.appliedDate)) : 30)) * 100) : 0}%
                                       </p>
                                    </div>
                                 </div>
