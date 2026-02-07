@@ -46,6 +46,7 @@ import { DailyReportModal } from "./DailyReportModal";
 import { createClient } from "@/lib/supabase/client";
 import { markAnnouncementsAsRead } from "@/lib/actions/announcement.actions";
 import { InternAnnouncementBoard } from "@/components/sections/intern/InternAnnouncementBoard";
+import { LogbookPreviewModal } from "./LogbookPreviewModal";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { toast } from "sonner";
@@ -96,6 +97,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [isTaskDetailsOpen, setIsTaskDetailsOpen] = useState(false);
   const [isColleaguesModalOpen, setIsColleaguesModalOpen] = useState(false);
+  const [isLogbookPreviewOpen, setIsLogbookPreviewOpen] = useState(false);
   const [showDepartmentOnly, setShowDepartmentOnly] = useState(false);
   const internship = application?.internships;
   const company = internship?.company_profiles;
@@ -453,14 +455,12 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
             {/* Action Buttons - Full Width on Mobile */}
             <div className="flex gap-3">
               <Button 
-                asChild
+                onClick={() => setIsLogbookPreviewOpen(true)}
                 variant="outline" 
                 className="flex-1 sm:flex-none rounded-xl border-blue-100 dark:border-slate-700 font-semibold text-xs h-11 px-4 hover:bg-blue-50 dark:hover:bg-slate-800 transition-all cursor-pointer"
               >
-                <a href={`/api/internships/logbook/${application.id}?print=true`} target="_blank" rel="noopener noreferrer">
-                  <Download size={14} className="mr-2" />
-                  Logbook
-                </a>
+                <FileText size={14} className="mr-2 text-blue-600" />
+                Logbook
               </Button>
               <Button 
                 onClick={() => !hasLoggedToday && !needsPaymentAcknowledgment && setIsLogModalOpen(true)}
@@ -1159,14 +1159,6 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
       {/* Colleagues Modal */}
       <AnimatePresence>
         {isColleaguesModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsColleaguesModalOpen(false)}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
-            />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -1333,9 +1325,16 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                 </Button>
               </div>
             </motion.div>
-          </div>
         )}
       </AnimatePresence>
+
+      {/* Logbook Preview Modal */}
+      <LogbookPreviewModal 
+        isOpen={isLogbookPreviewOpen}
+        onClose={() => setIsLogbookPreviewOpen(false)}
+        applicationId={application.id}
+        studentName={application.student_profiles?.full_name || application.full_name || "Intern"}
+      />
     </div>
   );
 }
