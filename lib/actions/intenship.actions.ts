@@ -185,18 +185,28 @@ export async function getInternshipWorkspaceData() {
   const readIds = new Set(readRecords?.map((r: any) => r.announcement_id) || []);
   const unreadCount = announcements.filter((a: any) => !readIds.has(a.id)).length;
 
-  // 8. Fetch Fellow Interns - ULTRA ROBUST
+  // 8. Fetch Fellow Interns - ULTRA ROBUST & SCOPED TO COMPANY
+  const { data: companyInternships } = await supabaseAdmin
+    .from("internships")
+    .select("id")
+    .eq("company_id", companyId);
+
+  const companyInternshipIds = companyInternships?.map(i => i.id) || [];
+
+  // Only look for applications within this company
   const { data: structApps } = await supabaseAdmin
     .from("internship_applications")
     .select("id, internship_id, student_id, domain")
-    .eq("status", "accepted");
+    .eq("status", "accepted")
+    .in("internship_id", companyInternshipIds); // Scoped to company
 
   let legacyApps: any[] = [];
   try {
     const { data: legacyData } = await supabaseAdmin
       .from("Applications")
       .select("id, internship_id, student_id, domain")
-      .eq("status", "accepted");
+      .eq("status", "accepted")
+      .in("internship_id", companyInternshipIds); // Scoped to company
     legacyApps = legacyData || [];
   } catch (e) {
     // Silently fail for legacy table if it doesn't exist
@@ -220,6 +230,7 @@ export async function getInternshipWorkspaceData() {
     return {
       ...app,
       isSameProgram: app.internship_id === application.internship_id,
+      isSameDepartment: app.domain === application.domain, // New flag for department filtering
       student_profiles: profile || { full_name: "Member", avatar_url: "/default-avatar.svg", user_id: app.student_id }
     };
   }).filter(app => app.student_id !== user.id); // Exclude self

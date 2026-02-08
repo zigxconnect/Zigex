@@ -2,16 +2,16 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  BookOpen, 
-  Calendar, 
-  CheckCircle2, 
-  Clock, 
-  FileText, 
-  Layout, 
-  MessageSquare, 
-  Trophy, 
-  User, 
+import {
+  BookOpen,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  FileText,
+  Layout,
+  MessageSquare,
+  Trophy,
+  User,
   Video,
   ExternalLink,
   Shield,
@@ -79,17 +79,17 @@ const getTabs = (reportsCount: number, paymentsCount: number, tasksCount: number
   { id: "tasks", label: "Tasks", icon: CheckCheck, badge: tasksCount > 0 ? tasksCount : undefined },
   { id: "curriculum", label: "Curriculum", icon: BookOpen },
   { id: "announcements", label: "Announcements", icon: Megaphone, badge: unreadAnnouncements > 0 ? unreadAnnouncements : undefined },
-  { 
-    id: "reports", 
-    label: "Reports", 
-    icon: FileText, 
+  {
+    id: "reports",
+    label: "Reports",
+    icon: FileText,
     badge: reportsCount > 0 ? reportsCount : undefined,
     badgeColor: hasPendingReport ? "bg-red-500" : "bg-blue-600"
   },
-  { 
-    id: "payments", 
-    label: "Payments", 
-    icon: CreditCard, 
+  {
+    id: "payments",
+    label: "Payments",
+    icon: CreditCard,
     badge: paymentsCount > 0 ? paymentsCount : undefined,
     badgeColor: "bg-blue-600"
   },
@@ -113,17 +113,17 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
   const [expandedModule, setExpandedModule] = useState<string | null>(null);
 
   // Get dummy curriculum if DB one is empty
-  const displayCurriculum = (curriculum && curriculum.length > 0) 
-    ? curriculum 
+  const displayCurriculum = (curriculum && curriculum.length > 0)
+    ? curriculum
     : getInternCurriculum(application?.domain || "", application?.experience_level || "beginner")?.modules || [];
 
   const paymentLedger = application?.payment_ledger || [];
   const totalPaid = paymentLedger
     .filter((r: any) => r.status === 'paid')
     .reduce((sum: number, r: any) => sum + (r.amount || 0), 0);
-  
+
   const isPaid = totalPaid > 0;
-  
+
   // Check if today's log already exists (client-side check for better UX)
   const todayStr = format(new Date(), "yyyy-MM-dd");
   const hasLoggedToday = logs.some((log: any) => log.log_date === todayStr);
@@ -137,7 +137,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
 
   useEffect(() => {
     const supabase = createClient();
-    
+
     // Listen for changes to the current application (e.g., supervisor assignment)
     const channel = supabase
       .channel(`application-${application?.id}`)
@@ -166,7 +166,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
     if (activeTab === "announcements" && unreadAnnouncements > 0) {
       const studentId = application?.student_id;
       const announcementIds = announcements.map((a: any) => a.id);
-      
+
       if (studentId && announcementIds.length > 0) {
         markAnnouncementsAsRead(studentId, announcementIds).then(res => {
           if (res.success) {
@@ -193,10 +193,10 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
         },
         async (payload) => {
           const newAnnouncement = payload.new as any;
-          
+
           // Check if relevant: Global (company_id is null) or specific to student's company
           const isRelevant = !newAnnouncement.company_id || newAnnouncement.company_id === companyId;
-          
+
           if (isRelevant) {
             // Re-fetch enriched announcements or manually refresh to get company info
             router.refresh();
@@ -223,7 +223,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
   // Real-time Logs Listener (for Approval Status)
   useEffect(() => {
     const supabase = createClient();
-    
+
     const logsChannel = supabase
       .channel(`logs-${application?.student_id}`)
       .on(
@@ -249,7 +249,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
   // Real-time Tasks Listener
   useEffect(() => {
     const supabase = createClient();
-    
+
     const tasksChannel = supabase
       .channel(`tasks-${application?.student_id}`)
       .on(
@@ -262,7 +262,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
         },
         (payload) => {
           console.log('[REALTIME] Task change detected:', payload);
-          
+
           if (payload.eventType === 'INSERT') {
             const newTask = payload.new as any;
             setTasks(prev => [newTask, ...prev]);
@@ -353,7 +353,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
   const handleOpenTask = async (task: any) => {
     setSelectedTask(task);
     setIsTaskDetailsOpen(true);
-    
+
     if (!task.is_read) {
       const { markTaskAsRead } = await import("@/lib/actions/intenship.actions");
       const res = await markTaskAsRead(task.id);
@@ -371,9 +371,9 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
       {/* Daily Report Modal */}
       <AnimatePresence>
         {isLogModalOpen && (
-          <DailyReportModal 
-            isOpen={isLogModalOpen} 
-            onClose={() => setIsLogModalOpen(false)} 
+          <DailyReportModal
+            isOpen={isLogModalOpen}
+            onClose={() => setIsLogModalOpen(false)}
             internshipId={application.internship_id}
           />
         )}
@@ -384,15 +384,15 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
         {/* Decorative Background Elements */}
         <div className="absolute top-0 right-0 -tr-1/4 w-[500px] h-[500px] bg-blue-50/50 dark:bg-blue-600/5 rounded-full blur-3xl -z-10" />
         <div className="absolute bottom-0 left-0 -bl-1/4 w-[300px] h-[300px] bg-indigo-50/30 dark:bg-indigo-600/5 rounded-full blur-3xl -z-10" />
-        
+
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
           <div className="flex flex-col gap-8">
-            
-            
+
+
             {/* Main Info Row */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="flex items-center gap-5 sm:gap-6">
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   className="relative group shrink-0"
@@ -400,12 +400,12 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                   <div className="absolute -inset-1 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500" />
                   <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white dark:bg-slate-900 border border-blue-50 dark:border-slate-800 flex items-center justify-center overflow-hidden shadow-inner">
                     {company?.logo_url ? (
-                      <Image 
-                        src={normalizeImageSrc(company.logo_url)} 
-                        alt={company.company_name} 
-                        width={80} 
-                        height={80} 
-                        className="w-full h-full object-cover p-2" 
+                      <Image
+                        src={normalizeImageSrc(company.logo_url)}
+                        alt={company.company_name}
+                        width={80}
+                        height={80}
+                        className="w-full h-full object-cover p-2"
                       />
                     ) : (
                       <Shield size={32} className="text-blue-600/50" />
@@ -437,24 +437,24 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
               </div>
 
               <div className="hidden md:flex items-center gap-3">
-                <Button 
+                <Button
                   onClick={() => setIsLogbookPreviewOpen(true)}
-                  variant="outline" 
+                  variant="outline"
                   className="rounded-2xl border-slate-200 dark:border-slate-800 font-black text-[10px] h-11 px-5 hover:bg-slate-50 dark:hover:bg-slate-900 hover:border-blue-200 transition-all whitespace-nowrap"
                 >
                   <FileText size={14} className="mr-2 text-blue-600" />
                   LOGBOOK PREVIEW
                 </Button>
-                <Button 
+                <Button
                   onClick={() => !hasLoggedToday && !needsPaymentAcknowledgment && setIsLogModalOpen(true)}
                   disabled={hasLoggedToday || needsPaymentAcknowledgment}
                   className={cn(
                     "rounded-2xl font-black text-[10px] h-11 px-6 shadow-xl transition-all active:scale-[0.98] whitespace-nowrap",
-                    hasLoggedToday 
-                      ? "bg-emerald-50 text-emerald-600 cursor-not-allowed border border-emerald-100" 
+                    hasLoggedToday
+                      ? "bg-emerald-50 text-emerald-600 cursor-not-allowed border border-emerald-100"
                       : needsPaymentAcknowledgment
-                      ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                      : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/30"
+                        ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                        : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/30"
                   )}
                 >
                   {hasLoggedToday ? (
@@ -463,7 +463,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                     </span>
                   ) : needsPaymentAcknowledgment ? (
                     <span className="flex items-center gap-2">
-                       <Lock size={14} /> WORKSPACE LOCKED
+                      <Lock size={14} /> WORKSPACE LOCKED
                     </span>
                   ) : (
                     <span className="flex items-center gap-2">
@@ -476,20 +476,20 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
 
             {/* Bottom Row: Colleagues + Mobile Pulse */}
             <div className="flex items-center justify-between border-t border-slate-50 dark:border-slate-800/50 pt-8 sm:pt-10">
-              <button 
+              <button
                 onClick={() => setIsColleaguesModalOpen(true)}
                 className="flex items-center gap-4 group transition-all"
               >
                 <div className="flex -space-x-1 sm:-space-x-1.5">
                   {(fellowInterns || []).slice(0, 5).map((intern: any, i: number) => (
-                    <div 
-                      key={intern.id} 
+                    <div
+                      key={intern.id}
                       className="relative h-9 w-9 sm:h-10 sm:w-10 rounded-xl ring-2 ring-white dark:ring-slate-950 overflow-hidden bg-slate-100 shadow-sm transition-transform group-hover:translate-x-1 group-hover:scale-105"
                       style={{ transitionDelay: `${i * 50}ms`, zIndex: 10 - i }}
                     >
-                      <Image 
-                        src={normalizeImageSrc(intern.student_profiles?.avatar_url, "/logo.png")} 
-                        alt={intern.student_profiles?.full_name || "Intern"} 
+                      <Image
+                        src={normalizeImageSrc(intern.student_profiles?.avatar_url, "/logo.png")}
+                        alt={intern.student_profiles?.full_name || "Intern"}
                         fill
                         className="object-cover"
                       />
@@ -519,24 +519,24 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
 
             {/* Mobile Actions (Visible Only on Mobile) */}
             <div className="flex md:hidden flex-col gap-2.5">
-              <Button 
+              <Button
                 onClick={() => setIsLogbookPreviewOpen(true)}
-                variant="outline" 
+                variant="outline"
                 className="w-full rounded-2xl border-blue-100 dark:border-slate-800 font-black text-[10px] h-12 whitespace-nowrap"
               >
                 <FileText size={14} className="mr-2 text-blue-600" />
                 LOGBOOK PREVIEW
               </Button>
-              <Button 
+              <Button
                 onClick={() => !hasLoggedToday && !needsPaymentAcknowledgment && setIsLogModalOpen(true)}
                 disabled={hasLoggedToday || needsPaymentAcknowledgment}
                 className={cn(
                   "w-full rounded-2xl font-black text-[10px] h-12 shadow-lg whitespace-nowrap",
-                  hasLoggedToday 
-                    ? "bg-emerald-50 text-emerald-600 border border-emerald-100" 
+                  hasLoggedToday
+                    ? "bg-emerald-50 text-emerald-600 border border-emerald-100"
                     : needsPaymentAcknowledgment
-                    ? "bg-slate-100 text-slate-400"
-                    : "bg-blue-600 text-white shadow-blue-500/20"
+                      ? "bg-slate-100 text-slate-400"
+                      : "bg-blue-600 text-white shadow-blue-500/20"
                 )}
               >
                 {hasLoggedToday ? (
@@ -545,7 +545,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                   </span>
                 ) : needsPaymentAcknowledgment ? (
                   <span className="flex items-center gap-2">
-                     <Lock size={14} /> WORKSPACE LOCKED
+                    <Lock size={14} /> WORKSPACE LOCKED
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">
@@ -563,9 +563,9 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-1 py-3 overflow-x-auto hide-scrollbar custom-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
             {getTabs(
-              logs.length, 
-              paymentLedger.filter((p: any) => p.status === 'paid').length, 
-              tasks.filter(t => !t.is_read).length, 
+              logs.length,
+              paymentLedger.filter((p: any) => p.status === 'paid').length,
+              tasks.filter(t => !t.is_read).length,
               unreadAnnouncements,
               logs.some(l => l.status !== 'approved')
             ).map((tab) => {
@@ -577,8 +577,8 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
                     "relative flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest whitespace-nowrap transition-all duration-200",
-                    isActive 
-                      ? "text-blue-600 dark:text-blue-400" 
+                    isActive
+                      ? "text-blue-600 dark:text-blue-400"
                       : "text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
                   )}
                 >
@@ -622,10 +622,10 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
             {/* ===== OVERVIEW TAB ===== */}
             {activeTab === "overview" && (
               <div className="space-y-6">
-                
+
                 {/* Payment Acknowledgment Banner (Persistent until accepted) */}
                 {needsPaymentAcknowledgment && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-amber-500 to-orange-600 p-8 text-white shadow-xl shadow-amber-500/20 mb-6"
@@ -637,11 +637,11 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                       <div className="flex-1 text-center sm:text-left">
                         <h3 className="text-xl font-black mb-1">Paid Internship Acknowledgment</h3>
                         <p className="text-sm text-amber-50 font-medium">
-                          This is a paid internship ({internship?.monthly_rate?.toLocaleString()} FCFA/month). 
+                          This is a paid internship ({internship?.monthly_rate?.toLocaleString()} FCFA/month).
                           Please acknowledge that you agree to the payment terms to unlock your daily logs.
                         </p>
                       </div>
-                      <Button 
+                      <Button
                         onClick={async () => {
                           const { acknowledgePaidInternship } = await import("@/lib/actions/intenship.actions");
                           const res = await acknowledgePaidInternship(application.id);
@@ -666,7 +666,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                     { label: "Specialization", value: application?.domain || "General", icon: Cpu, color: "text-purple-600", bg: "bg-purple-50 dark:bg-purple-500/10" },
                     { label: "Success Rate", value: "94% Tracking", icon: Zap, color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-500/10" },
                   ].map((stat, i) => (
-                    <motion.div 
+                    <motion.div
                       key={i}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -685,7 +685,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
 
                 {/* Main Information Section */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                  
+
                   {/* Detailed Description */}
                   <div className="lg:col-span-8 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2rem] p-7 sm:p-9 shadow-sm">
                     <div className="flex items-center gap-3 mb-5">
@@ -695,7 +695,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                     <p className="text-[13px] text-slate-500 dark:text-slate-400 leading-relaxed font-medium mb-8">
                       {internship?.description || "This internship provides hands-on experience in your chosen field, allowing you to develop practical skills while working alongside industry professionals."}
                     </p>
-                    
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Technical Environment</p>
@@ -721,16 +721,16 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                     <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-[2rem] p-7 text-white shadow-2xl overflow-hidden relative group">
                       <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:scale-150 transition-transform duration-700" />
                       <p className="text-[9px] font-black text-blue-100 uppercase tracking-[0.2em] mb-5 relative opacity-80">Assigned Supervisor</p>
-                      
+
                       {supervisor ? (
                         <div className="space-y-5 relative">
                           <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-xl overflow-hidden ring-4 ring-white/10 dark:ring-slate-100 shadow-xl bg-slate-800">
-                              <Image 
-                                src={normalizeImageSrc(supervisor.avatar_url, "/logo.png")} 
-                                alt={supervisor.full_name} 
-                                width={48} 
-                                height={48} 
+                              <Image
+                                src={normalizeImageSrc(supervisor.avatar_url, "/logo.png")}
+                                alt={supervisor.full_name}
+                                width={48}
+                                height={48}
                                 className="w-full h-full object-cover"
                               />
                             </div>
@@ -739,20 +739,20 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                               <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Lead Strategist</p>
                             </div>
                           </div>
-                          
+
                           <p className="text-[13px] font-medium text-white/70 leading-relaxed italic line-clamp-3">
                             "{supervisor.bio || "Available for guidance throughout your professional journey."}"
                           </p>
-                          
+
                           <div className="pt-2 flex gap-2">
-                             <Button 
+                            <Button
                               asChild
                               className="flex-1 rounded-xl h-10 bg-white dark:bg-slate-900 text-slate-950 dark:text-white font-black text-[9px] uppercase tracking-widest hover:bg-slate-100 dark:hover:bg-slate-800 whitespace-nowrap px-4"
                             >
                               <a href={`mailto:${supervisor.email}`}><Mail size={12} className="mr-2" /> Connect</a>
                             </Button>
                             {supervisor.whatsapp && (
-                              <Button 
+                              <Button
                                 asChild
                                 className="w-10 h-10 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-all p-0 flex items-center justify-center shrink-0 border-0 shadow-lg shadow-blue-500/20"
                               >
@@ -784,9 +784,9 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                     </div>
                     <div className="flex items-center gap-2 px-4 py-1.5 bg-blue-50 dark:bg-blue-900/10 rounded-xl">
                       <div className="w-16 h-1.5 bg-blue-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-blue-600 transition-all duration-1000" 
-                          style={{ width: `${([isPaid, !!supervisor, logs.length > 0].filter(Boolean).length / 3) * 100}%` }} 
+                        <div
+                          className="h-full bg-blue-600 transition-all duration-1000"
+                          style={{ width: `${([isPaid, !!supervisor, logs.length > 0].filter(Boolean).length / 3) * 100}%` }}
                         />
                       </div>
                       <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">
@@ -794,7 +794,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                       </span>
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {[
                       { label: "Financial Verification", desc: "Payment sequence completed", done: isPaid, icon: CreditCard },
@@ -803,8 +803,8 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                     ].map((item, i) => (
                       <div key={i} className={cn(
                         "relative overflow-hidden p-6 rounded-[1.5rem] border-2 transition-all group",
-                        item.done 
-                          ? "bg-emerald-50/30 border-emerald-100 dark:bg-emerald-500/5 dark:border-emerald-500/20" 
+                        item.done
+                          ? "bg-emerald-50/30 border-emerald-100 dark:bg-emerald-500/5 dark:border-emerald-500/20"
                           : "bg-slate-50/50 border-slate-100 dark:bg-slate-900/50 dark:border-slate-800"
                       )}>
                         <div className="flex items-start gap-4">
@@ -878,15 +878,15 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                             <div className={cn(
                               "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border",
                               task.priority === "high" ? "bg-rose-50 text-rose-600 border-rose-100" :
-                              task.priority === "medium" ? "bg-amber-50 text-amber-600 border-amber-100" :
-                              "bg-sky-50 text-sky-600 border-sky-100"
+                                task.priority === "medium" ? "bg-amber-50 text-amber-600 border-amber-100" :
+                                  "bg-sky-50 text-sky-600 border-sky-100"
                             )}>
                               {task.priority || "Standard"} Priority
                             </div>
                             <div className="flex items-center gap-1.5">
-                               <CheckCheck 
-                                size={18} 
-                                className={cn("transition-colors duration-500", task.is_read ? "text-blue-500" : "text-slate-200")} 
+                              <CheckCheck
+                                size={18}
+                                className={cn("transition-colors duration-500", task.is_read ? "text-blue-500" : "text-slate-200")}
                               />
                             </div>
                           </div>
@@ -917,8 +917,8 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
 
                           {!task.is_read && (
                             <div className="absolute top-4 right-4 flex items-center gap-2">
-                               <div className="h-2 w-2 bg-blue-600 rounded-full animate-ping" />
-                               <span className="text-[8px] font-black text-blue-600 uppercase tracking-widest">New</span>
+                              <div className="h-2 w-2 bg-blue-600 rounded-full animate-ping" />
+                              <span className="text-[8px] font-black text-blue-600 uppercase tracking-widest">New</span>
                             </div>
                           )}
                         </div>
@@ -957,8 +957,8 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                   <div className="space-y-4">
                     <Accordion type="single" collapsible className="w-full space-y-4">
                       {displayCurriculum.map((item: any, idx) => (
-                        <AccordionItem 
-                          key={item.id || idx} 
+                        <AccordionItem
+                          key={item.id || idx}
                           value={`module-${idx}`}
                           className="border-2 rounded-[2.5rem] overflow-hidden transition-all bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-blue-200"
                         >
@@ -1009,7 +1009,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                                   </div>
                                   <h5 className="text-lg font-black text-slate-900 dark:text-white mb-2">{item.project.title}</h5>
                                   <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">{item.project.description}</p>
-                                  
+
                                   {item.project.deliverables && (
                                     <div className="space-y-2">
                                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Deliverables</p>
@@ -1064,7 +1064,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                     <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">Daily Reports</h2>
                     <p className="text-sm text-slate-500">Document your daily activities</p>
                   </div>
-                  <Button 
+                  <Button
                     onClick={() => setIsLogModalOpen(true)}
                     className="rounded-xl bg-blue-600 hover:bg-blue-700 h-10 px-5 font-black text-[10px] uppercase tracking-widest shadow-md shadow-blue-500/20 transition-all active:scale-[0.98] whitespace-nowrap"
                   >
@@ -1082,21 +1082,21 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                             {format(new Date(log.log_date), "MMM dd, yyyy")}
                           </span>
                           <div className="flex items-center gap-2">
-                            <CheckCheck 
-                              size={16} 
+                            <CheckCheck
+                              size={16}
                               className={cn(
                                 (log.read_at && log.status === "approved") ? "text-blue-500" : "text-slate-300"
-                              )} 
+                              )}
                               strokeWidth={3}
                             />
                             <Badge className={cn(
-                               "rounded-lg px-2 py-0.5 text-[9px] font-black uppercase tracking-widest border-0",
-                               log.status === "approved" ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10" : 
-                               log.status === "rejected" ? "bg-rose-50 text-rose-600 dark:bg-rose-500/10" :
-                               "bg-amber-50 text-amber-600 dark:bg-amber-500/10"
-                             )}>
-                               {log.status === "approved" ? "Confirmed" : (log.status || "Pending")}
-                             </Badge>
+                              "rounded-lg px-2 py-0.5 text-[9px] font-black uppercase tracking-widest border-0",
+                              log.status === "approved" ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10" :
+                                log.status === "rejected" ? "bg-rose-50 text-rose-600 dark:bg-rose-500/10" :
+                                  "bg-amber-50 text-amber-600 dark:bg-amber-500/10"
+                            )}>
+                              {log.status === "approved" ? "Confirmed" : (log.status || "Pending")}
+                            </Badge>
                           </div>
                         </div>
                         <p className="text-sm font-medium text-slate-700 dark:text-slate-300 line-clamp-2 mb-4">
@@ -1130,7 +1130,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                     <FileText size={40} className="text-slate-200 dark:text-slate-700 mx-auto mb-4" />
                     <p className="text-slate-400 font-semibold">No reports submitted yet</p>
                     <p className="text-xs text-slate-400 mt-1">Start by submitting your first daily log</p>
-                    <Button 
+                    <Button
                       onClick={() => setIsLogModalOpen(true)}
                       className="mt-4 rounded-xl bg-blue-600 hover:bg-blue-700 h-10 px-5 font-semibold text-xs"
                     >
@@ -1215,15 +1215,15 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                               </td>
                               <td className="px-6 py-4 text-right">
                                 {record.status === 'paid' && (
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
                                     asChild
                                     className="h-8 rounded-lg text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-[10px] font-black uppercase tracking-wider"
                                   >
-                                    <a 
-                                      href={`/api/internships/receipt/${application.id}?month=${record.month}`} 
-                                      target="_blank" 
+                                    <a
+                                      href={`/api/internships/receipt/${application.id}?month=${record.month}`}
+                                      target="_blank"
                                       rel="noopener noreferrer"
                                     >
                                       <Download size={14} className="mr-1.5" />
@@ -1289,8 +1289,8 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                   <Badge className={cn(
                     "text-[10px] font-black px-4 py-1.5 rounded-full border-0 tracking-widest",
                     selectedTask.priority === "high" ? "bg-red-500 text-white" :
-                    selectedTask.priority === "medium" ? "bg-amber-500 text-white" :
-                    "bg-blue-600 text-white"
+                      selectedTask.priority === "medium" ? "bg-amber-500 text-white" :
+                        "bg-blue-600 text-white"
                   )}>
                     {selectedTask.priority?.toUpperCase()} PRIORITY
                   </Badge>
@@ -1305,7 +1305,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                 <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mb-4 leading-tight">
                   {selectedTask.title}
                 </h2>
-                
+
                 <div className="space-y-4 mb-10 overflow-y-auto max-h-[300px] custom-scrollbar pr-4">
                   <p className="text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
                     {selectedTask.description}
@@ -1319,13 +1319,13 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-slate-100 dark:border-slate-800">
-                  <Button 
+                  <Button
                     onClick={() => setIsTaskDetailsOpen(false)}
                     className="flex-1 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black h-14 shadow-xl shadow-blue-500/20"
                   >
                     GOT IT
                   </Button>
-                  <Button 
+                  <Button
                     variant="outline"
                     onClick={() => setIsTaskDetailsOpen(false)}
                     className="flex-1 rounded-2xl border-slate-100 dark:border-slate-800 font-bold h-14"
@@ -1369,7 +1369,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                       <p className="text-xs text-blue-100 font-bold uppercase tracking-widest opacity-80">Fellow Colleagues</p>
                     </div>
                   </div>
-                  <button 
+                  <button
                     onClick={() => setIsColleaguesModalOpen(false)}
                     className="p-2 hover:bg-white/10 rounded-xl transition-colors"
                   >
@@ -1385,25 +1385,25 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                   <span className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest">Network Explorer</span>
                 </div>
                 <div className="flex items-center gap-2 w-full sm:w-auto">
-                  <Button 
+                  <Button
                     onClick={() => setShowDepartmentOnly(false)}
-                    variant={!showDepartmentOnly ? "default" : "outline"}
+                    variant={!showDepartmentOnly ? "primary" : "outline"}
                     className={cn(
                       "flex-1 sm:flex-none rounded-xl h-10 px-6 text-[10px] font-black uppercase tracking-widest transition-all",
-                      !showDepartmentOnly 
-                        ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" 
+                      !showDepartmentOnly
+                        ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
                         : "border-blue-100 dark:border-slate-700 text-slate-500"
                     )}
                   >
                     All Interns
                   </Button>
-                  <Button 
+                  <Button
                     onClick={() => setShowDepartmentOnly(true)}
-                    variant={showDepartmentOnly ? "default" : "outline"}
+                    variant={showDepartmentOnly ? "primary" : "outline"}
                     className={cn(
                       "flex-1 sm:flex-none rounded-xl h-10 px-6 text-[10px] font-black uppercase tracking-widest transition-all",
-                      showDepartmentOnly 
-                        ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" 
+                      showDepartmentOnly
+                        ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
                         : "border-blue-100 dark:border-slate-700 text-slate-500"
                     )}
                   >
@@ -1414,28 +1414,28 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
 
               {/* Content */}
               <div className="flex-1 overflow-y-auto p-6 sm:p-8 custom-scrollbar space-y-8">
-                
+
                 {/* Fellow Interns Section */}
                 <div>
                   <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                     <User size={12} /> Fellow Interns ({showDepartmentOnly ? fellowInterns.filter((i: any) => i.isSameProgram).length : fellowInterns.length})
                   </h4>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {(showDepartmentOnly 
-                      ? fellowInterns.filter((i: any) => i.isSameProgram)
+                    {(showDepartmentOnly
+                      ? fellowInterns.filter((i: any) => i.isSameDepartment)
                       : fellowInterns
                     ).map((intern: any) => (
-                      <motion.div 
+                      <motion.div
                         key={intern.id}
                         whileHover={{ y: -4, scale: 1.02 }}
                         className="p-4 rounded-[2rem] bg-white dark:bg-slate-900 border border-blue-50/50 dark:border-slate-800 flex flex-col items-center text-center gap-3 group shadow-sm hover:shadow-xl hover:shadow-blue-500/5 transition-all"
                       >
                         <div className="w-14 h-14 rounded-2xl overflow-hidden ring-4 ring-slate-50 dark:ring-slate-800 shadow-sm transition-transform group-hover:scale-105">
-                          <Image 
-                            src={normalizeImageSrc(intern.student_profiles?.avatar_url, "/logo.png")} 
-                            alt={intern.student_profiles?.full_name} 
-                            width={56} 
-                            height={56} 
+                          <Image
+                            src={normalizeImageSrc(intern.student_profiles?.avatar_url, "/logo.png")}
+                            alt={intern.student_profiles?.full_name}
+                            width={56}
+                            height={56}
                             className="w-full h-full object-cover"
                           />
                         </div>
@@ -1443,22 +1443,22 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                           <h5 className="font-black text-slate-900 dark:text-white truncate text-[11px] mb-1">{intern.student_profiles?.full_name}</h5>
                           <p className="text-[8px] text-blue-600 font-bold uppercase tracking-[0.05em] px-2 py-0.5 bg-blue-50 dark:bg-blue-900/20 rounded-full inline-block">{intern.domain}</p>
                         </div>
-                        
+
                         <div className="flex flex-col gap-1.5 pt-1 w-full">
-                          <Button 
-                             asChild
-                             variant="outline"
-                             className="w-full rounded-xl h-8 border-blue-100 dark:border-slate-800 text-[8px] font-black uppercase tracking-widest hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600"
+                          <Button
+                            asChild
+                            variant="outline"
+                            className="w-full rounded-xl h-8 border-blue-100 dark:border-slate-800 text-[8px] font-black uppercase tracking-widest hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600"
                           >
                             <a href={`mailto:${intern.student_profiles?.email}`}><Mail size={10} className="mr-1.5" /> Mail</a>
                           </Button>
-                          <Button 
-                             asChild
-                             className="w-full rounded-xl h-8 bg-blue-600 hover:bg-blue-700 text-[8px] font-black uppercase tracking-widest dark:text-white shadow-lg shadow-blue-500/10"
+                          <Button
+                            asChild
+                            className="w-full rounded-xl h-8 bg-blue-600 hover:bg-blue-700 text-[8px] font-black uppercase tracking-widest dark:text-white shadow-lg shadow-blue-500/10"
                           >
-                             <Link href={`/dashboard/student/${intern.student_profiles?.username || intern.student_profiles?.user_id}`}>
-                               <ArrowUpRight size={10} className="mr-1.5" /> Portal
-                             </Link>
+                            <Link href={`/dashboard/student/${intern.student_profiles?.username || intern.student_profiles?.user_id}`}>
+                              <ArrowUpRight size={10} className="mr-1.5" /> Portal
+                            </Link>
                           </Button>
                         </div>
                       </motion.div>
@@ -1477,17 +1477,20 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                     <Shield size={12} /> Company Supervisors ({fellowSupervisors.length})
                   </h4>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {(fellowSupervisors || []).map((sup: any) => (
-                      <div 
+                    {(showDepartmentOnly
+                      ? (fellowSupervisors || []).filter((sup: any) => sup.id === application.supervisor_id)
+                      : (fellowSupervisors || [])
+                    ).map((sup: any) => (
+                      <div
                         key={sup.id}
                         className="p-4 rounded-[2rem] bg-white dark:bg-slate-900 border border-blue-50/50 dark:border-slate-800 flex flex-col items-center text-center gap-3 group shadow-sm"
                       >
                         <div className="w-14 h-14 rounded-2xl overflow-hidden ring-4 ring-slate-50 dark:ring-slate-800 shadow-sm transition-transform group-hover:scale-105">
-                          <Image 
-                            src={normalizeImageSrc(sup.avatar_url, "/logo.png")} 
-                            alt={sup.full_name} 
-                            width={56} 
-                            height={56} 
+                          <Image
+                            src={normalizeImageSrc(sup.avatar_url, "/logo.png")}
+                            alt={sup.full_name}
+                            width={56}
+                            height={56}
                             className="w-full h-full object-cover"
                           />
                         </div>
@@ -1498,21 +1501,21 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                           </p>
                         </div>
                         <div className="flex flex-col gap-1.5 pt-1 w-full">
-                          <Button 
-                             asChild
-                             variant="outline"
-                             className="w-full rounded-xl h-8 border-blue-100 dark:border-slate-800 text-[8px] font-black uppercase tracking-widest hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600"
+                          <Button
+                            asChild
+                            variant="outline"
+                            className="w-full rounded-xl h-8 border-blue-100 dark:border-slate-800 text-[8px] font-black uppercase tracking-widest hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600"
                           >
-                             <a href={`mailto:${sup.email}`}><Mail size={10} className="mr-1.5" /> Mail</a>
+                            <a href={`mailto:${sup.email}`}><Mail size={10} className="mr-1.5" /> Mail</a>
                           </Button>
                           {sup.whatsapp && (
-                            <Button 
-                               asChild
-                               className="w-full rounded-xl h-8 bg-blue-600 hover:bg-blue-700 text-[8px] font-black uppercase tracking-widest dark:text-white shadow-lg shadow-blue-500/10"
+                            <Button
+                              asChild
+                              className="w-full rounded-xl h-8 bg-blue-600 hover:bg-blue-700 text-[8px] font-black uppercase tracking-widest dark:text-white shadow-lg shadow-blue-500/10"
                             >
-                               <a href={`https://wa.me/${sup.whatsapp.replace(/\+/g, '')}`} target="_blank" rel="noopener noreferrer">
-                                 <MessageSquare size={10} className="mr-1.5" /> WhatsApp
-                               </a>
+                              <a href={`https://wa.me/${sup.whatsapp.replace(/\+/g, '')}`} target="_blank" rel="noopener noreferrer">
+                                <MessageSquare size={10} className="mr-1.5" /> WhatsApp
+                              </a>
                             </Button>
                           )}
                         </div>
@@ -1525,7 +1528,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
 
               {/* Footer */}
               <div className="p-6 bg-slate-50 dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 shrink-0">
-                <Button 
+                <Button
                   onClick={() => setIsColleaguesModalOpen(false)}
                   className="w-full h-12 rounded-xl bg-slate-900 dark:bg-white dark:text-slate-900 text-white font-black uppercase tracking-widest text-xs"
                 >
@@ -1538,7 +1541,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
       </AnimatePresence>
 
       {/* Logbook Preview Modal */}
-      <LogbookPreviewModal 
+      <LogbookPreviewModal
         isOpen={isLogbookPreviewOpen}
         onClose={() => setIsLogbookPreviewOpen(false)}
         applicationId={application.id}
