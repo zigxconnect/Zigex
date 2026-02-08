@@ -443,6 +443,8 @@ export async function assignInternshipTask(taskData: {
     description: string;
     due_date?: string;
     priority?: string;
+    resource_links?: { title: string; url: string }[];
+    output_image_url?: string;
 }) {
     try {
         console.log("[SUPERVISOR_ACTIONS] assignInternshipTask called", taskData);
@@ -486,7 +488,9 @@ export async function assignInternshipTask(taskData: {
             due_date: taskData.due_date || null,
             priority: taskData.priority || "medium",
             status: "pending",
-            supervisor_id: profile.id
+            supervisor_id: profile.id,
+            resource_links: taskData.resource_links || [],
+            output_image_url: taskData.output_image_url || null
         };
 
         if (taskData.internship_id === "all") {

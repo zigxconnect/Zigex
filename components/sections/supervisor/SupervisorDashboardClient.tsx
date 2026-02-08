@@ -27,7 +27,14 @@ import {
   Send,
   Loader2,
   Award,
-  Edit
+  Edit,
+  Globe,
+  Youtube,
+  Github,
+  FolderOpen,
+  ImagePlus,
+  Link,
+  FileIcon
 } from "lucide-react";
 import { format } from "date-fns";
 import Image from "next/image";
@@ -72,7 +79,13 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
     title: "",
     description: "",
     due_date: "",
-    priority: "medium"
+    priority: "medium",
+    resource_links: [
+      { title: "YouTube", url: "" },
+      { title: "GitHub", url: "" },
+      { title: "Drive", url: "" }
+    ],
+    output_image: null as File | null
   });
   const [isSubmittingTask, setIsSubmittingTask] = useState(false);
   
@@ -185,11 +198,51 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
 
     setIsSubmittingTask(true);
     try {
-      const res = await assignInternshipTask(newTask);
+      let imageUrl = "";
+      if (newTask.output_image) {
+        const supabase = createClient();
+        const fileExt = newTask.output_image.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `task_outputs/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('task_attachments')
+          .upload(filePath, newTask.output_image);
+
+        if (uploadError) {
+          toast.error("Image upload failed. Proceeding without image.");
+        } else {
+          const { data: { publicUrl } } = supabase.storage
+            .from('task_attachments')
+            .getPublicUrl(filePath);
+          imageUrl = publicUrl;
+        }
+      }
+
+      const cleanLinks = newTask.resource_links.filter(link => link.url.trim() !== "");
+
+      const res = await assignInternshipTask({
+        ...newTask,
+        resource_links: cleanLinks,
+        output_image_url: imageUrl
+      } as any);
+
       if (res.success) {
         toast.success("Task assigned successfully!");
         setIsTaskModalOpen(false);
-        setNewTask({ internship_id: "", title: "", description: "", due_date: "", priority: "medium" });
+        setNewTask({ 
+          internship_id: "", 
+          title: "", 
+          description: "", 
+          due_date: "", 
+          priority: "medium",
+          resource_links: [
+            { title: "YouTube", url: "" },
+            { title: "GitHub", url: "" },
+            { title: "Drive", url: "" }
+          ],
+          output_image: null as File | null
+        });
         router.refresh();
       } else {
         toast.error(res.error || "Failed to assign task");
@@ -881,6 +934,72 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                     placeholder="Describe the goals and requirements..."
                     className="min-h-[100px] rounded-2xl border-slate-100 bg-slate-50 text-sm font-medium resize-none shadow-none focus-visible:ring-1"
                   />
+                </div>
+
+                <div className="space-y-3 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1 flex items-center gap-2">
+                    <Link size={12} /> Resource Links (Optional)
+                  </label>
+                  <div className="space-y-2">
+                    {newTask.resource_links.map((link, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center text-slate-400">
+                          {link.title === "YouTube" && <Youtube size={14} />}
+                          {link.title === "GitHub" && <Github size={14} />}
+                          {link.title === "Drive" && <FolderOpen size={14} />}
+                        </div>
+                        <Input 
+                          value={link.url}
+                          onChange={(e) => {
+                            const newLinks = [...newTask.resource_links];
+                            newLinks[idx].url = e.target.value;
+                            setNewTask({ ...newTask, resource_links: newLinks });
+                          }}
+                          placeholder={`${link.title} URL...`}
+                          className="h-10 rounded-xl border-slate-100 bg-white dark:bg-slate-900 text-xs font-bold"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1 flex items-center gap-2">
+                    <ImagePlus size={12} /> Required Output Image
+                  </label>
+                  <div className="flex items-center gap-4">
+                    <label className="flex-1 cursor-pointer">
+                      <div className="h-12 rounded-2xl border-2 border-dashed border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all flex items-center justify-center gap-2 text-[10px] font-black text-slate-400">
+                        {newTask.output_image ? (
+                          <span className="text-blue-600 truncate px-4">{newTask.output_image.name}</span>
+                        ) : (
+                          <>
+                            <FileIcon size={14} /> CHOOSE IMAGE (PNG/JPG)
+                          </>
+                        )}
+                      </div>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) setNewTask({ ...newTask, output_image: file });
+                        }}
+                      />
+                    </label>
+                    {newTask.output_image && (
+                      <Button 
+                        type="button"
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => setNewTask({ ...newTask, output_image: null })}
+                        className="h-10 w-10 text-rose-500 hover:text-rose-600"
+                      >
+                        <X size={16} />
+                      </Button>
+                    )}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">

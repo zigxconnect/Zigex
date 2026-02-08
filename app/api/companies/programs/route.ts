@@ -1,7 +1,8 @@
 import { createClient, supabaseAdmin } from "@/lib/supabase/server";
 import { authMiddleware } from "@/lib/middleware/auth";
 import { programSchema } from "@/lib/validation/program";
-import { v4 as uuidv4 } from "uuid"; // For unique file names
+import { v4 as uuidv4 } from "uuid";
+import { NextResponse } from "next/server";
 
 /*
  * Function to handle CRUD operations for company programs
@@ -295,11 +296,10 @@ export async function PATCH(request: Request) {
     // Validate partial updates
     const updates = programSchema.partial().parse(rawUpdates);
 
-    // Ensure the program belongs to the authenticated company
     const supabase = await createClient();
     const { data: existingProgram, error: fetchError } = await supabase
       .from("programs")
-      .select("id, company_id, program_picture_url") // Also get current image URL
+      .select("id, company_id, program_picture_url")
       .eq("id", programId)
       .eq("company_id", company.id)
       .single();
@@ -311,42 +311,42 @@ export async function PATCH(request: Request) {
       );
     }
 
-    let program_picture_url: string | undefined =
-      existingProgram.program_picture_url;
+    let program_picture_url: string | undefined = existingProgram.program_picture_url;
+    let oldImageFileName: string | null = null;
+    let newImageFileName: string | null = null;
 
     // Handle new image upload
     if (programPicture) {
-      // Optional: Delete old image from storage if it exists
-      if (existingProgram.program_picture_url) {
-        const oldFileName = existingProgram.program_picture_url
-          .split("/")
-          .pop();
-        if (oldFileName) {
-          await supabaseAdmin.storage
-            .from("program_pictures")
-            .remove([`${company.id}/${oldFileName}`]);
-        }
+      // 1. Validate new image
+      const allowedExtensions = ["jpg", "jpeg", "png", "gif", "webp"];
+      const allowedMimeTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+
+      let fileExtension = programPicture.name.split(".").pop();
+      if (!fileExtension) {
+        return NextResponse.json({ error: "Uploaded file must have an extension." }, { status: 400 });
+      }
+      fileExtension = fileExtension.toLowerCase().trim();
+
+      if (!allowedExtensions.includes(fileExtension) || (programPicture.type && !allowedMimeTypes.includes(programPicture.type))) {
+        return NextResponse.json({ error: "Invalid file type or format." }, { status: 400 });
       }
 
-      const fileExtension = programPicture.name.split(".").pop();
-      const fileName = `${uuidv4()}.${fileExtension}`;
-      const filePath = `${company.id}/${fileName}`;
+      // 2. Prepare upload
+      newImageFileName = `${uuidv4()}.${fileExtension}`;
+      const filePath = `${company.id}/${newImageFileName}`;
 
-      const { data: uploadData, error: uploadError } =
-        await supabaseAdmin.storage
-          .from("program_pictures")
-          .upload(filePath, programPicture, {
-            cacheControl: "3600",
-            upsert: true,
-            contentType: programPicture.type,
-          });
+      // 3. Upload new image
+      const { error: uploadError } = await supabaseAdmin.storage
+        .from("program_pictures")
+        .upload(filePath, programPicture, {
+          cacheControl: "3600",
+          upsert: true,
+          contentType: programPicture.type,
+        });
 
       if (uploadError) {
         console.error("Supabase Storage upload error:", uploadError);
-        return NextResponse.json(
-          { error: `Failed to upload new image: ${uploadError.message}` },
-          { status: 500 }
-        );
+        return NextResponse.json({ error: `Upload failed: ${uploadError.message}` }, { status: 500 });
       }
 
       const { data: publicUrlData } = supabaseAdmin.storage
@@ -354,10 +354,15 @@ export async function PATCH(request: Request) {
         .getPublicUrl(filePath);
 
       program_picture_url = publicUrlData.publicUrl;
+
+      // Track old image for later deletion
+      if (existingProgram.program_picture_url) {
+        oldImageFileName = existingProgram.program_picture_url.split("/").pop() || null;
+      }
     }
 
-    // Update program data in the database
-    const { data, error } = await supabase
+    // 4. Update program data in the database
+    const { data, error: updateError } = await supabase
       .from("programs")
       .update({
         ...updates,
@@ -367,10 +372,26 @@ export async function PATCH(request: Request) {
       .select("*")
       .single();
 
-    if (error) {
-      console.error("Error updating program:", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    if (updateError) {
+      console.error("Error updating program:", updateError);
+
+      // ROLLBACK: Delete the new image if DB update failed
+      if (newImageFileName) {
+        await supabaseAdmin.storage
+          .from("program_pictures")
+          .remove([`${company.id}/${newImageFileName}`]);
+      }
+
+      return NextResponse.json({ error: updateError.message }, { status: 500 });
     }
+
+    // 5. SUCCESS: Cleanup old image from storage
+    if (oldImageFileName && newImageFileName) {
+      await supabaseAdmin.storage
+        .from("program_pictures")
+        .remove([`${company.id}/${oldImageFileName}`]);
+    }
+
     return NextResponse.json(data);
   } catch (err) {
     console.error("Validation or processing error:", err);
