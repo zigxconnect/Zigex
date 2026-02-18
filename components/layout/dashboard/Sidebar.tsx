@@ -17,6 +17,7 @@ import {
   LogOut,
   MessageSquare,
   ShieldCheck,
+  LayoutDashboard,
 } from "lucide-react";
 import { AiOutlineWechat } from "react-icons/ai";
 import { Button } from "@/components/ui/button";
@@ -91,87 +92,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState<number>(0);
-  const categories = [
-    {
-      title: "Discover",
-      items: [
-        {
-          href: "/feed",
-          icon: Globe,
-          label: "Browse",
-          matchPaths: ["/feed", "/feed/", "/programs/"],
-          excludePaths: ["/feed/projects"]
-        },
-        {
-          href: "/dashboard/projects",
-          icon: Briefcase,
-          label: "Projects",
-          matchPaths: ["/dashboard/projects", "/dashboard/projects/", "/feed/projects/"],
-        },
-        {
-          href: "/dashboard/blog",
-          icon: Newspaper,
-          label: "News",
-          matchPaths: ["/dashboard/blog", "/dashboard/blog/"],
-        },
-      ]
-    },
-    {
-      title: "Collaboration",
-      items: [
-        {
-          href: "/dashboard/student",
-          icon: Users,
-          label: "ZigX",
-          matchPaths: ["/dashboard/student", "/dashboard/student/"],
-        },
-        {
-          href: "/dashboard/community",
-          icon: MessageSquare,
-          label: "Community",
-          matchPaths: ["/dashboard/community", "/dashboard/community/"],
-        },
-      ]
-    },
-    {
-      title: "Workspace",
-      items: [
-        ...(user?.permissions?.isIntern ? [{
-          href: "/intern/workspace",
-          icon: Briefcase,
-          label: "Intern Workspace",
-          matchPaths: ["/intern/workspace"],
-        }] : []),
-        ...(user?.permissions?.isSupervisor ? [{
-          href: "/supervisor",
-          icon: ShieldCheck,
-          label: "Supervisor Hub",
-          matchPaths: ["/supervisor"],
-        }] : []),
-      ]
-    },
-    {
-      title: "Account",
-      items: [
-        {
-          href: `/profile/${slugifyUsername(user?.profile?.username) || "username"}`,
-          icon: User,
-          label: "My Profile",
-          matchPaths: ["/profile/"],
-        },
-      ]
-    }
-  ];
-
-  if (showUploadLive) {
-    categories[0].items.push({
-      href: "/upload-live",
-      icon: Zap,
-      label: "Upload Live",
-      matchPaths: ["/upload-live", "/upload-live/"],
-    });
-  }
-
   // Extract user data with fallbacks
   const userName = user?.name || user?.profile?.name || "Guest User";
   const userRole = user?.role || user?.profile?.role || "Student";
@@ -267,16 +187,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-20 lg:top-16 left-0 h-[calc(100vh-5rem)] lg:h-[calc(100vh-4rem)] w-80 bg-sidebar border-r border-sidebar-border shadow-lg z-50
-          transform transition-transform duration-300 ease-in-out
+          fixed top-20 lg:top-16 left-0 h-[calc(100vh-5rem)] lg:h-[calc(100vh-4rem)] w-80 bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 transition-transform duration-300 ease-in-out
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
-          lg:translate-x-0 flex flex-col
+          lg:translate-x-0 flex flex-col z-50 shadow-[20px_0_40px_-15px_rgba(0,0,0,0.03)]
         `}
       >
         {/* Header with User Profile - Fixed at top */}
-        <div className="flex-shrink-0 p-4 lg:p-6 border-b border-sidebar-border bg-sidebar-accent/20">
+        <div className="flex-shrink-0 p-4 lg:p-6 border-b border-slate-50 dark:border-slate-800/50 bg-slate-50/30 dark:bg-slate-800/20">
           <div className="flex items-center gap-4">
-            <div className="relative w-16 h-16 rounded-full overflow-hidden border-3 border-card shadow-lg flex-shrink-0">
+            <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-white dark:border-slate-700 shadow-xl flex-shrink-0">
               <Image
                 src={userAvatar || "https://i.ibb.co/8n8d37H4/white-logo-4x.png"}
                 alt={`${userName}'s Avatar`}
@@ -290,17 +209,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
               />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-sidebar-foreground truncate text-base">
+              <h3 className="font-black text-slate-900 dark:text-white truncate text-base tracking-tight">
                 {userName}
               </h3>
-              <p className="text-sm text-muted-foreground">{userRole}</p>
+              <p className="text-[10px] font-bold text-slate-400 tracking-wider">{userRole}</p>
               <div className="flex items-center gap-2 mt-1">
                 <div
-                  className={`w-2 h-2 rounded-full ${isOnline ? "bg-success" : "bg-muted"
+                  className={`w-2 h-2 rounded-full ${isOnline ? "bg-emerald-500" : "bg-slate-300"
                     }`}
                 />
                 <span
-                  className={`text-xs font-medium ${isOnline ? "text-success" : "text-muted-foreground"
+                  className={`text-[9px] font-bold tracking-widest ${isOnline ? "text-emerald-500" : "text-slate-400"
                     }`}
                 >
                   {isOnline ? "Online" : "Offline"}
@@ -310,7 +229,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {/* Mobile Close Button */}
             <button
               onClick={onClose}
-              className="lg:hidden p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors flex-shrink-0"
+              className="lg:hidden p-2 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors flex-shrink-0"
             >
               <X size={20} />
             </button>
@@ -318,63 +237,137 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Main Navigation Area */}
-        <div className="flex-1 flex flex-col min-h-0 bg-sidebar">
-          {/* Regular Navigation Items */}
-          <div className="flex-1 px-4 py-4 overflow-y-auto custom-scrollbar">
-            <div className="space-y-6">
-              {categories.map((category) => (
-                <div key={category.title} className="mb-2">
-                  <h4 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-3 px-3">
-                    {category.title}
-                  </h4>
-                  <div className="space-y-1">
-                    {category.items.map((item) => (
-                      <AnimatedNavLink
-                        key={item.href}
-                        href={item.href}
-                        icon={item.icon}
-                        label={item.label}
-                        isActive={isRouteActive(item.href, item.matchPaths, item.excludePaths)}
-                        onClick={handleNavClick}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))}
-
-              {/* AI Assistant Section - Always Visible */}
-              {/* AI Assistant Section */}
-              <div className="mb-4">
-                <h4 className="text-xs font-semibold text-primary uppercase tracking-wider mb-3 px-1">
-                  AI Assistant
-                </h4>
+        <div className="flex-1 flex flex-col min-h-0 bg-white dark:bg-slate-900">
+          <div className="flex-1 px-4 py-8 space-y-10 overflow-y-auto custom-scrollbar">
+            {/* Main Navigation - High Fidelity Links */}
+            <div className="space-y-4">
+              <h3 className="px-4 text-[9px] font-bold tracking-[0.25em] text-slate-400 dark:text-slate-500">
+                Discover
+              </h3>
+              <div className="space-y-2">
                 <AnimatedNavLink
-                  href={aiChatItem.href}
-                  icon={aiChatItem.icon}
-                  label={aiChatItem.label}
-                  isActive={isRouteActive(aiChatItem.href)}
+                  href="/feed"
+                  icon={Globe}
+                  label="Browse"
+                  isActive={isRouteActive("/feed")}
                   onClick={handleNavClick}
-                  isSpecial={true}
-                  badge="Beta"
+                />
+                <AnimatedNavLink
+                  href="/dashboard/projects"
+                  icon={Briefcase}
+                  label="Projects"
+                  isActive={isRouteActive("/dashboard/projects")}
+                  onClick={handleNavClick}
+                />
+                <AnimatedNavLink
+                  href="/dashboard/blog"
+                  icon={Newspaper}
+                  label="News"
+                  isActive={isRouteActive("/dashboard/blog")}
+                  onClick={handleNavClick}
                 />
               </div>
+            </div>
 
-              {/* Quick Stats Card - Desktop Only */}
-              <div className="hidden lg:block mt-6 p-4 bg-sidebar-accent/10 rounded-xl border border-sidebar-border">
-                <h4 className="font-semibold text-primary mb-3 text-sm flex items-center gap-2">
-                  <TrendingUp size={16} />
-                  Quick Stats
+            {/* Collaboration Section */}
+            <div className="space-y-4">
+              <h3 className="px-4 text-[9px] font-bold tracking-[0.25em] text-slate-400 dark:text-slate-500">
+                Network
+              </h3>
+              <div className="space-y-2">
+                <AnimatedNavLink
+                  href="/dashboard/student"
+                  icon={Users}
+                  label="ZigX"
+                  isActive={isRouteActive("/dashboard/student")}
+                  onClick={handleNavClick}
+                />
+                <AnimatedNavLink
+                  href="/dashboard/community"
+                  icon={MessageSquare}
+                  label="Group"
+                  isActive={isRouteActive("/dashboard/community")}
+                  onClick={handleNavClick}
+                />
+              </div>
+            </div>
+
+            {/* Workspace Section */}
+            <div className="space-y-4">
+              <h3 className="px-4 text-[9px] font-bold tracking-[0.25em] text-slate-400 dark:text-slate-500">
+                Workspace
+              </h3>
+              <div className="space-y-2">
+                {user?.permissions?.isIntern && (
+                  <AnimatedNavLink
+                    href="/intern/workspace"
+                    icon={LayoutDashboard}
+                    label="Workspace"
+                    isActive={isRouteActive("/intern/workspace")}
+                    badge={unreadCount > 0 ? unreadCount : undefined}
+                    onClick={handleNavClick}
+                  />
+                )}
+                {user?.permissions?.isSupervisor && (
+                  <AnimatedNavLink
+                    href="/supervisor"
+                    icon={ShieldCheck}
+                    label="Supervisor Hub"
+                    isActive={isRouteActive("/supervisor")}
+                    onClick={handleNavClick}
+                  />
+                )}
+                <AnimatedNavLink
+                  href="/buddy"
+                  icon={AiOutlineWechat}
+                  label="Ziggy AI"
+                  isActive={isRouteActive("/buddy")}
+                  isSpecial
+                  onClick={handleNavClick}
+                />
+              </div>
+            </div>
+
+            {/* Account Section */}
+            <div className="space-y-4">
+              <h3 className="px-4 text-[9px] font-bold tracking-[0.25em] text-slate-400 dark:text-slate-500">
+                Account
+              </h3>
+              <div className="space-y-2">
+                <AnimatedNavLink
+                  href="/profile"
+                  icon={User}
+                  label="Profile"
+                  isActive={isRouteActive("/profile")}
+                  onClick={handleNavClick}
+                />
+                <AnimatedNavLink
+                  href="/notifications"
+                  icon={Bell}
+                  label="Notifications"
+                  isActive={isRouteActive("/notifications")}
+                  onClick={handleNavClick}
+                />
+              </div>
+            </div>
+
+            {/* Quick Stats Card - Desktop Only */}
+            <div className="hidden lg:block pt-4">
+              <div className="p-6 bg-blue-50/50 dark:bg-blue-600/5 rounded-3xl border border-blue-100/50 dark:border-blue-900/20">
+                <h4 className="text-[9px] font-bold text-blue-600 dark:text-blue-400 tracking-widest mb-4 flex items-center gap-2">
+                  <TrendingUp size={14} />
+                  Stats
                 </h4>
-                <div className="space-y-2 text-sm">
+                <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Applications</span>
-                    <span className="font-bold text-primary bg-primary/10 px-2 py-1 rounded-full text-xs">
+                    <span className="text-[11px] font-bold text-slate-500">Applications</span>
+                    <span className="font-black text-slate-900 dark:text-white text-xs">
                       {applicationsCount}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Profile Views</span>
-                    <span className="font-bold text-primary bg-primary/10 px-2 py-1 rounded-full text-xs">
+                    <span className="text-[11px] font-bold text-slate-500">Network Reach</span>
+                    <span className="font-black text-slate-900 dark:text-white text-xs">
                       {profileViews}
                     </span>
                   </div>
@@ -384,38 +377,35 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
 
           {/* Sign Out Button - Always Visible at Bottom */}
-          <div className="flex-shrink-0 p-4 border-t border-sidebar-border bg-sidebar/50">
+          <div className="p-4 border-t border-slate-50 dark:border-slate-800/50">
             <Button
               variant="outline"
-              className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10 hover:border-destructive/30 border-sidebar-border transition-all duration-200 py-3 font-medium"
+              className="w-full justify-start gap-4 rounded-2xl border-slate-100 dark:border-slate-800 font-bold text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 hover:border-rose-100 transition-all duration-300 py-6"
               onClick={handleSignOut}
             >
-              <div className="p-1.5 rounded-lg bg-muted hover:bg-destructive/20 transition-colors flex-shrink-0">
-                <LogOut
-                  size={16}
-                  className="text-muted-foreground hover:text-destructive"
-                />
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800 group-hover:bg-rose-100 transition-colors">
+                <LogOut size={18} />
               </div>
-              <span>Sign Out</span>
+              <span className="font-bold text-[11px] tracking-widest">Logout</span>
             </Button>
           </div>
         </div>
 
         {/* Mobile Stats - Show on mobile only */}
-        <div className="lg:hidden flex-shrink-0 p-4 bg-sidebar-accent/20 border-t border-sidebar-border">
+        <div className="lg:hidden flex-shrink-0 p-6 bg-slate-50/50 dark:bg-slate-800/20 border-t border-slate-100 dark:border-slate-800">
           <div className="flex justify-around text-center">
             <div>
-              <div className="font-bold text-primary text-lg">
+              <div className="font-black text-slate-900 dark:text-white text-xl tracking-tighter">
                 {applicationsCount}
               </div>
-              <div className="text-xs text-muted-foreground">Applications</div>
+              <div className="text-[9px] font-bold text-slate-400 tracking-widest">Applications</div>
             </div>
-            <div className="w-px bg-border"></div>
+            <div className="w-px h-8 bg-slate-200 dark:bg-slate-700 my-auto"></div>
             <div>
-              <div className="font-bold text-secondary text-lg">
+              <div className="font-black text-blue-600 text-xl tracking-tighter">
                 {profileViews}
               </div>
-              <div className="text-xs text-muted-foreground">Profile Views</div>
+              <div className="text-[9px] font-bold text-slate-400 tracking-widest">Reach</div>
             </div>
           </div>
         </div>

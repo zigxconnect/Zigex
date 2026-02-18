@@ -79,7 +79,7 @@ export const DashboardHeader = ({
                 )}
               >
                 <Icon size={18} className={cn(isActive ? "text-white" : "text-muted-foreground group-hover:text-primary")} />
-                <span>{item.label}</span>
+                <span className="text-slate-700">{item.label}</span>
               </Link>
             );
           })}
@@ -113,7 +113,7 @@ export const DashboardHeader = ({
               <p className="text-sm font-bold text-foreground leading-tight group-hover:text-primary transition-colors">
                 {userName}
               </p>
-              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide leading-tight">{userRole}</p>
+              <p className="text-[10px] font-bold text-muted-foreground tracking-wide leading-tight">{userRole}</p>
             </div>
           </Link>
         </div>

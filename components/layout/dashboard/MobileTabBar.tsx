@@ -16,6 +16,7 @@ import {
   Newspaper,
 } from "lucide-react";
 import { AiOutlineWechat } from "react-icons/ai";
+import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -142,8 +143,8 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border lg:hidden z-50 safe-area-bottom">
-        <div className="flex items-center justify-around px-2 py-2">
+      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 lg:hidden z-50 safe-area-bottom shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.05)]">
+        <div className="flex items-center justify-around px-2 py-3">
           {tabItems.map((item: any) => {
             const Icon = item.icon;
             const isActive = isRouteActive(item.href, item.matchPaths, item.excludePaths);
@@ -153,42 +154,45 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
               <Link
                 key={item.href}
                 href={item.href}
-                className="flex flex-col items-center justify-center flex-1 py-2 px-1 relative group"
+                className={cn(
+                  "relative flex flex-col items-center justify-center flex-1 py-1 transition-all duration-300",
+                  isActive ? "text-blue-600" : "text-slate-400"
+                )}
               >
-                <div className="relative">
-                  <div
+                <div className="relative p-2.5 z-10 flex flex-col items-center">
+                  <Icon
+                    size={20}
+                    strokeWidth={isActive ? 3 : 2.5}
                     className={cn(
-                      "p-2.5 rounded-2xl transition-all duration-200 active:scale-90 flex items-center justify-center relative",
-                      isActive
-                        ? "bg-blue-600 text-white shadow-lg shadow-blue-500/25"
-                        : "text-slate-400 group-active:bg-slate-100"
+                      "transition-all duration-300",
+                      isActive 
+                        ? "text-white scale-110 drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" 
+                        : "text-blue-500/70"
                     )}
-                  >
-                    <Icon
-                      size={24}
-                      strokeWidth={isActive ? 2.5 : 2}
-                      className="transition-transform duration-200"
+                  />
+                  
+                  {isActive && (
+                    <motion.div
+                      layoutId="mobile-tab-pill"
+                      className="absolute inset-0 bg-blue-600 rounded-2xl shadow-lg shadow-blue-500/30 -z-10"
+                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                     />
-                  </div>
-
-                  {/* Notification Badge */}
-                  {showBadge && (
-                    <div className="absolute -top-1 -right-1 bg-white text-blue-600 text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 shadow-md border border-blue-600">
-                      {unreadCount > 99 ? '99+' : unreadCount}
-                    </div>
                   )}
                 </div>
 
-                <span
-                  className={cn(
-                    "text-[10px] font-semibold tracking-tight mt-1 transition-all duration-200",
-                    isActive 
-                      ? "text-blue-600 dark:text-blue-400 font-bold" 
-                      : "text-slate-400"
-                  )}
-                >
+                <span className={cn(
+                  "text-[9px] font-bold tracking-tight mt-1 transition-all duration-300",
+                  isActive ? "text-blue-600 dark:text-blue-500" : "text-slate-500"
+                )}>
                   {item.label}
                 </span>
+
+                {/* Notification Badge */}
+                {showBadge && (
+                  <div className="absolute top-1 right-1/2 translate-x-4 bg-rose-500 text-white text-[9px] font-black rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 shadow-lg border-2 border-white ring-4 ring-blue-50/10 z-20">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </div>
+                )}
               </Link>
             );
           })}
