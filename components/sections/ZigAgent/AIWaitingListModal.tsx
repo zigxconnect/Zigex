@@ -48,12 +48,7 @@ export function AIWaitingListModal({
         throw new Error("EmailJS not configured");
       }
 
-      // console.log("Sending email with:", {
-        serviceId: EMAILJS_SERVICE_ID,
-        templateId: EMAILJS_TEMPLATE_ID,
-        email,
-        featureName
-      });
+      // console.log("Sending email with:", EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, email, featureName);
 
       const templateParams = {
         to_email: email,
