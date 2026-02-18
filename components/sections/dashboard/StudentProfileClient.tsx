@@ -86,7 +86,7 @@ export default function StudentProfileClient({
           url: window.location.href,
         });
       } catch (error) {
-        console.log("Error sharing", error);
+      // console.log("Error sharing", error);
       }
     } else {
        navigator.clipboard.writeText(window.location.href);

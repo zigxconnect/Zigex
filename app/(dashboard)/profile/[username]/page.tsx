@@ -120,7 +120,7 @@ export default async function ProfilePage({ params }: Props) {
   } | null = null;
 
   // Debug: Log the IDs we're searching with
-  console.log(`[ActiveInternship] Searching for user_id: ${data.user_id}, profile_id: ${data.id}`);
+  // console.log(`[ActiveInternship] Searching for user_id: ${data.user_id}, profile_id: ${data.id}`);
 
   // Build the query - handle cases where user_id might be null/undefined
   const studentIdFilters: string[] = [];
@@ -152,8 +152,7 @@ export default async function ProfilePage({ params }: Props) {
     activeApp = appData;
     
     // Debug logging
-    console.log(`[ActiveInternship] Query filters: ${studentIdFilters.join(' OR ')}`);
-    console.log(`[ActiveInternship] Query result:`, appData ? `Found app id: ${appData.id}, status: ${appData.status}, internship: ${JSON.stringify(appData.internships)}` : 'No result');
+    // Debug logging
     if (appError) console.error(`[ActiveInternship] Query error:`, appError);
   }
 

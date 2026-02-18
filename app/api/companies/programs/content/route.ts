@@ -244,7 +244,7 @@ export async function POST(request: Request) {
 
     // --- NOTIFICATION LOGIC FOR PAID USERS ---
     try {
-        console.log(`[POST] Starting notification process for program: ${program_id} ("${program.title}")`);
+        // console.log(`[POST] Starting notification process for program: ${program_id} ("${program.title}")`);
 
         // Fetch all paid students for this program
         const { data: paidStudents, error: fetchAppsError } = await supabaseAdmin
@@ -267,7 +267,7 @@ export async function POST(request: Request) {
             // Filter only those who have actually paid
             const targetStudents = paidStudents.filter((app: any) => app.payment_completed);
 
-            console.log(`[POST] Found ${targetStudents.length} paid students to notify.`);
+            // console.log(`[POST] Found ${targetStudents.length} paid students to notify.`);
 
             const notificationPromises = targetStudents.map(async (app: any) => {
                 const studentProfile = Array.isArray(app.student) ? app.student[0] : app.student;
@@ -285,7 +285,7 @@ export async function POST(request: Request) {
                     return { status: 'skipped', reason: 'no email found' };
                 }
 
-                console.log(`[POST] Sending email to: ${studentEmail} (${studentProfile.full_name})`);
+                // console.log(`[POST] Sending email to: ${studentEmail} (${studentProfile.full_name})`);
 
                 try {
                     await sendEmail({
@@ -301,7 +301,7 @@ export async function POST(request: Request) {
                         statusBadge: "NEW CONTENT",
                         statusColor: "#155DFC"
                     });
-                    console.log(`[POST] [SMTP Status] Sent to ${studentEmail}`);
+                    // console.log(`[POST] [SMTP Status] Sent to ${studentEmail}`);
                     return { status: 'sent', email: studentEmail, method: 'SMTP' };
                 } catch (e: any) {
                     console.error(`[POST] SMTP failed for ${studentEmail}:`, e.message);
@@ -311,9 +311,9 @@ export async function POST(request: Request) {
 
             const results = await Promise.allSettled(notificationPromises);
             const successful = results.filter(r => r.status === 'fulfilled').length;
-            console.log(`[POST] [NOTIFICATIONS DONE] Processed ${results.length} students. Successful: ${successful}`);
+            // console.log(`[POST] [NOTIFICATIONS DONE] Processed ${results.length} students. Successful: ${successful}`);
         } else {
-            console.log(`[POST] No paid students found for program ${program_id}. No notifications sent.`);
+            // console.log(`[POST] No paid students found for program ${program_id}. No notifications sent.`);
         }
     } catch (notificationError) {
         console.error("[POST] Unexpected error in notification loop:", notificationError);
@@ -394,7 +394,7 @@ export async function PUT(request: Request) {
 
     // --- NOTIFICATION LOGIC FOR UPDATED CONTENT ---
     try {
-        console.log(`[PUT] Starting update notification for content ID: ${id}`);
+        // console.log(`[PUT] Starting update notification for content ID: ${id}`);
 
         // Fetch program title
         const { data: program } = await supabaseAdmin
@@ -420,7 +420,7 @@ export async function PUT(request: Request) {
 
         if (paidStudents && paidStudents.length > 0) {
             const targetStudents = paidStudents.filter((app: any) => app.payment_completed);
-            console.log(`[PUT] Notifying ${targetStudents.length} paid students about update to: ${updates.title || existingContent.title}`);
+            // console.log(`[PUT] Notifying ${targetStudents.length} paid students about update to: ${updates.title || existingContent.title}`);
 
             const notificationPromises = targetStudents.map(async (app: any) => {
                 const studentProfile = Array.isArray(app.student) ? app.student[0] : app.student;
@@ -452,7 +452,7 @@ export async function PUT(request: Request) {
             });
 
             Promise.allSettled(notificationPromises).then(results => {
-                console.log(`[PUT] Update notifications sent for ${results.length} students.`);
+                // console.log(`[PUT] Update notifications sent for ${results.length} students.`);
             });
         }
     } catch (e) {

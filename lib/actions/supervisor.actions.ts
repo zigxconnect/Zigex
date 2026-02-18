@@ -12,7 +12,6 @@ import { createNotification } from "@/lib/notifications";
  */
 export async function getSupervisors(companyId?: string) {
     try {
-        console.log(`[SERVER_ACTION] getSupervisors called. CompanyId: ${companyId}`);
 
         // If no companyId is provided, we should probably return nothing or only global ones.
         // For the admin dashboard, we expect a companyId.

@@ -50,14 +50,14 @@ function ApplicantsPageComponent() {
       try {
         setIsLoading(true);
         setError(null);
-        console.log("Fetching applicants...");
+        // console.log("Fetching applicants...");
         const response = await fetch("/api/companies/applications");
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
           throw new Error(errorData.error || `Error ${response.status}`);
         }
         const data: Applicant[] = await response.json();
-        console.log("Applicants fetched:", data.length);
+        // console.log("Applicants fetched:", data.length);
         setApplicants(data);
 
         // Fetch company profile to get ID

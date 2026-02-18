@@ -36,9 +36,9 @@ export function SupervisorAssignment({
     async function loadSupervisors() {
       setIsLoading(true);
       try {
-        console.log("SupervisorAssignment: Loading supervisors for company:", companyId);
+        // console.log("SupervisorAssignment: Loading supervisors for company:", companyId);
         const data = await getSupervisors(companyId);
-        console.log("SupervisorAssignment: Fetched supervisors:", data);
+        // console.log("SupervisorAssignment: Fetched supervisors:", data);
         setSupervisors(data || []);
       } catch (error) {
         console.error("Failed to load supervisors", error);

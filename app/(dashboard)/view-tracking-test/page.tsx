@@ -42,7 +42,7 @@ export default function ViewTrackingTestPage() {
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "happening_now" },
         (payload) => {
-          console.log("📡 Real-time update received:", payload);
+          // console.log("📡 Real-time update received:", payload);
           setItems((prev) =>
             prev.map((item) =>
               item.id === payload.new.id

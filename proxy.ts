@@ -52,9 +52,9 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  console.log(`[Proxy] Pathname: ${pathname}, User Authenticated: ${!!user}`);
+  // console.log(`[Proxy] Pathname: ${pathname}, User Authenticated: ${!!user}`);
   if (user) {
-    console.log(`[Proxy] User ID: ${user.id}`);
+    // console.log(`[Proxy] User ID: ${user.id}`);
   }
 
   const publicPaths = [

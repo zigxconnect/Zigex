@@ -103,10 +103,7 @@ export default async function StudentDetailPage({ params }: Props) {
       : { data: null };
 
     // Debug logging
-    console.log(`[StudentLookup] lookup for: '${username}'`);
-    console.log(`[StudentLookup] unslugified: '${unslugified}'`);
-    console.log(`[StudentLookup] nameParts: [${nameParts.join(', ')}]`);
-    console.log(`[StudentLookup] byUsername: ${!!byUsername}, byFullName: ${!!byFullName}, byFullNamePattern: ${!!byFullNamePattern}, byUsernameIlike: ${!!byUsernameIlike}`);
+    // Debug logging
 
     data = byUsername || byFullName || byFullNamePattern || byUsernameIlike;
   }

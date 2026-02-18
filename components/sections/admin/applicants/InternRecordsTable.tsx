@@ -49,8 +49,8 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
       setFetchingSummaries(true);
       try {
         const data = await getCompanyInternsPerformanceSummary(companyId);
-        console.log("[RECORDS_DEBUG] Fetched summaries:", data);
-        console.log("[RECORDS_DEBUG] Summary keys:", Object.keys(data || {}));
+        // console.log("[RECORDS_DEBUG] Fetched summaries:", data);
+        // console.log("[RECORDS_DEBUG] Summary keys:", Object.keys(data || {}));
         setSummaries(data || {});
       } catch (err) {
         console.error("Error fetching performance summaries:", err);

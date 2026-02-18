@@ -140,7 +140,21 @@ export const AuthForm = ({ type }: AuthFormProps) => {
       (window as any).google.accounts.id.prompt();
     }
   };
+      // console.log("[AuthForm] handleGoogleSignIn triggered");
+      const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+      const isGoogleScriptLoaded = typeof window !== 'undefined' && (window as any).google;
 
+      // console.log("[AuthForm] Google Client ID exists:", !!googleClientId);
+      // console.log("[AuthForm] Google Script loaded:", !!isGoogleScriptLoaded);
+
+      if (!isGoogleScriptLoaded || !googleClientId) {
+        // console.log("[AuthForm] Falling back to standard OAuth flow");
+        await startStandardOAuth();
+      } else {
+        // console.log("[AuthForm] Google script is loaded, the invisible overlay should have handled this click. If you see this, the overlay might have failed.");
+        // As an emergency fallback, trigger the ID token prompt manually
+        (window as any).google.accounts.id.prompt();
+      }
   // Initialize Google Identity Services
   useEffect(() => {
     let isMounted = true;
@@ -214,6 +228,13 @@ export const AuthForm = ({ type }: AuthFormProps) => {
       isMounted = false;
     };
   }, [isSignUp, router, supabase]);
+      // console.warn("[AuthForm] NEXT_PUBLIC_GOOGLE_CLIENT_ID is missing");
+      // console.log("[AuthForm] Initializing Google Identity Services");
+      // console.log("[AuthForm] Google ID Token received, signing in with Supabase...");
+      // console.error("[AuthForm] Supabase ID Token Auth Error:", error);
+      // console.log("[AuthForm] Supabase sign-in successful, user:", data.user?.id);
+      // console.log("[AuthForm] Rendering invisible Google button onto overlay");
+      // console.log("[AuthForm] Google script or Client ID not ready for Identity Services");
 
   const startStandardOAuth = async () => {
     const { data, error } = await supabase.auth.signInWithOAuth({

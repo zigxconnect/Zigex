@@ -93,7 +93,7 @@ const testUpload = async () => {
     .from('media')
     .uploadToSignedUrl(imageUploadInfo.path, token, testFile);
   
-  console.log('Upload result:', { data, error });
+ // console.log('Upload result:', { data, error });
 };
 
 testUpload();

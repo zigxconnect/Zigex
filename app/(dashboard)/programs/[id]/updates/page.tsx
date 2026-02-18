@@ -39,12 +39,12 @@ async function getAcceptedCrewMembers(programId: string) {
       if (program?.id) {
         actualId = program.id;
       } else {
-        console.log("[Crew] Program not found for slug:", programId);
+        // console.log("[Crew] Program not found for slug:", programId);
         return { members: [], totalCount: 0 };
       }
     }
 
-    console.log("[Crew] Fetching members for program:", actualId);
+    // console.log("[Crew] Fetching members for program:", actualId);
 
     // Query applications with correct relation syntax
     const { data, error, count } = await supabaseAdmin
@@ -66,7 +66,7 @@ async function getAcceptedCrewMembers(programId: string) {
       .order("updated_at", { ascending: false })
       .limit(50);
 
-    console.log("[Crew] Query result - Count:", count, "Error:", error?.message || "none");
+    // console.log("[Crew] Query result - Count:", count, "Error:", error?.message || "none");
     
     if (error) {
       console.error("[Crew] Error fetching crew members:", error);
@@ -74,11 +74,11 @@ async function getAcceptedCrewMembers(programId: string) {
     }
 
     if (!data || data.length === 0) {
-      console.log("[Crew] No accepted applications found");
+      // console.log("[Crew] No accepted applications found");
       return { members: [], totalCount: 0 };
     }
 
-    console.log("[Crew] Raw data sample:", JSON.stringify(data[0], null, 2));
+    // console.log("[Crew] Raw data sample:", JSON.stringify(data[0], null, 2));
 
     const members = data
       .filter((app: any) => {
@@ -95,7 +95,7 @@ async function getAcceptedCrewMembers(programId: string) {
         };
       });
 
-    console.log("[Crew] Processed members count:", members.length);
+    // console.log("[Crew] Processed members count:", members.length);
 
     return { members, totalCount: count || members.length };
   } catch (err) {

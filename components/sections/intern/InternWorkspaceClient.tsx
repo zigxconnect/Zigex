@@ -150,7 +150,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
           filter: `id=eq.${application?.id}`
         },
         (payload) => {
-          console.log('[REALTIME] Application update detected:', payload);
+          // console.log('[REALTIME] Application update detected:', payload);
           router.refresh();
         }
       )

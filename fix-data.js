@@ -11,7 +11,7 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function fixData() {
-  console.log('Fixing happening_now data...');
+  // console.log('Fixing happening_now data...');
   
   // 1. Get existing record
   const { data: existing, error: fetchError } = await supabase
@@ -50,13 +50,13 @@ async function fixData() {
   
   if (existing && existing.length > 0) {
     const id = existing[0].id;
-    console.log(`Updating record ${id}...`);
+    // console.log(`Updating record ${id}...`);
     result = await supabase
       .from('happening_now')
       .update(validData)
       .eq('id', id);
   } else {
-    console.log(`Inserting new record...`);
+    // console.log(`Inserting new record...`);
     result = await supabase
       .from('happening_now')
       .insert([validData]);
@@ -65,7 +65,7 @@ async function fixData() {
   if (result.error) {
     console.error('Update failed:', result.error);
   } else {
-    console.log('✅ Data successfully updated with valid test content!');
+    // console.log('✅ Data successfully updated with valid test content!');
   }
 }
 

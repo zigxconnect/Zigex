@@ -18,7 +18,7 @@ export function ViewIncrementTest({ itemId, currentViewCount = 0 }: ViewIncremen
     setResult(null);
 
     try {
-      console.log(`🧪 Testing manual increment for: ${itemId}`);
+      // console.log(`🧪 Testing manual increment for: ${itemId}`);
 
       const response = await fetch("/api/happening-now", {
         method: "PUT",

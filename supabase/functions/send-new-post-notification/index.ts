@@ -105,7 +105,7 @@ Deno.serve(async (req) => {
       html: emailHtml,
     });
 
-    console.log("Email dispatch successful.");
+    // console.log("Email dispatch successful.");
     return new Response(
       JSON.stringify({
         message: `Email dispatch initiated for ${recipientEmails.length} users.`,

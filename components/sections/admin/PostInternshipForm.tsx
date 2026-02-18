@@ -138,7 +138,7 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    console.log("Submit button clicked! isEditMode:", isEditMode);
+    // console.log("Submit button clicked! isEditMode:", isEditMode);
 
     try {
       const formData = new FormData();

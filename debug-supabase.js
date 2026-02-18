@@ -3,9 +3,9 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-console.log('Checking Supabase connection...');
-console.log('URL:', supabaseUrl ? 'Set' : 'Missing');
-console.log('Key:', supabaseKey ? 'Set' : 'Missing');
+// console.log('Checking Supabase connection...');
+// console.log('URL:', supabaseUrl ? 'Set' : 'Missing');
+// console.log('Key:', supabaseKey ? 'Set' : 'Missing');
 
 if (!supabaseUrl || !supabaseKey) {
   console.error("Critical: Supabase environment variables are missing.");
@@ -15,7 +15,7 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function getData() {
-  console.log('Fetching data from happening_now table...');
+  // console.log('Fetching data from happening_now table...');
   const { data, error } = await supabase
     .from('happening_now')
     .select('*');
@@ -25,19 +25,19 @@ async function getData() {
     return;
   }
 
-  console.log(`Found ${data.length} records.`);
+  // console.log(`Found ${data.length} records.`);
   
   if (data.length > 0) {
     data.forEach((item, index) => {
-      console.log(`\nItem ${index + 1}:`);
-      console.log(`  ID: ${item.id}`);
-      console.log(`  Company: ${item.company}`);
-      console.log(`  Images:`, item.images);
-      console.log(`  Video:`, item.video);
-      console.log(`  Created At: ${item.created_at}`);
+      // console.log(`\nItem ${index + 1}:`);
+      // console.log(`  ID: ${item.id}`);
+      // console.log(`  Company: ${item.company}`);
+      // console.log(`  Images:`, item.images);
+      // console.log(`  Video:`, item.video);
+      // console.log(`  Created At: ${item.created_at}`);
     });
   } else {
-    console.log("Table 'happening_now' appears to be empty.");
+    // console.log("Table 'happening_now' appears to be empty.");
   }
 }
 

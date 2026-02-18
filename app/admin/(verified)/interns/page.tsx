@@ -183,7 +183,7 @@ function InternsPageComponent() {
         app.applicationType === "internship" || 
         (app.internshipId && app.applicationType !== "program" && app.applicationType !== "event")
       );
-      console.log("[INTERNS] Total apps:", data.length, "Internship apps:", internshipApps.length);
+      // console.log("[INTERNS] Total apps:", data.length, "Internship apps:", internshipApps.length);
       setApplicants(internshipApps);
 
       // Fetch company profile to get ID
