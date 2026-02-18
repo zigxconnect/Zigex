@@ -124,37 +124,22 @@ export const AuthForm = ({ type }: AuthFormProps) => {
     "By continuing, you agree to our Terms of Service and Privacy Policy.";
 
   const handleGoogleSignIn = async () => {
-    console.log("[AuthForm] handleGoogleSignIn triggered");
+    // console.log("[AuthForm] handleGoogleSignIn triggered");
     const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
     const isGoogleScriptLoaded = typeof window !== 'undefined' && (window as any).google;
 
-    console.log("[AuthForm] Google Client ID exists:", !!googleClientId);
-    console.log("[AuthForm] Google Script loaded:", !!isGoogleScriptLoaded);
+    // console.log("[AuthForm] Google Client ID exists:", !!googleClientId);
+    // console.log("[AuthForm] Google Script loaded:", !!isGoogleScriptLoaded);
 
     if (!isGoogleScriptLoaded || !googleClientId) {
-      console.log("[AuthForm] Falling back to standard OAuth flow");
+      // console.log("[AuthForm] Falling back to standard OAuth flow");
       await startStandardOAuth();
     } else {
-      console.log("[AuthForm] Google script is loaded, the invisible overlay should have handled this click. If you see this, the overlay might have failed.");
+      // console.log("[AuthForm] Google script is loaded, the invisible overlay should have handled this click. If you see this, the overlay might have failed.");
       // As an emergency fallback, trigger the ID token prompt manually
       (window as any).google.accounts.id.prompt();
     }
   };
-      // console.log("[AuthForm] handleGoogleSignIn triggered");
-      const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-      const isGoogleScriptLoaded = typeof window !== 'undefined' && (window as any).google;
-
-      // console.log("[AuthForm] Google Client ID exists:", !!googleClientId);
-      // console.log("[AuthForm] Google Script loaded:", !!isGoogleScriptLoaded);
-
-      if (!isGoogleScriptLoaded || !googleClientId) {
-        // console.log("[AuthForm] Falling back to standard OAuth flow");
-        await startStandardOAuth();
-      } else {
-        // console.log("[AuthForm] Google script is loaded, the invisible overlay should have handled this click. If you see this, the overlay might have failed.");
-        // As an emergency fallback, trigger the ID token prompt manually
-        (window as any).google.accounts.id.prompt();
-      }
   // Initialize Google Identity Services
   useEffect(() => {
     let isMounted = true;
