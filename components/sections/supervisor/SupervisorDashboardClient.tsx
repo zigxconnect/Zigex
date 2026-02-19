@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Users, 
@@ -27,7 +27,9 @@ import {
   Send,
   Loader2,
   Award,
-  Edit
+  Edit,
+  AlertTriangle,
+  UsersRound
 } from "lucide-react";
 import { format } from "date-fns";
 import Image from "next/image";
@@ -75,6 +77,8 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
     priority: "medium"
   });
   const [isSubmittingTask, setIsSubmittingTask] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string; isGroup: boolean } | null>(null);
+  const [isDeletingTask, setIsDeletingTask] = useState(false);
   
   // Attendance Batch State
   const [pendingAttendance, setPendingAttendance] = useState<Record<string, string>>({});
@@ -82,6 +86,29 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
 
   const { interns, recentLogs, tasks, attendance, evaluations } = data;
   const router = useRouter();
+
+  // Group bulk-assigned tasks (same title + description + supervisor_id) into one card
+  const groupedTasks = useMemo(() => {
+    const groups = new Map<string, { representative: any; members: any[]; studentNames: string[] }>();
+    tasks.forEach((task: any) => {
+      const key = `${task.title}||${task.description}||${task.supervisor_id}`;
+      if (!groups.has(key)) {
+        groups.set(key, { representative: task, members: [task], studentNames: [] });
+      } else {
+        groups.get(key)!.members.push(task);
+      }
+      // Resolve student name for this task
+      const targetIntern = interns.find((i: any) => i.internship_id === task.internship_id);
+      const student = targetIntern ? (Array.isArray(targetIntern.student) ? targetIntern.student[0] : targetIntern.student) : null;
+      if (student?.full_name) groups.get(key)!.studentNames.push(student.full_name);
+    });
+    return Array.from(groups.values()).map(g => ({
+      ...g.representative,
+      isGroup: g.members.length > 1,
+      memberCount: g.members.length,
+      studentNames: g.studentNames
+    }));
+  }, [tasks, interns]);
 
   const filteredInterns = interns.filter(i => {
     const student = Array.isArray(i.student) ? i.student[0] : i.student;
@@ -201,12 +228,22 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
     }
   };
 
-  const handleDeleteTask = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this task?")) return;
-    const res = await deleteInternshipTask(id);
-    if (res.success) {
-      toast.success("Task deleted");
-      router.refresh();
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setIsDeletingTask(true);
+    try {
+      const res = await deleteInternshipTask(deleteTarget.id, deleteTarget.isGroup);
+      if (res.success) {
+        toast.success(deleteTarget.isGroup ? "Task group deleted from all interns" : "Task deleted");
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to delete task");
+      }
+    } catch {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setIsDeletingTask(false);
+      setDeleteTarget(null);
     }
   };
 
@@ -756,27 +793,35 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {tasks.length > 0 ? tasks.map((task, idx) => {
-                  const targetIntern = interns.find(i => i.internship_id === task.internship_id);
+                {groupedTasks.length > 0 ? groupedTasks.map((task: any, idx: number) => {
+                  // For single tasks, resolve inline; for groups, we already have studentNames
+                  const targetIntern = !task.isGroup ? interns.find((i: any) => i.internship_id === task.internship_id) : null;
                   const student = targetIntern ? (Array.isArray(targetIntern.student) ? targetIntern.student[0] : targetIntern.student) : null;
                   
                   return (
                     <motion.div 
-                      key={task.id}
+                      key={task.isGroup ? `group-${task.title}-${task.supervisor_id}` : task.id}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.05 }}
                       className="group relative bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-6 hover:shadow-xl hover:shadow-slate-200/30 dark:hover:shadow-none transition-all duration-400 hover:-translate-y-1 flex flex-col"
                     >
                       <div className="flex justify-between items-start mb-4">
-                        <Badge className={cn(
-                          "border-0 font-bold text-[8px] tracking-wider px-2.5 py-1 rounded-lg",
-                          task.priority === "high" || task.priority === "critical" ? "bg-rose-50 text-rose-600" : "bg-slate-50 text-slate-500"
-                        )}>
-                           {(task.priority || "Standard").charAt(0).toUpperCase() + (task.priority || "standard").slice(1)}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge className={cn(
+                            "border-0 font-bold text-[8px] tracking-wider px-2.5 py-1 rounded-lg",
+                            task.priority === "high" || task.priority === "critical" ? "bg-rose-50 text-rose-600" : "bg-slate-50 text-slate-500"
+                          )}>
+                            {(task.priority || "Standard").charAt(0).toUpperCase() + (task.priority || "standard").slice(1)}
+                          </Badge>
+                          {task.isGroup && (
+                            <Badge className="border-0 font-bold text-[8px] tracking-wider px-2.5 py-1 rounded-lg bg-blue-50 text-[#155DFC]">
+                              <UsersRound size={10} className="mr-1" /> Team
+                            </Badge>
+                          )}
+                        </div>
                         <button 
-                          onClick={() => handleDeleteTask(task.id)} 
+                          onClick={() => setDeleteTarget({ id: task.id, title: task.title, isGroup: task.isGroup })} 
                           className="w-7 h-7 rounded-lg bg-slate-50 text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all flex items-center justify-center"
                         >
                           <Trash2 size={12} />
@@ -791,20 +836,32 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                       </p>
 
                       <div className="pt-4 border-t border-slate-50 dark:border-slate-800 flex items-center justify-between">
-                         <div className="flex items-center gap-2.5">
-                           <div className="relative w-7 h-7 rounded-lg overflow-hidden shadow-sm border border-slate-100">
+                        {task.isGroup ? (
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-lg bg-[#155DFC]/10 flex items-center justify-center">
+                              <UsersRound size={14} className="text-[#155DFC]" />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-[9px] font-bold text-slate-900 dark:text-white">Assigned To All</span>
+                              <span className="text-[8px] font-medium text-slate-400">{task.memberCount} Interns</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2.5">
+                            <div className="relative w-7 h-7 rounded-lg overflow-hidden shadow-sm border border-slate-100">
                               <Image src={student?.avatar_url || "/default-avatar.svg"} alt="" fill className="object-cover" />
-                           </div>
-                           <span className="text-[9px] font-bold text-slate-900 dark:text-white truncate max-w-[120px]">
-                             {student ? student.full_name : "General"}
-                           </span>
-                         </div>
-                         <div className="flex flex-col items-end">
-                            <span className="text-[8px] font-bold text-slate-300 tracking-widest mb-0.5">Due Date</span>
-                            <span className="text-[10px] font-bold text-slate-900 dark:text-slate-100">
-                               {task.due_date ? format(new Date(task.due_date), "MMM dd, yyyy") : "None"}
+                            </div>
+                            <span className="text-[9px] font-bold text-slate-900 dark:text-white truncate max-w-[120px]">
+                              {student ? student.full_name : "General"}
                             </span>
-                         </div>
+                          </div>
+                        )}
+                        <div className="flex flex-col items-end">
+                          <span className="text-[8px] font-bold text-slate-300 tracking-widest mb-0.5">Due Date</span>
+                          <span className="text-[10px] font-bold text-slate-900 dark:text-slate-100">
+                            {task.due_date ? format(new Date(task.due_date), "MMM dd, yyyy") : "None"}
+                          </span>
+                        </div>
                       </div>
                     </motion.div>
                   )
@@ -1253,6 +1310,56 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                     className="w-full rounded-2xl h-14 font-black text-slate-400 hover:text-slate-600"
                 >
                     CLOSE
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* DELETE CONFIRMATION MODAL */}
+      <AnimatePresence>
+        {deleteTarget && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+            <motion.div 
+               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+               onClick={() => !isDeletingTask && setDeleteTarget(null)}
+               className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden p-8 text-center"
+            >
+              <div className="w-14 h-14 bg-rose-50 rounded-xl flex items-center justify-center mx-auto mb-5 text-rose-500">
+                <AlertTriangle size={28} />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight mb-2">Delete Task</h3>
+              <p className="text-slate-500 text-xs font-medium leading-relaxed mb-1">
+                Are you sure you want to delete <span className="font-bold text-slate-700 dark:text-slate-200">&ldquo;{deleteTarget.title}&rdquo;</span>?
+              </p>
+              {deleteTarget.isGroup && (
+                <p className="text-[10px] font-bold text-rose-500 bg-rose-50 rounded-lg px-3 py-1.5 mt-2 inline-block">
+                  This will remove the task from all assigned interns
+                </p>
+              )}
+
+              <div className="flex gap-3 mt-6">
+                <Button 
+                    onClick={() => setDeleteTarget(null)}
+                    disabled={isDeletingTask}
+                    variant="ghost" 
+                    className="flex-1 rounded-xl h-11 font-bold text-[9px] tracking-wider hover:bg-slate-50"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                    onClick={handleConfirmDelete}
+                    disabled={isDeletingTask}
+                    className="flex-[2] rounded-xl h-11 font-bold text-[9px] tracking-wider bg-rose-500 text-white hover:bg-rose-600 shadow-lg shadow-rose-500/20 transition-all active:scale-[0.98]"
+                >
+                  {isDeletingTask ? <Loader2 className="animate-spin" size={16} /> : "Delete Task"}
                 </Button>
               </div>
             </motion.div>
