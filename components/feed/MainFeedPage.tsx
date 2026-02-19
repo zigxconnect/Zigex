@@ -27,7 +27,7 @@ export default async function MainFeedPage({
     getHappeningNowContent()
   ]);
 
-  const { internships, events, programs, announcements, error } = feedData;
+  const { internships, events, programs, announcements, companies, error } = feedData;
 
   return (
     <div className="w-full mt-6">
@@ -43,7 +43,7 @@ export default async function MainFeedPage({
       {/* Optimized Feed Grid - Hybrid SSR/Client */}
       <Suspense fallback={<LoadingSkeleton />}>
         <FeedGridClient
-          initialData={{ internships, events, programs, announcements }}
+          initialData={{ internships, events, programs, announcements, companies }}
           error={error}
         />
       </Suspense>
