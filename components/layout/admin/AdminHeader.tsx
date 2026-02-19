@@ -57,47 +57,47 @@ export const AdminHeader = ({ stats, companyProfile }: AdminHeaderProps) => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-indigo-100/50 h-20">
-      <div className="flex items-center justify-between h-full px-4 lg:px-8">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 h-20 shadow-[0_4px_30px_-10px_rgba(0,0,0,0.03)]">
+      <div className="flex items-center justify-between h-full px-4 lg:px-10">
         {/* Left Section: Logo & Toggle */}
-        <div className="flex items-center gap-4 lg:w-72">
+        <div className="flex items-center gap-6 lg:w-80">
           <button
             onClick={toggleSidebar}
-            className="p-2.5 text-slate-500 rounded-2xl hover:bg-slate-100 transition-all lg:hidden active:scale-90"
+            className="p-3 text-slate-400 rounded-[1.25rem] hover:bg-slate-50 hover:text-slate-900 transition-all lg:hidden active:scale-90 border border-transparent hover:border-slate-100"
             aria-label="Toggle sidebar"
           >
-            <Menu size={20} />
+            <Menu size={22} />
           </button>
           
-          <Link href="/admin/dashboard" className="flex items-center gap-3 transition-transform hover:scale-105">
-            <div className="w-9 h-9 lg:w-11 lg:h-11 shadow-lg shadow-primary/10 rounded-xl overflow-hidden p-0.5 bg-white">
+          <Link href="/admin/dashboard" className="flex items-center gap-4 group">
+            <div className="w-10 h-10 lg:w-12 lg:h-12 shadow-[0_8px_20px_-6px_rgba(0,0,0,0.1)] group-hover:shadow-primary/20 rounded-2xl overflow-hidden p-1 bg-white border border-slate-50 transition-all duration-300 group-hover:-translate-y-0.5">
               <Logo />
             </div>
-            <span className="font-heading font-black text-2xl tracking-tight hidden sm:block text-slate-900">
-              Zigex<span className="text-primary italic font-black">Admin</span>
+            <span className="font-black text-2xl tracking-tighter hidden sm:block text-slate-900">
+              Zigex<span className="text-blue-600 font-black">Admin</span>
             </span>
           </Link>
         </div>
 
         {/* Center Section: Search & Stats */}
-        <div className="flex-1 flex justify-center max-w-2xl px-4">
+        <div className="flex-1 flex justify-center max-w-2xl px-6">
           <div className="relative w-full group hidden md:block">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={18} />
+            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={20} />
             <input 
               type="text" 
-              placeholder="Search applications, postings, or candidates..." 
-              className="w-full bg-slate-100/50 border-transparent focus:bg-white focus:border-primary/20 focus:ring-4 focus:ring-primary/5 rounded-2xl py-2.5 pl-11 pr-4 text-sm transition-all outline-none"
+              placeholder="Deep search mission logs, candidates, or reports..." 
+              className="w-full bg-slate-50/50 border border-slate-100 focus:bg-white focus:border-blue-200 focus:ring-8 focus:ring-blue-50/50 rounded-[1.5rem] py-4 pl-14 pr-6 text-sm transition-all outline-none font-medium text-slate-600 shadow-inner"
             />
           </div>
 
-          <div className="flex items-center gap-8 ml-8 text-sm border-l border-slate-200 pl-8 hidden lg:flex">
+          <div className="flex items-center gap-10 ml-10 border-l border-slate-100 pl-10 hidden lg:flex">
              <div className="flex flex-col">
-               <span className="text-xs text-slate-400 font-medium">Active</span>
-               <span className="font-bold text-emerald-600">{stats.active}</span>
+               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">LIVE</span>
+               <span className="font-black text-lg text-emerald-500 tracking-tighter">{stats.active}</span>
              </div>
              <div className="flex flex-col">
-               <span className="text-xs text-slate-400 font-medium">Apps</span>
-               <span className="font-bold text-slate-900">{stats.applications}</span>
+               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">CENSUS</span>
+               <span className="font-black text-lg text-slate-900 tracking-tighter">{stats.applications}</span>
              </div>
           </div>
         </div>

@@ -45,7 +45,8 @@ export async function GET(request: Request) {
           user_id,
           full_name,
           avatar_url,
-          phone
+          phone,
+          email
         )
       `;
 
@@ -106,7 +107,7 @@ export async function GET(request: Request) {
             if (studentIds.length > 0) {
               const { data: profiles } = await supabaseAdmin
                 .from("student_profiles")
-                .select("id, user_id, full_name, avatar_url, phone")
+                .select("id, user_id, full_name, avatar_url, phone, email")
                 .in("user_id", studentIds);
 
               if (profiles) {
@@ -139,12 +140,19 @@ export async function GET(request: Request) {
       }
     });
 
-    // Batch fetch auth emails
+    // Batch fetch auth emails ONLY for students missing email in profile
     const authEmailMap: Record<string, string> = {};
-    if (userIdsNeedingEmail.length > 0) {
-      const uniqueUserIds = [...new Set(userIdsNeedingEmail)];
+    const userIdsNeedingAuthLookup = [...new Set(userIdsNeedingEmail.filter(id => {
+      const app = [...(legacyApps || []), ...structuredInternshipApps].find(a =>
+        (a.student_id === id || a.student?.user_id === id) && a.student?.email
+      );
+      return !app;
+    }))];
+
+    if (userIdsNeedingAuthLookup.length > 0) {
+      console.log(`[API] Fetching ${userIdsNeedingAuthLookup.length} emails from Auth service...`);
       await Promise.all(
-        uniqueUserIds.map(async (userId) => {
+        userIdsNeedingAuthLookup.slice(0, 10).map(async (userId) => { // Hard limit to avoid rate limits
           try {
             const { data: userData } = await supabaseAdmin.auth.admin.getUserById(userId);
             if (userData?.user?.email) authEmailMap[userId] = userData.user.email;

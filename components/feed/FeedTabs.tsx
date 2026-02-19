@@ -142,8 +142,8 @@ const tabs = [
                     flex items-center gap-2 px-4 py-2 rounded-md font-medium text-sm whitespace-nowrap transition-all duration-200
                     ${
                       activeTab === tab.id
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                        ? "bg-primary text-white/100 shadow-sm"
+                        : "text-slate-700 hover:text-foreground hover:bg-muted"
                     }
                   `}
                 >

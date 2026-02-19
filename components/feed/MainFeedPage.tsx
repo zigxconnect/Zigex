@@ -20,7 +20,7 @@ interface MainFeedPageProps {
  */
 export default async function MainFeedPage({
   searchQuery,
-}: MainFeedPageProps) {
+}: MainFeedPageProps) { 
   // Fetch data on the server with React cache deduplication
   const [feedData, happeningNowData] = await Promise.all([
     getAllFeedData(searchQuery),
