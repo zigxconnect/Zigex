@@ -40,7 +40,8 @@ import {
   Check,
   ShieldCheck,
   Radio,
-  Activity
+  Activity,
+  X
 } from "lucide-react";
 import { format } from "date-fns";
 import Link from "next/link";
@@ -112,6 +113,15 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
   const internship = application?.internships;
   const company = internship?.company_profiles;
   const supervisor = application?.supervisor_profiles;
+
+  const studentDomain = (application?.domain || "").toLowerCase().trim();
+  const displayedInterns = showDepartmentOnly 
+    ? (fellowInterns || []).filter((i: any) => (i.domain || "").toLowerCase().trim() === studentDomain)
+    : (fellowInterns || []);
+    
+  const displayedSupervisors = showDepartmentOnly
+    ? (fellowSupervisors || []).filter((s: any) => (s.department || "").toLowerCase().trim() === studentDomain)
+    : (fellowSupervisors || []);
 
   const [expandedModule, setExpandedModule] = useState<string | null>(null);
 
@@ -453,7 +463,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                   className="rounded-xl border-slate-200 dark:border-slate-800 font-bold text-[10px] tracking-wider h-12 px-6 hover:bg-slate-50 dark:hover:bg-slate-900 transition-all duration-300"
                 >
                   <FileText size={14} className="mr-3 text-slate-900 dark:text-white" />
-                  Insight Ledger
+                  Logbook preview
                 </Button>
                 <Button 
                   onClick={() => !hasLoggedToday && !needsPaymentAcknowledgment && setIsLogModalOpen(true)}
@@ -485,16 +495,16 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
             </div>
 
             {/* Bottom Row: Network + Metadata */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 pt-10 border-t border-slate-50 dark:border-slate-800/50">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 pt-8 border-t border-slate-50 dark:border-slate-800/50">
               <button 
                 onClick={() => setIsColleaguesModalOpen(true)}
-                className="flex items-center gap-6 group transition-all"
+                className="flex items-center gap-5 group transition-all"
               >
-                <div className="flex -space-x-3">
+                <div className="flex -space-x-2.5">
                   {(fellowInterns || []).slice(0, 4).map((intern: any, i: number) => (
                     <div 
                       key={intern.id} 
-                      className="relative h-12 w-12 rounded-2xl ring-4 ring-white dark:ring-slate-950 overflow-hidden bg-slate-100 shadow-[0_8px_16px_-4px_rgba(0,0,0,0.1)] transition-all duration-500 group-hover:translate-x-2 group-hover:-rotate-6"
+                      className="relative h-9 w-9 rounded-xl ring-2 ring-white dark:ring-slate-950 overflow-hidden bg-slate-100 shadow-[0_4px_12px_-2px_rgba(0,0,0,0.12)] transition-all duration-500 group-hover:translate-x-1.5 group-hover:-rotate-3"
                       style={{ transitionDelay: `${i * 50}ms`, zIndex: 10 - i }}
                     >
                       <Image 
@@ -506,14 +516,14 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                     </div>
                   ))}
                   {fellowInterns.length > 4 && (
-                    <div className="relative flex items-center justify-center h-12 w-12 rounded-2xl ring-4 ring-white dark:ring-slate-950 bg-slate-900 text-white text-xs font-black shadow-xl z-0 transition-transform group-hover:translate-x-2">
+                    <div className="relative flex items-center justify-center h-9 w-9 rounded-xl ring-2 ring-white dark:ring-slate-950 bg-slate-900 text-white text-[10px] font-black shadow-lg z-0 transition-transform group-hover:translate-x-1.5">
                       +{fellowInterns.length - 4}
                     </div>
                   )}
                 </div>
                 <div className="text-left">
-                  <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.25em] mb-1">Squadrons</p>
-                  <p className="text-sm font-bold text-slate-900 dark:text-slate-300">
+                  <p className="text-[10px] font-black text-[#155DFC] dark:text-blue-400 uppercase tracking-[0.3em] mb-0.5">Squadrons</p>
+                  <p className="text-xs font-bold text-slate-900 dark:text-slate-300">
                     Network of {fellowInterns.length} Active Cohorts
                   </p>
                 </div>
@@ -1311,7 +1321,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsColleaguesModalOpen(false)}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-slate-900/80 backdrop-blur-md"
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -1320,23 +1330,24 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
               className="relative w-full max-w-2xl bg-[#F6F8FF] dark:bg-slate-950 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
             >
               {/* Header */}
-              <div className="bg-[#155DFC] p-8 text-white relative shrink-0">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl" />
+              <div className="bg-gradient-to-br from-[#155DFC] to-[#0A3D91] p-8 text-white relative shrink-0 overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl animate-pulse" />
+                <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-400/20 rounded-full -ml-24 -mb-24 blur-3xl" />
                 <div className="relative z-10 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center">
-                      <Users className="text-white" size={20} />
+                  <div className="flex items-center gap-5">
+                    <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-xl flex items-center justify-center border border-white/30 shadow-2xl">
+                      <Users className="text-white" size={24} />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold tracking-tight">{internship?.title}</h3>
-                      <p className="text-[9px] text-blue-100 font-bold tracking-widest opacity-80">Operational Network</p>
+                      <h3 className="text-xl font-bold tracking-tight text-white/95">{internship?.title}</h3>
+                      <p className="text-[10px] text-blue-100 font-black tracking-[0.2em] uppercase opacity-90">Operational Network Hub</p>
                     </div>
                   </div>
                   <button 
                     onClick={() => setIsColleaguesModalOpen(false)}
-                    className="p-2 hover:bg-white/10 rounded-xl transition-colors"
+                    className="p-3 hover:bg-white/20 rounded-2xl transition-all duration-300 active:scale-90 border border-transparent hover:border-white/20 shadow-lg"
                   >
-                    <Users size={20} className="rotate-45" />
+                    <X size={20} className="text-white/80" />
                   </button>
                 </div>
               </div>
@@ -1381,16 +1392,13 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                   <div className="space-y-12">
                     <div>
                       <div className="flex items-center justify-between mb-8">
-                        <h4 className="text-[10px] font-bold text-slate-400 tracking-wider flex items-center gap-2">
+                        <h4 className="text-[10px] font-black text-slate-400 tracking-[0.2em] flex items-center gap-2 uppercase">
                           <Users size={14} className="text-[#155DFC]" /> 
-                          Fellow Cohorts ({showDepartmentOnly ? fellowInterns.filter((i: any) => i.isSameProgram).length : fellowInterns.length})
+                          Fellow Cohorts ({displayedInterns.length})
                         </h4>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {(showDepartmentOnly 
-                          ? fellowInterns.filter((i: any) => i.isSameProgram)
-                          : fellowInterns
-                        ).map((intern: any) => (
+                        {displayedInterns.map((intern: any) => (
                           <div 
                             key={intern.id}
                             className="relative group h-full"
@@ -1398,7 +1406,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                             <div className="relative h-full p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center gap-5 shadow-sm hover:border-blue-100 transition-all">
                               <div className="relative">
                                 <div className="absolute inset-0 bg-[#155DFC]/10 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-all duration-500 scale-125" />
-                                <div className="relative w-20 h-20 rounded-2xl overflow-hidden ring-1 ring-slate-100 dark:ring-slate-800 shadow-lg bg-slate-50">
+                                <div className="relative w-16 h-16 rounded-2xl overflow-hidden ring-1 ring-slate-100 dark:ring-slate-800 shadow-md bg-slate-50 transition-all duration-500 group-hover:shadow-blue-500/20 group-hover:scale-105">
                                   <Image 
                                     src={normalizeImageSrc(intern.student_profiles?.avatar_url, "/logo.png")} 
                                     alt={intern.student_profiles?.full_name} 
@@ -1408,24 +1416,24 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                                 </div>
                               </div>
                               <div className="flex-1 min-w-0 w-full">
-                                <h5 className="font-bold text-slate-900 dark:text-white text-sm tracking-tight mb-1.5 truncate px-2">{intern.student_profiles?.full_name}</h5>
-                                <Badge className="bg-blue-50 dark:bg-[#155DFC]/10 text-[#155DFC] border-0 text-[8px] font-bold tracking-widest px-2.5 py-0.5 rounded-lg">{intern.domain || "Technical Specialist"}</Badge>
+                                <h5 className="font-bold text-slate-900 dark:text-white text-sm tracking-tight mb-1 truncate px-2 group-hover:text-[#155DFC] transition-colors">{intern.student_profiles?.full_name}</h5>
+                                <Badge className="bg-blue-50/50 dark:bg-[#155DFC]/5 text-[#155DFC] border border-[#155DFC]/10 text-[8px] font-black tracking-widest px-2.5 py-0.5 rounded-lg uppercase">{intern.domain || "Specialist"}</Badge>
                               </div>
                               
-                              <div className="flex items-center gap-2 pt-2 w-full">
+                              <div className="flex items-center gap-2 pt-1 w-full opacity-80 group-hover:opacity-100 transition-opacity">
                                 <Button 
                                    asChild
                                    variant="outline"
-                                   className="flex-1 rounded-xl h-10 border-slate-100 dark:border-slate-800 text-[9px] font-bold tracking-wider hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm"
+                                   className="flex-1 rounded-xl h-9 border-slate-100 dark:border-slate-800 text-[9px] font-bold tracking-wider hover:bg-[#155DFC] hover:text-white hover:border-[#155DFC] transition-all duration-300"
                                 >
                                   <a href={`mailto:${intern.student_profiles?.email}`}><Mail size={12} className="mr-1.5" /> Message</a>
                                 </Button>
                                 <Button 
                                    asChild
-                                   className="w-10 h-10 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-[#155DFC] dark:hover:bg-[#155DFC] dark:hover:text-white p-0 flex items-center justify-center transition-all shadow-xl"
+                                   className="w-9 h-9 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-[#155DFC] dark:hover:bg-[#155DFC] dark:hover:text-white p-0 flex items-center justify-center transition-all shadow-lg"
                                 >
                                    <Link href={`/dashboard/student/${intern.student_profiles?.username || intern.student_profiles?.user_id}`}>
-                                      <ArrowUpRight size={16} />
+                                      <ArrowUpRight size={14} />
                                    </Link>
                                 </Button>
                               </div>
@@ -1433,50 +1441,53 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                           </div>
                         ))}
                       </div>
-                      {fellowInterns.length === 0 && (
-                        <div className="text-center py-20 bg-slate-50 dark:bg-slate-900/50 rounded-[3rem] border-2 border-dashed border-slate-200 dark:border-slate-800">
-                          <p className="text-sm font-black text-slate-400 uppercase tracking-widest">No active cohorts detected</p>
+                      {displayedInterns.length === 0 && (
+                        <div className="text-center py-16 bg-slate-50 dark:bg-slate-900/50 rounded-[3rem] border-2 border-dashed border-slate-200 dark:border-slate-800">
+                          <p className="text-sm font-black text-slate-400 uppercase tracking-widest">No matching cohorts found</p>
                         </div>
                       )}
                     </div>
 
                     {/* Supervisors Section */}
                     <div>
-                      <h4 className="text-[10px] font-bold text-slate-400 tracking-wider mb-6 flex items-center gap-2">
-                        <Shield size={14} className="text-amber-500" /> Command Core ({fellowSupervisors.length})
+                      <h4 className="text-[10px] font-bold text-slate-400 tracking-[0.2em] mb-6 flex items-center gap-2 uppercase">
+                        <Shield size={14} className="text-amber-500" /> Command Core ({displayedSupervisors.length})
                       </h4>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {(fellowSupervisors || []).map((sup: any) => (
+                        {displayedSupervisors.map((sup: any) => (
                           <div 
                             key={sup.id}
-                            className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center gap-5 group shadow-sm hover:shadow-lg transition-all"
+                            className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center gap-5 group shadow-sm hover:shadow-xl hover:border-amber-100/50 transition-all duration-300"
                           >
-                            <div className="w-16 h-16 rounded-2xl overflow-hidden ring-1 ring-slate-100 dark:ring-slate-800 shadow-lg bg-slate-50">
-                              <Image 
-                                src={normalizeImageSrc(sup.avatar_url, "/logo.png")} 
-                                alt={sup.full_name} 
-                                fill
-                                className="object-cover"
-                              />
+                            <div className="relative group/avatar">
+                              <div className="absolute inset-0 bg-amber-500/10 rounded-2xl blur-lg opacity-0 group-hover/avatar:opacity-100 transition-all duration-500 scale-125" />
+                              <div className="relative w-16 h-16 rounded-2xl overflow-hidden ring-1 ring-slate-100 dark:ring-slate-800 shadow-lg bg-slate-50 transition-transform duration-500 group-hover:scale-105">
+                                <Image 
+                                  src={normalizeImageSrc(sup.avatar_url, "/logo.png")} 
+                                  alt={sup.full_name} 
+                                  fill
+                                  className="object-cover"
+                                />
+                              </div>
                             </div>
                             <div className="flex-1 min-w-0 w-full">
-                              <h5 className="font-bold text-slate-900 dark:text-white text-sm tracking-tight mb-1 truncate px-2">{sup.full_name}</h5>
-                              <Badge className="bg-amber-50 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 border-0 text-[8px] font-bold tracking-widest px-2.5 py-0.5 rounded-lg">
+                              <h5 className="font-bold text-slate-900 dark:text-white text-sm tracking-tight mb-1 truncate px-2 group-hover:text-amber-600 transition-colors uppercase">{sup.full_name}</h5>
+                              <Badge className="bg-amber-50 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 border border-amber-200/50 text-[8px] font-black tracking-widest px-2.5 py-0.5 rounded-lg uppercase">
                                 {sup.role || "Lead Strategist"}
                               </Badge>
                             </div>
-                            <div className="flex items-center gap-2 pt-2 w-full">
+                            <div className="flex items-center gap-2 pt-1 w-full opacity-80 group-hover:opacity-100 transition-opacity">
                               <Button 
                                  asChild
                                  variant="outline"
-                                 className="flex-1 rounded-xl h-10 border-slate-100 dark:border-slate-800 text-[9px] font-bold tracking-wider hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm"
+                                 className="flex-1 rounded-xl h-9 border-slate-100 dark:border-slate-800 text-[9px] font-bold tracking-wider hover:bg-amber-500 hover:text-white hover:border-amber-500 transition-all duration-300"
                               >
                                  <a href={`mailto:${sup.email}`}><Mail size={12} className="mr-1.5" /> Contact</a>
                               </Button>
                               {sup.whatsapp && (
                                 <Button 
                                    asChild
-                                   className="w-10 h-10 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white p-0 flex items-center justify-center transition-all shadow-lg shadow-emerald-500/10"
+                                   className="w-9 h-9 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white p-0 flex items-center justify-center transition-all shadow-lg shadow-emerald-500/20"
                                 >
                                    <a href={`https://wa.me/${sup.whatsapp.replace(/\+/g, '')}`} target="_blank" rel="noopener noreferrer">
                                      <MessageSquare size={16} />
@@ -1487,6 +1498,11 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                           </div>
                         ))}
                       </div>
+                      {displayedSupervisors.length === 0 && (
+                        <div className="text-center py-16 bg-slate-50 dark:bg-slate-900/50 rounded-[3rem] border-2 border-dashed border-slate-200 dark:border-slate-800 mt-6">
+                          <p className="text-xs font-black text-slate-400 uppercase tracking-widest">No linked supervisors in this sector</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
