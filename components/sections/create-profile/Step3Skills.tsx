@@ -16,6 +16,7 @@ const interestsSuggestions = [
   { value: "Cybersecurity", label: "Cybersecurity" },
   { value: "Cloud Computing", label: "Cloud Computing" },
   { value: "Blockchain", label: "Blockchain" },
+  { value: "Embedded Systems & IoT", label: "Embedded Systems & IoT" },
   { value: "Project Management", label: "Project Management" },
   { value: "Digital Marketing", label: "Digital Marketing" },
 ];

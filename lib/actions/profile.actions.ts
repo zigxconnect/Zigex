@@ -1,6 +1,6 @@
 "use server";
 
-import { createServerActionClient } from "@/lib/supabase/server";
+import { createServerActionClient, supabaseAdmin } from "@/lib/supabase/server";
 
 export interface UserProfile {
   id: string;
@@ -32,6 +32,10 @@ export interface FormattedUserData {
   stats?: {
     applications: number;
     profileViews: number;
+  };
+  permissions?: {
+    isSupervisor: boolean;
+    isIntern: boolean;
   };
 }
 
@@ -91,7 +95,43 @@ export async function getProfileInfo(): Promise<FormattedUserData> {
       applications: applicationsCount || 0,
       profileViews: 0, // Placeholder as this is not yet tracked
     },
+    permissions: {
+      isSupervisor: false,
+      isIntern: false
+    }
   };
+
+  // Check for Supervisor status
+  const { data: supervisor } = await supabaseAdmin
+    .from("supervisor_profiles")
+    .select("id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (supervisor) userData.permissions!.isSupervisor = true;
+
+  // Check for Intern status (Accepted internship)
+  const { data: activeInternship } = await supabaseAdmin
+    .from("internship_applications")
+    .select("id")
+    .eq("student_id", user.id)
+    .eq("status", "accepted")
+    .limit(1)
+    .maybeSingle();
+
+  if (activeInternship) userData.permissions!.isIntern = true;
+
+  // Final fallback: check legacy Applications table if not found in modern one
+  if (!userData.permissions!.isIntern) {
+    const { data: legacyInternship } = await supabaseAdmin
+      .from("Applications")
+      .select("id")
+      .eq("student_id", profile.id)
+      .eq("status", "accepted")
+      .limit(1)
+      .maybeSingle();
+    if (legacyInternship) userData.permissions!.isIntern = true;
+  }
 
   return userData;
 }

@@ -185,32 +185,33 @@ export function ApplicationModal({
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button 
-          className="bg-gradient-to-r from-blue-600 to-blue-700 
-            hover:from-blue-700 hover:to-blue-800 text-white font-semibold 
-            py-3 px-6 rounded-lg shadow-md hover:shadow-lg 
-            transition-all duration-200 ease-in-out transform 
-            hover:scale-[1.02] active:scale-[0.98]"
+          className="bg-gradient-to-r from-[#155DFC] to-[#1A3CB9] 
+            hover:from-[#1A3CB9] hover:to-[#155DFC] text-white font-bold
+            py-4 px-8 rounded-xl shadow-lg shadow-blue-500/20
+            transition-all duration-300 ease-in-out transform 
+            hover:scale-[1.02] active:scale-[0.98] uppercase tracking-wider text-xs"
         >
           {buttonText}
         </Button>
       </DialogTrigger>
-      <DialogContent className="w-[95vw] sm:max-w-[600px] max-h-[90vh] 
-        overflow-y-auto bg-gradient-to-b from-blue-50/60 to-white/80 backdrop-blur-lg 
-        shadow-2xl rounded-2xl border-0 p-0">
-        <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md p-6 border-b border-gray-100">
-          <DialogHeader className="space-y-3">
-            <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
+      <DialogContent className="w-[95vw] sm:max-w-[650px] max-h-[90vh] 
+        overflow-y-auto bg-white backdrop-blur-xl 
+        shadow-2xl rounded-3xl border-0 p-0 overflow-x-hidden">
+        <div className="sticky top-0 z-10 bg-gradient-to-br from-[#155DFC] to-[#1A3CB9] p-8 text-white">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16" />
+          <DialogHeader className="space-y-4 relative z-10">
+            <DialogTitle className="text-3xl font-black tracking-tight leading-tight">
               {title}
             </DialogTitle>
-            <DialogDescription className="text-gray-600">
+            <DialogDescription className="text-blue-100/90 font-medium text-base">
               {description}
             </DialogDescription>
           </DialogHeader>
         </div>
 
         {/* content wrapper with blue tint and extra bottom padding so mobile bars don't overlap */}
-        <div className="p-6 pb-28">
-          <div className="rounded-lg bg-white/60 backdrop-blur-sm p-4">
+        <div className="p-8 pb-32">
+          <div className="rounded-2xl bg-slate-50/50 p-6 border border-slate-100">
             <ApplicationForm
               type={type}
               id={id}
@@ -234,7 +235,12 @@ export function ApplicationModal({
               </div>
             </div>
             <div className="flex-shrink-0">
-              <button onClick={() => setIsOpen(true)} className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 rounded-lg shadow">Open Form</button>
+              <button 
+                onClick={() => setIsOpen(true)} 
+                className="bg-gradient-to-r from-[#155DFC] to-[#1A3CB9] text-white px-6 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-blue-500/25 active:scale-95 transition-all"
+              >
+                Open Form
+              </button>
             </div>
           </div>
         </div>

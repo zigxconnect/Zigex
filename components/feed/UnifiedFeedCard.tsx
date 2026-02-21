@@ -58,11 +58,13 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
 
     switch (item._type) {
       case "internships":
-        return normalizeImageSrc((item as any).cover_image_url || (item as any).internship_picture_url);
+        return normalizeImageSrc((item as any).cover_image_url);
       case "programs":
         return normalizeImageSrc((item as any).program_picture_url);
       case "events":
         return normalizeImageSrc((item as any).event_picture_url);
+      case "announcements":
+        return normalizeImageSrc((item as any).image_url);
       default:
         return "/placeholder.png";
     }
@@ -78,7 +80,31 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
 
   if (item._type === "programs") {
     const program = item as any;
-    if (program.isLocked || (program.end_date && new Date(program.end_date) < now) || (program.application_deadline && new Date(program.application_deadline) < now)) {
+    const appDeadline = program.application_deadline ? new Date(program.application_deadline) : null;
+    const endDate = program.end_date ? new Date(program.end_date) : null;
+    
+    if (appDeadline) appDeadline.setHours(23, 59, 59, 999);
+    if (endDate) endDate.setHours(23, 59, 59, 999);
+
+    if (program.isLocked || (endDate && endDate < now) || (appDeadline && appDeadline < now)) {
+      isOpen = false;
+    }
+  } else if (item._type === "internships") {
+    const internship = item as any;
+    const deadline = internship.deadline ? new Date(internship.deadline) : null;
+    if (deadline) {
+      deadline.setHours(23, 59, 59, 999);
+      if (deadline < now) isOpen = false;
+    }
+  } else if (item._type === "events") {
+    const event = item as any;
+    const registrationDeadline = event.registration_deadline ? new Date(event.registration_deadline) : null;
+    const endDate = event.end_date ? new Date(event.end_date) : null;
+
+    if (registrationDeadline) registrationDeadline.setHours(23, 59, 59, 999);
+    if (endDate) endDate.setHours(23, 59, 59, 999);
+
+    if ((endDate && endDate < now) || (registrationDeadline && registrationDeadline < now)) {
       isOpen = false;
     }
   }
@@ -124,16 +150,18 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCar
               </span>
             </div>
 
-            {isOpen ? (
-              <div className="bg-[#16A34A] px-4 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">
-                <Unlock size={12} className="text-black" />
-                <span className="text-black text-xs font-bold uppercase tracking-tight">OPEN</span>
-              </div>
-            ) : (
-              <div className="bg-destructive px-4 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">
-                <Lock size={12} className="text-white" />
-                <span className="text-white text-xs font-bold uppercase tracking-tight">CLOSED</span>
-              </div>
+            {item._type !== "announcements" && (
+              isOpen ? (
+                <div className="bg-[#16A34A] px-4 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">
+                  <Unlock size={12} className="text-black" />
+                  <span className="text-black text-xs font-bold uppercase tracking-tight">OPEN</span>
+                </div>
+              ) : (
+                <div className="bg-destructive px-4 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">
+                  <Lock size={12} className="text-white" />
+                  <span className="text-white text-xs font-bold uppercase tracking-tight">CLOSED</span>
+                </div>
+              )
             )}
           </div>
 

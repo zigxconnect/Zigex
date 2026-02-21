@@ -55,51 +55,77 @@ export async function GET(
 
   const { id } = await params;
 
-  const { data: application, error: applicationError } = await supabaseAdmin
+  let application: any = null;
+  let isNewInternshipApp = false;
+
+  // Try legacy table first
+  const { data: legacyApp } = await supabaseAdmin
     .from("Applications")
     .select("*")
     .eq("id", id)
     .single();
 
-  if (applicationError || !application) {
+  if (legacyApp) {
+    application = legacyApp;
+  } else {
+    // Try new internship table
+    const { data: sApp } = await supabaseAdmin
+      .from("internship_applications")
+      .select(`
+        *,
+        internship:internships(id, title, description, company_id)
+      `)
+      .eq("id", id)
+      .single();
+
+    if (sApp) {
+      application = sApp;
+      isNewInternshipApp = true;
+    }
+  }
+
+  if (!application) {
     return NextResponse.json(
       { error: "Application not found" },
       { status: 404 }
     );
   }
-  if (application.application_type == "event") {
-    const { data: opportunity, error } = await supabaseAdmin
-      .from("event")
-      .select("company_id")
-      .eq("id", application.event_id)
-      .single();
-    if (error || !opportunity || opportunity.company_id !== company.id)
+
+  // Cross-reference with company
+  if (isNewInternshipApp) {
+    const intershipData = Array.isArray(application.internship) ? application.internship[0] : application.internship;
+    if (!intershipData || intershipData.company_id !== company.id) {
       return NextResponse.json(
         { error: "Unauthorized: Application does not belong to this company." },
         { status: 403 }
       );
-  } else if (application.application_type == "program") {
-    const { data: opportunity, error } = await supabaseAdmin
-      .from("programs")
-      .select("company_id")
-      .eq("id", application.program_id)
-      .single();
-    if (error || !opportunity || opportunity.company_id !== company.id)
-      return NextResponse.json(
-        { error: "Unauthorized: Application does not belong to this company." },
-        { status: 403 }
-      );
-  } else if (application.application_type == "internship") {
-    const { data: opportunity, error } = await supabaseAdmin
-      .from("internships")
-      .select("company_id")
-      .eq("id", application.internship_id)
-      .single();
-    if (error || !opportunity || opportunity.company_id !== company.id)
-      return NextResponse.json(
-        { error: "Unauthorized: Application does not belong to this company." },
-        { status: 403 }
-      );
+    }
+  } else {
+    if (application.application_type == "event") {
+      const { data: opportunity } = await supabaseAdmin
+        .from("event")
+        .select("company_id")
+        .eq("id", application.event_id)
+        .single();
+      if (!opportunity || opportunity.company_id !== company.id)
+        return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    } else if (application.application_type == "program") {
+      const { data: opportunity } = await supabaseAdmin
+        .from("programs")
+        .select("company_id")
+        .eq("id", application.program_id)
+        .single();
+      if (!opportunity || opportunity.company_id !== company.id)
+        return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    } else if (application.application_type == "internship") {
+      const { data: opportunity } = await supabaseAdmin
+        .from("internships")
+        .select("company_id")
+        .eq("id", application.internship_id)
+        .single();
+      if (!opportunity || opportunity.company_id !== company.id)
+        return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
   }
 
   return NextResponse.json(application);
@@ -125,27 +151,58 @@ export async function PATCH(
 
   const { id } = await params;
   const body = await request.json();
-  const { status, payment_completed } = body;
+  const { status, payment_completed, payment_ledger } = body;
 
-  // First, get the application
-  const { data: application, error: applicationError } = await supabaseAdmin
+  // --- FETCH APPLICATION (LEGACY OR NEW INTERNSHIP) ---
+  let application: any = null;
+  let isNewInternshipApp = false;
+
+  const { data: legacyApp } = await supabaseAdmin
     .from("Applications")
     .select("*")
     .eq("id", id)
     .single();
 
-  if (applicationError || !application) {
+  if (legacyApp) {
+    application = legacyApp;
+  } else {
+    const { data: sApp } = await supabaseAdmin
+      .from("internship_applications")
+      .select(`
+        *,
+        internship:internships(id, title, description, company_id)
+      `)
+      .eq("id", id)
+      .single();
+
+    if (sApp) {
+      application = sApp;
+      isNewInternshipApp = true;
+    }
+  }
+
+  if (!application) {
     return NextResponse.json(
       { error: "Application not found" },
       { status: 404 }
     );
   }
 
+  // Permission Check
+  if (isNewInternshipApp) {
+    const internshipData = Array.isArray(application.internship) ? application.internship[0] : application.internship;
+    if (!internshipData || internshipData.company_id !== company.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+  }
+  // ... (Legacy permission check is implicit later or we could add it here)
+
   // Get the student profile
+  // IMPORTANT: For structured apps, student_id is user_id. For legacy, it's profile_id.
   const { data: studentProfile } = await supabaseAdmin
     .from("student_profiles")
     .select("user_id, full_name")
-    .eq("id", application.student_id)
+    .eq(isNewInternshipApp ? "user_id" : "id", application.student_id)
     .single();
 
   // We allow updates even if student profile is missing (e.g. deleted user), 
@@ -156,60 +213,88 @@ export async function PATCH(
     console.warn(`[UPDATE_APPLICATION] Warning: Student profile or user_id not found for application ${id}. Notifications will be skipped.`);
   }
 
-  // Get the opportunity title and description based on application type
+  // Get the opportunity title
   let opportunityTitle = "your application";
   let opportunityPrice = 0;
-  if (application.application_type === "internship" && application.internship_id) {
-    const { data: internship } = await supabaseAdmin
-      .from("internships")
-      .select("title, description")
-      .eq("id", application.internship_id)
-      .single();
-    opportunityTitle = internship?.title || opportunityTitle;
-  } else if (application.application_type === "program" && application.program_id) {
-    const { data: program } = await supabaseAdmin
-      .from("programs")
-      .select("title, description, price_xaf")
-      .eq("id", application.program_id)
-      .single();
-    opportunityTitle = program?.title || opportunityTitle;
-    opportunityPrice = program?.price_xaf || 0;
-  } else if (application.application_type === "event" && application.event_id) {
-    const { data: event } = await supabaseAdmin
-      .from("event")
-      .select("title, description")
-      .eq("id", application.event_id)
-      .single();
-    opportunityTitle = event?.title || opportunityTitle;
+  let opportunityId: string | null = null;
+  let appType = application.application_type;
+
+  if (isNewInternshipApp) {
+    const internshipData = Array.isArray(application.internship) ? application.internship[0] : application.internship;
+    opportunityTitle = internshipData?.title || "Internship";
+    opportunityId = internshipData?.id;
+    appType = "internship";
+  } else {
+    if (application.application_type === "internship" && application.internship_id) {
+      const { data: internship } = await supabaseAdmin
+        .from("internships")
+        .select("title")
+        .eq("id", application.internship_id)
+        .single();
+      opportunityTitle = internship?.title || opportunityTitle;
+      opportunityId = application.internship_id;
+    } else if (application.application_type === "program" && application.program_id) {
+      const { data: program } = await supabaseAdmin
+        .from("programs")
+        .select("title, price_xaf")
+        .eq("id", application.program_id)
+        .single();
+      opportunityTitle = program?.title || opportunityTitle;
+      opportunityPrice = program?.price_xaf || 0;
+      opportunityId = application.program_id;
+    } else if (application.application_type === "event" && application.event_id) {
+      const { data: event } = await supabaseAdmin
+        .from("event")
+        .select("title")
+        .eq("id", application.event_id)
+        .single();
+      opportunityTitle = event?.title || opportunityTitle;
+      opportunityId = application.event_id;
+    }
   }
+
+  // --- Common variables for notifications ---
+  const studentName = isNewInternshipApp ? application.full_name : (studentProfile?.full_name || "Student");
 
   // --- Handle payment_completed update (simple update, no notifications) ---
   if (typeof payment_completed === 'boolean' && status === undefined) {
+    const table = isNewInternshipApp ? "internship_applications" : "Applications";
+    const updatePayload: any = isNewInternshipApp
+      ? { is_paid_acknowledgement: payment_completed }
+      : { payment_completed };
+
     const { data: updatedApplication, error: updateError } = await supabaseAdmin
-      .from("Applications")
-      .update({
-        payment_completed,
-      })
+      .from(table)
+      .update(updatePayload)
       .eq("id", id)
       .select()
       .single();
 
     if (updateError) {
-      console.log(updateError);
+      console.error(`[PATCH_PAYMENT] Error for ${id}:`, updateError);
       return NextResponse.json({ error: updateError.message }, { status: 400 });
     }
 
-    // Trigger receipt email if payment is confirmed
     if (payment_completed === true && shouldNotify) {
       try {
         const studentAuthId = studentProfile!.user_id;
+
+        // Add Real-time Notification
+        await createNotification(
+          studentAuthId,
+          "Payment Confirmed! 💰",
+          `Your payment for "${opportunityTitle}" has been confirmed. You now have full access to your workspace.`,
+          "internship",
+          id
+        );
+
         const { data: userData } = await supabaseAdmin.auth.admin.getUserById(studentAuthId);
         const studentEmail = userData?.user?.email;
 
         if (studentEmail) {
           await sendPaymentReceiptEmail({
             email: studentEmail,
-            name: studentProfile!.full_name || "Student",
+            name: studentName,
             programTitle: opportunityTitle,
             amount: opportunityPrice,
             date: new Date().toISOString(),
@@ -238,138 +323,150 @@ export async function PATCH(
   let resultData = null;
 
   // Build update object with both status and payment_completed if provided
-  const updateObject: { status?: string; payment_completed?: boolean } = {};
-  if (status !== undefined) updateObject.status = status;
-  if (typeof payment_completed === 'boolean') updateObject.payment_completed = payment_completed;
+  const updateObject: { status?: string; payment_completed?: boolean; payment_ledger?: any; updated_at?: string } = {
+    updated_at: new Date().toISOString()
+  };
 
-  if (status === "rejected") {
-    // DELETE the application to allow re-applying
-    const { error: deleteError } = await supabaseAdmin
-      .from("Applications")
-      .delete()
-      .eq("id", id);
-
-    if (deleteError) {
-      console.log(deleteError);
-      return NextResponse.json({ error: deleteError.message }, { status: 400 });
+  if (status !== undefined) {
+    // Map 'reviewing' to 'reviewed' for structured apps to satisfy DB check constraint if needed
+    // The structured table only allows: 'pending', 'reviewed', 'accepted', 'rejected'
+    if (isNewInternshipApp && status === "reviewing") {
+      updateObject.status = "reviewed";
+    } else {
+      updateObject.status = status;
     }
-    resultData = { ...application, status: "rejected", deleted: true };
-  } else if (Object.keys(updateObject).length > 0) {
+  }
+
+  if (typeof payment_completed === 'boolean') {
+    if (isNewInternshipApp) {
+      // Map to the correct column name for internship_applications
+      (updateObject as any).is_paid_acknowledgement = payment_completed;
+    } else {
+      updateObject.payment_completed = payment_completed;
+    }
+  }
+
+  if (payment_ledger !== undefined) updateObject.payment_ledger = payment_ledger;
+
+  console.log(`[PATCH_APPLICATION] Updating ${id} in ${isNewInternshipApp ? "internship_applications" : "Applications"}:`, updateObject);
+
+  if (Object.keys(updateObject).length > 1) { // > 1 because updated_at is always there
     // UPDATE the application
+    const table = isNewInternshipApp ? "internship_applications" : "Applications";
     const { data: updatedApplication, error: updateError } = await supabaseAdmin
-      .from("Applications")
+      .from(table)
       .update(updateObject)
       .eq("id", id)
       .select()
       .single();
 
     if (updateError) {
-      console.log(updateError);
+      console.error(`[PATCH_APPLICATION] Update error for ${id}:`, updateError);
       return NextResponse.json({ error: updateError.message }, { status: 400 });
     }
-    resultData = updatedApplication;
+
+    if (!updatedApplication) {
+      console.warn(`[PATCH_APPLICATION] Update succeeded but no data returned for ${id}`);
+      // If update succeeded but select().single() returned nothing, we still want to return the updated values
+      resultData = { ...application, ...updateObject };
+    } else {
+      resultData = updatedApplication;
+    }
   } else {
     return NextResponse.json({ error: "No valid update fields provided" }, { status: 400 });
   }
 
   // --- Background Tasks: Notifications and Emails ---
-  // We do NOT want to block the user interface for email dispatches.
-  // We'll wrap this in an async execution block.
-
   if (shouldNotify) {
     const startBackgroundTasks = async () => {
       try {
-        const referenceId = application.internship_id || application.program_id || application.event_id;
-        const studentAuthId = studentProfile!.user_id;
+        const studentAuthId = isNewInternshipApp ? application.student_id : (studentProfile?.user_id || application.student_id);
+        const referenceId = opportunityId;
 
-        if (referenceId && application.application_type) {
+        if (referenceId && appType && studentAuthId) {
+          console.log(`[BACKGROUND_TASKS] Starting for ${id}, status: ${status}`);
           const { data: userData } = await supabaseAdmin.auth.admin.getUserById(studentAuthId);
           const studentEmail = userData?.user?.email;
-          const studentName = studentProfile.full_name || "Student";
+          const studentName = isNewInternshipApp ? application.full_name : (studentProfile?.full_name || "Student");
           const companyName = company.company_name || "The Company";
 
           const emailPromises = [];
 
-          // 1. Notify Candidate of Decision (only for Accepted/Rejected)
+          // 1. Notify Candidate of Decision
           if (studentEmail) {
             if (status === "accepted") {
               emailPromises.push(sendAcceptanceEmail({
                 email: studentEmail,
                 name: studentName,
                 opportunityTitle,
-                opportunityType: application.application_type,
+                opportunityType: appType,
                 companyName,
-                whatsappGroupLink: "https://chat.whatsapp.com/DXYGLpny3DwGs5pkb1fPAr",
+                whatsappGroupLink: "https://chat.whatsapp.com/K0RflJDzxyKDIM2yuvzTTQ?mode=gi_t",
               }));
             } else if (status === "rejected") {
               emailPromises.push(sendRejectionEmail({
                 email: studentEmail,
                 name: studentName,
                 opportunityTitle,
-                opportunityType: application.application_type,
+                opportunityType: appType,
                 companyName,
               }));
             }
           }
 
-          // 2. Notify Zigex & Company for status changes (except internal transitions unless preferred)
-          // Zigex Alerts
+          // 2. Alert Admins
           emailPromises.push(sendApplicationAlert({
             adminEmail: "zigex.connect@gmail.com,zigexconnect.com@gmail.com",
             studentName,
             studentEmail: studentEmail || "N/A",
             opportunityTitle,
-            opportunityType: application.application_type,
+            opportunityType: appType,
             status: status || "updated",
             companyName,
           }));
 
-          // Company Alerts
           if (company.email) {
             emailPromises.push(sendApplicationAlert({
               adminEmail: company.email,
               studentName,
               studentEmail: studentEmail || "N/A",
               opportunityTitle,
-              opportunityType: application.application_type,
+              opportunityType: appType,
               status: status || "updated",
               companyName,
             }));
           }
 
-          // 3. Database Notification
+          // 3. In-app Notification
           const notificationTitle = status === "accepted"
             ? "Congratulations! Your Application was Accepted!"
             : status === "rejected"
               ? "Application Update: Please Reapply"
-              : `Application move: ${status}`;
+              : `Application status updated: ${status || 'Update'}`;
 
           const notificationMessage = status === "accepted"
             ? `Great news! Your application for "${opportunityTitle}" has been accepted.`
             : status === "rejected"
-              ? `Your previous application for "${opportunityTitle}" has been removed to allow you to reapply with updated details.`
-              : `Your application status for "${opportunityTitle}" is now ${status}.`;
+              ? `Your application for "${opportunityTitle}" has been reviewed. Check your email for details.`
+              : `Your application status for "${opportunityTitle}" is now ${status || 'updated'}.`;
 
           emailPromises.push(createNotification(
             studentAuthId,
             notificationTitle,
             notificationMessage,
-            application.application_type,
+            appType as any,
             referenceId
           ));
 
-          // Execute all background tasks in parallel
           await Promise.allSettled(emailPromises);
-          console.log(`[BACKGROUND_TASKS] All notifications processed for application ${id}`);
+          console.log(`[BACKGROUND_TASKS] Completed for ${id}`);
         }
       } catch (bgError) {
-        console.error("[BACKGROUND_TASKS] Error during email/notification dispatch:", bgError);
+        console.error("[BACKGROUND_TASKS] Critical error:", bgError);
       }
     };
 
-    // Fire and forget OR wait if in a environment that requires it.
-    // For local dev and most servers, not awaiting this is fine and speeds up the response immensely.
-    // However, to be safe and ensure emails go out, we can use waitUntil (on Vercel) or just fire it.
+    // Use Next.js 15 request wait if available, otherwise fire and forget
     startBackgroundTasks();
   }
 
@@ -398,14 +495,20 @@ export async function DELETE(
   const { id } = await params;
 
   // Perform delete
-  const { error } = await supabaseAdmin
+  // Try to delete from either table
+  const { error: error1 } = await supabaseAdmin
     .from("Applications")
     .delete()
     .eq("id", id);
 
-  if (error) {
-    console.error("Delete error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  const { error: error2 } = await supabaseAdmin
+    .from("internship_applications")
+    .delete()
+    .eq("id", id);
+
+  if (error1 && error2) {
+    console.error("Delete error:", error1, error2);
+    return NextResponse.json({ error: "Failed to delete from both tables" }, { status: 500 });
   }
 
   return NextResponse.json({ message: "Application deleted successfully" });

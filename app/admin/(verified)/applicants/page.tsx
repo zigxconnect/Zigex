@@ -3,14 +3,17 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, AlertTriangle, Filter, Search, DownloadCloud, Plus } from "lucide-react";
+import { Loader2, AlertTriangle, Filter, Search, DownloadCloud, Plus, LayoutGrid, List } from "lucide-react";
 
-import { Applicant, ApplicantStatus } from "@/lib/types/applicants";
+import { Applicant, ApplicantStatus, PaymentRecord } from "@/lib/types/applicants";
 import { ApplicantsTable } from "@/components/sections/admin/applicants/ApplicantsTable";
+import { InternLedgerTable } from "@/components/sections/admin/applicants/InternLedgerTable";
 import { ApplicantDetail } from "@/components/sections/admin/applicants/ApplicantDetail";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
 
 function ApplicantsPageComponent() {
   const [applicants, setApplicants] = useState<Applicant[]>([]);
@@ -19,6 +22,24 @@ function ApplicantsPageComponent() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<"grid" | "ledger">("grid");
+  const [companyId, setCompanyId] = useState<string | null>(null);
+
+  const handleUpdatePaymentLedger = async (appId: string, ledger: PaymentRecord[]) => {
+    try {
+      const resp = await fetch(`/api/companies/applications/${appId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ payment_ledger: ledger })
+      });
+      if (!resp.ok) throw new Error("Update failed");
+      
+      setApplicants(prev => prev.map(a => a.id === appId ? { ...a, paymentLedger: ledger } : a));
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  };
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -38,6 +59,13 @@ function ApplicantsPageComponent() {
         const data: Applicant[] = await response.json();
         console.log("Applicants fetched:", data.length);
         setApplicants(data);
+
+        // Fetch company profile to get ID
+        const companyResp = await fetch("/api/companies/profiles");
+        if (companyResp.ok) {
+           const companyData = await companyResp.json();
+           setCompanyId(companyData.id);
+        }
 
         // Handle URL selection
         if (selectedIdFromUrl) {
@@ -97,6 +125,14 @@ function ApplicantsPageComponent() {
       setApplicants(originalApplicants);
       toast.error("Update failed", { description: err.message });
     }
+  };
+
+  const handleUpdateSupervisor = (applicantId: string, supervisor: any) => {
+    setApplicants((prev) =>
+      prev.map((app) =>
+        app.id === applicantId ? { ...app, supervisorId: supervisor.id, supervisor } : app
+      )
+    );
   };
 
   const handleDeleteApplicant = async (id: string) => {
@@ -279,7 +315,7 @@ function ApplicantsPageComponent() {
            <Button variant="outline" className="h-12 rounded-2xl border-slate-100 shadow-sm gap-2 font-bold text-slate-600">
               <Filter size={16} /> Filters
            </Button>
-           <Button 
+            <Button 
              variant="outline" 
              onClick={handleExportCSV}
              className="h-12 w-12 rounded-2xl border-slate-100 shadow-sm p-0 flex items-center justify-center text-slate-600 hover:bg-primary/5 hover:text-primary transition-colors"
@@ -287,16 +323,43 @@ function ApplicantsPageComponent() {
            >
               <DownloadCloud size={18} />
            </Button>
+
+           <div className="flex items-center gap-1 bg-slate-100/50 p-1 rounded-2xl border border-slate-100 ml-2">
+              <Button 
+                variant={viewMode === "grid" ? "primary" : "ghost"}
+                size="sm"
+                className={cn("rounded-xl h-10 px-4", viewMode === "grid" ? "shadow-md" : "text-slate-500")}
+                onClick={() => setViewMode("grid")}
+              >
+                <LayoutGrid size={16} className="mr-2" /> Grid
+              </Button>
+              <Button 
+                variant={viewMode === "ledger" ? "primary" : "ghost"}
+                size="sm"
+                className={cn("rounded-xl h-10 px-4", viewMode === "ledger" ? "shadow-md" : "text-slate-500")}
+                onClick={() => setViewMode("ledger")}
+              >
+                <List size={16} className="mr-2" /> Ledger
+              </Button>
+           </div>
         </div>
       </header>
 
-      <ApplicantsTable 
-        applicants={filteredApplicants}
-        selectedApplicantId={selectedApplicantId}
-        onSelect={handleSelectApplicant}
-        onDelete={handleDeleteApplicant}
-        onUpdatePayment={handleUpdatePayment}
-      />
+      {viewMode === "grid" ? (
+        <ApplicantsTable 
+          applicants={filteredApplicants}
+          selectedApplicantId={selectedApplicantId}
+          onSelect={handleSelectApplicant}
+          onDelete={handleDeleteApplicant}
+          onUpdatePayment={handleUpdatePayment}
+        />
+      ) : (
+        <InternLedgerTable 
+          applicants={filteredApplicants}
+          onDelete={handleDeleteApplicant}
+          onUpdatePayment={handleUpdatePaymentLedger}
+        />
+      )}
 
       {/* Focus Modal for Candidate Review */}
       <Dialog open={isSheetOpen} onOpenChange={setIsSheetOpen}>
@@ -306,8 +369,12 @@ function ApplicantsPageComponent() {
               <div className="animate-in fade-in zoom-in-95 duration-500">
                 <ApplicantDetail
                   applicant={selectedApplicant}
+                  companyId={companyId || ""}
                   onUpdateStatus={(newStatus) =>
                     handleUpdateStatus(selectedApplicant.id, newStatus)
+                  }
+                  onUpdateSupervisor={(supervisor) => 
+                    handleUpdateSupervisor(selectedApplicant.id, supervisor)
                   }
                 />
               </div>

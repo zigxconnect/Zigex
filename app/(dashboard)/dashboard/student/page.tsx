@@ -24,6 +24,7 @@ export default async function StudentDirectoryPage() {
       .in("student_id", allProfileIds)
       .neq("status", "rejected"),
     supabaseAdmin.from("projects").select("creator_id").in("creator_id", allProfileIds),
+
   ]);
 
   // Create a map for quick stat lookup

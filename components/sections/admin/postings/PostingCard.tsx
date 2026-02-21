@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
   Briefcase,
@@ -132,9 +133,9 @@ export const PostingCard = ({ posting, onDelete }: PostingCardProps) => {
 
   return (
     <AlertDialog>
-      <article className="bg-gradient-to-br from-white to-slate-50 rounded-xl border border-gray-200 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group overflow-hidden h-full">
+      <article className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-indigo-100/50 shadow-xl shadow-indigo-100/20 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 group overflow-hidden h-full flex flex-col">
         {/* --- Image Section --- */}
-        <div className="relative aspect-video bg-slate-100 overflow-hidden">
+        <div className="relative aspect-[16/10] bg-slate-100 overflow-hidden">
           <Link
             href={`/admin/postings/${posting.id}`}
             className="block w-full h-full"
@@ -145,16 +146,19 @@ export const PostingCard = ({ posting, onDelete }: PostingCardProps) => {
                 alt={posting.title}
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                className="object-cover transition-transform duration-700 group-hover:scale-110"
                 onError={() => setImageError(true)}
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
-                <Icon className="h-12 w-12 text-gray-300" />
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+                <Icon className="h-16 w-16 text-slate-200" />
               </div>
             )}
             <div
-              className={`absolute top-3 right-3 px-3 py-1.5 text-xs font-bold rounded-full backdrop-blur-md bg-white/60 border ${statusStyles[posting.status]}`}
+              className={cn(
+                "absolute top-4 right-4 px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl backdrop-blur-md border shadow-lg",
+                posting.status === 'Active' ? 'bg-emerald-500 text-white border-emerald-400' : 'bg-slate-500 text-white border-slate-400'
+              )}
             >
               {posting.status}
             </div>
@@ -162,26 +166,33 @@ export const PostingCard = ({ posting, onDelete }: PostingCardProps) => {
         </div>
 
         {/* --- Content & Stats Section --- */}
-        <div className="p-5 flex-grow flex flex-col">
-          <span
-            className={`inline-block self-start rounded-full px-3 py-1 text-xs font-bold ${typeColors}`}
-          >
-            {posting.type}
-          </span>
-          <h3 className="font-bold text-lg text-gray-800 group-hover:text-blue-600 transition-colors line-clamp-2 leading-tight mt-2 flex-grow">
+        <div className="p-8 flex-grow flex flex-col">
+          <div className="flex items-center gap-2 mb-4">
+            <span
+              className={cn(
+                "rounded-lg px-2.5 py-1 text-[10px] font-black uppercase tracking-widest",
+                typeColors
+              )}
+            >
+              {posting.type}
+            </span>
+          </div>
+          
+          <h3 className="font-heading font-black text-xl text-slate-900 group-hover:text-primary transition-colors duration-300 line-clamp-2 leading-tight tracking-tighter">
             <Link href={`/admin/postings/${posting.id}`}>{posting.title}</Link>
           </h3>
-          <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center text-sm text-gray-500">
+          
+          <div className="mt-8 pt-6 border-t border-slate-100 flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">
             <div className="flex items-center gap-2" title="Date Posted">
-              <Clock size={16} className="text-gray-400" />
+              <Clock size={14} className="text-primary/60" />
               <span>{posting.createdAt}</span>
             </div>
             <div
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100"
               title={`${posting.applicantCount} ${applicantLabel}`}
             >
-              <Users size={16} className="text-gray-400" />
-              <span className="font-semibold text-gray-800">
+              <Users size={14} className="text-primary" />
+              <span className="font-black text-slate-900">
                 {posting.applicantCount}
               </span>
             </div>
@@ -189,8 +200,8 @@ export const PostingCard = ({ posting, onDelete }: PostingCardProps) => {
         </div>
 
         {/* --- Actions Footer --- */}
-        <div className="p-3 bg-slate-50/70 border-t flex justify-end items-center gap-2">
-          <Button asChild variant="outline" size="sm" disabled={isDeleting}>
+        <div className="px-8 py-6 bg-slate-50/50 border-t border-slate-100 flex justify-end items-center gap-3">
+          <Button asChild variant="outline" size="sm" className="rounded-2xl h-10 px-5 border-slate-200 bg-white hover:bg-slate-50 font-bold text-[10px] uppercase tracking-widest transition-all active:scale-95 shadow-sm" disabled={isDeleting}>
             <Link
               href={`/admin/postings/${posting.id}/edit`}
               className="flex items-center gap-2"
@@ -202,7 +213,7 @@ export const PostingCard = ({ posting, onDelete }: PostingCardProps) => {
             <Button
               variant="destructive"
               size="sm"
-              className="flex items-center gap-2"
+              className="rounded-2xl h-10 px-5 bg-rose-600 hover:bg-rose-700 font-bold text-[10px] uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-rose-100"
               disabled={isDeleting}
             >
               {isDeleting ? (
@@ -210,7 +221,7 @@ export const PostingCard = ({ posting, onDelete }: PostingCardProps) => {
               ) : (
                 <Trash2 size={14} />
               )}
-              {isDeleting ? "Deleting" : "Delete"}
+              <span>{isDeleting ? "Deleting" : "Delete"}</span>
             </Button>
           </AlertDialogTrigger>
         </div>

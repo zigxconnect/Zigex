@@ -63,18 +63,18 @@ export const AdminHeader = ({ stats, companyProfile }: AdminHeaderProps) => {
         <div className="flex items-center gap-4 lg:w-72">
           <button
             onClick={toggleSidebar}
-            className="p-2 text-slate-500 rounded-xl hover:bg-slate-100 transition-colors lg:hidden"
+            className="p-2.5 text-slate-500 rounded-2xl hover:bg-slate-100 transition-all lg:hidden active:scale-90"
             aria-label="Toggle sidebar"
           >
             <Menu size={20} />
           </button>
           
-          <Link href="/admin/dashboard" className="flex items-center gap-2">
-            <div className="w-8 h-8 lg:w-10 lg:h-10">
+          <Link href="/admin/dashboard" className="flex items-center gap-3 transition-transform hover:scale-105">
+            <div className="w-9 h-9 lg:w-11 lg:h-11 shadow-lg shadow-primary/10 rounded-xl overflow-hidden p-0.5 bg-white">
               <Logo />
             </div>
-            <span className="font-heading font-bold text-xl tracking-tight hidden sm:block">
-              Zigex<span className="text-primary italic">Admin</span>
+            <span className="font-heading font-black text-2xl tracking-tight hidden sm:block text-slate-900">
+              Zigex<span className="text-primary italic font-black">Admin</span>
             </span>
           </Link>
         </div>

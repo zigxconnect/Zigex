@@ -1,6 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '../../../../lib/supabase/server';
+import { createClient, supabaseAdmin } from '@/lib/supabase/server';
 import { authMiddleware } from '@/lib/middleware/auth';
 import { internshipSchema } from '@/lib/validation/internship';
 
@@ -62,7 +61,8 @@ export async function GET(request: Request) {
     }
 
 
-    const { data, error } = await supabaseAdmin
+    const supabase = await createClient();
+    const { data, error } = await supabase
         .from('internships')
         .select('*')
         .eq('company_id', company.id);
@@ -99,24 +99,87 @@ export async function POST(request: Request) {
         );
     }
     try {
-        const body = await request.json();
+        const formData = await request.formData();
+        const coverImage = formData.get("cover_image") as File | null;
+
+        // Extract fields from FormData
+        const rawData: any = {};
+        formData.forEach((value, key) => {
+            if (key === "required_skills") {
+                try {
+                    rawData[key] = JSON.parse(value as string);
+                } catch {
+                    rawData[key] = [];
+                }
+            } else if (key === "is_paid") {
+                rawData[key] = value === "true";
+            } else if (key !== "cover_image") {
+                rawData[key] = value === "null" ? null : value;
+            }
+        });
+
+        console.log("POST /api/companies/internships - Processing form data");
+
+        const sanitizePathComponent = (str: string) =>
+            str.replace(/[^a-zA-Z0-9_-]/g, "_");
+
+        let cover_image_url = rawData.cover_image_url || null;
+
+        const supabase = await createClient();
+
+        // Handle Image Upload if new image provided
+        if (coverImage) {
+            console.log("Uploading internship cover image...");
+            const imageExt = coverImage.name.split(".").pop();
+            const imageName = `internship-${Date.now()}.${imageExt}`;
+            const imagePath = `${sanitizePathComponent(company.company_name)}/internships/${imageName}`;
+
+            const { error: uploadError } = await supabaseAdmin.storage
+                .from("company-assets")
+                .upload(imagePath, coverImage, { cacheControl: "3600", upsert: false });
+
+            if (uploadError) {
+                console.error("Supabase storage upload error:", uploadError);
+                return NextResponse.json(
+                    { error: "Failed to upload cover image" },
+                    { status: 500 }
+                );
+            }
+
+            const { data: imageData } = supabaseAdmin.storage
+                .from("company-assets")
+                .getPublicUrl(imagePath);
+            cover_image_url = imageData.publicUrl;
+            console.log("Image uploaded to:", cover_image_url);
+        }
+
         const validatedData = internshipSchema.parse({
-            ...body,
+            ...rawData,
+            cover_image_url,
             company_id: company.id
         });
 
-        const { data: internship, error } = await supabaseAdmin.from('internships').insert([validatedData]).select('*').single();
+        console.log("Inserting internship into DB...");
+        const { data: internship, error } = await supabase.from('internships').insert([validatedData]).select('*').single();
         if (error) {
-            console.log(error);
+            console.error("DB Insert Error:", error);
+            // Cleanup uploaded image if DB insert fails
+            if (coverImage && cover_image_url) {
+                const path = cover_image_url.split('/company-assets/').pop();
+                if (path) await supabaseAdmin.storage.from('company-assets').remove([path]);
+            }
             return NextResponse.json(
                 { error: error.message },
                 { status: 500 });
         }
+        console.log("Internship created successfully:", internship.id);
 
-        // --- NOTIFICATION & EMAIL LOGIC (Migrated from Edge Function) ---
+        // --- NOTIFICATION & EMAIL LOGIC ---
+        // Note: We don't want to block the response too long if this is slow.
+        console.log("Starting notification process...");
         try {
             // 1. Get subscribed users
-            const { data: users, error: userError } = await supabaseAdmin.rpc("get_subscribed_emails");
+            const { data: users, error: userError } = await (await createClient()).rpc("get_subscribed_emails");
 
             let recipients = users || [];
             if (userError) {
@@ -136,27 +199,37 @@ export async function POST(request: Request) {
                 const recipientEmails = uniqueRecipients.map((u: any) => u.email).filter(Boolean);
 
                 // 2. Send Email (Batch BCC with Generic To)
+                // Note: Resend has a limit on BCC recipients (usually 50-100).
+                // We'll cap it at 50 for now or ideally use a mailing list/loop.
                 if (process.env.RESEND_API_KEY && recipientEmails.length > 0) {
                     const { Resend } = await import("resend");
                     const resend = new Resend(process.env.RESEND_API_KEY);
                     const { NewPostEmail } = await import("@/emails/NewPostEmail");
 
-                    // Send to "notifications@zigexconnect.com" (ourselves) and BCC everyone else
-                    await resend.emails.send({
-                        from: "ZIGEX <notifications@zigexconnect.com>",
-                        to: "notifications@zigexconnect.com",
-                        bcc: recipientEmails, // Everyone goes to BCC
-                        subject: `New Internship Posted: ${internship.title}`,
-                        react: NewPostEmail({
-                            postTitle: internship.title,
-                            postType: "Internship",
-                            postLocation: internship.location,
-                            viewPostUrl: `https://zigexconnect.com/internships/${internship.id}`,
-                            companyLogoUrl: "https://tmvipinvvhgklmqwvows.supabase.co/storage/v1/object/public/company-assets/Seed%20Company/events/SEED%20community%20Challenge-1757769838240.jpg",
-                            managePreferencesUrl: "https://zigexconnect.com/profile/notifications",
-                            postedDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
-                        }),
-                    });
+                    // Resend BCC limit is usually 50. We cap it to avoid hanging/errors.
+                    const limitedRecipients = recipientEmails.slice(0, 50);
+
+                    console.log(`Sending notification emails to ${limitedRecipients.length} recipients...`);
+
+                    try {
+                        await resend.emails.send({
+                            from: "ZIGEX <notifications@zigexconnect.com>",
+                            to: "notifications@zigexconnect.com",
+                            bcc: limitedRecipients,
+                            subject: `New Internship Posted: ${internship.title}`,
+                            react: NewPostEmail({
+                                postTitle: internship.title,
+                                postType: "Internship",
+                                postLocation: internship.location,
+                                viewPostUrl: `https://zigexconnect.com/internships/${internship.id}`,
+                                companyLogoUrl: "https://tmvipinvvhgklmqwvows.supabase.co/storage/v1/object/public/company-assets/Seed%20Company/events/SEED%20community%20Challenge-1757769838240.jpg",
+                                managePreferencesUrl: "https://zigexconnect.com/profile/notifications",
+                                postedDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
+                            }),
+                        });
+                    } catch (emailErr) {
+                        console.error("Resend email sending failed:", emailErr);
+                    }
                 }
 
                 // 3. Create Notifications in DB (using unique recipients)
@@ -168,7 +241,7 @@ export async function POST(request: Request) {
                     reference_id: internship.id,
                 }));
 
-                const { error: notifError } = await supabaseAdmin.from("notifications").insert(notifications);
+                const { error: notifError } = await (await createClient()).from("notifications").insert(notifications);
                 if (notifError) console.error("Failed to create notifications:", notifError);
             }
         } catch (innerErr) {
@@ -220,8 +293,9 @@ export async function PATCH(request: Request) {
             { status: 400 }
         );
     }
+    const supabase = await createClient();
     // Ensure the internship belongs to the authenticated company
-    const { data: existingInternship, error: fetchError } = await supabaseAdmin
+    const { data: existingInternship, error: fetchError } = await supabase
         .from('internships')
         .select('*')
         .eq('id', id)
@@ -235,10 +309,12 @@ export async function PATCH(request: Request) {
     }
 
     // Update data
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
         .from('internships')
         .update(updates)
-        .eq('id', id);
+        .eq('id', id)
+        .select()
+        .single();
     if (error) {
         return NextResponse.json(
             { error: error.message },
@@ -274,8 +350,9 @@ export async function DELETE(request: Request) {
     const body = await request.json()
     const { id } = body;
 
+    const supabase = await createClient();
     // verify internship belongs to company
-    const { data: existingInternship, error: fetchError } = await supabaseAdmin
+    const { data: existingInternship, error: fetchError } = await supabase
         .from('internships')
         .select('*')
         .eq('id', id)
@@ -289,7 +366,7 @@ export async function DELETE(request: Request) {
     }
 
     // const { id } = await request.json();
-    const { data, error } = await supabaseAdmin.from('internships').delete().eq('id', id);
+    const { data, error } = await supabase.from('internships').delete().eq('id', id);
     if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }

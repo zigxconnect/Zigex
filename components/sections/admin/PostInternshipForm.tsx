@@ -11,6 +11,8 @@ import { Select } from "@/components/uiComponent/Select";
 import { Textarea } from "@/components/uiComponent/Textarea";
 import { ImageUpload } from "@/components/feed/project-form/ImageUpload";
 import { createClient } from "@/lib/supabase/client";
+import { ImageUpload } from "@/components/feed/project-form/ImageUpload";
+import { createClient } from "@/lib/supabase/client";
 
 // Helper UI Components
 
@@ -119,6 +121,17 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
   );
   const [monthlyRate, setMonthlyRate] = useState(
     initialData?.monthly_rate || 0
+  const [compensationAmount, setCompensationAmount] = useState(
+    initialData?.compensation_amount || ""
+  );
+  const [monthlyRate, setMonthlyRate] = useState(
+    initialData?.monthly_rate || 0
+  );
+  const [isPaid, setIsPaid] = useState(Boolean(initialData?.is_paid));
+  const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(initialData?.cover_image_url || null);
+  const [endDate, setEndDate] = useState(
+    formatDateForInput(initialData?.end_date)
   );
   const [isPaid, setIsPaid] = useState(Boolean(initialData?.is_paid));
   const [coverImage, setCoverImage] = useState<File | null>(null);
@@ -181,6 +194,8 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
 
       console.log(`Sending ${method} request to ${endpoint}...`);
 
+      console.log(`Sending ${method} request to ${endpoint}...`);
+
       const response = await fetch(endpoint, {
         method,
         body: formData, // Sending FormData instead of JSON
@@ -197,7 +212,22 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
         throw new Error("The server returned an invalid response. Please try again.");
       }
 
+        body: formData, // Sending FormData instead of JSON
+      });
+
+      console.log("API response status:", response.status);
+
+      let result;
+      try {
+        result = await response.json();
+        console.log("API response data:", result);
+      } catch (err) {
+        console.error("Failed to parse JSON response:", err);
+        throw new Error("The server returned an invalid response. Please try again.");
+      }
+
       if (!response.ok) {
+        throw new Error(result?.error?.message || result?.error || "Failed to submit form");
         throw new Error(result?.error?.message || result?.error || "Failed to submit form");
       }
 
@@ -207,7 +237,15 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
         router.push("/admin/postings");
         router.refresh();
       }, 1000);
+      toast.success(`Internship ${isEditMode ? "updated" : "published"} successfully!`);
+      
+      setTimeout(() => {
+        router.push("/admin/postings");
+        router.refresh();
+      }, 1000);
     } catch (error: any) {
+      console.error("Form submission error details:", error);
+      toast.error(error.message || "An unexpected error occurred. Please check your internet connection.");
       console.error("Form submission error details:", error);
       toast.error(error.message || "An unexpected error occurred. Please check your internet connection.");
     } finally {
@@ -238,6 +276,9 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
             <option>Marketing</option>
             <option>Data Science</option>
             <option>Design</option>
+            <option>Product Management</option>
+            <option>Project Management</option>
+            <option>Embedded Systems & IoT</option>
             <option>Product Management</option>
             <option>Project Management</option>
             <option>Embedded Systems & IoT</option>
@@ -277,6 +318,13 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
             onChange={(e) => setEndDate(e.target.value)}
           />
         </FormField>
+        <FormField label="End Date">
+          <Input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+          />
+        </FormField>
         <FormField label="Application Deadline" required>
           <Input
             type="date"
@@ -285,6 +333,20 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
             required
           />
         </FormField>
+      </FormSection>
+
+      <FormSection title="Visuals">
+         <div className="md:col-span-2">
+            <ImageUpload 
+              previewUrl={coverImage ? URL.createObjectURL(coverImage) : coverImageUrl}
+              onImageChange={(file) => setCoverImage(file)}
+              onRemove={() => {
+                setCoverImage(null);
+                setCoverImageUrl(null);
+              }}
+              maxSize="5MB"
+            />
+         </div>
       </FormSection>
 
       <FormSection title="Visuals">
@@ -364,6 +426,24 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
             </div>
           </div>
           {isPaid && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField label="Monthly Stipend (Paid to Intern)">
+                <Input
+                  type="text"
+                  value={compensationAmount}
+                  onChange={(e) => setCompensationAmount(e.target.value)}
+                  placeholder="e.g., 50,000 FCFA"
+                />
+              </FormField>
+              <FormField label="Program Fee (Paid by Intern)">
+                <Input
+                  type="number"
+                  value={monthlyRate}
+                  onChange={(e) => setMonthlyRate(parseInt(e.target.value) || 0)}
+                  placeholder="e.g., 25000"
+                />
+              </FormField>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField label="Monthly Stipend (Paid to Intern)">
                 <Input
