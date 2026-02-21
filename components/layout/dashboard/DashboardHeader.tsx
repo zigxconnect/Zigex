@@ -38,15 +38,15 @@ export const DashboardHeader = ({
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border shadow-sm transition-all duration-300">
-      <div className="flex items-center justify-between px-4 lg:px-6 py-3 max-w-full mx-auto">
+    <header className="sticky top-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800/50 shadow-sm shadow-slate-100/50 dark:shadow-none transition-all duration-300">
+      <div className="flex items-center justify-between px-4 lg:px-6 py-2.5 max-w-full mx-auto">
         {/* Left Side - Mobile Menu & Logo */}
         <div className="flex items-center gap-3 lg:gap-4 flex-1">
           {/* Mobile Menu Button */}
           <button
             onClick={onMenuClick}
-            className="p-2 hover:bg-muted text-muted-foreground hover:text-primary rounded-xl transition-colors lg:hidden flex-shrink-0"
-            aria-label="Toggle menu"
+            className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-400 hover:text-[#155DFC] rounded-xl transition-all lg:hidden flex-shrink-0"
+            aria-label="Toggle Menu"
           >
             <Menu size={22} />
           </button>
@@ -56,14 +56,14 @@ export const DashboardHeader = ({
             href="/"
             className="flex items-center gap-2 group flex-shrink-0"
           >
-            <div className="relative w-10 h-10 lg:w-12 lg:h-12 transition-transform group-hover:scale-105">
+            <div className="relative w-10 h-10 lg:w-11 lg:h-11 transition-transform group-hover:scale-105">
               <Logo className="w-full h-full" />
             </div>
           </Link>
         </div>
 
         {/* Middle Section - Desktop Navigation */}
-        <nav className="hidden xl:flex items-center justify-center gap-2 flex-1">
+        <nav className="hidden xl:flex items-center justify-center gap-1.5 flex-1">
           {middleNavItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
@@ -72,13 +72,13 @@ export const DashboardHeader = ({
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-300",
+                  "flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold tracking-wide transition-all duration-300",
                   isActive 
-                    ? "bg-primary text-white shadow-md shadow-primary/25" 
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    ? "bg-[#155DFC] text-white shadow-lg shadow-blue-500/20" 
+                    : "text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
                 )}
               >
-                <Icon size={18} className={cn(isActive ? "text-white" : "text-muted-foreground group-hover:text-primary")} />
+                <Icon size={16} className={cn(isActive ? "text-white" : "text-slate-400")} />
                 <span>{item.label}</span>
               </Link>
             );
@@ -95,9 +95,9 @@ export const DashboardHeader = ({
           {/* User Profile */}
           <Link
             href={`/profile/${slugifyUsername(user?.profile?.username) || ""}`}
-            className="flex items-center gap-3 pl-2 lg:pl-3 border-l-2 border-border flex-shrink-0 group"
+            className="flex items-center gap-3 pl-3 lg:pl-4 border-l border-slate-100 dark:border-slate-800 flex-shrink-0 group"
           >
-            <div className="relative w-9 h-9 lg:w-10 lg:h-10 rounded-full border-2 border-background ring-2 ring-muted group-hover:ring-primary/30 shadow-sm overflow-hidden transition-all duration-300">
+            <div className="relative w-9 h-9 lg:w-10 lg:h-10 rounded-xl border-2 border-white dark:border-slate-800 ring-2 ring-slate-100 dark:ring-slate-800 group-hover:ring-[#155DFC]/30 shadow-sm overflow-hidden transition-all duration-300">
               {userAvatar ? (
                 <Image
                   src={userAvatar}
@@ -110,10 +110,10 @@ export const DashboardHeader = ({
               )}
             </div>
             <div className="hidden md:flex flex-col">
-              <p className="text-sm font-bold text-foreground leading-tight group-hover:text-primary transition-colors">
+              <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight group-hover:text-[#155DFC] transition-colors tracking-tight">
                 {userName}
               </p>
-              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide leading-tight">{userRole}</p>
+              <p className="text-[9px] font-bold text-slate-400 tracking-wider leading-tight">{userRole}</p>
             </div>
           </Link>
         </div>

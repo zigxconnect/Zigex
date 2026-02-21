@@ -959,6 +959,7 @@ export async function updateSupervisorProfile(
         bio?: string;
         field_expertise?: string[];
         whatsapp?: string;
+        department?: string;
     }
 ) {
     // SECURITY: Get the caller's company
@@ -998,6 +999,43 @@ export async function updateSupervisorProfile(
     if (error) {
         console.error("Error updating supervisor:", error);
         return { success: false, error: error.message };
+    }
+
+    // --- BULK ASSIGNMENT BY DEPARTMENT ---
+    // If department was updated, automatically assign existing interns in that domain
+    if (updates.department && updates.department !== "none") {
+        console.log(`[BULK_ASSIGN] Re-linking interns in domain "${updates.department}" to supervisor ${supervisorId}`);
+
+        // 1. Fetch internship IDs for this company to filter internship_applications
+        const { data: internships } = await supabaseAdmin
+            .from("internships")
+            .select("id")
+            .eq("company_id", companyProfile.id);
+
+        const internshipIds = internships?.map(i => i.id) || [];
+
+        if (internshipIds.length > 0) {
+            const { error: bulkError } = await supabaseAdmin
+                .from("internship_applications")
+                .update({ supervisor_id: supervisorId })
+                .in("internship_id", internshipIds)
+                .filter("domain", "ilike", updates.department)
+                .eq("status", "accepted");
+
+            if (bulkError) console.error("[BULK_ASSIGN] Error during internship_applications update:", bulkError);
+        }
+
+        // 2. Legacy table update (Uses company_id and department column)
+        try {
+            await supabaseAdmin
+                .from("Applications")
+                .update({ supervisor_id: supervisorId })
+                .eq("company_id", companyProfile.id)
+                .filter("department", "ilike", updates.department)
+                .eq("status", "accepted");
+        } catch (e) {
+            // Legacy table might not support this or not exist
+        }
     }
 
     revalidatePath("/admin/supervisors");
@@ -1129,6 +1167,38 @@ export async function promoteToSupervisor(userData: any) {
                 return { success: true, data: retryData };
             }
             return { success: false, error: error.message };
+        }
+
+        // --- BULK ASSIGNMENT BY DEPARTMENT (Initial Creation) ---
+        if (secureUserData.department && secureUserData.department !== "none") {
+            console.log(`[BULK_ASSIGN] Initial linking for new supervisor ${data.id} in domain "${secureUserData.department}"`);
+
+            // 1. Fetch internship IDs for this company
+            const { data: internships } = await supabaseAdmin
+                .from("internships")
+                .select("id")
+                .eq("company_id", companyProfile.id);
+
+            const internshipIds = internships?.map(i => i.id) || [];
+
+            if (internshipIds.length > 0) {
+                await supabaseAdmin
+                    .from("internship_applications")
+                    .update({ supervisor_id: data.id })
+                    .in("internship_id", internshipIds)
+                    .filter("domain", "ilike", secureUserData.department)
+                    .eq("status", "accepted");
+            }
+
+            // 2. Legacy legacy fallback (Uses company_id and department)
+            try {
+                await supabaseAdmin
+                    .from("Applications")
+                    .update({ supervisor_id: data.id })
+                    .eq("company_id", companyProfile.id)
+                    .filter("department", "ilike", secureUserData.department)
+                    .eq("status", "accepted");
+            } catch (e) { }
         }
 
         // Send Premium Welcome Email

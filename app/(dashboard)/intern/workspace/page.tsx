@@ -1,18 +1,27 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getInternshipWorkspaceData } from "@/lib/actions/intenship.actions";
+import { 
+  getInternshipWorkspaceData, 
+  getAcceptedInternships 
+} from "@/lib/actions/intenship.actions";
 import { InternWorkspaceClient } from "@/components/sections/intern/InternWorkspaceClient";
+import { InternWorkspaceSelection } from "@/components/sections/intern/InternWorkspaceSelection";
 
 export const metadata = {
   title: "Intern Workspace | Zigex",
   description: "Manage your internship, curriculum, and tasks in one place.",
 };
 
-export default async function InternWorkspacePage() {
-  const data = await getInternshipWorkspaceData();
+export default async function InternWorkspacePage({
+  searchParams,
+}: {
+  searchParams: { appId?: string };
+}) {
+  // 1. Fetch all accepted internships to check for multiple placements
+  const acceptedInternships = await getAcceptedInternships();
 
-  // If no active (accepted) internship application is found, redirect or show error
-  if (!data) {
+  // If no internships at all, show the empty state
+  if (acceptedInternships.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F6F8FF] p-6">
         <div className="max-w-md w-full bg-white rounded-[2.5rem] p-12 text-center shadow-xl shadow-blue-500/5 border border-blue-50">
@@ -32,6 +41,22 @@ export default async function InternWorkspacePage() {
         </div>
       </div>
     );
+  }
+
+  // 2. Selection Logic
+  const selectedAppId = searchParams.appId;
+
+  // If multiple internships exist and none is selected via URL, show selection screen
+  if (acceptedInternships.length > 1 && !selectedAppId) {
+    return <InternWorkspaceSelection internships={acceptedInternships} />;
+  }
+
+  // 3. Fetch specific workspace data (either the selected one or the only one)
+  const data = await getInternshipWorkspaceData(selectedAppId);
+
+  if (!data) {
+    // This shouldn't happen if acceptedInternships exists, but handle as fallback
+    redirect("/intern/workspace");
   }
 
   return <InternWorkspaceClient data={data} />;

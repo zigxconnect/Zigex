@@ -37,7 +37,11 @@ import {
   Cpu,
   Notebook,
   Rocket,
-  Check
+  Check,
+  ShieldCheck,
+  Radio,
+  Activity,
+  X
 } from "lucide-react";
 import { format } from "date-fns";
 import Link from "next/link";
@@ -57,6 +61,8 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 import { InternActivityGraph } from "./InternActivityGraph";
 import { normalizeImageSrc } from "@/lib/utils";
+import { getInternCurriculum, CurriculumModule } from "@/lib/data/intern-curriculum";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 interface InternWorkspaceClientProps {
   data: {
@@ -107,6 +113,22 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
   const internship = application?.internships;
   const company = internship?.company_profiles;
   const supervisor = application?.supervisor_profiles;
+
+  const studentDomain = (application?.domain || "").toLowerCase().trim();
+  const displayedInterns = showDepartmentOnly 
+    ? (fellowInterns || []).filter((i: any) => (i.domain || "").toLowerCase().trim() === studentDomain)
+    : (fellowInterns || []);
+    
+  const displayedSupervisors = showDepartmentOnly
+    ? (fellowSupervisors || []).filter((s: any) => (s.department || "").toLowerCase().trim() === studentDomain)
+    : (fellowSupervisors || []);
+
+  const [expandedModule, setExpandedModule] = useState<string | null>(null);
+
+  // Get dummy curriculum if DB one is empty
+  const displayCurriculum = (curriculum && curriculum.length > 0) 
+    ? curriculum 
+    : getInternCurriculum(application?.domain || "", application?.experience_level || "beginner")?.modules || [];
 
   const paymentLedger = application?.payment_ledger || [];
   const totalPaid = paymentLedger
@@ -358,7 +380,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
   const tasksCount = tasks.filter(t => !t.is_read).length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-blue-50/30 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+    <div className="min-h-screen bg-[#FDFDFF] dark:bg-slate-950">
       {/* Daily Report Modal */}
       <AnimatePresence>
         {isLogModalOpen && (
@@ -371,111 +393,118 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
       </AnimatePresence>
 
       {/* ===== HEADER ===== */}
-      <header className="relative overflow-hidden bg-white dark:bg-slate-950 border-b border-blue-100/30 dark:border-slate-800/50">
-        {/* Decorative Background Elements */}
-        <div className="absolute top-0 right-0 -tr-1/4 w-[500px] h-[500px] bg-blue-50/50 dark:bg-blue-600/5 rounded-full blur-3xl -z-10" />
-        <div className="absolute bottom-0 left-0 -bl-1/4 w-[300px] h-[300px] bg-indigo-50/30 dark:bg-indigo-600/5 rounded-full blur-3xl -z-10" />
+      <header className="relative pt-12 pb-16 overflow-hidden bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800/50">
+        {/* Decorative Background Elements - More atmospheric */}
+        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-blue-50/40 dark:bg-blue-600/5 rounded-full blur-[120px] -z-10 translate-x-1/2 -translate-y-1/2" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-indigo-50/30 dark:bg-indigo-600/5 rounded-full blur-[100px] -z-10 -translate-x-1/4 translate-y-1/4" />
         
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
-          <div className="flex flex-col gap-8">
-            
+        <div className="max-w-7xl mx-auto px-6 lg:px-12">
+          <div className="flex flex-col gap-10">
+            {/* Status Pulse Bar */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-[pulse_2s_infinite]" />
+                <span className="text-[9px] font-bold text-slate-900 dark:text-slate-400 tracking-wider">Operational</span>
+              </div>
+              <div className="h-px flex-1 bg-gradient-to-r from-slate-100 to-transparent dark:from-slate-800" />
+            </div>
             
             {/* Main Info Row */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <div className="flex items-center gap-5 sm:gap-6">
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="relative group shrink-0"
-                >
-                  <div className="absolute -inset-1 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500" />
-                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white dark:bg-slate-900 border border-blue-50 dark:border-slate-800 flex items-center justify-center overflow-hidden shadow-inner">
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10">
+              <div className="flex items-start gap-8">
+                <div className="relative group shrink-0">
+                  <div className="absolute -inset-4 bg-blue-600/5 rounded-[2.5rem] blur-2xl group-hover:bg-blue-600/10 transition-all duration-500" />
+                  <div className="relative w-20 h-20 lg:w-24 lg:h-24 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center overflow-hidden shadow-[0_10px_30px_-12px_rgba(0,0,0,0.08)]">
                     {company?.logo_url ? (
                       <Image 
                         src={normalizeImageSrc(company.logo_url)} 
                         alt={company.company_name} 
-                        width={80} 
-                        height={80} 
-                        className="w-full h-full object-cover p-2" 
+                        width={128} 
+                        height={128} 
+                        className="w-full h-full object-cover p-3" 
                       />
                     ) : (
-                      <Shield size={32} className="text-blue-600/50" />
+                      <Shield size={40} className="text-blue-600/20" />
                     )}
                   </div>
-                </motion.div>
+                </div>
 
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Badge className="bg-blue-600/10 text-blue-600 dark:bg-blue-400/10 dark:text-blue-400 border-0 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg">
+                <div className="flex-1 pt-2">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Badge className="bg-blue-600 text-white border-0 text-[9px] font-bold tracking-tight px-3 py-1 rounded-full shadow-lg shadow-blue-500/10">
                       {internship?.type || "Professional Track"}
                     </Badge>
+                    <span className="text-[9px] font-bold text-slate-300 dark:text-slate-600 tracking-wider">ID: {application?.id?.slice(0, 8)}</span>
                   </div>
-                  <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-tight mb-1">
+                  <h1 className="text-2xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-tight mb-3">
                     {internship?.title || "Professional Internship"}
                   </h1>
-                  <div className="flex flex-wrap items-center gap-y-1 gap-x-3 text-slate-500 dark:text-slate-400 font-bold text-[10px] sm:text-xs">
-                    <span className="flex items-center gap-1.5">
-                      <Layout size={12} className="text-blue-500" />
-                      {company?.company_name}
-                    </span>
-                    <span className="w-1 h-1 bg-slate-300 dark:bg-slate-700 rounded-full" />
-                    <span className="flex items-center gap-1.5">
-                      <Calendar size={14} className="text-indigo-500" />
-                      {application?.duration}
-                    </span>
+                  <div className="flex flex-wrap items-center gap-y-2 gap-x-5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center border border-slate-100 dark:border-slate-700">
+                        <Layout size={12} className="text-blue-600" />
+                      </div>
+                      <span className="text-xs font-bold text-slate-900 dark:text-slate-300 tracking-tight">{company?.company_name}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center border border-slate-100 dark:border-slate-700">
+                        <Calendar size={12} className="text-indigo-600" />
+                      </div>
+                      <span className="text-xs font-bold text-slate-900 dark:text-slate-300 tracking-tight">{application?.duration} Deployment</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="hidden md:flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-4 pt-4 lg:pt-0">
                 <Button 
                   onClick={() => setIsLogbookPreviewOpen(true)}
                   variant="outline" 
-                  className="rounded-2xl border-slate-200 dark:border-slate-800 font-black text-[10px] h-11 px-5 hover:bg-slate-50 dark:hover:bg-slate-900 hover:border-blue-200 transition-all whitespace-nowrap"
+                  className="rounded-xl border-slate-200 dark:border-slate-800 font-bold text-[10px] tracking-wider h-12 px-6 hover:bg-slate-50 dark:hover:bg-slate-900 transition-all duration-300"
                 >
-                  <FileText size={14} className="mr-2 text-blue-600" />
-                  LOGBOOK PREVIEW
+                  <FileText size={14} className="mr-3 text-slate-900 dark:text-white" />
+                  Logbook preview
                 </Button>
                 <Button 
                   onClick={() => !hasLoggedToday && !needsPaymentAcknowledgment && setIsLogModalOpen(true)}
                   disabled={hasLoggedToday || needsPaymentAcknowledgment}
                   className={cn(
-                    "rounded-2xl font-black text-[10px] h-11 px-6 shadow-xl transition-all active:scale-[0.98] whitespace-nowrap",
+                    "rounded-xl font-bold text-[10px] tracking-wider h-12 px-8 shadow-xl transition-all duration-300 active:scale-[0.98] whitespace-nowrap",
                     hasLoggedToday 
                       ? "bg-emerald-50 text-emerald-600 cursor-not-allowed border border-emerald-100" 
                       : needsPaymentAcknowledgment
-                      ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                      : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/30"
+                      ? "bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200"
+                      : "bg-[#155DFC] hover:bg-blue-700 text-white shadow-blue-500/20"
                   )}
                 >
                   {hasLoggedToday ? (
                     <span className="flex items-center gap-2">
-                      <CheckCheck size={14} /> LOGGED TODAY
+                      <CheckCheck size={16} strokeWidth={3} /> Logged
                     </span>
                   ) : needsPaymentAcknowledgment ? (
                     <span className="flex items-center gap-2">
-                       <Lock size={14} /> WORKSPACE LOCKED
+                       <Lock size={16} /> Locked
                     </span>
                   ) : (
                     <span className="flex items-center gap-2">
-                      <Plus size={14} /> SUBMIT DAILY LOG
+                       Submit Report
                     </span>
                   )}
                 </Button>
               </div>
             </div>
 
-            {/* Bottom Row: Colleagues + Mobile Pulse */}
-            <div className="flex items-center justify-between border-t border-slate-50 dark:border-slate-800/50 pt-8 sm:pt-10">
+            {/* Bottom Row: Network + Metadata */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 pt-8 border-t border-slate-50 dark:border-slate-800/50">
               <button 
                 onClick={() => setIsColleaguesModalOpen(true)}
-                className="flex items-center gap-4 group transition-all"
+                className="flex items-center gap-5 group transition-all"
               >
-                <div className="flex -space-x-1 sm:-space-x-1.5">
-                  {(fellowInterns || []).slice(0, 5).map((intern: any, i: number) => (
+                <div className="flex -space-x-2.5">
+                  {(fellowInterns || []).slice(0, 4).map((intern: any, i: number) => (
                     <div 
                       key={intern.id} 
-                      className="relative h-9 w-9 sm:h-10 sm:w-10 rounded-xl ring-2 ring-white dark:ring-slate-950 overflow-hidden bg-slate-100 shadow-sm transition-transform group-hover:translate-x-1 group-hover:scale-105"
+                      className="relative h-9 w-9 rounded-xl ring-2 ring-white dark:ring-slate-950 overflow-hidden bg-slate-100 shadow-[0_4px_12px_-2px_rgba(0,0,0,0.12)] transition-all duration-500 group-hover:translate-x-1.5 group-hover:-rotate-3"
                       style={{ transitionDelay: `${i * 50}ms`, zIndex: 10 - i }}
                     >
                       <Image 
@@ -486,73 +515,41 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                       />
                     </div>
                   ))}
-                  {fellowInterns.length > 5 && (
-                    <div className="relative flex items-center justify-center h-9 w-9 sm:h-10 sm:w-10 rounded-xl ring-2 ring-white dark:ring-slate-950 bg-blue-600 text-white text-[10px] font-black shadow-lg z-0 transition-transform group-hover:translate-x-1">
-                      +{fellowInterns.length - 5}
+                  {fellowInterns.length > 4 && (
+                    <div className="relative flex items-center justify-center h-9 w-9 rounded-xl ring-2 ring-white dark:ring-slate-950 bg-slate-900 text-white text-[10px] font-black shadow-lg z-0 transition-transform group-hover:translate-x-1.5">
+                      +{fellowInterns.length - 4}
                     </div>
                   )}
                 </div>
-                <div>
-                  <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest leading-none mb-1">Collaborative Network</p>
-                  <p className="text-xs font-bold text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">
-                    Meet your {fellowInterns.length} fellow cohorts
+                <div className="text-left">
+                  <p className="text-[10px] font-black text-[#155DFC] dark:text-blue-400 uppercase tracking-[0.3em] mb-0.5">Squadrons</p>
+                  <p className="text-xs font-bold text-slate-900 dark:text-slate-300">
+                    Network of {fellowInterns.length} Active Cohorts
                   </p>
                 </div>
               </button>
 
-              <div className="flex items-center gap-3">
-                <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Active Workspace</span>
+              <div className="flex items-center gap-8">
+                <div className="flex flex-col items-end">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Supervisor</p>
+                  <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                    {supervisor?.full_name || "Assigning..."}
+                  </p>
+                </div>
+                <div className="w-px h-10 bg-slate-100 dark:bg-slate-800" />
+                <div className="flex h-12 w-12 rounded-2xl bg-blue-50 dark:bg-blue-900/20 items-center justify-center border border-blue-100/50 dark:border-blue-800/50">
+                   <Target className="text-blue-600" size={20} />
                 </div>
               </div>
-            </div>
-
-            {/* Mobile Actions (Visible Only on Mobile) */}
-            <div className="flex md:hidden flex-col gap-2.5">
-              <Button 
-                onClick={() => setIsLogbookPreviewOpen(true)}
-                variant="outline" 
-                className="w-full rounded-2xl border-blue-100 dark:border-slate-800 font-black text-[10px] h-12 whitespace-nowrap"
-              >
-                <FileText size={14} className="mr-2 text-blue-600" />
-                LOGBOOK PREVIEW
-              </Button>
-              <Button 
-                onClick={() => !hasLoggedToday && !needsPaymentAcknowledgment && setIsLogModalOpen(true)}
-                disabled={hasLoggedToday || needsPaymentAcknowledgment}
-                className={cn(
-                  "w-full rounded-2xl font-black text-[10px] h-12 shadow-lg whitespace-nowrap",
-                  hasLoggedToday 
-                    ? "bg-emerald-50 text-emerald-600 border border-emerald-100" 
-                    : needsPaymentAcknowledgment
-                    ? "bg-slate-100 text-slate-400"
-                    : "bg-blue-600 text-white shadow-blue-500/20"
-                )}
-              >
-                {hasLoggedToday ? (
-                  <span className="flex items-center gap-2">
-                    <CheckCheck size={14} /> LOGGED TODAY
-                  </span>
-                ) : needsPaymentAcknowledgment ? (
-                  <span className="flex items-center gap-2">
-                     <Lock size={14} /> WORKSPACE LOCKED
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    <Plus size={14} /> SUBMIT DAILY LOG
-                  </span>
-                )}
-              </Button>
             </div>
           </div>
         </div>
       </header>
 
       {/* ===== NAVIGATION TABS ===== */}
-      <nav className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-blue-50 dark:border-slate-800">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-1 py-3 overflow-x-auto hide-scrollbar custom-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+      <nav className="sticky top-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl border-b border-slate-100 dark:border-slate-800">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12">
+          <div className="flex items-center gap-4 py-4 overflow-x-auto hide-scrollbar custom-scrollbar">
             {getTabs(
               logs.length, 
               paymentLedger.filter((p: any) => p.status === 'paid').length, 
@@ -567,17 +564,17 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    "relative flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest whitespace-nowrap transition-all duration-200",
+                    "relative flex items-center gap-2.5 px-5 py-2.5 rounded-xl font-bold text-[14px] tracking-tight whitespace-nowrap transition-all duration-300",
                     isActive 
-                      ? "text-blue-600 dark:text-blue-400" 
-                      : "text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                      ? "text-gray-100 bg-blue-700 dark:bg-blue-600/10" 
+                      : "text-slate-700 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50"
                   )}
                 >
                   <div className="relative">
-                    <Icon size={16} className={cn(isActive && "text-blue-600")} />
+                    <Icon size={16} strokeWidth={isActive ? 3 : 2} />
                     {tab.badge !== undefined && tab.badge > 0 && (
                       <span className={cn(
-                        "absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold text-white ring-2 ring-white dark:ring-slate-900 border border-white dark:border-slate-900 shadow-sm",
+                        "absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full text-[8px] font-bold text-white ring-2 ring-white dark:ring-slate-900 shadow-sm",
                         tab.id === "announcements" ? "animate-pulse" : "",
                         tab.badgeColor || "bg-blue-600"
                       )}>
@@ -586,13 +583,6 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                     )}
                   </div>
                   <span>{tab.label}</span>
-                  {isActive && (
-                    <motion.div
-                      layoutId="activeTab"
-                      className="absolute inset-0 bg-blue-50 dark:bg-blue-500/10 rounded-xl -z-10"
-                      transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
-                    />
-                  )}
                 </button>
               );
             })}
@@ -617,19 +607,20 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                 {/* Payment Acknowledgment Banner (Persistent until accepted) */}
                 {needsPaymentAcknowledgment && (
                   <motion.div 
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-amber-500 to-orange-600 p-8 text-white shadow-xl shadow-amber-500/20 mb-6"
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="relative overflow-hidden rounded-[2.5rem] bg-slate-900 border border-slate-800 p-1 lg:p-1.5 shadow-2xl mb-12 group"
                   >
-                    <div className="relative z-10 flex flex-col sm:flex-row items-center gap-6">
-                      <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center shrink-0">
-                        <CreditCard size={32} className="text-white" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 via-transparent to-indigo-600/20 opacity-50" />
+                    <div className="relative z-10 bg-white dark:bg-slate-900 rounded-[2.25rem] p-8 lg:p-12 flex flex-col lg:flex-row items-center gap-10">
+                      <div className="w-24 h-24 bg-blue-600 rounded-3xl flex items-center justify-center shrink-0 shadow-2xl shadow-blue-500/40 rotate-3 group-hover:rotate-0 transition-transform duration-500">
+                        <CreditCard size={40} className="text-white" />
                       </div>
-                      <div className="flex-1 text-center sm:text-left">
-                        <h3 className="text-xl font-black mb-1">Paid Internship Acknowledgment</h3>
-                        <p className="text-sm text-amber-50 font-medium">
-                          This is a paid internship ({internship?.monthly_rate?.toLocaleString()} FCFA/month). 
-                          Please acknowledge that you agree to the payment terms to unlock your daily logs.
+                      <div className="flex-1 text-center lg:text-left">
+                        <h3 className="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white mb-3 tracking-tight">Financial Activation Required</h3>
+                        <p className="text-sm lg:text-base text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-2xl">
+                          This is a paid track offering <span className="text-blue-600 font-black">{internship?.monthly_rate?.toLocaleString()} FCFA</span> per cycle. 
+                          Please acknowledge the professional terms to activate your deployment modules and daily reporting ledger.
                         </p>
                       </div>
                       <Button 
@@ -640,37 +631,32 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                             router.refresh();
                           }
                         }}
-                        className="bg-white text-orange-600 hover:bg-amber-50 font-black rounded-2xl px-6 h-11 text-[10px] uppercase tracking-widest shadow-lg whitespace-nowrap"
+                        className="bg-[#155DFC] hover:bg-blue-700 text-white font-bold rounded-xl px-8 h-12 text-[10px] tracking-wider shadow-lg shadow-blue-500/10 whitespace-nowrap active:scale-[0.98] transition-all"
                       >
-                        I AGREE & ACKNOWLEDGE
+                        Activate Mission
                       </Button>
                     </div>
-                    <div className="absolute -right-8 -bottom-8 w-40 h-40 bg-white/10 rounded-full blur-2xl" />
                   </motion.div>
                 )}
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                   {[
-                    { label: "Active Phase", value: application?.duration || "N/A", icon: Compass, color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-500/10" },
-                    { label: "Work Ledger", value: `${logs.length} Entries`, icon: Notebook, color: "text-indigo-600", bg: "bg-indigo-50 dark:bg-indigo-500/10" },
-                    { label: "Specialization", value: application?.domain || "General", icon: Cpu, color: "text-purple-600", bg: "bg-purple-50 dark:bg-purple-500/10" },
-                    { label: "Success Rate", value: "94% Tracking", icon: Zap, color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-500/10" },
+                    { label: "Deployment Cycle", value: application?.duration || "N/A", icon: Compass, color: "text-blue-600", bg: "bg-blue-50/50 dark:bg-blue-600/10" },
+                    { label: "Insights Logged", value: `${logs.length} Entries`, icon: Notebook, color: "text-indigo-600", bg: "bg-indigo-50/50 dark:bg-indigo-600/10" },
+                    { label: "Specialization", value: application?.domain || "Core", icon: Cpu, color: "text-violet-600", bg: "bg-violet-50/50 dark:bg-violet-600/10" },
+                    { label: "Operational Grade", value: "94% Tracking", icon: Zap, color: "text-blue-500", bg: "bg-blue-50/50 dark:bg-blue-500/10" },
                   ].map((stat, i) => (
-                    <motion.div 
+                    <div 
                       key={i}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.1 }}
-                      whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                      className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[1.5rem] p-5 shadow-sm hover:shadow-xl hover:shadow-blue-500/5 transition-all"
+                      className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all group"
                     >
-                      <div className={cn("inline-flex items-center justify-center p-2.5 rounded-xl mb-4", stat.bg)}>
+                      <div className={cn("inline-flex items-center justify-center w-10 h-10 rounded-xl mb-4 transition-transform group-hover:scale-105", stat.bg)}>
                         <stat.icon size={18} className={stat.color} />
                       </div>
-                      <p className="text-[9px] text-slate-400 font-black uppercase tracking-[0.1em] mb-1">{stat.label}</p>
-                      <p className="text-sm font-black text-slate-900 dark:text-white tracking-tight">{stat.value}</p>
-                    </motion.div>
+                      <p className="text-[9px] text-slate-400 font-bold tracking-wider mb-1.5">{stat.label}</p>
+                      <p className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">{stat.value}</p>
+                    </div>
                   ))}
                 </div>
 
@@ -678,145 +664,145 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                   
                   {/* Detailed Description */}
-                  <div className="lg:col-span-8 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2rem] p-7 sm:p-9 shadow-sm">
-                    <div className="flex items-center gap-3 mb-5">
-                      <div className="w-1 h-5 bg-blue-600 rounded-full" />
-                      <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">Mission Briefing</h3>
+                  <div className="lg:col-span-8 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-10 lg:p-12 shadow-sm">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-1 h-5 bg-[#155DFC] rounded-full" />
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">Mission Briefing</h3>
                     </div>
-                    <p className="text-[13px] text-slate-500 dark:text-slate-400 leading-relaxed font-medium mb-8">
+                    <p className="text-base text-slate-500 dark:text-slate-400 leading-relaxed font-semibold mb-10">
                       {internship?.description || "This internship provides hands-on experience in your chosen field, allowing you to develop practical skills while working alongside industry professionals."}
                     </p>
                     
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Technical Environment</p>
-                        <div className="flex flex-wrap gap-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <div className="p-5 rounded-3xl bg-[#FDFDFF] dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                        <p className="text-[9px] font-bold text-slate-400 tracking-wider mb-3">Technical Stack</p>
+                        <div className="flex flex-wrap gap-1.5">
                           {(application?.skills || ["Professionalism", "Execution", "Strategy"]).map((skill: string, i: number) => (
-                            <span key={i} className="px-2 py-0.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[9px] font-bold text-slate-500 dark:text-slate-400 capitalize">
+                            <span key={i} className="px-2.5 py-0.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[9px] font-bold text-slate-600 dark:text-slate-300 tracking-tight">
                               {skill}
                             </span>
                           ))}
                         </div>
                       </div>
-                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Experience Focus</p>
-                        <p className="text-xs font-bold text-slate-600 dark:text-slate-300">
-                          {application?.experience_level || "Industry Standards"}
+                      <div className="p-6 rounded-3xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] mb-4">Deployment Phase</p>
+                        <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                          {application?.experience_level || "Standard Protocol"}
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  {/* High Tech Supervisor Card */}
-                  <div className="lg:col-span-4 flex flex-col gap-6">
-                    <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-[2rem] p-7 text-white shadow-2xl overflow-hidden relative group">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:scale-150 transition-transform duration-700" />
-                      <p className="text-[9px] font-black text-blue-100 uppercase tracking-[0.2em] mb-5 relative opacity-80">Assigned Supervisor</p>
+                  {/* High-Performance Supervisor Card */}
+                  <div className="lg:col-span-4 flex flex-col gap-5">
+                    <div className="bg-gradient-to-br from-[#155DFC] to-[#1A3CB9] rounded-2xl p-6 text-white shadow-xl overflow-hidden relative group">
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -mr-12 -mt-12 blur-xl group-hover:scale-125 transition-transform duration-700" />
+                      <p className="text-[9px] font-bold text-blue-100/70 tracking-wider mb-4 relative">Assigned Supervisor</p>
                       
                       {supervisor ? (
-                        <div className="space-y-5 relative">
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-xl overflow-hidden ring-4 ring-white/10 dark:ring-slate-100 shadow-xl bg-slate-800">
+                        <div className="space-y-4 relative">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl overflow-hidden ring-2 ring-white/20 shadow-lg bg-slate-800">
                               <Image 
                                 src={normalizeImageSrc(supervisor.avatar_url, "/logo.png")} 
                                 alt={supervisor.full_name} 
-                                width={48} 
-                                height={48} 
+                                width={40} 
+                                height={40} 
                                 className="w-full h-full object-cover"
                               />
                             </div>
                             <div>
-                              <h4 className="font-black text-base tracking-tight leading-none mb-1 text-white">{supervisor.full_name}</h4>
-                              <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Lead Strategist</p>
+                              <h4 className="font-bold text-sm tracking-tight leading-tight text-white">{supervisor.full_name}</h4>
+                              <p className="text-[9px] font-bold text-blue-300 tracking-wider">Lead Strategist</p>
                             </div>
                           </div>
                           
-                          <p className="text-[13px] font-medium text-white/70 leading-relaxed italic line-clamp-3">
+                          <p className="text-xs font-medium text-white/80 leading-relaxed italic line-clamp-3">
                             "{supervisor.bio || "Available for guidance throughout your professional journey."}"
                           </p>
                           
-                          <div className="pt-2 flex gap-2">
+                          <div className="pt-1 flex gap-2">
                              <Button 
                               asChild
-                              className="flex-1 rounded-xl h-10 bg-white dark:bg-slate-900 text-slate-950 dark:text-white font-black text-[9px] uppercase tracking-widest hover:bg-slate-100 dark:hover:bg-slate-800 whitespace-nowrap px-4"
+                              className="flex-1 rounded-lg h-9 bg-white dark:bg-slate-900 text-slate-950 dark:text-white font-bold text-[9px] tracking-wider hover:bg-slate-100 whitespace-nowrap px-4"
                             >
                               <a href={`mailto:${supervisor.email}`}><Mail size={12} className="mr-2" /> Connect</a>
                             </Button>
                             {supervisor.whatsapp && (
                               <Button 
                                 asChild
-                                className="w-10 h-10 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-all p-0 flex items-center justify-center shrink-0 border-0 shadow-lg shadow-blue-500/20"
+                                className="w-9 h-9 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all p-0 flex items-center justify-center shrink-0 border-0 shadow-md shadow-blue-500/10"
                               >
                                 <a href={`https://wa.me/${supervisor.whatsapp.replace(/\+/g, '')}`} target="_blank" rel="noopener noreferrer">
-                                  <MessageSquare size={16} />
+                                  <MessageSquare size={14} />
                                 </a>
                               </Button>
                             )}
                           </div>
                         </div>
                       ) : (
-                        <div className="text-center py-10">
-                          <div className="w-14 h-14 bg-white/5 dark:bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/10">
-                            <User size={24} className="text-slate-500" />
+                        <div className="text-center py-6">
+                          <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center mx-auto mb-3 border border-white/5">
+                            <User size={18} className="text-blue-200/50" />
                           </div>
-                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Awaiting Command</p>
+                          <p className="text-[9px] font-bold text-blue-100/50 tracking-wider">Awaiting Command</p>
                         </div>
                       )}
                     </div>
                   </div>
                 </div>
 
-                {/* Milestone Progress Tracker */}
-                <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2rem] p-7 shadow-sm">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-7">
+                {/* Deployment Roadmap */}
+                <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-8 lg:p-10 shadow-sm">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
                     <div>
-                      <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">Milestone Roadmap</h3>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Onboarding & Activation Coverage</p>
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">Deployment Roadmap</h3>
+                      <p className="text-[9px] font-bold text-slate-400 tracking-wider mt-1">Onboarding & Operational Sequence</p>
                     </div>
-                    <div className="flex items-center gap-2 px-4 py-1.5 bg-blue-50 dark:bg-blue-900/10 rounded-xl">
-                      <div className="w-16 h-1.5 bg-blue-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div className="flex items-center gap-3 px-4 py-2 bg-blue-50/50 dark:bg-blue-600/5 rounded-xl border border-blue-50 dark:border-blue-900/20">
+                      <div className="w-20 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
                         <div 
-                          className="h-full bg-blue-600 transition-all duration-1000" 
-                          style={{ width: `${([isPaid, !!supervisor, logs.length > 0].filter(Boolean).length / 3) * 100}%` }} 
+                          style={{ width: `${([isPaid, !!supervisor, logs.length > 0].filter(Boolean).length / 3) * 100}%` }}
+                          className="h-full bg-[#155DFC] transition-all duration-1000" 
                         />
                       </div>
-                      <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">
-                        {Math.round(([isPaid, !!supervisor, logs.length > 0].filter(Boolean).length / 3) * 100)}% Complete
+                      <span className="text-[9px] font-bold text-[#155DFC] tracking-wider">
+                        {Math.round(([isPaid, !!supervisor, logs.length > 0].filter(Boolean).length / 3) * 100)}% Active
                       </span>
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                     {[
-                      { label: "Financial Verification", desc: "Payment sequence completed", done: isPaid, icon: CreditCard },
-                      { label: "Strategic Alignment", desc: "Supervisor contact established", done: !!supervisor, icon: Target },
-                      { label: "Execution Start", desc: "Initial engagement log recorded", done: logs.length > 0, icon: Rocket },
+                      { label: "Financial Activation", desc: "Currency ledger validated", done: isPaid, icon: ShieldCheck },
+                      { label: "Strategic Link", desc: "Supervisor uplink active", done: !!supervisor, icon: Radio },
+                      { label: "Insight Stream", desc: "First intelligence log recorded", done: logs.length > 0, icon: Activity },
                     ].map((item, i) => (
                       <div key={i} className={cn(
-                        "relative overflow-hidden p-6 rounded-[1.5rem] border-2 transition-all group",
+                        "relative overflow-hidden p-6 rounded-2xl border-2 transition-all group",
                         item.done 
-                          ? "bg-emerald-50/30 border-emerald-100 dark:bg-emerald-500/5 dark:border-emerald-500/20" 
-                          : "bg-slate-50/50 border-slate-100 dark:bg-slate-900/50 dark:border-slate-800"
+                          ? "bg-blue-50/20 border-blue-100 dark:bg-blue-600/5 dark:border-blue-900/30" 
+                          : "bg-slate-50/50 border-slate-100 dark:bg-slate-900/30 dark:border-slate-800"
                       )}>
                         <div className="flex items-start gap-4">
                           <div className={cn(
-                            "w-10 h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110",
-                            item.done ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "bg-slate-200 dark:bg-slate-700 text-slate-400"
+                            "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 group-hover:scale-105 shadow-sm",
+                            item.done ? "bg-[#155DFC] text-white" : "bg-slate-200 dark:bg-slate-800 text-slate-400"
                           )}>
-                            <item.icon size={18} />
+                            <item.icon size={18} strokeWidth={2.5} />
                           </div>
-                          <div>
+                          <div className="pt-0.5">
                             <p className={cn(
-                              "text-sm font-black tracking-tight mb-0.5",
-                              item.done ? "text-emerald-900 dark:text-emerald-400" : "text-slate-600 dark:text-slate-400"
+                              "text-[10px] font-bold tracking-tight mb-0.5",
+                              item.done ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-500"
                             )}>{item.label}</p>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-tight">{item.desc}</p>
+                            <p className="text-[8px] font-medium text-slate-400 tracking-wide leading-tight">{item.desc}</p>
                           </div>
                         </div>
                         {item.done && (
-                          <div className="absolute top-2 right-2">
-                            <div className="w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
-                              <Check size={12} className="text-white" />
+                          <div className="absolute top-3 right-3">
+                            <div className="w-5 h-5 bg-[#155DFC] rounded-full flex items-center justify-center shadow-md">
+                              <Check size={10} strokeWidth={4} className="text-white" />
                             </div>
                           </div>
                         )}
@@ -837,83 +823,77 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
 
             {/* ===== TASKS TAB ===== */}
             {activeTab === "tasks" && (
-              <div className="space-y-8">
+              <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
-                    <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Milestone Track</h2>
-                    <p className="text-sm font-medium text-slate-500">Execution roadmap and assigned objectives</p>
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Milestone Track</h2>
+                    <p className="text-[10px] font-medium text-slate-500">Execution roadmap and assigned objectives</p>
                   </div>
-                  <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-500/10 rounded-2xl border border-blue-100 dark:border-blue-500/20">
-                    <Target size={14} className="text-blue-600" />
-                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{tasks.length} Active Objectives</span>
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-500/10 rounded-xl border border-blue-50 dark:border-blue-500/20">
+                    <Target size={12} className="text-[#155DFC]" />
+                    <span className="text-[9px] font-bold text-[#155DFC] tracking-wider">{tasks.length} Active Objectives</span>
                   </div>
                 </div>
 
                 {tasks.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                     {tasks.map((task, i) => (
-                      <motion.div
+                      <div
                         key={task.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.1 }}
-                        whileHover={{ y: -6, transition: { duration: 0.2 } }}
                         onClick={() => handleOpenTask(task)}
                         className="group relative"
                       >
                         <div className={cn(
-                          "h-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-7 transition-all duration-300 shadow-sm overflow-hidden flex flex-col cursor-pointer",
-                          !task.is_read ? "ring-2 ring-blue-500 shadow-xl shadow-blue-500/10" : "hover:shadow-2xl hover:shadow-blue-500/5 hover:border-blue-200"
+                          "h-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-6 transition-all duration-300 shadow-sm overflow-hidden flex flex-col cursor-pointer",
+                          !task.is_read ? "ring-1 ring-[#155DFC] shadow-lg shadow-blue-500/5" : "hover:border-blue-200"
                         )}>
-                          <div className="flex items-start justify-between mb-6">
+                          <div className="flex items-start justify-between mb-5">
                             <div className={cn(
-                              "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border",
+                              "px-2.5 py-0.5 rounded-lg text-[8px] font-bold tracking-wider border",
                               task.priority === "high" ? "bg-rose-50 text-rose-600 border-rose-100" :
                               task.priority === "medium" ? "bg-amber-50 text-amber-600 border-amber-100" :
                               "bg-sky-50 text-sky-600 border-sky-100"
                             )}>
-                              {task.priority || "Standard"} Priority
+                              {task.priority?.charAt(0).toUpperCase() + task.priority?.slice(1)} Priority
                             </div>
-                            <div className="flex items-center gap-1.5">
-                               <CheckCheck 
-                                size={18} 
-                                className={cn("transition-colors duration-500", task.is_read ? "text-blue-500" : "text-slate-200")} 
-                              />
-                            </div>
+                            <CheckCheck 
+                              size={16} 
+                              className={cn("transition-colors duration-500", task.is_read ? "text-[#155DFC]" : "text-slate-200")} 
+                            />
                           </div>
 
-                          <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2 leading-tight group-hover:text-blue-600 transition-colors">
+                          <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1.5 leading-tight group-hover:text-[#155DFC] transition-colors">
                             {task.title}
                           </h3>
-                          <p className="text-sm text-slate-500 dark:text-slate-400 font-medium line-clamp-3 mb-8 flex-1">
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium line-clamp-2 mb-6 flex-1 leading-snug">
                             {task.description}
                           </p>
 
-                          <div className="pt-6 border-t border-slate-50 dark:border-slate-800/50 flex items-center justify-between mt-auto">
+                          <div className="pt-4 border-t border-slate-50 dark:border-slate-800/50 flex items-center justify-between mt-auto">
                             <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
-                                <Calendar size={12} className="text-slate-400" />
+                              <div className="w-7 h-7 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
+                                <Calendar size={10} className="text-slate-400" />
                               </div>
                               <div>
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">Deadline</p>
-                                <p className="text-[11px] font-black text-slate-900 dark:text-white uppercase">
+                                <p className="text-[8px] font-bold text-slate-400 tracking-wider leading-none mb-0.5">Deadline</p>
+                                <p className="text-[10px] font-bold text-slate-900 dark:text-white">
                                   {format(new Date(task.due_date), "MMM dd")}
                                 </p>
                               </div>
                             </div>
-                            <div className="w-10 h-10 rounded-2xl bg-blue-50 group-hover:bg-blue-600 group-hover:text-white text-blue-600 flex items-center justify-center transition-all">
-                              <ArrowUpRight size={18} />
+                            <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-900/10 group-hover:bg-[#155DFC] group-hover:text-white text-[#155DFC] flex items-center justify-center transition-all">
+                              <ArrowUpRight size={14} />
                             </div>
                           </div>
 
                           {!task.is_read && (
-                            <div className="absolute top-4 right-4 flex items-center gap-2">
-                               <div className="h-2 w-2 bg-blue-600 rounded-full animate-ping" />
-                               <span className="text-[8px] font-black text-blue-600 uppercase tracking-widest">New</span>
+                            <div className="absolute top-3 right-3 flex items-center gap-1.5">
+                               <div className="h-1.5 w-1.5 bg-[#155DFC] rounded-full animate-pulse" />
+                               <span className="text-[8px] font-bold text-[#155DFC] tracking-wider">New</span>
                             </div>
                           )}
                         </div>
-                      </motion.div>
+                      </div>
                     ))}
                   </div>
                 ) : (
@@ -932,87 +912,108 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
 
             {/* ===== CURRICULUM TAB ===== */}
             {activeTab === "curriculum" && (
-              <div className="space-y-8">
+              <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
-                    <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Curriculum Roadmap</h2>
-                    <p className="text-sm font-medium text-slate-500">Structured learning path for technical mastery</p>
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Curriculum Roadmap</h2>
+                    <p className="text-[10px] font-medium text-slate-500">Structured learning path for technical mastery</p>
                   </div>
-                  <div className="flex items-center gap-2 px-3 py-1 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-500/20">
+                  <div className="flex items-center gap-2 px-3 py-1 bg-[#155DFC] text-white rounded-lg shadow-md shadow-blue-500/10">
                     <BookOpen size={12} />
-                    <span className="text-[9px] font-black uppercase tracking-widest">{curriculum.length} Learning Modules</span>
+                    <span className="text-[9px] font-bold tracking-wider">{displayCurriculum.length} Learning Modules</span>
                   </div>
                 </div>
 
-                {curriculum.length > 0 ? (
-                  <div className="space-y-6">
-                    {curriculum.map((item, idx) => (
-                      <motion.div 
-                        key={item.id} 
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: idx * 0.05 }}
-                        className="group"
-                      >
-                        <div className={cn(
-                          "relative flex flex-col sm:flex-row gap-6 p-6 sm:p-8 rounded-[2.5rem] border-2 transition-all duration-300",
-                          idx === 0 
-                            ? "bg-blue-50/30 border-blue-200 dark:bg-blue-600/5 dark:border-blue-500/30 shadow-xl shadow-blue-500/5" 
-                            : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-500/5"
-                        )}>
-                          <div className={cn(
-                            "w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg shrink-0 transition-transform group-hover:scale-110 shadow-sm",
-                            idx === 0 
-                              ? "bg-blue-600 text-white" 
-                              : "bg-slate-100 dark:bg-slate-800 text-slate-500"
-                          )}>
-                            {idx + 1}
-                          </div>
-                          
-                          <div className="flex-1 min-w-0">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                              <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight group-hover:text-blue-600 transition-colors">
-                                {item.title}
-                              </h3>
-                              <div className="flex items-center gap-2">
+                {displayCurriculum.length > 0 ? (
+                  <div className="space-y-4">
+                    <Accordion type="single" collapsible className="w-full space-y-3">
+                      {displayCurriculum.map((item: any, idx) => (
+                        <AccordionItem 
+                          key={item.id || idx} 
+                          value={`module-${idx}`}
+                          className="border rounded-2xl overflow-hidden transition-all bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-blue-200"
+                        >
+                          <AccordionTrigger className="px-5 py-4 sm:px-6 hover:no-underline group">
+                            <div className="flex items-center gap-4 text-left">
+                              <div className={cn(
+                                "w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 transition-transform group-hover:scale-105 shadow-sm",
+                                idx === 0 ? "bg-[#155DFC] text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500"
+                              )}>
+                                {idx + 1}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight group-hover:text-[#155DFC] transition-colors">
+                                  {item.title}
+                                </h3>
+                                <p className="text-[9px] font-bold text-slate-400 tracking-wider mt-0.5">
+                                  Duration: <span className="text-[#155DFC]">{item.duration || "Self-paced"}</span>
+                                </p>
+                              </div>
+                            </div>
+                          </AccordionTrigger>
+                          <AccordionContent className="px-5 pb-6 sm:px-6 pt-1">
+                            <div className="pl-[52px] space-y-4">
+                              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-2xl">
+                                {item.description}
+                              </p>
+
+                              {item.topics && item.topics.length > 0 && (
+                                <div className="space-y-2">
+                                  <h4 className="text-[9px] font-bold text-slate-400 tracking-wider">What You'll Learn</h4>
+                                  <div className="flex flex-wrap gap-2">
+                                    {item.topics.map((topic: string, tidx: number) => (
+                                      <span key={tidx} className="px-2 py-0.5 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded text-[10px] font-medium border border-slate-100 dark:border-slate-700">
+                                        {topic}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {item.project && (
+                                <div className="p-5 rounded-2xl bg-blue-50/30 dark:bg-blue-600/5 border border-blue-50 dark:border-blue-900/20">
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <div className="w-7 h-7 rounded-lg bg-[#155DFC] flex items-center justify-center text-white">
+                                      <Rocket size={12} />
+                                    </div>
+                                    <h4 className="font-bold text-[#155DFC] tracking-wider text-[10px]">Module Project</h4>
+                                  </div>
+                                  <h5 className="text-sm font-bold text-slate-900 dark:text-white mb-1">{item.project.title}</h5>
+                                  <p className="text-[11px] text-slate-600 dark:text-slate-400 mb-3 leading-relaxed">{item.project.description}</p>
+                                  
+                                  {item.project.deliverables && (
+                                    <div className="space-y-2">
+                                      <p className="text-[9px] font-bold text-slate-400 tracking-wider">Deliverables</p>
+                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        {item.project.deliverables.map((del: string, didx: number) => (
+                                          <div key={didx} className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+                                            <div className="w-3.5 h-3.5 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
+                                              <Check size={8} strokeWidth={4} />
+                                            </div>
+                                            {del}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              <div className="flex items-center gap-4 pt-4">
+                                <Button className="rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black text-[9px] h-10 px-6 uppercase tracking-widest shadow-xl transition-all active:scale-95">
+                                  Launch Module
+                                </Button>
                                 {item.video_url && (
-                                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 text-[10px] font-black uppercase">
-                                    <Video size={12} /> Video
-                                  </div>
-                                )}
-                                {item.resources && (
-                                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase">
-                                    <FileText size={12} /> Resources
-                                  </div>
+                                  <Button variant="outline" className="rounded-xl border-slate-200 dark:border-slate-700 font-black text-[9px] h-10 px-6 uppercase tracking-widest">
+                                    <Video size={12} className="mr-2" /> Watch Video
+                                  </Button>
                                 )}
                               </div>
                             </div>
-                            
-                            <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 font-medium leading-relaxed mb-6 max-w-3xl">
-                              {item.description}
-                            </p>
-                            
-                            <div className="flex items-center gap-4">
-                              <Button className="rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black text-[9px] h-10 px-5 uppercase tracking-widest shadow-xl transition-all active:scale-95 whitespace-nowrap">
-                                Launch Module
-                              </Button>
-                              <div className="h-8 w-px bg-slate-100 dark:bg-slate-800 mx-2" />
-                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                                Status: <span className="text-blue-600 dark:text-blue-400">{idx === 0 ? "In Progress" : "Upcoming"}</span>
-                              </p>
-                            </div>
-                          </div>
-
-                          {idx === 0 && (
-                            <div className="absolute top-6 right-6">
-                               <div className="px-3 py-1 bg-blue-600 text-white rounded-lg text-[9px] font-black uppercase tracking-wider animate-pulse">
-                                 Active Module
-                               </div>
-                            </div>
-                          )}
-                        </div>
-                      </motion.div>
-                    ))}
+                          </AccordionContent>
+                        </AccordionItem>
+                      ))}
+                    </Accordion>
                   </div>
                 ) : (
                   <div className="text-center py-24 bg-white dark:bg-slate-900 rounded-[3rem] border-2 border-dashed border-slate-100">
@@ -1031,36 +1032,36 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
               <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
-                    <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">Daily Reports</h2>
-                    <p className="text-sm text-slate-500">Document your daily activities</p>
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Daily Reports</h2>
+                    <p className="text-[10px] font-medium text-slate-500">Document your daily activities and operational progress</p>
                   </div>
                   <Button 
                     onClick={() => setIsLogModalOpen(true)}
-                    className="rounded-xl bg-blue-600 hover:bg-blue-700 h-10 px-5 font-black text-[10px] uppercase tracking-widest shadow-md shadow-blue-500/20 transition-all active:scale-[0.98] whitespace-nowrap"
+                    className="rounded-xl bg-[#155DFC] hover:bg-[#1A3CB9] h-10 px-5 font-bold text-[10px] tracking-wider shadow-lg shadow-blue-500/10 transition-all active:scale-[0.98] whitespace-nowrap"
                   >
                     <Plus size={14} className="mr-1.5" />
-                    NEW REPORT
+                    New Report
                   </Button>
                 </div>
 
                 {logs.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {logs.map((log) => (
-                      <div key={log.id} className="group bg-white dark:bg-slate-900 border border-blue-50 dark:border-slate-800 rounded-2xl p-5 hover:shadow-md hover:border-blue-100 dark:hover:border-slate-700 transition-all">
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
+                      <div key={log.id} className="group bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-5 hover:shadow-lg hover:border-blue-100 transition-all">
+                        <div className="flex items-center justify-between mb-4">
+                          <span className="text-[9px] text-slate-400 font-bold tracking-wider">
                             {format(new Date(log.log_date), "MMM dd, yyyy")}
                           </span>
                           <div className="flex items-center gap-2">
                             <CheckCheck 
-                              size={16} 
+                              size={14} 
                               className={cn(
-                                (log.read_at && log.status === "approved") ? "text-blue-500" : "text-slate-300"
+                                (log.read_at && log.status === "approved") ? "text-[#155DFC]" : "text-slate-200"
                               )} 
                               strokeWidth={3}
                             />
                             <Badge className={cn(
-                               "rounded-lg px-2 py-0.5 text-[9px] font-black uppercase tracking-widest border-0",
+                               "rounded-lg px-2 py-0.5 text-[8px] font-bold tracking-wider border-0",
                                log.status === "approved" ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10" : 
                                log.status === "rejected" ? "bg-rose-50 text-rose-600 dark:bg-rose-500/10" :
                                "bg-amber-50 text-amber-600 dark:bg-amber-500/10"
@@ -1069,25 +1070,25 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                              </Badge>
                           </div>
                         </div>
-                        <p className="text-sm font-medium text-slate-700 dark:text-slate-300 line-clamp-2 mb-4">
-                          {log.learning_log?.substring(0, 80)}...
+                        <p className="text-[11px] font-medium text-slate-600 dark:text-slate-400 line-clamp-2 mb-4 leading-relaxed">
+                          {log.learning_log}
                         </p>
-                        <div className="flex items-center gap-3 text-xs text-slate-400">
-                          <span className="flex items-center gap-1">
-                            <Clock size={12} className="text-blue-500" />
+                        <div className="flex items-center gap-4 text-[10px] text-slate-400 font-bold">
+                          <span className="flex items-center gap-1.5">
+                            <Clock size={12} className="text-[#155DFC]" />
                             {log.check_in ? format(new Date(log.check_in), "HH:mm") : "--:--"}
                           </span>
-                          <span className="flex items-center gap-1">
+                          <span className="flex items-center gap-1.5">
                             <Star size={12} className="text-amber-500" />
                             {log.experience_rating}/5
                           </span>
                         </div>
                         {log.supervisor_feedback && (
-                          <div className="mt-4 p-3 rounded-xl bg-blue-50/50 dark:bg-blue-500/5 border border-blue-100 dark:border-blue-500/20">
-                            <p className="text-[10px] text-blue-600 font-semibold uppercase tracking-wider mb-1 flex items-center gap-1">
+                          <div className="mt-4 p-3 rounded-xl bg-blue-50/30 dark:bg-blue-600/5 border border-blue-50 dark:border-blue-900/20">
+                            <p className="text-[9px] text-[#155DFC] font-bold tracking-wider mb-1 flex items-center gap-1.5">
                               <MessageSquare size={10} /> Feedback
                             </p>
-                            <p className="text-xs text-blue-700 dark:text-blue-300 italic line-clamp-2">
+                            <p className="text-[10px] text-blue-700 dark:text-blue-300 italic line-clamp-2 leading-relaxed">
                               "{log.supervisor_feedback}"
                             </p>
                           </div>
@@ -1115,72 +1116,72 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
             {activeTab === "payments" && (
               <div className="space-y-6">
                 {/* Payment Header Card */}
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 p-5 sm:p-8 text-white">
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#155DFC] to-[#1A3CB9] p-6 sm:p-8 text-white shadow-xl">
                   <div className="relative z-10">
-                    <p className="text-blue-100 text-xs font-semibold uppercase tracking-wider mb-2">Payment Overview</p>
-                    <h2 className="text-2xl sm:text-3xl font-bold mb-6">Financial Ledger</h2>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
+                    <p className="text-blue-100/70 text-[9px] font-bold tracking-widest mb-2">Financial Status</p>
+                    <h2 className="text-2xl sm:text-3xl font-bold mb-8">Financial Ledger</h2>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 sm:gap-10">
                       <div>
-                        <p className="text-xs text-blue-200 font-semibold mb-1">Monthly Rate</p>
-                        <p className="text-xl sm:text-2xl font-bold">{internship?.monthly_rate?.toLocaleString() || "0"} <span className="text-sm font-normal opacity-70">FCFA</span></p>
+                        <p className="text-[9px] font-bold text-blue-200/50 mb-1.5 tracking-wider">Monthly Rate</p>
+                        <p className="text-xl sm:text-2xl font-bold text-white tracking-tight">{internship?.monthly_rate?.toLocaleString() || "0"} <span className="text-[10px] opacity-70">FCFA</span></p>
                       </div>
                       <div>
-                        <p className="text-xs text-blue-200 font-semibold mb-1">Total Paid</p>
-                        <p className="text-xl sm:text-2xl font-bold">{totalPaid.toLocaleString()} <span className="text-sm font-normal opacity-70">FCFA</span></p>
+                        <p className="text-[9px] font-bold text-blue-200/50 mb-1.5 tracking-wider">Total Ledger</p>
+                        <p className="text-xl sm:text-2xl font-bold text-white tracking-tight">{totalPaid.toLocaleString()} <span className="text-[10px] opacity-70">FCFA</span></p>
                       </div>
                       <div className="col-span-2 sm:col-span-1">
-                        <p className="text-xs text-blue-200 font-semibold mb-1">Status</p>
-                        <Badge className="bg-white/20 text-white border-0 font-semibold px-3 py-1 rounded-lg">
-                          {totalPaid >= (internship?.monthly_rate * (application.duration_months || 1)) ? "Completed" : isPaid ? "Active" : "Awaiting"}
+                        <p className="text-[9px] font-bold text-blue-200/50 mb-1.5 tracking-wider">Operational Status</p>
+                        <Badge className="bg-white/10 text-white border border-white/10 font-bold px-3 py-1 rounded-lg text-[9px] tracking-wider">
+                          {totalPaid >= (internship?.monthly_rate * (application.duration_months || 1)) ? "Completed" : isPaid ? "Active" : "Awaiting Activation"}
                         </Badge>
                       </div>
                     </div>
                   </div>
-                  <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-white/5 rounded-full" />
-                  <Trophy size={60} className="absolute right-4 top-4 text-white/10" />
+                  <div className="absolute -right-6 -bottom-6 w-40 h-40 bg-white/5 rounded-full blur-2xl" />
+                  <Trophy size={80} className="absolute right-6 top-6 text-white/5" />
                 </div>
 
-                {/* Payment History Table */}
-                <div className="bg-white dark:bg-slate-900 border border-blue-50 dark:border-slate-800 rounded-2xl overflow-hidden">
-                  <div className="p-5 border-b border-blue-50 dark:border-slate-800">
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Transaction History</h3>
+                {/* Payment History Ledger */}
+                <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+                  <div className="p-6 border-b border-slate-50 dark:border-slate-800">
+                    <h3 className="text-xs font-bold text-slate-900 dark:text-white tracking-tight">Transaction History</h3>
                   </div>
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
+                    <table className="w-full text-left">
                       <thead>
                         <tr className="bg-slate-50 dark:bg-slate-800/50">
-                          <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Month</th>
-                          <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Date</th>
-                          <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Amount</th>
-                          <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
-                          <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-right">Action</th>
+                          <th className="px-6 py-3 text-[9px] font-bold text-slate-400 tracking-wider">Operational Month</th>
+                          <th className="px-6 py-3 text-[9px] font-bold text-slate-400 tracking-wider">Date Recorded</th>
+                          <th className="px-6 py-3 text-[9px] font-bold text-slate-400 tracking-wider">Amount</th>
+                          <th className="px-6 py-3 text-[9px] font-bold text-slate-400 tracking-wider">Protocol Status</th>
+                          <th className="px-6 py-3 text-[9px] font-bold text-slate-400 tracking-wider text-right">Verification</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                         {paymentLedger.length > 0 ? (
                           paymentLedger.map((record: any, idx: number) => (
-                            <tr key={idx} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                            <tr key={idx} className="group hover:bg-slate-50/50 transition-colors">
                               <td className="px-6 py-4">
-                                <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                                <span className="text-[10px] font-bold text-slate-900 dark:text-white">
                                   {new Date(0, record.month - 1).toLocaleString('en-US', { month: 'long' })}
                                 </span>
                               </td>
                               <td className="px-6 py-4">
-                                <span className="text-xs text-slate-500">
+                                <span className="text-[10px] font-medium text-slate-500">
                                   {record.date ? format(new Date(record.date), "MMM dd, yyyy") : "---"}
                                 </span>
                               </td>
                               <td className="px-6 py-4">
-                                <span className="text-sm font-black text-slate-900 dark:text-white">
+                                <span className="text-[10px] font-bold text-slate-900 dark:text-white">
                                   {record.amount?.toLocaleString()} XAF
                                 </span>
                               </td>
                               <td className="px-6 py-4">
                                 <Badge className={cn(
-                                  "text-[10px] font-bold px-2 py-0.5 rounded-md border-0 capitalize",
-                                  record.status === 'paid' ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500"
+                                  "text-[8px] font-bold px-2 py-0.5 rounded-lg border-0",
+                                  record.status === 'paid' ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10" : "bg-slate-100 text-slate-500 dark:bg-slate-800"
                                 )}>
-                                  {record.status}
+                                  {record.status === 'paid' ? 'Verified' : 'Pending'}
                                 </Badge>
                               </td>
                               <td className="px-6 py-4 text-right">
@@ -1189,14 +1190,14 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                                     variant="ghost" 
                                     size="sm" 
                                     asChild
-                                    className="h-8 rounded-lg text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-[10px] font-black uppercase tracking-wider"
+                                    className="h-8 rounded-lg text-[#155DFC] hover:text-[#1A3CB9] hover:bg-blue-50 dark:hover:bg-blue-900/10 text-[9px] font-bold tracking-wider"
                                   >
                                     <a 
                                       href={`/api/internships/receipt/${application.id}?month=${record.month}`} 
                                       target="_blank" 
                                       rel="noopener noreferrer"
                                     >
-                                      <Download size={14} className="mr-1.5" />
+                                      <Download size={12} className="mr-1.5" />
                                       Receipt
                                     </a>
                                   </Button>
@@ -1207,9 +1208,11 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                         ) : (
                           <tr>
                             <td colSpan={5} className="px-6 py-12 text-center">
-                              <div className="flex flex-col items-center gap-2">
-                                <CreditCard size={32} className="text-slate-200" />
-                                <p className="text-sm text-slate-400 font-medium">No payment history found</p>
+                              <div className="flex flex-col items-center gap-3">
+                                <div className="w-10 h-10 bg-slate-50 dark:bg-slate-800 rounded-xl flex items-center justify-center text-slate-300">
+                                  <CreditCard size={18} />
+                                </div>
+                                <p className="text-[10px] font-bold text-slate-400 tracking-wider">No Transaction History Identified</p>
                               </div>
                             </td>
                           </tr>
@@ -1219,14 +1222,14 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                   </div>
                 </div>
 
-                {/* Payment Instructions */}
-                <div className="bg-white dark:bg-slate-900 border border-blue-50 dark:border-slate-800 rounded-2xl p-5 sm:p-6">
-                  <div className="flex items-start gap-4 p-4 rounded-xl bg-amber-50/50 dark:bg-amber-500/5 border border-amber-100 dark:border-amber-500/20">
-                    <AlertCircle size={20} className="text-amber-600 shrink-0 mt-0.5" />
+                {/* Operational Guidelines */}
+                <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-6">
+                  <div className="flex items-start gap-4 p-5 rounded-xl bg-amber-50/30 dark:bg-amber-500/5 border border-amber-100 dark:border-amber-900/20">
+                    <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-sm font-semibold text-amber-800 dark:text-amber-400 mb-1">Payment Instructions</p>
-                      <p className="text-xs text-amber-700 dark:text-amber-300/80">
-                        To activate your full workspace and unlock all resources, please ensure your monthly allowance is processed by the administration. Download your official receipts above for your records.
+                      <p className="text-[10px] font-bold text-amber-800 dark:text-amber-400 mb-1 tracking-tight">Administrative Protocol</p>
+                      <p className="text-[9px] font-medium text-amber-700/80 dark:text-amber-300/60 leading-relaxed">
+                        To maintain operational access and unlock specialized resource sectors, ensure your financial ledger remains active through administration. Official verification receipts are accessible within the transaction row.
                       </p>
                     </div>
                   </div>
@@ -1255,35 +1258,35 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
               className="relative w-full max-w-xl bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden"
             >
               <div className="p-8 sm:p-10">
-                <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center justify-between mb-6">
                   <Badge className={cn(
-                    "text-[10px] font-black px-4 py-1.5 rounded-full border-0 tracking-widest",
-                    selectedTask.priority === "high" ? "bg-red-500 text-white" :
-                    selectedTask.priority === "medium" ? "bg-amber-500 text-white" :
-                    "bg-blue-600 text-white"
+                    "text-[9px] font-bold px-3 py-1 rounded-lg border-0 tracking-tight",
+                    selectedTask.priority === "high" ? "bg-rose-50 text-rose-600 dark:bg-rose-500/10" :
+                    selectedTask.priority === "medium" ? "bg-amber-50 text-amber-600 dark:bg-amber-500/10" :
+                    "bg-[#155DFC]/10 text-[#155DFC]"
                   )}>
-                    {selectedTask.priority?.toUpperCase()} PRIORITY
+                    {selectedTask.priority ? selectedTask.priority.charAt(0).toUpperCase() + selectedTask.priority.slice(1) : "Normal"} Priority
                   </Badge>
                   <div className="flex items-center gap-2 text-slate-400">
-                    <Clock size={16} />
-                    <span className="text-xs font-bold uppercase tracking-wider">
+                    <Clock size={14} className="text-slate-400" />
+                    <span className="text-[10px] font-bold tracking-tight">
                       {format(new Date(selectedTask.due_date), "MMM dd, yyyy")}
                     </span>
                   </div>
                 </div>
 
-                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mb-4 leading-tight">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-3 tracking-tight">
                   {selectedTask.title}
                 </h2>
                 
-                <div className="space-y-4 mb-10 overflow-y-auto max-h-[300px] custom-scrollbar pr-4">
-                  <p className="text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
+                <div className="space-y-4 mb-8 overflow-y-auto max-h-[250px] custom-scrollbar pr-2">
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
                     {selectedTask.description}
                   </p>
                   {selectedTask.department && (
-                    <div className="flex items-center gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800 w-fit">
-                      <Layers size={14} className="text-blue-600" />
-                      <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{selectedTask.department}</span>
+                    <div className="flex items-center gap-2 p-2 px-3 rounded-lg bg-slate-50 dark:bg-slate-800 w-fit">
+                      <Layers size={12} className="text-[#155DFC]" />
+                      <span className="text-[9px] font-bold text-slate-700 dark:text-slate-300">{selectedTask.department}</span>
                     </div>
                   )}
                 </div>
@@ -1291,16 +1294,16 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                 <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-slate-100 dark:border-slate-800">
                   <Button 
                     onClick={() => setIsTaskDetailsOpen(false)}
-                    className="flex-1 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black h-14 shadow-xl shadow-blue-500/20"
+                    className="flex-1 rounded-xl bg-[#155DFC] hover:bg-[#1A3CB9] text-white font-bold h-11 shadow-lg shadow-blue-500/10 text-[10px] tracking-wider"
                   >
-                    GOT IT
+                    Confirm Observation
                   </Button>
                   <Button 
                     variant="outline"
                     onClick={() => setIsTaskDetailsOpen(false)}
-                    className="flex-1 rounded-2xl border-slate-100 dark:border-slate-800 font-bold h-14"
+                    className="flex-1 rounded-xl border-slate-100 dark:border-slate-800 font-bold h-11 text-[10px] tracking-wider text-slate-500"
                   >
-                    CLOSE
+                    Close Briefing
                   </Button>
                 </div>
               </div>
@@ -1318,7 +1321,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsColleaguesModalOpen(false)}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-slate-900/80 backdrop-blur-md"
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -1327,23 +1330,24 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
               className="relative w-full max-w-2xl bg-[#F6F8FF] dark:bg-slate-950 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
             >
               {/* Header */}
-              <div className="bg-[#155DFC] p-8 text-white relative shrink-0">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl" />
+              <div className="bg-gradient-to-br from-[#155DFC] to-[#0A3D91] p-8 text-white relative shrink-0 overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl animate-pulse" />
+                <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-400/20 rounded-full -ml-24 -mb-24 blur-3xl" />
                 <div className="relative z-10 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center">
+                  <div className="flex items-center gap-5">
+                    <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-xl flex items-center justify-center border border-white/30 shadow-2xl">
                       <Users className="text-white" size={24} />
                     </div>
                     <div>
-                      <h3 className="text-xl font-black tracking-tight">{internship?.title}</h3>
-                      <p className="text-xs text-blue-100 font-bold uppercase tracking-widest opacity-80">Fellow Colleagues</p>
+                      <h3 className="text-xl font-bold tracking-tight text-white/95">{internship?.title}</h3>
+                      <p className="text-[10px] text-blue-100 font-black tracking-[0.2em] uppercase opacity-90">Operational Network Hub</p>
                     </div>
                   </div>
                   <button 
                     onClick={() => setIsColleaguesModalOpen(false)}
-                    className="p-2 hover:bg-white/10 rounded-xl transition-colors"
+                    className="p-3 hover:bg-white/20 rounded-2xl transition-all duration-300 active:scale-90 border border-transparent hover:border-white/20 shadow-lg"
                   >
-                    <Users size={20} className="rotate-45" />
+                    <X size={20} className="text-white/80" />
                   </button>
                 </div>
               </div>
@@ -1351,30 +1355,30 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
               {/* Filtering */}
               <div className="p-6 bg-white dark:bg-slate-900 border-b border-blue-100/50 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0">
                 <div className="flex items-center gap-2">
-                  <Compass size={16} className="text-blue-600" />
-                  <span className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest">Network Explorer</span>
+                  <Compass size={14} className="text-[#155DFC]" />
+                  <span className="text-[10px] font-bold text-slate-900 dark:text-white tracking-widest">Network Explorer</span>
                 </div>
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                   <Button 
                     onClick={() => setShowDepartmentOnly(false)}
-                    variant={!showDepartmentOnly ? "default" : "outline"}
+                    variant={!showDepartmentOnly ? "primary" : "outline"}
                     className={cn(
-                      "flex-1 sm:flex-none rounded-xl h-10 px-6 text-[10px] font-black uppercase tracking-widest transition-all",
+                      "flex-1 sm:flex-none rounded-xl h-9 px-5 text-[9px] font-bold tracking-widest transition-all",
                       !showDepartmentOnly 
-                        ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" 
-                        : "border-blue-100 dark:border-slate-700 text-slate-500"
+                        ? "bg-[#155DFC] text-white shadow-lg shadow-blue-500/10" 
+                        : "border-slate-100 dark:border-slate-800 text-slate-500"
                     )}
                   >
                     All Interns
                   </Button>
                   <Button 
                     onClick={() => setShowDepartmentOnly(true)}
-                    variant={showDepartmentOnly ? "default" : "outline"}
+                    variant={showDepartmentOnly ? "primary" : "outline"}
                     className={cn(
-                      "flex-1 sm:flex-none rounded-xl h-10 px-6 text-[10px] font-black uppercase tracking-widest transition-all",
+                      "flex-1 sm:flex-none rounded-xl h-9 px-5 text-[9px] font-bold tracking-widest transition-all",
                       showDepartmentOnly 
-                        ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" 
-                        : "border-blue-100 dark:border-slate-700 text-slate-500"
+                        ? "bg-[#155DFC] text-white shadow-lg shadow-blue-500/10" 
+                        : "border-slate-100 dark:border-slate-800 text-slate-500"
                     )}
                   >
                     My Department
@@ -1382,126 +1386,136 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                 </div>
               </div>
 
-              {/* Content */}
-              <div className="flex-1 overflow-y-auto p-6 sm:p-8 custom-scrollbar space-y-8">
-                
-                {/* Fellow Interns Section */}
-                <div>
-                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <User size={12} /> Fellow Interns ({showDepartmentOnly ? fellowInterns.filter((i: any) => i.isSameProgram).length : fellowInterns.length})
-                  </h4>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {(showDepartmentOnly 
-                      ? fellowInterns.filter((i: any) => i.isSameProgram)
-                      : fellowInterns
-                    ).map((intern: any) => (
-                      <motion.div 
-                        key={intern.id}
-                        whileHover={{ y: -4, scale: 1.02 }}
-                        className="p-4 rounded-[2rem] bg-white dark:bg-slate-900 border border-blue-50/50 dark:border-slate-800 flex flex-col items-center text-center gap-3 group shadow-sm hover:shadow-xl hover:shadow-blue-500/5 transition-all"
-                      >
-                        <div className="w-14 h-14 rounded-2xl overflow-hidden ring-4 ring-slate-50 dark:ring-slate-800 shadow-sm transition-transform group-hover:scale-105">
-                          <Image 
-                            src={normalizeImageSrc(intern.student_profiles?.avatar_url, "/logo.png")} 
-                            alt={intern.student_profiles?.full_name} 
-                            width={56} 
-                            height={56} 
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h5 className="font-black text-slate-900 dark:text-white truncate text-[11px] mb-1">{intern.student_profiles?.full_name}</h5>
-                          <p className="text-[8px] text-blue-600 font-bold uppercase tracking-[0.05em] px-2 py-0.5 bg-blue-50 dark:bg-blue-900/20 rounded-full inline-block">{intern.domain}</p>
-                        </div>
-                        
-                        <div className="flex flex-col gap-1.5 pt-1 w-full">
-                          <Button 
-                             asChild
-                             variant="outline"
-                             className="w-full rounded-xl h-8 border-blue-100 dark:border-slate-800 text-[8px] font-black uppercase tracking-widest hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600"
-                          >
-                            <a href={`mailto:${intern.student_profiles?.email}`}><Mail size={10} className="mr-1.5" /> Mail</a>
-                          </Button>
-                          <Button 
-                             asChild
-                             className="w-full rounded-xl h-8 bg-blue-600 hover:bg-blue-700 text-[8px] font-black uppercase tracking-widest dark:text-white shadow-lg shadow-blue-500/10"
-                          >
-                             <Link href={`/dashboard/student/${intern.student_profiles?.username || intern.student_profiles?.user_id}`}>
-                               <ArrowUpRight size={10} className="mr-1.5" /> Portal
-                             </Link>
-                          </Button>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                  {fellowInterns.length === 0 && (
-                    <div className="text-center py-10 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border-2 border-dashed border-slate-100 dark:border-slate-800">
-                      <p className="text-xs font-bold text-slate-400">No other interns found yet.</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Supervisors Section */}
-                <div>
-                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <Shield size={12} /> Company Supervisors ({fellowSupervisors.length})
-                  </h4>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {(fellowSupervisors || []).map((sup: any) => (
-                      <div 
-                        key={sup.id}
-                        className="p-4 rounded-[2rem] bg-white dark:bg-slate-900 border border-blue-50/50 dark:border-slate-800 flex flex-col items-center text-center gap-3 group shadow-sm"
-                      >
-                        <div className="w-14 h-14 rounded-2xl overflow-hidden ring-4 ring-slate-50 dark:ring-slate-800 shadow-sm transition-transform group-hover:scale-105">
-                          <Image 
-                            src={normalizeImageSrc(sup.avatar_url, "/logo.png")} 
-                            alt={sup.full_name} 
-                            width={56} 
-                            height={56} 
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h5 className="font-black text-slate-900 dark:text-white truncate text-[11px] mb-1">{sup.full_name}</h5>
-                          <p className="text-[8px] text-amber-600 font-bold uppercase tracking-[0.05em] px-2 py-0.5 bg-amber-50 dark:bg-amber-900/20 rounded-full inline-block">
-                            {sup.role || "Lead Supervisor"}
-                          </p>
-                        </div>
-                        <div className="flex flex-col gap-1.5 pt-1 w-full">
-                          <Button 
-                             asChild
-                             variant="outline"
-                             className="w-full rounded-xl h-8 border-blue-100 dark:border-slate-800 text-[8px] font-black uppercase tracking-widest hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600"
-                          >
-                             <a href={`mailto:${sup.email}`}><Mail size={10} className="mr-1.5" /> Mail</a>
-                          </Button>
-                          {sup.whatsapp && (
-                            <Button 
-                               asChild
-                               className="w-full rounded-xl h-8 bg-blue-600 hover:bg-blue-700 text-[8px] font-black uppercase tracking-widest dark:text-white shadow-lg shadow-blue-500/10"
-                            >
-                               <a href={`https://wa.me/${sup.whatsapp.replace(/\+/g, '')}`} target="_blank" rel="noopener noreferrer">
-                                 <MessageSquare size={10} className="mr-1.5" /> WhatsApp
-                               </a>
-                            </Button>
-                          )}
-                        </div>
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto p-10 lg:p-14 custom-scrollbar">
+                  {/* Fellow Interns Section */}
+                  <div className="space-y-12">
+                    <div>
+                      <div className="flex items-center justify-between mb-8">
+                        <h4 className="text-[10px] font-black text-slate-400 tracking-[0.2em] flex items-center gap-2 uppercase">
+                          <Users size={14} className="text-[#155DFC]" /> 
+                          Fellow Cohorts ({displayedInterns.length})
+                        </h4>
                       </div>
-                    ))}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {displayedInterns.map((intern: any) => (
+                          <div 
+                            key={intern.id}
+                            className="relative group h-full"
+                          >
+                            <div className="relative h-full p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center gap-5 shadow-sm hover:border-blue-100 transition-all">
+                              <div className="relative">
+                                <div className="absolute inset-0 bg-[#155DFC]/10 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-all duration-500 scale-125" />
+                                <div className="relative w-16 h-16 rounded-2xl overflow-hidden ring-1 ring-slate-100 dark:ring-slate-800 shadow-md bg-slate-50 transition-all duration-500 group-hover:shadow-blue-500/20 group-hover:scale-105">
+                                  <Image 
+                                    src={normalizeImageSrc(intern.student_profiles?.avatar_url, "/logo.png")} 
+                                    alt={intern.student_profiles?.full_name} 
+                                    fill
+                                    className="object-cover"
+                                  />
+                                </div>
+                              </div>
+                              <div className="flex-1 min-w-0 w-full">
+                                <h5 className="font-bold text-slate-900 dark:text-white text-sm tracking-tight mb-1 truncate px-2 group-hover:text-[#155DFC] transition-colors">{intern.student_profiles?.full_name}</h5>
+                                <Badge className="bg-blue-50/50 dark:bg-[#155DFC]/5 text-[#155DFC] border border-[#155DFC]/10 text-[8px] font-black tracking-widest px-2.5 py-0.5 rounded-lg uppercase">{intern.domain || "Specialist"}</Badge>
+                              </div>
+                              
+                              <div className="flex items-center gap-2 pt-1 w-full opacity-80 group-hover:opacity-100 transition-opacity">
+                                <Button 
+                                   asChild
+                                   variant="outline"
+                                   className="flex-1 rounded-xl h-9 border-slate-100 dark:border-slate-800 text-[9px] font-bold tracking-wider hover:bg-[#155DFC] hover:text-white hover:border-[#155DFC] transition-all duration-300"
+                                >
+                                  <a href={`mailto:${intern.student_profiles?.email}`}><Mail size={12} className="mr-1.5" /> Message</a>
+                                </Button>
+                                <Button 
+                                   asChild
+                                   className="w-9 h-9 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-[#155DFC] dark:hover:bg-[#155DFC] dark:hover:text-white p-0 flex items-center justify-center transition-all shadow-lg"
+                                >
+                                   <Link href={`/dashboard/student/${intern.student_profiles?.username || intern.student_profiles?.user_id}`}>
+                                      <ArrowUpRight size={14} />
+                                   </Link>
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      {displayedInterns.length === 0 && (
+                        <div className="text-center py-16 bg-slate-50 dark:bg-slate-900/50 rounded-[3rem] border-2 border-dashed border-slate-200 dark:border-slate-800">
+                          <p className="text-sm font-black text-slate-400 uppercase tracking-widest">No matching cohorts found</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Supervisors Section */}
+                    <div>
+                      <h4 className="text-[10px] font-bold text-slate-400 tracking-[0.2em] mb-6 flex items-center gap-2 uppercase">
+                        <Shield size={14} className="text-amber-500" /> Command Core ({displayedSupervisors.length})
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {displayedSupervisors.map((sup: any) => (
+                          <div 
+                            key={sup.id}
+                            className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center gap-5 group shadow-sm hover:shadow-xl hover:border-amber-100/50 transition-all duration-300"
+                          >
+                            <div className="relative group/avatar">
+                              <div className="absolute inset-0 bg-amber-500/10 rounded-2xl blur-lg opacity-0 group-hover/avatar:opacity-100 transition-all duration-500 scale-125" />
+                              <div className="relative w-16 h-16 rounded-2xl overflow-hidden ring-1 ring-slate-100 dark:ring-slate-800 shadow-lg bg-slate-50 transition-transform duration-500 group-hover:scale-105">
+                                <Image 
+                                  src={normalizeImageSrc(sup.avatar_url, "/logo.png")} 
+                                  alt={sup.full_name} 
+                                  fill
+                                  className="object-cover"
+                                />
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0 w-full">
+                              <h5 className="font-bold text-slate-900 dark:text-white text-sm tracking-tight mb-1 truncate px-2 group-hover:text-amber-600 transition-colors uppercase">{sup.full_name}</h5>
+                              <Badge className="bg-amber-50 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 border border-amber-200/50 text-[8px] font-black tracking-widest px-2.5 py-0.5 rounded-lg uppercase">
+                                {sup.role || "Lead Strategist"}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-2 pt-1 w-full opacity-80 group-hover:opacity-100 transition-opacity">
+                              <Button 
+                                 asChild
+                                 variant="outline"
+                                 className="flex-1 rounded-xl h-9 border-slate-100 dark:border-slate-800 text-[9px] font-bold tracking-wider hover:bg-amber-500 hover:text-white hover:border-amber-500 transition-all duration-300"
+                              >
+                                 <a href={`mailto:${sup.email}`}><Mail size={12} className="mr-1.5" /> Contact</a>
+                              </Button>
+                              {sup.whatsapp && (
+                                <Button 
+                                   asChild
+                                   className="w-9 h-9 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white p-0 flex items-center justify-center transition-all shadow-lg shadow-emerald-500/20"
+                                >
+                                   <a href={`https://wa.me/${sup.whatsapp.replace(/\+/g, '')}`} target="_blank" rel="noopener noreferrer">
+                                     <MessageSquare size={16} />
+                                   </a>
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      {displayedSupervisors.length === 0 && (
+                        <div className="text-center py-16 bg-slate-50 dark:bg-slate-900/50 rounded-[3rem] border-2 border-dashed border-slate-200 dark:border-slate-800 mt-6">
+                          <p className="text-xs font-black text-slate-400 uppercase tracking-widest">No linked supervisors in this sector</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-              </div>
-
-              {/* Footer */}
-              <div className="p-6 bg-slate-50 dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 shrink-0">
-                <Button 
-                  onClick={() => setIsColleaguesModalOpen(false)}
-                  className="w-full h-12 rounded-xl bg-slate-900 dark:bg-white dark:text-slate-900 text-white font-black uppercase tracking-widest text-xs"
-                >
-                  Close Network
-                </Button>
-              </div>
+                {/* Footer */}
+                <div className="p-6 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 shrink-0">
+                  <Button 
+                    onClick={() => setIsColleaguesModalOpen(false)}
+                    className="w-full h-12 rounded-xl bg-slate-900 dark:bg-white dark:text-slate-900 text-white font-bold tracking-wider text-[10px] shadow-lg transition-all active:scale-[0.98]"
+                  >
+                    Close Protocol
+                  </Button>
+                </div>
             </motion.div>
           </div>
         )}

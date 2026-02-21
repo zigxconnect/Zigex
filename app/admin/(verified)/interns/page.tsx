@@ -46,7 +46,8 @@ const StatCard = ({
   sublabel, 
   icon: Icon, 
   variant = "default",
-  className = ""
+  className = "",
+  loading = false
 }: { 
   label: string;
   value: number;
@@ -54,6 +55,7 @@ const StatCard = ({
   icon: any;
   variant?: "default" | "warning" | "info" | "success";
   className?: string;
+  loading?: boolean;
 }) => {
   const variants = {
     default: {
@@ -110,7 +112,11 @@ const StatCard = ({
       <div className="relative z-10 flex items-center justify-between">
         <div>
           <p className={cn("text-[10px] font-bold uppercase tracking-[0.2em] mb-1", v.labelColor)}>{label}</p>
-          <p className={cn("text-4xl font-black tracking-tighter", v.valueColor)}>{value}</p>
+          {loading ? (
+            <div className="h-10 w-16 bg-slate-100 animate-pulse rounded-lg mt-1" />
+          ) : (
+            <p className={cn("text-4xl font-black tracking-tighter", v.valueColor)}>{value}</p>
+          )}
           <p className={cn("text-[10px] font-bold uppercase mt-1", v.sublabelColor)}>{sublabel}</p>
         </div>
         <div className={cn(
@@ -554,6 +560,7 @@ function InternsPageComponent() {
             sublabel="Candidates"
             icon={Users}
             variant="default"
+            loading={isLoading}
           />
           <StatCard
             label="Pending Review"
@@ -561,6 +568,7 @@ function InternsPageComponent() {
             sublabel="Direct Action Needed"
             icon={Clock}
             variant="warning"
+            loading={isLoading}
           />
           <StatCard
             label="Under Review"
@@ -568,6 +576,7 @@ function InternsPageComponent() {
             sublabel="Active Screening"
             icon={Eye}
             variant="info"
+            loading={isLoading}
           />
           <StatCard
             label="Onboarded"
@@ -575,6 +584,7 @@ function InternsPageComponent() {
             sublabel="Confirmed Interns"
             icon={UserCheck}
             variant="success"
+            loading={isLoading}
           />
         </div>
 

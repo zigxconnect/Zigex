@@ -93,130 +93,139 @@ export function DailyReportModal({ isOpen, onClose, internshipId }: DailyReportM
         className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-2xl shadow-2xl max-h-[90vh] overflow-hidden"
       >
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-5 sm:p-6 text-white">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
-                <FileText size={18} />
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 sm:p-8 text-white relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl" />
+          <div className="relative z-10 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center shadow-lg">
+                <FileText size={22} strokeWidth={2.5} />
               </div>
               <div>
-                <h2 className="text-lg font-bold">Daily Report</h2>
-                <p className="text-xs text-blue-200">Document your progress</p>
+                <h2 className="text-xl font-black tracking-tight uppercase">Daily Briefing</h2>
+                <p className="text-xs text-blue-100 font-bold uppercase tracking-[0.2em] opacity-80">Mission Documentation</p>
               </div>
             </div>
             <button 
               onClick={onClose}
-              className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+              className="w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all active:scale-90"
             >
-              <X size={18} />
+              <X size={20} strokeWidth={3} />
             </button>
           </div>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-6 max-h-[55vh] overflow-y-auto custom-scrollbar">
+        <form onSubmit={handleSubmit} className="p-6 sm:p-10 space-y-8 max-h-[60vh] overflow-y-auto custom-scrollbar bg-slate-50/30 dark:bg-slate-900/30">
            
           {/* Learning Log Section */}
-          <div className="space-y-3">
-            <label className="flex items-center gap-2 text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
-              <MessageSquare size={12} className="text-blue-500" />
-              What did you learn today?
+          <div className="space-y-4">
+            <label className="flex items-center gap-2 text-[10px] text-slate-400 font-black uppercase tracking-[0.25em]">
+              <MessageSquare size={14} className="text-blue-600" />
+              Strategic Insights
             </label>
             <Textarea 
               value={learningLog}
               onChange={(e) => setLearningLog(e.target.value)}
-              placeholder="Share your key takeaways, concepts mastered, or challenges..."
-              className="min-h-[100px] rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-blue-500 text-sm resize-none"
+              placeholder="What core concepts did you master today?"
+              className="min-h-[120px] rounded-[1.5rem] border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm font-medium resize-none shadow-sm p-4"
             />
           </div>
 
           {/* Tasks Completed */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
-                <CheckSquare size={12} className="text-blue-500" />
-                Tasks Completed
+              <label className="flex items-center gap-2 text-[10px] text-slate-400 font-black uppercase tracking-[0.25em]">
+                <CheckSquare size={14} className="text-blue-600" />
+                Objectives Secured
               </label>
               <Button 
                 type="button" 
                 onClick={handleAddTask}
                 variant="ghost" 
                 size="sm"
-                className="text-blue-600 font-semibold text-[10px] h-7 px-2 hover:bg-blue-50 rounded-lg"
+                className="text-blue-600 font-black text-[10px] h-8 px-4 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl uppercase tracking-widest"
               >
-                <Plus size={12} className="mr-1" /> Add
+                <Plus size={12} className="mr-1.5" strokeWidth={3} /> Add Step
               </Button>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {tasks.map((task, idx) => (
-                <Input 
-                  key={idx}
-                  value={task}
-                  onChange={(e) => handleTaskChange(idx, e.target.value)}
-                  placeholder={`Task ${idx + 1}...`}
-                  className="h-10 rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
-                />
+                <div key={idx} className="relative group">
+                  <Input 
+                    value={task}
+                    onChange={(e) => handleTaskChange(idx, e.target.value)}
+                    placeholder={`Objective ${idx + 1}...`}
+                    className="h-12 pl-12 rounded-2xl border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm font-bold shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  />
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
+                    <span className="text-[10px] font-black text-blue-600">{idx + 1}</span>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
 
           {/* Experience Rating */}
-          <div className="space-y-3">
-            <label className="flex items-center gap-2 text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
-              <Star size={12} className="text-blue-500" />
-              Today's Experience
+          <div className="space-y-4 pb-4">
+            <label className="flex items-center gap-2 text-[10px] text-slate-400 font-black uppercase tracking-[0.25em]">
+              <Star size={14} className="text-blue-600" />
+              Impact Status
             </label>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               {[1, 2, 3, 4, 5].map((s) => (
                 <button
                   key={s}
                   type="button"
                   onClick={() => setRating(s)}
                   className={cn(
-                    "w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm transition-all",
+                    "w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm transition-all shadow-sm",
                     rating >= s 
-                      ? "bg-amber-400 text-white shadow-sm" 
-                      : "bg-slate-100 dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700"
+                      ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30 scale-105" 
+                      : "bg-white dark:bg-slate-950 text-slate-400 border border-slate-100 dark:border-slate-800 hover:border-blue-200"
                   )}
                 >
                   {s}
                 </button>
               ))}
-              <span className="ml-3 text-xs text-slate-500 font-medium">
-                {rating === 5 ? "Excellent!" : rating >= 4 ? "Great" : rating >= 3 ? "Good" : "Okay"}
-              </span>
+              <div className="ml-4">
+                <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest leading-none mb-1">Status</p>
+                <p className="text-sm font-black text-slate-900 dark:text-white uppercase leading-none">
+                  {rating === 5 ? "Elite" : rating >= 4 ? "Optimal" : rating >= 3 ? "Standard" : "Baseline"}
+                </p>
+              </div>
             </div>
           </div>
         </form>
 
         {/* Footer */}
-        <div className="p-5 sm:p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex gap-3">
+        <div className="p-6 sm:p-8 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 flex gap-4 shrink-0">
           <Button 
             type="button" 
             onClick={onClose}
             variant="outline" 
-            className="flex-1 rounded-xl h-11 font-semibold text-xs border-slate-200 hover:bg-slate-100 transition-colors"
+            className="flex-1 rounded-2xl h-14 font-black text-[11px] uppercase tracking-widest border-slate-100 dark:border-slate-800 shadow-sm"
           >
-            Cancel
+            Abort
           </Button>
           <Button 
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="flex-[2] rounded-xl bg-blue-600 hover:bg-blue-700 text-white h-11 font-semibold text-xs shadow-md shadow-blue-500/20 transition-all active:scale-[0.98]"
+            className="flex-[2] rounded-2xl bg-blue-600 hover:bg-blue-700 text-white h-14 font-black text-[11px] uppercase tracking-widest shadow-xl shadow-blue-500/20 transition-all active:scale-[0.98]"
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-                Submitting...
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Processing...
               </>
             ) : (
               <>
-                <Send size={14} className="mr-1.5" />
-                Submit Report
+                <Send size={16} className="mr-2" />
+                Transmit Briefing
               </>
             )}
           </Button>
         </div>
+
       </motion.div>
     </div>
   );

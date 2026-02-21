@@ -249,6 +249,29 @@ export const getPrograms = cache(async (searchQuery?: string) => {
 });
 
 /**
+ * NEW: Get a consolidated list of companies for the sidebar directory
+ */
+export const getCompanyDirectory = cache(async () => {
+  try {
+    const supabase = await createClient();
+    const { data: companies, error } = await supabase
+      .from("company_profiles")
+      .select("id, company_name, logo_url, email, website_url")
+      .order("company_name", { ascending: true });
+
+    if (error) {
+      console.error("Error fetching company directory:", error);
+      return [];
+    }
+
+    return companies || [];
+  } catch (error) {
+    console.error("Company directory fetch error:", error);
+    return [];
+  }
+});
+
+/**
  * Get all feed data in parallel
  * This is the main function to use in your components
  * Uses React cache to deduplicate requests
@@ -256,12 +279,13 @@ export const getPrograms = cache(async (searchQuery?: string) => {
 export const getAllFeedData = cache(async (searchQuery?: string, studentId?: string) => {
   try {
     // Fetch all data in parallel for better performance
-    const [internshipsResult, eventsResult, programsResult, announcements] =
+    const [internshipsResult, eventsResult, programsResult, announcements, companies] =
       await Promise.all([
         getInternships(searchQuery),
         getEvents(searchQuery),
         getPrograms(searchQuery),
-        studentId ? getAnnouncementsForStudent(studentId) : Promise.resolve([])
+        studentId ? getAnnouncementsForStudent(studentId) : Promise.resolve([]),
+        getCompanyDirectory()
       ]);
 
     // Collect any errors
@@ -276,6 +300,7 @@ export const getAllFeedData = cache(async (searchQuery?: string, studentId?: str
       events: eventsResult.data,
       programs: programsResult.data,
       announcements: announcements || [],
+      companies: companies || [],
       error: errors.length > 0 ? errors.join(", ") : null,
     };
   } catch (error) {
