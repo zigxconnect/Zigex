@@ -3,14 +3,11 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import React from "react";
 import { Select } from "@/components/uiComponent/Select";
 import { Textarea } from "@/components/uiComponent/Textarea";
-import { ImageUpload } from "@/components/feed/project-form/ImageUpload";
-import { createClient } from "@/lib/supabase/client";
 import { ImageUpload } from "@/components/feed/project-form/ImageUpload";
 import { createClient } from "@/lib/supabase/client";
 
@@ -121,17 +118,6 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
   );
   const [monthlyRate, setMonthlyRate] = useState(
     initialData?.monthly_rate || 0
-  const [compensationAmount, setCompensationAmount] = useState(
-    initialData?.compensation_amount || ""
-  );
-  const [monthlyRate, setMonthlyRate] = useState(
-    initialData?.monthly_rate || 0
-  );
-  const [isPaid, setIsPaid] = useState(Boolean(initialData?.is_paid));
-  const [coverImage, setCoverImage] = useState<File | null>(null);
-  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(initialData?.cover_image_url || null);
-  const [endDate, setEndDate] = useState(
-    formatDateForInput(initialData?.end_date)
   );
   const [isPaid, setIsPaid] = useState(Boolean(initialData?.is_paid));
   const [coverImage, setCoverImage] = useState<File | null>(null);
@@ -151,58 +137,35 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    // console.log("Submit button clicked! isEditMode:", isEditMode);
-
     try {
       const formData = new FormData();
-
-      // Helper for date validation
-      const validateDate = (dateStr: string, name: string) => {
-        if (!dateStr) return null;
-        const d = new Date(dateStr);
-        if (isNaN(d.getTime())) {
-          throw new Error(`Invalid ${name} date selected.`);
-        }
-        return d.toISOString();
-      };
-
-      // Add all fields to FormData
       formData.append("title", title);
       formData.append("description", description);
       formData.append("location", location);
       formData.append("category", category);
-      formData.append("start_date", validateDate(startDate, "start") || "");
-      formData.append("end_date", validateDate(endDate, "end") || "");
-      formData.append("deadline", validateDate(deadline, "deadline") || "");
+      formData.append("start_date", startDate);
+      formData.append("end_date", endDate);
+      formData.append("deadline", deadline);
       formData.append("type", internshipType);
       formData.append("is_paid", String(isPaid));
       formData.append("compensation_amount", isPaid ? compensationAmount : "");
       formData.append("monthly_rate", String(monthlyRate));
       formData.append("required_skills", JSON.stringify(requiredSkills));
-
       if (coverImage) {
         formData.append("cover_image", coverImage);
-        console.log("Added new cover image to form data");
       } else if (coverImageUrl) {
         formData.append("cover_image_url", coverImageUrl);
       }
-
       const endpoint = isEditMode
         ? `/api/companies/internships/${initialData.id}`
         : "/api/companies/internships";
       const method = isEditMode ? "PATCH" : "POST";
-
       console.log(`Sending ${method} request to ${endpoint}...`);
-
-      console.log(`Sending ${method} request to ${endpoint}...`);
-
       const response = await fetch(endpoint, {
         method,
-        body: formData, // Sending FormData instead of JSON
+        body: formData,
       });
-
       console.log("API response status:", response.status);
-
       let result;
       try {
         result = await response.json();
@@ -211,41 +174,15 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
         console.error("Failed to parse JSON response:", err);
         throw new Error("The server returned an invalid response. Please try again.");
       }
-
-        body: formData, // Sending FormData instead of JSON
-      });
-
-      console.log("API response status:", response.status);
-
-      let result;
-      try {
-        result = await response.json();
-        console.log("API response data:", result);
-      } catch (err) {
-        console.error("Failed to parse JSON response:", err);
-        throw new Error("The server returned an invalid response. Please try again.");
-      }
-
       if (!response.ok) {
         throw new Error(result?.error?.message || result?.error || "Failed to submit form");
-        throw new Error(result?.error?.message || result?.error || "Failed to submit form");
       }
-
       toast.success(`Internship ${isEditMode ? "updated" : "published"} successfully!`);
-      
-      setTimeout(() => {
-        router.push("/admin/postings");
-        router.refresh();
-      }, 1000);
-      toast.success(`Internship ${isEditMode ? "updated" : "published"} successfully!`);
-      
       setTimeout(() => {
         router.push("/admin/postings");
         router.refresh();
       }, 1000);
     } catch (error: any) {
-      console.error("Form submission error details:", error);
-      toast.error(error.message || "An unexpected error occurred. Please check your internet connection.");
       console.error("Form submission error details:", error);
       toast.error(error.message || "An unexpected error occurred. Please check your internet connection.");
     } finally {
