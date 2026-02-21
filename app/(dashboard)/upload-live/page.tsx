@@ -128,12 +128,12 @@ export default function UploadLivePage() {
 
     try {
       if (process.env.NODE_ENV === 'development') {
-        console.log("📋 Starting upload with new service:");
-        console.log("  - Company:", company);
-        console.log("  - Is Live:", isLive);
-        console.log("  - Images:", images.length);
-        console.log("  - Captions:", captions);
-        console.log("  - Video:", video ? 'Yes' : 'No');
+        // console.log("📋 Starting upload with new service:");
+        // console.log("  - Company:", company);
+        // console.log("  - Is Live:", isLive);
+        // console.log("  - Images:", images.length);
+        // console.log("  - Captions:", captions);
+        // console.log("  - Video:", video ? 'Yes' : 'No');
       }
 
       // Use the new two-step upload service

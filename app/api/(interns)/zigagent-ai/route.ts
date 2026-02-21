@@ -92,7 +92,7 @@ async function getAggregatedData(): Promise<AggregatedData> {
 // ━━━━━━ 🌐 TAVILY WEB SEARCH AGENT ━━━━━━
 // This is the core of the new online search capability.
 async function searchWithTavily(query: string, userProfile: UserProfile | null): Promise<SourceData[]> {
-  console.log('[AGENT TAVILY] Initiating external web search.');
+  // console.log('[AGENT TAVILY] Initiating external web search.');
 
   // 1. Construct a highly specific, profile-driven search query for better results.
   let enhancedQuery = `Find job or internship opportunities related to: "${query}"`;
@@ -100,8 +100,7 @@ async function searchWithTavily(query: string, userProfile: UserProfile | null):
     enhancedQuery += ` for a candidate with skills in ${userProfile.hard_skills.join(', ')}.`;
   }
   enhancedQuery += " The results should include the company name, location (including 'Remote'), and a direct URL to the application page.";
-
-  console.log(`[AGENT TAVILY] Enhanced Query: "${enhancedQuery}"`);
+  // console.log(`[AGENT TAVILY] Enhanced Query: "${enhancedQuery}"`);
 
   // 2. Initialize the Tavily retriever. `k: 4` fetches the top 4 most relevant results.
   const retriever = new TavilySearchAPIRetriever({ k: 4 });

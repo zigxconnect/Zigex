@@ -20,6 +20,7 @@ import QRCodeButton from "@/components/sections/dashboard/QRCodeButton";
 import PersonalizedFeed from "@/components/feed/PersonalizedFeed";
 import CreateProjectButton from "@/components/project/CreateProjectButton";
 import SimilarStudentsSidebar from "@/components/sections/dashboard/SimilarStudentsSidebar";
+import { ActiveInternshipActivityGraph } from "@/components/sections/profile/ActiveInternshipActivityGraph";
 import { redirect } from "next/navigation";
 
 interface Props {
@@ -76,13 +77,18 @@ export default async function ProfilePage({ params }: Props) {
   const skills = data.hard_skills || [];
   const soft = data.soft_skills || [];
 
-  // Fetch accepted application counts
-  const [internRes, progRes, eventRes] = await Promise.all([
+  // Fetch accepted application counts from BOTH legacy and modern tables
+  const [internResLegacy, internResModern, progRes, eventRes] = await Promise.all([
     supabaseAdmin
       .from("Applications")
       .select("id", { count: "exact", head: true })
       .eq("student_id", data.id)
       .eq("application_type", "internship")
+      .eq("status", "accepted"),
+    supabaseAdmin
+      .from("internship_applications")
+      .select("id", { count: "exact", head: true })
+      .or(`student_id.eq.${data.user_id},student_id.eq.${data.id}`)
       .eq("status", "accepted"),
     supabaseAdmin
       .from("Applications")
@@ -98,11 +104,91 @@ export default async function ProfilePage({ params }: Props) {
       .eq("status", "accepted"),
   ]);
 
-  const internshipsApplied = internRes?.count ?? 0;
+  const internshipsApplied = Math.max(internResLegacy?.count ?? 0, internResModern?.count ?? 0);
   const programsApplied = progRes?.count ?? 0;
   const eventsApplied = eventRes?.count ?? 0;
   const avatarUrl = data.avatar_url;
   const coverImageUrl = data.cover_image || "https://i.ibb.co/vv3sgJwd/n8.jpg";
+
+  // ========== ACTIVE INTERNSHIP DETECTION ==========
+  // Fetch if this user has an active/accepted internship (for display in profile)
+  let activeInternshipInfo: {
+    internship: any;
+    company: any;
+    supervisor: any;
+    logs: any[];
+  } | null = null;
+
+  // Debug: Log the IDs we're searching with
+  // console.log(`[ActiveInternship] Searching for user_id: ${data.user_id}, profile_id: ${data.id}`);
+
+  // Build the query - handle cases where user_id might be null/undefined
+  const studentIdFilters: string[] = [];
+  if (data.user_id) studentIdFilters.push(`student_id.eq.${data.user_id}`);
+  if (data.id) studentIdFilters.push(`student_id.eq.${data.id}`);
+  
+  let activeApp = null;
+  if (studentIdFilters.length > 0) {
+    // First, try a simpler query without the supervisor join (which may fail if column doesn't exist)
+    const { data: appData, error: appError } = await supabaseAdmin
+      .from("internship_applications")
+      .select(`
+        id,
+        internship_id,
+        student_id,
+        domain,
+        status,
+        internships (
+          id, title, type, location, description,
+          company_profiles (
+            id, company_name, logo_url, cover_image_url
+          )
+        )
+      `)
+      .or(studentIdFilters.join(','))
+      .eq("status", "accepted")
+      .maybeSingle();
+    
+    activeApp = appData;
+    
+    // Debug logging
+    // Debug logging
+    if (appError) console.error(`[ActiveInternship] Query error:`, appError);
+  }
+
+  if (activeApp?.internships) {
+    // Fetch logs for activity graph
+    const { data: logsData } = await supabaseAdmin
+      .from("internship_daily_logs")
+      .select("id, log_date")
+      .eq("application_id", activeApp.id);
+
+    // Try to get supervisor info if assigned (may not exist yet)
+    let supervisorInfo = null;
+    try {
+      // Check if there's a supervisor assignment for this intern's domain
+      const { data: supervisorData } = await supabaseAdmin
+        .from("supervisor_profiles")
+        .select("id, full_name, avatar_url, role, email")
+        .eq("domain", (activeApp as any).domain)
+        .maybeSingle();
+      supervisorInfo = supervisorData;
+    } catch (e) {
+      console.log(`[ActiveInternship] No supervisor found for domain: ${(activeApp as any).domain}`);
+    }
+
+    activeInternshipInfo = {
+      internship: activeApp.internships,
+      company: (activeApp.internships as any)?.company_profiles || null,
+      supervisor: supervisorInfo,
+      logs: logsData || []
+    };
+    console.log(`[ActiveInternship] SUCCESS - Found internship: ${(activeApp.internships as any)?.title}`);
+  } else {
+    console.log(`[ActiveInternship] No active internship found for this user`);
+  }
+  // ========== END ACTIVE INTERNSHIP DETECTION ==========
+
 
   // Fetch similar students
   const { data: candidatesData } = await supabaseAdmin
@@ -260,12 +346,21 @@ export default async function ProfilePage({ params }: Props) {
               {/* Action Buttons and Social Links */}
               <div className="flex items-center gap-4 flex-wrap mt-2">
                 <div className="flex items-center gap-3">
-                  <Link
-                    href="/dashboard/projects"
-                    className="px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold uppercase tracking-wider transition-all duration-200 hover:scale-105 active:scale-95"
-                  >
-                    My projects
-                  </Link>
+                  {activeInternshipInfo ? (
+                    <Link
+                      href="/intern/workspace"
+                      className="px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold uppercase tracking-wider transition-all duration-200 hover:scale-105 active:scale-95"
+                    >
+                      My Workspace
+                    </Link>
+                  ) : (
+                    <Link
+                      href="/dashboard/projects"
+                      className="px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold uppercase tracking-wider transition-all duration-200 hover:scale-105 active:scale-95"
+                    >
+                      My Projects
+                    </Link>
+                  )}
                 </div>
 
                 {/* Social Links - Repositioned beside buttons */}
@@ -342,6 +437,60 @@ export default async function ProfilePage({ params }: Props) {
             </div>
           </div>
         </div>
+
+        {/* ===== ACTIVE INTERNSHIP SECTION (for accepted interns) ===== */}
+        {activeInternshipInfo && (
+          <div className="bg-card rounded-3xl border border-primary/20 overflow-hidden shadow-lg">
+            {/* Internship Header */}
+            <div className="bg-gradient-to-r from-primary to-blue-700 p-6 text-white relative">
+              <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full blur-3xl -mr-16 -mt-16" />
+              <div className="relative z-10 flex items-center gap-4">
+                <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 shadow-xl overflow-hidden">
+                  {activeInternshipInfo.company?.logo_url ? (
+                    <Image src={activeInternshipInfo.company.logo_url} alt="Company" width={64} height={64} className="w-full h-full object-cover" />
+                  ) : (
+                    <Briefcase size={28} className="text-white" />
+                  )}
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-blue-100 mb-1">Currently Interning At</p>
+                  <h2 className="text-xl md:text-2xl font-black tracking-tight">{activeInternshipInfo.company?.company_name || "Company"}</h2>
+                  <p className="text-sm font-medium text-blue-100 mt-0.5">{activeInternshipInfo.internship?.title}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Supervisor Info */}
+            {activeInternshipInfo.supervisor && (
+              <div className="p-6 border-b border-border flex items-center gap-4">
+                <div className="w-14 h-14 rounded-xl overflow-hidden bg-muted shadow-md">
+                  <Image 
+                    src={activeInternshipInfo.supervisor.avatar_url || "/default-avatar.svg"} 
+                    alt={activeInternshipInfo.supervisor.full_name} 
+                    width={56} 
+                    height={56} 
+                    className="w-full h-full object-cover" 
+                  />
+                </div>
+                <div className="flex-1">
+                  <p className="text-[10px] font-black text-primary uppercase tracking-widest">Supervised By</p>
+                  <h4 className="text-lg font-bold text-foreground">{activeInternshipInfo.supervisor.full_name}</h4>
+                  <p className="text-xs font-medium text-muted-foreground">{activeInternshipInfo.supervisor.role || "Lead Supervisor"}</p>
+                </div>
+                {activeInternshipInfo.supervisor.email && (
+                  <Link href={`mailto:${activeInternshipInfo.supervisor.email}`} className="p-3 rounded-xl bg-muted hover:bg-muted-foreground/10 transition-colors" title="Contact Supervisor">
+                    <Mail size={18} className="text-primary" />
+                  </Link>
+                )}
+              </div>
+            )}
+
+            {/* Activity Graph */}
+            <div className="p-6">
+              <ActiveInternshipActivityGraph logs={activeInternshipInfo.logs} />
+            </div>
+          </div>
+        )}
 
         {/* Personalized Feed wrapped in a card */}
         <div className="bg-card rounded-3xl border border-border overflow-hidden">

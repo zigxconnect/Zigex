@@ -376,25 +376,38 @@ const ApplicationCard = ({
           ))}
         </div>
 
-        <div className="flex gap-2 mt-6">
-          <button
-            onClick={() => onView(application)}
-            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            <Eye size={14} /> View
-          </button>
-          <button
-            onClick={() => onEdit(application)}
-            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
-          >
-            <Edit3 size={14} /> Edit
-          </button>
-          <button
-            onClick={() => onDelete(application.id)}
-            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors"
-          >
-            <Trash2 size={14} /> Delete
-          </button>
+        <div className="flex flex-col gap-3 mt-6">
+          {application.status === 'accepted' && application.application_type === 'internship' && (
+            <button
+               onClick={() => window.location.href = '/intern/workspace'}
+               className="w-full h-12 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-blue-200 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 group"
+            >
+               <Zap size={14} className="fill-white group-hover:animate-pulse" />
+               Launch Internship Workspace
+               <ArrowRight size={14} />
+            </button>
+          )}
+          
+          <div className="flex gap-2">
+            <button
+              onClick={() => onView(application)}
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <Eye size={14} /> View
+            </button>
+            <button
+              onClick={() => onEdit(application)}
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
+            >
+              <Edit3 size={14} /> Edit
+            </button>
+            <button
+              onClick={() => onDelete(application.id)}
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors"
+            >
+              <Trash2 size={14} /> Delete
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -496,7 +509,6 @@ export default function MyApplicationsPage() {
 
   const handleEdit = (application: Application) => {
     // Implement edit functionality
-    console.log("Edit application:", application);
     alert("Edit functionality to be implemented");
   };
 
@@ -504,7 +516,6 @@ export default function MyApplicationsPage() {
     if (confirm("Are you sure you want to delete this application?")) {
       try {
         // Implement delete functionality
-        console.log("Delete application:", id);
         setApplications(applications.filter(app => app.id !== id));
         alert("Application deleted successfully");
       } catch (error) {

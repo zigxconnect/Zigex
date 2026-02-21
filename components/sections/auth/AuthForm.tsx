@@ -16,18 +16,19 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "react-hot-toast";
 
 // --- Schemas ---
-// Define a unified form data type that covers both sign-in and sign-up
 const signUpSchema = z.object({
-  fullName: z.string().min(2, { message: "Full name must be at least 2 characters." }),
+  fullName: z
+    .string()
+    .min(2, { message: "Full name must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email address." }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters." }),
+  password: z
+    .string()
+    .min(6, { message: "Password must be at least 6 characters." }),
 });
-
 const signInSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
   password: z.string().min(1, { message: "Password is required." }),
 });
-
 type FormData = z.infer<typeof signUpSchema>;
 type AuthFormProps = { type: "signIn" | "signUp" };
 
@@ -53,7 +54,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
   const [csrfToken, setCsrfToken] = useState<string | null>(null);
 
   const [supabase] = useState(() => createClient());
-  const [isGoogleReady, setIsGoogleReady] = useState(false);
+  const googleButtonRef = typeof window !== 'undefined' ? (window as any).googleButtonRef : null;
 
   // Fetch CSRF token on mount
   useEffect(() => {
@@ -70,7 +71,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
-    resolver: zodResolver(isSignUp ? signUpSchema : signInSchema) as any,
+    resolver: zodResolver(isSignUp ? signUpSchema : signInSchema),
   });
 
   useEffect(() => {
@@ -123,22 +124,22 @@ export const AuthForm = ({ type }: AuthFormProps) => {
     "By continuing, you agree to our Terms of Service and Privacy Policy.";
 
   const handleGoogleSignIn = async () => {
-    console.log("[AuthForm] handleGoogleSignIn triggered. isGoogleReady:", isGoogleReady);
+    // console.log("[AuthForm] handleGoogleSignIn triggered");
     const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
     const isGoogleScriptLoaded = typeof window !== 'undefined' && (window as any).google;
 
-    console.log("[AuthForm] Google Client ID exists:", !!googleClientId);
-    console.log("[AuthForm] Google Script loaded:", !!isGoogleScriptLoaded);
+    // console.log("[AuthForm] Google Client ID exists:", !!googleClientId);
+    // console.log("[AuthForm] Google Script loaded:", !!isGoogleScriptLoaded);
 
-    if (!isGoogleReady || !isGoogleScriptLoaded || !googleClientId) {
-      console.log("[AuthForm] Falling back to standard OAuth flow because modern Google is not ready");
+    if (!isGoogleScriptLoaded || !googleClientId) {
+      // console.log("[AuthForm] Falling back to standard OAuth flow");
       await startStandardOAuth();
     } else {
-      console.log("[AuthForm] Google script is ready, the invisible overlay should have handled this click. Triggering prompt as fallback.");
+      // console.log("[AuthForm] Google script is loaded, the invisible overlay should have handled this click. If you see this, the overlay might have failed.");
+      // As an emergency fallback, trigger the ID token prompt manually
       (window as any).google.accounts.id.prompt();
     }
   };
-
   // Initialize Google Identity Services
   useEffect(() => {
     let isMounted = true;
@@ -146,83 +147,79 @@ export const AuthForm = ({ type }: AuthFormProps) => {
 
     if (!googleClientId) {
       console.warn("[AuthForm] NEXT_PUBLIC_GOOGLE_CLIENT_ID is missing");
-      return;
     }
 
-    const initGoogle = async () => {
+    if (googleClientId && (window as any).google) {
+      console.log("[AuthForm] Initializing Google Identity Services");
       const google = (window as any).google;
-      if (google && isMounted) {
-        console.log("[AuthForm] Initializing Google Identity Services with Client ID:", googleClientId.substring(0, 10) + "...");
-        try {
-          google.accounts.id.initialize({
-            client_id: googleClientId,
-            itp_support: true,
-            use_fedcm_for_prompt: true,
-            callback: async (response: any) => {
-              if (!isMounted) return;
-              console.log("[AuthForm] Google ID Token received, signing in with Supabase...");
-              const { data, error } = await supabase.auth.signInWithIdToken({
-                provider: "google",
-                token: response.credential,
-              });
 
-              if (error) {
-                console.error("[AuthForm] Supabase ID Token Auth Error:", error);
-                toast.error(error.message);
-              } else {
-                console.log("[AuthForm] Supabase sign-in successful, user:", data.user?.id);
-                toast.success("Logged in successfully!");
-
-                // Refresh session to ensure cookies are synced
-                await supabase.auth.refreshSession();
-
-                // Check if profile exists and is complete
-                const { data: profile } = await supabase
-                  .from("student_profiles")
-                  .select("profile_status")
-                  .eq("user_id", data.user?.id)
-                  .maybeSingle();
-
-                // Redirect based on profile status
-                if (profile?.profile_status === "complete") {
-                  window.location.href = "/dashboard";
-                } else {
-                  window.location.href = "/create-profile";
-                }
-              }
-            },
+      google.accounts.id.initialize({
+        client_id: googleClientId,
+        itp_support: true,
+        use_fedcm_for_prompt: true,
+        callback: async (response: any) => {
+          if (!isMounted) return;
+          console.log("[AuthForm] Google ID Token received, signing in with Supabase...");
+          const { data, error } = await supabase.auth.signInWithIdToken({
+            provider: "google",
+            token: response.credential,
           });
 
-          // Render the official Google button INVISIBLY on top of our custom button
-          const parent = document.getElementById("google-button-overlay");
-          if (parent) {
-            console.log("[AuthForm] Rendering invisible Google button onto overlay");
-            google.accounts.id.renderButton(parent, {
-              theme: "filled_black",
-              size: "large",
-              type: "standard",
-              shape: "rectangular",
-              text: isSignUp ? "signup_with" : "signin_with",
-              width: 400,
-            });
-            setIsGoogleReady(true);
-          }
-        } catch (err) {
-          console.error("[AuthForm] Failed to initialize Google:", err);
-        }
-      } else {
-        console.log("[AuthForm] Google script not found on window");
-      }
-    };
+          if (error) {
+            console.error("[AuthForm] Supabase ID Token Auth Error:", error);
+            toast.error(error.message);
+          } else {
+            console.log("[AuthForm] Supabase sign-in successful, user:", data.user?.id);
+            toast.success("Logged in successfully!");
 
-    // Use a small timeout to ensure the script has time to register on the window object
-    const timer = setTimeout(initGoogle, 1000);
+            // Refresh session to ensure cookies are synced
+            await supabase.auth.refreshSession();
+
+            // Check if profile exists and is complete
+            const { data: profile } = await supabase
+              .from("student_profiles")
+              .select("profile_status")
+              .eq("user_id", data.user?.id)
+              .maybeSingle();
+
+            // Redirect based on profile status
+            if (profile?.profile_status === "complete") {
+              window.location.href = "/dashboard";
+            } else {
+              window.location.href = "/create-profile";
+            }
+          }
+        },
+      });
+
+      // Render the official Google button INVISIBLY on top of our custom button
+      const parent = document.getElementById("google-button-overlay");
+      if (parent) {
+        console.log("[AuthForm] Rendering invisible Google button onto overlay");
+        google.accounts.id.renderButton(parent, {
+          theme: "filled_black",
+          size: "large",
+          type: "standard",
+          shape: "rectangular",
+          text: isSignUp ? "signup_with" : "signin_with",
+          width: 400,
+        });
+      }
+    } else {
+      console.log("[AuthForm] Google script or Client ID not ready for Identity Services");
+    }
 
     return () => {
       isMounted = false;
-      clearTimeout(timer);
     };
   }, [isSignUp, router, supabase]);
+      // console.warn("[AuthForm] NEXT_PUBLIC_GOOGLE_CLIENT_ID is missing");
+      // console.log("[AuthForm] Initializing Google Identity Services");
+      // console.log("[AuthForm] Google ID Token received, signing in with Supabase...");
+      // console.error("[AuthForm] Supabase ID Token Auth Error:", error);
+      // console.log("[AuthForm] Supabase sign-in successful, user:", data.user?.id);
+      // console.log("[AuthForm] Rendering invisible Google button onto overlay");
+      // console.log("[AuthForm] Google script or Client ID not ready for Identity Services");
 
   const startStandardOAuth = async () => {
     const { data, error } = await supabase.auth.signInWithOAuth({
@@ -375,17 +372,16 @@ export const AuthForm = ({ type }: AuthFormProps) => {
         <div className="relative w-full">
           {/* The visible custom button */}
           <SocialButton
-            icon={GoogleIcon as any}
-            onClick={handleGoogleSignIn}
+            icon={GoogleIcon}
+            onClick={handleGoogleSignIn} // Now has fallback logic
             text={`${currentContent.socialButtonText} with Google`}
           />
-          {isGoogleReady && (
-            <div
-              id="google-button-overlay"
-              className="absolute inset-0 z-10 opacity-0 overflow-hidden"
-              style={{ transform: 'scale(1.05)' }} // Slight scale to ensure full coverage
-            />
-          )}
+          {/* The invisible official Google button layered on top */}
+          <div
+            id="google-button-overlay"
+            className="absolute inset-0 z-10 opacity-0 overflow-hidden"
+            style={{ transform: 'scale(1.05)' }} // Slight scale to ensure full coverage
+          />
         </div>
       </div>
       <Divider />
