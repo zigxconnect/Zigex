@@ -86,7 +86,7 @@ export function CompanySidebar({ companies }: CompanySidebarProps) {
       {/* Contact Us CTA */}
       <Link 
         href="/contact"
-        className="w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-5 rounded-[2rem] flex items-center justify-center gap-3 transition-all shadow-xl shadow-slate-200 dark:shadow-none uppercase tracking-[0.2em] text-[10px]"
+        className="w-full bg-[#155DFC] hover:bg-[#0D47A1] text-white font-black py-5 rounded-[2rem] flex items-center justify-center gap-3 transition-all shadow-xl shadow-blue-500/20 uppercase tracking-[0.2em] text-[10px]"
       >
         <MessageSquare size={16} />
         <span>Contact Administration</span>
