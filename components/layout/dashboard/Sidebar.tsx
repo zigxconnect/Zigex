@@ -60,6 +60,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const applicationsCount =
     user?.applicationsCount || user?.stats?.applications || 0;
   const profileViews = user?.profileViews || user?.stats?.profileViews || 0;
+  // Get username for profile link
+  const username = user?.profile?.username || user?.username || "";
+  const profileLink = username ? `/profile/${slugifyUsername(username)}` : "/profile";
 
   const handleSignOut = async () => {
     try {
@@ -272,10 +275,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </h3>
               <div className="space-y-1">
                 <AnimatedNavLink
-                  href="/profile"
+                  href={profileLink}
                   icon={User}
                   label="Profile"
-                  isActive={isRouteActive("/profile")}
+                  isActive={isRouteActive(profileLink)}
                   onClick={handleNavClick}
                 />
                 <AnimatedNavLink
