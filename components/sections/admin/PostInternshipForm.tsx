@@ -381,24 +381,6 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
                 />
               </FormField>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField label="Monthly Stipend (Paid to Intern)">
-                <Input
-                  type="text"
-                  value={compensationAmount}
-                  onChange={(e) => setCompensationAmount(e.target.value)}
-                  placeholder="e.g., 50,000 FCFA"
-                />
-              </FormField>
-              <FormField label="Program Fee (Paid by Intern)">
-                <Input
-                  type="number"
-                  value={monthlyRate}
-                  onChange={(e) => setMonthlyRate(parseInt(e.target.value) || 0)}
-                  placeholder="e.g., 25000"
-                />
-              </FormField>
-            </div>
           )}
         </div>
       </FormSection>
