@@ -1,16 +1,17 @@
 // lib/validation/program.ts
 import { z } from 'zod';
+import { noUrl, URL_NOT_ALLOWED_MESSAGE } from './url-guard';
 
 export const programSchema = z.object({
     id: z.string().uuid().optional(),
-    title: z.string().min(3).max(100),
-    description: z.string().min(10).max(5000),
+    title: z.string().min(3).max(100).refine(noUrl, URL_NOT_ALLOWED_MESSAGE),
+    description: z.string().min(10).max(5000).refine(noUrl, URL_NOT_ALLOWED_MESSAGE),
     company_id: z.string().uuid(),
     program_category: z.enum(['bootcamp', 'hackathon', 'volunteer', 'mentorship', 'apprenticeship']),
     start_date: z.string().datetime(),
     end_date: z.string().datetime(), // Programs often have a clear end date
     application_deadline: z.string().datetime().optional(), // Optional, some programs might not have a strict application deadline
-    location: z.string().min(2).max(100).optional(), // Some programs might be fully remote without a specific location
+    location: z.string().min(2).max(100).refine(noUrl, URL_NOT_ALLOWED_MESSAGE).optional(), // Some programs might be fully remote without a specific location
     type: z.enum(['onsite', 'remote', 'hybrid']).default('remote'),
     compensation: z.string().max(100).optional(), // Can be 'paid', 'unpaid', or a specific amount
     program_picture_url: z.string().url().optional(), // URL to the image stored in Supabase Storage

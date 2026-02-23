@@ -1,15 +1,16 @@
 import { z } from 'zod';
+import { noUrl, URL_NOT_ALLOWED_MESSAGE } from './url-guard';
 
 export const internshipSchema = z.object({
     id: z.string().uuid().optional(),
-    title: z.string().min(3).max(100),
-    description: z.string().min(10).max(5000),
+    title: z.string().min(3).max(100).refine(noUrl, URL_NOT_ALLOWED_MESSAGE),
+    description: z.string().min(10).max(5000).refine(noUrl, URL_NOT_ALLOWED_MESSAGE),
     company_id: z.string().uuid(),
     cover_image_url: z.string().url().optional().nullable(),
     start_date: z.string().datetime(),
     end_date: z.string().datetime().nullable().optional(),
     deadline: z.string().datetime(),
-    location: z.string().min(2).max(100),
+    location: z.string().min(2).max(100).refine(noUrl, URL_NOT_ALLOWED_MESSAGE),
     type: z.enum(['onsite', 'remote', 'hybrid']).default('onsite').nullable(),
     is_paid: z.boolean().default(false).optional(),
     compensation_amount: z.string().max(100).nullable().optional(),

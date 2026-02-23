@@ -1,17 +1,19 @@
 import { z } from "zod";
+import { noUrl, URL_NOT_ALLOWED_MESSAGE } from "./url-guard";
 
 // 1. This is the BASE schema that matches your database table exactly.
 export const baseCompanySchema = z.object({
   id: z.string().uuid().optional(),
   user_id: z.string().uuid().optional(),
-  company_name: z.string().min(2, "Company name is required."),
+  company_name: z.string().min(2, "Company name is required.").refine(noUrl, URL_NOT_ALLOWED_MESSAGE),
   email: z.string().email(), // This is required in the database
   description: z
     .string()
-    .min(10, "A description of at least 10 characters is required."),
-  industry: z.string().optional(),
+    .min(10, "A description of at least 10 characters is required.")
+    .refine(noUrl, URL_NOT_ALLOWED_MESSAGE),
+  industry: z.string().refine(noUrl, URL_NOT_ALLOWED_MESSAGE).optional(),
   phone: z.string().optional().or(z.literal("")),
-  address: z.string().optional().or(z.literal("")),
+  address: z.string().refine(noUrl, URL_NOT_ALLOWED_MESSAGE).optional().or(z.literal("")),
   website_url: z
     .string()
     .url({ message: "Please enter a valid URL." })
@@ -19,10 +21,10 @@ export const baseCompanySchema = z.object({
     .or(z.literal("")),
   website: z.string().optional().or(z.literal("")), // Added for UI compatibility
   contact_email: z.string().email().optional().or(z.literal("")), // Added for UI compatibility
-  tagline: z.string().optional().or(z.literal("")),
+  tagline: z.string().refine(noUrl, URL_NOT_ALLOWED_MESSAGE).optional().or(z.literal("")),
   verified: z.boolean().optional(),
   size: z.string().optional().or(z.literal("")),
-  location: z.string().optional().or(z.literal("")), // Added for UI compatibility
+  location: z.string().refine(noUrl, URL_NOT_ALLOWED_MESSAGE).optional().or(z.literal("")), // Added for UI compatibility
   logo_url: z
     .string()
     .url({ message: "Please enter a valid URL." })

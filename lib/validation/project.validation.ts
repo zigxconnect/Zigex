@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { noUrl, URL_NOT_ALLOWED_MESSAGE } from "./url-guard";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB for cover image
 const MAX_VIDEO_SIZE = 20 * 1024 * 1024; // 20MB for uploaded short videos (strictly)
@@ -10,11 +11,13 @@ export const projectFormSchema = z.object({
   title: z.string()
     .min(3, "Title must be at least 3 characters")
     .max(100, "Title must not exceed 100 characters")
-    .regex(/^[a-zA-Z0-9\s\-_,.!?&():'"]+$/, "Title contains invalid characters"),
+    .regex(/^[a-zA-Z0-9\s\-_,.!?&():'"]+$/, "Title contains invalid characters")
+    .refine(noUrl, URL_NOT_ALLOWED_MESSAGE),
 
   description: z.string()
     .min(50, "Description must be at least 50 characters")
-    .max(500, "Description must not exceed 500 characters"),
+    .max(500, "Description must not exceed 500 characters")
+    .refine(noUrl, URL_NOT_ALLOWED_MESSAGE),
 
   githubLink: z.union([
     z.string().regex(
@@ -62,8 +65,8 @@ export type ProjectFormInput = z.infer<typeof projectFormSchema>;
 
 // Server-side validation schema that works with FormData
 export const serverProjectSchema = z.object({
-  title: z.string().min(3).max(100),
-  description: z.string().min(50).max(500),
+  title: z.string().min(3).max(100).refine(noUrl, URL_NOT_ALLOWED_MESSAGE),
+  description: z.string().min(50).max(500).refine(noUrl, URL_NOT_ALLOWED_MESSAGE),
   githubLink: z.string().optional(),
   youtubeLink: z.string().min(1, "YouTube URL is required"),
   duration: z.string().min(1),
