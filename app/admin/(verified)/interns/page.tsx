@@ -161,6 +161,7 @@ function InternsPageComponent() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterDomain, setFilterDomain] = useState<string | null>(null);
+  const [filterSchool, setFilterSchool] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "table" | "ledger" | "management" | "records">("table");
   const [companyId, setCompanyId] = useState<string | null>(null);
 
@@ -364,19 +365,27 @@ function InternsPageComponent() {
     }
   };
 
-  // Get unique domains for filtering
+  // Get unique domains and schools for filtering
   const domains = [...new Set(applicants.map(a => a.domain).filter(Boolean))];
+  const schools = [...new Set(applicants.map(a => a.school).filter(Boolean))].sort();
 
   const filteredApplicants = applicants.filter(app => {
-    const matchesSearch = 
-      app.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (app.internshipTitle || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (app.school || "").toLowerCase().includes(searchQuery.toLowerCase());
-    
+    const searchTerms = [
+      app.name,
+      app.email,
+      app.internshipTitle,
+      app.school,
+      app.domain,
+      app.studentId,
+      app.userId,
+      app.id
+    ].filter(Boolean).map(t => String(t).toLowerCase());
+
+    const matchesSearch = !searchQuery || searchTerms.some(term => term.includes(searchQuery.toLowerCase()));
     const matchesDomain = !filterDomain || app.domain === filterDomain;
+    const matchesSchool = !filterSchool || app.school === filterSchool;
     
-    return matchesSearch && matchesDomain;
+    return matchesSearch && matchesDomain && matchesSchool;
   });
 
   const selectedApplicant = applicants.find(app => app.id === selectedApplicantId);
@@ -600,11 +609,41 @@ function InternsPageComponent() {
             />
           </div>
           
-          <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto custom-scrollbar pb-2 md:pb-0">
+            {schools.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="gap-3 h-16 px-6 rounded-[1.5rem] border-slate-100 bg-slate-50/50 hover:bg-white hover:border-blue-200 min-w-[180px] justify-between font-bold text-slate-600 uppercase tracking-widest text-[10px] shrink-0">
+                    <div className="flex items-center gap-3">
+                      <Filter size={16} className="text-blue-500" />
+                      <span className="truncate max-w-[100px]">{filterSchool || "All Schools"}</span>
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64 rounded-[1.5rem] p-2 border-blue-50 shadow-2xl z-[100]">
+                  <DropdownMenuItem onClick={() => setFilterSchool(null)} className="rounded-xl py-3 font-bold text-xs uppercase text-slate-400 cursor-pointer hover:bg-slate-50">
+                    All Schools
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
+                    {schools.map(school => (
+                      <DropdownMenuItem 
+                        key={school} 
+                        onClick={() => setFilterSchool(school!)}
+                        className="rounded-xl py-3 font-bold text-xs uppercase cursor-pointer hover:bg-blue-50 hover:text-blue-600"
+                      >
+                        {school}
+                      </DropdownMenuItem>
+                    ))}
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
             {domains.length > 0 && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="gap-3 h-16 px-6 rounded-[1.5rem] border-slate-100 bg-slate-50/50 hover:bg-white hover:border-blue-200 min-w-[180px] justify-between font-bold text-slate-600 uppercase tracking-widest text-[10px]">
+                  <Button variant="outline" className="gap-3 h-16 px-6 rounded-[1.5rem] border-slate-100 bg-slate-50/50 hover:bg-white hover:border-blue-200 min-w-[180px] justify-between font-bold text-slate-600 uppercase tracking-widest text-[10px] shrink-0">
                     <div className="flex items-center gap-3">
                       <Filter size={16} className="text-blue-500" />
                       <span>{filterDomain || "All Expertise"}</span>
@@ -756,7 +795,7 @@ function InternsPageComponent() {
 
             {viewMode === "management" && (
               <InternManagementTable 
-                applicants={applicants}
+                applicants={filteredApplicants}
                 companyId={companyId || ""}
                 onSelect={handleSelectApplicant}
               />
@@ -764,7 +803,7 @@ function InternsPageComponent() {
 
             {viewMode === "records" && (
               <InternRecordsTable 
-                applicants={applicants}
+                applicants={filteredApplicants}
                 companyId={companyId || ""}
               />
             )}

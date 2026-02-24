@@ -69,12 +69,8 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
 
   // Filter only active (accepted) interns
   const activeInterns = useMemo(() => {
-    return applicants.filter(app => 
-      app.status === "accepted" && 
-      (app.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-       app.email.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-  }, [applicants, searchTerm]);
+    return applicants.filter(app => app.status === "accepted");
+  }, [applicants]);
 
   const handleOpenInternPortal = async (intern: Applicant) => {
     setSelectedIntern(intern);
@@ -149,23 +145,13 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
           </h2>
           <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Tracking verification metrics for {activeInterns.length} students</p>
         </div>
-        
         <div className="flex items-center gap-3 w-full lg:w-auto">
-          <div className="relative flex-1 lg:w-80 group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={16} />
-            <Input
-              placeholder="Filter by name, ID or email..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-11 h-12 rounded-2xl border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all font-medium text-sm"
-            />
-          </div>
           <Button 
             onClick={handleExportCSV}
             variant="outline" 
-            className="h-12 px-5 rounded-2xl border-slate-100 hover:bg-slate-50 text-slate-600 font-bold uppercase text-[10px] tracking-widest gap-2"
+            className="h-12 px-5 rounded-2xl border-slate-100 hover:bg-slate-50 text-slate-600 font-bold uppercase text-[10px] tracking-widest gap-2 whitespace-nowrap"
           >
-            <Download size={14} /> Export CSV
+            <Download size={14} /> Export
           </Button>
         </div>
       </div>
@@ -209,7 +195,14 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
                         </div>
                         <div>
                           <p className="font-black text-slate-900 text-sm group-hover:text-blue-600 transition-colors">{intern.name}</p>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{intern.email}</p>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate max-w-[150px]">{intern.email}</p>
+                          {intern.school && (
+                             <div className="mt-1 flex items-center gap-1">
+                                <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-600 border border-blue-100/50 truncate max-w-[180px]">
+                                   {intern.school}
+                                </span>
+                             </div>
+                          )}
                         </div>
                       </div>
                     </td>
