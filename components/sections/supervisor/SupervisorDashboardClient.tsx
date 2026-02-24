@@ -29,7 +29,8 @@ import {
   Award,
   Edit,
   AlertTriangle,
-  UsersRound
+  UsersRound,
+  ShieldCheck
 } from "lucide-react";
 import { format } from "date-fns";
 import Image from "next/image";
@@ -89,6 +90,8 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
   // Attendance Batch State
   const [pendingAttendance, setPendingAttendance] = useState<Record<string, string>>({});
   const [isSubmittingBatch, setIsSubmittingBatch] = useState(false);
+  const [showAttendanceSuccess, setShowAttendanceSuccess] = useState(false);
+  const [internSearchTerm, setInternSearchTerm] = useState("");
 
   const { interns, recentLogs, tasks, attendance, evaluations } = data;
   const router = useRouter();
@@ -197,7 +200,7 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
 
       const res = await submitBatchAttendance(records);
       if (res.success) {
-        toast.success(`Success: ${res.count} records sent to company!`);
+        setShowAttendanceSuccess(true);
         router.refresh();
       } else {
         toast.error(res.error || "Failed to send attendance");
@@ -706,12 +709,33 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                 </div>
               </div>
 
+              <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2rem] p-6 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
+                 <div>
+                   <h3 className="font-bold text-slate-900 dark:text-white text-base tracking-tight">Register Trainees</h3>
+                   <p className="text-[10px] text-slate-500 mt-1 max-w-sm tracking-tight leading-relaxed">Search through your assigned interns to mark them present quickly. Unmarked interns default to absent.</p>
+                 </div>
+                 
+                 <div className="relative w-full sm:w-auto">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                    <Input 
+                      placeholder="Search intern name..." 
+                      value={internSearchTerm}
+                      onChange={(e) => setInternSearchTerm(e.target.value)}
+                      className="pl-10 h-11 w-full sm:w-64 rounded-xl border-slate-100 bg-slate-50 dark:bg-slate-800 dark:border-slate-800 text-xs font-bold tracking-tight focus:ring-2 focus:ring-blue-100 transition-all"
+                    />
+                 </div>
+              </div>
+
               {/* Intern List/Grid with bottom padding for mobile tab bar */}
               <div className={cn(
                 "grid gap-4 sm:gap-6 md:grid-cols-2 pb-32 md:pb-12",
                 !isAttendanceWindow() && "opacity-50 pointer-events-none grayscale-[0.5]"
               )}>
-                {interns.map((intern, idx) => {
+                {interns.filter((intern) => {
+                  const student = Array.isArray(intern.student) ? intern.student[0] : intern.student;
+                  if (!internSearchTerm) return true;
+                  return student?.full_name?.toLowerCase().includes(internSearchTerm.toLowerCase());
+                }).map((intern, idx) => {
                   const student = Array.isArray(intern.student) ? intern.student[0] : intern.student;
                   const confirmedRecord = attendance.find(a => a.student_id === student?.user_id);
                   const isLocked = !!confirmedRecord && confirmedRecord.status === 'present';
@@ -1356,6 +1380,46 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                     className="w-full rounded-2xl h-14 font-black text-slate-400 hover:text-slate-600"
                 >
                     CLOSE
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ATTENDANCE SUCCESS MODAL */}
+      <AnimatePresence>
+        {showAttendanceSuccess && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+            <motion.div 
+               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+               onClick={() => setShowAttendanceSuccess(false)}
+               className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden p-10 text-center border border-slate-100 dark:border-slate-800"
+            >
+              <div className="absolute -top-10 -right-10 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+              
+              <div className="relative z-10 w-20 h-20 bg-emerald-50 dark:bg-emerald-900/20 rounded-3xl flex items-center justify-center mx-auto mb-6 text-emerald-500 shadow-inner">
+                <CheckCircle2 size={40} className="drop-shadow-sm" />
+              </div>
+              
+              <h3 className="relative z-10 text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-2">Logs Secured</h3>
+              <p className="relative z-10 text-slate-500 dark:text-slate-400 text-sm font-medium leading-relaxed mb-8">
+                Daily attendance has been synchronized. All operations are nominal.
+              </p>
+              
+              <div className="relative z-10 space-y-3">
+                <Button 
+                    onClick={() => setShowAttendanceSuccess(false)}
+                    className="w-full rounded-2xl h-14 font-black text-[10px] tracking-wider bg-emerald-500 text-white hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/20"
+                >
+                    ACKNOWLEDGE
                 </Button>
               </div>
             </motion.div>
