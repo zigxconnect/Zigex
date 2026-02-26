@@ -8,7 +8,10 @@ import {
   Activity, MessageSquare, Download,
   ArrowUpRight, BarChart3, Target, Filter,
   MoreHorizontal, ChevronDown, UserCircle,
-  ExternalLink, FileSpreadsheet
+  ExternalLink, FileSpreadsheet, Sparkles,
+  Zap, BrainCircuit, LayoutDashboard,
+  Users,
+  FileText
 } from "lucide-react";
 import Image from "next/image";
 import { format, differenceInDays } from "date-fns";
@@ -49,8 +52,6 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
       setFetchingSummaries(true);
       try {
         const data = await getCompanyInternsPerformanceSummary(companyId);
-        console.log("[RECORDS_DEBUG] Fetched summaries:", data);
-        console.log("[RECORDS_DEBUG] Summary keys:", Object.keys(data || {}));
         setSummaries(data || {});
       } catch (err) {
         console.error("Error fetching performance summaries:", err);
@@ -80,7 +81,6 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
     const targetStudentId = intern.userId || intern.studentId || "";
 
     if (!targetStudentId) {
-      console.warn("No valid student ID found for intern:", intern);
       setEvaluations([]);
       setLogs([]);
       setLoading(false);
@@ -92,6 +92,7 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
         getEvaluationsForIntern(targetStudentId),
         getInternLogsForAdmin(targetStudentId, intern.internshipId || undefined)
       ]);
+      
       setEvaluations(evals || []);
       setLogs(internLogs || []);
     } catch (error) {
@@ -175,7 +176,7 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
                 const daysWorked = intern.appliedDate ? differenceInDays(new Date(), new Date(intern.appliedDate)) : 0;
                 // Try lookup by application ID first, then by user ID as fallback
                 // Try all ID fallbacks: application ID, userId (auth user), studentId (profile id)
-                const summary = summaries[intern.id] || summaries[intern.userId || ""] || summaries[intern.studentId || ""] || { attendanceCount: 0, totalMarks: 0 };
+                const summary = summaries[intern.id] || summaries[intern.userId || ""] || summaries[intern.studentId || ""] || { attendanceCount: 0, totalMarks: 0, latestObservation: "", taskCount: 0, avgMark: null, performanceRating: null };
                 
                 return (
                   <tr key={intern.id} className="group hover:bg-blue-50/30 transition-colors duration-300">
@@ -225,12 +226,12 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
                         <div className="flex flex-col items-center gap-1.5">
                           <div className="flex items-baseline gap-1">
                              <span className="text-sm font-black text-slate-900">{summary.attendanceCount}</span>
-                             <span className="text-[10px] font-bold text-slate-400">Total Days</span>
+                             <span className="text-[10px] font-bold text-slate-400">/ {parseInt(intern.duration || "1") * 20}</span>
                           </div>
                           <div className="h-1.5 w-16 bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
                              <div 
                                className="h-full bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.3)]" 
-                               style={{ width: `${Math.min(100, (summary.attendanceCount / Math.max(1, daysWorked)) * 100)}%` }} 
+                               style={{ width: `${Math.min(100, (summary.attendanceCount / (parseInt(intern.duration || "1") * 20)) * 100)}%` }} 
                              />
                           </div>
                         </div>
@@ -292,7 +293,7 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
           {activeInterns.length === 0 && (
             <div className="py-20 text-center">
               <div className="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center mx-auto mb-4 text-slate-200 border-2 border-dashed border-slate-100">
-                <UsersIcon size={32} />
+                <Users size={32} />
               </div>
               <h3 className="font-black text-slate-900 text-lg">No records match your criteria</h3>
               <p className="text-sm text-slate-400 font-medium uppercase tracking-widest mt-2 px-20">Adjust your filters or ensure you have active interns in the system to view performance metrics.</p>
@@ -318,182 +319,121 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
 
       {/* The Detail Portal (Sheet/Dialog) */}
       <Dialog open={isPortalOpen} onOpenChange={setIsPortalOpen}>
-        <DialogContent className="max-w-6xl h-[95vh] p-0 bg-slate-50 border-none rounded-[3rem] overflow-hidden shadow-2xl flex flex-col">
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0 bg-white border border-blue-100 rounded-[2.5rem] overflow-hidden shadow-[0_20px_50px_rgba(30,58,138,0.1)] flex flex-col focus:outline-none">
           <DialogTitle className="sr-only">Performance Report - {selectedIntern?.name}</DialogTitle>
           <DialogDescription className="sr-only">Comprehensive audit of attendance, weekly marks, and supervisor feedback.</DialogDescription>
           
-          {/* Header Portal Info */}
-          <div className="bg-white border-b border-blue-50 p-8 flex items-center justify-between shrink-0">
-             <div className="flex items-center gap-6">
-                <div className="relative">
-                   <div className="w-20 h-20 rounded-[2rem] bg-gradient-to-br from-blue-600 to-indigo-700 p-0.5 shadow-2xl shadow-blue-200">
-                      <div className="bg-white h-full w-full rounded-[calc(2rem-2px)] flex items-center justify-center text-3xl font-black text-blue-600 overflow-hidden">
-                         {selectedIntern?.avatarUrl ? (
-                            <Image src={selectedIntern.avatarUrl} alt="Avatar" width={80} height={80} className="object-cover h-full w-full" />
-                         ) : selectedIntern?.name.charAt(0)}
-                      </div>
+          {/* Close Button */}
+          {/* <button 
+            onClick={() => setIsPortalOpen(false)} 
+            className="absolute top-6 right-6 h-10 w-10 flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-all z-50"
+          >
+             <CloseIcon size={20} />
+          </button> */}
+
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8">
+            {/* Header: Student Profile & School */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-4">
+               <div className="flex items-center gap-6">
+                  <div className="relative">
+                    <div className="w-20 h-20 rounded-[2rem] bg-gradient-to-br from-blue-500 to-indigo-600 p-0.5 shadow-lg shadow-blue-500/20">
+                       <div className="bg-white h-full w-full rounded-[calc(2rem-2px)] flex items-center justify-center text-3xl font-black text-blue-600 overflow-hidden">
+                          {selectedIntern?.avatarUrl && selectedIntern.avatarUrl !== "/default-avatar.svg" ? (
+                             <Image src={selectedIntern.avatarUrl} alt="Avatar" width={80} height={80} className="object-cover h-full w-full" />
+                          ) : selectedIntern?.name.charAt(0)}
+                       </div>
+                    </div>
+                  </div>
+                  <div>
+                    <h2 className="text-3xl font-black text-slate-900 tracking-tight leading-none">{selectedIntern?.name}</h2>
+                    <p className="text-blue-600 text-sm font-bold uppercase tracking-widest mt-2">{selectedIntern?.internshipTitle || "Intern"}</p>
+                  </div>
+               </div>
+               
+               <div className="text-right">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Affiliated Institution</p>
+                  <p className="text-lg font-bold text-slate-600">{selectedIntern?.school || "Zigex Academy"}</p>
+               </div>
+            </div>
+
+            {/* Premium Stats Row */}
+             {(() => {
+                const targetDays = parseInt(selectedIntern?.duration || "1") * 20;
+                const summary = selectedIntern ? getSummary(selectedIntern) : { attendanceCount: 0, totalMarks: 0, taskCount: 0, avgMark: null, performanceRating: null };
+                
+                return (
+                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 px-2">
+                      <StatBox label="Tasks Done" value={summary.taskCount || 0} icon={CheckCircle2} color="bg-[#155DFC]" />
+                      <StatBox label="Attendance" value={`${summary.attendanceCount || 0} / ${targetDays} Days`} icon={Calendar} color="bg-emerald-500" />
+                      <StatBox label="Avg Mark" value={summary.avgMark ? `${summary.avgMark}/5` : "---"} icon={TrendingUp} color="bg-amber-500" trend={summary.avgMark >= 4 ? "+High" : undefined} />
+                      <StatBox label="Performance" value={summary.performanceRating || "---"} icon={Award} color="bg-purple-600" />
                    </div>
-                </div>
-                <div>
-                   <h2 className="text-3xl font-black text-slate-900 tracking-tight">{selectedIntern?.name}</h2>
-                   <div className="flex items-center gap-3 mt-1.5">
-                      <Badge className="bg-blue-600/10 text-blue-700 rounded-lg px-2.5 py-1 text-[9px] uppercase font-black tracking-widest border border-blue-100">{selectedIntern?.internshipTitle}</Badge>
-                      <span className="text-xs text-slate-400 font-bold flex items-center gap-1.5 border-l border-slate-200 pl-3">
-                         <Target size={12} className="text-rose-500" /> ID: {selectedIntern?.id.substring(0, 8).toUpperCase()}
-                      </span>
-                   </div>
-                </div>
-             </div>
-             <div className="flex items-center gap-3">
-                <Button variant="outline" className="h-12 rounded-2xl border-slate-200 uppercase text-[10px] font-black tracking-widest px-6 bg-white hover:bg-slate-50 transition-all shadow-sm">
-                   <FileSpreadsheet size={16} className="mr-2 text-emerald-600" /> Full Export
-                </Button>
-                <button onClick={() => setIsPortalOpen(false)} className="h-12 w-12 flex items-center justify-center rounded-2xl text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-all">
-                   <CloseIcon size={24} />
-                </button>
-             </div>
+                );
+             })()}
+
+            {/* Weekly Remarks Section */}
+            <div className="space-y-4 px-4 pb-4">
+               <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.3em] flex items-center gap-2">
+                  <Activity size={14} className="text-blue-500" /> performance audit timeline
+               </h3>
+               
+               <div className="space-y-3">
+                  {loading ? (
+                    <div className="py-20 flex flex-col items-center justify-center bg-slate-50 rounded-[2rem] border border-slate-100 border-dashed">
+                       <div className="w-10 h-10 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mb-4" />
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Compiling feedback data...</p>
+                    </div>
+                  ) : evaluations.length > 0 ? (
+                    evaluations.map((eval_item, idx) => (
+                      <motion.div 
+                        key={eval_item.id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.1 }}
+                        className="bg-slate-50 border border-slate-100 rounded-2xl p-5 hover:bg-blue-50/50 transition-all group flex flex-col md:flex-row md:items-center justify-between gap-4"
+                      >
+                         <div className="flex items-center gap-4 flex-1">
+                            <div className="h-10 w-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600 font-bold text-xs shrink-0">
+                               W{evaluations.length - idx}
+                            </div>
+                            <div className="space-y-1">
+                               <p className="text-xs font-black text-slate-400 uppercase tracking-widest leading-none">
+                                  Remark by {eval_item.supervisor?.full_name || "Supervisor"}
+                               </p>
+                               <p className="text-sm text-slate-700 font-medium leading-relaxed italic">
+                                  "{eval_item.comments || "Exceptional performance observed during this cycle."}"
+                               </p>
+                            </div>
+                         </div>
+                         <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
+                            <Badge className="bg-blue-500/10 text-blue-600 border-none rounded-lg px-2 py-1 text-[10px] font-black uppercase">
+                               {eval_item.overall_rating} pts
+                            </Badge>
+                         </div>
+                      </motion.div>
+                    ))
+                  ) : (
+                    <div className="py-20 text-center bg-slate-50/50 dark:bg-slate-900/50 rounded-2xl border-2 border-dashed border-slate-100 dark:border-slate-800">
+                      <FileText className="mx-auto h-16 w-16 text-slate-200 mb-6 drop-shadow-sm" />
+                      <h4 className="text-slate-900 dark:text-white font-bold text-lg mb-1">No Records Found</h4>
+                      <p className="text-slate-500 text-xs font-medium max-w-xs mx-auto leading-relaxed">
+                        We couldn't find any detailed supervisor observations or record history for this intern yet.
+                      </p>
+                    </div>
+                  )}
+               </div>
+            </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                
-                {/* Scorecards */}
-                <div className="lg:col-span-4 space-y-6">
-                   <div className="bg-white rounded-[2rem] p-8 border border-blue-50 shadow-xl shadow-blue-500/5">
-                      <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-8 flex items-center gap-2">
-                        <BarChart3 size={14} className="text-indigo-500" /> Master KPIs
-                      </h4>
-                      <div className="space-y-8">
-                         <KPIMetric label="Technical Achievement" value={selectedIntern ? Math.min(100, (getSummary(selectedIntern).totalMarks || 0) * 4) : 0} color="bg-blue-600" />
-                         <KPIMetric label="Soft Skills Proficiency" value={85} color="bg-indigo-600" />
-                         <KPIMetric label="Attendance Compliance" value={selectedIntern ? Math.min(100, Math.round(((getSummary(selectedIntern).attendanceCount || 0) / Math.max(1, selectedIntern.appliedDate ? differenceInDays(new Date(), new Date(selectedIntern.appliedDate)) : 30)) * 100)) : 0} color="bg-emerald-500" />
-                      </div>
-                   </div>
-
-                   <div className="bg-slate-900 rounded-[2rem] p-8 text-white shadow-2xl relative overflow-hidden group">
-                      <div className="relative z-10">
-                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Total Evaluation Points</h4>
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-5xl font-black text-white">{selectedIntern ? (getSummary(selectedIntern).totalMarks || 0) : 0}</span>
-                          <span className="text-xl font-bold text-slate-500">Points</span>
-                        </div>
-                        <div className="mt-8 flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10">
-                           <div className="flex items-center gap-3">
-                              <Star size={16} className="text-amber-400" />
-                              <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
-                                Validated by Supervisors
-                              </span>
-                           </div>
-                           <TrendingUp size={16} className="text-emerald-400" />
-                        </div>
-                      </div>
-                      <SparklesIcon className="absolute -right-6 -bottom-6 text-white opacity-[0.05] group-hover:rotate-12 transition-transform duration-1000" size={160} />
-                   </div>
-                </div>
-
-                {/* Audit Timeline */}
-                <div className="lg:col-span-8 space-y-8">
-                   <div className="space-y-6">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-                           <FileSpreadsheet size={20} className="text-emerald-600" /> Detailed Audit Trail
-                           <span className="text-[10px] font-black bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-lg uppercase ml-2 tracking-widest">verified</span>
-                        </h3>
-                      </div>
-
-                      {loading ? (
-                         <div className="py-20 flex flex-col items-center justify-center bg-white rounded-[2rem] border border-blue-50 border-dashed">
-                             <div className="w-12 h-12 border-4 border-slate-100 border-t-blue-600 rounded-full animate-spin mb-4" />
-                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Aggregating Global Records...</p>
-                         </div>
-                      ) : (evaluations.length > 0 || logs.length > 0) ? (
-                         <div className="space-y-4">
-                            {/* Merge and sort logs & evals for a true audit trail? 
-                                For now, let's show weekly marks (evaluations) predominantly as requested */}
-                            {evaluations.map((eval_item, idx) => (
-                               <motion.div 
-                                 key={eval_item.id}
-                                 initial={{ opacity: 0, y: 10 }}
-                                 animate={{ opacity: 1, y: 0 }}
-                                 transition={{ delay: idx * 0.1 }}
-                                 className="bg-white rounded-[2rem] p-6 border border-slate-100 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-500/5 transition-all group lg:flex items-center gap-8"
-                               >
-                                  {/* Week Badge */}
-                                  <div className="lg:w-32 flex flex-col items-center justify-center p-4 rounded-2xl bg-slate-50 border border-slate-100 group-hover:bg-blue-600 group-hover:border-blue-500 transition-colors duration-500 shrink-0">
-                                     <span className="text-[10px] font-black text-slate-400 group-hover:text-blue-100 uppercase tracking-[0.2em] mb-1">Cycle</span>
-                                     <span className="text-2xl font-black text-slate-900 group-hover:text-white leading-none">0{evaluations.length - idx}</span>
-                                  </div>
-
-                                  {/* Content */}
-                                  <div className="flex-1 py-4 lg:py-0 border-y lg:border-y-0 lg:border-x border-slate-50 lg:px-8 space-y-3">
-                                     <div className="flex items-center justify-between flex-wrap gap-2">
-                                        <div className="flex items-center gap-2">
-                                           <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-500">
-                                              <UserCircle size={16} />
-                                           </div>
-                                           <p className="text-xs font-black text-slate-900 truncate max-w-[150px]">{eval_item.supervisor?.full_name || 'System Admin'}</p>
-                                        </div>
-                                        <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">{format(new Date(eval_item.evaluation_date), "MMM dd, yyyy")}</span>
-                                     </div>
-                                     <div className="flex items-start gap-4">
-                                        <MessageSquare size={14} className="text-slate-300 mt-1 shrink-0" />
-                                        <p className="text-xs text-slate-500 leading-relaxed italic border-l-2 border-slate-100 pl-4">
-                                          "{eval_item.comments || "No specific observations recorded for this week."}"
-                                        </p>
-                                     </div>
-                                  </div>
-
-                                  {/* Marks */}
-                                  <div className="lg:w-40 text-center space-y-2 shrink-0">
-                                     <div className="flex items-baseline justify-center gap-1">
-                                        <span className="text-3xl font-black text-slate-900">{eval_item.overall_rating}</span>
-                                        <span className="text-sm font-bold text-slate-400">Score</span>
-                                     </div>
-                                     <div className="flex items-center justify-center gap-1 text-[9px] font-black uppercase tracking-widest text-emerald-600">
-                                        <Award size={10} /> Validated
-                                     </div>
-                                  </div>
-                               </motion.div>
-                            ))}
-
-                            {/* Attendance Summary Strip */}
-                            <div className="bg-gradient-to-r from-blue-600/5 to-transparent border border-blue-50 rounded-[2rem] p-8 flex flex-col md:flex-row items-center justify-between gap-6">
-                               <div className="flex items-center gap-6">
-                                  <div className="w-16 h-16 rounded-[1.5rem] bg-blue-600 flex items-center justify-center text-white shadow-xl shadow-blue-500/20">
-                                     <Clock size={24} />
-                                  </div>
-                                  <div>
-                                     <h5 className="font-black text-slate-900 tracking-tight">Daily Attendance Summary</h5>
-                                     <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Verifying entry coordinates & timestamps</p>
-                                  </div>
-                               </div>
-                               <div className="flex items-center gap-8">
-                                  <div className="text-center">
-                                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Present Days</p>
-                                     <p className="text-2xl font-black text-slate-900">{selectedIntern ? getSummary(selectedIntern).attendanceCount || 0 : 0}</p>
-                                  </div>
-                                  <div className="w-px h-10 bg-slate-200" />
-                                  <div className="text-center">
-                                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Punctuality Score</p>
-                                     <p className="text-2xl font-black text-emerald-600">
-                                        {selectedIntern ? Math.round(((getSummary(selectedIntern).attendanceCount || 0) / Math.max(1, selectedIntern.appliedDate ? differenceInDays(new Date(), new Date(selectedIntern.appliedDate)) : 30)) * 100) : 0}%
-                                      </p>
-                                   </div>
-                                </div>
-                            </div>
-                         </div>
-                      ) : (
-                         <div className="bg-white rounded-[2rem] p-20 text-center border border-slate-100 shadow-sm border-dashed">
-                            <div className="w-16 h-16 bg-slate-50 rounded-[1.5rem] flex items-center justify-center mx-auto mb-4 text-slate-200">
-                               <MessageSquare size={32} />
-                            </div>
-                            <h5 className="font-bold text-slate-400 text-sm uppercase tracking-widest">No Performance Indexed</h5>
-                            <p className="text-xs text-slate-300 mt-2">Audit data will appear here once the first supervisor evaluation cycle is complete.</p>
-                         </div>
-                      )}
-                   </div>
-                </div>
-             </div>
+           {/* AI Footer Action */}
+          <div className="p-8 bg-slate-50 border-t border-slate-100 shrink-0">
+             <Button 
+               className="w-full h-16 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black uppercase tracking-[0.2em] text-xs shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-3 border-none group"
+             >
+                <BrainCircuit size={20} className="group-hover:scale-110 transition-transform" />
+                Analyze student profile
+                <Zap size={16} className="text-amber-300 fill-amber-300" />
+             </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -501,40 +441,31 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
   );
 }
 
-// Highly stylized KPI Metric Visualizer
-const KPIMetric = ({ label, value, color }: { label: string, value: number, color: string }) => (
-  <div className="space-y-3">
-    <div className="flex justify-between items-end">
-      <div className="space-y-1">
-         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</span>
+ // Stats Box Component
+const StatBox = ({ label, value, icon: Icon, color, trend }: any) => (
+  <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-5 rounded-[1.5rem] shadow-sm relative overflow-hidden group hover:border-[#155DFC]/20 transition-all duration-300">
+    <div className={`absolute top-0 left-0 w-1.5 h-full ${color} opacity-10 group-hover:opacity-100 transition-opacity`} />
+    <div className="flex items-center gap-4 relative z-10">
+      <div className={`p-3 rounded-2xl ${color} shadow-lg shadow-black/5 group-hover:scale-110 transition-transform duration-500`}>
+        <Icon size={20} className="text-white" />
       </div>
-      <div className="flex items-baseline gap-0.5">
-         <span className="text-xl font-black text-slate-900">{value}</span>
-         <span className="text-[10px] font-bold text-slate-400">%</span>
+      <div className="min-w-0">
+        <p className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">{label}</p>
+        <div className="flex items-center gap-2">
+          <p className="text-xl font-black text-black dark:text-white leading-none tracking-tight">{value}</p>
+          {trend && (
+            <span className="text-[10px] font-bold text-emerald-500 flex items-center gap-0.5">
+               {trend}
+            </span>
+          )}
+        </div>
       </div>
     </div>
-    <div className="relative h-2 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
-      <motion.div 
-        initial={{ width: 0 }}
-        animate={{ width: `${value}%` }}
-        transition={{ duration: 1.5, ease: [0.19, 1, 0.22, 1] }}
-        className={cn("h-full rounded-full shadow-lg relative z-10", color)} 
-      />
-      {/* Dynamic Background Pattern */}
-      <div className="absolute inset-0 opacity-[0.05]" style={{ backgroundImage: 'linear-gradient(45deg, #000 25%, transparent 25%, transparent 50%, #000 50%, #000 75%, transparent 75%, transparent)' , backgroundSize: '4px 4px' }} />
-    </div>
+    <div className="absolute -bottom-6 -right-6 w-16 h-16 bg-slate-50 dark:bg-slate-800/50 rounded-full group-hover:scale-150 transition-transform duration-700 opacity-50" />
   </div>
 );
 
 // Minimalist Vector Icons
 const CloseIcon = ({ size }: { size: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
-);
-
-const UsersIcon = ({ size }: { size: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-);
-
-const SparklesIcon = ({ size, className }: { size: number, className?: string }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" /></svg>
 );

@@ -613,10 +613,10 @@ function InternsPageComponent() {
             {schools.length > 0 && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="gap-3 h-16 px-6 rounded-[1.5rem] border-slate-100 bg-slate-50/50 hover:bg-white hover:border-blue-200 min-w-[180px] justify-between font-bold text-slate-600 uppercase tracking-widest text-[10px] shrink-0">
+                  <Button variant="outline" className="gap-3 h-16 px-6 rounded-[1.5rem] border-2 border-slate-100 bg-slate-50/50 hover:bg-white hover:border-blue-200 min-w-[200px] justify-between font-bold text-slate-600 uppercase tracking-widest text-[10px] shrink-0 transition-all duration-300">
                     <div className="flex items-center gap-3">
                       <Filter size={16} className="text-blue-500" />
-                      <span className="truncate max-w-[100px]">{filterSchool || "All Schools"}</span>
+                      <span className="truncate max-w-[120px]">{filterSchool || "All Schools"}</span>
                     </div>
                   </Button>
                 </DropdownMenuTrigger>
@@ -643,7 +643,7 @@ function InternsPageComponent() {
             {domains.length > 0 && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="gap-3 h-16 px-6 rounded-[1.5rem] border-slate-100 bg-slate-50/50 hover:bg-white hover:border-blue-200 min-w-[180px] justify-between font-bold text-slate-600 uppercase tracking-widest text-[10px] shrink-0">
+                  <Button variant="outline" className="gap-3 h-16 px-6 rounded-[1.5rem] border-2 border-slate-100 bg-slate-50/50 hover:bg-white hover:border-blue-200 min-w-[200px] justify-between font-bold text-slate-600 uppercase tracking-widest text-[10px] shrink-0 transition-all duration-300">
                     <div className="flex items-center gap-3">
                       <Filter size={16} className="text-blue-500" />
                       <span>{filterDomain || "All Expertise"}</span>
