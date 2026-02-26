@@ -41,7 +41,10 @@ import {
   ShieldCheck,
   Radio,
   Activity,
-  X
+  X,
+  Play,
+  FileCheck2,
+  LockKeyhole
 } from "lucide-react";
 import { format } from "date-fns";
 import Link from "next/link";
@@ -61,7 +64,7 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 import { InternActivityGraph } from "./InternActivityGraph";
 import { normalizeImageSrc } from "@/lib/utils";
-import { getInternCurriculum, CurriculumModule } from "@/lib/data/intern-curriculum";
+import { getProgramCurriculum, ProgramCurriculum, LevelCurriculum, CurriculumModule, Lesson } from "@/lib/data/curriculum";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 interface InternWorkspaceClientProps {
@@ -123,12 +126,23 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
     ? (fellowSupervisors || []).filter((s: any) => (s.department || "").toLowerCase().trim() === studentDomain)
     : (fellowSupervisors || []);
 
-  const [expandedModule, setExpandedModule] = useState<string | null>(null);
+  const fullProgramCurriculum = getProgramCurriculum(application?.domain || application?.internships?.title || "");
+  
+  // Mapping for experience levels to match curriculum data levels
+  const getMappedLevel = (level?: string): LevelCurriculum['level'] => {
+    if (!level) return 'Beginner';
+    const l = level.toLowerCase();
+    if (l.includes('expert') || l.includes('advanced')) return 'Advanced';
+    if (l.includes('intermediate')) return 'Intermediate';
+    return 'Beginner'; // Default to Beginner for "No Idea" or unknown
+  };
 
-  // Get dummy curriculum if DB one is empty
-  const displayCurriculum = (curriculum && curriculum.length > 0) 
-    ? curriculum 
-    : getInternCurriculum(application?.domain || "", application?.experience_level || "beginner")?.modules || [];
+  const [selectedLevel, setSelectedLevel] = useState<LevelCurriculum['level']>(
+    getMappedLevel(application?.experience_level)
+  );
+
+  const currentLevelData = fullProgramCurriculum?.levels.find(l => l.level === selectedLevel) || fullProgramCurriculum?.levels[0];
+  const displayCurriculum = currentLevelData?.modules || [];
 
   const paymentLedger = application?.payment_ledger || [];
   const totalPaid = paymentLedger
@@ -912,116 +926,181 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
 
             {/* ===== CURRICULUM TAB ===== */}
             {activeTab === "curriculum" && (
-              <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div>
-                    <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Curriculum Roadmap</h2>
-                    <p className="text-[10px] font-medium text-slate-500">Structured learning path for technical mastery</p>
+              <div className="space-y-8">
+                {/* Curriculum Header & Selector */}
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-100 dark:border-slate-800">
+                  <div className="space-y-1">
+                    <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Academic Pathway</h2>
+                    <p className="text-xs font-bold text-[#155DFC] uppercase tracking-widest">{fullProgramCurriculum?.program || "General Internship"} • {selectedLevel} Level</p>
                   </div>
-                  <div className="flex items-center gap-2 px-3 py-1 bg-[#155DFC] text-white rounded-lg shadow-md shadow-blue-500/10">
-                    <BookOpen size={12} />
-                    <span className="text-[9px] font-bold tracking-wider">{displayCurriculum.length} Learning Modules</span>
+                  
+                  {/* Level Switcher */}
+                  <div className="flex p-1.5 bg-slate-100 dark:bg-slate-900 rounded-2xl gap-1 w-fit border border-slate-200 dark:border-slate-800 shadow-inner">
+                    {['Beginner', 'Intermediate', 'Advanced'].map((level) => (
+                      <button
+                        key={level}
+                        onClick={() => setSelectedLevel(level as any)}
+                        className={cn(
+                          "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300",
+                          selectedLevel === level 
+                            ? "bg-[#155DFC] text-white shadow-lg shadow-blue-500/20" 
+                            : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                        )}
+                      >
+                        {level}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
                 {displayCurriculum.length > 0 ? (
-                  <div className="space-y-4">
-                    <Accordion type="single" collapsible className="w-full space-y-3">
-                      {displayCurriculum.map((item: any, idx) => (
-                        <AccordionItem 
-                          key={item.id || idx} 
-                          value={`module-${idx}`}
-                          className="border rounded-2xl overflow-hidden transition-all bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-blue-200"
-                        >
-                          <AccordionTrigger className="px-5 py-4 sm:px-6 hover:no-underline group">
-                            <div className="flex items-center gap-4 text-left">
-                              <div className={cn(
-                                "w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 transition-transform group-hover:scale-105 shadow-sm",
-                                idx === 0 ? "bg-[#155DFC] text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500"
-                              )}>
-                                {idx + 1}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <h3 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight group-hover:text-[#155DFC] transition-colors">
-                                  {item.title}
-                                </h3>
-                                <p className="text-[9px] font-bold text-slate-400 tracking-wider mt-0.5">
-                                  Duration: <span className="text-[#155DFC]">{item.duration || "Self-paced"}</span>
-                                </p>
-                              </div>
-                            </div>
-                          </AccordionTrigger>
-                          <AccordionContent className="px-5 pb-6 sm:px-6 pt-1">
-                            <div className="pl-[52px] space-y-4">
-                              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-2xl">
-                                {item.description}
-                              </p>
-
-                              {item.topics && item.topics.length > 0 && (
-                                <div className="space-y-2">
-                                  <h4 className="text-[9px] font-bold text-slate-400 tracking-wider">What You'll Learn</h4>
-                                  <div className="flex flex-wrap gap-2">
-                                    {item.topics.map((topic: string, tidx: number) => (
-                                      <span key={tidx} className="px-2 py-0.5 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded text-[10px] font-medium border border-slate-100 dark:border-slate-700">
-                                        {topic}
-                                      </span>
-                                    ))}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                    {/* Left Column: Module Navigation & Details */}
+                    <div className="lg:col-span-8 space-y-4">
+                      <Accordion type="single" collapsible className="w-full space-y-4">
+                        {displayCurriculum.map((module, mIdx) => (
+                          <AccordionItem 
+                            key={module.id} 
+                            value={module.id}
+                            className="border-2 rounded-[2rem] overflow-hidden transition-all duration-500 bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-blue-100 group data-[state=open]:border-[#155DFC]/30 data-[state=open]:ring-4 data-[state=open]:ring-blue-50 dark:data-[state=open]:ring-blue-900/10"
+                          >
+                            <AccordionTrigger className="px-6 py-6 sm:px-8 hover:no-underline group">
+                              <div className="flex items-center gap-6 text-left w-full">
+                                <div className={cn(
+                                  "w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm shrink-0 transition-all duration-500 shadow-inner group-data-[state=open]:rotate-12 group-data-[state=open]:scale-110",
+                                  mIdx === 0 ? "bg-[#155DFC] text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-400"
+                                )}>
+                                  {mIdx + 1}
+                                </div>
+                                <div className="flex-1 min-w-0 pr-4">
+                                  <div className="flex items-center gap-3 mb-1">
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#155DFC] opacity-80">Module {mIdx + 1}</span>
+                                    <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800" />
+                                  </div>
+                                  <h3 className="text-base font-black text-slate-900 dark:text-white tracking-tight group-hover:text-[#155DFC] transition-colors line-clamp-1">
+                                    {module.title}
+                                  </h3>
+                                  <div className="flex items-center gap-4 mt-2">
+                                    <div className="flex items-center gap-1.5 text-[9px] font-bold text-slate-400">
+                                      <Clock size={12} className="text-slate-300" />
+                                      {module.duration}
+                                    </div>
+                                    <div className="flex items-center gap-1.5 text-[9px] font-bold text-slate-400">
+                                      <Layers size={12} className="text-slate-300" />
+                                      {module.lessons.length} Lessons
+                                    </div>
                                   </div>
                                 </div>
-                              )}
+                              </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="px-6 pb-8 sm:px-8 pt-2">
+                              <div className="pl-[72px] space-y-8">
+                                <p className="text-sm text-slate-500 dark:text-slate-400 font-semibold leading-relaxed max-w-2xl border-l-4 border-blue-50 dark:border-slate-800 pl-6 py-2">
+                                  {module.description}
+                                </p>
 
-                              {item.project && (
-                                <div className="p-5 rounded-2xl bg-blue-50/30 dark:bg-blue-600/5 border border-blue-50 dark:border-blue-900/20">
-                                  <div className="flex items-center gap-2 mb-3">
-                                    <div className="w-7 h-7 rounded-lg bg-[#155DFC] flex items-center justify-center text-white">
-                                      <Rocket size={12} />
-                                    </div>
-                                    <h4 className="font-bold text-[#155DFC] tracking-wider text-[10px]">Module Project</h4>
+                                {/* Lessons List - Coursera style */}
+                                <div className="space-y-3">
+                                  <div className="flex items-center justify-between mb-4">
+                                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Syllabus Sequence</h4>
+                                    <div className="h-px flex-1 mx-4 bg-slate-100 dark:bg-slate-800" />
                                   </div>
-                                  <h5 className="text-sm font-bold text-slate-900 dark:text-white mb-1">{item.project.title}</h5>
-                                  <p className="text-[11px] text-slate-600 dark:text-slate-400 mb-3 leading-relaxed">{item.project.description}</p>
-                                  
-                                  {item.project.deliverables && (
-                                    <div className="space-y-2">
-                                      <p className="text-[9px] font-bold text-slate-400 tracking-wider">Deliverables</p>
-                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                        {item.project.deliverables.map((del: string, didx: number) => (
-                                          <div key={didx} className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-                                            <div className="w-3.5 h-3.5 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
-                                              <Check size={8} strokeWidth={4} />
-                                            </div>
-                                            {del}
-                                          </div>
-                                        ))}
+                                  {module.lessons.map((lesson, lIdx) => (
+                                    <div 
+                                      key={lesson.id} 
+                                      className="group/lesson flex items-center justify-between p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-900 hover:border-blue-100 transition-all cursor-pointer"
+                                    >
+                                      <div className="flex items-center gap-4">
+                                        <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-800 flex items-center justify-center border border-slate-100 dark:border-slate-700 shadow-sm transition-transform group-hover/lesson:scale-110">
+                                          {lesson.type === 'video' ? <Play size={14} className="text-[#155DFC] fill-[#155DFC]" /> : 
+                                           lesson.type === 'reading' ? <FileText size={14} className="text-indigo-500" /> :
+                                           lesson.type === 'project' ? <Rocket size={14} className="text-amber-500" /> :
+                                           <FileCheck2 size={14} className="text-emerald-500" />}
+                                        </div>
+                                        <div>
+                                          <p className="text-xs font-bold text-slate-900 dark:text-white tracking-tight">{lesson.title}</p>
+                                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{lesson.type} • {lesson.duration}</p>
+                                        </div>
+                                      </div>
+                                      <div className="w-6 h-6 rounded-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center opacity-0 group-hover/lesson:opacity-100 transition-opacity">
+                                        <ArrowRight size={12} className="text-[#155DFC]" />
                                       </div>
                                     </div>
-                                  )}
+                                  ))}
                                 </div>
-                              )}
 
-                              <div className="flex items-center gap-4 pt-4">
-                                <Button className="rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black text-[9px] h-10 px-6 uppercase tracking-widest shadow-xl transition-all active:scale-95">
-                                  Launch Module
+                                <Button className="w-full sm:w-auto rounded-2xl bg-[#155DFC] hover:bg-blue-700 text-white font-black text-[10px] h-12 px-8 uppercase tracking-[0.2em] shadow-xl shadow-blue-500/20 transition-all active:scale-95 group">
+                                  Initialize Module <ArrowRight size={14} className="ml-3 group-hover:translate-x-1 transition-transform" />
                                 </Button>
-                                {item.video_url && (
-                                  <Button variant="outline" className="rounded-xl border-slate-200 dark:border-slate-700 font-black text-[9px] h-10 px-6 uppercase tracking-widest">
-                                    <Video size={12} className="mr-2" /> Watch Video
-                                  </Button>
-                                )}
                               </div>
-                            </div>
-                          </AccordionContent>
-                        </AccordionItem>
-                      ))}
-                    </Accordion>
+                            </AccordionContent>
+                          </AccordionItem>
+                        ))}
+                      </Accordion>
+                    </div>
+
+                    {/* Right Column: Progress & Insights */}
+                    <div className="lg:col-span-4 space-y-6">
+                      <Card className="rounded-[2.5rem] border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+                        <CardHeader className="pb-2">
+                          <p className="text-[10px] font-black text-[#155DFC] uppercase tracking-widest mb-1">Learning Velocity</p>
+                          <CardTitle className="text-xl font-black tracking-tight">Deployment Progress</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                          <div className="flex items-end justify-between mb-2">
+                            <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">18%</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">3 of 12 Modules</span>
+                          </div>
+                          <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden p-1 border border-slate-200 dark:border-slate-700">
+                             <div className="h-full bg-gradient-to-r from-[#155DFC] to-indigo-500 rounded-full w-[18%] shadow-[0_0_10px_rgba(21,93,252,0.3)]" />
+                          </div>
+                          
+                          <div className="pt-6 border-t border-slate-50 dark:border-slate-800 space-y-4">
+                            <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Milestones Reached</h4>
+                            {[
+                              { label: "Technical Onboarding", date: "Feb 12", icon: ShieldCheck },
+                              { label: mIdx => displayCurriculum[0]?.title || "Intro Module", date: "Feb 15", icon: CheckCircle2 },
+                            ].map((milestone, i) => {
+                              const label = typeof milestone.label === 'function' ? milestone.label(0) : milestone.label;
+                              const Icon = milestone.icon;
+                              return (
+                                <div key={i} className="flex items-center gap-4 group">
+                                  <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-500 shrink-0">
+                                    <Icon size={14} />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-[11px] font-bold text-slate-900 dark:text-white truncate">{label}</p>
+                                    <p className="text-[9px] font-medium text-slate-400 uppercase tracking-wider">{milestone.date}</p>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <div className="p-8 rounded-[2.5rem] bg-gradient-to-br from-[#155DFC] to-[#0A45C4] text-white shadow-xl relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:scale-150 transition-transform duration-1000" />
+                        <LockKeyhole size={40} className="text-white/20 absolute -right-4 bottom-4" />
+                        <h4 className="text-lg font-black tracking-tight mb-2">Certification Track</h4>
+                        <p className="text-[11px] text-blue-100/80 font-medium leading-relaxed mb-6">Complete all modules in the <span className="text-white font-bold">{selectedLevel}</span> path to unlock your official verification badge.</p>
+                        <Button variant="outline" className="w-full rounded-xl bg-white/10 border-white/20 text-white font-black text-[10px] h-10 uppercase tracking-widest hover:bg-white/20">View Certificate Req</Button>
+                      </div>
+                    </div>
                   </div>
                 ) : (
-                  <div className="text-center py-24 bg-white dark:bg-slate-900 rounded-[3rem] border-2 border-dashed border-slate-100">
-                    <BookOpen size={48} className="text-slate-200 dark:text-slate-700 mx-auto mb-6" />
-                    <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">Curriculum Locked</h3>
-                    <p className="text-sm font-medium text-slate-400 max-w-xs mx-auto">
-                      Your specialized learning path is currently being finalized. Prepare for activation.
-                    </p>
+                  <div className="text-center py-24 bg-white dark:bg-slate-900 rounded-[3rem] border-2 border-dashed border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden">
+                    <div className="absolute inset-0 bg-blue-50/50 dark:bg-blue-900/5 backdrop-blur-[1px]" />
+                    <div className="relative z-10">
+                      <div className="w-20 h-20 bg-white dark:bg-slate-800 rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-xl text-slate-200">
+                        <BookOpen size={40} strokeWidth={1} />
+                      </div>
+                      <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">Curriculum Not Found</h3>
+                      <p className="text-sm font-medium text-slate-400 max-w-xs mx-auto mb-8 leading-relaxed">
+                        We couldn't find a specialized track for your domain yet. Please check in with your supervisor.
+                      </p>
+                      <Button variant="outline" className="rounded-xl font-black text-[10px] h-10 px-6 uppercase tracking-widest text-slate-500">Contact Supervisor</Button>
+                    </div>
                   </div>
                 )}
               </div>
