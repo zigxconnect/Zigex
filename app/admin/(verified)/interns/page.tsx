@@ -8,7 +8,8 @@ import {
   GraduationCap, Briefcase, MapPin, Calendar, Clock,
   Target, User, Mail, Phone, ChevronRight, Eye,
   CheckCircle2, XCircle, MoreHorizontal, Filter,
-  Building2, Star, TrendingUp, Sparkles, Users, UserCheck, Award
+  Building2, Star, TrendingUp, Sparkles, Users, UserCheck, Award,
+  ChevronDown
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import Image from "next/image";
@@ -60,75 +61,84 @@ const StatCard = ({
   const variants = {
     default: {
       bg: "bg-white",
-      border: "border-blue-50",
+      border: "border-blue-50/50",
       iconBg: "bg-blue-50/50",
-      iconColor: "text-blue-400",
+      iconColor: "text-blue-500",
       labelColor: "text-blue-400",
       valueColor: "text-slate-900",
-      sublabelColor: "text-blue-400",
-      hoverShadow: "hover:shadow-blue-200/50"
+      sublabelColor: "text-blue-300",
+      hoverShadow: "hover:shadow-blue-200/40"
     },
     warning: {
       bg: "bg-white",
-      border: "border-indigo-100",
-      iconBg: "bg-indigo-50",
-      iconColor: "text-indigo-500",
-      labelColor: "text-indigo-500/70",
-      valueColor: "text-indigo-600",
-      sublabelColor: "text-indigo-500/70",
-      hoverShadow: "hover:shadow-indigo-200/50"
+      border: "border-amber-100/50",
+      iconBg: "bg-amber-50",
+      iconColor: "text-amber-500",
+      labelColor: "text-amber-500/70",
+      valueColor: "text-slate-900",
+      sublabelColor: "text-amber-400/70",
+      hoverShadow: "hover:shadow-amber-200/40"
     },
     info: {
       bg: "bg-white",
-      border: "border-blue-100",
-      iconBg: "bg-blue-50",
-      iconColor: "text-blue-500",
-      labelColor: "text-blue-500/70",
-      valueColor: "text-blue-600",
-      sublabelColor: "text-blue-500/70",
-      hoverShadow: "hover:shadow-blue-200/50"
+      border: "border-indigo-100/50",
+      iconBg: "bg-indigo-50",
+      iconColor: "text-indigo-500",
+      labelColor: "text-indigo-500/70",
+      valueColor: "text-slate-900",
+      sublabelColor: "text-indigo-400/70",
+      hoverShadow: "hover:shadow-indigo-200/40"
     },
     success: {
-      bg: "bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700",
+      bg: "bg-gradient-to-br from-[#155DFC] to-[#0A45C4]",
       border: "border-transparent",
       iconBg: "bg-white/20",
       iconColor: "text-white",
       labelColor: "text-white/70",
       valueColor: "text-white",
       sublabelColor: "text-white/70",
-      hoverShadow: "hover:shadow-blue-300/50"
+      hoverShadow: "hover:shadow-blue-300/40"
     },
   };
 
   const v = variants[variant];
 
   return (
-    <div className={cn(
-      "relative overflow-hidden rounded-3xl p-6 border-2 transition-all duration-300 group",
-      v.bg, v.border, v.hoverShadow,
-      "hover:shadow-xl hover:-translate-y-1",
-      className
-    )}>
+    <div 
+      className={cn(
+        "relative overflow-hidden rounded-[2rem] p-7 border-2 transition-all duration-300 group hover:-translate-y-1",
+        v.bg, v.border, v.hoverShadow,
+        className
+      )}
+    >
       <div className="relative z-10 flex items-center justify-between">
-        <div>
-          <p className={cn("text-[10px] font-bold uppercase tracking-[0.2em] mb-1", v.labelColor)}>{label}</p>
+        <div className="space-y-1">
+          <p className={cn("text-[10px] font-black uppercase tracking-[0.25em]", v.labelColor)}>{label}</p>
           {loading ? (
-            <div className="h-10 w-16 bg-slate-100 animate-pulse rounded-lg mt-1" />
+            <div className="h-10 w-16 bg-slate-100 animate-pulse rounded-xl mt-1" />
           ) : (
-            <p className={cn("text-4xl font-black tracking-tighter", v.valueColor)}>{value}</p>
+            <p className={cn("text-4xl font-black tracking-tighter leading-none", v.valueColor)}>
+              {value}
+            </p>
           )}
-          <p className={cn("text-[10px] font-bold uppercase mt-1", v.sublabelColor)}>{sublabel}</p>
+          <p className={cn("text-[10px] font-bold uppercase tracking-wider opacity-80", v.sublabelColor)}>{sublabel}</p>
         </div>
         <div className={cn(
-          "w-14 h-14 rounded-2xl flex items-center justify-center transition-transform duration-500 group-hover:scale-110",
+          "w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 group-hover:rotate-6",
           v.iconBg
         )}>
           <Icon size={24} className={v.iconColor} />
         </div>
       </div>
+      
+      {/* Abstract Design Elements */}
       <div className={cn(
-        "absolute -right-4 -bottom-4 w-24 h-24 rounded-full transition-all duration-500 group-hover:scale-110",
-        variant === "success" ? "bg-white/10" : "bg-slate-50"
+        "absolute -right-6 -bottom-6 w-32 h-32 rounded-full transition-all duration-500 group-hover:scale-125 opacity-[0.03]",
+        variant === "success" ? "bg-white" : "bg-blue-600"
+      )} />
+      <div className={cn(
+        "absolute -left-4 -top-4 w-16 h-16 rounded-full transition-all duration-500 group-hover:scale-110 opacity-[0.02]",
+        variant === "success" ? "bg-white" : "bg-indigo-600"
       )} />
     </div>
   );
@@ -390,12 +400,12 @@ function InternsPageComponent() {
 
   const selectedApplicant = applicants.find(app => app.id === selectedApplicantId);
 
-  // Stats
+  // Stats derived from filtered results for live feedback
   const stats = {
-    total: applicants.length,
-    pending: applicants.filter(a => a.status === "pending").length,
-    accepted: applicants.filter(a => a.status === "accepted").length,
-    reviewing: applicants.filter(a => a.status === "reviewing" || a.status === "reviewed").length,
+    total: filteredApplicants.length,
+    pending: filteredApplicants.filter(a => a.status === "pending").length,
+    accepted: filteredApplicants.filter(a => a.status === "accepted").length,
+    reviewing: filteredApplicants.filter(a => a.status === "reviewing" || a.status === "reviewed").length,
   };
 
   const handleExportCSV = () => {
@@ -597,76 +607,117 @@ function InternsPageComponent() {
           />
         </div>
 
-        {/* Command Center: Search & Global Actions */}
-        <div className="bg-white p-6 rounded-[2.5rem] border border-blue-100 shadow-xl shadow-blue-500/5 flex flex-col md:flex-row gap-6 items-center">
+        {/* Command Center: Premium Filter & Search */}
+        {/* Command Center: Premium Filter & Search */}
+        <div className="bg-white/70 backdrop-blur-xl p-3 md:p-4 rounded-[2.5rem] border-2 border-blue-50/50 shadow-2xl shadow-blue-500/5 flex flex-col md:flex-row gap-4 items-center ring-4 ring-blue-50/20">
           <div className="relative flex-1 w-full group">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
+            <div className="absolute left-6 top-1/2 -translate-y-1/2 pointer-events-none z-10">
+               <Search className="w-5 h-5 text-slate-300 group-focus-within:text-[#155DFC] group-focus-within:scale-110 transition-all duration-500" />
+            </div>
             <Input
-              placeholder="Deep search candidates by name, school, email, or skill domain..."
+              placeholder="Deep intelligence search: name, school, email, or domain..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-14 h-16 rounded-[1.5rem] border-slate-100 bg-slate-50/50 focus:bg-white focus:border-blue-300 focus:ring-8 focus:ring-blue-50 transition-all font-medium text-base shadow-inner"
+              className="pl-16 h-16 rounded-[2rem] border-none bg-slate-100/50 focus:bg-white focus:ring-[12px] focus:ring-blue-50/50 transition-all font-bold text-slate-900 placeholder:text-slate-300 shadow-inner"
             />
           </div>
           
-          <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto custom-scrollbar pb-2 md:pb-0">
-            {schools.length > 0 && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="gap-3 h-16 px-6 rounded-[1.5rem] border-2 border-slate-100 bg-slate-50/50 hover:bg-white hover:border-blue-200 min-w-[200px] justify-between font-bold text-slate-600 uppercase tracking-widest text-[10px] shrink-0 transition-all duration-300">
-                    <div className="flex items-center gap-3">
-                      <Filter size={16} className="text-blue-500" />
-                      <span className="truncate max-w-[120px]">{filterSchool || "All Schools"}</span>
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            {/* School Filter Pill */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className={cn(
+                    "group relative gap-3 h-16 px-8 rounded-[2rem] border-2 transition-all duration-300 flex-1 md:flex-none min-w-[220px] justify-between overflow-hidden",
+                    filterSchool 
+                      ? "bg-[#155DFC] border-transparent text-white shadow-lg shadow-blue-200" 
+                      : "border-slate-100 bg-slate-50/50 text-slate-400 hover:bg-white hover:border-blue-200"
+                  )}
+                >
+                  <div className="flex items-center gap-3 relative z-10">
+                    <div className="flex flex-col items-start leading-none ml-1">
+                       <span className="text-[8px] font-black uppercase tracking-[0.2em] mb-0.5 opacity-60">Institute</span>
+                       <span className="text-[11px] font-black uppercase tracking-widest truncate max-w-[140px]">
+                          {filterSchool || "All Facilities"}
+                       </span>
                     </div>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-64 rounded-[1.5rem] p-2 border-blue-50 shadow-2xl z-[100]">
-                  <DropdownMenuItem onClick={() => setFilterSchool(null)} className="rounded-xl py-3 font-bold text-xs uppercase text-slate-400 cursor-pointer hover:bg-slate-50">
-                    All Schools
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
-                    {schools.map(school => (
-                      <DropdownMenuItem 
-                        key={school} 
-                        onClick={() => setFilterSchool(school!)}
-                        className="rounded-xl py-3 font-bold text-xs uppercase cursor-pointer hover:bg-blue-50 hover:text-blue-600"
-                      >
-                        {school}
-                      </DropdownMenuItem>
-                    ))}
                   </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+                  <ChevronDown size={14} className={cn("transition-transform duration-300 group-hover:translate-y-0.5 relative z-10", filterSchool ? "text-white" : "text-slate-300")} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-72 rounded-[2rem] p-3 border-blue-50 shadow-2xl backdrop-blur-3xl bg-white/90 z-[100]">
+                <DropdownMenuItem 
+                  onClick={() => setFilterSchool(null)} 
+                  className="rounded-2xl py-4 px-4 font-black text-[10px] uppercase tracking-widest text-[#155DFC] cursor-pointer hover:bg-blue-50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full bg-blue-500" />
+                    Reset Facility Filter
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="my-2 opacity-50" />
+                <div className="max-h-[350px] overflow-y-auto custom-scrollbar pr-1">
+                  {schools.map(school => (
+                    <DropdownMenuItem 
+                      key={school} 
+                      onClick={() => setFilterSchool(school!)}
+                      className="rounded-2xl py-4 px-4 font-bold text-[11px] uppercase tracking-wider cursor-pointer hover:bg-slate-50 border border-transparent hover:border-blue-100 transition-all mb-1"
+                    >
+                      {school}
+                    </DropdownMenuItem>
+                  ))}
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-            {domains.length > 0 && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="gap-3 h-16 px-6 rounded-[1.5rem] border-2 border-slate-100 bg-slate-50/50 hover:bg-white hover:border-blue-200 min-w-[200px] justify-between font-bold text-slate-600 uppercase tracking-widest text-[10px] shrink-0 transition-all duration-300">
-                    <div className="flex items-center gap-3">
-                      <Filter size={16} className="text-blue-500" />
-                      <span>{filterDomain || "All Expertise"}</span>
+            {/* Expertise Filter Pill */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="outline" 
+                   className={cn(
+                    "group relative gap-3 h-16 px-8 rounded-[2rem] border-2 transition-all duration-300 flex-1 md:flex-none min-w-[220px] justify-between overflow-hidden",
+                    filterDomain 
+                      ? "bg-[#155DFC] border-transparent text-white shadow-lg shadow-blue-200" 
+                      : "border-slate-100 bg-slate-50/50 text-slate-400 hover:bg-white hover:border-blue-200"
+                  )}
+                >
+                  <div className="flex items-center gap-3 relative z-10">
+                    <div className="flex flex-col items-start leading-none ml-1">
+                       <span className="text-[8px] font-black uppercase tracking-[0.2em] mb-0.5 opacity-60">Expertise</span>
+                       <span className="text-[11px] font-black uppercase tracking-widest truncate max-w-[140px]">
+                          {filterDomain || "Cross Domain"}
+                       </span>
                     </div>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 rounded-[1.5rem] p-2 border-blue-50 shadow-2xl">
-                  <DropdownMenuItem onClick={() => setFilterDomain(null)} className="rounded-xl py-3 font-bold text-xs uppercase text-slate-400">
-                    All Expertise
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
+                  </div>
+                  <ChevronDown size={14} className={cn("transition-transform duration-300 group-hover:translate-y-0.5 relative z-10", filterDomain ? "text-white" : "text-slate-300")} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-72 rounded-[2rem] p-3 border-indigo-50 shadow-2xl backdrop-blur-3xl bg-white/90">
+                <DropdownMenuItem 
+                  onClick={() => setFilterDomain(null)} 
+                  className="rounded-2xl py-4 px-4 font-black text-[10px] uppercase tracking-widest text-[#155DFC] cursor-pointer hover:bg-blue-50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full bg-blue-500" />
+                    Reset All Domains
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="my-2 opacity-50" />
+                <div className="max-h-[350px] overflow-y-auto custom-scrollbar pr-1">
                   {domains.map(domain => (
                     <DropdownMenuItem 
                       key={domain} 
                       onClick={() => setFilterDomain(domain!)}
-                      className="rounded-xl py-3 font-bold text-xs uppercase"
+                      className="rounded-2xl py-4 px-4 font-bold text-[11px] uppercase tracking-wider cursor-pointer hover:bg-slate-50 border border-transparent hover:border-indigo-100 transition-all mb-1"
                     >
                       {domain}
                     </DropdownMenuItem>
                   ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
