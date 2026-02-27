@@ -30,7 +30,13 @@ import {
   Edit,
   AlertTriangle,
   UsersRound,
-  ShieldCheck
+  ShieldCheck,
+  Link,
+  Paperclip,
+  Upload,
+  ChevronLeft,
+  StarHalf,
+  UserX
 } from "lucide-react";
 import { format } from "date-fns";
 import Image from "next/image";
@@ -51,6 +57,15 @@ import {
   submitWeeklyEvaluation
 } from "@/lib/actions/supervisor.actions";
 
+const isWithinWeeklyLimit = (dateString: string) => {
+  if (!dateString) return false;
+  const lastDate = new Date(dateString);
+  const now = new Date();
+  const diffTime = Math.abs(now.getTime() - lastDate.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays <= 7;
+};
+
 interface SupervisorDashboardClientProps {
   data: {
     profile: any;
@@ -70,19 +85,22 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
   
   // Task Form State
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
   const [newTask, setNewTask] = useState({
     internship_id: "",
     title: "",
     description: "",
     due_date: "",
     priority: "medium",
-    resource_links: [
-      { title: "YouTube", url: "" },
-      { title: "GitHub", url: "" },
-      { title: "Drive", url: "" }
-    ],
-    output_image: null as File | null
+    resource_links: [] as { title: string; url: string }[],
+    attachments: [] as { name: string; url: string; size: number; type: string }[],
+    output_image: null as File | null,
+    attachedFiles: [] as File[]
   });
+  const [previews, setPreviews] = useState<{
+    cover: string | null;
+    files: { name: string; url: string; type: string }[];
+  }>({ cover: null, files: [] });
   const [isSubmittingTask, setIsSubmittingTask] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string; isGroup: boolean } | null>(null);
   const [isDeletingTask, setIsDeletingTask] = useState(false);
@@ -92,6 +110,8 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
   const [isSubmittingBatch, setIsSubmittingBatch] = useState(false);
   const [showAttendanceSuccess, setShowAttendanceSuccess] = useState(false);
   const [internSearchTerm, setInternSearchTerm] = useState("");
+  const [evalSearchTerm, setEvalSearchTerm] = useState("");
+  const [evalFilter, setEvalFilter] = useState("all"); // all, pending, high, low
 
   const { interns, recentLogs, tasks, attendance, evaluations } = data;
   const router = useRouter();
@@ -119,10 +139,41 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
     }));
   }, [tasks, interns]);
 
-  const filteredInterns = interns.filter(i => {
-    const student = Array.isArray(i.student) ? i.student[0] : i.student;
-    return student?.full_name?.toLowerCase().includes(searchTerm.toLowerCase());
-  });
+  const filteredRecentLogs = useMemo(() => {
+    return recentLogs.filter(log => {
+      const student = Array.isArray(log.student) ? log.student[0] : log.student;
+      return student?.full_name?.toLowerCase().includes(searchTerm.toLowerCase());
+    });
+  }, [recentLogs, searchTerm]);
+
+  const filteredEvalInterns = useMemo(() => {
+    return interns.filter(intern => {
+      const student = Array.isArray(intern.student) ? intern.student[0] : intern.student;
+      const matchesSearch = student?.full_name?.toLowerCase().includes(evalSearchTerm.toLowerCase());
+      
+      if (!matchesSearch) return false;
+      
+      if (evalFilter === "all") return true;
+      
+      const lastEval = evaluations.find(e => e.student_id === student?.user_id);
+      const isPending = !lastEval || !isWithinWeeklyLimit(lastEval.evaluation_date);
+      
+      if (evalFilter === "pending") return isPending;
+      if (evalFilter === "completed") return !isPending;
+      
+      if (evalFilter === "high") return lastEval && lastEval.overall_rating >= 4;
+      if (evalFilter === "low") return lastEval && lastEval.overall_rating <= 2;
+      
+      return true;
+    });
+  }, [interns, evalSearchTerm, evalFilter, evaluations]);
+
+  const filteredEvalLedger = useMemo(() => {
+    return evaluations.filter(e => {
+      const studentName = e.student?.full_name?.toLowerCase() || "";
+      return studentName.includes(evalSearchTerm.toLowerCase());
+    });
+  }, [evaluations, evalSearchTerm]);
 
   const pendingReviews = recentLogs.filter(l => l.status === "pending" || !l.status).length;
   const approvedCount = recentLogs.filter(l => l.status === "approved").length;
@@ -212,8 +263,51 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'cover' | 'attachment') => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    if (type === 'cover') {
+      const file = files[0];
+      if (file.size > 3 * 1024 * 1024) {
+        toast.error("Cover image exceeds 3MB");
+        return;
+      }
+      setNewTask(prev => ({ ...prev, output_image: file }));
+      const url = URL.createObjectURL(file);
+      setPreviews(prev => {
+        if (prev.cover) URL.revokeObjectURL(prev.cover);
+        return { ...prev, cover: url };
+      });
+    } else {
+      const validFiles = files.filter(f => f.size <= 3 * 1024 * 1024);
+      if (validFiles.length < files.length) {
+        toast.error("Some files were skipped because they exceed 3MB.");
+      }
+      
+      const newFiles = [...newTask.attachedFiles, ...validFiles];
+      setNewTask(prev => ({ ...prev, attachedFiles: newFiles }));
+      
+      const newFilePreviews = validFiles.map(f => ({
+        name: f.name,
+        url: URL.createObjectURL(f),
+        type: f.type
+      }));
+      
+      setPreviews(prev => ({
+        ...prev,
+        files: [...prev.files, ...newFilePreviews]
+      }));
+    }
+  };
+
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (currentStep === 1) {
+      setCurrentStep(2);
+      return;
+    }
+
     if (!newTask.internship_id || !newTask.title) {
       toast.error("Please fill in required fields.");
       return;
@@ -221,9 +315,11 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
 
     setIsSubmittingTask(true);
     try {
+      const supabase = createClient();
+      
+      // 1. Upload Cover Image
       let imageUrl = "";
       if (newTask.output_image) {
-        const supabase = createClient();
         const fileExt = newTask.output_image.name.split('.').pop();
         const fileName = `${Math.random()}.${fileExt}`;
         const filePath = `task_outputs/${fileName}`;
@@ -233,7 +329,8 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
           .upload(filePath, newTask.output_image);
 
         if (uploadError) {
-          toast.error("Image upload failed. Proceeding without image.");
+          console.error("Cover upload error:", uploadError);
+          toast.error("Failed to upload cover image.");
         } else {
           const { data: { publicUrl } } = supabase.storage
             .from('task_attachments')
@@ -242,35 +339,74 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
         }
       }
 
-      const cleanLinks = newTask.resource_links.filter(link => link.url.trim() !== "");
+      // 2. Upload Attachments
+      const uploadedAttachments = [];
+      for (const file of newTask.attachedFiles) {
+        if (file.size > 3 * 1024 * 1024) {
+          toast.error(`${file.name} exceeds 3MB limit.`);
+          continue;
+        }
+
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `tasks/${Date.now()}_${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('task_attachments')
+          .upload(filePath, file);
+
+        if (uploadError) {
+          toast.error(`Failed to upload ${file.name}`);
+        } else {
+          const { data: { publicUrl } } = supabase.storage
+            .from('task_attachments')
+            .getPublicUrl(filePath);
+          
+          uploadedAttachments.push({
+            name: file.name,
+            url: publicUrl,
+            size: file.size,
+            type: file.type
+          });
+        }
+      }
+
+      const cleanLinks = newTask.resource_links.filter(link => link.title.trim() !== "" && link.url.trim() !== "");
 
       const res = await assignInternshipTask({
         ...newTask,
         resource_links: cleanLinks,
+        attachments: uploadedAttachments,
         output_image_url: imageUrl
       } as any);
 
       if (res.success) {
         toast.success("Task assigned successfully!");
         setIsTaskModalOpen(false);
+        setCurrentStep(1);
+        
+        // Cleanup previews
+        if (previews.cover) URL.revokeObjectURL(previews.cover);
+        previews.files.forEach(f => URL.revokeObjectURL(f.url));
+        setPreviews({ cover: null, files: [] });
+
         setNewTask({ 
           internship_id: "", 
           title: "", 
           description: "", 
           due_date: "", 
           priority: "medium",
-          resource_links: [
-            { title: "YouTube", url: "" },
-            { title: "GitHub", url: "" },
-            { title: "Drive", url: "" }
-          ],
-          output_image: null as File | null
+          resource_links: [],
+          attachments: [],
+          output_image: null,
+          attachedFiles: []
         });
         router.refresh();
       } else {
         toast.error(res.error || "Failed to assign task");
       }
     } catch (err) {
+      console.error(err);
       toast.error("An unexpected error occurred");
     } finally {
       setIsSubmittingTask(false);
@@ -319,14 +455,6 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [existingEval, setExistingEval] = useState<any>(null);
 
-  const isWithinWeeklyLimit = (dateString: string) => {
-    if (!dateString) return false;
-    const lastDate = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - lastDate.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays <= 7;
-  };
 
   const handleSubmitEvaluation = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -510,7 +638,7 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                   </div>
 
                   <div className="space-y-4">
-                    {recentLogs.length > 0 ? recentLogs.map((log, idx) => {
+                    {filteredRecentLogs.length > 0 ? filteredRecentLogs.map((log, idx) => {
                       const student = Array.isArray(log.student) ? log.student[0] : log.student;
                       const isPending = !log.status || log.status === "pending";
                       return (
@@ -970,9 +1098,45 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                 </Button>
               </div>
 
+              {/* Search and Filters */}
+              <div className="flex flex-col md:flex-row gap-4 items-center">
+                <div className="relative flex-1 w-full">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                  <Input 
+                    placeholder="Search students by name..."
+                    value={evalSearchTerm}
+                    onChange={(e) => setEvalSearchTerm(e.target.value)}
+                    className="pl-11 h-12 bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 rounded-2xl text-xs font-bold focus:ring-2 focus:ring-blue-100 transition-all shadow-sm"
+                  />
+                </div>
+                <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+                  {[
+                    { id: 'all', label: 'All Students', icon: Users },
+                    { id: 'pending', label: 'Pending', icon: Clock },
+                    { id: 'completed', label: 'Evaluated', icon: CheckCircle2 },
+                    { id: 'high', label: 'High Rating', icon: Star },
+                    { id: 'low', label: 'Low Rating', icon: StarHalf }
+                  ].map((f) => (
+                    <button
+                      key={f.id}
+                      onClick={() => setEvalFilter(f.id)}
+                      className={cn(
+                        "flex items-center gap-2 px-4 h-12 rounded-2xl text-[10px] font-bold whitespace-nowrap transition-all border",
+                        evalFilter === f.id
+                          ? "bg-[#155DFC] border-[#155DFC] text-white shadow-lg shadow-blue-500/20"
+                          : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-500 hover:border-slate-300"
+                      )}
+                    >
+                      <f.icon size={14} />
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Performance Scoreboard */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {interns.map((intern, idx) => {
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredEvalInterns.map((intern, idx) => {
                   const student = Array.isArray(intern.student) ? intern.student[0] : intern.student;
                   const lastEval = evaluations.find(e => e.student_id === student?.user_id);
                   const hasWeeklyEval = lastEval && isWithinWeeklyLimit(lastEval.evaluation_date);
@@ -1049,8 +1213,14 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                         {hasWeeklyEval ? "Update Feedback" : "Start Evaluation"}
                       </Button>
                     </motion.div>
-                  )
+                   )
                 })}
+                {filteredEvalInterns.length === 0 && (
+                  <div className="col-span-full py-16 text-center bg-slate-50 dark:bg-slate-900/50 rounded-2xl border-2 border-dashed border-slate-100 dark:border-slate-800">
+                    <UserX className="mx-auto mb-3 text-slate-200" size={32} />
+                    <p className="text-slate-400 font-bold text-xs tracking-tight">No students match your criteria</p>
+                  </div>
+                )}
               </div>
 
               {/* Precise Evaluation Ledger */}
@@ -1071,8 +1241,8 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                              <th className="px-6 py-3 text-[9px] font-bold text-slate-400 tracking-widest text-right">Details</th>
                           </tr>
                        </thead>
-                       <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-                          {evaluations.map(e => (
+                        <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                           {filteredEvalLedger.map(e => (
                              <tr key={e.id} className="hover:bg-slate-50/50 transition-colors group">
                                 <td className="px-6 py-4">
                                   <div className="flex items-center gap-2.5">
@@ -1101,7 +1271,7 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                           ))}
                        </tbody>
                     </table>
-                    {evaluations.length === 0 && (
+                     {filteredEvalLedger.length === 0 && (
                       <div className="p-20 text-center">
                          <FileText className="mx-auto mb-3 text-slate-100" size={48} />
                          <p className="text-slate-300 font-bold text-base tracking-tight">No Entries In Ledger</p>
@@ -1129,88 +1299,280 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
               exit={{ opacity: 0, scale: 0.95, y: 30 }}
               className="relative w-full max-w-xl bg-white dark:bg-slate-900 rounded-2xl shadow-[0_32px_64px_-12px_rgba(15,23,42,0.3)] dark:shadow-none overflow-hidden p-8 sm:p-10 border border-slate-100 dark:border-slate-800"
             >
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-11 h-11 bg-[#155DFC] rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
-                  <Plus size={20} strokeWidth={2.5} />
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 bg-[#155DFC] rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                    {currentStep === 1 ? <Plus size={20} strokeWidth={2.5} /> : <Paperclip size={20} />}
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
+                      {currentStep === 1 ? "Deploy Mission" : "Resource Intelligence"}
+                    </h3>
+                    <p className="text-[9px] text-slate-400 font-bold tracking-widest mt-0.5 uppercase">
+                      {currentStep === 1 ? "Phase 01: Core Objectives" : "Phase 02: Supporting Materials"}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Deploy Mission</h3>
-                  <p className="text-[9px] text-slate-400 font-bold tracking-widest mt-0.5">Assign New Milestone To Interns</p>
+                <div className="flex items-center gap-2">
+                   <div className={cn("w-2 h-2 rounded-full transition-all duration-300", currentStep === 1 ? "bg-[#155DFC] w-6" : "bg-slate-200")} />
+                   <div className={cn("w-2 h-2 rounded-full transition-all duration-300", currentStep === 2 ? "bg-[#155DFC] w-6" : "bg-slate-200")} />
                 </div>
               </div>
 
-              <form onSubmit={handleCreateTask} className="space-y-5">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] font-bold text-slate-400 tracking-widest px-1">Target Identity</label>
-                    <select 
-                      value={newTask.internship_id}
-                      onChange={(e) => setNewTask({...newTask, internship_id: e.target.value})}
-                      className="w-full h-11 rounded-xl border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-4 text-xs font-bold tracking-tight focus:ring-2 focus:ring-blue-100 transition-all appearance-none cursor-pointer"
-                      required
+              <form onSubmit={handleCreateTask} className="space-y-6">
+                <AnimatePresence mode="wait">
+                  {currentStep === 1 ? (
+                    <motion.div 
+                      key="step1"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      className="space-y-5"
                     >
-                      <option value="">Select Intern...</option>
-                      <option value="all" className="font-bold text-[#155DFC]">🚀 Full Team Deployment</option>
-                      {interns.map(i => (
-                        <option key={i.id} value={i.id}>
-                          {(Array.isArray(i.student) ? i.student[0] : i.student)?.full_name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div className="space-y-1.5">
+                          <label className="text-[9px] font-bold text-slate-400 tracking-widest px-1 uppercase">Target Identity</label>
+                          <select 
+                            value={newTask.internship_id}
+                            onChange={(e) => setNewTask({...newTask, internship_id: e.target.value})}
+                            className="w-full h-11 rounded-xl border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-4 text-xs font-bold tracking-tight focus:ring-2 focus:ring-blue-100 transition-all appearance-none cursor-pointer"
+                            required
+                          >
+                            <option value="">Select Intern...</option>
+                            <option value="all" className="font-bold text-[#155DFC]">🚀 Full Team Deployment</option>
+                            {interns.map(i => (
+                              <option key={i.id} value={i.id}>
+                                {(Array.isArray(i.student) ? i.student[0] : i.student)?.full_name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] font-bold text-slate-400 tracking-widest px-1">Mission Priority</label>
-                    <select 
-                       value={newTask.priority}
-                       onChange={(e) => setNewTask({...newTask, priority: e.target.value})}
-                       className="w-full h-11 rounded-xl border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-4 text-xs font-bold focus:ring-2 focus:ring-blue-100 transition-all appearance-none cursor-pointer"
+                        <div className="space-y-1.5">
+                          <label className="text-[9px] font-bold text-slate-400 tracking-widest px-1 uppercase">Mission Priority</label>
+                          <select 
+                            value={newTask.priority}
+                            onChange={(e) => setNewTask({...newTask, priority: e.target.value})}
+                            className="w-full h-11 rounded-xl border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-4 text-xs font-bold focus:ring-2 focus:ring-blue-100 transition-all appearance-none cursor-pointer"
+                          >
+                            <option value="low">Low Priority</option>
+                            <option value="medium">Standard</option>
+                            <option value="high">High Priority</option>
+                            <option value="critical">Critical</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-bold text-slate-400 tracking-widest px-1 uppercase">Mission Call-sign</label>
+                        <Input 
+                          value={newTask.title}
+                          onChange={(e) => setNewTask({...newTask, title: e.target.value})}
+                          placeholder="e.g. Core Architecture Phase"
+                          className="h-11 rounded-xl border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-4 text-sm font-bold tracking-tight focus:ring-2 focus:ring-blue-100 transition-all"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-bold text-slate-400 tracking-widest px-1 uppercase">Mission Intelligence</label>
+                        <Textarea 
+                          value={newTask.description}
+                          onChange={(e) => setNewTask({...newTask, description: e.target.value})}
+                          placeholder="Define objectives and requirements..."
+                          className="min-h-[120px] rounded-xl border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-4 py-3 text-sm font-medium resize-none focus:ring-2 focus:ring-blue-100 transition-all leading-relaxed"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-bold text-slate-400 tracking-widest px-1 uppercase">Deadline Horizon</label>
+                        <Input 
+                          type="date"
+                          value={newTask.due_date}
+                          onChange={(e) => setNewTask({...newTask, due_date: e.target.value})}
+                          className="h-11 rounded-xl border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-4 text-sm font-bold focus:ring-2 focus:ring-blue-100 transition-all cursor-pointer"
+                          required
+                        />
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <motion.div 
+                      key="step2"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      className="space-y-6"
                     >
-                      <option value="low">Low Priority</option>
-                      <option value="medium">Standard</option>
-                      <option value="high">High Priority</option>
-                      <option value="critical">Critical</option>
-                    </select>
-                  </div>
-                </div>
+                      {/* Cover Image Upload & Preview */}
+                      <div className="space-y-3">
+                        <label className="text-[9px] font-bold text-slate-400 tracking-widest px-1 uppercase">Mission Cover Image</label>
+                        <div className="relative group">
+                          {previews.cover ? (
+                            <div className="relative w-full h-40 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-800">
+                              <Image src={previews.cover} alt="Cover" fill className="object-cover" />
+                              <button 
+                                type="button"
+                                onClick={() => {
+                                  if (previews.cover) URL.revokeObjectURL(previews.cover);
+                                  setPreviews(p => ({ ...p, cover: null }));
+                                  setNewTask(p => ({ ...p, output_image: null }));
+                                }}
+                                className="absolute top-2 right-2 w-8 h-8 rounded-full bg-rose-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                              >
+                                <X size={16} />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="relative h-24 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center bg-slate-50/50 dark:bg-slate-950 hover:border-[#155DFC] transition-colors">
+                              <input 
+                                type="file" 
+                                accept="image/*"
+                                onChange={(e) => handleFileChange(e, 'cover')}
+                                className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                              />
+                              <Upload size={20} className="text-slate-300 mb-1" />
+                              <span className="text-[10px] font-bold text-slate-400">Add Cover Image</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-[9px] font-bold text-slate-400 tracking-widest px-1">Mission Call-sign</label>
-                  <Input 
-                    value={newTask.title}
-                    onChange={(e) => setNewTask({...newTask, title: e.target.value})}
-                    placeholder="e.g. Core Architecture Phase"
-                    className="h-11 rounded-xl border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-4 text-sm font-bold tracking-tight focus:ring-2 focus:ring-blue-100 transition-all"
-                    required
-                  />
-                </div>
+                      {/* Resource Links Section */}
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between px-1">
+                          <label className="text-[9px] font-bold text-slate-400 tracking-widest uppercase flex items-center gap-2">
+                             <Link size={12} className="text-[#155DFC]" /> Resource Links
+                          </label>
+                          <button 
+                            type="button" 
+                            onClick={() => setNewTask({...newTask, resource_links: [...newTask.resource_links, { title: "", url: "" }]})}
+                            className="text-[9px] font-bold text-[#155DFC] hover:underline"
+                          >
+                            + ADD LINK
+                          </button>
+                        </div>
+                        <div className="space-y-2.5">
+                          {newTask.resource_links.map((link, idx) => (
+                            <div key={idx} className="flex gap-2 items-center group">
+                              <Input 
+                                placeholder="Title" 
+                                value={link.title}
+                                onChange={(e) => {
+                                  const updated = [...newTask.resource_links];
+                                  updated[idx].title = e.target.value;
+                                  setNewTask({...newTask, resource_links: updated});
+                                }}
+                                className="flex-1 h-10 rounded-xl text-xs font-bold border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900"
+                              />
+                              <Input 
+                                placeholder="URL" 
+                                value={link.url}
+                                onChange={(e) => {
+                                  const updated = [...newTask.resource_links];
+                                  updated[idx].url = e.target.value;
+                                  setNewTask({...newTask, resource_links: updated});
+                                }}
+                                className="flex-[2] h-10 rounded-xl text-xs border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900"
+                              />
+                              <button 
+                                type="button" 
+                                onClick={() => {
+                                  const updated = newTask.resource_links.filter((_, i) => i !== idx);
+                                  setNewTask({...newTask, resource_links: updated});
+                                }}
+                                className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all opacity-0 group-hover:opacity-100"
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
+                          ))}
+                          {newTask.resource_links.length === 0 && (
+                            <div className="text-center py-4 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/30">
+                              <p className="text-[10px] text-slate-400 font-medium italic">No intelligence links projected</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-[9px] font-bold text-slate-400 tracking-widest px-1">Mission Intelligence</label>
-                  <Textarea 
-                    value={newTask.description}
-                    onChange={(e) => setNewTask({...newTask, description: e.target.value})}
-                    placeholder="Define objectives and requirements..."
-                    className="min-h-[100px] rounded-xl border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-4 py-3 text-xs font-medium resize-none focus:ring-2 focus:ring-blue-100 transition-all leading-relaxed"
-                  />
-                </div>
+                      {/* Document Upload Section */}
+                      <div className="space-y-4">
+                        <label className="text-[9px] font-bold text-slate-400 tracking-widest px-1 uppercase flex items-center gap-2">
+                           <Paperclip size={12} className="text-[#155DFC]" /> Attachments (Max 3MB)
+                        </label>
+                        
+                        <div className="relative">
+                          <input 
+                            type="file" 
+                            multiple 
+                            onChange={(e) => handleFileChange(e, 'attachment')}
+                            className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                            accept=".pdf,.doc,.docx,.txt,.md,image/*"
+                          />
+                          <div className="border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-2xl p-6 text-center hover:border-[#155DFC] transition-all bg-slate-50/50 dark:bg-slate-950">
+                            <Upload size={20} className="mx-auto text-slate-300 mb-2" />
+                            <p className="text-[10px] font-bold text-slate-400">Click or drag materials here</p>
+                            <p className="text-[8px] text-slate-300 mt-1 uppercase font-black tracking-tighter">PDF • DOC • TXT • MD • IMAGES</p>
+                          </div>
+                        </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-[9px] font-bold text-slate-400 tracking-widest px-1">Deadline Horizon</label>
-                  <Input 
-                    type="date"
-                    value={newTask.due_date}
-                    onChange={(e) => setNewTask({...newTask, due_date: e.target.value})}
-                    className="h-11 rounded-xl border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-4 text-sm font-bold focus:ring-2 focus:ring-blue-100 transition-all cursor-pointer"
-                  />
-                </div>
+                        {/* File Previews */}
+                        <div className="grid grid-cols-2 gap-3">
+                          {previews.files.map((file, idx) => (
+                            <div key={idx} className="relative group flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
+                              <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center shrink-0">
+                                {file.type.startsWith('image/') ? (
+                                   <div className="relative w-full h-full rounded-lg overflow-hidden">
+                                      <Image src={file.url} alt="" fill className="object-cover" />
+                                   </div>
+                                ) : (
+                                   <FileText size={14} className="text-[#155DFC]" />
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[9px] font-bold text-slate-900 dark:text-white truncate">{file.name}</p>
+                                <p className="text-[8px] font-medium text-slate-400">Ready for uplink</p>
+                              </div>
+                              <button 
+                                type="button" 
+                                onClick={() => {
+                                  URL.revokeObjectURL(file.url);
+                                  const updatedPreviews = previews.files.filter((_, i) => i !== idx);
+                                  const updatedFiles = newTask.attachedFiles.filter((_, i) => i !== idx);
+                                  setPreviews(p => ({ ...p, files: updatedPreviews }));
+                                  setNewTask(p => ({ ...p, attachedFiles: updatedFiles }));
+                                }}
+                                className="w-6 h-6 rounded-md bg-rose-50 text-rose-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <X size={12} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
-                <div className="pt-6 flex flex-col sm:flex-row gap-3">
+                <div className="pt-6 flex gap-3">
+                   {currentStep === 2 && (
+                     <Button 
+                      type="button"
+                      onClick={() => setCurrentStep(1)}
+                      variant="ghost" 
+                      className="rounded-xl h-11 font-bold text-[9px] tracking-wider hover:bg-slate-50 px-6 border border-transparent hover:border-slate-100"
+                     >
+                       <ChevronLeft size={14} className="mr-2" /> Back
+                     </Button>
+                   )}
                    <Button 
                     type="button"
                     onClick={() => setIsTaskModalOpen(false)}
                     variant="ghost" 
-                    className="flex-1 rounded-xl h-11 font-bold text-[9px] tracking-wider hover:bg-slate-50"
+                    className={cn(
+                      "rounded-xl h-11 font-bold text-[9px] tracking-wider hover:bg-slate-50 px-6",
+                      currentStep === 2 ? "hidden sm:flex" : "flex-1"
+                    )}
                    >
                      Cancel
                    </Button>
@@ -1219,7 +1581,13 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                     disabled={isSubmittingTask}
                     className="flex-[2] rounded-xl h-11 font-bold text-[9px] tracking-wider bg-[#155DFC] text-white hover:bg-[#1A3CB9] shadow-lg shadow-blue-500/20 transition-all active:scale-[0.98]"
                    >
-                     {isSubmittingTask ? <Loader2 className="animate-spin" /> : "Deploy Milestone"}
+                     {isSubmittingTask ? (
+                       <Loader2 className="animate-spin" />
+                     ) : currentStep === 1 ? (
+                       <span className="flex items-center gap-2">Project Details <ChevronRight size={14} /></span>
+                     ) : (
+                       "Deploy Mission"
+                     )}
                    </Button>
                 </div>
               </form>

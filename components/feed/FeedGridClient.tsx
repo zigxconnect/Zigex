@@ -130,7 +130,7 @@ export function FeedGridClient({ initialData, error }: FeedGridClientProps) {
   );
 
   return (
-    <div className="space-y-12">
+    <div id="feed-content" className="space-y-12">
       {/* Header Controls - Enhanced Search & Tabs Integration */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-100 dark:border-slate-800">
         <div className="relative w-full lg:max-w-md">

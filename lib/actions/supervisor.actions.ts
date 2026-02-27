@@ -376,12 +376,13 @@ export async function getSupervisorDashboardData() {
             }
         }
 
-        // Fetch Tasks (Linked by Internship ID)
+        // Fetch Tasks (Linked by Internship ID, isolated by supervisor_id)
         const internshipIds = rawApps.map(i => i.internship_id).filter(Boolean);
         const { data: tasks } = await supabaseAdmin
             .from("internship_tasks")
             .select("*")
             .in("internship_id", internshipIds)
+            .eq("supervisor_id", profile.id)
             .order("created_at", { ascending: false });
 
         // Fetch Today's Attendance
@@ -444,6 +445,7 @@ export async function assignInternshipTask(taskData: {
     due_date?: string;
     priority?: string;
     resource_links?: { title: string; url: string }[];
+    attachments?: { name: string; url: string; size: number; type: string }[];
     output_image_url?: string;
 }) {
     try {
@@ -490,6 +492,7 @@ export async function assignInternshipTask(taskData: {
             status: "pending",
             supervisor_id: profile.id,
             resource_links: taskData.resource_links || [],
+            attachments: taskData.attachments || [],
             output_image_url: taskData.output_image_url || null
         };
 

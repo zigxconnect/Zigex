@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Play, Eye, Clock, Zap, Loader2, AlertCircle } from "lucide-react";
 import { type HappeningNowItem } from "@/lib/actions/happening-now.actions";
 import { getRandomViewCount, formatSimpleViewCount } from "@/lib/utils/randomViews";
+import Image from "next/image";
 
 export const HappeningNowGrid = ({ initialData = [] }: { initialData?: HappeningNowItem[] }) => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -25,7 +26,7 @@ export const HappeningNowGrid = ({ initialData = [] }: { initialData?: Happening
   // Empty state
   if (data.length === 0) {
     return (
-      <div className="w-full mb-12">
+      <div className="w-full mb-6">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center gap-3 mb-6">
             <div className="relative">
@@ -65,7 +66,7 @@ export const HappeningNowGrid = ({ initialData = [] }: { initialData?: Happening
         </div>
 
         {/* Responsive Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
           {data.map((item, index) => {
             const isHovered = hoveredId === item.id;
             const isFirstItem = index === 0;
@@ -81,18 +82,58 @@ export const HappeningNowGrid = ({ initialData = [] }: { initialData?: Happening
                 `}
                 onMouseEnter={() => setHoveredId(item.id)}
                 onMouseLeave={() => setHoveredId(null)}
-                onClick={() => setSelectedItem(item)}
+                onClick={() => {
+                  if (isFirstItem) {
+                    const el = document.getElementById('feed-content');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  } else {
+                    setSelectedItem(item);
+                  }
+                }}
               >
-                {/* Image/Video Container */}
-                <div className="relative w-full h-full bg-muted">
-                  <img
-                    src={item.type === "video" ? item.thumbnail : item.src || "/placeholder.png"}
-                    alt={item.caption}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.src = "/placeholder.png";
-                    }}
-                  />
+                {isFirstItem ? (
+                  <div className="relative w-full h-full bg-[#155DFC] flex flex-col items-center justify-center p-8 text-center overflow-hidden">
+                    {/* Background Overlay Image */}
+                    <div className="absolute inset-0 z-0">
+                      <Image
+                        src="https://i.ibb.co/hxT5NZVR/home.png"
+                        alt="Background"
+                        fill
+                        className="object-cover opacity-40 mix-blend-overlay"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-br from-[#155DFC]/80 via-[#1A38B1]/90 to-[#0A1D56] mix-blend-multiply" />
+                    </div>
+
+                    <div className="relative z-10 space-y-6">
+                      <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-2 border border-white/20">
+                        <Zap className="w-8 h-8 text-white fill-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-3xl font-black text-white leading-tight tracking-tight">
+                          Discover <br/>Programs on Zigex
+                        </h3>
+                        <p className="text-white/60 text-[10px] font-bold tracking-[0.2em] uppercase mt-3">
+                          Programs • Internships • Events
+                        </p>
+                      </div>
+                      <div className="pt-2">
+                        <span className="px-8 py-3.5 bg-white text-[#155DFC] rounded-xl font-black text-[10px] uppercase tracking-widest shadow-2xl shadow-black/30 hover:bg-blue-50 transition-colors inline-block">
+                          Discover Opportunities
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative w-full h-full bg-muted">
+                    <img
+                      src={item.type === "video" ? item.thumbnail : item.src || "/placeholder.png"}
+                      alt={item.caption}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = "/placeholder.png";
+                      }}
+                    />
+                    {/* ... (rest of the image content) */}
 
                   {/* Gradient Overlay - Kept for text readability but standard black */}
                   <div className="absolute bottom-0 left-0 right-0 h-[35%] bg-gradient-to-t from-black/80 to-transparent" />
@@ -163,19 +204,16 @@ export const HappeningNowGrid = ({ initialData = [] }: { initialData?: Happening
                   {/* Hover Border Effect */}
                   <div
                     className={`
-                    absolute inset-0 rounded-2xl border-2 border-transparent
-                    transition-all duration-300 pointer-events-none
-                    ${
-                      isHovered
-                        ? "border-primary/50"
-                        : ""
-                    }
-                  `}
+                      absolute inset-0 rounded-2xl border-2 border-transparent
+                      transition-all duration-300 pointer-events-none
+                      ${isHovered ? "border-primary/50" : ""}
+                    `}
                   />
                 </div>
-              </div>
-            );
-          })}
+              )}
+            </div>
+          );
+        })}
         </div>
       </div>
 

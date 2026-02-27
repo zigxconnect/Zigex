@@ -19,6 +19,7 @@ export interface CurriculumModule {
 
 export interface LevelCurriculum {
     level: 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert';
+    image?: string;
     modules: CurriculumModule[];
 }
 
@@ -33,6 +34,7 @@ export const PROGRAM_CURRICULA: ProgramCurriculum[] = [
         levels: [
             {
                 level: "Beginner",
+                image: "/curriculum/ai-beginner.png",
                 modules: [
                     {
                         id: "ai-p1",
@@ -74,6 +76,7 @@ export const PROGRAM_CURRICULA: ProgramCurriculum[] = [
             },
             {
                 level: "Intermediate",
+                image: "/curriculum/ai-intermediate.png",
                 modules: [
                     {
                         id: "ai-p4",
@@ -115,6 +118,7 @@ export const PROGRAM_CURRICULA: ProgramCurriculum[] = [
             },
             {
                 level: "Advanced",
+                image: "/curriculum/ai-advanced.png",
                 modules: [
                     {
                         id: "ai-p7",
@@ -168,6 +172,7 @@ export const PROGRAM_CURRICULA: ProgramCurriculum[] = [
             },
             {
                 level: "Expert",
+                image: "/curriculum/ai-expert.png",
                 modules: [
                     {
                         id: "ai-p11",
@@ -202,6 +207,7 @@ export const PROGRAM_CURRICULA: ProgramCurriculum[] = [
         levels: [
             {
                 level: "Beginner",
+                image: "/curriculum/web-beginner.png",
                 modules: [
                     {
                         id: "web-beg-m1",
@@ -219,6 +225,7 @@ export const PROGRAM_CURRICULA: ProgramCurriculum[] = [
             },
             {
                 level: "Intermediate",
+                image: "/curriculum/web-intermediate.png",
                 modules: [
                     {
                         id: "web-int-m1",

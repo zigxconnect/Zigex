@@ -44,7 +44,9 @@ import {
   X,
   Play,
   FileCheck2,
-  LockKeyhole
+  LockKeyhole,
+  Link as LinkIcon,
+  Paperclip
 } from "lucide-react";
 import { format } from "date-fns";
 import Link from "next/link";
@@ -859,10 +861,22 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                         className="group relative"
                       >
                         <div className={cn(
-                          "h-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-6 transition-all duration-300 shadow-sm overflow-hidden flex flex-col cursor-pointer",
+                          "h-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl transition-all duration-300 shadow-sm overflow-hidden flex flex-col cursor-pointer",
                           !task.is_read ? "ring-1 ring-[#155DFC] shadow-lg shadow-blue-500/5" : "hover:border-blue-200"
                         )}>
-                          <div className="flex items-start justify-between mb-5">
+                          {task.output_image_url && (
+                            <div className="relative h-32 w-full overflow-hidden">
+                              <Image 
+                                src={task.output_image_url} 
+                                alt={task.title} 
+                                fill 
+                                className="object-cover group-hover:scale-110 transition-transform duration-500"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                            </div>
+                          )}
+                          <div className="p-6 flex flex-col flex-1">
+                            <div className="flex items-start justify-between mb-5">
                             <div className={cn(
                               "px-2.5 py-0.5 rounded-lg text-[8px] font-bold tracking-wider border",
                               task.priority === "high" ? "bg-rose-50 text-rose-600 border-rose-100" :
@@ -880,9 +894,24 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                           <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1.5 leading-tight group-hover:text-[#155DFC] transition-colors">
                             {task.title}
                           </h3>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium line-clamp-2 mb-6 flex-1 leading-snug">
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium line-clamp-2 mb-4 leading-snug">
                             {task.description}
                           </p>
+
+                          {(task.resource_links?.length > 0 || task.attachments?.length > 0) && (
+                            <div className="flex items-center gap-2 mb-6">
+                              {task.resource_links?.length > 0 && (
+                                <div className="flex items-center gap-1 text-[9px] font-bold text-blue-500 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded-md">
+                                  <LinkIcon size={10} /> {task.resource_links.length} Links
+                                </div>
+                              )}
+                              {task.attachments?.length > 0 && (
+                                <div className="flex items-center gap-1 text-[9px] font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded-md">
+                                  <Paperclip size={10} /> {task.attachments.length} Files
+                                </div>
+                              )}
+                            </div>
+                          )}
 
                           <div className="pt-4 border-t border-slate-50 dark:border-slate-800/50 flex items-center justify-between mt-auto">
                             <div className="flex items-center gap-2">
@@ -900,6 +929,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                               <ArrowUpRight size={14} />
                             </div>
                           </div>
+                        </div>
 
                           {!task.is_read && (
                             <div className="absolute top-3 right-3 flex items-center gap-1.5">
@@ -927,16 +957,22 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
 
             {/* ===== CURRICULUM TAB ===== */}
             {activeTab === "curriculum" && (
-              <div className="space-y-8">
-                {/* Curriculum Header & Selector */}
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-100 dark:border-slate-800">
-                  <div className="space-y-1">
-                    <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Academic Pathway</h2>
-                    <p className="text-xs font-bold text-[#155DFC] uppercase tracking-widest">{fullProgramCurriculum?.program || "General Internship"} • {selectedLevel} Level</p>
+              <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                {/* Curriculum Header */}
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                  <div className="space-y-1.5">
+                    <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">Academic Architecture</h2>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="rounded-full px-3 py-0.5 text-[10px] font-bold border-slate-200 dark:border-slate-800 text-slate-500 uppercase tracking-widest bg-slate-50/50 dark:bg-slate-950/50">
+                        v2.4.0 Production
+                      </Badge>
+                      <span className="text-[10px] font-bold text-slate-400">•</span>
+                      <p className="text-[10px] font-black text-[#155DFC] uppercase tracking-[0.2em]">Validated Syllabus</p>
+                    </div>
                   </div>
                   
                   {/* Level Switcher */}
-                  <div className="flex p-1.5 bg-slate-100 dark:bg-slate-900 rounded-2xl gap-1 w-fit border border-slate-200 dark:border-slate-800 shadow-inner">
+                  <div className="flex p-1.5 bg-slate-100/50 dark:bg-slate-900/50 backdrop-blur-md rounded-2xl gap-1 w-fit border border-slate-200/50 dark:border-slate-800/50 shadow-sm">
                     {['Beginner', 'Intermediate', 'Advanced', 'Expert'].map((level) => (
                       <button
                         key={level}
@@ -944,7 +980,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                         className={cn(
                           "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300",
                           selectedLevel === level 
-                            ? "bg-[#155DFC] text-white shadow-lg shadow-blue-500/20" 
+                            ? "bg-[#155DFC] text-white shadow-xl shadow-blue-500/20 scale-[1.02]" 
                             : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                         )}
                       >
@@ -955,160 +991,185 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                 </div>
 
                 {displayCurriculum.length > 0 ? (
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                    {/* Left Column: Module Navigation & Details */}
-                    <div className="lg:col-span-8 space-y-4">
-                      <Accordion type="single" collapsible className="w-full space-y-4">
+                  <>
+                    {/* Main Vercel-Style Detail Card */}
+                    <Card className="rounded-[2.5rem] border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl shadow-blue-500/5 overflow-hidden">
+                      <div className="flex flex-col md:flex-row items-center justify-between p-6 border-b border-slate-50 dark:border-slate-800">
+                        <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Deployment Details</h3>
+                        <div className="flex items-center gap-3">
+                          <Button variant="outline" className="rounded-xl h-9 px-4 text-[10px] font-bold border-slate-100 dark:border-slate-800 gap-2">
+                            <Compass size={12} /> Share
+                          </Button>
+                          <Button variant="outline" className="rounded-xl h-9 px-4 text-[10px] font-bold border-slate-100 dark:border-slate-800 gap-2">
+                            <Activity size={12} /> Logs
+                          </Button>
+                          <Button className="rounded-xl h-9 px-6 text-[10px] font-black bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-90 gap-2">
+                            Visit Pathway <ChevronRight size={12} />
+                          </Button>
+                        </div>
+                      </div>
+
+                      <CardContent className="p-8">
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                          {/* Level Preview Image */}
+                          <div className="lg:col-span-4">
+                            <div className="relative aspect-video rounded-3xl overflow-hidden border border-slate-100 dark:border-slate-800 shadow-lg group">
+                              {currentLevelData?.image ? (
+                                <Image 
+                                  src={currentLevelData.image} 
+                                  alt={selectedLevel} 
+                                  fill 
+                                  className="object-cover transition-transform duration-700 group-hover:scale-110"
+                                />
+                              ) : (
+                                <div className="absolute inset-0 bg-gradient-to-br from-[#155DFC] to-indigo-600 flex items-center justify-center">
+                                  <Compass size={60} className="text-white/20" />
+                                </div>
+                              )}
+                              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 to-transparent flex flex-col justify-end p-6">
+                                <span className="text-[10px] font-black text-white/70 uppercase tracking-widest mb-1">Active Stage</span>
+                                <p className="text-xl font-black text-white tracking-tight">{selectedLevel} Mastery</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Metadata Grid */}
+                          <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-y-8 gap-x-12">
+                            <div className="space-y-1">
+                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Created</p>
+                              <div className="flex items-center gap-2">
+                                <div className="w-5 h-5 rounded-full bg-[#155DFC] flex items-center justify-center text-[8px] font-bold text-white">ZX</div>
+                                <span className="text-xs font-bold text-slate-900 dark:text-white">zigex-learning</span>
+                                <span className="text-xs text-slate-400 font-medium">3d ago</span>
+                              </div>
+                            </div>
+
+                            <div className="space-y-1">
+                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</p>
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                                <span className="text-xs font-bold text-slate-900 dark:text-white">Ready Latest</span>
+                              </div>
+                            </div>
+
+                            <div className="space-y-1">
+                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Duration</p>
+                              <div className="flex items-center gap-2">
+                                <Clock size={16} className="text-slate-400" />
+                                <span className="text-xs font-bold text-slate-900 dark:text-white">{displayCurriculum.reduce((acc, mod) => acc + (parseInt(mod.duration) || 0), 0)} Weeks Total</span>
+                                <span className="text-xs text-slate-400 font-medium">mastery time</span>
+                              </div>
+                            </div>
+
+                            <div className="space-y-1">
+                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Environment</p>
+                              <div className="flex items-center gap-2">
+                                <Target size={16} className="text-slate-400" />
+                                <span className="text-xs font-bold text-slate-900 dark:text-white">Professional Production</span>
+                              </div>
+                            </div>
+
+                            <div className="sm:col-span-2 pt-6 border-t border-slate-50 dark:border-slate-800 space-y-4">
+                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Academic Source</p>
+                              <div className="flex items-center gap-4">
+                                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+                                    <FileText size={14} className="text-slate-400" />
+                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">curriculum.ts</span>
+                                 </div>
+                                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+                                    <Compass size={14} className="text-[#155DFC]" />
+                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{fullProgramCurriculum?.program}</span>
+                                 </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Syllabus Explorer (Inspired by Build Logs) */}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Syllabus Architecture</h3>
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1 text-[10px] font-black text-emerald-500">
+                            <Check size={14} /> All Modules Validated
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-white dark:bg-slate-950 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 divide-y divide-slate-50 dark:divide-slate-900 overflow-hidden shadow-sm">
                         {displayCurriculum.map((module, mIdx) => (
-                          <AccordionItem 
-                            key={module.id} 
-                            value={module.id}
-                            className="border-2 rounded-[2rem] overflow-hidden transition-all duration-500 bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-blue-100 group data-[state=open]:border-[#155DFC]/30 data-[state=open]:ring-4 data-[state=open]:ring-blue-50 dark:data-[state=open]:ring-blue-900/10"
-                          >
-                            <AccordionTrigger className="px-6 py-6 sm:px-8 hover:no-underline group">
-                              <div className="flex items-center gap-6 text-left w-full">
-                                <div className={cn(
-                                  "w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm shrink-0 transition-all duration-500 shadow-inner group-data-[state=open]:rotate-12 group-data-[state=open]:scale-110",
-                                  mIdx === 0 ? "bg-[#155DFC] text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-400"
-                                )}>
-                                  {mIdx + 1}
+                          <Accordion type="single" collapsible key={module.id} className="w-full">
+                            <AccordionItem value={module.id} className="border-0">
+                              <AccordionTrigger className="px-8 py-5 hover:bg-slate-50/50 dark:hover:bg-slate-900/50 transition-colors hover:no-underline group">
+                                <div className="flex items-center gap-6 w-full text-left">
+                                   <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center text-xs font-black text-slate-400 group-data-[state=open]:text-[#155DFC] group-data-[state=open]:border-blue-100">
+                                     {mIdx + 1}
+                                   </div>
+                                   <div className="flex-1">
+                                     <h4 className="text-sm font-black text-slate-900 dark:text-white tracking-tight">{module.title}</h4>
+                                     <p className="text-[10px] font-bold text-slate-400 uppercase">{module.duration} • {module.lessons.length} Learning Blocks</p>
+                                   </div>
+                                   <div className="hidden sm:flex items-center gap-2 mr-4">
+                                      <Badge className="bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 border-0 font-bold text-[8px] uppercase tracking-tighter">Production Ready</Badge>
+                                   </div>
                                 </div>
-                                <div className="flex-1 min-w-0 pr-4">
-                                  <div className="flex items-center gap-3 mb-1">
-                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#155DFC] opacity-80">Module {mIdx + 1}</span>
-                                    <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800" />
-                                  </div>
-                                  <h3 className="text-base font-black text-slate-900 dark:text-white tracking-tight group-hover:text-[#155DFC] transition-colors line-clamp-1">
-                                    {module.title}
-                                  </h3>
-                                  <div className="flex items-center gap-4 mt-2">
-                                    <div className="flex items-center gap-1.5 text-[9px] font-bold text-slate-400">
-                                      <Clock size={12} className="text-slate-300" />
-                                      {module.duration}
-                                    </div>
-                                    <div className="flex items-center gap-1.5 text-[9px] font-bold text-slate-400">
-                                      <Layers size={12} className="text-slate-300" />
-                                      {module.lessons.length} Lessons
-                                    </div>
-                                  </div>
+                              </AccordionTrigger>
+                              <AccordionContent className="px-8 pb-8 pt-2">
+                                <div className="pl-16 space-y-8">
+                                   <p className="text-sm text-slate-500 font-medium leading-relaxed max-w-3xl border-l-2 border-slate-100 dark:border-slate-800 pl-6">
+                                     {module.description}
+                                   </p>
+                                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                      {module.lessons.map((lesson) => (
+                                        <a 
+                                          key={lesson.id} 
+                                          href={lesson.url} 
+                                          target="_blank" 
+                                          rel="noopener noreferrer"
+                                          className="group/item flex items-center justify-between p-4 rounded-2xl bg-slate-50/30 dark:bg-slate-900/30 border border-slate-100 dark:border-slate-800 hover:border-blue-100 hover:bg-white dark:hover:bg-slate-900 transition-all cursor-pointer"
+                                        >
+                                          <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center">
+                                              {lesson.type === 'video' ? <Play size={12} className="text-blue-500 fill-blue-500" /> : <FileText size={12} className="text-indigo-400" />}
+                                            </div>
+                                            <div>
+                                              <p className="text-xs font-bold text-slate-900 dark:text-white">{lesson.title}</p>
+                                              <p className="text-[9px] font-medium text-slate-400 uppercase">{lesson.type} • {lesson.duration}</p>
+                                            </div>
+                                          </div>
+                                          <ExternalLink size={12} className="text-slate-300 opacity-0 group-hover/item:opacity-100 transition-opacity" />
+                                        </a>
+                                      ))}
+                                   </div>
                                 </div>
-                              </div>
-                            </AccordionTrigger>
-                            <AccordionContent className="px-6 pb-8 sm:px-8 pt-2">
-                              <div className="pl-[72px] space-y-8">
-                                <p className="text-sm text-slate-500 dark:text-slate-400 font-semibold leading-relaxed max-w-2xl border-l-4 border-blue-50 dark:border-slate-800 pl-6 py-2">
-                                  {module.description}
-                                </p>
-
-                                {/* Lessons List - Coursera style */}
-                                <div className="space-y-3">
-                                  <div className="flex items-center justify-between mb-4">
-                                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Syllabus Sequence</h4>
-                                    <div className="h-px flex-1 mx-4 bg-slate-100 dark:bg-slate-800" />
-                                  </div>
-                                  {module.lessons.map((lesson, lIdx) => {
-                                    const LessonContent = (
-                                      <div 
-                                        className={cn(
-                                          "group/lesson flex items-center justify-between p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800 transition-all",
-                                          lesson.url ? "hover:bg-white dark:hover:bg-slate-900 hover:border-blue-100 cursor-pointer" : ""
-                                        )}
-                                      >
-                                        <div className="flex items-center gap-4">
-                                          <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-800 flex items-center justify-center border border-slate-100 dark:border-slate-700 shadow-sm transition-transform group-hover/lesson:scale-110">
-                                            {lesson.type === 'video' ? <Play size={14} className="text-[#155DFC] fill-[#155DFC]" /> : 
-                                             lesson.type === 'reading' ? <FileText size={14} className="text-indigo-500" /> :
-                                             lesson.type === 'project' ? <Rocket size={14} className="text-amber-500" /> :
-                                             <FileCheck2 size={14} className="text-emerald-500" />}
-                                          </div>
-                                          <div>
-                                            <p className="text-xs font-bold text-slate-900 dark:text-white tracking-tight">{lesson.title}</p>
-                                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{lesson.type} • {lesson.duration}</p>
-                                          </div>
-                                        </div>
-                                        {lesson.url && (
-                                          <div className="w-6 h-6 rounded-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center opacity-0 group-hover/lesson:opacity-100 transition-opacity">
-                                            <ExternalLink size={12} className="text-[#155DFC]" />
-                                          </div>
-                                        )}
-                                      </div>
-                                    );
-
-                                    return lesson.url ? (
-                                      <a 
-                                        key={lesson.id} 
-                                        href={lesson.url} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer" 
-                                        className="block no-underline"
-                                      >
-                                        {LessonContent}
-                                      </a>
-                                    ) : (
-                                      <div key={lesson.id}>{LessonContent}</div>
-                                    );
-                                  })}
-                                </div>
-
-                                <Button className="w-full sm:w-auto rounded-2xl bg-[#155DFC] hover:bg-blue-700 text-white font-black text-[10px] h-12 px-8 uppercase tracking-[0.2em] shadow-xl shadow-blue-500/20 transition-all active:scale-95 group">
-                                  Initialize Module <ArrowRight size={14} className="ml-3 group-hover:translate-x-1 transition-transform" />
-                                </Button>
-                              </div>
-                            </AccordionContent>
-                          </AccordionItem>
+                              </AccordionContent>
+                            </AccordionItem>
+                          </Accordion>
                         ))}
-                      </Accordion>
-                    </div>
-
-                    {/* Right Column: Progress & Insights */}
-                    <div className="lg:col-span-4 space-y-6">
-                      <Card className="rounded-[2.5rem] border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
-                        <CardHeader className="pb-2">
-                          <p className="text-[10px] font-black text-[#155DFC] uppercase tracking-widest mb-1">Learning Velocity</p>
-                          <CardTitle className="text-xl font-black tracking-tight">Deployment Progress</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                          <div className="flex items-end justify-between mb-2">
-                            <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">18%</span>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">3 of 12 Modules</span>
-                          </div>
-                          <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden p-1 border border-slate-200 dark:border-slate-700">
-                             <div className="h-full bg-gradient-to-r from-[#155DFC] to-indigo-500 rounded-full w-[18%] shadow-[0_0_10px_rgba(21,93,252,0.3)]" />
-                          </div>
-                          
-                          <div className="pt-6 border-t border-slate-50 dark:border-slate-800 space-y-4">
-                            <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Milestones Reached</h4>
-                            {[
-                              { label: "Technical Onboarding", date: "Feb 12", icon: ShieldCheck },
-                              { label: mIdx => displayCurriculum[0]?.title || "Intro Module", date: "Feb 15", icon: CheckCircle2 },
-                            ].map((milestone, i) => {
-                              const label = typeof milestone.label === 'function' ? milestone.label(0) : milestone.label;
-                              const Icon = milestone.icon;
-                              return (
-                                <div key={i} className="flex items-center gap-4 group">
-                                  <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-500 shrink-0">
-                                    <Icon size={14} />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-[11px] font-bold text-slate-900 dark:text-white truncate">{label}</p>
-                                    <p className="text-[9px] font-medium text-slate-400 uppercase tracking-wider">{milestone.date}</p>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      <div className="p-8 rounded-[2.5rem] bg-gradient-to-br from-[#155DFC] to-[#0A45C4] text-white shadow-xl relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:scale-150 transition-transform duration-1000" />
-                        <LockKeyhole size={40} className="text-white/20 absolute -right-4 bottom-4" />
-                        <h4 className="text-lg font-black tracking-tight mb-2">Certification Track</h4>
-                        <p className="text-[11px] text-blue-100/80 font-medium leading-relaxed mb-6">Complete all modules in the <span className="text-white font-bold">{selectedLevel}</span> path to unlock your official verification badge.</p>
-                        <Button variant="outline" className="w-full rounded-xl bg-white/10 border-white/20 text-white font-black text-[10px] h-10 uppercase tracking-widest hover:bg-white/20">View Certificate Req</Button>
                       </div>
                     </div>
-                  </div>
+
+                    {/* Bottom Diagnostic Tiles (Vercel Footer Cards) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {[
+                        { title: "Learning Velocity", value: "24.5%", desc: "View activity logs & pace", icon: Activity, color: "text-[#155DFC]" },
+                        { title: "Cognitive Retention", value: "88.2%", desc: "Knowledge durability metrics", icon: ShieldCheck, color: "text-emerald-500" },
+                        { title: "Pathway Precision", value: "High", desc: "Syllabus alignment score", icon: Target, color: "text-amber-500" },
+                        { title: "Engagement Flow", value: "Active", desc: "Session intensity tracking", icon: Zap, color: "text-indigo-500" }
+                      ].map((tile, i) => (
+                        <Card key={i} className="rounded-3xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900/50 hover:border-blue-100 transition-all p-6 group cursor-pointer shadow-sm">
+                          <p className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-widest mb-1">{tile.title}</p>
+                          <p className="text-xs font-semibold text-slate-400 mb-4">{tile.desc}</p>
+                          <div className="flex items-center justify-between">
+                             <span className={cn("text-lg font-black tracking-tight", tile.color)}>{tile.value}</span>
+                             <tile.icon size={18} className="text-slate-200 dark:text-slate-800 group-hover:scale-110 transition-transform" />
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  </>
                 ) : (
                   <div className="text-center py-24 bg-white dark:bg-slate-900 rounded-[3rem] border-2 border-dashed border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden">
                     <div className="absolute inset-0 bg-blue-50/50 dark:bg-blue-900/5 backdrop-blur-[1px]" />
@@ -1375,14 +1436,79 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                   </div>
                 </div>
 
+                {selectedTask.output_image_url && (
+                  <div className="relative h-48 w-full rounded-2xl overflow-hidden mb-6 border border-slate-100 dark:border-slate-800 shadow-md">
+                    <Image 
+                      src={selectedTask.output_image_url} 
+                      alt={selectedTask.title} 
+                      fill 
+                      className="object-cover"
+                    />
+                  </div>
+                )}
+
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-3 tracking-tight">
                   {selectedTask.title}
                 </h2>
                 
-                <div className="space-y-4 mb-8 overflow-y-auto max-h-[250px] custom-scrollbar pr-2">
+                <div className="space-y-6 mb-8 overflow-y-auto max-h-[400px] custom-scrollbar pr-2">
                   <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
                     {selectedTask.description}
                   </p>
+
+                  {selectedTask.resource_links?.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                        <LinkIcon size={12} className="text-blue-500" /> Resource Links
+                      </h4>
+                      <div className="grid grid-cols-1 gap-2">
+                        {selectedTask.resource_links.map((link: any, idx: number) => (
+                          <a 
+                            key={idx} 
+                            href={link.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 hover:border-blue-100 transition-all group/link"
+                          >
+                            <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 truncate max-w-[200px]">{link.title}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[9px] text-slate-400 truncate max-w-[150px]">{link.url}</span>
+                              <ExternalLink size={12} className="text-slate-300 group-hover/link:text-blue-500 transition-colors" />
+                            </div>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedTask.attachments?.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                        <Paperclip size={12} className="text-indigo-500" /> Attached Documents
+                      </h4>
+                      <div className="grid grid-cols-1 gap-2">
+                        {selectedTask.attachments.map((file: any, idx: number) => (
+                          <a 
+                            key={idx} 
+                            href={file.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            download
+                            className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 hover:border-indigo-100 transition-all group/file"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                                <FileText size={14} className="text-indigo-500" />
+                              </div>
+                              <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 truncate max-w-[300px]">{file.name}</span>
+                            </div>
+                            <Download size={14} className="text-slate-300 group-hover/file:text-indigo-500 transition-colors" />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {selectedTask.department && (
                     <div className="flex items-center gap-2 p-2 px-3 rounded-lg bg-slate-50 dark:bg-slate-800 w-fit">
                       <Layers size={12} className="text-[#155DFC]" />
