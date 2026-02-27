@@ -132,7 +132,8 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
   const getMappedLevel = (level?: string): LevelCurriculum['level'] => {
     if (!level) return 'Beginner';
     const l = level.toLowerCase();
-    if (l.includes('expert') || l.includes('advanced')) return 'Advanced';
+    if (l.includes('expert')) return 'Expert';
+    if (l.includes('advanced')) return 'Advanced';
     if (l.includes('intermediate')) return 'Intermediate';
     return 'Beginner'; // Default to Beginner for "No Idea" or unknown
   };
@@ -936,7 +937,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                   
                   {/* Level Switcher */}
                   <div className="flex p-1.5 bg-slate-100 dark:bg-slate-900 rounded-2xl gap-1 w-fit border border-slate-200 dark:border-slate-800 shadow-inner">
-                    {['Beginner', 'Intermediate', 'Advanced'].map((level) => (
+                    {['Beginner', 'Intermediate', 'Advanced', 'Expert'].map((level) => (
                       <button
                         key={level}
                         onClick={() => setSelectedLevel(level as any)}
@@ -1005,28 +1006,48 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                                     <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Syllabus Sequence</h4>
                                     <div className="h-px flex-1 mx-4 bg-slate-100 dark:bg-slate-800" />
                                   </div>
-                                  {module.lessons.map((lesson, lIdx) => (
-                                    <div 
-                                      key={lesson.id} 
-                                      className="group/lesson flex items-center justify-between p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-900 hover:border-blue-100 transition-all cursor-pointer"
-                                    >
-                                      <div className="flex items-center gap-4">
-                                        <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-800 flex items-center justify-center border border-slate-100 dark:border-slate-700 shadow-sm transition-transform group-hover/lesson:scale-110">
-                                          {lesson.type === 'video' ? <Play size={14} className="text-[#155DFC] fill-[#155DFC]" /> : 
-                                           lesson.type === 'reading' ? <FileText size={14} className="text-indigo-500" /> :
-                                           lesson.type === 'project' ? <Rocket size={14} className="text-amber-500" /> :
-                                           <FileCheck2 size={14} className="text-emerald-500" />}
+                                  {module.lessons.map((lesson, lIdx) => {
+                                    const LessonContent = (
+                                      <div 
+                                        className={cn(
+                                          "group/lesson flex items-center justify-between p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800 transition-all",
+                                          lesson.url ? "hover:bg-white dark:hover:bg-slate-900 hover:border-blue-100 cursor-pointer" : ""
+                                        )}
+                                      >
+                                        <div className="flex items-center gap-4">
+                                          <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-800 flex items-center justify-center border border-slate-100 dark:border-slate-700 shadow-sm transition-transform group-hover/lesson:scale-110">
+                                            {lesson.type === 'video' ? <Play size={14} className="text-[#155DFC] fill-[#155DFC]" /> : 
+                                             lesson.type === 'reading' ? <FileText size={14} className="text-indigo-500" /> :
+                                             lesson.type === 'project' ? <Rocket size={14} className="text-amber-500" /> :
+                                             <FileCheck2 size={14} className="text-emerald-500" />}
+                                          </div>
+                                          <div>
+                                            <p className="text-xs font-bold text-slate-900 dark:text-white tracking-tight">{lesson.title}</p>
+                                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{lesson.type} • {lesson.duration}</p>
+                                          </div>
                                         </div>
-                                        <div>
-                                          <p className="text-xs font-bold text-slate-900 dark:text-white tracking-tight">{lesson.title}</p>
-                                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{lesson.type} • {lesson.duration}</p>
-                                        </div>
+                                        {lesson.url && (
+                                          <div className="w-6 h-6 rounded-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center opacity-0 group-hover/lesson:opacity-100 transition-opacity">
+                                            <ExternalLink size={12} className="text-[#155DFC]" />
+                                          </div>
+                                        )}
                                       </div>
-                                      <div className="w-6 h-6 rounded-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center opacity-0 group-hover/lesson:opacity-100 transition-opacity">
-                                        <ArrowRight size={12} className="text-[#155DFC]" />
-                                      </div>
-                                    </div>
-                                  ))}
+                                    );
+
+                                    return lesson.url ? (
+                                      <a 
+                                        key={lesson.id} 
+                                        href={lesson.url} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer" 
+                                        className="block no-underline"
+                                      >
+                                        {LessonContent}
+                                      </a>
+                                    ) : (
+                                      <div key={lesson.id}>{LessonContent}</div>
+                                    );
+                                  })}
                                 </div>
 
                                 <Button className="w-full sm:w-auto rounded-2xl bg-[#155DFC] hover:bg-blue-700 text-white font-black text-[10px] h-12 px-8 uppercase tracking-[0.2em] shadow-xl shadow-blue-500/20 transition-all active:scale-95 group">
