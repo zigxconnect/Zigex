@@ -239,13 +239,8 @@ export const AuthForm = ({ type }: AuthFormProps) => {
       isMounted = false;
     };
   }, [isSignUp, router, supabase]);
-  // console.warn("[AuthForm] NEXT_PUBLIC_GOOGLE_CLIENT_ID is missing");
-  // console.log("[AuthForm] Initializing Google Identity Services");
-  // console.log("[AuthForm] Google ID Token received, signing in with Supabase...");
-  // console.error("[AuthForm] Supabase ID Token Auth Error:", error);
-  // console.log("[AuthForm] Supabase sign-in successful, user:", data.user?.id);
-  // console.log("[AuthForm] Rendering invisible Google button onto overlay");
-  // console.log("[AuthForm] Google script or Client ID not ready for Identity Services");
+
+
 
   const startStandardOAuth = async () => {
     const { data, error } = await supabase.auth.signInWithOAuth({

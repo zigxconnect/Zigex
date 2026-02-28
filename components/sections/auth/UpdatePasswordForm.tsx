@@ -8,6 +8,22 @@ import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Spinner } from "@/components/uiComponent/Spinner";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "react-hot-toast";
@@ -16,10 +32,10 @@ import {
   EyeOff,
   LockKeyhole,
   AlertTriangle,
-  CheckCircle,
-  ArrowLeft,
   ShieldCheck,
+  ArrowLeft,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const updatePasswordSchema = z
   .object({
@@ -45,25 +61,42 @@ const StrengthMeter = ({ password = "" }: { password?: string }) => {
     { label: "Special", met: /[^A-Za-z0-9]/.test(password) },
   ];
 
-  const score = checks.filter(c => c.met).length;
+  const score = checks.filter((c) => c.met).length;
 
   return (
     <div className="mt-3 space-y-2">
-      <div className="flex gap-1 h-1.5">
+      <div className="flex gap-1.5 h-1.5">
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
-            className={`flex-1 rounded-full transition-all duration-500 ${i <= score
-              ? score <= 2 ? "bg-red-400" : score === 3 ? "bg-amber-400" : "bg-emerald-500"
-              : "bg-gray-100"
-              }`}
+            className={cn(
+              "flex-1 rounded-full transition-all duration-500",
+              i <= score
+                ? score <= 2
+                  ? "bg-destructive/70"
+                  : score === 3
+                    ? "bg-yellow-500"
+                    : "bg-emerald-500"
+                : "bg-muted"
+            )}
           />
         ))}
       </div>
       <div className="flex flex-wrap gap-x-3 gap-y-1">
         {checks.map((check, i) => (
-          <span key={i} className={`text-[10px] flex items-center gap-1 transition-colors ${check.met ? "text-emerald-600 font-medium" : "text-gray-400"}`}>
-            <div className={`w-1 h-1 rounded-full ${check.met ? "bg-emerald-500" : "bg-gray-300"}`} />
+          <span
+            key={i}
+            className={cn(
+              "text-[10px] flex items-center gap-1 transition-colors",
+              check.met ? "text-emerald-600 font-medium" : "text-muted-foreground"
+            )}
+          >
+            <div
+              className={cn(
+                "w-1 h-1 rounded-full",
+                check.met ? "bg-emerald-500" : "bg-muted-foreground/30"
+              )}
+            />
             {check.label}
           </span>
         ))}
@@ -84,17 +117,16 @@ export const UpdatePasswordForm = () => {
 
   const verificationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const {
-    register,
-    handleSubmit,
-    control,
-    formState: { errors, isSubmitting },
-  } = useForm<FormData>({
+  const form = useForm<FormData>({
     resolver: zodResolver(updatePasswordSchema),
+    defaultValues: {
+      password: "",
+      confirmPassword: "",
+    },
     mode: "onChange",
   });
 
-  const passwordValue = useWatch({ control, name: "password" }) || "";
+  const passwordValue = useWatch({ control: form.control, name: "password" }) || "";
 
   useEffect(() => {
     // Check for errors passed from the callback route
@@ -103,7 +135,9 @@ export const UpdatePasswordForm = () => {
 
     if (errorParam) {
       console.error("[UpdatePasswordForm] Auth Error:", errorParam, errorDescription);
-      setApiError(errorDescription?.replace(/\+/g, " ") || "The reset link is invalid or has expired.");
+      setApiError(
+        errorDescription?.replace(/\+/g, " ") || "The reset link is invalid or has expired."
+      );
       setHasVerificationFailed(true);
       return;
     }
@@ -112,7 +146,9 @@ export const UpdatePasswordForm = () => {
     verificationTimeoutRef.current = setTimeout(() => {
       if (!isSessionReady) {
         setHasVerificationFailed(true);
-        setApiError("Authentication session could not be established. Please try requesting a new link.");
+        setApiError(
+          "Authentication session could not be established. Please try requesting a new link."
+        );
       }
     }, 8000);
 
@@ -126,12 +162,14 @@ export const UpdatePasswordForm = () => {
 
     checkSession();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
-        setIsSessionReady(true);
-        if (verificationTimeoutRef.current) clearTimeout(verificationTimeoutRef.current);
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (session) {
+          setIsSessionReady(true);
+          if (verificationTimeoutRef.current) clearTimeout(verificationTimeoutRef.current);
+        }
       }
-    });
+    );
 
     return () => {
       authListener.subscription.unsubscribe();
@@ -158,7 +196,7 @@ export const UpdatePasswordForm = () => {
   };
 
   return (
-    <div className="w-full max-w-[420px] mx-auto py-12 px-6">
+    <div className="w-full max-w-[440px] mx-auto py-12 px-6">
       <AnimatePresence mode="wait">
         {hasVerificationFailed ? (
           <motion.div
@@ -166,21 +204,30 @@ export const UpdatePasswordForm = () => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="bg-white p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 text-center"
           >
-            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
-              <AlertTriangle className="w-8 h-8 text-red-500" />
-            </div>
-            <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">Access Denied</h1>
-            <p className="mt-3 text-gray-500 leading-relaxed text-[15px]">
-              {apiError || "This link is no longer valid or the session has expired for security reasons."}
-            </p>
-            <Button
-              onClick={() => router.push("/forgot-password")}
-              className="w-full mt-8 h-12 bg-gray-900 hover:bg-black text-white rounded-xl transition-all shadow-sm"
-            >
-              Request New Link
-            </Button>
+            <Card className="border-destructive/20 shadow-lg">
+              <CardHeader className="text-center pb-2">
+                <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <AlertTriangle className="w-8 h-8 text-destructive" />
+                </div>
+                <CardTitle className="text-2xl font-bold tracking-tight text-foreground">
+                  Access Denied
+                </CardTitle>
+                <CardDescription className="text-sm px-2 mt-2">
+                  {apiError ||
+                    "This link is no longer valid or the session has expired for security reasons."}
+                </CardDescription>
+              </CardHeader>
+              <CardFooter className="pt-4">
+                <Button
+                  onClick={() => router.push("/forgot-password")}
+                  variant="destructive"
+                  className="w-full h-11 rounded-xl shadow-sm font-semibold"
+                >
+                  Request New Link
+                </Button>
+              </CardFooter>
+            </Card>
           </motion.div>
         ) : !isSessionReady ? (
           <motion.div
@@ -189,110 +236,149 @@ export const UpdatePasswordForm = () => {
             animate={{ opacity: 1 }}
             className="flex flex-col items-center justify-center py-20"
           >
-            <Spinner className="h-8 w-8 text-blue-500" />
-            <p className="mt-6 text-gray-500 font-medium animate-pulse">Establishing secure connection...</p>
+            <Spinner className="h-10 w-10 text-primary" />
+            <p className="mt-6 text-muted-foreground font-medium animate-pulse tracking-tight text-[15px]">
+              Establishing secure connection...
+            </p>
           </motion.div>
         ) : formState === "success" ? (
           <motion.div
             key="success"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white p-10 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 text-center"
           >
-            <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
-              <ShieldCheck className="w-10 h-10 text-emerald-500" />
-            </div>
-            <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">Identity Secured</h1>
-            <p className="mt-3 text-gray-500 text-[15px]">
-              Your password has been changed. <br /> Taking you to your dashboard now.
-            </p>
+            <Card className="border-emerald-100 shadow-xl overflow-hidden relative">
+              <div className="absolute top-0 left-0 w-full h-1 bg-emerald-500" />
+              <CardHeader className="text-center pt-10 pb-6">
+                <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <ShieldCheck className="w-10 h-10 text-emerald-500" />
+                </div>
+                <CardTitle className="text-2xl font-bold text-foreground">
+                  Identity Secured
+                </CardTitle>
+                <CardDescription className="text-[15px] pt-2">
+                  Your password has been changed. <br /> Taking you to your dashboard now.
+                </CardDescription>
+              </CardHeader>
+            </Card>
           </motion.div>
         ) : (
           <motion.div
             key="form"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white p-8 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-gray-50"
           >
-            <div className="mb-8">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-blue-50 text-blue-600 mb-4">
-                <LockKeyhole size={24} />
-              </div>
-              <h1 className="text-2xl font-bold text-gray-900 tracking-tight">New Password</h1>
-              <p className="text-gray-500 mt-2 text-[15px]">Update your credentials to secure your account.</p>
-            </div>
-
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-[13px] font-semibold text-gray-700 ml-1">NEW PASSWORD</label>
-                <div className="relative group">
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    className={`h-12 px-4 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 placeholder:text-gray-300 ${errors.password ? "border-red-300 focus:border-red-500 focus:ring-red-500/10" : ""
-                      }`}
-                    {...register("password")}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1"
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
+            <Card className="shadow-2xl border-border/40 overflow-hidden bg-card relative">
+              <div className="absolute top-0 left-0 w-full h-1 bg-primary" />
+              <CardHeader className="space-y-1 pb-6 pt-8">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 text-primary mb-4">
+                  <LockKeyhole size={24} />
                 </div>
-                {errors.password && (
-                  <p className="text-xs text-red-500 font-medium flex items-center gap-1.5 ml-1">
-                    <AlertTriangle size={12} /> {errors.password.message}
-                  </p>
-                )}
+                <CardTitle className="text-2xl font-bold tracking-tight">
+                  New Password
+                </CardTitle>
+                <CardDescription className="text-[15px]">
+                  Update your credentials to secure your account.
+                </CardDescription>
+              </CardHeader>
 
-                <StrengthMeter password={passwordValue} />
-              </div>
+              <CardContent>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem className="space-y-1.5">
+                          <FormLabel className="text-[13px] font-bold uppercase tracking-wider text-foreground/70 ml-1">
+                            New Password
+                          </FormLabel>
+                          <FormControl>
+                            <div className="relative group">
+                              <Input
+                                type={showPassword ? "text" : "password"}
+                                placeholder="••••••••"
+                                className={cn(
+                                  "h-12 px-4 rounded-xl border-input/60 focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all text-foreground placeholder:text-muted-foreground/30",
+                                  form.formState.errors.password &&
+                                  "border-destructive focus:border-destructive focus:ring-destructive/10"
+                                )}
+                                {...field}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground transition-colors p-1"
+                              >
+                                {showPassword ? (
+                                  <EyeOff size={18} />
+                                ) : (
+                                  <Eye size={18} />
+                                )}
+                              </button>
+                            </div>
+                          </FormControl>
+                          <StrengthMeter password={passwordValue} />
+                          <FormMessage className="text-[11px] font-medium ml-1" />
+                        </FormItem>
+                      )}
+                    />
 
-              <div className="space-y-2">
-                <label className="text-[13px] font-semibold text-gray-700 ml-1">CONFIRM PASSWORD</label>
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  className={`h-12 px-4 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 placeholder:text-gray-300 ${errors.confirmPassword ? "border-red-300 focus:border-red-500 focus:ring-red-500/10" : ""
-                    }`}
-                  {...register("confirmPassword")}
-                />
-                {errors.confirmPassword && (
-                  <p className="text-xs text-red-500 font-medium flex items-center gap-1.5 ml-1">
-                    <AlertTriangle size={12} /> {errors.confirmPassword.message}
-                  </p>
-                )}
-              </div>
+                    <FormField
+                      control={form.control}
+                      name="confirmPassword"
+                      render={({ field }) => (
+                        <FormItem className="space-y-1.5">
+                          <FormLabel className="text-[13px] font-bold uppercase tracking-wider text-foreground/70 ml-1">
+                            Confirm Password
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type={showPassword ? "text" : "password"}
+                              placeholder="••••••••"
+                              className={cn(
+                                "h-12 px-4 rounded-xl border-input/60 focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all text-foreground placeholder:text-muted-foreground/30",
+                                form.formState.errors.confirmPassword &&
+                                "border-destructive focus:border-destructive focus:ring-destructive/10"
+                              )}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage className="text-[11px] font-medium ml-1" />
+                        </FormItem>
+                      )}
+                    />
 
-              <div className="pt-2">
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all shadow-md shadow-blue-200/50 disabled:opacity-70 disabled:shadow-none"
-                >
-                  {isSubmitting ? (
-                    <div className="flex items-center gap-3">
-                      <Spinner className="h-4 w-4 text-white" />
-                      <span>Securing...</span>
+                    <div className="pt-3">
+                      <Button
+                        type="submit"
+                        disabled={form.formState.isSubmitting}
+                        className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl transition-all shadow-md shadow-primary/20 disabled:opacity-70 disabled:shadow-none text-base"
+                      >
+                        {form.formState.isSubmitting ? (
+                          <div className="flex items-center gap-3">
+                            <Spinner className="h-4 w-4 text-primary-foreground" />
+                            <span>Securing Account...</span>
+                          </div>
+                        ) : (
+                          "Update Security"
+                        )}
+                      </Button>
                     </div>
-                  ) : (
-                    "Update Security"
-                  )}
-                </Button>
-              </div>
-            </form>
+                  </form>
+                </Form>
+              </CardContent>
 
-            <div className="mt-8 pt-6 border-t border-gray-100">
-              <button
-                onClick={() => router.push("/sign-in")}
-                className="flex items-center justify-center gap-2 w-full text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors"
-              >
-                <ArrowLeft size={16} />
-                Return to Login
-              </button>
-            </div>
+              <CardFooter className="flex flex-col border-t border-border/50 bg-muted/30 pt-6 pb-6 mt-4">
+                <button
+                  onClick={() => router.push("/sign-in")}
+                  className="flex items-center justify-center gap-2 w-full text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <ArrowLeft size={16} />
+                  Return to Login
+                </button>
+              </CardFooter>
+            </Card>
           </motion.div>
         )}
       </AnimatePresence>
