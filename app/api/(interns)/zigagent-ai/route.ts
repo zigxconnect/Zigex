@@ -70,13 +70,21 @@ let cacheTimestamp: number = 0;
 const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
 
 async function getAggregatedData(): Promise<AggregatedData> {
+  // Skip at build time to prevent timeout errors
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    return { internships: [], events: [], programs: [], metadata: {} };
+  }
+
   const now = Date.now();
   if (cachedAggregatedData && (now - cacheTimestamp) < CACHE_DURATION_MS) {
     return cachedAggregatedData;
   }
   try {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const response = await fetch(`${baseUrl}/api/students/aggregated-data`, { cache: 'no-store' });
+    const response = await fetch(`${baseUrl}/api/students/aggregated-data`, { 
+      cache: 'no-store',
+      signal: AbortSignal.timeout(5000), // 5 second timeout to prevent hangs
+    });
     if (!response.ok) throw new Error(`Failed to fetch aggregated data. Status: ${response.status}`);
     const result = await response.json();
     cachedAggregatedData = result.data;

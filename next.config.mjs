@@ -3,7 +3,10 @@ import withPWAInit from "@ducanh2912/next-pwa";
 
 const withPWA = withPWAInit({
   dest: "public",
-  disable: process.env.NODE_ENV === "development", // Disable in development to prevent reload loops
+  // disable when developing or if an explicit flag is set. this is useful for
+  // build hosts that lack outgoing network connectivity (avoid ETIMEDOUT
+  // retries during the service-worker generation phase).
+  disable: process.env.NODE_ENV === "development" || process.env.DISABLE_PWA === "true",
   register: true,
   skipWaiting: true,
   cacheOnFrontEndNav: false, // Disabled to prevent buggy reloads
