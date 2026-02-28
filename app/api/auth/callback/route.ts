@@ -77,7 +77,6 @@ export async function GET(request: Request) {
         }
 
         if (!studentProfile) {
-
           const metadata = (user.user_metadata || {}) as Record<
             string,
             unknown
@@ -92,6 +91,11 @@ export async function GET(request: Request) {
             avatar_url,
             profile_status: "incomplete",
           });
+        }
+
+        // If we're on a password recovery flow, prioritize the update-password page
+        if (next === "/update-password") {
+          return NextResponse.redirect(`${origin}${next}`);
         }
 
         // If profile is incomplete or new, force redirect to completion flow

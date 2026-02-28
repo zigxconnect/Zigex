@@ -160,26 +160,39 @@ export const AuthForm = ({ type }: AuthFormProps) => {
         callback: async (response: any) => {
           if (!isMounted) return;
           console.log("[AuthForm] Google ID Token received, signing in with Supabase...");
-          const { data, error } = await supabase.auth.signInWithIdToken({
-            provider: "google",
-            token: response.credential,
-          });
+          try {
+            const { data, error } = await supabase.auth.signInWithIdToken({
+              provider: "google",
+              token: response.credential,
+            });
 
-          if (error) {
-            console.error("[AuthForm] Supabase ID Token Auth Error:", error);
-            toast.error(error.message);
-          } else {
-            console.log("[AuthForm] Supabase sign-in successful, user:", data.user?.id);
+            if (error) {
+              console.error("[AuthForm] Supabase ID Token Auth Error:", error);
+              toast.error(error.message);
+              return;
+            }
+
+            if (!data || !data.user) {
+              console.error("[AuthForm] Sign-in successful but no user data returned", data);
+              toast.error("Authentication failed: No user data received.");
+              return;
+            }
+
+            console.log("[AuthForm] Supabase sign-in successful, user:", data.user.id);
             toast.success("Logged in successfully!");
 
             // Refresh session to ensure cookies are synced
-            await supabase.auth.refreshSession();
+            try {
+              await supabase.auth.refreshSession();
+            } catch (refreshErr) {
+              console.warn("[AuthForm] Session refresh failed, continuing anyway:", refreshErr);
+            }
 
             // Check if profile exists and is complete
             const { data: profile } = await supabase
               .from("student_profiles")
               .select("profile_status")
-              .eq("user_id", data.user?.id)
+              .eq("user_id", data.user.id)
               .maybeSingle();
 
             // Redirect based on profile status
@@ -187,6 +200,19 @@ export const AuthForm = ({ type }: AuthFormProps) => {
               window.location.href = "/dashboard";
             } else {
               window.location.href = "/create-profile";
+            }
+          } catch (err: any) {
+            console.error("[AuthForm] Unexpected error during Google sign-in:", err);
+            // Specifically catch the "Cannot create property 'user' on string" error
+            // which often indicates a corrupted Supabase session state in localStorage.
+            if (err instanceof TypeError && err.message.includes("property 'user' on string")) {
+              toast.error("Login issue: Session data is corrupted. Please refresh the page and try again.");
+              // Optional: Clear any potentially corrupted session data
+              if (typeof window !== 'undefined') {
+                localStorage.removeItem('supabase.auth.token');
+              }
+            } else {
+              toast.error(`Sign-in error: ${err.message || "An unexpected error occurred"}`);
             }
           }
         },
@@ -213,13 +239,8 @@ export const AuthForm = ({ type }: AuthFormProps) => {
       isMounted = false;
     };
   }, [isSignUp, router, supabase]);
-      // console.warn("[AuthForm] NEXT_PUBLIC_GOOGLE_CLIENT_ID is missing");
-      // console.log("[AuthForm] Initializing Google Identity Services");
-      // console.log("[AuthForm] Google ID Token received, signing in with Supabase...");
-      // console.error("[AuthForm] Supabase ID Token Auth Error:", error);
-      // console.log("[AuthForm] Supabase sign-in successful, user:", data.user?.id);
-      // console.log("[AuthForm] Rendering invisible Google button onto overlay");
-      // console.log("[AuthForm] Google script or Client ID not ready for Identity Services");
+
+
 
   const startStandardOAuth = async () => {
     const { data, error } = await supabase.auth.signInWithOAuth({
