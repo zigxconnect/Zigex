@@ -3,13 +3,13 @@
 import { useState, useEffect, Suspense, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { 
+import {
   Loader2, AlertTriangle, Search, DownloadCloud,
   GraduationCap, Briefcase, MapPin, Calendar, Clock,
   Target, User, Mail, Phone, ChevronRight, Eye,
   CheckCircle2, XCircle, MoreHorizontal, Filter,
   Building2, Star, TrendingUp, Sparkles, Users, UserCheck, Award,
-  ChevronDown
+  ChevronDown, Landmark
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import Image from "next/image";
@@ -20,6 +20,7 @@ import { ApplicantsTable } from "@/components/sections/admin/applicants/Applican
 import { InternLedgerTable } from "@/components/sections/admin/applicants/InternLedgerTable";
 import { InternManagementTable } from "@/components/sections/admin/applicants/InternManagementTable";
 import { InternRecordsTable } from "@/components/sections/admin/applicants/InternRecordsTable";
+
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -41,15 +42,15 @@ import {
 } from "@/components/ui/tooltip";
 
 // Stat card component
-const StatCard = ({ 
-  label, 
-  value, 
-  sublabel, 
-  icon: Icon, 
+const StatCard = ({
+  label,
+  value,
+  sublabel,
+  icon: Icon,
   variant = "default",
   className = "",
   loading = false
-}: { 
+}: {
   label: string;
   value: number;
   sublabel: string;
@@ -61,13 +62,13 @@ const StatCard = ({
   const variants = {
     default: {
       bg: "bg-white",
-      border: "border-blue-50/50",
-      iconBg: "bg-blue-50/50",
-      iconColor: "text-blue-500",
-      labelColor: "text-blue-400",
+      border: "border-slate-100",
+      iconBg: "bg-blue-50",
+      iconColor: "text-[#155DFC]",
+      labelColor: "text-slate-400",
       valueColor: "text-slate-900",
-      sublabelColor: "text-blue-300",
-      hoverShadow: "hover:shadow-blue-200/40"
+      sublabelColor: "text-slate-400",
+      hoverShadow: "hover:shadow-xl hover:shadow-[#155DFC]/5 hover:border-[#155DFC]/30"
     },
     warning: {
       bg: "bg-white",
@@ -81,16 +82,16 @@ const StatCard = ({
     },
     info: {
       bg: "bg-white",
-      border: "border-indigo-100/50",
-      iconBg: "bg-indigo-50",
-      iconColor: "text-indigo-500",
-      labelColor: "text-indigo-500/70",
+      border: "border-blue-50",
+      iconBg: "bg-blue-50/50",
+      iconColor: "text-[#155DFC]",
+      labelColor: "text-blue-400",
       valueColor: "text-slate-900",
-      sublabelColor: "text-indigo-400/70",
-      hoverShadow: "hover:shadow-indigo-200/40"
+      sublabelColor: "text-blue-300",
+      hoverShadow: "hover:shadow-blue-200/40 hover:border-[#155DFC]/20"
     },
     success: {
-      bg: "bg-gradient-to-br from-[#155DFC] to-[#0A45C4]",
+      bg: "bg-[#155DFC]",
       border: "border-transparent",
       iconBg: "bg-white/20",
       iconColor: "text-white",
@@ -104,41 +105,37 @@ const StatCard = ({
   const v = variants[variant];
 
   return (
-    <div 
+    <div
       className={cn(
-        "relative overflow-hidden rounded-[2rem] p-7 border-2 transition-all duration-300 group hover:-translate-y-1",
+        "relative overflow-hidden rounded-3xl p-7 border transition-all duration-500 group",
         v.bg, v.border, v.hoverShadow,
         className
       )}
     >
       <div className="relative z-10 flex items-center justify-between">
         <div className="space-y-1">
-          <p className={cn("text-[10px] font-black uppercase tracking-[0.25em]", v.labelColor)}>{label}</p>
+          <p className={cn("text-[10px] font-black uppercase tracking-[0.2em]", v.labelColor)}>{label}</p>
           {loading ? (
             <div className="h-10 w-16 bg-slate-100 animate-pulse rounded-xl mt-1" />
           ) : (
-            <p className={cn("text-4xl font-black tracking-tighter leading-none", v.valueColor)}>
+            <p className={cn("text-4xl font-black tracking-tighter leading-none transition-transform duration-300 group-hover:scale-105 origin-left", v.valueColor)}>
               {value}
             </p>
           )}
           <p className={cn("text-[10px] font-bold uppercase tracking-wider opacity-80", v.sublabelColor)}>{sublabel}</p>
         </div>
         <div className={cn(
-          "w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 group-hover:rotate-6",
+          "w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 group-hover:rotate-6 group-hover:scale-110",
           v.iconBg
         )}>
           <Icon size={24} className={v.iconColor} />
         </div>
       </div>
-      
+
       {/* Abstract Design Elements */}
       <div className={cn(
-        "absolute -right-6 -bottom-6 w-32 h-32 rounded-full transition-all duration-500 group-hover:scale-125 opacity-[0.03]",
+        "absolute -right-6 -bottom-6 w-32 h-32 rounded-full transition-all duration-700 group-hover:scale-150 opacity-[0.03] group-hover:opacity-[0.05]",
         variant === "success" ? "bg-white" : "bg-blue-600"
-      )} />
-      <div className={cn(
-        "absolute -left-4 -top-4 w-16 h-16 rounded-full transition-all duration-500 group-hover:scale-110 opacity-[0.02]",
-        variant === "success" ? "bg-white" : "bg-indigo-600"
       )} />
     </div>
   );
@@ -178,7 +175,7 @@ function InternsPageComponent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const selectedIdFromUrl = searchParams.get("selected");
-  
+
   // Use a ref to store the latest applicants for use in stable callbacks without adding to deps
   const applicantsRef = useRef<Applicant[]>(applicants);
   useEffect(() => {
@@ -196,8 +193,8 @@ function InternsPageComponent() {
       }
       const data: Applicant[] = await response.json();
       // Filter internship applications
-      const internshipApps = data.filter(app => 
-        app.applicationType === "internship" || 
+      const internshipApps = data.filter(app =>
+        app.applicationType === "internship" ||
         (app.internshipId && app.applicationType !== "program" && app.applicationType !== "event")
       );
       console.log("[INTERNS] Total apps:", data.length, "Internship apps:", internshipApps.length);
@@ -206,8 +203,8 @@ function InternsPageComponent() {
       // Fetch company profile to get ID
       const companyResp = await fetch("/api/companies/profiles");
       if (companyResp.ok) {
-         const companyData = await companyResp.json();
-         setCompanyId(companyData.id);
+        const companyData = await companyResp.json();
+        setCompanyId(companyData.id);
       }
     } catch (err: any) {
       console.error("Fetch error:", err);
@@ -245,7 +242,7 @@ function InternsPageComponent() {
   const handleUpdateStatus = useCallback(async (applicantId: string, newStatus: ApplicantStatus) => {
     const previousApplicants = applicantsRef.current;
     console.log(`[STATUS_UPDATE] Initiating: ${applicantId} -> ${newStatus}`);
-    
+
     // 1. Optimistic update
     setApplicants(prev =>
       prev.map(app => app.id === applicantId ? { ...app, status: newStatus } : app)
@@ -266,14 +263,14 @@ function InternsPageComponent() {
 
       const updatedData = await response.json();
       console.log(`[STATUS_UPDATE] Success:`, updatedData);
-      
+
       // 2. Confirm state
       setApplicants(prev =>
         prev.map(app => {
           if (app.id !== applicantId) return app;
-          return { 
-            ...app, 
-            status: updatedData?.status || newStatus 
+          return {
+            ...app,
+            status: updatedData?.status || newStatus
           };
         })
       );
@@ -292,7 +289,7 @@ function InternsPageComponent() {
     // Capture state for revert
     const previousApplicants = applicantsRef.current;
     console.group(`[FINANCIAL_SYNC] ${appId}`);
-    
+
     // 1. Optimistic Update
     setApplicants(prev => prev.map(a => a.id === appId ? { ...a, paymentLedger: ledger } : a));
 
@@ -306,7 +303,7 @@ function InternsPageComponent() {
         body: JSON.stringify({ payment_ledger: ledger }),
         signal: controller.signal
       });
-      
+
       clearTimeout(timeoutId);
 
       if (!resp.ok) {
@@ -314,7 +311,7 @@ function InternsPageComponent() {
         if (resp.status === 401) toast.error("Session Expired", { description: "Please refresh the page and log in again." });
         throw new Error(errorData.error || `Server Error (${resp.status})`);
       }
-      
+
       const serverData = await resp.json();
       console.log("Sync Success:", serverData);
 
@@ -334,10 +331,10 @@ function InternsPageComponent() {
       console.error("Sync Failed:", err);
       // Revert state on error to previousRef
       setApplicants(previousApplicants);
-      
+
       const message = err.name === 'AbortError' ? "Request timed out" : (err.message || "Failed to save");
       toast.error("Process Failed", { description: message });
-      throw err; 
+      throw err;
     } finally {
       console.groupEnd();
     }
@@ -394,7 +391,7 @@ function InternsPageComponent() {
     const matchesSearch = !searchQuery || searchTerms.some(term => term.includes(searchQuery.toLowerCase()));
     const matchesDomain = !filterDomain || app.domain === filterDomain;
     const matchesSchool = !filterSchool || app.school === filterSchool;
-    
+
     return matchesSearch && matchesDomain && matchesSchool;
   });
 
@@ -488,13 +485,13 @@ function InternsPageComponent() {
           {/* View Mode Toggle */}
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-2xl border border-slate-200">
-              <Button 
+              <Button
                 variant={viewMode === "grid" ? "outline" : "ghost"}
                 size="sm"
                 className={cn(
                   "rounded-xl h-10 px-4 font-medium transition-all duration-200",
-                  viewMode === "grid" 
-                    ? "bg-white shadow-md text-blue-600" 
+                  viewMode === "grid"
+                    ? "bg-white shadow-md text-blue-600"
                     : "text-slate-500 hover:text-slate-700"
                 )}
                 onClick={() => setViewMode("grid")}
@@ -502,13 +499,13 @@ function InternsPageComponent() {
                 <LayoutGrid size={16} className="mr-2" />
                 Cards
               </Button>
-              <Button 
+              <Button
                 variant={viewMode === "table" ? "outline" : "ghost"}
                 size="sm"
                 className={cn(
                   "rounded-xl h-10 px-4 font-medium transition-all duration-200",
-                  viewMode === "table" 
-                    ? "bg-white shadow-md text-blue-600" 
+                  viewMode === "table"
+                    ? "bg-white shadow-md text-blue-600"
                     : "text-slate-500 hover:text-slate-700"
                 )}
                 onClick={() => setViewMode("table")}
@@ -516,13 +513,13 @@ function InternsPageComponent() {
                 <TableIcon size={16} className="mr-2" />
                 Table
               </Button>
-              <Button 
+              <Button
                 variant={viewMode === "ledger" ? "outline" : "ghost"}
                 size="sm"
                 className={cn(
                   "rounded-xl h-10 px-4 font-medium transition-all duration-200",
-                  viewMode === "ledger" 
-                    ? "bg-white shadow-md text-blue-600" 
+                  viewMode === "ledger"
+                    ? "bg-white shadow-md text-blue-600"
                     : "text-slate-500 hover:text-slate-700"
                 )}
                 onClick={() => setViewMode("ledger")}
@@ -530,13 +527,13 @@ function InternsPageComponent() {
                 <TrendingUp size={16} className="mr-2" />
                 Ledger
               </Button>
-              <Button 
+              <Button
                 variant={viewMode === "management" ? "outline" : "ghost"}
                 size="sm"
                 className={cn(
                   "rounded-xl h-10 px-4 font-medium transition-all duration-200",
-                  viewMode === "management" 
-                    ? "bg-white shadow-md text-blue-600" 
+                  viewMode === "management"
+                    ? "bg-white shadow-md text-blue-600"
                     : "text-slate-500 hover:text-slate-700"
                 )}
                 onClick={() => setViewMode("management")}
@@ -544,13 +541,13 @@ function InternsPageComponent() {
                 <CheckCircle2 size={16} className="mr-2" />
                 Management
               </Button>
-              <Button 
+              <Button
                 variant={viewMode === "records" ? "outline" : "ghost"}
                 size="sm"
                 className={cn(
                   "rounded-xl h-10 px-4 font-medium transition-all duration-200",
-                  viewMode === "records" 
-                    ? "bg-white shadow-md text-blue-600" 
+                  viewMode === "records"
+                    ? "bg-white shadow-md text-blue-600"
                     : "text-slate-500 hover:text-slate-700"
                 )}
                 onClick={() => setViewMode("records")}
@@ -558,11 +555,12 @@ function InternsPageComponent() {
                 <Award size={16} className="mr-2" />
                 Records
               </Button>
+
             </div>
-            
-            <Button 
-              variant="outline" 
-              onClick={handleExportCSV} 
+
+            <Button
+              variant="outline"
+              onClick={handleExportCSV}
               className="gap-2 rounded-xl h-12 border-slate-200 hover:border-blue-300 hover:bg-blue-50 font-medium"
             >
               <DownloadCloud size={16} />
@@ -612,7 +610,7 @@ function InternsPageComponent() {
         <div className="bg-white/70 backdrop-blur-xl p-3 md:p-4 rounded-[2.5rem] border-2 border-blue-50/50 shadow-2xl shadow-blue-500/5 flex flex-col md:flex-row gap-4 items-center ring-4 ring-blue-50/20">
           <div className="relative flex-1 w-full group">
             <div className="absolute left-6 top-1/2 -translate-y-1/2 pointer-events-none z-10">
-               <Search className="w-5 h-5 text-slate-300 group-focus-within:text-[#155DFC] group-focus-within:scale-110 transition-all duration-500" />
+              <Search className="w-5 h-5 text-slate-300 group-focus-within:text-[#155DFC] group-focus-within:scale-110 transition-all duration-500" />
             </div>
             <Input
               placeholder="Deep intelligence search: name, school, email, or domain..."
@@ -621,34 +619,34 @@ function InternsPageComponent() {
               className="pl-16 h-16 rounded-[2rem] border-none bg-slate-100/50 focus:bg-white focus:ring-[12px] focus:ring-blue-50/50 transition-all font-bold text-slate-900 placeholder:text-slate-300 shadow-inner"
             />
           </div>
-          
+
           <div className="flex items-center gap-3 w-full md:w-auto">
             {/* School Filter Pill */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className={cn(
                     "group relative gap-3 h-16 px-8 rounded-[2rem] border-2 transition-all duration-300 flex-1 md:flex-none min-w-[220px] justify-between overflow-hidden",
-                    filterSchool 
-                      ? "bg-[#155DFC] border-transparent text-white shadow-lg shadow-blue-200" 
+                    filterSchool
+                      ? "bg-[#155DFC] border-transparent text-white shadow-lg shadow-blue-200"
                       : "border-slate-100 bg-slate-50/50 text-slate-400 hover:bg-white hover:border-blue-200"
                   )}
                 >
                   <div className="flex items-center gap-3 relative z-10">
                     <div className="flex flex-col items-start leading-none ml-1">
-                       <span className="text-[8px] font-black uppercase tracking-[0.2em] mb-0.5 opacity-60">Institute</span>
-                       <span className="text-[11px] font-black uppercase tracking-widest truncate max-w-[140px]">
-                          {filterSchool || "All Facilities"}
-                       </span>
+                      <span className="text-[8px] font-black uppercase tracking-[0.2em] mb-0.5 opacity-60">Institute</span>
+                      <span className="text-[11px] font-black uppercase tracking-widest truncate max-w-[140px]">
+                        {filterSchool || "All Facilities"}
+                      </span>
                     </div>
                   </div>
                   <ChevronDown size={14} className={cn("transition-transform duration-300 group-hover:translate-y-0.5 relative z-10", filterSchool ? "text-white" : "text-slate-300")} />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-72 rounded-[2rem] p-3 border-blue-50 shadow-2xl backdrop-blur-3xl bg-white/90 z-[100]">
-                <DropdownMenuItem 
-                  onClick={() => setFilterSchool(null)} 
+                <DropdownMenuItem
+                  onClick={() => setFilterSchool(null)}
                   className="rounded-2xl py-4 px-4 font-black text-[10px] uppercase tracking-widest text-[#155DFC] cursor-pointer hover:bg-blue-50"
                 >
                   <div className="flex items-center gap-3">
@@ -659,8 +657,8 @@ function InternsPageComponent() {
                 <DropdownMenuSeparator className="my-2 opacity-50" />
                 <div className="max-h-[350px] overflow-y-auto custom-scrollbar pr-1">
                   {schools.map(school => (
-                    <DropdownMenuItem 
-                      key={school} 
+                    <DropdownMenuItem
+                      key={school}
                       onClick={() => setFilterSchool(school!)}
                       className="rounded-2xl py-4 px-4 font-bold text-[11px] uppercase tracking-wider cursor-pointer hover:bg-slate-50 border border-transparent hover:border-blue-100 transition-all mb-1"
                     >
@@ -674,29 +672,29 @@ function InternsPageComponent() {
             {/* Expertise Filter Pill */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="outline" 
-                   className={cn(
+                <Button
+                  variant="outline"
+                  className={cn(
                     "group relative gap-3 h-16 px-8 rounded-[2rem] border-2 transition-all duration-300 flex-1 md:flex-none min-w-[220px] justify-between overflow-hidden",
-                    filterDomain 
-                      ? "bg-[#155DFC] border-transparent text-white shadow-lg shadow-blue-200" 
+                    filterDomain
+                      ? "bg-[#155DFC] border-transparent text-white shadow-lg shadow-blue-200"
                       : "border-slate-100 bg-slate-50/50 text-slate-400 hover:bg-white hover:border-blue-200"
                   )}
                 >
                   <div className="flex items-center gap-3 relative z-10">
                     <div className="flex flex-col items-start leading-none ml-1">
-                       <span className="text-[8px] font-black uppercase tracking-[0.2em] mb-0.5 opacity-60">Expertise</span>
-                       <span className="text-[11px] font-black uppercase tracking-widest truncate max-w-[140px]">
-                          {filterDomain || "Cross Domain"}
-                       </span>
+                      <span className="text-[8px] font-black uppercase tracking-[0.2em] mb-0.5 opacity-60">Expertise</span>
+                      <span className="text-[11px] font-black uppercase tracking-widest truncate max-w-[140px]">
+                        {filterDomain || "Cross Domain"}
+                      </span>
                     </div>
                   </div>
                   <ChevronDown size={14} className={cn("transition-transform duration-300 group-hover:translate-y-0.5 relative z-10", filterDomain ? "text-white" : "text-slate-300")} />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-72 rounded-[2rem] p-3 border-indigo-50 shadow-2xl backdrop-blur-3xl bg-white/90">
-                <DropdownMenuItem 
-                  onClick={() => setFilterDomain(null)} 
+                <DropdownMenuItem
+                  onClick={() => setFilterDomain(null)}
                   className="rounded-2xl py-4 px-4 font-black text-[10px] uppercase tracking-widest text-[#155DFC] cursor-pointer hover:bg-blue-50"
                 >
                   <div className="flex items-center gap-3">
@@ -707,8 +705,8 @@ function InternsPageComponent() {
                 <DropdownMenuSeparator className="my-2 opacity-50" />
                 <div className="max-h-[350px] overflow-y-auto custom-scrollbar pr-1">
                   {domains.map(domain => (
-                    <DropdownMenuItem 
-                      key={domain} 
+                    <DropdownMenuItem
+                      key={domain}
                       onClick={() => setFilterDomain(domain!)}
                       className="rounded-2xl py-4 px-4 font-bold text-[11px] uppercase tracking-wider cursor-pointer hover:bg-slate-50 border border-transparent hover:border-indigo-100 transition-all mb-1"
                     >
@@ -729,7 +727,7 @@ function InternsPageComponent() {
             </div>
             <h3 className="text-xl font-bold text-slate-700 mb-2">No Intern Applications</h3>
             <p className="text-sm text-slate-400 max-w-md mx-auto">
-              {searchQuery || filterDomain 
+              {searchQuery || filterDomain
                 ? "No applications match your current filters. Try adjusting your search."
                 : "When students apply for your internships, they'll appear here."}
             </p>
@@ -745,8 +743,8 @@ function InternsPageComponent() {
                     className={cn(
                       "group relative bg-white rounded-3xl border-2 p-5 cursor-pointer transition-all duration-300",
                       "hover:shadow-xl hover:shadow-blue-100/50 hover:border-blue-200 hover:-translate-y-1",
-                      selectedApplicantId === applicant.id 
-                        ? "border-blue-500 shadow-lg shadow-blue-100" 
+                      selectedApplicantId === applicant.id
+                        ? "border-blue-500 shadow-lg shadow-blue-100"
                         : "border-slate-100"
                     )}
                   >
@@ -760,10 +758,10 @@ function InternsPageComponent() {
                       <div className="relative">
                         {applicant.avatarUrl && applicant.avatarUrl !== "/default-avatar.svg" ? (
                           <div className="w-14 h-14 rounded-2xl overflow-hidden ring-2 ring-slate-100 group-hover:ring-blue-200 transition-all shadow-sm">
-                            <Image 
-                              src={applicant.avatarUrl} 
-                              alt={applicant.name} 
-                              width={56} 
+                            <Image
+                              src={applicant.avatarUrl}
+                              alt={applicant.name}
+                              width={56}
                               height={56}
                               className="w-full h-full object-cover"
                             />
@@ -808,9 +806,9 @@ function InternsPageComponent() {
                       <span className="text-xs text-slate-400">
                         {formatDistanceToNow(new Date(applicant.appliedDate), { addSuffix: true })}
                       </span>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         className="gap-1 text-xs text-blue-600 hover:bg-blue-50 rounded-lg font-medium"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -827,7 +825,7 @@ function InternsPageComponent() {
             )}
 
             {viewMode === "table" && (
-              <ApplicantsTable 
+              <ApplicantsTable
                 applicants={filteredApplicants}
                 selectedApplicantId={selectedApplicantId}
                 onSelect={handleSelectApplicant}
@@ -837,15 +835,16 @@ function InternsPageComponent() {
             )}
 
             {viewMode === "ledger" && (
-              <InternLedgerTable 
+              <InternLedgerTable
                 applicants={filteredApplicants}
                 onDelete={handleDeleteApplicant}
                 onUpdatePayment={handleUpdatePaymentLedger}
+                companyId={companyId || ""}
               />
             )}
 
             {viewMode === "management" && (
-              <InternManagementTable 
+              <InternManagementTable
                 applicants={filteredApplicants}
                 companyId={companyId || ""}
                 onSelect={handleSelectApplicant}
@@ -853,11 +852,13 @@ function InternsPageComponent() {
             )}
 
             {viewMode === "records" && (
-              <InternRecordsTable 
+              <InternRecordsTable
                 applicants={filteredApplicants}
                 companyId={companyId || ""}
               />
             )}
+
+
           </>
         )}
 
@@ -876,7 +877,7 @@ function InternsPageComponent() {
           </DialogContent>
         </Dialog>
       </div>
-    </TooltipProvider>
+    </TooltipProvider >
   );
 }
 

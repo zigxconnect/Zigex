@@ -18,6 +18,7 @@ export type ApplicationType = "internship" | "program" | "event";
 export type PaymentRecord = {
   month: number;
   status: 'paid' | 'unpaid';
+  type?: 'completed' | 'advance';
   amount: number;
   date?: string;
   transactionId?: string;
