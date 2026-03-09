@@ -6,6 +6,7 @@ import { Toaster } from "react-hot-toast";
 
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
+import { SessionGuard } from "@/components/providers/SessionGuard";
 
 const inter = Inter({
 
@@ -129,7 +130,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${hostGrotesk.variable} antialiased`}>
-        {children}
+        <SessionGuard>
+          {children}
+        </SessionGuard>
 
         <Toaster position="top-center" reverseOrder={false} />
         <Analytics />

@@ -84,7 +84,18 @@ export const AuthForm = ({ type }: AuthFormProps) => {
       } catch { }
       toast.error(decoded);
     }
+
+    // Handle the session_corrupted error param set by SessionGuard
+    // when it detects a corrupted Supabase session in localStorage.
+    const errorParam = searchParams.get("error");
+    if (errorParam === "session_corrupted") {
+      toast.error(
+        "Your session data was corrupted and has been cleared. Please sign in again.",
+        { duration: 6000 }
+      );
+    }
   }, [searchParams]);
+
 
   // Cooldown timer for sign-in to avoid spamming OTP requests
   useEffect(() => {
