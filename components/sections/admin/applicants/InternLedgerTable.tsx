@@ -65,6 +65,7 @@ export const InternLedgerTable = ({
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
   const [isExpensesAuditOpen, setIsExpensesAuditOpen] = useState(false);
   const [withdrawData, setWithdrawData] = useState({ id: "", amount: "", reason: "", pin: "" });
+  const [withdrawError, setWithdrawError] = useState("");
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showPin, setShowPin] = useState(false);
@@ -260,7 +261,10 @@ export const InternLedgerTable = ({
 
       const result = await resp.json();
 
-      if (!resp.ok) throw new Error(result.error || "Authorization failure");
+      if (!resp.ok) {
+        if (resp.status === 403) setWithdrawError(result.error || "Invalid Authorization PIN");
+        throw new Error(result.error || "Authorization failure");
+      }
 
       // Update local state
       if (isDeleting) {
@@ -286,6 +290,7 @@ export const InternLedgerTable = ({
 
   const openEditExpense = (expense: ExpenseRecord) => {
     setIsDeleting(false);
+    setWithdrawError("");
     setWithdrawData({
       id: expense.id,
       amount: String(expense.amount),
@@ -297,6 +302,7 @@ export const InternLedgerTable = ({
 
   const openDeleteExpense = (expense: ExpenseRecord) => {
     setIsDeleting(true);
+    setWithdrawError("");
     setWithdrawData({
       id: expense.id,
       amount: String(expense.amount),
@@ -767,7 +773,10 @@ export const InternLedgerTable = ({
         </div>
 
         {/* --- WITHDRAWAL & EDIT & DELETE DIALOG --- */}
-        <Dialog open={isWithdrawModalOpen} onOpenChange={setIsWithdrawModalOpen}>
+        <Dialog open={isWithdrawModalOpen} onOpenChange={(open) => {
+          setIsWithdrawModalOpen(open);
+          if (!open) setWithdrawError("");
+        }}>
           <DialogContent className="max-w-md bg-white dark:bg-slate-900 rounded-[2.5rem] border-none shadow-3xl p-0 overflow-hidden ring-1 ring-slate-100 dark:ring-slate-800">
             <div className="bg-[#155DFC] p-8 text-white relative">
               <DialogTitle className="text-2xl font-black mb-1">
@@ -826,7 +835,10 @@ export const InternLedgerTable = ({
                   <Input
                     type={showPin ? "text" : "password"}
                     value={withdrawData.pin}
-                    onChange={(e) => setWithdrawData(prev => ({ ...prev, pin: e.target.value }))}
+                    onChange={(e) => {
+                      setWithdrawData(prev => ({ ...prev, pin: e.target.value }));
+                      if (withdrawError) setWithdrawError("");
+                    }}
                     placeholder="••••"
                     className={cn(
                       "h-14 pl-12 pr-12 rounded-2xl border-slate-100 bg-slate-50 dark:bg-slate-800/40 text-lg font-black tracking-[0.5em] focus:ring-4 focus:ring-blue-50 dark:focus:ring-blue-900/10 transition-all placeholder:tracking-normal placeholder:text-slate-300",
@@ -843,6 +855,11 @@ export const InternLedgerTable = ({
                     {showPin ? <EyeOff size={16} /> : <Eye size={16} />}
                   </Button>
                 </div>
+                {withdrawError && (
+                  <p className="text-[10px] text-rose-500 font-bold tracking-widest uppercase mt-2 animate-in fade-in slide-in-from-top-1">
+                    {withdrawError}
+                  </p>
+                )}
               </div>
 
               <div className="flex gap-3 pt-2">
