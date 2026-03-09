@@ -9,7 +9,9 @@ import {
   ArrowUpRight, Loader2, Info, Clock, AlertCircle,
   FileJson, ChevronRight, X,
   ShieldCheck, Sparkles, Target, Landmark, Building2,
-  Receipt, ArrowDownLeft, KeyRound, History, Tag
+  Receipt, ArrowDownLeft, KeyRound, History, Tag,
+  ArrowUpDown, Pencil, ArrowUp, ArrowDown,
+  Eye, EyeOff
 } from "lucide-react";
 import { format } from "date-fns";
 import Image from "next/image";
@@ -62,8 +64,12 @@ export const InternLedgerTable = ({
   const [expenses, setExpenses] = useState<ExpenseRecord[]>([]);
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
   const [isExpensesAuditOpen, setIsExpensesAuditOpen] = useState(false);
-  const [withdrawData, setWithdrawData] = useState({ amount: "", reason: "", pin: "" });
+  const [withdrawData, setWithdrawData] = useState({ id: "", amount: "", reason: "", pin: "" });
   const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showPin, setShowPin] = useState(false);
+  const [sortBy, setSortBy] = useState<"name" | "last_payment" | "debt">("name");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   // Payment Modal State
   const [isAmountModalOpen, setIsAmountModalOpen] = useState(false);
@@ -126,21 +132,41 @@ export const InternLedgerTable = ({
       debt,
       remainingBalance,
       ledger,
-      isOverdue: debt > 0
+      remainingBalance,
+      ledger,
+      isOverdue: debt > 0,
+      monthsElapsed
     };
   }, []);
 
-  const filteredData = useMemo(() => {
-    return applicants.filter(app =>
+  const sortedData = useMemo(() => {
+    let base = applicants.filter(app =>
       app.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (app.school || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
       (app.domain || "").toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [applicants, searchQuery]);
+
+    return base.sort((a, b) => {
+      let comparison = 0;
+      if (sortBy === "name") {
+        comparison = a.name.localeCompare(b.name);
+      } else if (sortBy === "last_payment") {
+        const getLastDate = (app: Applicant) => {
+          const payments = (app.paymentLedger || []).filter(p => p.status === 'paid' && p.date);
+          if (payments.length === 0) return 0;
+          return Math.max(...payments.map(p => new Date(p.date!).getTime()));
+        };
+        comparison = getLastDate(a) - getLastDate(b);
+      } else if (sortBy === "debt") {
+        comparison = getFinancials(a).debt - getFinancials(b).debt;
+      }
+      return sortOrder === "asc" ? comparison : -comparison;
+    });
+  }, [applicants, searchQuery, sortBy, sortOrder, getFinancials]);
 
   // High-Level Aggregate Stats
   const totals = useMemo(() => {
-    const records = filteredData.map(app => getFinancials(app));
+    const records = sortedData.map(app => getFinancials(app));
 
     const totalCollected = records.reduce((sum, r) => sum + r.totalPaid, 0);
     // Calculated Expected Income based on number of students (20,000 per month)
@@ -162,9 +188,19 @@ export const InternLedgerTable = ({
       totalExpenses,
       currentBalance,
       collectionEfficiency,
-      count: filteredData.length
+      count: sortedData.length,
+      paidCount: records.filter(r => r.debt === 0 && r.totalPaid > 0).length,
+      departmentStats: Array.from(new Set(applicants.map(a => a.domain || "Other"))).map(dept => {
+        const deptApps = sortedData.filter(a => (a.domain || "Other") === dept);
+        const deptRecords = deptApps.map(a => getFinancials(a));
+        return {
+          name: dept,
+          total: deptApps.length,
+          paid: deptRecords.filter(r => r.debt === 0 && r.totalPaid > 0).length
+        };
+      })
     };
-  }, [filteredData, getFinancials, expenses]);
+  }, [sortedData, getFinancials, expenses, applicants]);
 
   const performUpdate = async (applicant: Applicant, monthIndex: number, shouldMarkPaid: boolean, amount: number, type: 'completed' | 'advance') => {
     const paymentKey = `${applicant.id}-${monthIndex}`;
@@ -214,9 +250,10 @@ export const InternLedgerTable = ({
     }
 
     setIsWithdrawing(true);
+    const isEditing = !!withdrawData.id && !isDeleting;
     try {
       const resp = await fetch('/api/admin/finance/withdraw', {
-        method: "POST",
+        method: isDeleting ? "DELETE" : (isEditing ? "PATCH" : "POST"),
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(withdrawData)
       });
@@ -226,15 +263,47 @@ export const InternLedgerTable = ({
       if (!resp.ok) throw new Error(result.error || "Authorization failure");
 
       // Update local state
-      setExpenses(prev => [result.expense, ...prev]);
+      if (isDeleting) {
+        setExpenses(prev => prev.filter(e => e.id !== withdrawData.id));
+      } else if (isEditing) {
+        setExpenses(prev => prev.map(e => e.id === withdrawData.id ? result.expense : e));
+      } else {
+        setExpenses(prev => [result.expense, ...prev]);
+      }
+
       setIsWithdrawModalOpen(false);
-      setWithdrawData({ amount: "", reason: "", pin: "" });
-      toast.success("Withdrawal Authorized", { description: `${parseInt(withdrawData.amount).toLocaleString()} XAF registered as expense.` });
+      setWithdrawData({ id: "", amount: "", reason: "", pin: "" });
+      toast.success(isDeleting ? "Record Deleted" : (isEditing ? "Record Updated" : "Withdrawal Authorized"), {
+        description: isDeleting ? "Financial discrepancy cleared." : `${parseInt(withdrawData.amount).toLocaleString()} XAF registered.`
+      });
     } catch (err: any) {
       toast.error("Access Denied", { description: err.message });
     } finally {
       setIsWithdrawing(false);
+      setIsDeleting(false);
     }
+  };
+
+  const openEditExpense = (expense: ExpenseRecord) => {
+    setIsDeleting(false);
+    setWithdrawData({
+      id: expense.id,
+      amount: String(expense.amount),
+      reason: expense.reason,
+      pin: ""
+    });
+    setIsWithdrawModalOpen(true);
+  };
+
+  const openDeleteExpense = (expense: ExpenseRecord) => {
+    setIsDeleting(true);
+    setWithdrawData({
+      id: expense.id,
+      amount: String(expense.amount),
+      reason: expense.reason,
+      pin: ""
+    });
+    setIsWithdrawModalOpen(true);
   };
 
   const handleModalSubmit = () => {
@@ -248,7 +317,7 @@ export const InternLedgerTable = ({
   // Modern Export Handler
   const handleExportAudit = () => {
     const headers = ["ID", "Name", "Institution", "Field", "Duration", "Contract Value", "Paid", "Owed", "Pending Balance", "Payment Audit"];
-    const rows = filteredData.map(app => {
+    const rows = sortedData.map(app => {
       const intel = getFinancials(app);
       const audit = (app.paymentLedger || [])
         .map(p => `M${p.month}: ${p.amount} (${p.type || 'completed'})`)
@@ -366,9 +435,17 @@ export const InternLedgerTable = ({
                   <span className="text-sm font-bold text-slate-500">XAF</span>
                 </div>
               </div>
-              <div className="flex items-center gap-2 pt-4 border-t border-white/5 text-[10px] font-black text-rose-400 uppercase tracking-widest">
-                <Clock size={12} className="animate-pulse" />
-                Immediate Collection
+              <div className="flex items-center justify-between pt-4 border-t border-white/5">
+                <div className="flex items-center gap-2 text-[10px] font-black text-rose-400 uppercase tracking-widest">
+                  <Clock size={12} className="animate-pulse" />
+                  Immediate Collection
+                </div>
+                <div className="text-right">
+                  <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Paid Ratio</p>
+                  <p className="text-xs font-black text-emerald-400 tabular-nums">
+                    {totals.paidCount} / {totals.count}
+                  </p>
+                </div>
               </div>
             </div>
             <div className="absolute -right-10 -bottom-10 w-44 h-44 bg-rose-500/10 rounded-full blur-[70px]" />
@@ -398,7 +475,7 @@ export const InternLedgerTable = ({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setIsWithdrawing(false) || setIsExpensesAuditOpen(true)}
+                  onClick={() => setIsExpensesAuditOpen(true)}
                   className="h-6 px-2 text-[8px] font-black uppercase text-[#155DFC] hover:bg-blue-50 rounded-lg gap-1"
                 >
                   <History size={10} /> View Audit
@@ -422,8 +499,45 @@ export const InternLedgerTable = ({
           </div>
 
           <div className="flex items-center gap-3 w-full md:w-auto">
+            <div className="flex items-center bg-white dark:bg-slate-900 rounded-2xl border-2 border-slate-100 dark:border-slate-800 p-1.5 shadow-sm">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  if (sortBy === "last_payment") setSortOrder(prev => prev === "asc" ? "desc" : "asc");
+                  else { setSortBy("last_payment"); setSortOrder("desc"); }
+                }}
+                className={cn(
+                  "h-10 px-4 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all gap-2",
+                  sortBy === "last_payment" ? "bg-blue-50 text-[#155DFC]" : "text-slate-400 hover:text-slate-600"
+                )}
+              >
+                <Calendar size={14} />
+                Date {sortBy === "last_payment" && (sortOrder === "asc" ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  if (sortBy === "debt") setSortOrder(prev => prev === "asc" ? "desc" : "asc");
+                  else { setSortBy("debt"); setSortOrder("desc"); }
+                }}
+                className={cn(
+                  "h-10 px-4 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all gap-2",
+                  sortBy === "debt" ? "bg-rose-50 text-rose-500" : "text-slate-400 hover:text-slate-600"
+                )}
+              >
+                <AlertCircle size={14} />
+                Debt {sortBy === "debt" && (sortOrder === "asc" ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
+              </Button>
+            </div>
+
             <Button
-              onClick={() => setIsWithdrawModalOpen(true)}
+              onClick={() => {
+                setWithdrawData({ id: "", amount: "", reason: "", pin: "" });
+                setShowPin(false);
+                setIsWithdrawModalOpen(true);
+              }}
               className="h-14 px-8 rounded-2xl bg-[#155DFC] hover:bg-[#1A3CB9] text-white font-black uppercase text-[10px] tracking-[0.2em] shadow-xl shadow-blue-500/20 flex-1 md:flex-none gap-3 active:scale-95 transition-all"
             >
               <ArrowDownLeft size={18} /> Withdraw Funds
@@ -444,7 +558,22 @@ export const InternLedgerTable = ({
             <table className="w-full border-separate border-spacing-0">
               <thead>
                 <tr className="bg-slate-50/50 dark:bg-slate-800/40">
-                  <th className="px-8 py-8 text-left border-b border-slate-100 dark:border-slate-800"><span className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Intern Identification</span></th>
+                  <th
+                    className="px-8 py-8 text-left border-b border-slate-100 dark:border-slate-800 cursor-pointer group/th"
+                    onClick={() => {
+                      if (sortBy === "name") setSortOrder(prev => prev === "asc" ? "desc" : "asc");
+                      else { setSortBy("name"); setSortOrder("asc"); }
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Intern Identification</span>
+                      {sortBy === "name" ? (
+                        sortOrder === "asc" ? <ArrowUp size={12} className="text-[#155DFC]" /> : <ArrowDown size={12} className="text-[#155DFC]" />
+                      ) : (
+                        <ArrowUpDown size={12} className="text-slate-200 group-hover/th:text-slate-400 transition-colors" />
+                      )}
+                    </div>
+                  </th>
                   <th className="px-8 py-8 text-left border-b border-slate-100 dark:border-slate-800"><span className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Academic Option</span></th>
                   <th className="px-8 py-8 text-center border-b border-slate-100 dark:border-slate-800"><span className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Monthly Ledger Audit</span></th>
                   <th className="px-8 py-8 text-right border-b border-slate-100 dark:border-slate-800"><span className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Financial status</span></th>
@@ -453,7 +582,7 @@ export const InternLedgerTable = ({
               </thead>
               <tbody className="divide-y divide-slate-50 dark:divide-slate-800/60">
                 <AnimatePresence mode="popLayout">
-                  {filteredData.map((app, appIdx) => {
+                  {sortedData.map((app, appIdx) => {
                     const intel = getFinancials(app);
                     return (
                       <motion.tr
@@ -637,52 +766,82 @@ export const InternLedgerTable = ({
           </div>
         </div>
 
-        {/* --- WITHDRAWAL DIALOG --- */}
+        {/* --- WITHDRAWAL & EDIT & DELETE DIALOG --- */}
         <Dialog open={isWithdrawModalOpen} onOpenChange={setIsWithdrawModalOpen}>
           <DialogContent className="max-w-md bg-white dark:bg-slate-900 rounded-[2.5rem] border-none shadow-3xl p-0 overflow-hidden ring-1 ring-slate-100 dark:ring-slate-800">
             <div className="bg-[#155DFC] p-8 text-white relative">
-              <DialogTitle className="text-2xl font-black mb-1">Corporate withdrawal</DialogTitle>
+              <DialogTitle className="text-2xl font-black mb-1">
+                {isDeleting ? "Delete expense record" : (withdrawData.id ? "Edit Financial Record" : "Corporate withdrawal")}
+              </DialogTitle>
               <DialogDescription className="text-blue-100 text-[11px] font-black uppercase tracking-widest opacity-80">
-                Authorized Administrative Expense Tracking
+                {isDeleting ? "Irreversible Audit correction" : "Strict Authorization required"}
               </DialogDescription>
-              <PiggyBank className="absolute -right-6 -bottom-6 text-white/5 rotate-12" size={140} />
             </div>
 
             <div className="p-8 space-y-6">
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Withdrawal Amount (XAF)</Label>
-                <div className="relative group">
-                  <Wallet className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#155DFC] transition-colors" size={18} />
-                  <Input
-                    type="number"
-                    value={withdrawData.amount}
-                    onChange={(e) => setWithdrawData(prev => ({ ...prev, amount: e.target.value }))}
-                    className="h-14 pl-12 rounded-2xl border-slate-100 bg-slate-50 dark:bg-slate-800/40 text-lg font-black tabular-nums focus:ring-4 focus:ring-blue-50 dark:focus:ring-blue-900/10 transition-all"
-                  />
-                </div>
-              </div>
+              {!isDeleting && (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Withdrawal Amount (XAF)</label>
+                    <div className="relative group">
+                      <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#155DFC] transition-colors" size={18} />
+                      <Input
+                        type="number"
+                        value={withdrawData.amount}
+                        onChange={(e) => setWithdrawData(prev => ({ ...prev, amount: e.target.value }))}
+                        placeholder="e.g. 50000"
+                        className="h-14 pl-12 rounded-2xl border-slate-100 bg-slate-50 dark:bg-slate-800/40 text-lg font-bold focus:ring-4 focus:ring-blue-50 dark:focus:ring-blue-900/10 transition-all placeholder:text-slate-300"
+                      />
+                    </div>
+                  </div>
 
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Reason / Allocation</Label>
-                <Input
-                  value={withdrawData.reason}
-                  onChange={(e) => setWithdrawData(prev => ({ ...prev, reason: e.target.value }))}
-                  placeholder="e.g. Office Supplies, Server Maintenance..."
-                  className="h-14 px-5 rounded-2xl border-slate-100 bg-slate-50 dark:bg-slate-800/40 font-bold focus:ring-4 focus:ring-blue-50 dark:focus:ring-blue-900/10 transition-all placeholder:text-slate-300"
-                />
-              </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Reason for Withdrawal</label>
+                    <div className="relative group">
+                      <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#155DFC] transition-colors" size={18} />
+                      <Input
+                        value={withdrawData.reason}
+                        onChange={(e) => setWithdrawData(prev => ({ ...prev, reason: e.target.value }))}
+                        placeholder="e.g. Office Supplies, Maintenance..."
+                        className="h-14 pl-12 rounded-2xl border-slate-100 bg-slate-50 dark:bg-slate-800/40 text-sm font-bold focus:ring-4 focus:ring-blue-50 dark:focus:ring-blue-900/10 transition-all placeholder:text-slate-300"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {isDeleting && (
+                <div className="bg-rose-50 dark:bg-rose-900/20 p-4 rounded-2xl border-2 border-rose-100 dark:border-rose-900/30">
+                  <p className="text-xs font-bold text-rose-600 dark:text-rose-400 mb-1">Confirm Deletion</p>
+                  <p className="text-[10px] text-rose-500 font-medium">
+                    You are deleting the expense: <span className="font-black uppercase">"{withdrawData.reason}"</span> for <span className="font-black">{Number(withdrawData.amount).toLocaleString()} XAF</span>.
+                  </p>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Secure Authorization PIN</Label>
                 <div className="relative group">
                   <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#155DFC] transition-colors" size={18} />
                   <Input
-                    type="password"
+                    type={showPin ? "text" : "password"}
                     value={withdrawData.pin}
                     onChange={(e) => setWithdrawData(prev => ({ ...prev, pin: e.target.value }))}
                     placeholder="••••"
-                    className="h-14 pl-12 rounded-2xl border-slate-100 bg-slate-50 dark:bg-slate-800/40 text-lg font-black tracking-[0.5em] focus:ring-4 focus:ring-blue-50 dark:focus:ring-blue-900/10 transition-all placeholder:tracking-normal placeholder:text-slate-300"
+                    className={cn(
+                      "h-14 pl-12 pr-12 rounded-2xl border-slate-100 bg-slate-50 dark:bg-slate-800/40 text-lg font-black tracking-[0.5em] focus:ring-4 focus:ring-blue-50 dark:focus:ring-blue-900/10 transition-all placeholder:tracking-normal placeholder:text-slate-300",
+                      showPin && "tracking-normal"
+                    )}
                   />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 h-8 w-8 p-0 text-slate-400 hover:text-[#155DFC]"
+                    onClick={() => setShowPin(!showPin)}
+                  >
+                    {showPin ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </Button>
                 </div>
               </div>
 
@@ -690,16 +849,22 @@ export const InternLedgerTable = ({
                 <Button
                   variant="ghost"
                   onClick={() => setIsWithdrawModalOpen(false)}
-                  className="flex-1 h-14 rounded-2xl font-black uppercase text-[10px] tracking-widest text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
+                  className="flex-1 h-14 rounded-2xl font-black uppercase text-[10px] tracking-widest text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all"
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={handleWithdrawal}
-                  disabled={isWithdrawing}
-                  className="flex-[2] h-14 rounded-2xl bg-[#155DFC] hover:bg-[#1A3CB9] text-white font-black uppercase text-[10px] tracking-[0.2em] shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
+                  disabled={isWithdrawing || (!isDeleting && (!withdrawData.amount || !withdrawData.reason)) || !withdrawData.pin}
+                  className={cn(
+                    "flex-[2] h-14 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] shadow-xl transition-all active:scale-95 gap-3",
+                    isDeleting
+                      ? "bg-rose-500 hover:bg-rose-600 text-white shadow-rose-500/20"
+                      : "bg-[#155DFC] hover:bg-[#1A3CB9] text-white shadow-blue-500/20"
+                  )}
                 >
-                  {isWithdrawing ? <Loader2 className="animate-spin" size={18} /> : "Record Withdrawal"}
+                  {isWithdrawing ? <Loader2 className="animate-spin" size={18} /> : (isDeleting ? <Trash2 size={18} /> : <ShieldCheck size={18} />)}
+                  {isWithdrawing ? "Processing..." : (isDeleting ? "Verify & Delete" : "Authorize Transaction")}
                 </Button>
               </div>
             </div>
@@ -710,9 +875,27 @@ export const InternLedgerTable = ({
         <Dialog open={isExpensesAuditOpen} onOpenChange={setIsExpensesAuditOpen}>
           <DialogContent className="max-w-2xl bg-white dark:bg-slate-900 rounded-[2.5rem] border-none shadow-3xl p-0 overflow-hidden ring-1 ring-slate-100 dark:ring-slate-800">
             <div className="bg-slate-900 p-8 text-white relative">
-              <DialogTitle className="text-2xl font-black mb-1">Financial Audit trail</DialogTitle>
-              <DialogDescription className="text-indigo-400 text-[11px] font-black uppercase tracking-widest">Historical Expense Reconciliation</DialogDescription>
-              <History className="absolute -right-6 -bottom-6 text-white/5 rotate-12" size={140} />
+              <div className="flex justify-between items-start">
+                <div>
+                  <DialogTitle className="text-2xl font-black mb-1">Financial Audit trail</DialogTitle>
+                  <DialogDescription className="text-indigo-400 text-[11px] font-black uppercase tracking-widest">Historical Expense Reconciliation</DialogDescription>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Payment Distribution</p>
+                  <p className="text-xl font-black text-indigo-400 tabular-nums">
+                    {totals.paidCount} / {totals.count}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-6 flex flex-wrap gap-2">
+                {totals.departmentStats.map((dept, i) => (
+                  <Badge key={i} className="bg-white/5 border-white/10 text-[8px] font-black uppercase px-2 py-1 rounded-lg">
+                    {dept.name}: {dept.paid}/{dept.total}
+                  </Badge>
+                ))}
+              </div>
+              <History className="absolute -right-6 -bottom-6 text-white/2 rotate-12" size={140} />
             </div>
 
             <div className="p-8 max-h-[60vh] overflow-y-auto custom-scrollbar space-y-4">
@@ -741,9 +924,29 @@ export const InternLedgerTable = ({
                         </p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-lg font-black text-slate-900 dark:text-white tabular-nums">{expense.amount.toLocaleString()}</p>
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">XAF</p>
+                    <div className="text-right flex items-center gap-4">
+                      <div>
+                        <p className="text-lg font-black text-slate-900 dark:text-white tabular-nums">{expense.amount.toLocaleString()}</p>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">XAF</p>
+                      </div>
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 rounded-lg text-slate-400 hover:text-[#155DFC] hover:bg-blue-50"
+                          onClick={() => openEditExpense(expense)}
+                        >
+                          <Pencil size={14} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50"
+                          onClick={() => openDeleteExpense(expense)}
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
                     </div>
                   </motion.div>
                 ))
