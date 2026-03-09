@@ -39,6 +39,24 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const DOMAIN_OPTIONS = [
+  "MACHINE LEARNING/AI",
+  "CYBERSECURITY",
+  "FRONTEND WEB DEV",
+  "PRODUCT DESIGN (UI/UX)",
+  "BACKEND",
+  "EMBEDDED SYSTEMS & IOT",
+  "MOBILE DEV",
+  "OTHER"
+];
 
 interface SupervisorManagementClientProps {
   supervisors: any[];
@@ -227,9 +245,16 @@ export function SupervisorManagementClient({ supervisors, companyId }: Superviso
                     <h4 className="font-semibold text-slate-900 dark:text-white truncate">
                       {supervisor.full_name}
                     </h4>
-                    <p className="text-xs text-slate-500 truncate flex items-center gap-1">
-                      <Mail size={10} /> {supervisor.email}
-                    </p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <p className="text-[10px] text-slate-500 truncate flex items-center gap-1">
+                        <Mail size={8} /> {supervisor.email}
+                      </p>
+                      {supervisor.department && (
+                        <Badge className="bg-blue-600/10 text-blue-600 border-0 text-[9px] font-bold py-0 h-4 uppercase">
+                          {supervisor.department}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
 
                   <div className="hidden sm:flex items-center gap-3">
@@ -299,6 +324,7 @@ function AddSupervisorModal({ isOpen, onClose, companyId }: { isOpen: boolean; o
   const [isSearching, setIsSearching] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [department, setDepartment] = useState("");
   const router = useRouter();
 
   const handleSearch = useCallback(async () => {
@@ -333,7 +359,8 @@ function AddSupervisorModal({ isOpen, onClose, companyId }: { isOpen: boolean; o
         full_name: selectedUser.full_name,
         email: selectedUser.email,
         avatar_url: selectedUser.avatar_url,
-        company_id: companyId
+        company_id: companyId,
+        department: (department && department !== "none") ? department : null
       });
 
       if (result.success) {
@@ -448,6 +475,35 @@ function AddSupervisorModal({ isOpen, onClose, companyId }: { isOpen: boolean; o
               </div>
             )}
           </div>
+
+          {/* Department Selection */}
+          {selectedUser && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-4 bg-blue-50/50 dark:bg-blue-500/5 rounded-2xl border border-blue-100 dark:border-blue-900/30 space-y-3"
+            >
+              <label className="text-[10px] text-blue-600 font-bold uppercase tracking-wider block px-1">Assign Department (Auto-Matching)</label>
+              <Select value={department} onValueChange={setDepartment}>
+                <SelectTrigger className="h-11 rounded-xl bg-white border-blue-100 focus:ring-blue-500">
+                  <SelectValue placeholder="Select a department..." />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-blue-100">
+                  <SelectItem value="none" className="rounded-lg text-slate-400">
+                    None (Manual Assignment)
+                  </SelectItem>
+                  {DOMAIN_OPTIONS.map((domain) => (
+                    <SelectItem key={domain} value={domain} className="rounded-lg">
+                      {domain}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[9px] text-slate-400 px-1 italic">
+                Incoming interns in this domain will be automatically assigned to this supervisor.
+              </p>
+            </motion.div>
+          )}
         </div>
 
         {/* Footer */}
@@ -476,6 +532,7 @@ function AddSupervisorModal({ isOpen, onClose, companyId }: { isOpen: boolean; o
 function EditSupervisorModal({ isOpen, onClose, supervisor }: { isOpen: boolean; onClose: () => void; supervisor: any }) {
   const [fullName, setFullName] = useState(supervisor.full_name || "");
   const [bio, setBio] = useState(supervisor.bio || "");
+  const [department, setDepartment] = useState(supervisor.department || "");
   const [expertise, setExpertise] = useState(supervisor.field_expertise?.join(", ") || "");
   const [whatsapp, setWhatsapp] = useState(supervisor.whatsapp || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -489,6 +546,7 @@ function EditSupervisorModal({ isOpen, onClose, supervisor }: { isOpen: boolean;
         bio,
         field_expertise: expertise.split(",").map((e: string) => e.trim()).filter(Boolean),
         whatsapp,
+        department: (department && department !== "none") ? department : null
       });
 
       if (result.success) {
@@ -560,6 +618,27 @@ function EditSupervisorModal({ isOpen, onClose, supervisor }: { isOpen: boolean;
           <div>
             <label className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mb-2 block">WhatsApp Number</label>
             <Input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="+237..." className="h-11 rounded-xl" />
+          </div>
+          <div className="pt-2">
+            <label className="text-[10px] text-blue-600 font-bold uppercase tracking-wider mb-2 block">Supervisor Department</label>
+            <Select value={department} onValueChange={setDepartment}>
+              <SelectTrigger className="h-11 rounded-xl border-blue-100 focus:ring-blue-500">
+                <SelectValue placeholder="Select a department..." />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                <SelectItem value="none" className="rounded-lg text-slate-400">
+                  None (Manual Assignment)
+                </SelectItem>
+                {DOMAIN_OPTIONS.map((domain) => (
+                  <SelectItem key={domain} value={domain} className="rounded-lg">
+                    {domain}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-[9px] text-slate-400 mt-1.5 italic">
+              Used for automated intern assignment based on application domain.
+            </p>
           </div>
         </div>
 

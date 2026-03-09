@@ -31,7 +31,6 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
   const resolvedParams = await searchParams;
   // Fetch user profile
   const userData = await getProfileInfo();
-  console.log("User Data in FeedPage:", userData);
 
   return (
     <>

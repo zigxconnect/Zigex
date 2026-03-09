@@ -1,6 +1,6 @@
 "use server";
 
-import { createServerActionClient } from "@/lib/supabase/server";
+import { createServerActionClient, supabaseAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 export async function createEvaluation(data: {
@@ -19,62 +19,48 @@ export async function createEvaluation(data: {
     period_end?: string;
 }) {
     const supabase = await createServerActionClient();
-
-    // Verify permissions (supervisor check)
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: "Unauthorized" };
-
-    // Check if supervisor profile exists for this user
-    const { data: supervisorProfile } = await supabase
-        .from("supervisor_profiles")
-        .select("id")
-        .eq("user_id", user.id)
-        .single();
-
-    if (!supervisorProfile || supervisorProfile.id !== data.supervisor_id) {
-        return { success: false, error: "Unauthorized: Invalid Supervisor Profile" };
-    }
-
-    const { error } = await supabase
+    const { data: evaluation, error } = await supabase
         .from("intern_evaluations")
-        .insert({
-            ...data,
-            evaluation_date: new Date().toISOString().split('T')[0], // Today
-        });
+        .insert([data])
+        .select()
+        .single();
 
     if (error) {
         console.error("Error creating evaluation:", error);
         return { success: false, error: error.message };
     }
 
-    revalidatePath("/supervisor/interns");
     revalidatePath("/admin/interns");
-    return { success: true };
+    revalidatePath("/supervisor");
+    return { success: true, data: evaluation };
 }
 
 export async function getEvaluationsForIntern(studentId: string) {
-    const supabase = await createServerActionClient();
 
-    // Resolve all possible IDs for this student
-    const { data: profile } = await supabase
+    // Resolve all possible IDs for this student for broad matching
+    // We use supabaseAdmin to avoid potential RLS issues in the Admin view
+    const { data: profiles } = await supabaseAdmin
         .from("student_profiles")
         .select("id, user_id")
-        .or(`id.eq.${studentId},user_id.eq.${studentId}`)
-        .single();
+        .or(`id.eq.${studentId},user_id.eq.${studentId}`);
 
     const ids = [studentId];
-    if (profile) {
-        if (profile.id) ids.push(profile.id);
-        if (profile.user_id) ids.push(profile.user_id);
+    if (profiles) {
+        profiles.forEach(p => {
+            if (p.id) ids.push(p.id);
+            if (p.user_id) ids.push(p.user_id);
+        });
     }
-    const uniqueIds = [...new Set(ids)];
 
-    const { data, error } = await supabase
+    const uniqueIds = [...new Set(ids.filter(id => id && id.length > 10))];
+
+    // Use supabaseAdmin to bypass potential RLS issues for Admin dashboard
+    const { data, error } = await supabaseAdmin
         .from("intern_evaluations")
         .select(`
-      *,
-      supervisor:supervisor_profiles(full_name, avatar_url)
-    `)
+            *,
+            supervisor:supervisor_profiles(full_name, avatar_url)
+        `)
         .in("student_id", uniqueIds)
         .order("evaluation_date", { ascending: false });
 
@@ -83,13 +69,11 @@ export async function getEvaluationsForIntern(studentId: string) {
         return [];
     }
 
-    return data;
+    return data || [];
 }
 
 export async function getEvaluationsByInternship(internshipId: string) {
-    const supabase = await createServerActionClient();
-
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
         .from("intern_evaluations")
         .select(`
       *,
@@ -107,23 +91,24 @@ export async function getEvaluationsByInternship(internshipId: string) {
 }
 
 export async function getInternLogsForAdmin(studentId: string, internshipId?: string) {
-    const supabase = await createServerActionClient();
 
     // Resolve all possible IDs for this student
-    const { data: profile } = await supabase
+    const { data: profiles } = await supabaseAdmin
         .from("student_profiles")
         .select("id, user_id")
-        .or(`id.eq.${studentId},user_id.eq.${studentId}`)
-        .single();
+        .or(`id.eq.${studentId},user_id.eq.${studentId}`);
 
     const ids = [studentId];
-    if (profile) {
-        if (profile.id) ids.push(profile.id);
-        if (profile.user_id) ids.push(profile.user_id);
+    if (profiles) {
+        profiles.forEach(p => {
+            if (p.id) ids.push(p.id);
+            if (p.user_id) ids.push(p.user_id);
+        });
     }
-    const uniqueIds = [...new Set(ids)];
+    const uniqueIds = [...new Set(ids.filter(id => id && id.length > 10))];
 
-    let query = supabase
+    // Use supabaseAdmin to ensure consistency in Admin modal
+    let query = supabaseAdmin
         .from("intern_logs")
         .select("*")
         .in("student_id", uniqueIds)
@@ -140,7 +125,7 @@ export async function getInternLogsForAdmin(studentId: string, internshipId?: st
         return [];
     }
 
-    return data;
+    return data || [];
 }
 
 export async function getCompanyInternsPerformanceSummary(companyId: string) {
@@ -154,11 +139,10 @@ export async function getCompanyInternsPerformanceSummary(companyId: string) {
 
         if (error) {
             console.error("RPC Error fetching performance summary:", error);
-            // Fallback to empty object or throw
             return {};
         }
 
-        console.log(`[PERF_SUMMARY_RPC] Fetched summary for ${Object.keys(data || {}).length} keys`);
+
         return data || {};
 
     } catch (err) {

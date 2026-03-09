@@ -299,7 +299,7 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
 
   const handleCreatePost = async () => {
     // Debug log to check what we are receiving
-    console.log("HandleCreatePost - CurrentUser:", currentUser);
+    // console.log("HandleCreatePost - CurrentUser:", currentUser);
 
     const userId = currentUser?.profile?.user_id;
 

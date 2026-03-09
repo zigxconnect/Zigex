@@ -335,6 +335,31 @@ export async function PATCH(
     } else {
       updateObject.status = status;
     }
+
+    // --- AUTO-ASSIGN SUPERVISOR BY DEPARTMENT ---
+    // If accepted and no supervisor is assigned, try to find one by department/domain
+    if (status === "accepted" && !application.supervisor_id) {
+      const appDomain = application.domain;
+      if (appDomain) {
+        console.log(`[AUTO_ASSIGN] Attempting auto-assignment for application ${id} (Domain: ${appDomain})`);
+
+        // Find a supervisor in the same company whose department matches the application domain
+        const { data: matchingSupervisor } = await supabaseAdmin
+          .from("supervisor_profiles")
+          .select("id")
+          .eq("company_id", company.id)
+          .eq("department", appDomain)
+          .limit(1)
+          .maybeSingle();
+
+        if (matchingSupervisor) {
+          console.log(`[AUTO_ASSIGN] Match found! Assigning supervisor ${matchingSupervisor.id}`);
+          (updateObject as any).supervisor_id = matchingSupervisor.id;
+        } else {
+          console.warn(`[AUTO_ASSIGN] No matching supervisor found for domain: ${appDomain} in company: ${company.id}`);
+        }
+      }
+    }
   }
 
   if (typeof payment_completed === 'boolean') {

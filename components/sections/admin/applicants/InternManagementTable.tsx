@@ -7,7 +7,6 @@ import {
 } from "@/lib/types/applicants";
 import { 
   Users, 
-  Search, 
   MapPin, 
   Calendar, 
   User, 
@@ -43,28 +42,15 @@ export function InternManagementTable({
   companyId,
   onSelect 
 }: InternManagementTableProps) {
-  const [searchTerm, setSearchTerm] = useState("");
-
   const activeInterns = applicants.filter(app => 
-    app.status === "accepted" && 
-    (app.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     app.email.toLowerCase().includes(searchTerm.toLowerCase()))
+    app.status === "accepted"
   );
 
   return (
     <div className="space-y-6">
       {/* Search and Filters */}
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-        <div className="relative flex-1 w-full">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-          <input
-            type="text"
-            placeholder="Search active interns..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 h-14 rounded-2xl border border-blue-100 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-slate-600"
-          />
-        </div>
+        <h2 className="text-xl font-black text-slate-900 tracking-tight">Active Roster</h2>
         <div className="flex items-center gap-3">
           <Badge className="bg-blue-50 text-blue-700 border-blue-100 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider">
             {activeInterns.length} Active Interns

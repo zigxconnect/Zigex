@@ -376,12 +376,13 @@ export async function getSupervisorDashboardData() {
             }
         }
 
-        // Fetch Tasks (Linked by Internship ID)
+        // Fetch Tasks (Linked by Internship ID, isolated by supervisor_id)
         const internshipIds = rawApps.map(i => i.internship_id).filter(Boolean);
         const { data: tasks } = await supabaseAdmin
             .from("internship_tasks")
             .select("*")
             .in("internship_id", internshipIds)
+            .eq("supervisor_id", profile.id)
             .order("created_at", { ascending: false });
 
         // Fetch Today's Attendance
@@ -443,6 +444,9 @@ export async function assignInternshipTask(taskData: {
     description: string;
     due_date?: string;
     priority?: string;
+    resource_links?: { title: string; url: string }[];
+    attachments?: { name: string; url: string; size: number; type: string }[];
+    output_image_url?: string;
 }) {
     try {
         console.log("[SUPERVISOR_ACTIONS] assignInternshipTask called", taskData);
@@ -486,7 +490,10 @@ export async function assignInternshipTask(taskData: {
             due_date: taskData.due_date || null,
             priority: taskData.priority || "medium",
             status: "pending",
-            supervisor_id: profile.id
+            supervisor_id: profile.id,
+            resource_links: taskData.resource_links || [],
+            attachments: taskData.attachments || [],
+            output_image_url: taskData.output_image_url || null
         };
 
         if (taskData.internship_id === "all") {
@@ -955,6 +962,7 @@ export async function updateSupervisorProfile(
         bio?: string;
         field_expertise?: string[];
         whatsapp?: string;
+        department?: string;
     }
 ) {
     // SECURITY: Get the caller's company
@@ -994,6 +1002,43 @@ export async function updateSupervisorProfile(
     if (error) {
         console.error("Error updating supervisor:", error);
         return { success: false, error: error.message };
+    }
+
+    // --- BULK ASSIGNMENT BY DEPARTMENT ---
+    // If department was updated, automatically assign existing interns in that domain
+    if (updates.department && updates.department !== "none") {
+        console.log(`[BULK_ASSIGN] Re-linking interns in domain "${updates.department}" to supervisor ${supervisorId}`);
+
+        // 1. Fetch internship IDs for this company to filter internship_applications
+        const { data: internships } = await supabaseAdmin
+            .from("internships")
+            .select("id")
+            .eq("company_id", companyProfile.id);
+
+        const internshipIds = internships?.map(i => i.id) || [];
+
+        if (internshipIds.length > 0) {
+            const { error: bulkError } = await supabaseAdmin
+                .from("internship_applications")
+                .update({ supervisor_id: supervisorId })
+                .in("internship_id", internshipIds)
+                .filter("domain", "ilike", updates.department)
+                .eq("status", "accepted");
+
+            if (bulkError) console.error("[BULK_ASSIGN] Error during internship_applications update:", bulkError);
+        }
+
+        // 2. Legacy table update (Uses company_id and department column)
+        try {
+            await supabaseAdmin
+                .from("Applications")
+                .update({ supervisor_id: supervisorId })
+                .eq("company_id", companyProfile.id)
+                .filter("department", "ilike", updates.department)
+                .eq("status", "accepted");
+        } catch (e) {
+            // Legacy table might not support this or not exist
+        }
     }
 
     revalidatePath("/admin/supervisors");
@@ -1125,6 +1170,38 @@ export async function promoteToSupervisor(userData: any) {
                 return { success: true, data: retryData };
             }
             return { success: false, error: error.message };
+        }
+
+        // --- BULK ASSIGNMENT BY DEPARTMENT (Initial Creation) ---
+        if (secureUserData.department && secureUserData.department !== "none") {
+            console.log(`[BULK_ASSIGN] Initial linking for new supervisor ${data.id} in domain "${secureUserData.department}"`);
+
+            // 1. Fetch internship IDs for this company
+            const { data: internships } = await supabaseAdmin
+                .from("internships")
+                .select("id")
+                .eq("company_id", companyProfile.id);
+
+            const internshipIds = internships?.map(i => i.id) || [];
+
+            if (internshipIds.length > 0) {
+                await supabaseAdmin
+                    .from("internship_applications")
+                    .update({ supervisor_id: data.id })
+                    .in("internship_id", internshipIds)
+                    .filter("domain", "ilike", secureUserData.department)
+                    .eq("status", "accepted");
+            }
+
+            // 2. Legacy legacy fallback (Uses company_id and department)
+            try {
+                await supabaseAdmin
+                    .from("Applications")
+                    .update({ supervisor_id: data.id })
+                    .eq("company_id", companyProfile.id)
+                    .filter("department", "ilike", secureUserData.department)
+                    .eq("status", "accepted");
+            } catch (e) { }
         }
 
         // Send Premium Welcome Email

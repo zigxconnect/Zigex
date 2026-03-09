@@ -136,10 +136,10 @@ export const ApplicationModal = ({
     const data = getValues();
     const formData = new FormData();
 
-    console.log(
-      "Submitting Application with Internship ID:",
-      finalInternshipId
-    );
+    // console.log(
+    //   "Submitting Application with Internship ID:",
+    //   finalInternshipId
+    // );
 
     formData.append("internship_id", finalInternshipId);
     formData.append("cover_letter_file", data.cover_letter_file);

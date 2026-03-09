@@ -74,17 +74,58 @@ export async function getInternshipById(id: string) {
 }
 
 /**
+ * NEW: Server Action to fetch all accepted internships for the student.
+ * Used for the selection screen when multiple internships are active.
+ */
+export async function getAcceptedInternships() {
+  const supabase = await createServerActionClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from("internship_applications")
+    .select(`
+      id,
+      internship_id,
+      domain,
+      status,
+      internships (
+        id,
+        title,
+        location,
+        company_id,
+        company_profiles (
+          id,
+          company_name,
+          logo_url
+        )
+      )
+    `)
+    .eq("student_id", user.id)
+    .eq("status", "accepted")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching accepted internships:", error);
+    return [];
+  }
+
+  return data || [];
+}
+
+/**
  * NEW: Server Action to fetch the complete workspace data for an intern.
  * Fetches application, supervisor, curriculum, logs, and tasks.
  */
-export async function getInternshipWorkspaceData() {
+export async function getInternshipWorkspaceData(applicationId?: string) {
   const supabase = await createServerActionClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) return null;
 
-  // 1. Get the latest accepted internship application
-  const { data: application, error: appError } = await supabase
+  // 1. Get the internship application
+  let query = supabase
     .from("internship_applications")
     .select(`
       *,
@@ -95,10 +136,15 @@ export async function getInternshipWorkspaceData() {
       supervisor_profiles (*)
     `)
     .eq("student_id", user.id)
-    .eq("status", "accepted")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .single();
+    .eq("status", "accepted");
+
+  if (applicationId) {
+    query = query.eq("id", applicationId);
+  } else {
+    query = query.order("created_at", { ascending: false }).limit(1);
+  }
+
+  const { data: application, error: appError } = await query.single();
 
   if (appError || !application) {
     console.warn("No active internship found for user", user.id);

@@ -20,14 +20,14 @@ interface MainFeedPageProps {
  */
 export default async function MainFeedPage({
   searchQuery,
-}: MainFeedPageProps) {
+}: MainFeedPageProps) { 
   // Fetch data on the server with React cache deduplication
   const [feedData, happeningNowData] = await Promise.all([
     getAllFeedData(searchQuery),
     getHappeningNowContent()
   ]);
 
-  const { internships, events, programs, announcements, error } = feedData;
+  const { internships, events, programs, announcements, companies, error } = feedData;
 
   return (
     <div className="w-full mt-6">
@@ -43,7 +43,7 @@ export default async function MainFeedPage({
       {/* Optimized Feed Grid - Hybrid SSR/Client */}
       <Suspense fallback={<LoadingSkeleton />}>
         <FeedGridClient
-          initialData={{ internships, events, programs, announcements }}
+          initialData={{ internships, events, programs, announcements, companies }}
           error={error}
         />
       </Suspense>

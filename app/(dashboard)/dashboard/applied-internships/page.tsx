@@ -509,7 +509,6 @@ export default function MyApplicationsPage() {
 
   const handleEdit = (application: Application) => {
     // Implement edit functionality
-    console.log("Edit application:", application);
     alert("Edit functionality to be implemented");
   };
 
@@ -517,7 +516,6 @@ export default function MyApplicationsPage() {
     if (confirm("Are you sure you want to delete this application?")) {
       try {
         // Implement delete functionality
-        console.log("Delete application:", id);
         setApplications(applications.filter(app => app.id !== id));
         alert("Application deleted successfully");
       } catch (error) {

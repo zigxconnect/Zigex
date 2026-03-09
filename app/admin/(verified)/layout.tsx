@@ -16,7 +16,7 @@ export default async function VerifiedAdminLayout({
 
   if (!companyProfile) {
     return redirect("/sign-in");
-  }
+  } 
 
   // Gate check: If not verified AND not super admin, redirect to pending page
   if (!companyProfile.is_verified && !companyProfile.is_super_admin) {

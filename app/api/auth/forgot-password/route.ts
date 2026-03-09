@@ -54,8 +54,8 @@ export async function POST(request: Request) {
   );
 
   // This is the URL the user will be redirected to after clicking the reset link.
-  // It must be the page where you will build the "Update Password" form.
-  const redirectTo = `${new URL(request.url).origin}/update-password`;
+  // We point to our server-side callback to handle the PKCE code exchange reliably.
+  const redirectTo = `${new URL(request.url).origin}/api/auth/callback?next=/update-password`;
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo,

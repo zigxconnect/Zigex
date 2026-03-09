@@ -164,14 +164,14 @@ export const MultiStepForm = () => {
     setIsNavigating(true);
     const isValid = await trigger(fieldsToValidate);
     if (isValid) {
-      console.log(
-        `[Step Navigation] Moving from step ${currentStep} to step ${Math.min(currentStep + 1, totalSteps)}`
-      );
+      // console.log(
+      //   `[Step Navigation] Moving from step ${currentStep} to step ${Math.min(currentStep + 1, totalSteps)}`
+      // );
       setCurrentStep((prev) => Math.min(prev + 1, totalSteps));
     } else {
-      console.log(
-        `[Step Validation] Validation failed for step ${currentStep}`
-      );
+      // console.log(
+      //   `[Step Validation] Validation failed for step ${currentStep}`
+      // );
       toast.error("Please fill in all required fields correctly.");
     }
     setIsNavigating(false);

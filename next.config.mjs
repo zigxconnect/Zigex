@@ -119,6 +119,9 @@ const nextConfig = {
     ]
   },
 
+  // Turbopack compatibility (Next.js 16 defaults to Turbopack)
+  turbopack: {},
+
   // Console removal in production
   compiler: {
     // removeConsole: process.env.NODE_ENV === 'production',

@@ -24,36 +24,6 @@ export default async function TestCompanyProfilePage() {
   const result = await getAllCompanies();
 
   // Comprehensive logging for debugging
-  console.log('=== COMPANY PROFILES TEST DEBUG ===');
-  console.log('Result type:', typeof result);
-  console.log('Success:', result.success);
-
-  if (!result.success) {
-    console.log('Error occurred:', result.error);
-  } else {
-    console.log('Success! Company data received:');
-    console.log('Total companies found:', result.count);
-    console.log('Companies array length:', result.data?.length || 0);
-
-    if (result.data && result.data.length > 0) {
-      result.data.forEach((company, index) => {
-        console.log(`--- Company ${index + 1} ---`);
-        console.log('Company ID:', company.id);
-        console.log('User ID:', company.user_id);
-        console.log('Company Name:', company.company_name);
-        console.log('Email:', company.email);
-        console.log('Industry:', company.industry);
-        console.log('Phone:', company.phone);
-        console.log('Website:', company.website_url);
-        console.log('Description length:', company.description?.length || 0);
-        console.log('Address:', company.address);
-        console.log('Created at:', company.created_at);
-      });
-
-      console.log('Full data structure:', JSON.stringify(result.data[0], null, 2));
-    }
-  }
-  console.log('=== END DEBUG ===');
 
   return (
     <div className="container mx-auto p-6 max-w-6xl">

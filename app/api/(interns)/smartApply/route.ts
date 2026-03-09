@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
       return new NextResponse('Company name and user profile are required', { status: 400 });
     }
 
-    console.log(`[SmartApply] Generating application for ${userProfile.name} at ${companyName}`);
+    // console.log(`[SmartApply] Generating application for ${userProfile.name} at ${companyName}`);
 
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
     const prompt = createCoverLetterPrompt(companyName, userProfile);
