@@ -129,6 +129,34 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  for (var i = 0; i < localStorage.length; i++) {
+                    var key = localStorage.key(i);
+                    if (key && (key.indexOf('sb-') === 0 || key === 'supabase.auth.token')) {
+                      if (key.indexOf('-code-verifier') !== -1) continue;
+                      var val = localStorage.getItem(key);
+                      if (!val) continue;
+                      try {
+                        var parsed = JSON.parse(val);
+                        if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+                          localStorage.removeItem(key);
+                        }
+                      } catch (e) {
+                        localStorage.removeItem(key);
+                      }
+                    }
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
       <body className={`${inter.variable} ${hostGrotesk.variable} antialiased`}>
         <SessionGuard>
           {children}
