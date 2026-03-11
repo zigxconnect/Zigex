@@ -3,6 +3,7 @@ import { Inter, Host_Grotesk } from "next/font/google";
 import "./globals.css";
 // import { Toaster } from "@/components/ui/sonner";
 import { Toaster } from "react-hot-toast";
+import Script from "next/script";
 
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
@@ -130,25 +131,52 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* 
+          CRITICAL: This script must run SYNCHRONOUSLY before any other JS.
+          It purges corrupted Supabase auth tokens from localStorage to prevent
+          "TypeError: Cannot create property 'user' on string".
+          
+          It also handles double-stringified values (the root cause):
+          If JSON.parse returns a string instead of an object, it tries
+          parsing one more time. If that succeeds, it fixes the stored value.
+          If not, it removes the key entirely.
+        */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
                 try {
+                  var keys = [];
                   for (var i = 0; i < localStorage.length; i++) {
-                    var key = localStorage.key(i);
-                    if (key && (key.indexOf('sb-') === 0 || key === 'supabase.auth.token')) {
-                      if (key.indexOf('-code-verifier') !== -1) continue;
-                      var val = localStorage.getItem(key);
-                      if (!val) continue;
-                      try {
-                        var parsed = JSON.parse(val);
-                        if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+                    keys.push(localStorage.key(i));
+                  }
+                  for (var j = 0; j < keys.length; j++) {
+                    var key = keys[j];
+                    if (!key) continue;
+                    if (key.indexOf('sb-') !== 0 && key !== 'supabase.auth.token') continue;
+                    if (key.indexOf('-code-verifier') !== -1) continue;
+                    var val = localStorage.getItem(key);
+                    if (!val) continue;
+                    try {
+                      var parsed = JSON.parse(val);
+                      if (typeof parsed === 'string') {
+                        // Double-stringified! Try to recover.
+                        try {
+                          var recovered = JSON.parse(parsed);
+                          if (typeof recovered === 'object' && recovered !== null && !Array.isArray(recovered)) {
+                            // Fix: write the correctly stringified version back
+                            localStorage.setItem(key, JSON.stringify(recovered));
+                          } else {
+                            localStorage.removeItem(key);
+                          }
+                        } catch(e2) {
                           localStorage.removeItem(key);
                         }
-                      } catch (e) {
+                      } else if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
                         localStorage.removeItem(key);
                       }
+                    } catch (e) {
+                      localStorage.removeItem(key);
                     }
                   }
                 } catch (e) {}

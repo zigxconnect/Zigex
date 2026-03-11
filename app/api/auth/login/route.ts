@@ -188,7 +188,6 @@ const _POST = async function (request: Request) {
       {
         message: "Login successful",
         profileComplete: studentProfile.profile_status === "complete",
-        session: data.session,
       },
       { status: 200 }
     );
