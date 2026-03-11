@@ -169,33 +169,12 @@ export default function RootLayout({
                     }
                   }
 
-                  // --- 2. COOKIE GUARD ---
-                  // If a session cookie is bloated or corrupted, it causes the same crash.
-                  var cookies = document.cookie.split(';');
-                  var supabaseCookies = [];
-                  for (var k = 0; k < cookies.length; k++) {
-                    var c = cookies[k].trim();
-                    if (c.indexOf('sb-') === 0 && c.indexOf('-auth-token') !== -1) {
-                      supabaseCookies.push(c.split('=')[0]);
-                    }
-                  }
-                  
-                  // If we have chunks (e.g. .0, .1) but they aren't forming a valid session,
-                  // or if they are unusually large, we clear them to be safe.
-                  if (supabaseCookies.length > 0) {
-                    // Note: We can only clear cookies on the current domain/path.
-                    // Supabase SSR uses / by default.
-                    supabaseCookies.forEach(function(cName) {
-                      // If the cookie name is part of a chunked session, we just clear all of them
-                      // to force a fresh re-auth from the server with the now-cleaned metadata.
-                      document.cookie = cName + "=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
-                    });
-                  }
                 } catch (e) {}
               })();
             `,
           }}
         />
+
       </head>
       <body className={`${inter.variable} ${hostGrotesk.variable} antialiased`}>
         <SessionGuard>

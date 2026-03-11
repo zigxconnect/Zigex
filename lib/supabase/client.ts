@@ -3,8 +3,6 @@ import { createBrowserClient } from "@supabase/ssr";
 /**
  * Creates a Supabase client for browser (client components).
  */
-let cachedClient: ReturnType<typeof createBrowserClient> | null = null;
-
 export function createClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -13,9 +11,7 @@ export function createClient() {
     throw new Error("Supabase configuration is missing.");
   }
 
-  if (cachedClient) return cachedClient;
-
-  cachedClient = createBrowserClient(supabaseUrl, supabaseKey, {
+  return createBrowserClient(supabaseUrl, supabaseKey, {
     auth: {
       autoRefreshToken: true,
       persistSession: true,
@@ -24,8 +20,6 @@ export function createClient() {
       storage: wrapStorageWithSafety(typeof window !== "undefined" ? window.localStorage : undefined)
     }
   });
-
-  return cachedClient;
 }
 
 /**

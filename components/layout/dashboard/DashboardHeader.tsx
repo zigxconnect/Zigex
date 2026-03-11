@@ -10,6 +10,17 @@ import { toast } from "sonner";
 import { useRouter, usePathname } from "next/navigation";
 import NameInitials from "@/components/NameInitials";
 import { slugifyUsername, cn } from "@/lib/utils";
+import { useTransition } from "react";
+import { signOutAction } from "@/lib/actions/auth.action";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { User as UserIcon, Settings, LogOut, ExternalLink } from "lucide-react";
 
 interface DashboardHeaderProps {
   user?: any;
@@ -92,32 +103,114 @@ export const DashboardHeader = ({
             <NotificationDropdown />
           </div>
 
-          {/* User Profile */}
-          <Link
-            href={`/profile/${slugifyUsername(user?.profile?.username) || ""}`}
-            className="flex items-center gap-3 pl-3 lg:pl-4 border-l border-slate-100 dark:border-slate-800 flex-shrink-0 group"
-          >
-            <div className="relative w-9 h-9 lg:w-10 lg:h-10 rounded-xl border-2 border-white dark:border-slate-800 ring-2 ring-slate-100 dark:ring-slate-800 group-hover:ring-[#155DFC]/30 shadow-sm overflow-hidden transition-all duration-300">
-              {userAvatar ? (
-                <Image
-                  src={userAvatar}
-                  alt={userName}
-                  fill
-                  className="object-cover"
-                />
-              ) : (
-                <NameInitials name={userName} />
-              )}
-            </div>
-            <div className="hidden md:flex flex-col">
-              <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight group-hover:text-[#155DFC] transition-colors tracking-tight">
-                {userName}
-              </p>
-              <p className="text-[9px] font-bold text-slate-400 tracking-wider leading-tight">{userRole}</p>
-            </div>
-          </Link>
+          {/* User Profile Dropdown */}
+          <div className="flex-shrink-0 border-l border-slate-100 dark:border-slate-800 pl-3 lg:pl-4">
+            <UserMenu 
+              user={user} 
+              userName={userName} 
+              userRole={userRole} 
+              userAvatar={userAvatar} 
+            />
+          </div>
         </div>
       </div>
     </header>
   );
 };
+
+/**
+ * Sub-component for the user profile dropdown menu
+ */
+const UserMenu = ({ user, userName, userRole, userAvatar }: any) => {
+  const [isPending, startTransition] = useTransition();
+  const profileUrl = `/profile/${slugifyUsername(user?.profile?.username) || ""}`;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className="flex items-center gap-3 group outline-none focus:outline-none">
+          <div className="relative w-9 h-9 lg:w-10 lg:h-10 rounded-xl border-2 border-white dark:border-slate-800 ring-2 ring-slate-100 dark:ring-slate-800 group-hover:ring-[#155DFC]/30 shadow-sm overflow-hidden transition-all duration-300">
+            {userAvatar ? (
+              <Image
+                src={userAvatar}
+                alt={userName}
+                fill
+                className="object-cover"
+              />
+            ) : (
+              <NameInitials name={userName} />
+            )}
+          </div>
+          <div className="hidden md:flex flex-col items-start translate-y-[-1px]">
+            <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight group-hover:text-[#155DFC] transition-colors tracking-tight">
+              {userName}
+            </p>
+            <p className="text-[9px] font-bold text-slate-400 tracking-wider leading-tight uppercase">{userRole}</p>
+          </div>
+        </button>
+      </DropdownMenuTrigger>
+      
+      <DropdownMenuContent 
+        align="end" 
+        className="w-64 p-2 rounded-2xl border-slate-100 dark:border-slate-800 shadow-2xl shadow-blue-500/5 mt-1"
+      >
+        <DropdownMenuLabel className="px-3 py-3">
+          <div className="flex flex-col gap-0.5">
+            <p className="text-sm font-bold text-slate-900 dark:text-white">{userName}</p>
+            <p className="text-[10px] font-medium text-slate-500">{user?.profile?.email || "Account Profile"}</p>
+          </div>
+        </DropdownMenuLabel>
+        
+        <DropdownMenuSeparator className="bg-slate-50 dark:bg-slate-800/50 my-1" />
+        
+        <DropdownMenuItem asChild>
+          <Link 
+            href={profileUrl}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer group focus:bg-blue-50 dark:focus:bg-blue-900/20 focus:text-[#155DFC] transition-all"
+          >
+            <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-[#155DFC] group-hover:scale-110 transition-transform">
+              <UserIcon size={16} />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs font-bold">Public Profile</span>
+              <span className="text-[10px] text-slate-400">View as others see you</span>
+            </div>
+            <ExternalLink size={12} className="ml-auto opacity-30 group-hover:opacity-100 transition-opacity" />
+          </Link>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem asChild>
+          <Link 
+            href="/profile-settings"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer group focus:bg-blue-50 dark:focus:bg-blue-900/20 focus:text-[#155DFC] transition-all"
+          >
+            <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-500 group-focus:text-[#155DFC] group-hover:scale-110 transition-transform">
+              <Settings size={16} />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs font-bold">Edit Profile</span>
+              <span className="text-[10px] text-slate-400">Manage your settings</span>
+            </div>
+          </Link>
+        </DropdownMenuItem>
+        
+        <DropdownMenuSeparator className="bg-slate-50 dark:bg-slate-800/50 my-1" />
+        
+        <DropdownMenuItem 
+          onClick={() => startTransition(() => signOutAction())}
+          disabled={isPending}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer group focus:bg-red-50 dark:focus:bg-red-900/10 focus:text-red-600 text-slate-600 transition-all"
+        >
+          <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-focus:text-red-500 group-hover:scale-110 transition-transform">
+            {isPending ? <Spinner className="h-4 w-4" /> : <LogOut size={16} />}
+          </div>
+          <span className="text-xs font-bold">Logout</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
+const Spinner = ({ className }: { className?: string }) => (
+  <div className={cn("animate-spin rounded-full border-2 border-current border-t-transparent", className)} />
+);
