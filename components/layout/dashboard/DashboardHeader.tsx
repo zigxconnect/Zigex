@@ -56,7 +56,7 @@ export const DashboardHeader = ({
           {/* Mobile Menu Button */}
           <button
             onClick={onMenuClick}
-            className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-400 hover:text-[#155DFC] rounded-xl transition-all lg:hidden flex-shrink-0"
+            className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-400 hover:text-[#155DFC] rounded-xl transition-all lg:hidden shrink-0"
             aria-label="Toggle Menu"
           >
             <Menu size={22} />
@@ -65,7 +65,7 @@ export const DashboardHeader = ({
           {/* Logo/Brand */}
           <Link
             href="/"
-            className="flex items-center gap-2 group flex-shrink-0"
+            className="flex items-center gap-2 group shrink-0"
           >
             <div className="relative w-10 h-10 lg:w-11 lg:h-11 transition-transform group-hover:scale-105">
               <Logo className="w-full h-full" />
@@ -99,12 +99,12 @@ export const DashboardHeader = ({
         {/* Right Side - Notifications, User & Logout */}
         <div className="flex items-center gap-3 lg:gap-4 flex-1 justify-end">
           {/* Notifications Dropdown */}
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             <NotificationDropdown />
           </div>
 
           {/* User Profile Dropdown */}
-          <div className="flex-shrink-0 border-l border-slate-100 dark:border-slate-800 pl-3 lg:pl-4">
+          <div className="shrink-0 border-l border-slate-100 dark:border-slate-800 pl-3 lg:pl-4">
             <UserMenu 
               user={user} 
               userName={userName} 
@@ -141,7 +141,7 @@ const UserMenu = ({ user, userName, userRole, userAvatar }: any) => {
               <NameInitials name={userName} />
             )}
           </div>
-          <div className="hidden md:flex flex-col items-start translate-y-[-1px]">
+          <div className="hidden md:flex flex-col items-start -translate-y-px">
             <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight group-hover:text-[#155DFC] transition-colors tracking-tight">
               {userName}
             </p>
