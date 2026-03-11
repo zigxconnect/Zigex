@@ -70,6 +70,9 @@ export async function createServerActionClient() {
         },
         async set(name: string, value: string, options: CookieOptions) {
           try {
+            if (value.length > 3000) {
+              console.warn(`[Supabase ServerAction] Setting large cookie: ${name} (${value.length} bytes). Metadata bloat suspected.`);
+            }
             (await cookieStore).set({ name, value, ...options });
           } catch (error) { }
         },
@@ -106,20 +109,24 @@ export const createSupabaseServerClient = async () => {
       get(name: string) {
         return cookieStore.get(name)?.value;
       },
-      set(name: string, value: string, options: CookieOptions) {
-        try {
-          cookieStore.set({ name, value, ...options });
-        } catch (error) {
-          // This can fail in Server Components, but we ignore it there
-        }
-      },
-      remove(name: string, options: CookieOptions) {
-        try {
-          cookieStore.set({ name, value: "", ...options });
-        } catch (error) {
-          // This can fail in Server Components, but we ignore it there
-        }
-      },
+        set(name: string, value: string, options: CookieOptions) {
+          try {
+            // Log warning if cookie is unusually large to catch metadata bloat early
+            if (value.length > 3000) {
+              console.warn(`[Supabase Server] Setting large cookie: ${name} (${value.length} bytes). Metadata bloat suspected.`);
+            }
+            cookieStore.set({ name, value, ...options });
+          } catch (error) {
+            // This can fail in Server Components, but we ignore it there
+          }
+        },
+        remove(name: string, options: CookieOptions) {
+          try {
+            cookieStore.set({ name, value: "", ...options });
+          } catch (error) {
+            // This can fail in Server Components, but we ignore it there
+          }
+        },
     },
     global: {
       fetch: fetchWithRetry,

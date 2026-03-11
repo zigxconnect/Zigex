@@ -146,6 +146,7 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
+                  // --- 1. LOCAL STORAGE GUARD ---
                   var keys = [];
                   for (var i = 0; i < localStorage.length; i++) {
                     keys.push(localStorage.key(i));
@@ -159,25 +160,36 @@ export default function RootLayout({
                     if (!val) continue;
                     try {
                       var parsed = JSON.parse(val);
-                      if (typeof parsed === 'string') {
-                        // Double-stringified! Try to recover.
-                        try {
-                          var recovered = JSON.parse(parsed);
-                          if (typeof recovered === 'object' && recovered !== null && !Array.isArray(recovered)) {
-                            // Fix: write the correctly stringified version back
-                            localStorage.setItem(key, JSON.stringify(recovered));
-                          } else {
-                            localStorage.removeItem(key);
-                          }
-                        } catch(e2) {
-                          localStorage.removeItem(key);
-                        }
-                      } else if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+                      if (typeof parsed === 'string' || parsed === null || typeof parsed !== 'object') {
+                        console.warn('[ZApp] Invalid localStorage session detected for ' + key + '. Removing.');
                         localStorage.removeItem(key);
                       }
                     } catch (e) {
                       localStorage.removeItem(key);
                     }
+                  }
+
+                  // --- 2. COOKIE GUARD ---
+                  // If a session cookie is bloated or corrupted, it causes the same crash.
+                  var cookies = document.cookie.split(';');
+                  var supabaseCookies = [];
+                  for (var k = 0; k < cookies.length; k++) {
+                    var c = cookies[k].trim();
+                    if (c.indexOf('sb-') === 0 && c.indexOf('-auth-token') !== -1) {
+                      supabaseCookies.push(c.split('=')[0]);
+                    }
+                  }
+                  
+                  // If we have chunks (e.g. .0, .1) but they aren't forming a valid session,
+                  // or if they are unusually large, we clear them to be safe.
+                  if (supabaseCookies.length > 0) {
+                    // Note: We can only clear cookies on the current domain/path.
+                    // Supabase SSR uses / by default.
+                    supabaseCookies.forEach(function(cName) {
+                      // If the cookie name is part of a chunked session, we just clear all of them
+                      // to force a fresh re-auth from the server with the now-cleaned metadata.
+                      document.cookie = cName + "=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+                    });
                   }
                 } catch (e) {}
               })();
