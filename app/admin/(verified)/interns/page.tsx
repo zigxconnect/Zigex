@@ -9,7 +9,7 @@ import {
   Target, User, Mail, Phone, ChevronRight, Eye,
   CheckCircle2, XCircle, MoreHorizontal, Filter,
   Building2, Star, TrendingUp, Sparkles, Users, UserCheck, Award,
-  ChevronDown, Landmark
+  ChevronDown, Landmark, PieChart as ChartPieIcon
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import Image from "next/image";
@@ -20,6 +20,7 @@ import { ApplicantsTable } from "@/components/sections/admin/applicants/Applican
 import { InternLedgerTable } from "@/components/sections/admin/applicants/InternLedgerTable";
 import { InternManagementTable } from "@/components/sections/admin/applicants/InternManagementTable";
 import { InternRecordsTable } from "@/components/sections/admin/applicants/InternRecordsTable";
+import { InternsAnalytics } from "@/components/sections/admin/applicants/InternsAnalytics";
 
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -169,7 +170,7 @@ function InternsPageComponent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterDomain, setFilterDomain] = useState<string | null>(null);
   const [filterSchool, setFilterSchool] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"grid" | "table" | "ledger" | "management" | "records">("table");
+  const [viewMode, setViewMode] = useState<"grid" | "table" | "ledger" | "management" | "records" | "analytics">("table");
   const [companyId, setCompanyId] = useState<string | null>(null);
 
   const searchParams = useSearchParams();
@@ -555,6 +556,20 @@ function InternsPageComponent() {
                 <Award size={16} className="mr-2" />
                 Records
               </Button>
+              <Button
+                variant={viewMode === "analytics" ? "outline" : "ghost"}
+                size="sm"
+                className={cn(
+                  "rounded-xl h-10 px-4 font-medium transition-all duration-200",
+                  viewMode === "analytics"
+                    ? "bg-white shadow-md text-blue-600"
+                    : "text-slate-500 hover:text-slate-700"
+                )}
+                onClick={() => setViewMode("analytics")}
+              >
+                <ChartPieIcon size={16} className="mr-2" />
+                Analytics
+              </Button>
 
             </div>
 
@@ -856,6 +871,10 @@ function InternsPageComponent() {
                 applicants={filteredApplicants}
                 companyId={companyId || ""}
               />
+            )}
+
+            {viewMode === "analytics" && (
+              <InternsAnalytics applicants={applicants} />
             )}
 
 
