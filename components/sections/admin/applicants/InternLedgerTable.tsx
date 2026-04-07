@@ -98,8 +98,12 @@ export const InternLedgerTable = ({
    * Financial Intelligence Engine
    */
   const getFinancials = useCallback((applicant: Applicant) => {
-    const match = (applicant.duration || "3").match(/\d+/);
-    const months = match ? parseInt(match[0]) : 3;
+    const isInternship = applicant.applicationType === "internship";
+    
+    // For internships, look at duration. For programs and events, treat as 1 billing cycle.
+    const match = isInternship ? (applicant.duration || "3").match(/\d+/) : null;
+    const months = match ? parseInt(match[0]) : (isInternship ? 3 : 1);
+    
     const rate = applicant.monthlyRate || 0;
     const ledger = applicant.paymentLedger || [];
 
@@ -112,10 +116,13 @@ export const InternLedgerTable = ({
     // 3. Time Accrual
     const startDate = new Date(applicant.appliedDate);
     const today = new Date();
-    const monthsElapsed = Math.min(
-      months,
-      Math.max(1, (today.getFullYear() - startDate.getFullYear()) * 12 + (today.getMonth() - startDate.getMonth()) + 1)
-    );
+    // For non-internships, accrual is immediate (1 month elapsed).
+    const monthsElapsed = isInternship 
+        ? Math.min(
+            months,
+            Math.max(1, (today.getFullYear() - startDate.getFullYear()) * 12 + (today.getMonth() - startDate.getMonth()) + 1)
+          )
+        : 1;
 
     // 4. Expected Revenue to Date (Accrued)
     const accruedDue = monthsElapsed * rate;
@@ -131,8 +138,6 @@ export const InternLedgerTable = ({
       totalPaid,
       accruedDue,
       debt,
-      remainingBalance,
-      ledger,
       remainingBalance,
       ledger,
       isOverdue: debt > 0,
@@ -170,8 +175,8 @@ export const InternLedgerTable = ({
     const records = sortedData.map(app => getFinancials(app));
 
     const totalCollected = records.reduce((sum, r) => sum + r.totalPaid, 0);
-    // Calculated Expected Income based on number of students (20,000 per month)
-    const expectedIncome = records.reduce((sum, r) => sum + (r.months * 20000), 0);
+    // Calculated Expected Income based on total contract value for each application
+    const expectedIncome = records.reduce((sum, r) => sum + r.totalDue, 0);
     const totalArrears = records.reduce((sum, r) => sum + r.debt, 0);
     const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
 

@@ -45,7 +45,7 @@ export interface FormattedUserData {
  * have already prevented unauthorized access.
  * @returns {Promise<FormattedUserData>}
  */
-export async function getProfileInfo(): Promise<FormattedUserData> {
+export async function getProfileInfo(): Promise<FormattedUserData | null> {
   const supabase = await createServerActionClient();
   const {
     data: { user },
@@ -53,22 +53,18 @@ export async function getProfileInfo(): Promise<FormattedUserData> {
 
   if (!user) {
     const { data: { session } } = await supabase.auth.getSession();
-    console.error("[ProfileActions] User not found in getProfileInfo. Session exists:", !!session);
-    throw new Error(
-      "Authentication error: User not found. Middleware should have prevented this."
-    );
+    console.warn("[ProfileActions] User not found in getProfileInfo. Session exists:", !!session);
+    return null;
   }
 
-  const { data: profile, error } = await supabase
+  const { data: profile } = await supabase
     .from("student_profiles")
     .select("*")
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
 
-  if (error || !profile) {
-    throw new Error(
-      "Data fetching error: Profile not found for an authenticated user. Middleware should have prevented this."
-    );
+  if (!profile) {
+    return null;
   }
 
   const { count: applicationsCount, error: countError } = await supabase
@@ -110,27 +106,28 @@ export async function getProfileInfo(): Promise<FormattedUserData> {
 
   if (supervisor) userData.permissions!.isSupervisor = true;
 
-  // Check for Intern status (Accepted internship)
-  const { data: activeInternship } = await supabaseAdmin
-    .from("internship_applications")
+  // Check for Intern status (Accepted placement)
+  // Check modern Applications table first (supports internship, program, event)
+  const { data: anyAcceptedAction } = await supabaseAdmin
+    .from("Applications")
     .select("id")
     .eq("student_id", user.id)
-    .eq("status", "accepted")
+    .in("status", ["accepted", "rsvp_confirmed"])
     .limit(1)
     .maybeSingle();
 
-  if (activeInternship) userData.permissions!.isIntern = true;
-
-  // Final fallback: check legacy Applications table if not found in modern one
-  if (!userData.permissions!.isIntern) {
-    const { data: legacyInternship } = await supabaseAdmin
-      .from("Applications")
+  if (anyAcceptedAction) {
+    userData.permissions!.isIntern = true;
+  } else {
+    // Fallback to structural internship_applications
+    const { data: activeInternship } = await supabaseAdmin
+      .from("internship_applications")
       .select("id")
-      .eq("student_id", profile.id)
+      .eq("student_id", user.id)
       .eq("status", "accepted")
       .limit(1)
       .maybeSingle();
-    if (legacyInternship) userData.permissions!.isIntern = true;
+    if (activeInternship) userData.permissions!.isIntern = true;
   }
 
   return userData;

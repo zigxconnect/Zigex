@@ -83,35 +83,95 @@ export async function getAcceptedInternships() {
 
   if (!user) return [];
 
-  const { data, error } = await supabase
+  // First get the student profile
+  const { data: profile } = await supabase
+    .from("student_profiles")
+    .select("id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!profile) {
+    console.warn(`[getAcceptedInternships] No student profile found for user ${user.id}`);
+    return [];
+  }
+
+  // Try fetching from Applications (which supports internship, program, event)
+  const { data: appData, error: appError } = await supabase
+    .from("Applications")
+    .select(`
+      id,
+      internship_id,
+      program_id,
+      event_id,
+      application_type,
+      status,
+      internships (
+        id, title, location, company_id, company_profiles ( id, company_name, logo_url )
+      ),
+      programs (
+        id, title, location, company_id, company_profiles ( id, company_name, logo_url )
+      ),
+      event (
+        id, title, location, company_id, company_profiles ( id, company_name, logo_url )
+      )
+    `)
+    .eq("student_id", profile.id)
+    .in("status", ["accepted", "rsvp_confirmed"])
+    .order("created_at", { ascending: false });
+
+  if (appError) {
+    console.error("[getAcceptedInternships] Applications query failed:", appError.message);
+  }
+
+  let allAccepted: any[] = [];
+  if (appData && appData.length > 0) {
+    allAccepted = [...appData];
+  }
+
+  // Also fetch from legacy internship_applications
+  // NOTE: internship_applications uses auth user.id as student_id (NOT student_profiles.id)
+  const { data: legacyData, error: legacyError } = await supabase
     .from("internship_applications")
     .select(`
       id,
       internship_id,
       domain,
       status,
+      created_at,
       internships (
-        id,
-        title,
-        location,
-        company_id,
-        company_profiles (
-          id,
-          company_name,
-          logo_url
-        )
+        id, title, location, company_id, company_profiles ( id, company_name, logo_url )
       )
     `)
     .eq("student_id", user.id)
     .eq("status", "accepted")
     .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("Error fetching accepted internships:", error);
-    return [];
+  if (legacyData && legacyData.length > 0) {
+    // map legacy to standard format
+    const legacyMapped = legacyData.map((leg: any) => ({
+      ...leg,
+      application_type: "internship"
+    }));
+    // Remove duplicates based on internship_id if any (unlikely but safe)
+    const existingInternshipIds = new Set(allAccepted.map(a => a.internship_id).filter(Boolean));
+    for (const leg of legacyMapped) {
+      if (leg.internship_id && !existingInternshipIds.has(leg.internship_id)) {
+        allAccepted.push(leg);
+      }
+    }
   }
 
-  return data || [];
+  // Ensure application_type is consistent (lowercase) and handles missing programs/events
+  const finalData = allAccepted.map(app => {
+    const type = (app.application_type || "internship").toLowerCase();
+    return {
+      ...app,
+      application_type: type
+    };
+  });
+
+  console.log(`[getAcceptedInternships] Found ${finalData.length} placements for user ${user.id}`);
+  return finalData;
 }
 
 /**
@@ -124,19 +184,31 @@ export async function getInternshipWorkspaceData(applicationId?: string) {
 
   if (!user) return null;
 
+  // Get the student profile
+  const { data: profile } = await supabase
+    .from("student_profiles")
+    .select("id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!profile) return null;
+
   // 1. Get the internship application
+  let application = null;
+  let appError = null;
+
+  // First try the unified Applications table
   let query = supabase
-    .from("internship_applications")
+    .from("Applications")
     .select(`
       *,
-      internships (
-        *, 
-        company_profiles (*)
-      ),
+      internships (*, company_profiles (*)),
+      programs (*, company_profiles (*)),
+      event (*, company_profiles (*)),
       supervisor_profiles (*)
     `)
-    .eq("student_id", user.id)
-    .eq("status", "accepted");
+    .eq("student_id", profile.id)
+    .in("status", ["accepted", "rsvp_confirmed"]);
 
   if (applicationId) {
     query = query.eq("id", applicationId);
@@ -144,49 +216,65 @@ export async function getInternshipWorkspaceData(applicationId?: string) {
     query = query.order("created_at", { ascending: false }).limit(1);
   }
 
-  const { data: application, error: appError } = await query.single();
+  const { data: appData, error: appErr1 } = await query.maybeSingle();
 
-  if (appError || !application) {
-    console.warn("No active internship found for user", user.id);
+  if (appData) {
+    application = appData;
+  } else {
+    // Fallback to legacy table if not found
+    // NOTE: internship_applications uses auth user.id as student_id (NOT student_profiles.id)
+    let legacyQuery = supabase
+      .from("internship_applications")
+      .select(`
+        *,
+        internships (*, company_profiles (*)),
+        supervisor_profiles (*)
+      `)
+      .eq("student_id", user.id)
+      .eq("status", "accepted");
+
+    if (applicationId) {
+      legacyQuery = legacyQuery.eq("id", applicationId);
+    } else {
+      legacyQuery = legacyQuery.order("created_at", { ascending: false }).limit(1);
+    }
+
+    const { data: legacyData, error: legacyErr } = await legacyQuery.single();
+    if (legacyData) {
+      application = { ...legacyData, application_type: "internship" };
+    } else {
+      appError = legacyErr;
+    }
+  }
+
+  if (!application) {
+    console.warn(`[Workspace] No active application found for user ${user.id} with ID ${applicationId || 'latest'}`);
     return null;
   }
 
-  // 2. Fetch associated curriculum
-  const { data: curriculum } = await supabase
-    .from("internship_curriculum")
-    .select("*")
-    .eq("internship_id", application.internship_id)
-    .order("week_number", { ascending: true });
+  // Normalize application_type
+  application.application_type = (application.application_type || "internship").toLowerCase();
 
-  // 3. Fetch internship logs (attendance and reports)
-  const { data: logs } = await supabase
-    .from("intern_logs")
-    .select("*")
-    .eq("student_id", user.id)
-    .eq("internship_id", application.internship_id)
-    .order("log_date", { ascending: false });
+  // Get the normalized parent ref depending on type
+  let referenceId = application.internship_id;
+  if (application.application_type === "program") referenceId = application.program_id;
+  if (application.application_type === "event") referenceId = application.event_id;
 
-  // 4. Fetch assigned tasks - ONLY for this student
-  const { data: tasks } = await supabase
-    .from("internship_tasks")
-    .select("*")
-    .eq("student_id", user.id)
-    .order("created_at", { ascending: false });
+  if (!referenceId) {
+    console.warn(`[Workspace] Application ${application.id} has no reference ID for type ${application.application_type}`);
+    // If it's a legacy application, it might be solely linked via internship_id
+    referenceId = application.internship_id;
+  }
 
-  // 5. Fetch notes
-  const { data: notes } = await supabase
-    .from("intern_notes")
-    .select("*")
-    .eq("student_id", user.id)
-    .eq("internship_id", application.internship_id)
-    .order("updated_at", { ascending: false });
+  // Derive companyId early so announcement query can run in parallel
+  let companyId = application.internships?.company_id;
+  if (!companyId && application.programs?.company_id) companyId = application.programs.company_id;
+  if (!companyId && application.event?.company_id) companyId = application.event.company_id;
 
-  // 6. Fetch Announcements (Global + Company) without joins to avoid PGRST200
-  const companyId = application.internships?.company_id;
-
+  // Build announcement query (needs companyId)
   let announcementQuery = supabase
     .from("announcements")
-    .select("*")
+    .select("id, title, content, author_id, company_id, is_pinned, created_at, updated_at")
     .order("is_pinned", { ascending: false })
     .order("created_at", { ascending: false });
 
@@ -196,7 +284,50 @@ export async function getInternshipWorkspaceData(applicationId?: string) {
     announcementQuery = announcementQuery.is("company_id", null);
   }
 
-  const { data: rawAnnouncements } = await announcementQuery;
+  // PERF: Run all independent queries in parallel (was sequential — ~5 round trips → ~1)
+  const [
+    { data: curriculum },
+    { data: logs },
+    { data: tasks },
+    { data: notes },
+    { data: rawAnnouncements },
+    { data: readRecords },
+  ] = await Promise.all([
+    // 2. Curriculum
+    supabase
+      .from("internship_curriculum")
+      .select("*")
+      .eq("internship_id", referenceId)
+      .order("week_number", { ascending: true }),
+    // 3. Logs
+    supabase
+      .from("intern_logs")
+      .select("*")
+      .eq("student_id", user.id)
+      .eq("internship_id", referenceId)
+      .order("log_date", { ascending: false }),
+    // 4. Tasks (isolated by internship_id to prevent cross-workspace leakage)
+    supabase
+      .from("internship_tasks")
+      .select("*")
+      .eq("student_id", profile.id)
+      .eq("internship_id", referenceId)
+      .order("created_at", { ascending: false }),
+    // 5. Notes
+    supabase
+      .from("intern_notes")
+      .select("*")
+      .eq("student_id", user.id)
+      .eq("internship_id", referenceId)
+      .order("updated_at", { ascending: false }),
+    // 6. Announcements
+    announcementQuery,
+    // 7. Read records
+    supabaseAdmin
+      .from("announcement_reads")
+      .select("announcement_id")
+      .eq("student_id", profile.id),
+  ]);
 
   // Enrich announcements manually
   let announcements: any[] = [];
@@ -222,53 +353,88 @@ export async function getInternshipWorkspaceData(applicationId?: string) {
     }));
   }
 
-  // 7. Calculate unread announcements
-  const { data: readRecords } = await supabaseAdmin
-    .from("announcement_reads")
-    .select("announcement_id")
-    .eq("student_id", user.id);
-
+  // Calculate unread announcements (readRecords already fetched in parallel above)
   const readIds = new Set(readRecords?.map((r: any) => r.announcement_id) || []);
   const unreadCount = announcements.filter((a: any) => !readIds.has(a.id)).length;
 
   // 8. Fetch Fellow Interns - ULTRA ROBUST
+  // internship_applications uses auth user.id as student_id
   const { data: structApps } = await supabaseAdmin
     .from("internship_applications")
     .select("id, internship_id, student_id, domain")
     .eq("status", "accepted");
 
-  let legacyApps: any[] = [];
+  // Applications uses student_profiles.id as student_id
+  let unifiedApps: any[] = [];
   try {
-    const { data: legacyData } = await supabaseAdmin
+    const { data: unifiedData } = await supabaseAdmin
       .from("Applications")
-      .select("id, internship_id, student_id, domain")
+      .select("id, internship_id, program_id, student_id, domain")
       .eq("status", "accepted");
-    legacyApps = legacyData || [];
+    unifiedApps = unifiedData || [];
   } catch (e) {
-    // Silently fail for legacy table if it doesn't exist
-    legacyApps = [];
+    unifiedApps = [];
   }
 
-  const allRawApps = [...(structApps || []), ...legacyApps];
-  const allStudentUserIds = Array.from(new Set(allRawApps.map(app => app.student_id).filter(Boolean)));
+  // Collect auth user_ids from internship_applications (these ARE user_ids)
+  const legacyUserIds = (structApps || []).map(app => app.student_id).filter(Boolean);
+  // Collect student_profiles.ids from Applications (these are profile IDs, need to resolve to user_ids)
+  const unifiedProfileIds = unifiedApps.map(app => app.student_id).filter(Boolean);
 
-  let allStudentProfiles: any[] = [];
-  if (allStudentUserIds.length > 0) {
-    const { data: profiles } = await supabaseAdmin
+  // Resolve unified profile IDs to user_ids AND store full profile data
+  let profileToUserMap = new Map<string, string>();
+  let profileIdToDataMap = new Map<string, any>();
+  if (unifiedProfileIds.length > 0) {
+    const { data: profileMappings } = await supabaseAdmin
+      .from("student_profiles")
+      .select("id, user_id, full_name, avatar_url, username")
+      .in("id", unifiedProfileIds);
+    (profileMappings || []).forEach((p: any) => {
+      profileToUserMap.set(p.id, p.user_id);
+      profileIdToDataMap.set(p.id, p);
+    });
+  }
+
+  // Also fetch profiles for legacy user_ids
+  let userIdToProfileMap = new Map<string, any>();
+  if (legacyUserIds.length > 0) {
+    const { data: legacyProfiles } = await supabaseAdmin
       .from("student_profiles")
       .select("user_id, full_name, avatar_url, username")
-      .in("user_id", allStudentUserIds);
-    allStudentProfiles = profiles || [];
+      .in("user_id", legacyUserIds);
+    (legacyProfiles || []).forEach((p: any) => userIdToProfileMap.set(p.user_id, p));
   }
 
-  const fellowInterns = allRawApps.map(app => {
-    const profile = allStudentProfiles.find(p => p.user_id === app.student_id);
+  // Build fellow interns from legacy apps (student_id = auth user.id)
+  const fellowFromLegacy = (structApps || []).map(app => {
+    const prof = userIdToProfileMap.get(app.student_id);
     return {
       ...app,
-      isSameProgram: app.internship_id === application.internship_id,
-      student_profiles: profile || { full_name: "Member", avatar_url: "/default-avatar.svg", user_id: app.student_id }
+      auth_user_id: app.student_id,
+      isSameProgram: app.internship_id === referenceId,
+      student_profiles: prof || { full_name: "Member", avatar_url: "/default-avatar.svg", user_id: app.student_id }
     };
-  }).filter(app => app.student_id !== user.id); // Exclude self
+  });
+
+  // Build fellow interns from unified apps (student_id = student_profiles.id)
+  const fellowFromUnified = unifiedApps.map(app => {
+    const authUserId = profileToUserMap.get(app.student_id);
+    const profData = profileIdToDataMap.get(app.student_id);
+    return {
+      ...app,
+      auth_user_id: authUserId || app.student_id,
+      isSameProgram: (app.internship_id === referenceId) || (app.program_id === referenceId),
+      student_profiles: profData 
+        ? { full_name: profData.full_name, avatar_url: profData.avatar_url, username: profData.username, user_id: authUserId }
+        : { full_name: "Member", avatar_url: "/default-avatar.svg", user_id: authUserId || app.student_id }
+    };
+  });
+
+  // Merge and deduplicate, then exclude self
+  const allFellows = [...fellowFromLegacy, ...fellowFromUnified];
+  const fellowInterns = allFellows.filter(app => 
+    app.auth_user_id !== user.id && app.student_id !== user.id && app.student_id !== profile.id
+  );
 
   // 9. Fetch Supervisors for the same company
   const { data: colleaguesSupervisors } = await supabaseAdmin
@@ -408,17 +574,27 @@ export async function acknowledgePaidInternship(applicationId: string) {
 
   if (!user) return { success: false, error: "Unauthorized" };
 
-  const { error } = await supabase
-    .from("internship_applications")
+  // Try updating building Applications first
+  const { error: appError, data: appData } = await supabase
+    .from("Applications")
     .update({ is_paid_acknowledgement: true })
-    .eq("id", applicationId);
+    .eq("id", applicationId)
+    .select("id");
 
-  if (error) {
-    console.error("Error acknowledging paid internship:", error);
-    return { success: false, error: error.message };
+  if (appError || !appData || appData.length === 0) {
+    // Try legacy table
+    const { error: legacyError } = await supabase
+      .from("internship_applications")
+      .update({ is_paid_acknowledgement: true })
+      .eq("id", applicationId);
+
+    if (legacyError) {
+      console.error("Error acknowledging paid internship:", legacyError);
+      return { success: false, error: legacyError.message };
+    }
   }
 
-  revalidatePath("/intern/workspace");
+  revalidatePath("/student/workspace");
   return { success: true };
 }
 
@@ -442,7 +618,7 @@ export async function markTaskAsRead(taskId: string) {
     return { success: false, error: error.message };
   }
 
-  revalidatePath("/intern/workspace");
+  revalidatePath("/student/workspace");
   return { success: true };
 }
 

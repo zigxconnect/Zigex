@@ -48,10 +48,10 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
       excludePaths: ["/feed/projects"]
     },
     {
-      href: "/intern/workspace",
+      href: "/student/workspace",
       icon: Briefcase,
       label: "Workspace",
-     
+      matchPaths: ["/student/workspace/"]
     },
      {
               href: "/dashboard/blog",

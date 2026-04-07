@@ -240,10 +240,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <div className="space-y-1">
                 {user?.permissions?.isIntern && (
                   <AnimatedNavLink
-                    href="/intern/workspace"
+                    href="/student/workspace"
                     icon={LayoutDashboard}
                     label="Workspace"
-                    isActive={isRouteActive("/intern/workspace")}
+                    isActive={isRouteActive("/student/workspace", ["/student/workspace/"])}
                     badge={unreadCount > 0 ? unreadCount : undefined}
                     onClick={handleNavClick}
                   />

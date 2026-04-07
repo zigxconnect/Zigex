@@ -3,11 +3,11 @@ import { getAcceptedInternships } from "@/lib/actions/intenship.actions";
 import { InternWorkspaceSelection } from "@/components/sections/intern/InternWorkspaceSelection";
 
 export const metadata = {
-  title: "Intern Workspace Selection | Zigex",
+  title: "Student Workspace Selection | Zigex",
   description: "Select your active placement to enter your workspace.",
 };
 
-export default async function InternWorkspaceSelectionPage(props: {
+export default async function StudentWorkspaceSelectionPage(props: {
   searchParams: Promise<{ appId?: string }>;
 }) {
   const searchParams = await props.searchParams;
@@ -30,7 +30,7 @@ export default async function InternWorkspaceSelectionPage(props: {
     const slug = title.toLowerCase().replace(/ /g, "-");
     
     // Build parameters for redirection to the sub-page
-    const targetUrl = `/intern/workspace/${type}/${slug}?appId=${placement.id}`;
+    const targetUrl = `/student/workspace/${type}/${slug}?appId=${placement.id}`;
     console.log(`[WorkspaceSelection] Redirecting to ${targetUrl}`);
     redirect(targetUrl);
   }

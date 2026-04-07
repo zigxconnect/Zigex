@@ -36,7 +36,8 @@ import {
   Upload,
   ChevronLeft,
   StarHalf,
-  UserX
+  UserX,
+  ArrowLeft
 } from "lucide-react";
 import { format } from "date-fns";
 import Image from "next/image";
@@ -69,6 +70,12 @@ const isWithinWeeklyLimit = (dateString: string) => {
 interface SupervisorDashboardClientProps {
   data: {
     profile: any;
+    workspace?: {
+      id: string;
+      type: "internship" | "program";
+      title: string;
+      company?: any;
+    };
     interns: any[];
     recentLogs: any[];
     tasks: any[];
@@ -546,6 +553,28 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
       {/* ===== HEADER ===== */}
       <header className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-slate-900/80">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8">
+          {/* Workspace Context Bar */}
+          {data.workspace && (
+            <div className="flex items-center gap-3 mb-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+              <a href="/supervisor" className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 hover:text-[#155DFC] transition-colors group">
+                <ArrowLeft size={13} className="group-hover:-translate-x-0.5 transition-transform" />
+                Switch
+              </a>
+              <div className="w-px h-4 bg-slate-200 dark:bg-slate-700" />
+              <Badge className={cn(
+                "text-[8px] font-extrabold tracking-widest px-2 py-0.5 rounded-md border-0",
+                data.workspace.type === "program" 
+                  ? "bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300"
+                  : "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300"
+              )}>
+                {data.workspace.type === "program" ? "PROGRAM" : "INTERNSHIP"}
+              </Badge>
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate">
+                {data.workspace.title}
+              </span>
+            </div>
+          )}
+
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -558,7 +587,10 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                 Hello, {data.profile?.full_name?.split(" ")[0]}! 👋
               </h1>
               <p className="text-[10px] sm:text-xs text-slate-500 font-medium mt-1 tracking-tight">
-                Synchronize your team, track milestones, and drive internship excellence.
+                {data.workspace 
+                  ? `Managing ${data.workspace.title} — ${interns.length} intern${interns.length !== 1 ? "s" : ""} assigned.`
+                  : "Synchronize your team, track milestones, and drive internship excellence."
+                }
               </p>
             </div>
 

@@ -115,9 +115,21 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
   const [isColleaguesModalOpen, setIsColleaguesModalOpen] = useState(false);
   const [isLogbookPreviewOpen, setIsLogbookPreviewOpen] = useState(false);
   const [showDepartmentOnly, setShowDepartmentOnly] = useState(false);
-  const internship = application?.internships;
-  const company = internship?.company_profiles;
+  const isProgram = application?.application_type === "program" || application?.applicationType === "program";
+  const isEvent = application?.application_type === "event" || application?.applicationType === "event";
+
+  const opportunity = isProgram 
+    ? application?.programs 
+    : isEvent 
+      ? application?.event 
+      : application?.internships;
+
+  const company = opportunity?.company_profiles;
   const supervisor = application?.supervisor_profiles;
+
+  // Cleanup title for dynamic URL
+  const slugifiedTitle = (opportunity?.title || "workspace").toLowerCase().replace(/ /g, "-");
+  const typeSlug = isProgram ? "program" : isEvent ? "event" : "internship";
 
   const studentDomain = (application?.domain || "").toLowerCase().trim();
   const displayedInterns = showDepartmentOnly 
@@ -128,7 +140,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
     ? (fellowSupervisors || []).filter((s: any) => (s.department || "").toLowerCase().trim() === studentDomain)
     : (fellowSupervisors || []);
 
-  const fullProgramCurriculum = getProgramCurriculum(application?.domain || application?.internships?.title || "");
+  const fullProgramCurriculum = getProgramCurriculum(application?.domain || opportunity?.title || "");
   
   // Mapping for experience levels to match curriculum data levels
   const getMappedLevel = (level?: string): LevelCurriculum['level'] => {
@@ -158,7 +170,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
   const todayStr = format(new Date(), "yyyy-MM-dd");
   const hasLoggedToday = logs.some((log: any) => log.log_date === todayStr);
 
-  const isPaidInternship = internship?.monthly_rate > 0;
+  const isPaidInternship = opportunity?.monthly_rate > 0;
   const needsPaymentAcknowledgment = !application?.is_paid_acknowledgement && isPaidInternship;
 
   const progressPercent = Math.min(Math.round((logs.length / 30) * 100), 100);
@@ -210,7 +222,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
   // Real-time Announcements Listener
   useEffect(() => {
     const supabase = createClient();
-    const companyId = application?.internships?.company_id;
+    const companyId = opportunity?.company_id;
 
     const announcementsChannel = supabase
       .channel('announcements-realtime')
@@ -248,7 +260,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
     return () => {
       supabase.removeChannel(announcementsChannel);
     };
-  }, [application?.internships?.company_id, activeTab, router]);
+  }, [opportunity?.company_id, activeTab, router]);
 
   // Real-time Logs Listener (for Approval Status)
   useEffect(() => {
@@ -404,7 +416,8 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
           <DailyReportModal 
             isOpen={isLogModalOpen} 
             onClose={() => setIsLogModalOpen(false)} 
-            internshipId={application.internship_id}
+            applicationId={application.id}
+            opportunityType={application.application_type || "internship"}
           />
         )}
       </AnimatePresence>
@@ -449,12 +462,12 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                 <div className="flex-1 pt-2">
                   <div className="flex items-center gap-3 mb-3">
                     <Badge className="bg-blue-600 text-white border-0 text-[9px] font-bold tracking-tight px-3 py-1 rounded-full shadow-lg shadow-blue-500/10">
-                      {internship?.type || "Professional Track"}
+                      {opportunity?.type || isProgram ? "Program Track" : isEvent ? "Event Track" : "Professional Track"}
                     </Badge>
                     <span className="text-[9px] font-bold text-slate-300 dark:text-slate-600 tracking-wider">ID: {application?.id?.slice(0, 8)}</span>
                   </div>
                   <h1 className="text-2xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-tight mb-3">
-                    {internship?.title || "Professional Internship"}
+                    {opportunity?.title || "Professional Deployment"}
                   </h1>
                   <div className="flex flex-wrap items-center gap-y-2 gap-x-5">
                     <div className="flex items-center gap-2">
@@ -636,7 +649,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                       <div className="flex-1 text-center lg:text-left">
                         <h3 className="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white mb-3 tracking-tight">Financial Activation Required</h3>
                         <p className="text-sm lg:text-base text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-2xl">
-                          This is a paid track offering <span className="text-blue-600 font-black">{internship?.monthly_rate?.toLocaleString()} FCFA</span> per cycle. 
+                          This is a paid track offering <span className="text-blue-600 font-black">{opportunity?.monthly_rate?.toLocaleString()} FCFA</span> per cycle. 
                           Please acknowledge the professional terms to activate your deployment modules and daily reporting ledger.
                         </p>
                       </div>
@@ -687,7 +700,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                       <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">Mission Briefing</h3>
                     </div>
                     <p className="text-base text-slate-500 dark:text-slate-400 leading-relaxed font-semibold mb-10">
-                      {internship?.description || "This internship provides hands-on experience in your chosen field, allowing you to develop practical skills while working alongside industry professionals."}
+                      {opportunity?.description || "This deployment provides hands-on experience in your chosen field, allowing you to develop practical skills while working alongside industry professionals."}
                     </p>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -1284,7 +1297,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 sm:gap-10">
                       <div>
                         <p className="text-[9px] font-bold text-blue-200/50 mb-1.5 tracking-wider">Monthly Rate</p>
-                        <p className="text-xl sm:text-2xl font-bold text-white tracking-tight">{internship?.monthly_rate?.toLocaleString() || "0"} <span className="text-[10px] opacity-70">FCFA</span></p>
+                        <p className="text-xl sm:text-2xl font-bold text-white tracking-tight">{opportunity?.monthly_rate?.toLocaleString() || "0"} <span className="text-[10px] opacity-70">FCFA</span></p>
                       </div>
                       <div>
                         <p className="text-[9px] font-bold text-blue-200/50 mb-1.5 tracking-wider">Total Ledger</p>
@@ -1293,7 +1306,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                       <div className="col-span-2 sm:col-span-1">
                         <p className="text-[9px] font-bold text-blue-200/50 mb-1.5 tracking-wider">Operational Status</p>
                         <Badge className="bg-white/10 text-white border border-white/10 font-bold px-3 py-1 rounded-lg text-[9px] tracking-wider">
-                          {totalPaid >= (internship?.monthly_rate * (application.duration_months || 1)) ? "Completed" : isPaid ? "Active" : "Awaiting Activation"}
+                          {totalPaid >= (opportunity?.monthly_rate * (application.duration_months || 1)) ? "Completed" : isPaid ? "Active" : "Awaiting Activation"}
                         </Badge>
                       </div>
                     </div>
@@ -1565,7 +1578,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                       <Users className="text-white" size={24} />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold tracking-tight text-white/95">{internship?.title}</h3>
+                      <h3 className="text-xl font-bold tracking-tight text-white/95">{opportunity?.title}</h3>
                       <p className="text-[10px] text-blue-100 font-black tracking-[0.2em] uppercase opacity-90">Operational Network Hub</p>
                     </div>
                   </div>

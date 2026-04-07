@@ -30,8 +30,14 @@ import {
   PieChart as PieIcon,
   BarChart3,
   CalendarDays,
-  Star
+  Star,
+  BrainCircuit,
+  ArrowRightCircle,
+  ShieldCheck,
+  AlertCircle
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const COLORS = ["#155DFC", "#8B5CF6", "#10B981", "#F59E0B", "#EF4444", "#06B6D4", "#EC4899", "#82ca9d"];
@@ -91,34 +97,50 @@ export const InternsAnalytics = ({ applicants }: InternsAnalyticsProps) => {
     let advances = 0;
     let completed = 0;
     let totalPaidAmount = 0;
-    let remainingAmount = 0;
+    let expectedAmount = 0;
+    let debtAmount = 0;
 
     applicants.forEach(app => {
       if (app.isPaid) paid++;
       
+      const isInternship = app.applicationType === "internship";
+      const match = isInternship ? (app.duration || "3").match(/\d+/) : null;
+      const months = match ? parseInt(match[0]) : (isInternship ? 3 : 1);
+      
+      const appContractTotal = (app.monthlyRate || 0) * months;
+      expectedAmount += appContractTotal;
+
+      let appPaid = 0;
       app.paymentLedger?.forEach(record => {
         if (record.status === 'paid') {
+          appPaid += record.amount;
           totalPaidAmount += record.amount;
           if (record.type === 'advance') advances++;
           if (record.type === 'completed') completed++;
-        } else {
-          remainingAmount += record.amount;
         }
       });
+
+      if (appPaid < appContractTotal) {
+        debtAmount += (appContractTotal - appPaid);
+      }
     });
+
+    const collectionRate = expectedAmount > 0 ? (totalPaidAmount / expectedAmount) * 100 : 0;
 
     return {
       overview: [
-        { name: "Fully Cleared", value: paid, color: "#10B981" },
-        { name: "In Progress", value: applicants.length - paid, color: "#F59E0B" }
+        { name: "Fully Settled", value: paid, color: "#10B981" },
+        { name: "In Arrears", value: applicants.length - paid, color: "#EF4444" }
       ],
       types: [
-        { name: "Advance Payments", value: advances },
-        { name: "Full Completions", value: completed }
+        { name: "Initial Deposits", value: advances },
+        { name: "Final Settlements", value: completed }
       ],
       financials: {
         totalPaid: totalPaidAmount,
-        totalRemaining: remainingAmount
+        totalDebt: debtAmount,
+        expected: expectedAmount,
+        rate: collectionRate
       }
     };
   }, [applicants]);
@@ -184,19 +206,34 @@ export const InternsAnalytics = ({ applicants }: InternsAnalyticsProps) => {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Top Header Section */}
-      <div className="flex items-center justify-between mb-2">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-4"
+      >
         <div>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-            Intelligence <span className="text-[#155DFC]">Dashboard</span>
-            <Sparkles className="w-5 h-5 text-amber-400 fill-amber-400" />
+          <h2 className="text-3xl font-black text-slate-900 tracking-tighter flex items-center gap-3">
+            Ecosystem <span className="bg-clip-text text-transparent bg-linear-to-r from-[#155DFC] to-violet-600">Intelligence</span>
+            <Sparkles className="w-6 h-6 text-amber-400 fill-amber-400 animate-pulse" />
           </h2>
-          <p className="text-sm font-medium text-slate-400">Deep behavioral analytics of your intern ecosystem</p>
+          <p className="text-sm font-semibold text-slate-400 mt-1 uppercase tracking-widest">Global intern performance & financial matrix</p>
         </div>
-        <div className="hidden md:flex items-center gap-2 bg-slate-100 p-1 rounded-4xl border border-slate-200">
-          <div className="px-4 py-2 bg-white rounded-xl shadow-sm text-xs font-bold text-[#155DFC]">Last 30 Days</div>
-          <div className="px-4 py-2 text-xs font-bold text-slate-400">All Time</div>
+        
+        <div className="flex items-center gap-4">
+          <Button 
+            className="h-14 px-8 rounded-4xl bg-slate-900 hover:bg-slate-800 text-white font-black tracking-tight flex items-center gap-3 group transition-all duration-500 hover:scale-105 active:scale-95 shadow-2xl shadow-slate-900/20 cursor-pointer"
+          >
+            <BrainCircuit className="w-5 h-5 group-hover:rotate-12 transition-transform duration-500" />
+            Analyze with AI
+            <div className="px-2 py-0.5 rounded-full bg-blue-500/20 text-[10px] text-blue-400 border border-blue-500/30 ml-1">Beta</div>
+          </Button>
+
+          <div className="hidden lg:flex items-center gap-2 bg-white/50 backdrop-blur-sm p-1.5 rounded-4xl border border-slate-200">
+            <div className="px-5 py-2.5 bg-white rounded-2xl shadow-sm text-xs font-black text-[#155DFC]">30D Insight</div>
+            <div className="px-5 py-2.5 text-xs font-black text-slate-400">Projected</div>
+          </div>
         </div>
-      </div>
+      </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
@@ -262,65 +299,84 @@ export const InternsAnalytics = ({ applicants }: InternsAnalyticsProps) => {
         </Card>
 
         {/* Payment Health - Side Chart */}
-        <Card className="lg:col-span-4 p-10 rounded-[3rem] border-none shadow-2xl shadow-blue-500/5 bg-white flex flex-col items-center justify-center relative overflow-hidden">
-          <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-50/50 rounded-full blur-3xl" />
+        <Card className="lg:col-span-4 p-10 rounded-[3rem] border-none shadow-2xl shadow-blue-500/10 bg-white flex flex-col items-center justify-center relative overflow-hidden ring-1 ring-slate-100">
+          <div className="absolute top-0 left-0 w-full h-2 bg-linear-to-r from-emerald-400 via-blue-500 to-amber-400" />
           
           <div className="text-center mb-8 relative z-10 w-full">
-            <div className="w-16 h-16 bg-blue-50 rounded-4xl flex items-center justify-center text-[#155DFC] mx-auto mb-4 border border-blue-100/50 shadow-inner">
-              <CreditCard size={28} />
+            <div className="w-20 h-20 bg-emerald-50 rounded-4xl flex items-center justify-center text-emerald-600 mx-auto mb-6 border border-emerald-100 shadow-[inset_0_2px_10px_rgba(0,0,0,0.02)] relative">
+              <CreditCard size={32} />
+              <div className="absolute -top-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-md">
+                <ShieldCheck size={14} className="text-emerald-500" />
+              </div>
             </div>
-            <h3 className="text-xl font-extrabold text-slate-900 tracking-tight leading-tight">Payment <span className="text-[#155DFC]">Status</span></h3>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2 bg-slate-50 py-1 px-3 rounded-full inline-block">Overall Compliance</p>
+            <h3 className="text-2xl font-black text-slate-900 tracking-tighter leading-tight">Financial <span className="text-emerald-600">Velocity</span></h3>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2 bg-slate-50 py-1.5 px-4 rounded-full inline-block border border-slate-100">Capital Flow Report</p>
           </div>
 
-          <div className="h-[260px] w-full relative z-10">
+          <div className="h-[280px] w-full relative z-10 group/pie">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={paymentAnalytics.overview}
                   cx="50%"
                   cy="50%"
-                  innerRadius={75}
-                  outerRadius={105}
-                  paddingAngle={8}
+                  innerRadius={80}
+                  outerRadius={115}
+                  paddingAngle={10}
                   dataKey="value"
-                  animationBegin={500}
-                  animationDuration={1500}
+                  stroke="none"
                 >
                   {paymentAnalytics.overview.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} stroke="rgba(255,255,255,0.4)" strokeWidth={2} />
+                    <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
                 <Tooltip content={<CustomTooltip />} />
               </PieChart>
             </ResponsiveContainer>
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
-              <p className="text-3xl font-black text-slate-900 tracking-tight">
-                {Math.round((paymentAnalytics.overview[0].value / (applicants.length || 1)) * 100)}%
-              </p>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Cleared</p>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
+              <motion.p 
+                key={paymentAnalytics.financials.rate}
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="text-4xl font-black text-slate-900 tracking-tighter"
+              >
+                {Math.round(paymentAnalytics.financials.rate)}%
+              </motion.p>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mt-1">Collection</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 w-full mt-4 relative z-10">
-            <div className="bg-emerald-50/50 p-4 rounded-4xl border border-emerald-100 group/fin">
-              <p className="text-[9px] font-black text-emerald-600 uppercase mb-1">Paid Full</p>
-              <p className="text-xl font-black text-emerald-700 leading-none">{paymentAnalytics.overview[0].value}</p>
+          <div className="grid grid-cols-2 gap-4 w-full mt-6 relative z-10">
+            <div className="bg-emerald-50/80 backdrop-blur-sm p-5 rounded-4xl border border-emerald-100 group/fin hover:scale-105 transition-transform">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <ShieldCheck size={10} className="text-emerald-500" />
+                <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Liquid</p>
+              </div>
+              <p className="text-2xl font-black text-emerald-700 leading-none">₦{(paymentAnalytics.financials.totalPaid / 1000).toFixed(0)}k</p>
             </div>
-            <div className="bg-amber-50/50 p-4 rounded-4xl border border-amber-100">
-              <p className="text-[9px] font-black text-amber-600 uppercase mb-1">Remaining</p>
-              <p className="text-xl font-black text-amber-700 leading-none">{applicants.length - paymentAnalytics.overview[0].value}</p>
+            <div className="bg-rose-50/80 backdrop-blur-sm p-5 rounded-4xl border border-rose-100 hover:scale-105 transition-transform">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <AlertCircle size={10} className="text-rose-500" />
+                <p className="text-[9px] font-black text-rose-600 uppercase tracking-widest">Arrears</p>
+              </div>
+              <p className="text-2xl font-black text-rose-700 leading-none">₦{(paymentAnalytics.financials.totalDebt / 1000).toFixed(0)}k</p>
             </div>
           </div>
 
-          <div className="w-full mt-6 pt-6 border-t border-slate-100 relative z-10 space-y-3">
+          <div className="w-full mt-8 pt-8 border-t border-slate-100/50 relative z-10 space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Advances Issued</span>
-              <span className="text-xs font-black text-slate-900">{paymentAnalytics.types[0].value}</span>
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Payments Found</span>
+              </div>
+              <span className="text-xs font-black text-slate-900">{paymentAnalytics.types[0].value + paymentAnalytics.types[1].value}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Collection</span>
-              <span className="text-xs font-black text-[#155DFC]">₦{paymentAnalytics.financials.totalPaid.toLocaleString()}</span>
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-[#155DFC]" />
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Settled Full</span>
+              </div>
+              <span className="text-xs font-black text-[#155DFC]">{paymentAnalytics.overview[0].value} Interns</span>
             </div>
           </div>
         </Card>
@@ -487,13 +543,13 @@ export const InternsAnalytics = ({ applicants }: InternsAnalyticsProps) => {
                 </div>
                 <h3 className="text-xl font-extrabold text-slate-900 tracking-tight">Institutional <span className="text-orange-600">Pipeline</span></h3>
               </div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em]">Primary source of candidates by organization</p>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Primary source of candidates by organization</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 relative z-10">
             {schoolData.map((school, idx) => (
-              <div key={idx} className="bg-slate-50/50 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-500 p-8 rounded-[2.5rem] border border-slate-100 group/card text-center relative overflow-hidden">
+              <div key={idx} className="bg-slate-50/50 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-500 p-8 rounded-4xl border border-slate-100 group/card text-center relative overflow-hidden text-ellipsis">
                 <div className="absolute top-0 left-0 w-2 h-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
                 <div className={cn(
                   "w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4 text-white shadow-lg",
@@ -501,7 +557,7 @@ export const InternsAnalytics = ({ applicants }: InternsAnalyticsProps) => {
                 )}>
                   {idx + 1}
                 </div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.1em] mb-1 truncate px-2">{school.name}</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 truncate px-2">{school.name}</p>
                 <p className="text-2xl font-black text-slate-900 tracking-tight">{school.count}</p>
                 <div className="mt-4 h-1 w-12 bg-slate-200 mx-auto rounded-full overflow-hidden group-hover/card:w-20 transition-all duration-500">
                   <div className="h-full bg-[#155DFC] transition-all duration-1000" style={{ width: `${(school.count / applicants.length) * 100}%` }} />
@@ -540,6 +596,62 @@ export const InternsAnalytics = ({ applicants }: InternsAnalyticsProps) => {
              <p className="text-[10px] text-slate-400 font-medium italic">Data based on applicant self-assessment during registration.</p>
           </div>
         </Card>
+
+        {/* AI Analysis Future Section */}
+        <motion.div 
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          className="lg:col-span-12 p-1 bg-linear-to-r from-blue-600/20 via-violet-600/20 to-emerald-600/20 rounded-[3.5rem]"
+        >
+          <div className="bg-white/80 backdrop-blur-xl p-12 rounded-[3.4rem] border border-white/40 flex flex-col lg:flex-row items-center justify-between gap-12 group">
+            <div className="flex-1 space-y-6">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-full border border-blue-100">
+                <BrainCircuit className="w-4 h-4 text-blue-600" />
+                <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Future Roadmap</span>
+              </div>
+              <h4 className="text-4xl font-black text-slate-900 tracking-tighter leading-tight">
+                Get <span className="bg-clip-text text-transparent bg-linear-to-r from-blue-600 to-emerald-600">AI-Powered</span> Strategic Recommendations
+              </h4>
+              <p className="text-slate-500 font-medium leading-relaxed max-w-2xl">
+                Soon, you&apos;ll be able to click <span className="text-slate-900 font-bold underline decoration-blue-200">Analyze with AI</span> to receive a 
+                comprehensive audit of your current intake. Our engine will identify high-retention departments, 
+                optimize financial collection strategies, and suggest operational improvements for your next internship cycle.
+              </p>
+              <div className="flex flex-wrap gap-4 pt-4">
+                <div className="flex items-center gap-2 text-xs font-black text-slate-400 bg-slate-50 px-4 py-2 rounded-full border border-slate-100">
+                  <ShieldCheck size={14} className="text-emerald-500" /> Financial Audit
+                </div>
+                <div className="flex items-center gap-2 text-xs font-black text-slate-400 bg-slate-50 px-4 py-2 rounded-full border border-slate-100">
+                  <ShieldCheck size={14} className="text-[#155DFC]" /> Growth Mapping
+                </div>
+                <div className="flex items-center gap-2 text-xs font-black text-slate-400 bg-slate-50 px-4 py-2 rounded-full border border-slate-100">
+                  <ShieldCheck size={14} className="text-violet-500" /> Churn Prediction
+                </div>
+              </div>
+            </div>
+            
+            <div className="relative w-full lg:w-96 aspect-square flex items-center justify-center">
+              <div className="absolute inset-0 bg-blue-500/5 rounded-full blur-3xl group-hover:bg-blue-500/10 transition-colors" />
+              <motion.div 
+                animate={{ 
+                  rotate: 360,
+                  scale: [1, 1.05, 1]
+                }}
+                transition={{ 
+                  rotate: { duration: 20, repeat: Infinity, ease: "linear" },
+                  scale: { duration: 4, repeat: Infinity, ease: "easeInOut" }
+                }}
+                className="w-64 h-64 border-2 border-dashed border-blue-200 rounded-full flex items-center justify-center"
+              >
+                <div className="w-48 h-48 border-2 border-dashed border-violet-200 rounded-full flex items-center justify-center">
+                  <div className="w-32 h-32 bg-linear-to-br from-blue-500 to-violet-600 rounded-4xl flex items-center justify-center shadow-2xl shadow-blue-500/20 group-hover:rotate-12 transition-transform duration-700">
+                    <BrainCircuit size={48} className="text-white" />
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </motion.div>
       </div>
     </div>
   );
