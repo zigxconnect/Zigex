@@ -883,7 +883,7 @@ export async function assignInternshipTask(taskData: {
                     .eq("status", "accepted"),
                 supabaseAdmin
                     .from("Applications")
-                    .select("id, internship_id, student_id")
+                    .select("id, internship_id, program_id, student_id")
                     .eq("supervisor_id", profile.id)
                     .eq("status", "accepted")
             ]);
@@ -917,7 +917,7 @@ export async function assignInternshipTask(taskData: {
                     // Task deduplication by student_id
                     if (!uniqueTasksMap.has(app.student_id)) {
                         uniqueTasksMap.set(app.student_id, {
-                            internship_id: app.internship_id,
+                            internship_id: app.internship_id || app.program_id,
                             student_id: app.student_id,
                             ...taskPayload
                         });
@@ -942,11 +942,10 @@ export async function assignInternshipTask(taskData: {
                 .eq("id", taskData.internship_id)
                 .maybeSingle();
 
-            // Try legacy if not found
             if (!app) {
                 const { data: legacyApp } = await supabaseAdmin
                     .from("Applications")
-                    .select("id, internship_id, student_id")
+                    .select("id, internship_id, program_id, student_id")
                     .eq("id", taskData.internship_id)
                     .maybeSingle();
                 app = legacyApp;
@@ -965,7 +964,7 @@ export async function assignInternshipTask(taskData: {
                 .maybeSingle();
 
             tasksToCreate = [{
-                internship_id: app.internship_id,
+                internship_id: app.internship_id || app.program_id,
                 student_id: app.student_id,
                 ...taskPayload
             }];
