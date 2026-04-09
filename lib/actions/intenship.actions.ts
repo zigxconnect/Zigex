@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { sendReportSubmissionEmail } from "@/lib/email";
 import { createNotification } from "@/lib/notifications";
+import { sendPushNotification } from "@/lib/push";
 
 /**
  * Server Action to fetch a list of all published internships for the dashboard.
@@ -554,6 +555,11 @@ export async function submitInternshipLog(formData: {
               type: "new_log_submitted",
               referenceId: data.id
             });
+            await sendPushNotification(supervisor.user_id, {
+              title: "New Report Submitted 📜",
+              body: `${studentName} has submitted a new learning log for ${formData.log_date}.`,
+              url: "/supervisor"
+            });
           }
         }
       }
@@ -607,11 +613,20 @@ export async function markTaskAsRead(taskId: string) {
 
   if (!user) return { success: false, error: "Unauthorized" };
 
+  // Get the student profile
+  const { data: profile } = await supabase
+    .from("student_profiles")
+    .select("id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!profile) return { success: false, error: "Profile not found" };
+
   const { error } = await supabaseAdmin
     .from("internship_tasks")
     .update({ is_read: true })
     .eq("id", taskId)
-    .eq("student_id", user.id);
+    .eq("student_id", profile.id);
 
   if (error) {
     console.error("Error marking task as read:", error);

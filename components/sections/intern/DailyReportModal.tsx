@@ -101,8 +101,8 @@ export function DailyReportModal({ isOpen, onClose, internshipId }: DailyReportM
                 <FileText size={22} strokeWidth={2.5} />
               </div>
               <div>
-                <h2 className="text-xl font-black tracking-tight uppercase">Daily Briefing</h2>
-                <p className="text-xs text-blue-100 font-bold uppercase tracking-[0.2em] opacity-80">Mission Documentation</p>
+                <h2 className="text-xl font-black tracking-tight uppercase">Daily Report</h2>
+                <p className="text-xs text-blue-100 font-bold uppercase tracking-[0.2em] opacity-80">Progress Documentation</p>
               </div>
             </div>
             <button 
@@ -121,7 +121,7 @@ export function DailyReportModal({ isOpen, onClose, internshipId }: DailyReportM
           <div className="space-y-4">
             <label className="flex items-center gap-2 text-[10px] text-slate-400 font-black uppercase tracking-[0.25em]">
               <MessageSquare size={14} className="text-blue-600" />
-              Strategic Insights
+              Key Learnings & Progress
             </label>
             <Textarea 
               value={learningLog}
@@ -136,7 +136,7 @@ export function DailyReportModal({ isOpen, onClose, internshipId }: DailyReportM
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2 text-[10px] text-slate-400 font-black uppercase tracking-[0.25em]">
                 <CheckSquare size={14} className="text-blue-600" />
-                Objectives Secured
+                Tasks Completed
               </label>
               <Button 
                 type="button" 
@@ -154,7 +154,7 @@ export function DailyReportModal({ isOpen, onClose, internshipId }: DailyReportM
                   <Input 
                     value={task}
                     onChange={(e) => handleTaskChange(idx, e.target.value)}
-                    placeholder={`Objective ${idx + 1}...`}
+                    placeholder={`Task ${idx + 1}...`}
                     className="h-12 pl-12 rounded-2xl border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm font-bold shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
@@ -169,7 +169,7 @@ export function DailyReportModal({ isOpen, onClose, internshipId }: DailyReportM
           <div className="space-y-4 pb-4">
             <label className="flex items-center gap-2 text-[10px] text-slate-400 font-black uppercase tracking-[0.25em]">
               <Star size={14} className="text-blue-600" />
-              Impact Status
+              Experience Rating
             </label>
             <div className="flex items-center gap-3">
               {[1, 2, 3, 4, 5].map((s) => (
@@ -190,7 +190,7 @@ export function DailyReportModal({ isOpen, onClose, internshipId }: DailyReportM
               <div className="ml-4">
                 <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest leading-none mb-1">Status</p>
                 <p className="text-sm font-black text-slate-900 dark:text-white uppercase leading-none">
-                  {rating === 5 ? "Elite" : rating >= 4 ? "Optimal" : rating >= 3 ? "Standard" : "Baseline"}
+                  {rating === 5 ? "Excellent" : rating >= 4 ? "Good" : rating >= 3 ? "Average" : "Basic"}
                 </p>
               </div>
             </div>
@@ -205,7 +205,7 @@ export function DailyReportModal({ isOpen, onClose, internshipId }: DailyReportM
             variant="outline" 
             className="flex-1 rounded-2xl h-14 font-black text-[11px] uppercase tracking-widest border-slate-100 dark:border-slate-800 shadow-sm"
           >
-            Abort
+            Cancel
           </Button>
           <Button 
             onClick={handleSubmit}
@@ -220,7 +220,7 @@ export function DailyReportModal({ isOpen, onClose, internshipId }: DailyReportM
             ) : (
               <>
                 <Send size={16} className="mr-2" />
-                Transmit Briefing
+                Submit Report
               </>
             )}
           </Button>

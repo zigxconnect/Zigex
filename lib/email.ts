@@ -898,6 +898,10 @@ export const sendTaskAssignmentEmail = async (params: {
 
   try {
     const transporter = createTransporter();
+    if (!transporter) {
+      console.warn("[EMAIL] Task notification not sent — email not configured.");
+      return;
+    }
 
     const html = generateEmailHTML({
       heading: `New Task Assigned: ${taskTitle}`,

@@ -434,7 +434,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-[pulse_2s_infinite]" />
-                <span className="text-[9px] font-bold text-slate-900 dark:text-slate-400 tracking-wider">Operational</span>
+                <span className="text-[9px] font-bold text-slate-900 dark:text-slate-400 tracking-wider">Active Status</span>
               </div>
               <div className="h-px flex-1 bg-gradient-to-r from-slate-100 to-transparent dark:from-slate-800" />
             </div>
@@ -467,7 +467,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                     <span className="text-[9px] font-bold text-slate-300 dark:text-slate-600 tracking-wider">ID: {application?.id?.slice(0, 8)}</span>
                   </div>
                   <h1 className="text-2xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-tight mb-3">
-                    {opportunity?.title || "Professional Deployment"}
+                    {opportunity?.title || "Professional Program"}
                   </h1>
                   <div className="flex flex-wrap items-center gap-y-2 gap-x-5">
                     <div className="flex items-center gap-2">
@@ -552,9 +552,9 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                   )}
                 </div>
                 <div className="text-left">
-                  <p className="text-[10px] font-black text-[#155DFC] dark:text-blue-400 uppercase tracking-[0.3em] mb-0.5">Squadrons</p>
+                  <p className="text-[10px] font-black text-[#155DFC] dark:text-blue-400 uppercase tracking-[0.3em] mb-0.5">Fellow Interns</p>
                   <p className="text-xs font-bold text-slate-900 dark:text-slate-300">
-                    Network of {fellowInterns.length} Active Cohorts
+                    Connect with {fellowInterns.length} other members
                   </p>
                 </div>
               </button>
@@ -672,10 +672,10 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                   {[
-                    { label: "Deployment Cycle", value: application?.duration || "N/A", icon: Compass, color: "text-blue-600", bg: "bg-blue-50/50 dark:bg-blue-600/10" },
-                    { label: "Insights Logged", value: `${logs.length} Entries`, icon: Notebook, color: "text-indigo-600", bg: "bg-indigo-50/50 dark:bg-indigo-600/10" },
+                    { label: "Program Duration", value: application?.duration || "N/A", icon: Compass, color: "text-blue-600", bg: "bg-blue-50/50 dark:bg-blue-600/10" },
+                    { label: "Reports Submitted", value: `${logs.length} Entries`, icon: Notebook, color: "text-indigo-600", bg: "bg-indigo-50/50 dark:bg-indigo-600/10" },
                     { label: "Specialization", value: application?.domain || "Core", icon: Cpu, color: "text-violet-600", bg: "bg-violet-50/50 dark:bg-violet-600/10" },
-                    { label: "Operational Grade", value: "94% Tracking", icon: Zap, color: "text-blue-500", bg: "bg-blue-50/50 dark:bg-blue-500/10" },
+                    { label: "Completion Progress", value: `${progressPercent}% Tracked`, icon: Zap, color: "text-blue-500", bg: "bg-blue-50/50 dark:bg-blue-500/10" },
                   ].map((stat, i) => (
                     <div 
                       key={i}
@@ -697,7 +697,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                   <div className="lg:col-span-8 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-10 lg:p-12 shadow-sm">
                     <div className="flex items-center gap-3 mb-6">
                       <div className="w-1 h-5 bg-[#155DFC] rounded-full" />
-                      <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">Mission Briefing</h3>
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">Program Overview</h3>
                     </div>
                     <p className="text-base text-slate-500 dark:text-slate-400 leading-relaxed font-semibold mb-10">
                       {opportunity?.description || "This deployment provides hands-on experience in your chosen field, allowing you to develop practical skills while working alongside industry professionals."}
@@ -715,9 +715,9 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                         </div>
                       </div>
                       <div className="p-6 rounded-3xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] mb-4">Deployment Phase</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] mb-4">Experience Level</p>
                         <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">
-                          {application?.experience_level || "Standard Protocol"}
+                          {application?.experience_level || "Standard Level"}
                         </p>
                       </div>
                     </div>
@@ -743,7 +743,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                             </div>
                             <div>
                               <h4 className="font-bold text-sm tracking-tight leading-tight text-white">{supervisor.full_name}</h4>
-                              <p className="text-[9px] font-bold text-blue-300 tracking-wider">Lead Strategist</p>
+                              <p className="text-[9px] font-bold text-blue-300 tracking-wider">Mentorship Lead</p>
                             </div>
                           </div>
                           
@@ -775,7 +775,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                           <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center mx-auto mb-3 border border-white/5">
                             <User size={18} className="text-blue-200/50" />
                           </div>
-                          <p className="text-[9px] font-bold text-blue-100/50 tracking-wider">Awaiting Command</p>
+                          <p className="text-[9px] font-bold text-blue-100/50 tracking-wider">Assigning Soon...</p>
                         </div>
                       )}
                     </div>
@@ -786,8 +786,8 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                 <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-8 lg:p-10 shadow-sm">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
                     <div>
-                      <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">Deployment Roadmap</h3>
-                      <p className="text-[9px] font-bold text-slate-400 tracking-wider mt-1">Onboarding & Operational Sequence</p>
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">Program Journey</h3>
+                      <p className="text-[9px] font-bold text-slate-400 tracking-wider mt-1">Milestones & Progress Tracking</p>
                     </div>
                     <div className="flex items-center gap-3 px-4 py-2 bg-blue-50/50 dark:bg-blue-600/5 rounded-xl border border-blue-50 dark:border-blue-900/20">
                       <div className="w-20 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
@@ -804,9 +804,9 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                     {[
-                      { label: "Financial Activation", desc: "Currency ledger validated", done: isPaid, icon: ShieldCheck },
-                      { label: "Strategic Link", desc: "Supervisor uplink active", done: !!supervisor, icon: Radio },
-                      { label: "Insight Stream", desc: "First intelligence log recorded", done: logs.length > 0, icon: Activity },
+                      { label: "Payment Setup", desc: "Terms acknowledged", done: isPaid, icon: ShieldCheck },
+                      { label: "Mentor Assigned", desc: "Supervisor linked", done: !!supervisor, icon: Radio },
+                      { label: "First Report", desc: "Initial entry recorded", done: logs.length > 0, icon: Activity },
                     ].map((item, i) => (
                       <div key={i} className={cn(
                         "relative overflow-hidden p-6 rounded-2xl border-2 transition-all group",
@@ -856,8 +856,8 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
               <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
-                    <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Milestone Track</h2>
-                    <p className="text-[10px] font-medium text-slate-500">Execution roadmap and assigned objectives</p>
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Tasks & Objectives</h2>
+                    <p className="text-[10px] font-medium text-slate-500">Manage your assigned tasks and track progress</p>
                   </div>
                   <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-500/10 rounded-xl border border-blue-50 dark:border-blue-500/20">
                     <Target size={12} className="text-[#155DFC]" />
@@ -959,9 +959,9 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                     <div className="w-24 h-24 bg-blue-50/50 dark:bg-slate-800/30 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 text-blue-200">
                       <Zap size={40} className="text-slate-200 dark:text-slate-700" />
                     </div>
-                    <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">Zero Objectives</h3>
+                    <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">No Pending Tasks</h3>
                     <p className="text-sm font-medium text-slate-400 max-w-xs mx-auto">
-                      All systems operating normally. No pending milestones assigned at this time.
+                      Everything is up to date. No new tasks have been assigned at this time.
                     </p>
                   </div>
                 )}
@@ -974,13 +974,13 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                 {/* Curriculum Header */}
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                   <div className="space-y-1.5">
-                    <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">Academic Architecture</h2>
+                    <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">Program Curriculum</h2>
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className="rounded-full px-3 py-0.5 text-[10px] font-bold border-slate-200 dark:border-slate-800 text-slate-500 uppercase tracking-widest bg-slate-50/50 dark:bg-slate-950/50">
                         v2.4.0 Production
                       </Badge>
                       <span className="text-[10px] font-bold text-slate-400">•</span>
-                      <p className="text-[10px] font-black text-[#155DFC] uppercase tracking-[0.2em]">Validated Syllabus</p>
+                      <p className="text-[10px] font-black text-[#155DFC] uppercase tracking-[0.2em]">Official Syllabus</p>
                     </div>
                   </div>
                   

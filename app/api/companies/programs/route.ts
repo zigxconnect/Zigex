@@ -3,6 +3,7 @@ import { authMiddleware } from "@/lib/middleware/auth";
 import { programSchema } from "@/lib/validation/program";
 import { v4 as uuidv4 } from "uuid";
 import { NextResponse } from "next/server";
+import { sendPushNotification } from "@/lib/push";
 
 /*
  * Function to handle CRUD operations for company programs
@@ -232,6 +233,15 @@ export async function POST(request: Request) {
 
         const { error: notifError } = await (await createClient()).from("notifications").insert(notifications);
         if (notifError) console.error("Failed to create notifications:", notifError);
+
+        // Send Push Notifications in parallel
+        await Promise.all(uniqueRecipients.map((u: any) => 
+          sendPushNotification(u.id || u.user_id, {
+            title: "New Program Posted!",
+            body: `A new program "${data.title}" is available.`,
+            url: `/programs/${data.id}`
+          })
+        ));
       }
     } catch (innerErr) {
       console.error("Async notification error:", innerErr);

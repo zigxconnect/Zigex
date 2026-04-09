@@ -2,6 +2,7 @@ import { authMiddleware } from "@/lib/middleware/auth";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { sendAcceptanceEmail, sendRejectionEmail, sendApplicationAlert, sendPaymentReceiptEmail } from "@/lib/email";
+import { sendPushNotification } from "@/lib/push";
 
 /**
  * Helper function to create a notification for a student.
@@ -482,6 +483,12 @@ export async function PATCH(
             appType as any,
             referenceId
           ));
+
+          emailPromises.push(sendPushNotification(studentAuthId, {
+            title: notificationTitle,
+            body: notificationMessage,
+            url: "/dashboard" // Or specific route
+          }));
 
           await Promise.allSettled(emailPromises);
           console.log(`[BACKGROUND_TASKS] Completed for ${id}`);

@@ -4,6 +4,7 @@ import { createServerActionClient, supabaseAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { sendEmail, sendSupervisorWelcomeEmail, sendSupervisorAssignmentEmail } from "@/lib/email";
 import { createNotification } from "@/lib/notifications";
+import { sendPushNotification } from "@/lib/push";
 
 // ═══════════════════════════════════════════════════════════════
 // ISOLATED WORKSPACE FUNCTIONS  — Data is scoped per internship
@@ -896,15 +897,15 @@ export async function assignInternshipTask(taskData: {
                 return { success: false, error: "No active interns found." };
             }
 
-            // 3. Manual Join for Student Profiles
-            const studentIds = allApps.map(i => i.student_id).filter(Boolean);
-            let studentProfiles: any[] = [];
-            if (studentIds.length > 0) {
+            // 3. Ultra-Robust Student Profile Resolution (Handles both Profile UUID and Auth ID)
+            const inputStudentIds = allApps.map(i => i.student_id).filter(Boolean);
+            let resolvedProfiles: any[] = [];
+            if (inputStudentIds.length > 0) {
                 const { data: profiles } = await supabaseAdmin
                     .from("student_profiles")
-                    .select("user_id, full_name, email")
-                    .in("user_id", studentIds);
-                studentProfiles = profiles || [];
+                    .select("id, user_id, full_name, email")
+                    .or(`id.in.(${inputStudentIds.join(',')}),user_id.in.(${inputStudentIds.join(',')})`);
+                resolvedProfiles = profiles || [];
             }
 
             // 4. Map Applications to Students & Deduplicate
@@ -912,19 +913,21 @@ export async function assignInternshipTask(taskData: {
             const uniqueRecipientsMap = new Map();
 
             allApps.forEach(app => {
-                const student = studentProfiles.find(p => p.user_id === app.student_id);
-                if (student) {
-                    // Task deduplication by student_id
-                    if (!uniqueTasksMap.has(app.student_id)) {
-                        uniqueTasksMap.set(app.student_id, {
+                // Find profile by matching either ID or User ID
+                const profile = resolvedProfiles.find(p => p.id === app.student_id || p.user_id === app.student_id);
+                
+                if (profile) {
+                    // ALWAYS use the Profile UUID (profile.id) for the task table to ensure visibility in student workspace
+                    if (!uniqueTasksMap.has(profile.id)) {
+                        uniqueTasksMap.set(profile.id, {
                             internship_id: app.internship_id || app.program_id,
-                            student_id: app.student_id,
+                            student_id: profile.id,
                             ...taskPayload
                         });
                     }
                     // Email deduplication
-                    if (student.email && !uniqueRecipientsMap.has(student.email)) {
-                        uniqueRecipientsMap.set(student.email, student);
+                    if (profile.email && !uniqueRecipientsMap.has(profile.email)) {
+                        uniqueRecipientsMap.set(profile.email, profile);
                     }
                 }
             });
@@ -956,20 +959,27 @@ export async function assignInternshipTask(taskData: {
                 return { success: false, error: "Target intern record not found." };
             }
 
-            // Fetch student profile manually
-            const { data: student } = await supabaseAdmin
+            // IMPORTANT: The student workspace fetches tasks by profile.id (student_profiles table UUID).
+            // Legacy internship_applications stores AUTH_ID, while unified Applications stores PROFILE_ID.
+            // We must resolve to PROFILE_ID regardless.
+            let studentProfileId = app.student_id;
+            const { data: profileCheck } = await supabaseAdmin
                 .from("student_profiles")
-                .select("user_id, full_name, email")
-                .eq("user_id", app.student_id)
+                .select("id, user_id, full_name, email")
+                .or(`id.eq.${app.student_id},user_id.eq.${app.student_id}`)
                 .maybeSingle();
+            
+            if (profileCheck) {
+                studentProfileId = profileCheck.id;
+            }
 
             tasksToCreate = [{
                 internship_id: app.internship_id || app.program_id,
-                student_id: app.student_id,
+                student_id: studentProfileId,
                 ...taskPayload
             }];
 
-            if (student) recipients.push(student);
+            if (profileCheck) recipients.push(profileCheck);
         }
 
         console.log(`[SUPERVISOR_ACTIONS] Attempting to insert ${tasksToCreate.length} tasks`);
@@ -983,26 +993,29 @@ export async function assignInternshipTask(taskData: {
             return { success: false, error: error.message };
         }
 
-        console.log("[SUPERVISOR_ACTIONS] Tasks created successfully. Sending emails...");
+        console.log("[SUPERVISOR_ACTIONS] Tasks created successfully. Sending notifications...");
 
-        // Await all emails to ensure they are sent before the function returns
-        try {
-            await Promise.all(recipients.map(async (recipient: any) => {
-                let targetEmail = recipient.email;
+        // Send email, in-app notification, and push notification INDEPENDENTLY per recipient.
+        // Each channel runs in its own try/catch so one failure doesn't block the others.
+        await Promise.allSettled(recipients.map(async (recipient: any) => {
+            let targetEmail = recipient.email;
 
-                // Fallback: If email is missing in profile, fetch from Auth
-                if (!targetEmail && recipient.user_id) {
+            // Fallback: If email is missing in profile, fetch from Auth
+            if (!targetEmail && recipient.user_id) {
+                try {
                     const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(recipient.user_id);
                     if (authUser?.user?.email) {
                         targetEmail = authUser.user.email;
                     }
+                } catch (authErr) {
+                    console.warn(`[SUPERVISOR_ACTIONS] Auth lookup failed for ${recipient.user_id}:`, authErr);
                 }
+            }
 
-                if (!targetEmail) {
-                    console.warn(`[SUPERVISOR_ACTIONS] No email found for student ${recipient.full_name} (${recipient.user_id})`);
-                    return;
-                }
+            console.log(`[SUPERVISOR_ACTIONS] Processing recipient: ${recipient.full_name} | email=${targetEmail || "NONE"} | user_id=${recipient.user_id}`);
 
+            // 1. Gmail Notification (independent)
+            if (targetEmail) {
                 try {
                     await sendTaskAssignmentEmail({
                         email: targetEmail,
@@ -1013,8 +1026,17 @@ export async function assignInternshipTask(taskData: {
                         priority: taskData.priority,
                         supervisorName: profile.full_name || "Supervisor"
                     });
+                    console.log(`[SUPERVISOR_ACTIONS] ✅ Email sent to ${targetEmail}`);
+                } catch (emailErr) {
+                    console.error(`[SUPERVISOR_ACTIONS] ❌ Email FAILED for ${targetEmail}:`, emailErr);
+                }
+            } else {
+                console.warn(`[SUPERVISOR_ACTIONS] ⚠️ No email found for ${recipient.full_name} (${recipient.user_id}), skipping email.`);
+            }
 
-                    // Add Real-time Notification
+            // 2. In-App Real-time Notification (independent)
+            if (recipient.user_id) {
+                try {
                     await createNotification({
                         userId: recipient.user_id,
                         title: "New Milestone Assigned 🚀",
@@ -1022,16 +1044,30 @@ export async function assignInternshipTask(taskData: {
                         type: "task_assigned",
                         referenceId: taskData.internship_id === "all" ? undefined : taskData.internship_id
                     });
-                } catch (err) {
-                    console.error(`[SUPERVISOR_ACTIONS] Failed to send email/notification to ${targetEmail}:`, err);
+                    console.log(`[SUPERVISOR_ACTIONS] ✅ In-app notification created for ${recipient.user_id}`);
+                } catch (notifyErr) {
+                    console.error(`[SUPERVISOR_ACTIONS] ❌ In-app notification FAILED for ${recipient.user_id}:`, notifyErr);
                 }
-            }));
-            console.log("[SUPERVISOR_ACTIONS] All emails processed.");
-        } catch (emailErr) {
-            console.error("[SUPERVISOR_ACTIONS] Error in email broadcast loop:", emailErr);
-        }
+            }
+
+            // 3. Push Notification (independent)
+            if (recipient.user_id) {
+                try {
+                    await sendPushNotification(recipient.user_id, {
+                        title: "New Milestone Assigned 🚀",
+                        body: `A new task "${taskData.title}" has been assigned to you by ${profile.full_name}.`,
+                        url: "/student/workspace"
+                    });
+                    console.log(`[SUPERVISOR_ACTIONS] ✅ Push notification sent for ${recipient.user_id}`);
+                } catch (pushErr) {
+                    console.error(`[SUPERVISOR_ACTIONS] ❌ Push notification FAILED for ${recipient.user_id}:`, pushErr);
+                }
+            }
+        }));
+        console.log("[SUPERVISOR_ACTIONS] All notification channels processed.");
 
         revalidatePath("/supervisor");
+        revalidatePath("/student/workspace");
         revalidatePath("/intern/workspace");
 
         return { success: true, count: data?.length || 0 };
@@ -1245,6 +1281,12 @@ export async function reviewInternshipLog(logId: string, status: "approved" | "r
                 message: `Your report for ${logData.log_date} has been ${status}. ${feedback ? `Feedback: ${feedback}` : ""}`,
                 type: "log_reviewed",
                 referenceId: logId
+            });
+
+            await sendPushNotification(logData.student_id, {
+                title: status === "approved" ? "Report Approved ✅" : "Report Rejected ❌",
+                body: `Your report for ${logData.log_date} has been ${status}. ${feedback ? `Feedback: ${feedback}` : ""}`,
+                url: "/student/workspace"
             });
         }
     } catch (notifyErr) {
