@@ -11,7 +11,6 @@ import {
   Briefcase, 
   GraduationCap, 
   Calendar,
-  Sparkles,
   Filter,
   Inbox,
   ArrowRight
@@ -259,7 +258,7 @@ export default function NotificationsPage() {
               )}
               onClick={() => setFilter("unread")}
             >
-              <Sparkles className="w-4 h-4 mr-2" />
+              <Bell className="w-4 h-4 mr-2" />
               Unread ({unreadCount})
             </Badge>
           </div>
@@ -296,8 +295,8 @@ export default function NotificationsPage() {
               <Card
                 key={n.id}
                 className={cn(
-                  "border-0 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden group",
-                  !n.read && "ring-2 ring-blue-500/20"
+                  "border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group rounded-lg",
+                  !n.read && "ring-1 ring-blue-500/30"
                 )}
                 style={{ animationDelay: `${index * 50}ms` }}
               >

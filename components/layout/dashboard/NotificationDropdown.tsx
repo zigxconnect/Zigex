@@ -10,8 +10,7 @@ import {
   Calendar,
   ChevronRight,
   Inbox,
-  Clock,
-  Sparkles
+  Clock
 } from "lucide-react";
 import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
@@ -312,11 +311,10 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
                 <Link
                   href="/notifications"
                   onClick={() => setIsOpen(false)}
-                  className="w-full h-12 bg-white border border-slate-100 rounded-2xl flex items-center justify-center gap-3 text-slate-900 text-xs font-black uppercase tracking-widest hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all duration-300 shadow-sm"
+                  className="w-full h-11 bg-white border border-slate-100 rounded-xl flex items-center justify-center gap-2 text-slate-900 text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 hover:text-white transition-all duration-300 shadow-sm"
                 >
-                  <Sparkles size={14} className="text-amber-500" />
-                  <span>View Universe Feed</span>
-                  <ChevronRight size={14} />
+                  <span>View All Notifications</span>
+                  <ChevronRight size={12} />
                 </Link>
               </div>
             )}

@@ -439,10 +439,10 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
               <div className="h-px flex-1 bg-gradient-to-r from-slate-100 to-transparent dark:from-slate-800" />
             </div>
             
-            {/* Main Info Row */}
-            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10">
-              <div className="flex items-start gap-8">
-                <div className="relative group shrink-0">
+            {/* Main Info Row - Stacked on Mobile, Row on Desktop */}
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 lg:gap-10">
+              <div className="flex flex-col sm:flex-row items-start lg:items-center gap-6 lg:gap-8">
+                <div className="relative group shrink-0 mx-auto sm:mx-0">
                   <div className="absolute -inset-4 bg-blue-600/5 rounded-[2.5rem] blur-2xl group-hover:bg-blue-600/10 transition-all duration-500" />
                   <div className="relative w-20 h-20 lg:w-24 lg:h-24 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center overflow-hidden shadow-[0_10px_30px_-12px_rgba(0,0,0,0.08)]">
                     {company?.logo_url ? (
@@ -480,7 +480,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                       <div className="w-7 h-7 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center border border-slate-100 dark:border-slate-700">
                         <Calendar size={12} className="text-indigo-600" />
                       </div>
-                      <span className="text-xs font-bold text-slate-900 dark:text-slate-300 tracking-tight">{application?.duration} Deployment</span>
+                      <span className="text-xs font-bold text-slate-900 dark:text-slate-300 tracking-tight">{application?.duration} Program</span>
                     </div>
                   </div>
                 </div>
