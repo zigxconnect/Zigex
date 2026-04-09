@@ -418,16 +418,24 @@ export async function PATCH(
 
           const emailPromises = [];
 
-          // 1. Notify Candidate of Decision
+            // 1. Notify Candidate of Decision
           if (studentEmail) {
             if (status === "accepted") {
+              // Dynamically determine the WhatsApp group link based on the program title
+              let whatsappLink = "https://chat.whatsapp.com/K0RflJDzxyKDIM2yuvzTTQ?mode=gi_t"; // Default link
+              
+              if (opportunityTitle.toLowerCase().includes("seed 50 days") || 
+                  opportunityTitle.toLowerCase().includes("founders program")) {
+                whatsappLink = "https://chat.whatsapp.com/CsA3nNZcT5eDEIG9iQJ0RI";
+              }
+
               emailPromises.push(sendAcceptanceEmail({
                 email: studentEmail,
                 name: studentName,
                 opportunityTitle,
                 opportunityType: appType,
                 companyName,
-                whatsappGroupLink: "https://chat.whatsapp.com/K0RflJDzxyKDIM2yuvzTTQ?mode=gi_t",
+                whatsappGroupLink: whatsappLink,
               }));
             } else if (status === "rejected") {
               emailPromises.push(sendRejectionEmail({

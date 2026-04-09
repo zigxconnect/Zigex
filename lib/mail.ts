@@ -31,6 +31,13 @@ export const sendCandidateStatusEmail = async (params: {
 
   try {
     if (status === "accepted") {
+      // Determine WhatsApp link based on program title
+      let whatsappLink = "https://chat.whatsapp.com/K0RflJDzxyKDIM2yuvzTTQ?mode=gi_t";
+      if (opportunityTitle.toLowerCase().includes("seed 50 days") || 
+          opportunityTitle.toLowerCase().includes("founders program")) {
+        whatsappLink = "https://chat.whatsapp.com/CsA3nNZcT5eDEIG9iQJ0RI";
+      }
+
       await resend.emails.send({
         from: `${companyName || "SEED INC"} <notifications@zigexconnect.com>`,
         to: email,
@@ -40,7 +47,7 @@ export const sendCandidateStatusEmail = async (params: {
           programTitle: opportunityTitle,
           programDescription: opportunityDescription || "",
           companyName,
-          whatsappGroupLink: "https://chat.whatsapp.com/K0RflJDzxyKDIM2yuvzTTQ?mode=gi_t",
+          whatsappGroupLink: whatsappLink,
         }),
       });
     } else if (status === "rejected") {
