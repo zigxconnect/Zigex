@@ -61,3 +61,73 @@ export async function sendPushNotification(userId: string, payload: { title: str
         console.error('[PUSH_SYSTEM] Critical error sending push notification:', err);
     }
 }
+
+export async function broadcastPushNotification(payload: { title: string; body: string; url?: string; icon?: string }) {
+    try {
+        console.log(`[PUSH_BROADCAST] Starting broadcast for: ${payload.title}`);
+
+        // Fetch all active push subscriptions for users who have notifications enabled
+        // Joining with student_profiles to honor their preference
+        const { data: subscriptions, error } = await supabaseAdmin
+            .from('push_subscriptions')
+            .select(`
+                endpoint, 
+                p256dh, 
+                auth,
+                user_id
+            `)
+            .in('user_id', (
+                await supabaseAdmin
+                    .from('student_profiles')
+                    .select('user_id')
+                    .eq('is_subscribed_to_notifications', true)
+            ).data?.map(u => u.user_id) || []);
+
+        if (error || !subscriptions || subscriptions.length === 0) {
+            console.log(`[PUSH_BROADCAST] No active subscriptions found or error:`, error);
+            return;
+        }
+
+        console.log(`[PUSH_BROADCAST] Targeting ${subscriptions.length} devices...`);
+
+        // Send push notifications in parallel
+        const results = await Promise.allSettled(
+            subscriptions.map((sub: any) => {
+                const pushSubscription = {
+                    endpoint: sub.endpoint,
+                    keys: {
+                        p256dh: sub.p256dh,
+                        auth: sub.auth,
+                    },
+                };
+
+                return webpush.sendNotification(
+                    pushSubscription,
+                    JSON.stringify({
+                        title: payload.title,
+                        body: payload.body,
+                        url: payload.url || '/',
+                        icon: payload.icon || '/icons/icon-192x192.png',
+                        badge: '/icons/icon-192x192.png',
+                        tag: `broadcast-${Date.now()}`
+                    })
+                ).catch(err => {
+                    if (err.statusCode === 404 || err.statusCode === 410) {
+                        // Cleanup expired subscription
+                        supabaseAdmin.from('push_subscriptions').delete().eq('endpoint', sub.endpoint).then();
+                        throw new Error('Expired');
+                    }
+                    throw err;
+                });
+            })
+        );
+
+        const successful = results.filter(r => r.status === 'fulfilled').length;
+        const failed = results.filter(r => r.status === 'rejected').length;
+
+        console.log(`[PUSH_BROADCAST] Finished: ${successful} delivered, ${failed} failed.`);
+        
+    } catch (err) {
+        console.error('[PUSH_BROADCAST] Critical error during broadcast:', err);
+    }
+}

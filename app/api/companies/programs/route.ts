@@ -3,7 +3,7 @@ import { authMiddleware } from "@/lib/middleware/auth";
 import { programSchema } from "@/lib/validation/program";
 import { v4 as uuidv4 } from "uuid";
 import { NextResponse } from "next/server";
-import { sendPushNotification } from "@/lib/push";
+import { sendPushNotification, broadcastPushNotification } from "@/lib/push";
 
 /*
  * Function to handle CRUD operations for company programs
@@ -183,68 +183,93 @@ export async function POST(request: Request) {
 
     // --- NOTIFICATION & EMAIL LOGIC ---
     try {
-      // 1. Get subscribed users
-      const { data: users, error: userError } = await (await createClient()).rpc("get_subscribed_emails");
+      console.log(`[PROGRAM_NOTIFY] Starting notification flow for program: ${data.title}`);
 
-      let recipients = users || [];
-      if (userError) {
-        console.error("RPC get_subscribed_emails failed:", userError);
+      // 1. Get all students who have notifications enabled
+      const { data: subscribers, error: subError } = await supabaseAdmin
+        .from("student_profiles")
+        .select("user_id, email, full_name")
+        .eq("is_subscribed_to_notifications", true);
+
+      if (subError) {
+        console.error("[PROGRAM_NOTIFY] Failed to fetch subscribers:", subError);
       }
 
-      if (recipients.length > 0) {
-        const recipientEmails = recipients.map((u: any) => u.email).filter(Boolean);
+      if (subscribers && subscribers.length > 0) {
+        console.log(`[PROGRAM_NOTIFY] Found ${subscribers.length} subscribed students.`);
+        
+        const recipientIds = subscribers.map(s => s.user_id).filter(Boolean);
+        const recipientEmails = subscribers.map(s => s.email).filter(Boolean);
 
-        // 2. Send Email (Batch BCC)
-        // Use "notifications@zigexconnect.com" as 'to' and everyone else as 'bcc'
-        if (process.env.RESEND_API_KEY && recipientEmails.length > 0) {
-          const { Resend } = await import("resend");
-          const resend = new Resend(process.env.RESEND_API_KEY);
-          const { NewPostEmail } = await import("@/emails/NewPostEmail");
+        // 2. Send Broadcast Push Notification (Parallel)
+        broadcastPushNotification({
+          title: "New Program Posted! 🚀",
+          body: `A new program "${data.title}" is now available. Check it out!`,
+          url: `/programs/${data.id}`
+        }).catch(err => console.error("[PROGRAM_NOTIFY] Push broadcast failed:", err));
 
-          // Send to "notifications@zigexconnect.com" (ourselves) and BCC everyone else
-          await resend.emails.send({
-            from: "ZigX <notifications@zigexconnect.online>",
-            to: "notifications@zigexconnect.online",
-            bcc: recipientEmails.slice(0, 50),
-            subject: `New Program Posted: ${data.title}`,
-            react: NewPostEmail({
-              postTitle: data.title,
-              postType: "Program",
-              postLocation: data.location || "Online", // Fallback
-              viewPostUrl: `https://zigexconnect.com/programs/${data.id}`,
-              companyLogoUrl: "https://tmvipinvvhgklmqwvows.supabase.co/storage/v1/object/public/company-assets/Seed%20Company/events/SEED%20community%20Challenge-1757769838240.jpg",
-              managePreferencesUrl: "https://zigexconnect.com/profile/notifications",
-              postedDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
-            }),
-          });
-        }
-
-        // 3. Create Notifications in DB
-        // Deduplicate recipients to ensure only one notification per user
-        const uniqueRecipients = Array.from(new Map(recipients.map((item: any) => [item.id || item.user_id, item])).values());
-
-        const notifications = uniqueRecipients.map((u: any) => ({
-          user_id: u.id || u.user_id,
-          title: "New Program Posted!",
-          message: `A new program "${data.title}" is available.`,
+        // 3. Create In-App Notifications in DB (Batch)
+        // Deduplicate recipient IDs
+        const uniqueIds = Array.from(new Set(recipientIds));
+        const inAppNotifications = uniqueIds.map(userId => ({
+          user_id: userId,
+          title: "New Program Available!",
+          message: `A new program "${data.title}" has been posted.`,
           type: "program",
           reference_id: data.id,
+          is_global: false
         }));
 
-        const { error: notifError } = await (await createClient()).from("notifications").insert(notifications);
-        if (notifError) console.error("Failed to create notifications:", notifError);
+        if (inAppNotifications.length > 0) {
+          const { error: notifError } = await supabaseAdmin
+            .from("notifications")
+            .insert(inAppNotifications);
+          
+          if (notifError) {
+            console.error("[PROGRAM_NOTIFY] Failed to insert in-app notifications:", notifError);
+          } else {
+            console.log(`[PROGRAM_NOTIFY] Created ${inAppNotifications.length} in-app notifications.`);
+          }
+        }
 
-        // Send Push Notifications in parallel
-        await Promise.all(uniqueRecipients.map((u: any) => 
-          sendPushNotification(u.id || u.user_id, {
-            title: "New Program Posted!",
-            body: `A new program "${data.title}" is available.`,
-            url: `/programs/${data.id}`
-          })
-        ));
+        // 4. Send Email (Batch BCC via Resend)
+        if (process.env.RESEND_API_KEY && recipientEmails.length > 0) {
+          try {
+            const { Resend } = await import("resend");
+            const resend = new Resend(process.env.RESEND_API_KEY);
+            const { NewPostEmail } = await import("@/emails/NewPostEmail");
+
+            // Resend BCC limit is usually 50 per email
+            // We'll chunk them if needed
+            const batchSize = 50;
+            for (let i = 0; i < recipientEmails.length; i += batchSize) {
+              const batch = recipientEmails.slice(i, i + batchSize);
+              await resend.emails.send({
+                from: "Zigex <notifications@zigexconnect.online>",
+                to: "notifications@zigexconnect.online", // Send to our own notification address
+                bcc: batch,
+                subject: `New Program: ${data.title}`,
+                react: NewPostEmail({
+                  postTitle: data.title,
+                  postType: "Program",
+                  postLocation: data.location || "Online",
+                  viewPostUrl: `https://zigexconnect.com/programs/${data.id}`,
+                  companyLogoUrl: "https://tmvipinvvhgklmqwvows.supabase.co/storage/v1/object/public/company-assets/Seed%20Company/events/SEED%20community%20Challenge-1757769838240.jpg",
+                  managePreferencesUrl: "https://zigexconnect.com/profile/notifications",
+                  postedDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
+                }),
+              });
+            }
+            console.log(`[PROGRAM_NOTIFY] Successfully queued emails for ${recipientEmails.length} recipients.`);
+          } catch (emailErr) {
+            console.error("[PROGRAM_NOTIFY] Error sending batch emails:", emailErr);
+          }
+        }
+      } else {
+        console.log("[PROGRAM_NOTIFY] No subscribers found to notify.");
       }
     } catch (innerErr) {
-      console.error("Async notification error:", innerErr);
+      console.error("[PROGRAM_NOTIFY] Critical error in notification logic:", innerErr);
     }
     // ---------------------------------------------------------------
 
