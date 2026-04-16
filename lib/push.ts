@@ -12,7 +12,7 @@ export async function sendPushNotification(userId: string, payload: { title: str
         // Fetch user's push subscriptions
         const { data: subscriptions, error } = await supabaseAdmin
             .from('push_subscriptions')
-            .select('endpoint, p256dh, auth')
+            .select('endpoint, p256dh, auth, origin')
             .eq('user_id', userId);
 
         if (error || !subscriptions || subscriptions.length === 0) {
@@ -30,15 +30,19 @@ export async function sendPushNotification(userId: string, payload: { title: str
                 },
             };
 
+            const siteUrl = sub.origin || process.env.NEXT_PUBLIC_SITE_URL || 'https://www.zigexconnect.com';
+            const notificationUrl = payload.url?.startsWith('http') ? payload.url : `${siteUrl}${payload.url || '/'}`;
+            const iconUrl = `${siteUrl}/icons/icon-192x192.png`;
+
             console.log(`[PUSH] Dispatching to device: ${sub.endpoint.substring(0, 30)}...`);
             return webpush.sendNotification(
                 pushSubscription,
                 JSON.stringify({
                     title: payload.title,
                     body: payload.body,
-                    url: payload.url || '/',
-                    icon: payload.icon || '/icons/icon-192x192.png',
-                    badge: '/icons/icon-192x192.png',
+                    url: notificationUrl,
+                    icon: payload.icon || iconUrl,
+                    badge: iconUrl,
                     tag: `notification-${Date.now()}`
                 })
             ).then(() => {
@@ -74,7 +78,8 @@ export async function broadcastPushNotification(payload: { title: string; body: 
                 endpoint, 
                 p256dh, 
                 auth,
-                user_id
+                user_id,
+                origin
             `)
             .in('user_id', (
                 await supabaseAdmin
@@ -101,14 +106,18 @@ export async function broadcastPushNotification(payload: { title: string; body: 
                     },
                 };
 
+                const siteUrl = sub.origin || process.env.NEXT_PUBLIC_SITE_URL || 'https://www.zigexconnect.com';
+                const notificationUrl = payload.url?.startsWith('http') ? payload.url : `${siteUrl}${payload.url || '/'}`;
+                const iconUrl = `${siteUrl}/icons/icon-192x192.png`;
+
                 return webpush.sendNotification(
                     pushSubscription,
                     JSON.stringify({
                         title: payload.title,
                         body: payload.body,
-                        url: payload.url || '/',
-                        icon: payload.icon || '/icons/icon-192x192.png',
-                        badge: '/icons/icon-192x192.png',
+                        url: notificationUrl,
+                        icon: payload.icon || iconUrl,
+                        badge: iconUrl,
                         tag: `broadcast-${Date.now()}`
                     })
                 ).catch(err => {

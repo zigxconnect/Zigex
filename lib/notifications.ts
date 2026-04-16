@@ -94,9 +94,9 @@ export async function dispatchBroadcastNotification(payload: NotificationPayload
             postTitle: payload.title,
             postType: payload.type.charAt(0).toUpperCase() + payload.type.slice(1),
             postLocation: payload.location || 'Remote',
-            viewPostUrl: `https://zigexconnect.com${payload.link}`,
+            viewPostUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://zigexconnect.com'}${payload.link}`,
             companyLogoUrl: 'https://tmvipinvvhgklmqwvows.supabase.co/storage/v1/object/public/company-assets/Seed%20Company/events/SEED%20community%20Challenge-1757769838240.jpg',
-            managePreferencesUrl: 'https://zigexconnect.com/profile/notifications',
+            managePreferencesUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://zigexconnect.com'}/profile/notifications`,
             postedDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
           })
         }).catch(err => console.error('[NOTIF_DISPATCH] Email sending error:', err));

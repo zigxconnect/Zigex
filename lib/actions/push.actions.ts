@@ -2,7 +2,7 @@
 
 import { createServerActionClient } from "@/lib/supabase/server";
 
-export async function subscribeToPushNotifications(subscription: any) {
+export async function subscribeToPushNotifications(subscription: any, origin?: string) {
     try {
         const supabase = await createServerActionClient();
         const { data: { user } } = await supabase.auth.getUser();
@@ -18,6 +18,7 @@ export async function subscribeToPushNotifications(subscription: any) {
                 endpoint: subscription.endpoint,
                 p256dh: subscription.keys.p256dh,
                 auth: subscription.keys.auth,
+                origin: origin || 'https://www.zigexconnect.com'
             }, {
                 onConflict: 'user_id,endpoint'
             });

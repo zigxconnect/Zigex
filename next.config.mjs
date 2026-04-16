@@ -13,6 +13,7 @@ const withPWA = withPWAInit({
   workboxOptions: {
     disableDevLogs: true,
     maximumFileSizeToCacheInBytes: 5000000,
+    importScripts: ["/push-sw.js"],
   },
   fallbacks: {
     document: "/offline",
