@@ -107,6 +107,7 @@ export async function broadcastPushNotification(payload: { title: string; body: 
                 };
 
                 const siteUrl = sub.origin || process.env.NEXT_PUBLIC_SITE_URL || 'https://www.zigexconnect.com';
+                console.log(`[PUSH_BROADCAST] Sending to origin: ${siteUrl}`);
                 const notificationUrl = payload.url?.startsWith('http') ? payload.url : `${siteUrl}${payload.url || '/'}`;
                 const iconUrl = `${siteUrl}/icons/icon-192x192.png`;
 

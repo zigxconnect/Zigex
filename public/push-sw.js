@@ -1,5 +1,7 @@
 /// <reference lib="webworker" />
 
+const SW_VERSION = '1.0.2';
+console.log(`[PUSH_SW] Service Worker Version ${SW_VERSION} loaded.`);
 self.addEventListener('push', function (event) {
   if (event.data) {
     const data = event.data.json();
