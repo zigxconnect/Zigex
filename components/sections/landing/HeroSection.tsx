@@ -238,33 +238,24 @@ const BamendaHeroSection = () => {
                    </div>
 
                    {/* Dashboard Content */}
-                   <div className="p-6 bg-white min-h-[300px]">
-                       <div className="flex gap-6 mb-8">
-                           {/* Sidebar Mock */}
-                           <div className="w-12 flex flex-col gap-4">
-                               <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold">Z</div>
-                               <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center"><Briefcase size={20} /></div>
-                               <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center"><Users size={20} /></div>
-                           </div>
-                           
-                           {/* Main Area Mock */}
-                           <div className="flex-1 space-y-4">
-                               <div className="h-8 w-3/4 bg-gray-100 rounded-lg"></div>
-                               <div className="grid grid-cols-2 gap-4">
-                                   <div className="h-32 bg-blue-50 rounded-2xl border border-blue-100 p-4">
-                                       <div className="w-8 h-8 bg-blue-100 rounded-lg mb-2"></div>
-                                       <div className="h-4 w-16 bg-blue-200 rounded-full mb-2"></div>
-                                       <div className="h-3 w-24 bg-blue-100 rounded-full"></div>
-                                   </div>
-                                   <div className="h-32 bg-gray-50 rounded-2xl border border-gray-100 p-4">
-                                       <div className="w-8 h-8 bg-purple-100 rounded-lg mb-2"></div>
-                                       <div className="h-4 w-16 bg-gray-200 rounded-full mb-2"></div>
-                                       <div className="h-3 w-24 bg-gray-200 rounded-full"></div>
-                                   </div>
-                               </div>
-                               <div className="h-24 bg-gray-50 rounded-2xl border border-gray-100"></div>
-                           </div>
-                       </div>
+                   <div className="relative bg-white aspect-[4/3] overflow-hidden group">
+                       {/* The requested image */}
+                       <img 
+                         src="https://i.ibb.co/1YqtdCtK/Chat-GPT-Image-Apr-23-2026-03-29-43-PM.png" 
+                         alt="Zigex Dashboard Preview" 
+                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                       />
+                       
+                       {/* Edge softening overlays */}
+                       <div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_40px_rgba(255,255,255,0.8)]" />
+                       <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-white via-white/40 to-transparent opacity-60" />
+                       <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white via-white/40 to-transparent opacity-80" />
+                       <div className="absolute top-0 bottom-0 left-0 w-12 bg-gradient-to-r from-white/30 to-transparent" />
+                       <div className="absolute top-0 bottom-0 right-0 w-12 bg-gradient-to-l from-white/30 to-transparent" />
+                       
+                       {/* Decorative accent for premium feel */}
+                       <div className="absolute top-4 right-4 w-24 h-24 bg-blue-400/10 blur-2xl rounded-full" />
+                       <div className="absolute bottom-4 left-4 w-32 h-32 bg-indigo-400/10 blur-3xl rounded-full" />
                    </div>
                    
                    {/* Watermark Logo */}
