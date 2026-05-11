@@ -6,7 +6,7 @@ import Image from "next/image";
 import { NotificationDropdown } from "./NotificationDropdown";
 import { ProfileDropdown } from "./ProfileDropdown";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { cn, slugifyUsername } from "@/lib/utils";
 
 interface DashboardHeaderProps {
   user?: any;
