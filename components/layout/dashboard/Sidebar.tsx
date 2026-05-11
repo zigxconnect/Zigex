@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 
 import {
   Newspaper,
@@ -18,12 +20,17 @@ import {
   MessageSquare,
   ShieldCheck,
   LayoutDashboard,
+  Search,
+  ChevronRight,
+  Settings,
+  MoreVertical,
 } from "lucide-react";
 import { AiOutlineWechat } from "react-icons/ai";
 import { Button } from "@/components/ui/button";
 import AnimatedNavLink from "@/components/customButtons/AnimatedNavLink";
 import NameInitials from "@/components/NameInitials";
 import { slugifyUsername, cn } from "@/lib/utils";
+import { Logo } from "@/components/layout/Logo";
 
 interface SidebarProps {
   user: any;
@@ -33,13 +40,6 @@ interface SidebarProps {
   showUploadLive?: boolean;
 }
 
-// Special navigation item for AI chat
-const aiChatItem = {
-  href: "/dashboard/zigagent-ai",
-  icon: AiOutlineWechat,
-  label: "Chat With Agent Zai",
-};
-
 export const Sidebar: React.FC<SidebarProps> = ({
   isOpen = false,
   onClose,
@@ -48,19 +48,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
   showUploadLive = false,
 }) => {
   const pathname = usePathname();
-  const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
   // Extract user data with fallbacks
   const userName = user?.name || user?.profile?.name || "Guest User";
   const userRole = user?.role || user?.profile?.role || "Student";
   const userAvatar =
     user?.avatar ||
     user?.profile?.avatar_url ||
-    user?.avatarUrl
-  const isOnline = user?.isOnline ?? true;
-  const applicationsCount =
-    user?.applicationsCount || user?.stats?.applications || 0;
-  const profileViews = user?.profileViews || user?.stats?.profileViews || 0;
-  // Get username for profile link
+    user?.avatarUrl;
+  
   const username = user?.profile?.username || user?.username || "";
   const profileLink = username ? `/profile/${slugifyUsername(username)}` : "/profile";
 
@@ -70,15 +67,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       window.location.href = "/";
     } catch (error) {
       console.error("Logout failed:", error);
-      alert("Logout failed. Please try again.");
     }
   };
 
-  const isRouteActive = (href: string, matchPaths?: string[], excludePaths?: string[]) => {
-    // Remove trailing slashes for comparison but preserve leading slash
+  const isRouteActive = (href: string, matchPaths?: string[]) => {
     const normalize = (p: string | undefined) => {
       if (!p) return "";
-      return p.replace(/\/+$/, ""); // Remove trailing slashes only
+      return p.replace(/\/+$/, "");
     };
 
     const path = normalize(pathname);
@@ -86,36 +81,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
     if (!target) return false;
 
-    // Check if path matches any exclude patterns (with prefix matching for all)
-    if (excludePaths && excludePaths.length > 0) {
-      const isExcluded = excludePaths.some((p: string) => {
-        const normalized = normalize(p);
-        // Always do prefix matching for excludePaths
-        return path === normalized || path.startsWith(normalized + "/");
-      });
-      if (isExcluded) return false;
-    }
-
-    // Check explicit matchPaths first
     if (matchPaths && matchPaths.length > 0) {
       return matchPaths.some((p: string) => {
-        // Check if original matchPath ends with "/" (prefix match)
-        if (p.endsWith("/")) {
-          const normalized = normalize(p);
-          // Prefix match: /feed matches /feed/123, /feed/projects/123, etc.
-          return path === normalized || path.startsWith(normalized + "/");
-        } else {
-          // Exact match
-          return path === normalize(p);
-        }
+        const normalized = normalize(p);
+        return path === normalized || path.startsWith(normalized + "/");
       });
     }
 
-    // Default: exact match only (no prefix matching)
-    return path === target;
+    return path === target || (target !== "" && path.startsWith(target + "/"));
   };
 
-  // Handle nav item click
   const handleNavClick = () => {
     if (window.innerWidth < 1024 && onClose) {
       onClose();
@@ -124,232 +99,237 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      {/* Sidebar */}
+      {/* Sidebar Container */}
       <aside
-        className={`
-          fixed top-20 lg:top-16 left-0 h-[calc(100vh-5rem)] lg:h-[calc(100vh-4rem)] w-72 bg-white dark:bg-slate-950 border-r border-slate-100 dark:border-slate-800/50 transition-transform duration-300 ease-in-out
-          ${isOpen ? "translate-x-0" : "-translate-x-full"}
-          lg:translate-x-0 flex flex-col z-50 shadow-[12px_0_30px_-15px_rgba(0,0,0,0.04)]
-        `}
+        className={cn(
+          "fixed top-0 left-0 h-screen w-72 bg-white dark:bg-slate-950 border-r border-slate-100 dark:border-slate-800/50 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] z-50 flex flex-col",
+          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+          "shadow-[20px_0_40px_-20px_rgba(0,0,0,0.05)] dark:shadow-none"
+        )}
       >
-        {/* Header with User Profile - Fixed at top */}
-        <div className="flex-shrink-0 p-4 lg:p-5 border-b border-slate-50 dark:border-slate-800/50">
-          <div className="flex items-center gap-3">
-            <div className="relative w-12 h-12 rounded-xl overflow-hidden border-2 border-white dark:border-slate-800 shadow-lg flex-shrink-0">
-              <Image
-                src={userAvatar || "https://i.ibb.co/8n8d37H4/white-logo-4x.png"}
-                alt={`${userName}'s Avatar`}
-                width={48}
-                height={48}
-                className={cn(
-                  "w-full h-full object-cover",
-                  !userAvatar && "bg-gradient-to-br from-[#155DFC] to-[#1A3CB9] p-2.5"
-                )}
-                priority
+        {/* Header/Logo Section */}
+        <div className="p-6 pb-2 flex items-center justify-between">
+          <Link href="/feed" className="flex items-center gap-2 group">
+            <div className="relative w-10 h-10 transition-transform duration-500 group-hover:rotate-12">
+              <Logo className="w-full h-full" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-lg font-black tracking-tighter text-slate-900 dark:text-white leading-none">
+                ZIGEX
+              </span>
+              <span className="text-[10px] font-bold text-[#155DFC] tracking-[0.2em] uppercase leading-none mt-1">
+                Platform
+              </span>
+            </div>
+          </Link>
+
+          <button
+            onClick={onClose}
+            className="lg:hidden p-2 rounded-full hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-400 transition-colors"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Search Bar - Sleek Version */}
+        <div className="px-6 py-4">
+          <div className="relative group">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#155DFC] transition-colors" size={16} />
+            <input 
+              type="text" 
+              placeholder="Search anything..." 
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-transparent focus:border-[#155DFC]/20 rounded-2xl text-xs font-bold outline-none transition-all placeholder:text-slate-400"
+            />
+          </div>
+        </div>
+
+        {/* Navigation Area */}
+        <div className="flex-1 overflow-y-auto px-4 py-2 custom-scrollbar space-y-8">
+          {/* Main Group */}
+          <div className="space-y-2">
+            <h3 className="px-4 text-[10px] font-black tracking-[0.15em] text-slate-300 dark:text-slate-600 uppercase">
+              Discover
+            </h3>
+            <div className="space-y-1">
+              <AnimatedNavLink
+                href="/feed"
+                icon={Globe}
+                label="Explore"
+                isActive={isRouteActive("/feed")}
+                onClick={handleNavClick}
+              />
+              <AnimatedNavLink
+                href="/dashboard/projects"
+                icon={Briefcase}
+                label="Programs"
+                isActive={isRouteActive("/dashboard/projects")}
+                onClick={handleNavClick}
+              />
+              <AnimatedNavLink
+                href="/dashboard/blog"
+                icon={Newspaper}
+                label="Announcements"
+                isActive={isRouteActive("/dashboard/blog")}
+                onClick={handleNavClick}
               />
             </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-slate-900 dark:text-white truncate text-sm tracking-tight">
-                {userName}
-              </h3>
-              <p className="text-[9px] font-bold text-slate-400 tracking-wider">{userRole}</p>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <div
-                  className={`w-1.5 h-1.5 rounded-full ${isOnline ? "bg-emerald-500" : "bg-slate-300"
-                    }`}
-                />
-                <span
-                  className={`text-[8px] font-bold tracking-widest ${isOnline ? "text-emerald-500" : "text-slate-400"
-                    }`}
-                >
-                  {isOnline ? "Online" : "Offline"}
-                </span>
-              </div>
-            </div>
-            {/* Mobile Close Button */}
-            <button
-              onClick={onClose}
-              className="lg:hidden p-2 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-colors flex-shrink-0"
-            >
-              <X size={18} />
-            </button>
           </div>
-        </div>
 
-        {/* Main Navigation Area */}
-        <div className="flex-1 flex flex-col min-h-0 bg-white dark:bg-slate-950">
-          <div className="flex-1 px-3 py-6 space-y-7 overflow-y-auto custom-scrollbar">
-            {/* Main Navigation */}
-            <div className="space-y-2.5">
-              <h3 className="px-3 text-[8px] font-bold tracking-[0.25em] text-slate-300 dark:text-slate-600">
-                Discover
-              </h3>
-              <div className="space-y-1">
-                <AnimatedNavLink
-                  href="/feed"
-                  icon={Globe}
-                  label="Browse"
-                  isActive={isRouteActive("/feed")}
-                  onClick={handleNavClick}
-                />
-                <AnimatedNavLink
-                  href="/dashboard/projects"
-                  icon={Briefcase}
-                  label="Projects"
-                  isActive={isRouteActive("/dashboard/projects")}
-                  onClick={handleNavClick}
-                />
-                <AnimatedNavLink
-                  href="/dashboard/blog"
-                  icon={Newspaper}
-                  label="News"
-                  isActive={isRouteActive("/dashboard/blog")}
-                  onClick={handleNavClick}
-                />
-              </div>
+          {/* Network Group */}
+          <div className="space-y-2">
+            <h3 className="px-4 text-[10px] font-black tracking-[0.15em] text-slate-300 dark:text-slate-600 uppercase">
+              Network
+            </h3>
+            <div className="space-y-1">
+              <AnimatedNavLink
+                href="/dashboard/student"
+                icon={Users}
+                label="Network"
+                isActive={isRouteActive("/dashboard/student")}
+                onClick={handleNavClick}
+              />
+              <AnimatedNavLink
+                href="/dashboard/community"
+                icon={MessageSquare}
+                label="Communities"
+                isActive={isRouteActive("/dashboard/community")}
+                onClick={handleNavClick}
+              />
             </div>
+          </div>
 
-            {/* Collaboration Section */}
-            <div className="space-y-2.5">
-              <h3 className="px-3 text-[8px] font-bold tracking-[0.25em] text-slate-300 dark:text-slate-600">
-                Network
-              </h3>
-              <div className="space-y-1">
+          {/* Workspace Group */}
+          <div className="space-y-2">
+            <h3 className="px-4 text-[10px] font-black tracking-[0.15em] text-slate-300 dark:text-slate-600 uppercase">
+              Workspace
+            </h3>
+            <div className="space-y-1">
+              {user?.permissions?.isIntern && (
                 <AnimatedNavLink
-                  href="/dashboard/student"
-                  icon={Users}
-                  label="Zigx"
-                  isActive={isRouteActive("/dashboard/student")}
+                  href="/student/workspace"
+                  icon={LayoutDashboard}
+                  label="My Learning"
+                  isActive={isRouteActive("/student/workspace")}
                   onClick={handleNavClick}
                 />
+              )}
+              {user?.permissions?.isSupervisor && (
                 <AnimatedNavLink
-                  href="/dashboard/community"
-                  icon={MessageSquare}
-                  label="Group"
-                  isActive={isRouteActive("/dashboard/community")}
+                  href="/supervisor"
+                  icon={ShieldCheck}
+                  label="Mentorship"
+                  isActive={isRouteActive("/supervisor")}
                   onClick={handleNavClick}
                 />
-              </div>
+              )}
+              <AnimatedNavLink
+                href="/buddy"
+                icon={AiOutlineWechat}
+                label="Ziggy AI"
+                isActive={isRouteActive("/buddy")}
+                isSpecial
+                onClick={handleNavClick}
+              />
             </div>
+          </div>
 
-            {/* Workspace Section */}
-            <div className="space-y-2.5">
-              <h3 className="px-3 text-[8px] font-bold tracking-[0.25em] text-slate-300 dark:text-slate-600">
-                Workspace
-              </h3>
-              <div className="space-y-1">
-                {user?.permissions?.isIntern && (
-                  <AnimatedNavLink
-                    href="/student/workspace"
-                    icon={LayoutDashboard}
-                    label="Workspace"
-                    isActive={isRouteActive("/student/workspace", ["/student/workspace/"])}
-                    badge={unreadCount > 0 ? unreadCount : undefined}
-                    onClick={handleNavClick}
-                  />
-                )}
-                {user?.permissions?.isSupervisor && (
-                  <AnimatedNavLink
-                    href="/supervisor"
-                    icon={ShieldCheck}
-                    label="Supervisor Hub"
-                    isActive={isRouteActive("/supervisor")}
-                    onClick={handleNavClick}
-                  />
-                )}
-                <AnimatedNavLink
-                  href="/buddy"
-                  icon={AiOutlineWechat}
-                  label="Ziggy Ai"
-                  isActive={isRouteActive("/buddy")}
-                  isSpecial
-                  onClick={handleNavClick}
-                />
-              </div>
-            </div>
-
-            {/* Account Section */}
-            <div className="space-y-2.5">
-              <h3 className="px-3 text-[8px] font-bold tracking-[0.25em] text-slate-300 dark:text-slate-600">
-                Account
-              </h3>
-              <div className="space-y-1">
-                <AnimatedNavLink
-                  href={profileLink}
-                  icon={User}
-                  label="Profile"
-                  isActive={isRouteActive(profileLink)}
-                  onClick={handleNavClick}
-                />
-                <AnimatedNavLink
-                  href="/notifications"
-                  icon={Bell}
-                  label="Notifications"
-                  isActive={isRouteActive("/notifications")}
-                  onClick={handleNavClick}
-                />
-              </div>
-            </div>
-
-            {/* Quick Stats Card - Desktop Only */}
-            <div className="hidden lg:block pt-2">
-              <div className="p-4 bg-[#155DFC]/5 dark:bg-[#155DFC]/5 rounded-xl border border-[#155DFC]/10 dark:border-[#155DFC]/10">
-                <h4 className="text-[8px] font-bold text-[#155DFC] tracking-widest mb-3 flex items-center gap-1.5">
-                  <TrendingUp size={12} />
-                  Quick Stats
-                </h4>
-                <div className="space-y-2.5">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-bold text-slate-400">Applications</span>
-                    <span className="font-bold text-slate-900 dark:text-white text-xs">
-                      {applicationsCount}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-bold text-slate-400">Network Reach</span>
-                    <span className="font-bold text-slate-900 dark:text-white text-xs">
-                      {profileViews}
-                    </span>
-                  </div>
+          {/* Become a Superstar Promo Card */}
+          <div className="px-2 pt-4">
+            <div className="relative overflow-hidden p-5 rounded-[2rem] bg-gradient-to-br from-[#155DFC] to-[#0A2E82] text-white shadow-xl shadow-blue-500/20 group cursor-pointer">
+              {/* Background Glow */}
+              <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700" />
+              
+              <div className="relative z-10 space-y-3">
+                <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center">
+                  <Zap size={20} className="text-white" />
                 </div>
+                <div>
+                  <h4 className="font-black text-sm leading-tight">Become a Superstar</h4>
+                  <p className="text-[10px] font-medium text-white/70 mt-1 leading-relaxed">
+                    Unlock premium features and get noticed by top companies.
+                  </p>
+                </div>
+                <button className="w-full py-2 bg-white text-[#155DFC] rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-opacity-90 transition-all flex items-center justify-center gap-2">
+                  Upgrade Now
+                  <ChevronRight size={14} />
+                </button>
               </div>
             </div>
-          </div>
-
-          {/* Sign Out Button - Always Visible at Bottom */}
-          <div className="p-3 border-t border-slate-50 dark:border-slate-800/50">
-            <Button
-              variant="outline"
-              className="w-full justify-start gap-3 rounded-xl border-slate-100 dark:border-slate-800 font-bold text-xs text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 hover:border-rose-100 transition-all duration-300 py-5"
-              onClick={handleSignOut}
-            >
-              <div className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 transition-colors">
-                <LogOut size={16} />
-              </div>
-              <span className="font-bold text-[10px] tracking-wider">Sign Out</span>
-            </Button>
           </div>
         </div>
 
-        {/* Mobile Stats - Show on mobile only */}
-        <div className="lg:hidden flex-shrink-0 p-4 bg-slate-50/50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800">
-          <div className="flex justify-around text-center">
-            <div>
-              <div className="font-bold text-slate-900 dark:text-white text-lg tracking-tight">
-                {applicationsCount}
+        {/* Bottom User Profile Section */}
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800/50 bg-white dark:bg-slate-950">
+          <div className="relative">
+            <button 
+              onClick={() => setIsProfileOpen(!isProfileOpen)}
+              className="w-full flex items-center gap-3 p-2 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-all duration-300 group"
+            >
+              <div className="relative shrink-0">
+                <div className="w-11 h-11 rounded-2xl overflow-hidden ring-2 ring-slate-100 dark:ring-slate-800 group-hover:ring-[#155DFC]/30 transition-all">
+                  {userAvatar ? (
+                    <Image src={userAvatar} alt={userName} fill className="object-cover" />
+                  ) : (
+                    <NameInitials name={userName} />
+                  )}
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-950 shadow-sm" />
               </div>
-              <div className="text-[8px] font-bold text-slate-400 tracking-widest">Applications</div>
-            </div>
-            <div className="w-px h-8 bg-slate-200 dark:bg-slate-700 my-auto"></div>
-            <div>
-              <div className="font-bold text-[#155DFC] text-lg tracking-tight">
-                {profileViews}
+              
+              <div className="flex-1 text-left min-w-0">
+                <p className="text-xs font-black text-slate-900 dark:text-white truncate">
+                  {userName}
+                </p>
+                <p className="text-[10px] font-bold text-slate-400 truncate uppercase tracking-wider">
+                  {userRole}
+                </p>
               </div>
-              <div className="text-[8px] font-bold text-slate-400 tracking-widest">Reach</div>
-            </div>
+
+              <MoreVertical size={16} className="text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" />
+            </button>
+
+            {/* Profile Menu Popup */}
+            <AnimatePresence>
+              {isProfileOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setIsProfileOpen(false)} />
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="absolute bottom-full left-0 w-full mb-2 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl shadow-2xl shadow-slate-200/50 dark:shadow-none p-2 z-50"
+                  >
+                    <Link 
+                      href={profileLink}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group"
+                      onClick={() => setIsProfileOpen(false)}
+                    >
+                      <User size={16} className="text-slate-400 group-hover:text-[#155DFC]" />
+                      <span className="text-xs font-bold text-slate-600 dark:text-slate-300">View Profile</span>
+                    </Link>
+                    <Link 
+                      href="/profile-settings"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group"
+                      onClick={() => setIsProfileOpen(false)}
+                    >
+                      <Settings size={16} className="text-slate-400 group-hover:text-[#155DFC]" />
+                      <span className="text-xs font-bold text-slate-600 dark:text-slate-300">Settings</span>
+                    </Link>
+                    <div className="h-px bg-slate-50 dark:bg-slate-800 my-1 mx-2" />
+                    <button 
+                      onClick={handleSignOut}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 transition-colors group"
+                    >
+                      <LogOut size={16} />
+                      <span className="text-xs font-bold">Sign Out</span>
+                    </button>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </aside>
     </>
   );
-};
+};

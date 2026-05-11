@@ -1,5 +1,6 @@
 "use server";
 
+import { cache } from "react";
 import { createServerActionClient, supabaseAdmin } from "@/lib/supabase/server";
 
 export interface UserProfile {
@@ -41,11 +42,9 @@ export interface FormattedUserData {
 
 /**
  * Server action to get the current user's complete, formatted profile information.
- * Throws an error if the user or profile is not found, as the middleware should
- * have already prevented unauthorized access.
- * @returns {Promise<FormattedUserData>}
+ * Wrapped in React cache to prevent redundant DB calls within the same request.
  */
-export async function getProfileInfo(): Promise<FormattedUserData | null> {
+export const getProfileInfo = cache(async (): Promise<FormattedUserData | null> => {
   const supabase = await createServerActionClient();
   const {
     data: { user },
@@ -89,7 +88,7 @@ export async function getProfileInfo(): Promise<FormattedUserData | null> {
     profile: profile,
     stats: {
       applications: applicationsCount || 0,
-      profileViews: 0, // Placeholder as this is not yet tracked
+      profileViews: 0, // Placeholder
     },
     permissions: {
       isSupervisor: false,
@@ -107,7 +106,6 @@ export async function getProfileInfo(): Promise<FormattedUserData | null> {
   if (supervisor) userData.permissions!.isSupervisor = true;
 
   // Check for Intern status (Accepted placement)
-  // Check modern Applications table first (supports internship, program, event)
   const { data: anyAcceptedAction } = await supabaseAdmin
     .from("Applications")
     .select("id")
@@ -131,15 +129,13 @@ export async function getProfileInfo(): Promise<FormattedUserData | null> {
   }
 
   return userData;
-}
+});
 
 /**
  * Server action to get just the raw user profile data.
- * Returns null if the user or profile is not found, allowing client
- * components to handle the UI state gracefully.
- * @returns {Promise<UserProfile | null>}
+ * Wrapped in React cache for efficiency.
  */
-export async function getRawProfileInfo(): Promise<UserProfile | null> {
+export const getRawProfileInfo = cache(async (): Promise<UserProfile | null> => {
   try {
     const supabase = await createServerActionClient();
     const {
@@ -164,7 +160,7 @@ export async function getRawProfileInfo(): Promise<UserProfile | null> {
     console.error("Unexpected error in getRawProfileInfo:", error);
     return null;
   }
-}
+});
 
 /**
  * Server action to quickly check if a user has completed their profile.

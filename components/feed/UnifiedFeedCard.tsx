@@ -1,237 +1,168 @@
 // components/feed/UnifiedFeedCard.tsx
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import Link from "next/link";
 import {
-  MapPin, Calendar, Clock, Users,
-  Lock, Unlock, ArrowRight
+  MapPin, 
+  Clock,
+  Bookmark,
+  Calendar
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/uiComponent/Badge";
-import { ShareButton } from "@/components/sections/dashboard/ShareButton";
 import type { FeedItem } from "@/lib/types/feed";
 import { normalizeImageSrc, slugify } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 interface UnifiedFeedCardProps {
   item: FeedItem;
   onLiveClick?: () => void;
   index?: number;
+  isOpen?: boolean;
 }
 
-export function UnifiedFeedCard({ item, onLiveClick, index = 0 }: UnifiedFeedCardProps) {
+export function UnifiedFeedCard({ item, onLiveClick, index = 0, isOpen = true }: UnifiedFeedCardProps) {
   const router = useRouter();
   const [imageError, setImageError] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
-
-  // Intersection Observer for scroll animations
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setIsVisible(true);
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      {
-        threshold: 0.1,
-        rootMargin: "50px",
-      }
-    );
-
-    if (cardRef.current) {
-      observer.observe(cardRef.current);
-    }
-
-    return () => {
-      observer.disconnect();
-    };
-  }, []);
 
   const getImageUrl = () => {
     if (imageError) return "/placeholder.png";
-
     switch (item._type) {
-      case "internships":
-        return normalizeImageSrc((item as any).cover_image_url);
-      case "programs":
-        return normalizeImageSrc((item as any).program_picture_url);
-      case "events":
-        return normalizeImageSrc((item as any).event_picture_url);
-      case "announcements":
-        return normalizeImageSrc((item as any).image_url);
-      default:
-        return "/placeholder.png";
+      case "internships": return normalizeImageSrc((item as any).cover_image_url);
+      case "programs": return normalizeImageSrc((item as any).program_picture_url);
+      case "events": return normalizeImageSrc((item as any).event_picture_url);
+      case "announcements": return normalizeImageSrc((item as any).image_url);
+      default: return "/placeholder.png";
     }
   };
 
-  const companyName = typeof item.company === "string"
-    ? item.company
-    : item.company?.company_name || "Company";
-
-  // Check if program is open
+  const companyName = typeof item.company === "string" ? item.company : item.company?.company_name || "Zigex";
   const now = new Date();
-  let isOpen = true;
 
-  if (item._type === "programs") {
-    const program = item as any;
-    const appDeadline = program.application_deadline ? new Date(program.application_deadline) : null;
-    const endDate = program.end_date ? new Date(program.end_date) : null;
-    
-    if (appDeadline) appDeadline.setHours(23, 59, 59, 999);
-    if (endDate) endDate.setHours(23, 59, 59, 999);
+  // Days until start
+  const getStartInfo = () => {
+    const startDate = (item as any).start_date || (item as any).event_date;
+    if (!startDate) return null;
+    const start = new Date(startDate);
+    const diffDays = Math.ceil((start.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) return null;
+    if (diffDays === 0) return "Starts today";
+    return `Starts in ${diffDays} days`;
+  };
 
-    if (program.isLocked || (endDate && endDate < now) || (appDeadline && appDeadline < now)) {
-      isOpen = false;
+  // Duration
+  const getDuration = () => {
+    const p = item as any;
+    if (p.duration) return p.duration;
+    if (p.start_date && p.end_date) {
+      const start = new Date(p.start_date);
+      const end = new Date(p.end_date);
+      const weeks = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 7));
+      if (weeks <= 0) return null;
+      return `${weeks} Week${weeks > 1 ? "s" : ""} Program`;
     }
-  } else if (item._type === "internships") {
-    const internship = item as any;
-    const deadline = internship.deadline ? new Date(internship.deadline) : null;
-    if (deadline) {
-      deadline.setHours(23, 59, 59, 999);
-      if (deadline < now) isOpen = false;
-    }
-  } else if (item._type === "events") {
-    const event = item as any;
-    const registrationDeadline = event.registration_deadline ? new Date(event.registration_deadline) : null;
-    const endDate = event.end_date ? new Date(event.end_date) : null;
+    return null;
+  };
 
-    if (registrationDeadline) registrationDeadline.setHours(23, 59, 59, 999);
-    if (endDate) endDate.setHours(23, 59, 59, 999);
+  // Badge
+  const getBadge = () => {
+    if (index === 0) return { text: "FEATURED", bg: "bg-[#155DFC]" };
+    if (index === 1) return { text: "POPULAR", bg: "bg-emerald-500" };
+    if (index === 2) return { text: "NEW", bg: "bg-orange-500" };
+    return null;
+  };
 
-    if ((endDate && endDate < now) || (registrationDeadline && registrationDeadline < now)) {
-      isOpen = false;
-    }
-  }
+  const badge = getBadge();
+  const startInfo = getStartInfo();
+  const duration = getDuration();
+  const locationText = item.location || (item as any).venue || "Online";
 
   const handleCardClick = () => {
-    // Use slug for cleaner URLs as requested
     const slug = slugify(item.title) || item.id;
     router.push(`/feed/${slug}`);
   };
 
   return (
-    <div
-      ref={cardRef}
-      className={`transition-all duration-700 h-full ${isVisible
-        ? 'opacity-100 translate-y-0'
-        : 'opacity-0 translate-y-8'
-        }`}
-      style={{
-        transitionDelay: `${index * 50}ms`,
-      }}
+    <Card
+      onClick={handleCardClick}
+      className="group relative overflow-hidden border border-slate-100 dark:border-slate-800/50 hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-500 bg-white dark:bg-slate-900 rounded-[2rem] h-full flex flex-col cursor-pointer"
     >
-      <Card
-        onClick={handleCardClick}
-        className="group overflow-hidden border border-gray-100 shadow-md hover:shadow-2xl transition-all duration-500 bg-white rounded-[2rem] h-full flex flex-col cursor-pointer"
-      >
-        {/* Image Section */}
-        <div className="relative h-64 flex-shrink-0 overflow-hidden m-3 rounded-[1.8rem]">
-          <Image
-            src={getImageUrl()}
-            alt={item.title}
-            fill
-            className="object-cover transition-transform duration-700 group-hover:scale-105"
-            onError={() => setImageError(true)}
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            priority={index < 3}
-          />
+      {/* Image */}
+      <div className="relative h-32 sm:h-36 flex-shrink-0 overflow-hidden">
+        <Image
+          src={getImageUrl()}
+          alt={item.title}
+          fill
+          className="object-cover transition-transform duration-700 group-hover:scale-110"
+          onError={() => setImageError(true)}
+          sizes="(max-width: 768px) 80vw, (max-width: 1200px) 45vw, 25vw"
+          priority={index < 4}
+          quality={80}
+        />
 
-          {/* Badges on Image */}
-          <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
-            <div className="bg-white px-4 py-1.5 rounded-full shadow-sm">
-              <span className="text-black text-xs font-bold uppercase tracking-tight">
-                {item._type.slice(0, -1)}
-              </span>
-            </div>
-
-            {item._type !== "announcements" && (
-              isOpen ? (
-                <div className="bg-[#16A34A] px-4 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">
-                  <Unlock size={12} className="text-black" />
-                  <span className="text-black text-xs font-bold uppercase tracking-tight">OPEN</span>
-                </div>
-              ) : (
-                <div className="bg-destructive px-4 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">
-                  <Lock size={12} className="text-white" />
-                  <span className="text-white text-xs font-bold uppercase tracking-tight">CLOSED</span>
-                </div>
-              )
-            )}
+        {/* Badge */}
+        {badge && (
+          <div className={`absolute top-2 left-2 z-10 ${badge.bg} text-white text-[8px] font-black tracking-widest px-2 py-0.5 rounded-full shadow-lg`}>
+            {badge.text}
           </div>
+        )}
 
-          {/* Share Button */}
-          <div className="absolute top-4 right-4 z-10">
-            <div
-              className="w-10 h-10 bg-white/50 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-white transition-all shadow-sm"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-            >
-              <ShareButton
-                title={item.title}
-                description={item.description || `Check out this ${item._type.slice(0, -1)}`}
-                url={`/feed/${slugify(item.title) || item.id}`}
-                imageUrl={getImageUrl()}
-                type={item._type === "internships" ? "internship" : item._type === "events" ? "event" : "program"}
-              />
-            </div>
+        {/* Bookmark */}
+        <button 
+          onClick={(e) => { e.stopPropagation(); }}
+          className="absolute top-2 right-2 z-10 w-6 h-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-white transition-all shadow-md group/book"
+        >
+          <Bookmark size={10} className="text-slate-500 group-hover/book:text-[#155DFC] transition-colors" />
+        </button>
+      </div>
+
+      {/* Content */}
+      <div className="p-4 flex-1 flex flex-col space-y-2">
+        {/* Title */}
+        <h3 className="text-[13px] font-extrabold text-slate-900 dark:text-white leading-snug line-clamp-2 uppercase tracking-tight group-hover:text-[#155DFC] transition-colors">
+          {item.title}
+        </h3>
+
+        {/* Location & Duration */}
+        <div className="flex items-center gap-2 text-slate-400 flex-wrap">
+          <div className="flex items-center gap-1">
+            <MapPin size={11} className="text-slate-400 shrink-0" />
+            <span className="text-[11px] font-bold truncate max-w-[120px] uppercase">{locationText}</span>
           </div>
-        </div>
-
-        {/* Content Section */}
-        <div className="px-6 py-6 space-y-4 flex-1 flex flex-col">
-          {/* Company Info */}
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
-              <Image
-                src={normalizeImageSrc(item.company?.logo_url || "/seedLogo.png")}
-                alt={companyName}
-                width={24}
-                height={24}
-                className="object-cover"
-              />
-            </div>
-            <p className="text-[#155DFC] text-sm font-black uppercase tracking-wider">{companyName}</p>
-          </div>
-
-          {/* Title */}
-          <h3 className="text-2xl font-black text-black leading-tight line-clamp-2">
-            {item.title}
-          </h3>
-
-          {/* Description */}
-          {item.description && (
-            <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed font-medium">
-              {item.description.replace(/<[^>]*>/g, "")}
-            </p>
+          {duration && (
+            <>
+              <span className="text-slate-200 dark:text-slate-700 text-[10px]">•</span>
+              <div className="flex items-center gap-1">
+                <Clock size={11} className="text-slate-400 shrink-0" />
+                <span className="text-[11px] font-bold uppercase">{duration}</span>
+              </div>
+            </>
           )}
-
-          {/* Metadata */}
-          <div className="flex items-center gap-2 text-black pt-2">
-            <div className="w-8 h-8 rounded-full bg-[#155DFC]/10 flex items-center justify-center text-[#155DFC]">
-              <MapPin size={18} />
-            </div>
-            <span className="text-base font-bold truncate">{item.location}</span>
-          </div>
-
-          {/* CTA Button */}
-          <div className="mt-auto pt-4 pb-2">
-            <button
-              className="w-full py-4 bg-gradient-to-r from-[#155DFC] to-[#0D47A1] text-white font-bold rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-blue-500/20 group/btn transition-all hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <span>View Details</span>
-              <ArrowRight size={18} className="group-hover/btn:translate-x-1 transition-transform" />
-            </button>
-          </div>
         </div>
-      </Card>
-    </div>
+
+        {/* Description */}
+        <p className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold leading-relaxed line-clamp-2 italic">
+          {item.description || `${companyName} opportunity — explore this and grow.`}
+        </p>
+
+        {/* Footer */}
+        <div className="mt-auto pt-2 flex items-center justify-between border-t border-slate-50 dark:border-slate-800/50">
+          {startInfo ? (
+            <div className="flex items-center gap-1 text-slate-400">
+              <Calendar size={9} />
+              <span className="text-[8px] font-bold uppercase">{startInfo}</span>
+            </div>
+          ) : <div />}
+
+          <button
+            onClick={(e) => { e.stopPropagation(); handleCardClick(); }}
+            className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#155DFC] text-white rounded-lg text-[9px] font-black uppercase tracking-wider hover:scale-105 transition-all active:scale-[0.95] shadow-sm shadow-blue-500/20"
+          >
+            Apply
+          </button>
+        </div>
+      </div>
+    </Card>
   );
 }
