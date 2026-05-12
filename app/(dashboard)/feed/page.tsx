@@ -67,10 +67,10 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
                   alt="Dashboard Preview"
                   fill
                   priority
-                  className="object-cover opacity-20 md:opacity-100"
+                  className="object-cover opacity-10 md:opacity-100"
                 />
-                {/* Mobile overlay: Darker on left to protect text */}
-                <div className="absolute inset-0 bg-gradient-to-r from-[#155DFC] via-[#155DFC]/80 to-transparent md:hidden" />
+                {/* Mobile overlay: Subtle gradient to ensure text readability */}
+                <div className="absolute inset-0 bg-gradient-to-r from-[#155DFC] via-[#155DFC]/40 to-transparent md:hidden" />
                 
                 {/* Desktop overlay */}
                 <div className="hidden md:block absolute inset-0 bg-gradient-to-tr from-[#155DFC]/40 via-transparent to-transparent mix-blend-multiply opacity-40" />
