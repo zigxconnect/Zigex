@@ -59,8 +59,8 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
               </div>
             </div>
 
-            <div className="hidden md:flex items-center justify-end pr-8 h-full relative">
-              <div className="relative w-[300px] h-[200px] mt-4 rounded-2xl overflow-hidden border border-white/20 shadow-2xl transform rotate-3 hover:rotate-0 transition-transform duration-700 group">
+            <div className="flex items-center justify-center md:justify-end pr-0 md:pr-8 h-full relative mt-4 md:mt-0 p-6 md:p-0">
+              <div className="relative w-full md:w-[300px] aspect-[3/2] md:h-[200px] rounded-2xl overflow-hidden border border-white/20 shadow-2xl transform md:rotate-3 hover:rotate-0 transition-transform duration-700 group">
                 <Image
                   src="https://i.ibb.co/1YqtdCtK/Chat-GPT-Image-Apr-23-2026-03-29-43-PM.png"
                   alt="Dashboard Preview"

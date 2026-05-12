@@ -41,14 +41,14 @@ export const DashboardHeader = ({
              <span className="hidden sm:block text-lg font-black text-slate-900 dark:text-white tracking-tighter uppercase">Zigex</span>
            </Link>
 
-           {/* Global Intelligence Trigger */}
-           <div className="hidden md:flex items-center gap-3 px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 shadow-sm group cursor-pointer hover:border-[#155DFC]/20 transition-all duration-500 max-w-sm w-full">
-              <Search className="text-slate-400 group-hover:text-[#155DFC] transition-colors" size={14} strokeWidth={3} />
-              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Neural Discovery</span>
-              <div className="ml-auto flex items-center gap-1 px-1 py-0.5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
-                 <Command size={9} className="text-slate-300" />
-                 <span className="text-[8px] font-black text-slate-300">K</span>
-              </div>
+           {/* Time-based Greeting Identity */}
+           <div className="hidden md:flex flex-col">
+              <p className="text-[10px] font-black text-[#155DFC] uppercase tracking-widest leading-none mb-1">
+                {new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 18 ? "Good afternoon" : "Good evening"}
+              </p>
+              <h2 className="text-[15px] font-black text-slate-900 dark:text-white uppercase tracking-tighter truncate max-w-[250px] leading-none">
+                {userName}
+              </h2>
            </div>
         </div>
 
