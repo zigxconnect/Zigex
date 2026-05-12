@@ -715,9 +715,8 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
       {/* CREATE STORY MODAL */}
       <Dialog open={isCreating} onOpenChange={setIsCreating}>
         <DialogContent className="sm:max-w-md bg-white dark:bg-slate-950 border-none p-0 overflow-hidden rounded-[3rem] shadow-[0_50px_100px_-20px_rgba(21,93,252,0.3)]">
-          <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-            <h2 className="text-sm font-black uppercase tracking-widest text-slate-900 dark:text-white">New Activity</h2>
-            <Button variant="ghost" size="icon" className="rounded-2xl" onClick={() => setIsCreating(false)}><X size={20}/></Button>
+          <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">New Activity</h2>
           </div>
           
           <div className="h-[450px] relative bg-slate-50 dark:bg-slate-900/50 flex flex-col">
@@ -837,7 +836,7 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
                 <Button 
                   onClick={handleCreatePost} 
                   disabled={(!newStoryText && !newStoryImage) || isPosting} 
-                  className="flex-1 h-14 bg-[#155DFC] hover:bg-[#0D47A1] text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] shadow-lg shadow-blue-500/20 transition-all"
+                  className="flex-1 h-14 bg-[#155DFC] hover:bg-[#0D47A1] text-white rounded-3xl font-black uppercase tracking-[0.2em] text-[10px] shadow-xl shadow-blue-500/25 transition-all active:scale-95"
                 >
                   {isPosting ? 'Publishing...' : 'Share Activity'}
                 </Button>
