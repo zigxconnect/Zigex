@@ -34,11 +34,11 @@ export const DashboardHeader = ({
         {/* Left Side: Personalized Greeting Identity */}
         <div className="flex items-center gap-4 flex-1">
            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black text-[#155DFC] uppercase tracking-widest leading-none">
+              <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] leading-none">
                 {new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 18 ? "Good afternoon" : "Good evening"},
               </span>
-              <h2 className="text-[14px] font-black text-slate-900 dark:text-white uppercase tracking-tighter truncate max-w-[200px] leading-none">
-                {userName}
+              <h2 className="text-[14px] font-black text-slate-900 dark:text-white uppercase tracking-tighter truncate max-w-[150px] leading-none">
+                {userName.split(' ')[0]}
               </h2>
            </div>
         </div>

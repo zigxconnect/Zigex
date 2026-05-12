@@ -39,11 +39,12 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
           <div className="relative z-10 grid md:grid-cols-[1fr_auto] items-center h-full">
             <div className="p-7 sm:p-8 space-y-4">
               <div className="space-y-1.5">
-                <h1 className="text-[clamp(1.35rem,3.5vw,2rem)] font-extrabold text-white leading-[1.15] tracking-tight">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white leading-[1.1] tracking-tighter drop-shadow-xl">
                   Discover. Learn. Grow.
                 </h1>
-                <p className="text-[13px] text-blue-100/80 font-medium max-w-sm leading-relaxed">
-                  Find programs, internships, and events<br className="hidden sm:block" /> that shape your future.
+                <p className="text-[13px] sm:text-base text-blue-100/90 font-medium max-w-xl leading-relaxed drop-shadow-md">
+                  Find programs, internships, and events that shape your
+                  future.
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-3">
@@ -67,10 +68,10 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
                   alt="Dashboard Preview"
                   fill
                   priority
-                  className="object-cover opacity-10 md:opacity-100"
+                  className="object-cover opacity-15 md:opacity-100"
                 />
-                {/* Mobile overlay: Subtle gradient to ensure text readability */}
-                <div className="absolute inset-0 bg-gradient-to-r from-[#155DFC] via-[#155DFC]/40 to-transparent md:hidden" />
+                {/* Mobile overlay: Subtle mist to ensure text readability */}
+                <div className="absolute inset-0 bg-gradient-to-r from-[#155DFC] via-[#155DFC]/30 to-transparent md:hidden" />
                 
                 {/* Desktop overlay */}
                 <div className="hidden md:block absolute inset-0 bg-gradient-to-tr from-[#155DFC]/40 via-transparent to-transparent mix-blend-multiply opacity-40" />
