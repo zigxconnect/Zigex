@@ -241,7 +241,7 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
               ) : (
                 <div className="space-y-2">
                   <AnimatePresence mode="popLayout" initial={false}>
-                    {notifications.map((notification, index) => (
+                    {notifications.slice(0, 4).map((notification, index) => (
                       <motion.button
                         key={notification.id}
                         layout
@@ -251,14 +251,14 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
                         transition={{ delay: index * 0.05, type: "spring", damping: 25 }}
                         onClick={() => handleNotificationClick(notification.id, notification.referenceId, notification.type)}
                         className={cn(
-                          "w-full text-left p-5 transition-all duration-300 relative flex items-start gap-4 group outline-none border-b border-slate-50 dark:border-slate-900/50 last:border-0",
+                          "w-full text-left p-4 transition-all duration-300 relative flex items-center gap-4 group outline-none border-b border-slate-50 dark:border-slate-900/50 last:border-0",
                           !notification.read 
                             ? "bg-blue-50/30 dark:bg-blue-900/5" 
                             : "hover:bg-slate-50 dark:hover:bg-slate-900/30"
                         )}
                       >
                         {/* Status Dot */}
-                        <div className="pt-1.5 shrink-0">
+                        <div className="shrink-0">
                           <div className={cn(
                             "w-2 h-2 rounded-full transition-all duration-500",
                             !notification.read ? "bg-[#155DFC] shadow-[0_0_10px_rgba(21,93,252,0.8)]" : "bg-slate-200 dark:bg-slate-800"
@@ -266,20 +266,17 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
                         </div>
                         
                         <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-start gap-2 mb-0.5">
+                          <div className="flex justify-between items-center gap-2">
                             <h4 className={cn(
-                              "text-[13px] font-black tracking-tight truncate group-hover:text-[#155DFC] transition-colors uppercase",
+                              "text-[12px] font-black tracking-tight truncate group-hover:text-[#155DFC] transition-colors uppercase",
                               !notification.read ? "text-slate-900 dark:text-white" : "text-slate-400"
                             )}>
                               {notification.title}
                             </h4>
-                            <span className="text-[9px] font-bold text-slate-400 shrink-0 mt-0.5">
+                            <span className="text-[8px] font-bold text-slate-400 shrink-0">
                               {formatTime(notification.timestamp)}
                             </span>
                           </div>
-                          <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 leading-snug line-clamp-1 italic">
-                            {notification.content}
-                          </p>
                         </div>
                       </motion.button>
                     ))}

@@ -448,7 +448,7 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
       >
         {/* CREATE/YOUR STORY SLOT */}
         <motion.div 
-          className="relative flex-none w-24 h-40 sm:w-[120px] sm:h-[200px] rounded-[2rem] overflow-hidden cursor-pointer group shadow-sm hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-700 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800"
+          className="relative flex-none w-20 h-32 sm:w-[100px] sm:h-[160px] rounded-2xl overflow-hidden cursor-pointer group shadow-sm hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-700 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800"
           onClick={() => hasMyStory ? handleStoryClick(myStories[0]) : setIsCreating(true)}
           whileHover={{ y: -4 }}
         >
@@ -506,7 +506,7 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
             animate={{ opacity: 1, scale: 1, x: 0 }}
             transition={{ duration: 0.6, delay: idx * 0.05 }}
             className={cn(
-              "relative flex-none w-24 h-40 sm:w-[120px] sm:h-[200px] rounded-[2rem] overflow-hidden cursor-pointer shadow-sm hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-700 group",
+              "relative flex-none w-20 h-32 sm:w-[100px] sm:h-[160px] rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-700 group",
               !story.viewed && (story as any).isAnnouncement 
                 ? "ring-2 ring-[#155DFC] ring-offset-4 ring-offset-white dark:ring-offset-slate-950" 
                 : !story.viewed 
@@ -548,12 +548,7 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
             
             <div className="absolute bottom-5 left-4 right-4 z-20 flex flex-col items-center">
               <div className="space-y-1.5 w-full text-center">
-                {(story as any).isAnnouncement && (
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#155DFC] rounded-full shadow-lg mx-auto">
-                    <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                    <span className="text-[8px] text-white font-black uppercase tracking-[0.1em]">Zigex Official</span>
-                  </div>
-                )}
+
                 <p className="text-white text-[11px] font-black truncate uppercase tracking-[0.15em] drop-shadow-md group-hover:translate-y-[-2px] transition-transform">
                   {story.userName}
                 </p>

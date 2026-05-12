@@ -1,7 +1,7 @@
 // components/feed/UnifiedFeedCard.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
@@ -22,7 +22,7 @@ interface UnifiedFeedCardProps {
   isOpen?: boolean;
 }
 
-export function UnifiedFeedCard({ item, onLiveClick, index = 0, isOpen = true }: UnifiedFeedCardProps) {
+export const UnifiedFeedCard = memo(({ item, onLiveClick, index = 0, isOpen = true }: UnifiedFeedCardProps) => {
   const router = useRouter();
   const [imageError, setImageError] = useState(false);
 
@@ -86,7 +86,7 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0, isOpen = true }:
   return (
     <Card
       onClick={handleCardClick}
-      className="group relative overflow-hidden border border-slate-100 dark:border-slate-800/50 hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-500 bg-white dark:bg-slate-900 rounded-[2rem] h-full flex flex-col cursor-pointer"
+      className="group relative overflow-hidden border border-slate-100 dark:border-slate-800/50 hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-500 bg-white dark:bg-slate-900 rounded-2xl h-full flex flex-col cursor-pointer"
     >
       {/* Image */}
       <div className="relative h-32 sm:h-36 flex-shrink-0 overflow-hidden">
@@ -165,4 +165,6 @@ export function UnifiedFeedCard({ item, onLiveClick, index = 0, isOpen = true }:
       </div>
     </Card>
   );
-}
+});
+
+UnifiedFeedCard.displayName = "UnifiedFeedCard";

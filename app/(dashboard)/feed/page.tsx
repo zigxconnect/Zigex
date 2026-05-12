@@ -4,7 +4,9 @@ import { getProfileInfo } from '@/lib/actions/profile.actions';
 import { DashboardWidgets } from '@/components/feed/DashboardWidgets';
 import { ArrowRight, Play, Zap, Users, Target, Building2 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import FeedStories from '@/components/feed/FeedStories';
+import { cn } from "@/lib/utils";
 
 interface FeedPageProps {
   searchParams: Promise<{ q?: string }>;
@@ -57,12 +59,17 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
               </div>
             </div>
 
-            <div className="hidden md:flex items-end justify-end pr-6 h-full relative">
-              <div className="relative w-48 h-full flex items-end">
-                <div className="absolute bottom-5 right-0 text-white/10 text-base font-black tracking-[0.3em] uppercase select-none">ZIGEX</div>
-                <div className="w-36 h-44 rounded-t-2xl bg-gradient-to-t from-blue-700/50 to-blue-500/30 border border-white/5 mb-0 ml-4 overflow-hidden">
-                  <div className="w-full h-full bg-gradient-to-br from-white/[0.05] to-transparent" />
-                </div>
+            <div className="hidden md:flex items-center justify-end pr-8 h-full relative">
+              <div className="relative w-[300px] h-[200px] mt-4 rounded-2xl overflow-hidden border border-white/20 shadow-2xl transform rotate-3 hover:rotate-0 transition-transform duration-700 group">
+                <Image
+                  src="https://i.ibb.co/1YqtdCtK/Chat-GPT-Image-Apr-23-2026-03-29-43-PM.png"
+                  alt="Dashboard Preview"
+                  fill
+                  priority
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-tr from-[#155DFC]/40 via-transparent to-transparent mix-blend-multiply opacity-40" />
+                <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(21,93,252,0.3)]" />
               </div>
             </div>
           </div>
@@ -98,26 +105,24 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
             { value: "12+", label: "Active Programs", sub: "Join ongoing opportunities", icon: Zap, color: "text-[#155DFC]", bg: "bg-blue-50 dark:bg-blue-900/10" },
             { value: "2.5K+", label: "Students", sub: "Building their future", icon: Users, color: "text-purple-600", bg: "bg-purple-50 dark:bg-purple-900/10" },
             { value: "95%", label: "Satisfaction Rate", sub: "From our community", icon: Target, color: "text-rose-500", bg: "bg-rose-50 dark:bg-rose-900/10" },
-            { value: "20+", label: "Partner Organizations", sub: "Industry & tech leaders", icon: Building2, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/10" },
-          ].map((stat) => (
-            <div key={stat.label} className="flex items-start gap-2.5 p-3 sm:p-4">
-              <div className={`w-9 h-9 rounded-xl ${stat.bg} flex items-center justify-center shrink-0 ${stat.color}`}>
+            { value: "50+", label: "Partner Companies", sub: "Global network access", icon: Building2, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/10" },
+          ].map((stat, i) => (
+            <div key={i} className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/50 group hover:border-[#155DFC]/30 transition-colors">
+              <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center mb-3", stat.bg, stat.color)}>
                 <stat.icon size={18} />
               </div>
-              <div className="min-w-0">
-                <p className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white leading-none tracking-tight">{stat.value}</p>
-                <p className="text-[12px] font-semibold text-slate-700 dark:text-slate-300 mt-0.5">{stat.label}</p>
-                <p className="text-[10px] text-slate-400 font-medium mt-0.5 hidden sm:block">{stat.sub}</p>
-              </div>
+              <div className="text-xl font-extrabold text-slate-900 dark:text-white mb-0.5">{stat.value}</div>
+              <div className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-tight mb-1">{stat.label}</div>
+              <div className="text-[9px] font-medium text-slate-400 leading-tight">{stat.sub}</div>
             </div>
           ))}
         </section>
       </div>
 
-      {/* ═══ Right Column – Widgets ═══ */}
+      {/* ═══ Sidebar Column ═══ */}
       <DashboardWidgets user={userData} />
 
-      {/* Overlays */}
+      {/* ── Profile Recommendation Popup ── */}
       <ProfileRecommendationPopup user={userData} />
     </div>
   );
