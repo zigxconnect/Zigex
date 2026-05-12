@@ -59,17 +59,22 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
               </div>
             </div>
 
-            <div className="flex items-center justify-center md:justify-end pr-0 md:pr-8 h-full relative mt-4 md:mt-0 p-6 md:p-0">
-              <div className="relative w-full md:w-[300px] aspect-[3/2] md:h-[200px] rounded-2xl overflow-hidden border border-white/20 shadow-2xl transform md:rotate-3 hover:rotate-0 transition-transform duration-700 group">
+            {/* Banner Visual: Right side on desktop, Background on mobile */}
+            <div className="absolute right-0 top-0 h-full w-full md:relative md:w-[300px] md:h-[200px] md:mt-4 md:rounded-2xl md:overflow-hidden md:border md:border-white/20 md:shadow-2xl md:transform md:rotate-3 md:hover:rotate-0 md:transition-transform md:duration-700 md:group z-0">
+              <div className="relative w-full h-full">
                 <Image
                   src="https://i.ibb.co/1YqtdCtK/Chat-GPT-Image-Apr-23-2026-03-29-43-PM.png"
                   alt="Dashboard Preview"
                   fill
                   priority
-                  className="object-cover"
+                  className="object-cover opacity-20 md:opacity-100"
                 />
-                <div className="absolute inset-0 bg-gradient-to-tr from-[#155DFC]/40 via-transparent to-transparent mix-blend-multiply opacity-40" />
-                <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(21,93,252,0.3)]" />
+                {/* Mobile overlay: Darker on left to protect text */}
+                <div className="absolute inset-0 bg-gradient-to-r from-[#155DFC] via-[#155DFC]/80 to-transparent md:hidden" />
+                
+                {/* Desktop overlay */}
+                <div className="hidden md:block absolute inset-0 bg-gradient-to-tr from-[#155DFC]/40 via-transparent to-transparent mix-blend-multiply opacity-40" />
+                <div className="hidden md:block absolute inset-0 shadow-[inset_0_0_40px_rgba(21,93,252,0.3)]" />
               </div>
             </div>
           </div>
