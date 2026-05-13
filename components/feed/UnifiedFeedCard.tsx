@@ -171,7 +171,5 @@ export const UnifiedFeedCard = memo(({ item, onLiveClick, onClick, index = 0, is
     </Card>
   );
 });
-  );
-});
 
 UnifiedFeedCard.displayName = "UnifiedFeedCard";
