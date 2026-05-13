@@ -18,11 +18,12 @@ import { cn } from "@/lib/utils";
 interface UnifiedFeedCardProps {
   item: FeedItem;
   onLiveClick?: () => void;
+  onClick?: (item: FeedItem) => void;
   index?: number;
   isOpen?: boolean;
 }
 
-export const UnifiedFeedCard = memo(({ item, onLiveClick, index = 0, isOpen = true }: UnifiedFeedCardProps) => {
+export const UnifiedFeedCard = memo(({ item, onLiveClick, onClick, index = 0, isOpen = true }: UnifiedFeedCardProps) => {
   const router = useRouter();
   const [imageError, setImageError] = useState(false);
 
@@ -79,8 +80,12 @@ export const UnifiedFeedCard = memo(({ item, onLiveClick, index = 0, isOpen = tr
   const locationText = item.location || (item as any).venue || "Online";
 
   const handleCardClick = () => {
-    const slug = slugify(item.title) || item.id;
-    router.push(`/feed/${slug}`);
+    if (onClick) {
+      onClick(item);
+    } else {
+      const slug = slugify(item.title) || item.id;
+      router.push(`/feed/${slug}`);
+    }
   };
 
   return (
@@ -159,11 +164,13 @@ export const UnifiedFeedCard = memo(({ item, onLiveClick, index = 0, isOpen = tr
             onClick={(e) => { e.stopPropagation(); handleCardClick(); }}
             className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#155DFC] text-white rounded-lg text-[9px] font-black uppercase tracking-wider hover:scale-105 transition-all active:scale-[0.95] shadow-sm shadow-blue-500/20"
           >
-            Apply
+            {item._type === 'announcements' ? 'View' : 'Apply'}
           </button>
         </div>
       </div>
     </Card>
+  );
+});
   );
 });
 

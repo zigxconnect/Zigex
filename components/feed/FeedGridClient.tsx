@@ -32,10 +32,14 @@ const categories = [
   { id: "announcements" as CategoryId, label: "Workshops", icon: Wrench },
 ];
 
+import { ProgramDetailsSlideOver } from "@/components/feed/ProgramDetailsSlideOver";
+
 export function FeedGridClient({ initialData, error }: FeedGridClientProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeCategory, setActiveCategory] = useState<CategoryId>("all");
   const [activeSlide, setActiveSlide] = useState(0);
+  const [selectedItem, setSelectedItem] = useState<FeedItem | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const { isOpen, modalData, openModal, closeModal } = useVideoModal();
 
   // Transform data with type tags
@@ -45,6 +49,11 @@ export function FeedGridClient({ initialData, error }: FeedGridClientProps) {
     programs: (initialData.programs || []).map((p) => ({ ...p, _type: "programs" as const })),
     announcements: (initialData.announcements || []).map((a) => ({ ...a, _type: "announcements" as const })),
   }), [initialData]);
+
+  const handleItemClick = (item: FeedItem) => {
+    setSelectedItem(item);
+    setIsDetailsOpen(true);
+  };
 
   // All items sorted by date
   const allContentSorted = useMemo(() => {
@@ -173,6 +182,7 @@ export function FeedGridClient({ initialData, error }: FeedGridClientProps) {
                     item={item}
                     index={index}
                     isOpen={calculateIsOpen(item)}
+                    onClick={handleItemClick}
                   />
                 </motion.div>
               ))}
@@ -203,6 +213,12 @@ export function FeedGridClient({ initialData, error }: FeedGridClientProps) {
         </div>
       )}
 
+      <ProgramDetailsSlideOver
+        item={selectedItem}
+        isOpen={isDetailsOpen}
+        onClose={() => setIsDetailsOpen(false)}
+      />
+
       {modalData && (
         <LiveVideoModal
           isOpen={isOpen}
@@ -218,3 +234,4 @@ export function FeedGridClient({ initialData, error }: FeedGridClientProps) {
     </div>
   );
 }
+
