@@ -140,34 +140,34 @@ export function ProgramDetailsSlideOver({ item, isOpen, onClose }: ProgramDetail
           {/* Action Button */}
           <div className="pt-6">
             {loading ? (
-              <Button disabled className="w-full h-16 rounded-none bg-slate-100 dark:bg-slate-900 text-slate-400 border-none">
+              <Button disabled className="w-full h-16 rounded-none bg-slate-100 dark:bg-slate-900 text-slate-400 border-none cursor-pointer">
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                 Verifying Credentials...
               </Button>
             ) : status === "accepted" ? (
               <Link href="/student/workspace" className="block w-full">
-                <Button className="w-full h-16 rounded-none bg-[#155DFC] hover:bg-[#0D47A1] text-white font-black uppercase tracking-[0.2em] text-[11px] shadow-2xl shadow-blue-500/30 flex items-center justify-center gap-3 transition-all active:scale-95">
+                <Button className="w-full h-16 rounded-none bg-[#155DFC] hover:bg-[#0D47A1] text-white font-black uppercase tracking-[0.2em] text-[11px] shadow-2xl shadow-blue-500/30 flex items-center justify-center gap-3 transition-all active:scale-95 cursor-pointer">
                   <CheckCircle2 size={18} />
-                  Enter Workspace
+                  Visit Workspace
                   <ArrowRight size={18} />
                 </Button>
               </Link>
             ) : status === "pending" ? (
-              <Button disabled className="w-full h-16 rounded-none bg-amber-500/10 text-amber-500 border border-amber-500/20 font-black uppercase tracking-[0.2em] text-[11px] flex items-center justify-center gap-3">
+              <Button disabled className="w-full h-16 rounded-none bg-amber-500/10 text-amber-500 border border-amber-500/20 font-black uppercase tracking-[0.2em] text-[11px] flex items-center justify-center gap-3 cursor-pointer">
                 <Clock3 size={18} />
                 Pending Review
               </Button>
             ) : status === "rejected" ? (
-              <Button disabled className="w-full h-16 rounded-none bg-red-500/10 text-red-500 border border-red-500/20 font-black uppercase tracking-[0.2em] text-[11px]">
+              <Button disabled className="w-full h-16 rounded-none bg-red-500/10 text-red-500 border border-red-500/20 font-black uppercase tracking-[0.2em] text-[11px] cursor-pointer">
                 Application Unsuccessful
               </Button>
             ) : (new Date(item.end_date || item.event_date || 0) < new Date() && (item.end_date || item.event_date)) ? (
-              <Button disabled className="w-full h-16 rounded-none bg-slate-100 dark:bg-slate-900 text-slate-300 dark:text-slate-700 border-none font-black uppercase tracking-[0.2em] text-[11px] opacity-50 cursor-not-allowed blur-[0.5px]">
+              <Button disabled className="w-full h-16 rounded-none bg-slate-100 dark:bg-slate-900 text-slate-300 dark:text-slate-700 border-none font-black uppercase tracking-[0.2em] text-[11px] opacity-50 cursor-pointer blur-[0.5px]">
                 Registration Closed
               </Button>
             ) : (
               <Link href={`/feed/${item.id}`} className="block w-full">
-                <Button className="w-full h-16 rounded-none bg-[#155DFC] hover:bg-[#0D47A1] text-white font-black uppercase tracking-[0.2em] text-[11px] shadow-2xl shadow-blue-500/30 transition-all active:scale-95">
+                <Button className="w-full h-16 rounded-none bg-[#155DFC] hover:bg-[#0D47A1] text-white font-black uppercase tracking-[0.2em] text-[11px] shadow-2xl shadow-blue-500/30 transition-all active:scale-95 cursor-pointer">
                   Register Now
                 </Button>
               </Link>
