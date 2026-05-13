@@ -1,6 +1,7 @@
 import MainFeedPage from '@/components/feed/MainFeedPage';
 import ProfileRecommendationPopup from '@/components/feed/ProfileRecommendationPopup';
 import { getProfileInfo } from '@/lib/actions/profile.actions';
+import { getPlatformStats } from '@/lib/actions/feed/feed.action';
 import { DashboardWidgets } from '@/components/feed/DashboardWidgets';
 import { ArrowRight, Play, Zap, Users, Target, Building2 } from "lucide-react";
 import Link from "next/link";
@@ -21,7 +22,10 @@ export const metadata = {
 
 export default async function FeedPage({ searchParams }: FeedPageProps) {
   const resolvedParams = await searchParams;
-  const userData = await getProfileInfo();
+  const [userData, stats] = await Promise.all([
+    getProfileInfo(),
+    getPlatformStats()
+  ]);
 
   return (
     <div className="flex flex-col xl:flex-row gap-6 pb-12">
@@ -108,10 +112,10 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
         {/* ── Platform Stats ── */}
         <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-5 border-t border-slate-100 dark:border-slate-800/50">
           {[
-            { value: "12+", label: "Active Programs", sub: "Join ongoing opportunities", icon: Zap, color: "text-[#155DFC]", bg: "bg-blue-50 dark:bg-blue-900/10" },
-            { value: "2.5K+", label: "Students", sub: "Building their future", icon: Users, color: "text-purple-600", bg: "bg-purple-50 dark:bg-purple-900/10" },
-            { value: "95%", label: "Satisfaction Rate", sub: "From our community", icon: Target, color: "text-rose-500", bg: "bg-rose-50 dark:bg-rose-900/10" },
-            { value: "50+", label: "Partner Companies", sub: "Global network access", icon: Building2, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/10" },
+            { value: stats.activePrograms, label: "Active Programs", sub: "Join ongoing opportunities", icon: Zap, color: "text-[#155DFC]", bg: "bg-blue-50 dark:bg-blue-900/10" },
+            { value: stats.students, label: "Students", sub: "Building their future", icon: Users, color: "text-purple-600", bg: "bg-purple-50 dark:bg-purple-900/10" },
+            { value: stats.satisfactionRate, label: "Satisfaction Rate", sub: "From our community", icon: Target, color: "text-rose-500", bg: "bg-rose-50 dark:bg-rose-900/10" },
+            { value: stats.partnerCompanies, label: "Partner Companies", sub: "Global network access", icon: Building2, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/10" },
           ].map((stat, i) => (
             <div key={i} className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/50 group hover:border-[#155DFC]/30 transition-colors">
               <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center mb-3", stat.bg, stat.color)}>
