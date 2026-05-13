@@ -161,6 +161,10 @@ export function ProgramDetailsSlideOver({ item, isOpen, onClose }: ProgramDetail
               <Button disabled className="w-full h-16 rounded-none bg-red-500/10 text-red-500 border border-red-500/20 font-black uppercase tracking-[0.2em] text-[11px]">
                 Application Unsuccessful
               </Button>
+            ) : (new Date(item.end_date || item.event_date || 0) < new Date() && (item.end_date || item.event_date)) ? (
+              <Button disabled className="w-full h-16 rounded-none bg-slate-100 dark:bg-slate-900 text-slate-300 dark:text-slate-700 border-none font-black uppercase tracking-[0.2em] text-[11px] opacity-50 cursor-not-allowed blur-[0.5px]">
+                Registration Closed
+              </Button>
             ) : (
               <Link href={`/feed/${item.id}`} className="block w-full">
                 <Button className="w-full h-16 rounded-none bg-[#155DFC] hover:bg-[#0D47A1] text-white font-black uppercase tracking-[0.2em] text-[11px] shadow-2xl shadow-blue-500/30 transition-all active:scale-95">
