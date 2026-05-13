@@ -56,8 +56,8 @@ export function InternAnnouncementBoard({ announcements }: InternAnnouncementBoa
                         <Bell className="text-white w-6 h-6" />
                     </div>
                     <div>
-                        <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Timeline</h2>
-                        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Latest Updates</p>
+                        <h2 className="text-lg sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">Timeline</h2>
+                        <p className="text-[9px] sm:text-xs text-slate-400 font-bold uppercase tracking-widest">Latest Updates</p>
                     </div>
                 </div>
                 <div className="flex gap-2">
@@ -88,7 +88,7 @@ export function InternAnnouncementBoard({ announcements }: InternAnnouncementBoa
                                 </div>
                             )}
 
-                            <div className="p-5 sm:p-7 flex gap-4">
+                            <div className="p-4 sm:p-5 sm:p-7 flex gap-3 sm:gap-4">
                                 {/* Left: Avatar/Logo */}
                                 <div className="shrink-0 pt-1">
                                     <div className="w-12 h-12 rounded-2xl overflow-hidden ring-4 ring-slate-50 dark:ring-slate-800 shadow-sm border border-slate-100">
@@ -106,7 +106,7 @@ export function InternAnnouncementBoard({ announcements }: InternAnnouncementBoa
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center justify-between mb-1">
                                         <div className="flex items-center gap-1.5 min-w-0">
-                                            <span className="font-black text-slate-900 dark:text-white truncate">
+                                            <span className="font-black text-sm sm:text-base text-slate-900 dark:text-white truncate">
                                                 {announcement.company?.company_name || "Zigex Global"}
                                             </span>
                                             {announcement.company && (
@@ -123,11 +123,11 @@ export function InternAnnouncementBoard({ announcements }: InternAnnouncementBoa
                                         </button>
                                     </div>
 
-                                    <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2 leading-tight">
+                                    <h3 className="text-sm sm:text-lg font-black text-slate-900 dark:text-white mb-2 leading-tight">
                                         {announcement.title}
                                     </h3>
 
-                                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-line mb-4 font-medium">
+                                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-line mb-4 font-medium">
                                         {announcement.content}
                                     </p>
 
