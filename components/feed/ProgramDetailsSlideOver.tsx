@@ -66,9 +66,9 @@ export function ProgramDetailsSlideOver({ item, isOpen, onClose }: ProgramDetail
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent className="sm:max-w-xl p-0 overflow-y-auto bg-white dark:bg-slate-950 border-none rounded-l-[3rem] shadow-[-50px_0_100px_-20px_rgba(21,93,252,0.15)]">
+      <SheetContent className="w-[97vw] sm:max-w-xl p-0 overflow-y-auto bg-white dark:bg-slate-950 border-none rounded-none shadow-[-20px_0_80px_rgba(0,0,0,0.1)] transition-all duration-500 ease-in-out">
         {/* Banner Image */}
-        <div className="relative h-72 w-full overflow-hidden">
+        <div className="relative h-64 sm:h-72 w-full overflow-hidden">
           <Image
             src={getImageUrl()}
             alt={item.title}
@@ -76,29 +76,29 @@ export function ProgramDetailsSlideOver({ item, isOpen, onClose }: ProgramDetail
             className="object-cover"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
           
-          <div className="absolute bottom-8 left-8 right-8 space-y-2">
-            <Badge className="bg-[#155DFC] hover:bg-[#155DFC] text-white border-none px-3 py-1 text-[10px] font-black uppercase tracking-widest">
+          <div className="absolute bottom-6 sm:bottom-8 left-6 sm:left-8 right-6 sm:right-8 space-y-1.5">
+            <Badge className="bg-[#155DFC] hover:bg-[#155DFC] text-white border-none px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest rounded-none">
               {item._type?.replace('s', '')}
             </Badge>
-            <h2 className="text-2xl font-black text-white uppercase tracking-tighter leading-tight line-clamp-2">
+            <h2 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tighter leading-tight line-clamp-2">
               {item.title}
             </h2>
           </div>
         </div>
 
-        <div className="p-8 space-y-10">
+        <div className="p-6 sm:p-8 space-y-8 sm:space-y-10">
           {/* Quick Info Grid */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/50 space-y-1">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            <div className="p-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/50 space-y-1">
                <div className="flex items-center gap-2 text-slate-400">
                   <Building2 size={12} />
                   <span className="text-[10px] font-black uppercase tracking-widest">Provider</span>
                </div>
                <p className="text-xs font-black text-slate-900 dark:text-white uppercase truncate">{companyName}</p>
             </div>
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/50 space-y-1">
+            <div className="p-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/50 space-y-1">
                <div className="flex items-center gap-2 text-slate-400">
                   <MapPin size={12} />
                   <span className="text-[10px] font-black uppercase tracking-widest">Location</span>
@@ -106,7 +106,7 @@ export function ProgramDetailsSlideOver({ item, isOpen, onClose }: ProgramDetail
                <p className="text-xs font-black text-slate-900 dark:text-white uppercase truncate">{location}</p>
             </div>
             {startDate && (
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/50 space-y-1">
+              <div className="p-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/50 space-y-1">
                  <div className="flex items-center gap-2 text-slate-400">
                     <Calendar size={12} />
                     <span className="text-[10px] font-black uppercase tracking-widest">Starts</span>
@@ -116,7 +116,7 @@ export function ProgramDetailsSlideOver({ item, isOpen, onClose }: ProgramDetail
                  </p>
               </div>
             )}
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/50 space-y-1">
+            <div className="p-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/50 space-y-1">
                <div className="flex items-center gap-2 text-slate-400">
                   <Clock size={12} />
                   <span className="text-[10px] font-black uppercase tracking-widest">Duration</span>
@@ -140,30 +140,30 @@ export function ProgramDetailsSlideOver({ item, isOpen, onClose }: ProgramDetail
           {/* Action Button */}
           <div className="pt-6">
             {loading ? (
-              <Button disabled className="w-full h-16 rounded-[2rem] bg-slate-100 dark:bg-slate-900 text-slate-400 border-none">
+              <Button disabled className="w-full h-16 rounded-none bg-slate-100 dark:bg-slate-900 text-slate-400 border-none">
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                 Verifying Credentials...
               </Button>
             ) : status === "accepted" ? (
               <Link href="/student/workspace" className="block w-full">
-                <Button className="w-full h-16 rounded-[2rem] bg-[#155DFC] hover:bg-[#0D47A1] text-white font-black uppercase tracking-[0.2em] text-[11px] shadow-2xl shadow-blue-500/30 flex items-center justify-center gap-3">
+                <Button className="w-full h-16 rounded-none bg-[#155DFC] hover:bg-[#0D47A1] text-white font-black uppercase tracking-[0.2em] text-[11px] shadow-2xl shadow-blue-500/30 flex items-center justify-center gap-3 transition-all active:scale-95">
                   <CheckCircle2 size={18} />
                   Enter Workspace
                   <ArrowRight size={18} />
                 </Button>
               </Link>
             ) : status === "pending" ? (
-              <Button disabled className="w-full h-16 rounded-[2rem] bg-amber-500/10 text-amber-500 border border-amber-500/20 font-black uppercase tracking-[0.2em] text-[11px] flex items-center justify-center gap-3">
+              <Button disabled className="w-full h-16 rounded-none bg-amber-500/10 text-amber-500 border border-amber-500/20 font-black uppercase tracking-[0.2em] text-[11px] flex items-center justify-center gap-3">
                 <Clock3 size={18} />
                 Pending Review
               </Button>
             ) : status === "rejected" ? (
-              <Button disabled className="w-full h-16 rounded-[2rem] bg-red-500/10 text-red-500 border border-red-500/20 font-black uppercase tracking-[0.2em] text-[11px]">
+              <Button disabled className="w-full h-16 rounded-none bg-red-500/10 text-red-500 border border-red-500/20 font-black uppercase tracking-[0.2em] text-[11px]">
                 Application Unsuccessful
               </Button>
             ) : (
               <Link href={`/feed/${item.id}`} className="block w-full">
-                <Button className="w-full h-16 rounded-[2rem] bg-[#155DFC] hover:bg-[#0D47A1] text-white font-black uppercase tracking-[0.2em] text-[11px] shadow-2xl shadow-blue-500/30">
+                <Button className="w-full h-16 rounded-none bg-[#155DFC] hover:bg-[#0D47A1] text-white font-black uppercase tracking-[0.2em] text-[11px] shadow-2xl shadow-blue-500/30 transition-all active:scale-95">
                   Register Now
                 </Button>
               </Link>
