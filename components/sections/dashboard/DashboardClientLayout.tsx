@@ -84,7 +84,7 @@ export function DashboardClientLayout({
 
         {/* Main Content */}
         <main className={cn(
-          "flex-1 min-h-[calc(100vh-4rem)] transition-all duration-300 ease-in-out",
+          "flex-1 min-w-0 min-h-[calc(100vh-4rem)] transition-all duration-300 ease-in-out",
           !isMobile && isSidebarOpen ? 'lg:ml-80' : 'ml-0',
           "pb-20 lg:pb-0" // Mobile tab bar padding
         )}>

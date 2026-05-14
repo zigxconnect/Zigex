@@ -420,8 +420,8 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
 
       {/* ===== NAVIGATION TABS ===== */}
       <nav className="sticky top-[52px] z-[60] bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 shadow-sm">
-        <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-12">
-          <div className="flex items-center gap-1 sm:gap-4 py-0.5 overflow-x-auto hide-scrollbar -mx-2 px-2 sm:mx-0 sm:px-0">
+        <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-12">
+          <div className="flex items-center gap-1 sm:gap-4 py-0.5 px-2 sm:px-0 overflow-x-auto hide-scrollbar w-full">
             {getTabs(
               logs.length,
               paymentLedger.filter((p: any) => p.status === 'paid').length,
