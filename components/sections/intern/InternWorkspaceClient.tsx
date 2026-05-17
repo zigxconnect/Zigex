@@ -83,6 +83,7 @@ interface InternWorkspaceClientProps {
     unreadCount?: number;
     fellowInterns: any[];
     fellowSupervisors: any[];
+    userWorkspaces?: any[];
   };
 }
 
@@ -496,7 +497,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                               </Badge>
                               <span className="text-[8px] sm:text-[9px] font-black text-slate-300 uppercase tracking-widest">ID: {application.id.slice(0, 8)}</span>
                             </div>
-                            <h1 className="text-lg sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-tight max-w-xl">
+                            <h1 className="text-lg sm:text-xl lg:text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-tight max-w-xl">
                               {opportunity?.title}
                             </h1>
                             <div className="flex flex-wrap items-center gap-2 sm:gap-4">
@@ -1213,6 +1214,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
           <WorkspaceSidebar
             logs={logs}
             fellowInterns={fellowInterns}
+            userWorkspaces={data.userWorkspaces}
             onOpenColleagues={() => setIsColleaguesModalOpen(true)}
           />
         </div>

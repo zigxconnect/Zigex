@@ -16,53 +16,53 @@ import { normalizeImageSrc } from "@/lib/utils";
 interface WorkspaceSidebarProps {
   logs: any[];
   fellowInterns: any[];
+  userWorkspaces?: any[];
   onOpenColleagues?: () => void;
 }
 
-export function WorkspaceSidebar({ logs, fellowInterns, onOpenColleagues }: WorkspaceSidebarProps) {
+export function WorkspaceSidebar({ logs, fellowInterns, userWorkspaces, onOpenColleagues }: WorkspaceSidebarProps) {
   return (
     <aside className="hidden lg:flex flex-col gap-6 sticky top-28 h-fit pb-12">
-      {/* Recent Activity Feed */}
+      {/* Your Workspaces Feed */}
       <section className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
         <div className="flex items-center gap-2.5 mb-6">
           <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300">
             <History size={16} />
           </div>
-          <h3 className="text-xs font-bold text-slate-900 dark:text-white">Recent Activity</h3>
+          <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Your Workspaces</h3>
         </div>
 
-        <div className="space-y-6 relative before:absolute before:left-[15px] before:top-2 before:bottom-2 before:w-px before:bg-slate-100 dark:before:bg-slate-800">
-          {(logs || []).slice(0, 5).map((log) => (
-            <div key={log.id} className="relative pl-10 group cursor-pointer">
-              <div className="absolute left-0 top-1 w-8 h-8 rounded-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center justify-center z-10 group-hover:border-blue-600 transition-colors shadow-sm">
-                 <div className={cn(
-                   "w-2 h-2 rounded-full",
-                   log.status === "approved" ? "bg-emerald-500" : "bg-amber-500"
-                 )} />
+        <div className="space-y-4">
+          {(userWorkspaces || []).map((workspace) => (
+            <a 
+              key={workspace.id} 
+              href={`/intern/workspace/${workspace.type}/${encodeURIComponent(workspace.title || 'workspace')}?appId=${workspace.id}`}
+              className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900/50 border border-transparent hover:border-slate-100 dark:hover:border-slate-800 transition-all group"
+            >
+              <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0">
+                <Image 
+                  src={normalizeImageSrc(workspace.logo_url, "/logo.png")}
+                  alt={workspace.company_name || "Company"}
+                  fill
+                  className="object-cover"
+                />
               </div>
-              <div>
-                <p className="text-[11px] font-bold text-slate-800 dark:text-slate-100 mb-0.5 line-clamp-2 leading-snug">
-                  {log.learning_log}
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-bold text-slate-900 dark:text-white truncate group-hover:text-blue-600 transition-colors">
+                  {workspace.title}
                 </p>
-                <div className="flex items-center gap-3 mt-1">
-                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tight">
-                    {format(new Date(log.log_date), "MMM dd")}
-                  </span>
-                  <span className={cn(
-                    "text-[8px] font-bold uppercase",
-                    log.status === "approved" ? "text-emerald-600" : "text-amber-600"
-                  )}>
-                    {log.status === "approved" ? "Verified" : "Pending"}
-                  </span>
-                </div>
+                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-tight truncate">
+                  {workspace.company_name}
+                </p>
               </div>
-            </div>
+              <ChevronRight size={14} className="text-slate-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
+            </a>
           ))}
           
-          {(logs || []).length === 0 && (
+          {(userWorkspaces || []).length === 0 && (
             <div className="text-center py-8">
               <AlertCircle size={20} className="mx-auto text-slate-300 mb-2" />
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">No activity yet</p>
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">No workspaces</p>
             </div>
           )}
         </div>

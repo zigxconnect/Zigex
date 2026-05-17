@@ -443,6 +443,53 @@ export async function getInternshipWorkspaceData(applicationId?: string) {
     .select("*")
     .eq("company_id", companyId);
 
+  // 10. Fetch all user workspaces for the sidebar
+  const { data: allUnifiedApps } = await supabase
+    .from("Applications")
+    .select(`
+      id,
+      application_type,
+      status,
+      internships (title, company_profiles(company_name, logo_url)),
+      programs (title, company_profiles(company_name, logo_url)),
+      event (title, company_profiles(company_name, logo_url))
+    `)
+    .eq("student_id", profile.id)
+    .in("status", ["accepted", "rsvp_confirmed"]);
+
+  const { data: allLegacyApps } = await supabase
+    .from("internship_applications")
+    .select(`
+      id,
+      status,
+      internships (title, company_profiles(company_name, logo_url))
+    `)
+    .eq("student_id", user.id)
+    .eq("status", "accepted");
+
+  const userWorkspaces = [
+    ...(allUnifiedApps || []).map(app => ({
+      id: app.id,
+      title: app.application_type === 'program' ? app.programs?.title : 
+             app.application_type === 'event' ? app.event?.title : 
+             app.internships?.title,
+      company_name: app.application_type === 'program' ? app.programs?.company_profiles?.company_name : 
+                    app.application_type === 'event' ? app.event?.company_profiles?.company_name : 
+                    app.internships?.company_profiles?.company_name,
+      logo_url: app.application_type === 'program' ? app.programs?.company_profiles?.logo_url : 
+                app.application_type === 'event' ? app.event?.company_profiles?.logo_url : 
+                app.internships?.company_profiles?.logo_url,
+      type: app.application_type || 'internship',
+    })),
+    ...(allLegacyApps || []).map(app => ({
+      id: app.id,
+      title: app.internships?.title,
+      company_name: app.internships?.company_profiles?.company_name,
+      logo_url: app.internships?.company_profiles?.logo_url,
+      type: 'internship',
+    }))
+  ];
+
   return {
     application,
     curriculum: curriculum || [],
@@ -452,7 +499,8 @@ export async function getInternshipWorkspaceData(applicationId?: string) {
     announcements: announcements || [],
     unreadCount,
     fellowInterns: fellowInterns || [],
-    fellowSupervisors: colleaguesSupervisors || []
+    fellowSupervisors: colleaguesSupervisors || [],
+    userWorkspaces
   };
 }
 
