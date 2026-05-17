@@ -19,9 +19,10 @@ import { cn } from "@/lib/utils";
 
 interface WidgetProps {
   user: any;
+  workspaces?: any[];
 }
 
-export function DashboardWidgets({ user }: WidgetProps) {
+export function DashboardWidgets({ user, workspaces }: WidgetProps) {
   return (
     <div className="hidden xl:flex flex-col gap-5 w-72 shrink-0 sticky top-20 h-fit pb-8">
       
@@ -76,7 +77,7 @@ export function DashboardWidgets({ user }: WidgetProps) {
         </div>
       </motion.div>
 
-      {/* Latest Activities */}
+      {/* Your Workspaces */}
       <motion.div 
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
@@ -86,75 +87,46 @@ export function DashboardWidgets({ user }: WidgetProps) {
         <div className="flex items-center justify-between mb-5">
           <div className="space-y-0.5">
              <h3 className="text-[11px] font-bold text-[#155DFC] uppercase tracking-wider">Feed</h3>
-             <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-wide">Latest Activities</p>
+             <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-wide">Your Workspaces</p>
           </div>
           <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg text-[#155DFC]">
-            <Activity size={16} />
+            <Briefcase size={16} />
           </div>
         </div>
 
-        <div className="relative space-y-6 before:absolute before:left-[13px] before:top-2 before:bottom-2 before:w-[1px] before:bg-slate-100 dark:before:bg-slate-800">
-          {[
-            { 
-              title: "New Task assigned", 
-              desc: "Supervisor Dr. Fadiga: Optimise UI", 
-              time: "12m ago", 
-              icon: Zap, 
-              isNew: true 
-            },
-            { 
-              title: "Official Announcement", 
-              desc: "Zigex Summit registration open", 
-              time: "2h ago", 
-              icon: Target 
-            },
-            { 
-              title: "Company Posting", 
-              desc: "Google: ML Engineer Internship", 
-              time: "4h ago", 
-              icon: Briefcase 
-            },
-            { 
-              title: "Task Submitted", 
-              desc: "Refactored Dashboard Layout", 
-              time: "Yesterday", 
-              icon: Activity 
-            }
-          ].map((activity, i) => (
-            <div key={i} className="relative pl-10 group cursor-pointer">
-              {/* Timeline Dot with Icon */}
-              <div className="absolute left-0 top-0 w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-100/50 dark:border-blue-800/30 flex items-center justify-center text-[#155DFC] transition-all duration-500 group-hover:scale-110 group-hover:bg-[#155DFC] group-hover:text-white z-10">
-                <activity.icon size={12} strokeWidth={3} />
+        <div className="space-y-4">
+          {(workspaces || []).map((workspace: any) => (
+            <Link 
+              key={workspace.id} 
+              href={`/intern/workspace/${workspace.type}/${encodeURIComponent(workspace.title || 'workspace')}?appId=${workspace.id}`}
+              className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 transition-all group cursor-pointer"
+            >
+              <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-white dark:bg-slate-900 shrink-0 shadow-sm">
+                <img 
+                  src={workspace.logo_url || "/logo.png"}
+                  alt={workspace.company_name || "Company"}
+                  className="w-full h-full object-cover"
+                />
               </div>
-
-              <div className="space-y-0.5">
-                <div className="flex items-center justify-between gap-2">
-                  <h4 className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-tight truncate group-hover:text-[#155DFC] transition-colors">
-                    {activity.title}
-                  </h4>
-                  <span className="text-[8px] font-bold text-slate-400 uppercase shrink-0">{activity.time}</span>
-                </div>
-                <p className="text-[9px] font-medium text-slate-500 dark:text-slate-400 leading-tight line-clamp-1 italic">
-                  {activity.desc}
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-bold text-slate-900 dark:text-white truncate group-hover:text-[#155DFC] transition-colors">
+                  {workspace.title}
                 </p>
-                {activity.isNew && (
-                  <div className="flex items-center gap-1.5 pt-1">
-                    <span className="w-1 h-1 rounded-full bg-[#155DFC] animate-pulse" />
-                    <span className="text-[8px] font-black text-[#155DFC] uppercase tracking-widest">Active</span>
-                  </div>
-                )}
+                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-tight truncate">
+                  {workspace.company_name}
+                </p>
               </div>
-            </div>
+              <ChevronRight size={14} className="text-slate-300 group-hover:text-[#155DFC] group-hover:translate-x-1 transition-all" />
+            </Link>
           ))}
+          
+          {(workspaces || []).length === 0 && (
+            <div className="text-center py-6">
+              <Activity size={20} className="mx-auto text-slate-300 mb-2" />
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">No active workspaces</p>
+            </div>
+          )}
         </div>
-
-        <Link 
-          href="/dashboard/activity"
-          className="mt-6 w-full h-10 border border-slate-100 dark:border-slate-800 hover:border-[#155DFC] text-slate-400 hover:text-[#155DFC] rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all duration-300"
-        >
-          <span>View All Signals</span>
-          <ArrowUpRight size={14} />
-        </Link>
       </motion.div>
 
       {/* Zila terminal */}

@@ -22,9 +22,10 @@ export const metadata = {
 
 export default async function FeedPage({ searchParams }: FeedPageProps) {
   const resolvedParams = await searchParams;
-  const [userData, stats] = await Promise.all([
+  const [userData, stats, workspaces] = await Promise.all([
     getProfileInfo(),
-    getPlatformStats()
+    getPlatformStats(),
+    import('@/lib/actions/intenship.actions').then(m => m.getUserWorkspaces())
   ]);
 
   return (
@@ -130,7 +131,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
       </div>
 
       {/* ═══ Sidebar Column ═══ */}
-      <DashboardWidgets user={userData} />
+      <DashboardWidgets user={userData} workspaces={workspaces} />
 
       {/* ── Profile Recommendation Popup ── */}
       <ProfileRecommendationPopup user={userData} />

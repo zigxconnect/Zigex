@@ -84,6 +84,7 @@ interface InternWorkspaceClientProps {
     fellowInterns: any[];
     fellowSupervisors: any[];
     userWorkspaces?: any[];
+    studentProfile?: any;
   };
 }
 
@@ -100,7 +101,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
   const [activeTab, setActiveTab] = useState("overview");
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [unreadAnnouncements, setUnreadAnnouncements] = useState(data.unreadCount || 0);
-  const { application, curriculum, logs, tasks: initialTasks, announcements = [], fellowInterns = [], fellowSupervisors = [] } = data;
+  const { application, curriculum, logs, tasks: initialTasks, announcements = [], fellowInterns = [], fellowSupervisors = [], studentProfile } = data;
   const [tasks, setTasks] = useState(initialTasks || []);
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [isTaskDetailsOpen, setIsTaskDetailsOpen] = useState(false);
@@ -481,23 +482,23 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                     {/* Program Identity Card (Integrated Header) */}
                     <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-8 shadow-sm">
                       <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6 sm:gap-8">
-                        <div className="flex items-start gap-4 sm:gap-6">
-                          <div className="relative h-14 w-14 sm:h-20 sm:w-20 rounded-xl sm:rounded-2xl overflow-hidden bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-md shrink-0">
+                        <div className="flex items-start gap-4 sm:gap-6 min-w-0">
+                          <div className="relative h-14 w-14 sm:h-20 sm:w-20 rounded-full overflow-hidden bg-slate-50 dark:bg-slate-900 border-2 border-[#155DFC] shadow-lg shadow-blue-500/20 shrink-0">
                             <Image
-                              src={normalizeImageSrc(company?.logo_url, "/logo.png")}
-                              alt={company?.company_name || "Company"}
+                              src={normalizeImageSrc(studentProfile?.avatar_url, "/default-avatar.svg")}
+                              alt="Student Avatar"
                               fill
-                              className="object-cover p-2 sm:p-3"
+                              className="object-cover"
                             />
                           </div>
-                          <div className="space-y-2 sm:space-y-3">
+                          <div className="space-y-2 sm:space-y-3 min-w-0 flex-1">
                             <div className="flex items-center gap-2 sm:gap-3">
                               <Badge className="bg-blue-600 text-white font-black px-1.5 sm:px-2 py-0.5 rounded-md text-[7px] sm:text-[8px] uppercase tracking-widest border-0">
                                 {isProgram ? "Program Track" : isEvent ? "Event Access" : "Internship"}
                               </Badge>
                               <span className="text-[8px] sm:text-[9px] font-black text-slate-300 uppercase tracking-widest">ID: {application.id.slice(0, 8)}</span>
                             </div>
-                            <h1 className="text-lg sm:text-xl lg:text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-tight max-w-xl">
+                            <h1 className="text-lg sm:text-xl lg:text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-tight truncate">
                               {opportunity?.title}
                             </h1>
                             <div className="flex flex-wrap items-center gap-2 sm:gap-4">

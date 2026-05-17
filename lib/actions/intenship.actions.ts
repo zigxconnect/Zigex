@@ -188,7 +188,7 @@ export async function getInternshipWorkspaceData(applicationId?: string) {
   // Get the student profile
   const { data: profile } = await supabase
     .from("student_profiles")
-    .select("id")
+    .select("id, avatar_url")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -443,7 +443,37 @@ export async function getInternshipWorkspaceData(applicationId?: string) {
     .select("*")
     .eq("company_id", companyId);
 
-  // 10. Fetch all user workspaces for the sidebar
+  const userWorkspaces = await getUserWorkspaces();
+
+  return {
+    application,
+    curriculum: curriculum || [],
+    logs: logs || [],
+    tasks: tasks || [],
+    notes: notes || [],
+    announcements: announcements || [],
+    unreadCount,
+    fellowInterns: fellowInterns || [],
+    fellowSupervisors: colleaguesSupervisors || [],
+    userWorkspaces,
+    studentProfile: profile
+  };
+}
+
+export async function getUserWorkspaces() {
+  const supabase = await createServerActionClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) return [];
+
+  const { data: profile } = await supabase
+    .from("student_profiles")
+    .select("id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!profile) return [];
+
   const { data: allUnifiedApps } = await supabase
     .from("Applications")
     .select(`
@@ -467,7 +497,7 @@ export async function getInternshipWorkspaceData(applicationId?: string) {
     .eq("student_id", user.id)
     .eq("status", "accepted");
 
-  const userWorkspaces = [
+  return [
     ...(allUnifiedApps || []).map(app => ({
       id: app.id,
       title: app.application_type === 'program' ? app.programs?.title : 
@@ -489,19 +519,6 @@ export async function getInternshipWorkspaceData(applicationId?: string) {
       type: 'internship',
     }))
   ];
-
-  return {
-    application,
-    curriculum: curriculum || [],
-    logs: logs || [],
-    tasks: tasks || [],
-    notes: notes || [],
-    announcements: announcements || [],
-    unreadCount,
-    fellowInterns: fellowInterns || [],
-    fellowSupervisors: colleaguesSupervisors || [],
-    userWorkspaces
-  };
 }
 
 /**
