@@ -59,7 +59,7 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile, stats }: WelcomeC
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className="relative bg-white rounded-[2rem] md:rounded-[3rem] w-full mx-auto shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] border border-slate-100 overflow-hidden mb-6 md:mb-12 group/card"
+      className="relative bg-white rounded-[2rem] md:rounded-[3rem] w-full mx-auto shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] border border-slate-100 overflow-hidden group/card"
     >
       {/* 1. Immersive Cover Header */}
       <div className="relative h-32 sm:h-44 md:h-52 lg:h-60 w-full overflow-hidden">

@@ -4,11 +4,13 @@ import StudentDirectoryClient from "@/components/sections/dashboard/StudentDirec
 import { getProfileInfo } from "@/lib/actions/profile.actions";
 import { WelcomeCard } from "@/components/sections/dashboard/WelcomeCard";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { DashboardWidgets } from "@/components/feed/DashboardWidgets";
 
 export default async function StudentDirectoryPage() {
-  const [profiles, userData] = await Promise.all([
+  const [profiles, userData, workspaces] = await Promise.all([
     getAllUsers(1000, 0), // Fetch up to 1000 profiles to ensure we get all students
-    getProfileInfo()
+    getProfileInfo(),
+    import('@/lib/actions/intenship.actions').then(m => m.getUserWorkspaces())
   ]);
 
   // Filter out current user from directory list, but keep track of ID for stats
@@ -74,9 +76,15 @@ export default async function StudentDirectoryPage() {
   const userStats = userData?.profile?.id ? statsMap[userData.profile.id] : undefined;
 
   return (
-    <>
-      <WelcomeCard user={userData} stats={userStats} />
-      <StudentDirectoryClient profiles={profilesWithStats} />
-    </>
+    <div className="flex flex-col xl:flex-row gap-6 pb-12">
+      {/* ═══ Main Content Column ═══ */}
+      <div className="flex-1 min-w-0 space-y-6">
+        <WelcomeCard user={userData} stats={userStats} />
+        <StudentDirectoryClient profiles={profilesWithStats} />
+      </div>
+
+      {/* ═══ Sidebar Column ═══ */}
+      <DashboardWidgets user={userData} workspaces={workspaces} />
+    </div>
   );
 }
