@@ -91,7 +91,7 @@ export const UnifiedFeedCard = memo(({ item, onLiveClick, onClick, index = 0, is
   return (
     <Card
       onClick={handleCardClick}
-      className="group relative overflow-hidden border border-slate-100 dark:border-slate-800/50 hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-500 bg-white dark:bg-slate-900 rounded-2xl h-full flex flex-col cursor-pointer"
+      className="group relative overflow-hidden border border-slate-100 dark:border-slate-800/30 hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-500 bg-card text-card-foreground rounded-2xl h-full flex flex-col cursor-pointer"
     >
       {/* Image */}
       <div className="relative h-32 sm:h-36 flex-shrink-0 overflow-hidden">

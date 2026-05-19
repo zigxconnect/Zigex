@@ -127,7 +127,7 @@ export function FeedGridClient({ initialData, error }: FeedGridClientProps) {
                 "flex items-center gap-2 px-4 py-2 rounded-full text-[12px] font-semibold whitespace-nowrap transition-all duration-300 border shrink-0",
                 isActive
                   ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white shadow-sm"
-                  : "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-700 dark:hover:text-slate-200"
+                  : "bg-card text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-650 hover:text-slate-700 dark:hover:text-slate-200"
               )}
             >
               <cat.icon size={14} strokeWidth={2} />

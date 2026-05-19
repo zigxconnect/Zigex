@@ -197,7 +197,7 @@ export default function StudentProfileClient({
                   <div className="w-px h-6 bg-border"></div>
                   <div>
                     <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">Activities</p>
-                    <p className="text-sm font-black text-[#155DFC]">{pinnedItems.length || 2}</p>
+                    <p className="text-sm font-black text-[#155DFC] dark:text-slate-300">{pinnedItems.length || 2}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -238,20 +238,20 @@ export default function StudentProfileClient({
                     </h1>
                     {isSupervisor ? (
                       <div className="flex items-center gap-1">
-                        <ShieldCheck className="text-[#155DFC] w-4.5 h-4.5" title="Verified Supervisor" />
-                        <span className="bg-[#155DFC]/10 dark:bg-[#155DFC]/20 text-[#155DFC] text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border border-[#155DFC]/20">
+                        <ShieldCheck className="text-[#155DFC] dark:text-slate-300 w-4.5 h-4.5" title="Verified Supervisor" />
+                        <span className="bg-[#155DFC]/10 dark:bg-[#155DFC]/20 text-[#155DFC] dark:text-slate-300 text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border border-[#155DFC]/20">
                           Supervisor
                         </span>
                       </div>
                     ) : (
                       <div className="flex items-center gap-1.5">
-                        <CheckCircle2 className="text-[#155DFC] w-4.5 h-4.5" title="Verified Intern" />
+                        <CheckCircle2 className="text-[#155DFC] dark:text-slate-300 w-4.5 h-4.5" title="Verified Intern" />
                       </div>
                     )}
                   </div>
-                  <div className="flex flex-wrap items-center gap-2 text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">
-                    <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded-full border border-slate-100 dark:border-slate-800">
-                      <MapPin size={10} className="text-[#155DFC]" />
+                  <div className="flex flex-wrap items-center gap-2 text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
+                    <div className="flex items-center gap-1 bg-muted/50 px-2 py-1 rounded-full border border-border">
+                      <MapPin size={10} className="text-[#155DFC] dark:text-slate-300" />
                       <span>{data.university || "Global Cohort"}</span>
                     </div>
                     <div
@@ -261,37 +261,37 @@ export default function StudentProfileClient({
                         }
                       }}
                       className={cn(
-                        "flex items-center gap-1 hover:text-foreground cursor-pointer transition-colors bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded-full border border-slate-100 dark:border-slate-800",
-                        (!isSupervisor && connectionStats && connectionStats.count > 0) && "hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95"
+                        "flex items-center gap-1 hover:text-foreground cursor-pointer transition-colors bg-muted/50 px-2 py-1 rounded-full border border-border",
+                        (!isSupervisor && connectionStats && connectionStats.count > 0) && "hover:bg-muted active:scale-95"
                       )}
                     >
-                      <Users size={10} className="text-[#155DFC]" />
+                      <Users size={10} className="text-[#155DFC] dark:text-slate-300" />
                       <span>{isSupervisor ? `${superviseesCount} Supervisees` : `${connectionStats?.count || 0} Connections`}</span>
                     </div>
                   </div>
                   {isSupervisor && (
                     <div className="mt-2 text-[10px] font-extrabold text-slate-600 dark:text-slate-400 flex items-center gap-1.5 bg-blue-50/50 dark:bg-blue-950/20 px-2.5 py-1 rounded-lg border border-blue-100/50 dark:border-blue-900/10 w-fit">
                       <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                      <span>Actively supervising <strong className="text-[#155DFC] font-black">{superviseesCount}</strong> {superviseesCount === 1 ? 'student builder' : 'student builders'} at Zigex</span>
+                      <span>Actively supervising <strong className="text-[#155DFC] dark:text-slate-300 font-black">{superviseesCount}</strong> {superviseesCount === 1 ? 'student builder' : 'student builders'} at Zigex</span>
                     </div>
                   )}
                 </div>
 
                 {/* IMMEDIATELY VISIBLE BADGES IN HERO PANEL (AS REQUESTED) */}
                 <div
-                  className="flex items-center gap-2 bg-slate-50/80 dark:bg-slate-900/60 border border-slate-150 dark:border-slate-850 rounded-xl px-3 py-2 shrink-0 self-start md:self-center shadow-sm cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors"
+                  className="flex items-center gap-2 bg-muted/40 border border-border rounded-xl px-3 py-2 shrink-0 self-start md:self-center shadow-sm cursor-pointer hover:bg-muted transition-colors"
                   onClick={() => setSelectedBadge(unlockedBadges[0] || badges[0] || null)}
                 >
                   <div className="text-left">
                     <p className="text-[7.5px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Unlocked Badges</p>
                     <p className="text-[9.5px] font-bold text-slate-800 dark:text-slate-200 mt-0.5">{levelText}</p>
                   </div>
-                  <div className="w-px h-7 bg-slate-200 dark:bg-slate-800 mx-1" />
+                  <div className="w-px h-7 bg-border mx-1" />
                   <div className="flex items-center -space-x-1" onClick={(e) => e.stopPropagation()}>
                     {unlockedBadges.length > 0 ? (
                       unlockedBadges.slice(0, 4).map((b, i) => (
                         <div key={i} className="group relative cursor-pointer" title={`${b.title} (${b.tier} Badge)`} onClick={() => setSelectedBadge(b)}>
-                          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden border border-white dark:border-slate-900 bg-white/85 backdrop-blur-sm shadow-sm transition-transform duration-300 hover:scale-125 hover:z-20">
+                          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden border border-border bg-background/80 backdrop-blur-sm shadow-sm transition-transform duration-300 hover:scale-125 hover:z-20">
                             <Image src={b.icon} alt={b.title} width={40} height={40} className="w-full h-full object-contain" />
                           </div>
                         </div>
@@ -316,8 +316,8 @@ export default function StudentProfileClient({
               {/* Quick Skills & Cohorts Row */}
               <div className="pt-2 flex flex-wrap items-center gap-2">
                 {skills.slice(0, 3).map((skill: string, i: number) => (
-                  <div key={i} className="flex items-center gap-1 px-2.5 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-full text-[9px] font-black uppercase tracking-wider shadow-sm">
-                    <Rocket size={10} className="text-[#155DFC]" />
+                  <div key={i} className="flex items-center gap-1 px-2.5 py-1 bg-muted border border-border text-foreground rounded-full text-[9px] font-black uppercase tracking-wider shadow-sm">
+                    <Rocket size={10} className="text-[#155DFC] dark:text-slate-300" />
                     {skill}
                   </div>
                 ))}
@@ -333,9 +333,9 @@ export default function StudentProfileClient({
 
         {/* ── Accepted Programs, Internships & Cohorts (GitHub Pin Layout) ── */}
         <div id="accepted-roles" className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
-          <div className="p-4 sm:p-5 border-b border-border bg-slate-50/50 dark:bg-slate-900/20 flex items-center justify-between">
-            <h3 className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-              <Award size={16} className="text-[#155DFC]" />
+          <div className="p-4 sm:p-5 border-b border-border bg-muted/30 flex items-center justify-between">
+            <h3 className="text-xs sm:text-sm font-extrabold text-foreground tracking-tight flex items-center gap-2">
+              <Award size={16} className="text-[#155DFC] dark:text-slate-300" />
               Accepted Programs, Internships & Cohorts
             </h3>
             <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">
@@ -365,8 +365,8 @@ export default function StudentProfileClient({
 
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
-                          <Icon size={14} className="text-[#155DFC]" />
+                        <div className="flex items-center gap-1.5 text-muted-foreground">
+                          <Icon size={14} className="text-[#155DFC] dark:text-slate-300" />
                           <span className="text-[10px] font-bold uppercase tracking-wider">{item.tag}</span>
                         </div>
                         <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20 text-[8px] font-black uppercase tracking-wider">
@@ -374,7 +374,7 @@ export default function StudentProfileClient({
                         </span>
                       </div>
 
-                      <h4 className="text-xs sm:text-sm font-black text-slate-900 dark:text-white group-hover:text-[#155DFC] transition-colors leading-snug">
+                      <h4 className="text-xs sm:text-sm font-black text-foreground group-hover:text-[#155DFC] dark:text-slate-300 transition-colors leading-snug">
                         {item.title}
                       </h4>
                       <p className="text-[10px] font-bold text-muted-foreground mt-0.5">
@@ -402,13 +402,13 @@ export default function StudentProfileClient({
                       )}
                     </div>
 
-                    <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-3 mt-4">
-                      <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500">
+                    <div className="flex items-center justify-between border-t border-border pt-3 mt-4">
+                      <span className="text-[9px] font-bold text-muted-foreground">
                         🗓️ {item.period}
                       </span>
                       <div className="flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-[#155DFC]" />
-                        <span className="text-[9px] font-bold text-[#155DFC] uppercase tracking-wider">Zigex Verified</span>
+                        <span className="text-[9px] font-bold text-[#155DFC] dark:text-slate-300 uppercase tracking-wider">Zigex Verified</span>
                       </div>
                     </div>
                   </motion.div>
@@ -422,7 +422,7 @@ export default function StudentProfileClient({
         <div className="bg-card border border-border rounded-2xl p-6 shadow-sm relative overflow-hidden">
           <div className="absolute top-0 right-0 w-24 h-24 bg-[#155DFC]/5 rounded-bl-[80px] pointer-events-none" />
           <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-1.5">
-            <Globe size={14} className="text-[#155DFC]" />
+            <Globe size={14} className="text-[#155DFC] dark:text-slate-300" />
             Zigex Venture Journey Map
           </h3>
           <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-6 md:gap-4">
@@ -504,7 +504,7 @@ export default function StudentProfileClient({
           <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6 shadow-sm">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-[14px] font-extrabold text-foreground tracking-tight flex items-center gap-2">
-                <Calendar size={16} className="text-[#155DFC]" />
+                <Calendar size={16} className="text-[#155DFC] dark:text-slate-300" />
                 Cohort & Developer Logs Activity Heatmap
               </h3>
               <span className="text-[10px] font-black text-muted-foreground bg-secondary px-2 py-0.5 rounded-full uppercase tracking-wider">365-Day Timeline</span>
@@ -708,7 +708,7 @@ export default function StudentProfileClient({
               </div>
               <div className="mt-4 pt-3 border-t border-border hidden md:block w-full">
                 <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-bold uppercase tracking-wider">
-                  <Award size={12} className="text-[#155DFC]" />
+                  <Award size={12} className="text-[#155DFC] dark:text-slate-300" />
                   <span>Gamification Engine</span>
                 </div>
               </div>
@@ -854,7 +854,7 @@ export default function StudentProfileClient({
                 {/* Supervisors section */}
                 {connectionStats.supervisors.length > 0 && (
                   <div>
-                    <h4 className="text-[10px] font-black text-[#155DFC] uppercase tracking-widest mb-3 flex items-center gap-1">
+                    <h4 className="text-[10px] font-black text-[#155DFC] dark:text-slate-300 uppercase tracking-widest mb-3 flex items-center gap-1">
                       <span>Supervisors Assigned</span>
                       <span className="w-1.5 h-1.5 rounded-full bg-[#155DFC]" />
                     </h4>
@@ -866,7 +866,7 @@ export default function StudentProfileClient({
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-extrabold text-[13px] text-slate-900 dark:text-white leading-snug truncate">{sup.name}</p>
-                            <span className="text-[9px] text-[#155DFC] font-black uppercase tracking-wider block mt-0.5">{sup.role}</span>
+                            <span className="text-[9px] text-[#155DFC] dark:text-slate-300 font-black uppercase tracking-wider block mt-0.5">{sup.role}</span>
                           </div>
                           <span className="px-2 py-0.5 bg-blue-500/10 text-blue-500 dark:bg-blue-500/20 text-[7px] font-black uppercase tracking-widest rounded border border-blue-500/20">
                             Supervisor
@@ -898,7 +898,7 @@ export default function StudentProfileClient({
                             </div>
                             <Link
                               href={peerProfileUrl}
-                              className="px-3 py-1.5 rounded-lg border border-border hover:border-blue-500/35 hover:bg-[#155DFC]/5 text-[9px] font-extrabold text-[#155DFC] transition-all whitespace-nowrap active:scale-95 uppercase tracking-wider"
+                              className="px-3 py-1.5 rounded-lg border border-border hover:border-blue-500/35 hover:bg-[#155DFC]/5 text-[9px] font-extrabold text-[#155DFC] dark:text-slate-300 transition-all whitespace-nowrap active:scale-95 uppercase tracking-wider"
                               onClick={() => setIsConnectionsDrawerOpen(false)}
                             >
                               View Profile

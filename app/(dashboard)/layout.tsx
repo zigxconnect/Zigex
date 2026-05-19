@@ -21,7 +21,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" style={{ zoom: 0.9 }}>
       {/* Client Layout Component handles all the interactive state and includes header */}
       <DashboardClientLayout user={userData} showUploadLive={showUploadLive}>
         {children}

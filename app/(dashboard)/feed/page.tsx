@@ -34,31 +34,31 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
       <div className="flex-1 min-w-0 space-y-6">
 
         {/* ── Hero Banner ── */}
-        <section className="relative overflow-hidden rounded-2xl bg-[#155DFC] min-h-[220px]">
+        <section className="relative overflow-hidden rounded-2xl bg-slate-50 dark:bg-[#161b22] border border-slate-100 dark:border-slate-800/60 min-h-[220px]">
           <div className="absolute top-0 right-0 w-1/2 h-full">
-            <div className="absolute inset-0 bg-gradient-to-l from-blue-600/50 to-transparent" />
-            <div className="absolute right-6 bottom-2 text-white/[0.06] font-black text-[160px] leading-none tracking-tighter select-none pointer-events-none hidden md:block">Z</div>
+            <div className="absolute inset-0 bg-gradient-to-l from-blue-600/5 dark:from-blue-500/10 to-transparent" />
+            <div className="absolute right-6 bottom-2 text-slate-200/10 dark:text-white/[0.03] font-black text-[160px] leading-none tracking-tighter select-none pointer-events-none hidden md:block">Z</div>
           </div>
-          <div className="absolute -bottom-12 -left-12 w-40 h-40 bg-blue-400/15 rounded-full blur-3xl" />
+          <div className="absolute -bottom-12 -left-12 w-40 h-40 bg-blue-400/5 dark:bg-blue-400/10 rounded-full blur-3xl" />
 
           <div className="relative z-10 grid md:grid-cols-[1fr_auto] items-center h-full">
             <div className="p-7 sm:p-8 space-y-4">
               <div className="space-y-1.5">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white leading-[1.1] tracking-tighter drop-shadow-xl">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 dark:text-white leading-[1.1] tracking-tighter drop-shadow-sm">
                   Discover. Learn. Grow.
                 </h1>
-                <p className="text-[13px] sm:text-base text-blue-100/90 font-medium max-w-xl leading-relaxed drop-shadow-md">
+                <p className="text-[13px] sm:text-base text-slate-600 dark:text-slate-400 font-medium max-w-xl leading-relaxed">
                   Find programs, internships, and events that shape your
                   future.
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-3">
-                <Link href="#feed-content" className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-[#155DFC] rounded-full text-[12px] font-bold hover:shadow-lg hover:shadow-blue-900/20 transition-all duration-300 active:scale-[0.97]">
+                <Link href="#feed-content" className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#155DFC] dark:bg-[#1f6feb] text-white rounded-full text-[12px] font-bold hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-300 active:scale-[0.97]">
                   Explore Opportunities
                 </Link>
-                <button className="inline-flex items-center gap-2 px-4 py-2.5 text-white/90 hover:text-white text-[12px] font-semibold transition-colors">
-                  <div className="w-7 h-7 rounded-full border-2 border-white/30 flex items-center justify-center">
-                    <Play size={10} className="ml-0.5" fill="white" />
+                <button className="inline-flex items-center gap-2 px-4 py-2.5 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-[12px] font-semibold transition-colors">
+                  <div className="w-7 h-7 rounded-full border-2 border-slate-300 dark:border-slate-700 flex items-center justify-center">
+                    <Play size={10} className="ml-0.5 fill-current text-current" />
                   </div>
                   How it works
                 </button>
@@ -66,21 +66,21 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
             </div>
 
             {/* Banner Visual: Right side on desktop, Background on mobile */}
-            <div className="absolute right-0 top-0 h-full w-full md:relative md:w-[300px] md:h-[200px] md:mt-4 md:rounded-2xl md:overflow-hidden md:border md:border-white/20 md:shadow-2xl md:transform md:rotate-3 md:hover:rotate-0 md:transition-transform md:duration-700 md:group z-0">
+            <div className="absolute right-0 top-0 h-full w-full md:relative md:w-[300px] md:h-[200px] md:mt-4 md:rounded-2xl md:overflow-hidden md:border md:border-slate-200 dark:md:border-slate-800 md:shadow-2xl md:transform md:rotate-3 md:hover:rotate-0 md:transition-transform md:duration-700 md:group z-0">
               <div className="relative w-full h-full">
                 <Image
                   src="https://i.ibb.co/1YqtdCtK/Chat-GPT-Image-Apr-23-2026-03-29-43-PM.png"
                   alt="Dashboard Preview"
                   fill
                   priority
-                  className="object-cover opacity-15 md:opacity-100"
+                  className="object-cover opacity-10 dark:opacity-40 md:opacity-100"
                 />
                 {/* Mobile overlay: Subtle mist to ensure text readability */}
-                <div className="absolute inset-0 bg-gradient-to-r from-[#155DFC] via-[#155DFC]/30 to-transparent md:hidden" />
+                <div className="absolute inset-0 bg-gradient-to-r from-slate-50 via-slate-50/50 to-transparent dark:from-[#161b22] dark:via-[#161b22]/50 dark:to-transparent md:hidden" />
                 
                 {/* Desktop overlay */}
-                <div className="hidden md:block absolute inset-0 bg-gradient-to-tr from-[#155DFC]/40 via-transparent to-transparent mix-blend-multiply opacity-40" />
-                <div className="hidden md:block absolute inset-0 shadow-[inset_0_0_40px_rgba(21,93,252,0.3)]" />
+                <div className="hidden md:block absolute inset-0 bg-gradient-to-tr from-slate-100/40 dark:from-[#161b22]/40 via-transparent to-transparent mix-blend-multiply opacity-40" />
+                <div className="hidden md:block absolute inset-0 shadow-[inset_0_0_40px_rgba(21,93,252,0.1)] dark:shadow-[inset_0_0_40px_rgba(21,93,252,0.2)]" />
               </div>
             </div>
           </div>

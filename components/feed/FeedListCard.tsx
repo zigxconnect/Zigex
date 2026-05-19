@@ -56,7 +56,7 @@ export function FeedListCard({ item, index = 0, isOpen }: FeedListCardProps) {
       className="w-full"
     >
       <Link href={href} className="block group">
-        <Card className="relative overflow-hidden border border-slate-100 dark:border-slate-800/50 shadow-[0_10px_40px_-20px_rgba(0,0,0,0.05)] hover:shadow-[0_40px_100px_-20px_rgba(21,93,252,0.15)] transition-all duration-700 bg-white dark:bg-slate-900 rounded-[3rem] flex flex-col sm:flex-row gap-6 p-5 sm:p-6 group">
+        <Card className="relative overflow-hidden border border-slate-100 dark:border-slate-800/30 shadow-[0_10px_40px_-20px_rgba(0,0,0,0.05)] hover:shadow-[0_40px_100px_-20px_rgba(21,93,252,0.15)] transition-all duration-700 bg-card text-card-foreground rounded-[3rem] flex flex-col sm:flex-row gap-6 p-5 sm:p-6 group">
           
           {/* High-Fidelity Image Container */}
           <div className="relative w-full sm:w-80 h-56 sm:h-auto flex-shrink-0 overflow-hidden rounded-[2.2rem] shadow-inner">
@@ -74,7 +74,7 @@ export function FeedListCard({ item, index = 0, isOpen }: FeedListCardProps) {
 
             {/* Premium Badges */}
             <div className="absolute top-5 left-5 flex flex-col gap-2.5 z-10">
-              <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl px-5 py-2.5 rounded-[1.25rem] shadow-2xl border border-white/20">
+              <div className="bg-card/95 dark:bg-slate-950/95 backdrop-blur-2xl px-5 py-2.5 rounded-[1.25rem] shadow-2xl border border-white/20">
                 <span className="text-[#155DFC] text-[9px] font-black uppercase tracking-[0.3em]">
                   {item._type.slice(0, -1)}
                 </span>
@@ -97,7 +97,7 @@ export function FeedListCard({ item, index = 0, isOpen }: FeedListCardProps) {
           <div className="flex-1 flex flex-col py-2">
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-4">
-                <div className="w-8 h-8 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-800 ring-4 ring-slate-50 dark:ring-slate-800/50 shadow-sm flex-shrink-0">
+                <div className="w-8 h-8 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-950 ring-4 ring-slate-50 dark:ring-slate-950/55 shadow-sm flex-shrink-0">
                   <Image
                     src={normalizeImageSrc(item.company?.logo_url || "/zigex.svg")}
                     alt={companyName}
@@ -117,7 +117,7 @@ export function FeedListCard({ item, index = 0, isOpen }: FeedListCardProps) {
 
               {/* Share Interaction */}
               <div 
-                className="w-11 h-11 bg-slate-50 dark:bg-slate-800 hover:bg-[#155DFC] text-slate-400 hover:text-white rounded-2xl flex items-center justify-center transition-all duration-500 border border-transparent hover:border-blue-400/20"
+                className="w-11 h-11 bg-slate-50 dark:bg-slate-950/40 hover:bg-[#155DFC] text-slate-400 hover:text-white rounded-2xl flex items-center justify-center transition-all duration-500 border border-transparent hover:border-blue-400/20"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
               >
                  <ShareButton
@@ -143,14 +143,14 @@ export function FeedListCard({ item, index = 0, isOpen }: FeedListCardProps) {
             <div className="mt-auto flex flex-col sm:flex-row sm:items-center justify-between gap-6 pt-4 border-t border-slate-50 dark:border-slate-800/50">
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-3 text-slate-400">
-                  <div className="w-8 h-8 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-slate-50 dark:bg-slate-950/40 flex items-center justify-center">
                     <MapPin size={14} strokeWidth={2.5} className="text-[#155DFC]" />
                   </div>
                   <span className="text-[10px] font-black uppercase tracking-widest">{item.location}</span>
                 </div>
                 
                 <div className="hidden md:flex items-center gap-3 text-slate-400">
-                  <div className="w-8 h-8 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-slate-50 dark:bg-slate-950/40 flex items-center justify-center">
                     <Sparkles size={14} strokeWidth={2.5} className="text-[#155DFC]" />
                   </div>
                   <span className="text-[10px] font-black uppercase tracking-widest">Featured</span>

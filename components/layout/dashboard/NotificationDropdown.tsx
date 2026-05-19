@@ -177,7 +177,7 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
         onClick={toggleDropdown}
         className={cn(
           "relative w-10 h-10 transition-all duration-300 active:scale-90 flex items-center justify-center group outline-none",
-          isOpen ? "text-[#155DFC]" : "text-slate-400 hover:text-[#155DFC]"
+          isOpen ? "text-[#155DFC] dark:text-slate-300" : "text-slate-400 hover:text-[#155DFC] dark:hover:text-slate-300"
         )}
       >
         <Bell size={20} className={cn("transition-all duration-500", isOpen ? "scale-110" : "group-hover:rotate-12")} strokeWidth={3} />
@@ -199,10 +199,10 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.98 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="fixed inset-x-0 top-[73px] mx-auto w-full md:absolute md:right-[-20px] md:left-auto md:top-full md:mt-0 md:w-[420px] md:mx-0 md:inset-x-auto bg-white dark:bg-slate-950 border-x md:border-l border-b border-slate-100 dark:border-slate-800 shadow-[20px_40px_80px_rgba(0,0,0,0.15)] z-[100] overflow-hidden rounded-none"
+            className="fixed inset-x-0 top-[73px] mx-auto w-full md:absolute md:right-[-20px] md:left-auto md:top-full md:mt-0 md:w-[420px] md:mx-0 md:inset-x-auto bg-card border-x md:border-l border-b border-border shadow-[20px_40px_80px_rgba(0,0,0,0.15)] z-[100] overflow-hidden rounded-none"
           >
             {/* Glossy Header */}
-            <div className="px-8 py-6 flex justify-between items-center border-b border-slate-50 dark:border-slate-900/50">
+            <div className="px-8 py-6 flex justify-between items-center border-b border-border bg-muted/10">
                <div>
                  <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter">Notifications</h3>
                  <p className="text-[10px] font-black text-red-500 uppercase tracking-widest mt-0.5">
@@ -221,7 +221,7 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
                  )}
                  <button
                    onClick={() => setIsOpen(false)}
-                   className="p-3.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all"
+                   className="p-3.5 text-slate-400 hover:bg-muted rounded-2xl transition-all"
                  >
                    <X size={20} strokeWidth={2.5} />
                  </button>
@@ -232,8 +232,8 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
             <div className="max-h-[min(520px,70vh)] overflow-y-auto hide-scrollbar px-4 pb-4">
               {notifications.length === 0 ? (
                 <div className="px-12 py-24 text-center">
-                  <div className="w-24 h-24 bg-slate-50 dark:bg-slate-900 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 shadow-inner ring-1 ring-slate-100 dark:ring-slate-800/50">
-                    <Inbox className="w-12 h-12 text-slate-200 dark:text-slate-800" />
+                  <div className="w-24 h-24 bg-muted rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 shadow-inner ring-1 ring-border">
+                    <Inbox className="w-12 h-12 text-slate-200 dark:text-slate-700" />
                   </div>
                   <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest mb-1">Pure Silence</h4>
                   <p className="text-[9px] font-black text-slate-300 dark:text-slate-700 uppercase tracking-[0.3em]">No activities to show</p>
@@ -251,10 +251,10 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
                         transition={{ delay: index * 0.05, type: "spring", damping: 25 }}
                         onClick={() => handleNotificationClick(notification.id, notification.referenceId, notification.type)}
                         className={cn(
-                          "w-full text-left p-4 transition-all duration-300 relative flex items-center gap-4 group outline-none border-b border-slate-50 dark:border-slate-900/50 last:border-0",
+                          "w-full text-left p-4 transition-all duration-300 relative flex items-center gap-4 group outline-none border-b border-border last:border-0",
                           !notification.read 
                             ? "bg-blue-50/30 dark:bg-blue-900/5" 
-                            : "hover:bg-slate-50 dark:hover:bg-slate-900/30"
+                            : "hover:bg-muted/50"
                         )}
                       >
                         {/* Status Dot */}
@@ -268,7 +268,7 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-center gap-2">
                             <h4 className={cn(
-                              "text-[12px] font-black tracking-tight truncate group-hover:text-[#155DFC] transition-colors uppercase",
+                              "text-[12px] font-black tracking-tight truncate group-hover:text-[#155DFC] dark:group-hover:text-slate-300 transition-colors uppercase",
                               !notification.read ? "text-slate-900 dark:text-white" : "text-slate-400"
                             )}>
                               {notification.title}
@@ -286,7 +286,7 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-slate-100 dark:border-slate-900 bg-white dark:bg-slate-950">
+            <div className="p-4 border-t border-border bg-card">
               <Link
                 href="/notifications"
                 onClick={() => setIsOpen(false)}

@@ -65,7 +65,7 @@ export const ProfileDropdown = ({ user }: ProfileDropdownProps) => {
           isOpen ? "opacity-100" : "hover:opacity-80"
         )}
       >
-        <div className="relative w-9 h-9 rounded-full overflow-hidden ring-1 ring-slate-100 dark:ring-slate-800 shadow-sm transition-all duration-500 group-hover:ring-[#155DFC]/30">
+        <div className="relative w-9 h-9 rounded-full overflow-hidden ring-1 ring-border shadow-sm transition-all duration-500 group-hover:ring-[#155DFC]/30">
           {userAvatar ? (
             <Image
               src={userAvatar}
@@ -77,14 +77,14 @@ export const ProfileDropdown = ({ user }: ProfileDropdownProps) => {
             <NameInitials name={userName} />
           )}
           {/* Status Dot */}
-          <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white dark:border-slate-900" />
+          <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-background" />
         </div>
 
         <div className="hidden sm:flex flex-col items-start gap-0">
           <span className="text-[11px] font-black text-slate-900 dark:text-white leading-none uppercase tracking-tighter">
             {userName}
           </span>
-          <span className="text-[8px] font-bold text-[#155DFC] uppercase tracking-widest mt-0.5">
+          <span className="text-[8px] font-bold text-[#155DFC] dark:text-slate-300 uppercase tracking-widest mt-0.5">
             {role}
           </span>
         </div>
@@ -106,10 +106,10 @@ export const ProfileDropdown = ({ user }: ProfileDropdownProps) => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.98 }}
             transition={{ duration: 0.2 }}
-            className="absolute right-0 top-full mt-4 w-60 bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 shadow-[20px_40px_80px_rgba(0,0,0,0.15)] z-[100] rounded-none overflow-hidden"
+            className="absolute right-0 top-full mt-4 w-60 bg-card border border-border shadow-[20px_40px_80px_rgba(0,0,0,0.15)] dark:shadow-none z-[100] rounded-2xl overflow-hidden"
           >
             {/* Header info */}
-            <div className="px-6 py-5 border-b border-slate-50 dark:border-slate-900 bg-slate-50/30 dark:bg-slate-900/10">
+            <div className="px-6 py-5 border-b border-border bg-muted/20">
               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Authenticated As</p>
               <p className="text-xs font-black text-slate-900 dark:text-white truncate">{userName}</p>
             </div>
@@ -120,7 +120,7 @@ export const ProfileDropdown = ({ user }: ProfileDropdownProps) => {
                   key={idx}
                   href={item.href}
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-3 px-6 py-3 text-[11px] font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 hover:text-[#155DFC] transition-all uppercase tracking-tight"
+                  className="flex items-center gap-3 px-6 py-3 text-[11px] font-bold text-muted-foreground hover:bg-muted/50 hover:text-[#155DFC] transition-all uppercase tracking-tight"
                 >
                   <item.icon size={14} className="shrink-0" />
                   {item.label}
@@ -130,7 +130,7 @@ export const ProfileDropdown = ({ user }: ProfileDropdownProps) => {
               {mounted && (
                 <button
                   onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                  className="w-full flex items-center justify-between px-6 py-3 text-[11px] font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 hover:text-[#155DFC] transition-all uppercase tracking-tight"
+                  className="w-full flex items-center justify-between px-6 py-3 text-[11px] font-bold text-muted-foreground hover:bg-muted/50 hover:text-[#155DFC] transition-all uppercase tracking-tight cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
                     {theme === "dark" ? (
@@ -141,7 +141,7 @@ export const ProfileDropdown = ({ user }: ProfileDropdownProps) => {
                     <span>Theme: {theme === "dark" ? "Dark" : "Light"}</span>
                   </div>
                   {/* Premium Switch Indicator */}
-                  <div className="w-8 h-4.5 rounded-full bg-slate-200 dark:bg-slate-800 p-0.5 transition-colors duration-300 relative flex items-center">
+                  <div className="w-8 h-4.5 rounded-full bg-slate-200 dark:bg-slate-700 p-0.5 transition-colors duration-300 relative flex items-center">
                     <div
                       className={cn(
                         "w-3.5 h-3.5 rounded-full bg-white dark:bg-[#155DFC] shadow-sm transform duration-300 ease-out",
@@ -153,7 +153,7 @@ export const ProfileDropdown = ({ user }: ProfileDropdownProps) => {
               )}
             </div>
 
-            <div className="border-t border-slate-50 dark:border-slate-900 mt-2">
+            <div className="border-t border-border mt-2">
               <button
                 className="w-full flex items-center gap-3 px-6 py-4 text-[11px] font-black text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all uppercase tracking-widest"
                 onClick={() => {

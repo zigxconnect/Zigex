@@ -448,7 +448,7 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
       >
         {/* CREATE/YOUR STORY SLOT */}
         <motion.div 
-          className="relative flex-none w-20 h-32 sm:w-[100px] sm:h-[160px] rounded-2xl overflow-hidden cursor-pointer group shadow-sm hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-700 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800"
+          className="relative flex-none w-20 h-32 sm:w-[100px] sm:h-[160px] rounded-2xl overflow-hidden cursor-pointer group shadow-sm hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-700 bg-card border border-slate-100 dark:border-slate-850"
           onClick={() => hasMyStory ? handleStoryClick(myStories[0]) : setIsCreating(true)}
           whileHover={{ y: -4 }}
         >
@@ -478,13 +478,13 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
               </div>
               
               {/* Bottom white/dark section */}
-              <div className="flex-1 bg-white dark:bg-slate-900 flex flex-col items-center justify-center pb-3">
+              <div className="flex-1 bg-card flex flex-col items-center justify-center pb-3">
                 <span className="text-[10px] font-black text-[#155DFC] dark:text-blue-400 uppercase tracking-[0.2em]">Create</span>
               </div>
 
               {/* Centered Plus Button */}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
-                <div className="bg-[#155DFC] rounded-full p-3 text-white shadow-[0_10px_30px_rgba(21,93,252,0.5)] ring-8 ring-white dark:ring-slate-900 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-90">
+                <div className="bg-[#155DFC] rounded-full p-3 text-white shadow-[0_10px_30px_rgba(21,93,252,0.5)] ring-8 ring-white dark:ring-card transition-transform duration-500 group-hover:scale-110 group-hover:rotate-90">
                   <Plus className="w-6 h-6" strokeWidth={4} />
                 </div>
               </div>

@@ -29,7 +29,7 @@ export const DashboardHeader = ({
   const profileUrl = `/profile/${slugifyUsername(username) || ""}`;
 
   return (
-    <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-100/50 dark:border-slate-800/30 transition-all duration-700 lg:pl-72">
+    <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border transition-all duration-700 lg:pl-72">
       <div className="flex items-center justify-between px-4 lg:px-10 py-3 max-w-[2000px] mx-auto gap-4">
         
         {/* Left Side: Personalized Greeting Identity */}
@@ -38,7 +38,7 @@ export const DashboardHeader = ({
           <div className="flex lg:hidden items-center gap-3">
             <button
               onClick={onMenuClick}
-              className="p-2 -ml-2 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="p-2 -ml-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
             >
               <Menu size={20} />
             </button>
@@ -46,16 +46,16 @@ export const DashboardHeader = ({
               <div className="relative w-8 h-8">
                 <Logo className="w-full h-full" />
               </div>
-              <span className="font-extrabold text-lg text-slate-900 dark:text-white tracking-tight">ZIGEX</span>
+              <span className="font-extrabold text-lg text-foreground tracking-tight">ZIGEX</span>
             </Link>
           </div>
 
           {/* Desktop Greeting */}
            <div className="hidden lg:flex items-center gap-2">
-              <span className="text-[14px] font-black text-[#155DFC] uppercase tracking-tighter leading-none">
+              <span className="text-[14px] font-black text-[#155DFC] dark:text-slate-300 uppercase tracking-tighter leading-none">
                 {new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 18 ? "Good afternoon" : "Good evening"},
               </span>
-              <h2 className="text-[14px] font-black text-slate-900 dark:text-white uppercase tracking-tighter truncate max-w-[200px] leading-none">
+              <h2 className="text-[14px] font-black text-foreground uppercase tracking-tighter truncate max-w-[200px] leading-none">
                 {userName.split(' ')[0]}
               </h2>
            </div>
@@ -68,7 +68,7 @@ export const DashboardHeader = ({
           <NotificationDropdown />
 
           {/* Vertical Separator */}
-          <div className="h-6 w-[1px] bg-slate-100 dark:bg-slate-800 mx-1 hidden sm:block" />
+          <div className="h-6 w-[1px] bg-border mx-1 hidden sm:block" />
 
           {/* Identity Protocol Dropdown */}
           <ProfileDropdown user={user} />
