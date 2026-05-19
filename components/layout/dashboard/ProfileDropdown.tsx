@@ -8,9 +8,12 @@ import {
   ChevronDown,
   Shield,
   CreditCard,
-  ExternalLink
+  ExternalLink,
+  Sun,
+  Moon
 } from "lucide-react";
 import Image from "next/image";
+import { useTheme } from "next-themes";
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -24,6 +27,12 @@ interface ProfileDropdownProps {
 export const ProfileDropdown = ({ user }: ProfileDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const userName = user?.name || user?.profile?.name || "Guest User";
   const userAvatar = user?.avatar || user?.profile?.avatar_url || user?.avatarUrl;
@@ -117,6 +126,31 @@ export const ProfileDropdown = ({ user }: ProfileDropdownProps) => {
                   {item.label}
                 </Link>
               ))}
+
+              {mounted && (
+                <button
+                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                  className="w-full flex items-center justify-between px-6 py-3 text-[11px] font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 hover:text-[#155DFC] transition-all uppercase tracking-tight"
+                >
+                  <div className="flex items-center gap-3">
+                    {theme === "dark" ? (
+                      <Moon size={14} className="shrink-0 text-amber-500" />
+                    ) : (
+                      <Sun size={14} className="shrink-0 text-amber-500" />
+                    )}
+                    <span>Theme: {theme === "dark" ? "Dark" : "Light"}</span>
+                  </div>
+                  {/* Premium Switch Indicator */}
+                  <div className="w-8 h-4.5 rounded-full bg-slate-200 dark:bg-slate-800 p-0.5 transition-colors duration-300 relative flex items-center">
+                    <div
+                      className={cn(
+                        "w-3.5 h-3.5 rounded-full bg-white dark:bg-[#155DFC] shadow-sm transform duration-300 ease-out",
+                        theme === "dark" ? "translate-x-3.5" : "translate-x-0"
+                      )}
+                    />
+                  </div>
+                </button>
+              )}
             </div>
 
             <div className="border-t border-slate-50 dark:border-slate-900 mt-2">

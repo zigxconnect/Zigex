@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Host_Grotesk } from "next/font/google";
 import { PushNotificationManager } from "@/components/providers/PushNotificationManager";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import "./globals.css";
 // import { Toaster } from "@/components/ui/sonner";
 import { Toaster } from "react-hot-toast";
@@ -192,10 +193,12 @@ export default function RootLayout({
           zIndex={1600}
           showAtBottom={false}
         />
-        <SessionGuard>
-          <PushNotificationManager />
-          {children}
-        </SessionGuard>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+          <SessionGuard>
+            <PushNotificationManager />
+            {children}
+          </SessionGuard>
+        </ThemeProvider>
 
         <Toaster position="top-center" reverseOrder={false} />
         <Analytics />
