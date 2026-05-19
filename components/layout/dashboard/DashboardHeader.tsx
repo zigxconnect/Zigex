@@ -1,12 +1,13 @@
 // components/layout/dashboard/DashboardHeader.tsx
 "use client";
 
-import { Search, ChevronDown, Command } from "lucide-react";
+import { Search, ChevronDown, Command, Menu } from "lucide-react";
 import Image from "next/image";
 import { NotificationDropdown } from "./NotificationDropdown";
 import { ProfileDropdown } from "./ProfileDropdown";
 import Link from "next/link";
 import { cn, slugifyUsername } from "@/lib/utils";
+import { Logo } from "@/components/layout/Logo";
 
 interface DashboardHeaderProps {
   user?: any;
@@ -33,7 +34,24 @@ export const DashboardHeader = ({
         
         {/* Left Side: Personalized Greeting Identity */}
         <div className="flex items-center gap-4 flex-1">
-           <div className="flex items-center gap-2">
+          {/* Mobile Hamburger & Logo */}
+          <div className="flex lg:hidden items-center gap-3">
+            <button
+              onClick={onMenuClick}
+              className="p-2 -ml-2 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              <Menu size={20} />
+            </button>
+            <Link href="/feed" className="flex items-center gap-2">
+              <div className="relative w-8 h-8">
+                <Logo className="w-full h-full" />
+              </div>
+              <span className="font-extrabold text-lg text-slate-900 dark:text-white tracking-tight">ZIGEX</span>
+            </Link>
+          </div>
+
+          {/* Desktop Greeting */}
+           <div className="hidden lg:flex items-center gap-2">
               <span className="text-[14px] font-black text-[#155DFC] uppercase tracking-tighter leading-none">
                 {new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 18 ? "Good afternoon" : "Good evening"},
               </span>

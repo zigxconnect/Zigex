@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Play, Calendar, Github, Clock, ExternalLink, Eye, User, Share2 } from "lucide-react";
 import ContributeModal from "./ContributeModal";
+import CreateProjectButton from "@/components/project/CreateProjectButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { normalizeImageSrc } from "@/lib/utils";
@@ -130,9 +131,11 @@ export default function ProjectCard({
              <h3 className="text-lg font-bold text-foreground mb-1">{user.full_name}</h3>
              <p className="text-sm text-muted-foreground mb-6">No active project yet.</p>
              {isMyProject && (
-                 <Button asChild className="rounded-full bg-primary hover:bg-secondary text-primary-foreground">
-                    <Link href="/dashboard/projects">Create Project</Link>
-                 </Button>
+                 <CreateProjectButton variant="custom" customTrigger={
+                     <Button className="rounded-full bg-primary hover:bg-secondary text-primary-foreground">
+                        Create Project
+                     </Button>
+                 } />
              )}
           </div>
       </div>

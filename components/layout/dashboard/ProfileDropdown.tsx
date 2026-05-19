@@ -1,10 +1,10 @@
 // components/layout/dashboard/ProfileDropdown.tsx
 "use client";
 
-import { 
-  User, 
-  Settings, 
-  LogOut, 
+import {
+  User,
+  Settings,
+  LogOut,
   ChevronDown,
   Shield,
   CreditCard,
@@ -49,14 +49,14 @@ export const ProfileDropdown = ({ user }: ProfileDropdownProps) => {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <button 
+      <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "group relative flex items-center gap-3 p-1 rounded-none bg-transparent transition-all duration-300 outline-none",
+          "group relative flex items-center gap-3 cursor-pointer p-1 rounded-none bg-transparent transition-all duration-300 outline-none",
           isOpen ? "opacity-100" : "hover:opacity-80"
         )}
       >
-        <div className="relative w-9 h-9 rounded-none overflow-hidden ring-1 ring-slate-100 dark:ring-slate-800 shadow-sm transition-all duration-500 group-hover:ring-[#155DFC]/30">
+        <div className="relative w-9 h-9 rounded-full overflow-hidden ring-1 ring-slate-100 dark:ring-slate-800 shadow-sm transition-all duration-500 group-hover:ring-[#155DFC]/30">
           {userAvatar ? (
             <Image
               src={userAvatar}
@@ -70,7 +70,7 @@ export const ProfileDropdown = ({ user }: ProfileDropdownProps) => {
           {/* Status Dot */}
           <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white dark:border-slate-900" />
         </div>
-        
+
         <div className="hidden sm:flex flex-col items-start gap-0">
           <span className="text-[11px] font-black text-slate-900 dark:text-white leading-none uppercase tracking-tighter">
             {userName}
@@ -79,14 +79,14 @@ export const ProfileDropdown = ({ user }: ProfileDropdownProps) => {
             {role}
           </span>
         </div>
-        
-        <ChevronDown 
-          size={12} 
-          strokeWidth={3} 
+
+        <ChevronDown
+          size={12}
+          strokeWidth={3}
           className={cn(
             "text-slate-300 transition-transform duration-500 ml-1",
             isOpen ? "rotate-180 text-[#155DFC]" : ""
-          )} 
+          )}
         />
       </button>
 
@@ -123,8 +123,8 @@ export const ProfileDropdown = ({ user }: ProfileDropdownProps) => {
               <button
                 className="w-full flex items-center gap-3 px-6 py-4 text-[11px] font-black text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all uppercase tracking-widest"
                 onClick={() => {
-                   // Add logout logic
-                   setIsOpen(false);
+                  // Add logout logic
+                  setIsOpen(false);
                 }}
               >
                 <LogOut size={14} strokeWidth={3} />

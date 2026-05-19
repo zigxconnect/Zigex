@@ -15,7 +15,6 @@ import {
   MessageSquare,
   Newspaper,
 } from "lucide-react";
-import { AiOutlineWechat } from "react-icons/ai";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";

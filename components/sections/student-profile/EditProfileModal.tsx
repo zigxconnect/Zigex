@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { profileSchema, ProfileFormData } from "@/app/types/profile";
@@ -140,96 +141,101 @@ export const EditProfileModal = ({
     <Step5Additional key={6} />,
   ];
 
-  if (!isOpen) return null;
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  return (
-    <div className="fixed inset-0 z-999 overflow-y-auto">
+  if (!isOpen || !mounted) return null;
+
+  const modalContent = (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 overflow-hidden">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/50 transition-opacity"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
         onClick={onClose}
       />
 
-      {/* Modal */}
-      <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative bg-card rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-          {/* Header */}
-          <div className="sticky top-0 z-10 bg-card border-b border-border p-6 flex justify-between items-center">
-            <div>
-              <h2 className="text-2xl font-bold text-foreground">Edit Profile</h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                Step {currentStep} of {totalSteps}
-              </p>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-muted rounded-lg transition-colors"
-              type="button"
-            >
-              <X size={24} className="text-muted-foreground" />
-            </button>
+      {/* Modal Container */}
+      <div className="relative bg-card rounded-3xl shadow-2xl max-w-2xl w-full max-h-[85vh] md:max-h-[90vh] flex flex-col overflow-hidden transform scale-95 sm:scale-100 transition-all duration-300 border border-border/50">
+        {/* Header */}
+        <div className="bg-card border-b border-border p-5 sm:p-6 flex justify-between items-center shrink-0">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-heading font-bold text-foreground">Edit Profile</h2>
+            <p className="text-xs text-muted-foreground mt-1 font-medium">
+              Step {currentStep} of {totalSteps}
+            </p>
           </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-muted rounded-xl transition-colors"
+            type="button"
+          >
+            <X size={20} className="text-muted-foreground" />
+          </button>
+        </div>
 
-          {/* Form Content */}
-          <FormProvider {...methods}>
-            <form onSubmit={handleSubmit(onSubmit)}>
-              <div className="p-6">
-                <div key={currentStep} className="animate-in fade-in duration-500">
-                  {steps[currentStep - 1]}
-                </div>
+        {/* Form Content */}
+        <FormProvider {...methods}>
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 overflow-hidden">
+            <div className="flex-1 overflow-y-auto p-5 sm:p-6 min-h-0">
+              <div key={currentStep} className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                {steps[currentStep - 1]}
               </div>
+            </div>
 
-              {/* Footer */}
-              <div className="sticky bottom-0 bg-card border-t border-border p-4 sm:p-6 flex gap-3 sm:justify-between sm:gap-4">
-                {currentStep > 1 && (
+            {/* Footer */}
+            <div className="bg-card border-t border-border p-4 sm:p-6 flex gap-3 sm:justify-between sm:gap-4 shrink-0">
+              {currentStep > 1 && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handlePrevious}
+                  className="flex-1 sm:flex-none"
+                >
+                  Previous
+                </Button>
+              )}
+              <div className="contents sm:flex sm:gap-4 sm:ml-auto">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={onClose}
+                  className="flex-1 sm:flex-none"
+                >
+                  Cancel
+                </Button>
+                {currentStep < totalSteps ? (
                   <Button
                     type="button"
-                    variant="secondary"
-                    onClick={handlePrevious}
+                    onClick={handleNext}
+                    disabled={isSubmitting}
                     className="flex-1 sm:flex-none"
                   >
-                    Previous
+                    Next
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="flex-1 sm:flex-none"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Spinner /> Saving...
+                      </>
+                    ) : (
+                      "Save"
+                    )}
                   </Button>
                 )}
-                <div className="contents sm:flex sm:gap-4 sm:ml-auto">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={onClose}
-                    className="flex-1 sm:flex-none"
-                  >
-                    Cancel
-                  </Button>
-                  {currentStep < totalSteps ? (
-                    <Button
-                      type="button"
-                      onClick={handleNext}
-                      disabled={isSubmitting}
-                      className="flex-1 sm:flex-none"
-                    >
-                      Next
-                    </Button>
-                  ) : (
-                    <Button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="flex-1 sm:flex-none"
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <Spinner /> Saving...
-                        </>
-                      ) : (
-                        "Save"
-                      )}
-                    </Button>
-                  )}
-                </div>
               </div>
-            </form>
-          </FormProvider>
-        </div>
+            </div>
+          </form>
+        </FormProvider>
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };

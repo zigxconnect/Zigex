@@ -48,14 +48,14 @@ export default async function StudentDirectoryPage() {
         statsMap[row.student_id].internshipsApplied++;
       } else if (row.application_type === "program") {
         statsMap[row.student_id].programsApplied++;
-        
+
         // Check for active program
         if (row.status === 'accepted') {
-           // @ts-ignore
-           const programTitle = row.programs?.title;
-           if (programTitle) {
-              statsMap[row.student_id].currentProgram = programTitle;
-           }
+          // @ts-ignore
+          const programTitle = row.programs?.title;
+          if (programTitle) {
+            statsMap[row.student_id].currentProgram = programTitle;
+          }
         }
       } else if (row.application_type === "event") {
         statsMap[row.student_id].eventsApplied++;
@@ -79,7 +79,7 @@ export default async function StudentDirectoryPage() {
     <div className="flex flex-col xl:flex-row gap-6 pb-12">
       {/* ═══ Main Content Column ═══ */}
       <div className="flex-1 min-w-0 space-y-6">
-        <WelcomeCard user={userData} stats={userStats} />
+        {/* <WelcomeCard user={userData} stats={userStats} /> */}
         <StudentDirectoryClient profiles={profilesWithStats} />
       </div>
 

@@ -184,7 +184,7 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile, stats }: WelcomeC
                  <span className="text-[9px] md:text-[10px] font-black text-slate-900 uppercase tracking-widest">{skill}</span>
               </div>
            ))}
-           <Link href="/dashboard/projects" className="flex items-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-5 md:py-2.5 bg-amber-50 border border-amber-100 rounded-xl md:rounded-2xl shadow-sm hover:bg-amber-100 transition-all group/projects">
+           <Link href={`/dashboard/student/${slugifyUsername(username)}`} className="flex items-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-5 md:py-2.5 bg-amber-50 border border-amber-100 rounded-xl md:rounded-2xl shadow-sm hover:bg-amber-100 transition-all group/projects">
               <Award size={12} className="text-amber-600 group-hover/projects:rotate-12 transition-transform md:w-[14px] md:h-[14px]" />
               <span className="text-[9px] md:text-[10px] font-black text-amber-900 uppercase tracking-widest">My Projects</span>
            </Link>

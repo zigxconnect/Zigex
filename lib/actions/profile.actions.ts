@@ -66,11 +66,18 @@ export const getProfileInfo = cache(async (): Promise<FormattedUserData | null> 
     return null;
   }
 
-  const { count: applicationsCount, error: countError } = await supabase
-    .from("Applications")
-    .select("*", { count: "exact", head: true })
-    .eq("student_id", profile.id)
-    .neq("status", "rejected");
+  // Optimize: Run independent queries in parallel using profile.id for Applications
+  const [
+    { count: applicationsCount, error: countError },
+    { data: supervisor },
+    { data: anyAcceptedAction },
+    { data: activeInternship }
+  ] = await Promise.all([
+    supabase.from("Applications").select("*", { count: "exact", head: true }).eq("student_id", profile.id).neq("status", "rejected"),
+    supabaseAdmin.from("supervisor_profiles").select("id").eq("user_id", user.id).maybeSingle(),
+    supabaseAdmin.from("Applications").select("id").eq("student_id", profile.id).in("status", ["accepted", "rsvp_confirmed"]).limit(1).maybeSingle(),
+    supabaseAdmin.from("internship_applications").select("id").eq("student_id", user.id).eq("status", "accepted").limit(1).maybeSingle()
+  ]);
 
   if (countError) {
     console.error("Error fetching application count:", countError);
@@ -91,42 +98,10 @@ export const getProfileInfo = cache(async (): Promise<FormattedUserData | null> 
       profileViews: 0, // Placeholder
     },
     permissions: {
-      isSupervisor: false,
-      isIntern: false
+      isSupervisor: !!supervisor,
+      isIntern: !!anyAcceptedAction || !!activeInternship
     }
   };
-
-  // Check for Supervisor status
-  const { data: supervisor } = await supabaseAdmin
-    .from("supervisor_profiles")
-    .select("id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (supervisor) userData.permissions!.isSupervisor = true;
-
-  // Check for Intern status (Accepted placement)
-  const { data: anyAcceptedAction } = await supabaseAdmin
-    .from("Applications")
-    .select("id")
-    .eq("student_id", user.id)
-    .in("status", ["accepted", "rsvp_confirmed"])
-    .limit(1)
-    .maybeSingle();
-
-  if (anyAcceptedAction) {
-    userData.permissions!.isIntern = true;
-  } else {
-    // Fallback to structural internship_applications
-    const { data: activeInternship } = await supabaseAdmin
-      .from("internship_applications")
-      .select("id")
-      .eq("student_id", user.id)
-      .eq("status", "accepted")
-      .limit(1)
-      .maybeSingle();
-    if (activeInternship) userData.permissions!.isIntern = true;
-  }
 
   return userData;
 });

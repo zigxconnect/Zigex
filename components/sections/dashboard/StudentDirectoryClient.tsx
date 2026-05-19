@@ -26,6 +26,8 @@ interface RawUserProfile {
   about?: string | null;
   cover_image?: string | null;
   stats?: StudentStats;
+  role?: string | null;
+  email?: string | null;
 }
 
 export const StudentDirectoryClient: React.FC<{ profiles: RawUserProfile[] }> = ({ profiles }) => {

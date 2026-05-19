@@ -138,7 +138,6 @@ export const Step1Uploads = () => {
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-4">
                 <label className="cursor-pointer px-4 py-2 bg-white/90 hover:bg-white text-gray-900 rounded-full font-medium shadow-sm transition-all transform hover:scale-105 flex items-center gap-2">
                   <Camera className="w-4 h-4" />
-                  Change Cover
                   <input
                     type="file"
                     accept="image/*"
@@ -164,12 +163,6 @@ export const Step1Uploads = () => {
                 ) : (
                   <ImageIcon className="w-8 h-8" />
                 )}
-              </div>
-              <div className="text-center">
-                <p className="font-medium">Upload Cover Image</p>
-                <p className="text-xs text-gray-400 mt-1">
-                  Recommended: 1200x400px
-                </p>
               </div>
               <input
                 type="file"

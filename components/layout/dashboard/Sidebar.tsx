@@ -57,7 +57,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     user?.avatar ||
     user?.profile?.avatar_url ||
     user?.avatarUrl;
-  
+
   const username = user?.profile?.username || user?.username || "";
   const profileLink = username ? `/profile/${slugifyUsername(username)}` : "/profile";
 
@@ -135,9 +135,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="px-6 py-4">
           <div className="relative group">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#155DFC] transition-colors" size={16} />
-            <input 
-              type="text" 
-              placeholder="Search anything..." 
+            <input
+              type="text"
+              placeholder="Search anything..."
               className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-transparent focus:border-[#155DFC]/20 rounded-2xl text-xs font-bold outline-none transition-all placeholder:text-slate-400"
             />
           </div>
@@ -159,10 +159,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onClick={handleNavClick}
               />
               <AnimatedNavLink
-                href="/dashboard/projects"
+                href="/dashboard/programs"
                 icon={Briefcase}
                 label="Programs"
-                isActive={isRouteActive("/dashboard/projects")}
+                isActive={isRouteActive("/dashboard/programs")}
                 onClick={handleNavClick}
               />
               <AnimatedNavLink
@@ -234,34 +234,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
 
           {/* Become a Superstar Promo Card */}
-          <div className="px-2 pt-4">
-            <div className="relative overflow-hidden p-5 rounded-[2rem] bg-gradient-to-br from-[#155DFC] to-[#0A2E82] text-white shadow-xl shadow-blue-500/20 group cursor-pointer">
-              {/* Background Glow */}
-              <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700" />
-              
-              <div className="relative z-10 space-y-3">
-                <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center">
-                  <Zap size={20} className="text-white" />
-                </div>
-                <div>
-                  <h4 className="font-black text-sm leading-tight">Become a Superstar</h4>
-                  <p className="text-[10px] font-medium text-white/70 mt-1 leading-relaxed">
-                    Unlock premium features and get noticed by top companies.
-                  </p>
-                </div>
-                <button className="w-full py-2 bg-white text-[#155DFC] rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-opacity-90 transition-all flex items-center justify-center gap-2">
-                  Upgrade Now
-                  <ChevronRight size={14} />
-                </button>
-              </div>
-            </div>
-          </div>
+
         </div>
 
         {/* Bottom User Profile Section */}
         <div className="p-4 border-t border-slate-100 dark:border-slate-800/50 bg-white dark:bg-slate-950">
           <div className="relative">
-            <button 
+            <button
               onClick={() => setIsProfileOpen(!isProfileOpen)}
               className="w-full flex items-center gap-3 p-2 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-all duration-300 group"
             >
@@ -275,7 +254,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </div>
                 <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-950 shadow-sm" />
               </div>
-              
+
               <div className="flex-1 text-left min-w-0">
                 <p className="text-xs font-black text-slate-900 dark:text-white truncate">
                   {userName}
@@ -299,7 +278,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
                     className="absolute bottom-full left-0 w-full mb-2 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl shadow-2xl shadow-slate-200/50 dark:shadow-none p-2 z-50"
                   >
-                    <Link 
+                    <Link
                       href={profileLink}
                       className="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group"
                       onClick={() => setIsProfileOpen(false)}
@@ -307,7 +286,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       <User size={16} className="text-slate-400 group-hover:text-[#155DFC]" />
                       <span className="text-xs font-bold text-slate-600 dark:text-slate-300">View Profile</span>
                     </Link>
-                    <Link 
+                    <Link
                       href="/profile-settings"
                       className="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group"
                       onClick={() => setIsProfileOpen(false)}
@@ -316,7 +295,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       <span className="text-xs font-bold text-slate-600 dark:text-slate-300">Settings</span>
                     </Link>
                     <div className="h-px bg-slate-50 dark:bg-slate-800 my-1 mx-2" />
-                    <button 
+                    <button
                       onClick={handleSignOut}
                       className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 transition-colors group"
                     >
@@ -332,4 +311,4 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </aside>
     </>
   );
-};
+};

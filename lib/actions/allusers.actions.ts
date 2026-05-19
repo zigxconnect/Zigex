@@ -19,6 +19,8 @@ export interface RawUserProfile {
   about?: string | null;
   cover_image?: string | null;
   created_at?: string | null;
+  role?: string | null;
+  email?: string | null;
 }
 
 export async function getAllUsers(limit = 100, offset = 0) {
@@ -34,7 +36,7 @@ export async function getAllUsers(limit = 100, offset = 0) {
     const { data, error } = await supabase
       .from("student_profiles")
       .select(
-        `id, user_id, username, full_name, first_name, last_name, avatar_url, cover_image, about, university, hard_skills, soft_skills, linkedin_url, github_url, portfolio_url, created_at`
+        `id, user_id, username, full_name, first_name, last_name, avatar_url, cover_image, about, university, hard_skills, soft_skills, linkedin_url, github_url, portfolio_url, created_at, role, email`
       )
       .order("created_at", { ascending: false })
       .range(offset, Math.max(offset, limit - 1 + offset));

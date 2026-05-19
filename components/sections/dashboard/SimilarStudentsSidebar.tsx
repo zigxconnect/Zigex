@@ -30,7 +30,7 @@ export default function SimilarStudentsSidebar({
 }) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
-  
+
   const avatarFallback = "https://i.ibb.co/8n8d37H4/white-logo-4x.png";
 
   return (
@@ -51,7 +51,7 @@ export default function SimilarStudentsSidebar({
       <AnimatePresence>
         {open && (
           <div className="fixed inset-0 z-[9999] lg:hidden">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -83,7 +83,7 @@ export default function SimilarStudentsSidebar({
 
                 <div className="space-y-4">
                   {students.map((s, index) => (
-                    <motion.article 
+                    <motion.article
                       key={s.id}
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
@@ -96,11 +96,11 @@ export default function SimilarStudentsSidebar({
                     >
                       <div className="flex items-center gap-4 mb-4">
                         <div className="relative w-14 h-14 rounded-2xl overflow-hidden bg-blue-600 border-2 border-white shadow-md">
-                          <Image 
-                            src={s.avatar_url || avatarFallback} 
-                            alt={s.full_name || "S"} 
-                            fill 
-                            className={cn("object-cover", !s.avatar_url && "p-2")} 
+                          <Image
+                            src={s.avatar_url || avatarFallback}
+                            alt={s.full_name || "S"}
+                            fill
+                            className={cn("object-cover", !s.avatar_url && "p-2")}
                           />
                         </div>
                         <div className="min-w-0">
@@ -141,7 +141,7 @@ export default function SimilarStudentsSidebar({
               </div>
             </div>
             <Link href="/dashboard/student" title="View All" className="p-2.5 bg-slate-50 text-slate-400 hover:bg-blue-600 hover:text-white rounded-xl transition-all">
-               <ArrowRight size={18} />
+              <ArrowRight size={18} />
             </Link>
           </div>
 
@@ -160,57 +160,40 @@ export default function SimilarStudentsSidebar({
                 className="group flex items-center gap-4 p-4 rounded-2xl hover:bg-slate-50 transition-all duration-300 cursor-pointer relative"
               >
                 <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-blue-600 border border-slate-100 shadow-sm shrink-0 group-hover:scale-105 transition-transform duration-500">
-                  <Image 
-                    src={s.avatar_url || avatarFallback} 
-                    alt={s.full_name || "S"} 
-                    fill 
-                    className={cn("object-cover", !s.avatar_url && "p-2")} 
+                  <Image
+                    src={s.avatar_url || avatarFallback}
+                    alt={s.full_name || "S"}
+                    fill
+                    className={cn("object-cover", !s.avatar_url && "p-2")}
                   />
                 </div>
 
                 <div className="flex-1 min-w-0">
-                   <div className="flex items-center gap-1.5 mb-0.5">
-                      <span className="font-black text-sm text-slate-900 truncate tracking-tight group-hover:text-blue-600 transition-colors">
-                        {s.full_name || 'Unnamed'}
-                      </span>
-                      <CheckCircle2 size={10} className="text-blue-600 shrink-0" />
-                   </div>
-                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest truncate">{s.university || "Global Voyager"}</p>
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <span className="font-black text-sm text-slate-900 truncate tracking-tight group-hover:text-blue-600 transition-colors">
+                      {s.full_name || 'Unnamed'}
+                    </span>
+                    <CheckCircle2 size={10} className="text-blue-600 shrink-0" />
+                  </div>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest truncate">{s.university || "Global Voyager"}</p>
                 </div>
-                
+
                 <div className="opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0">
-                   <ChevronRight size={16} className="text-blue-600" strokeWidth={3} />
+                  <ChevronRight size={16} className="text-blue-600" strokeWidth={3} />
                 </div>
               </div>
             ))}
           </div>
-          
+
           <div className="mt-8 pt-8 border-t border-slate-50">
-             <Link href="/dashboard/student" className="w-full h-12 rounded-2xl border border-slate-100 flex items-center justify-center text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all duration-300">
-                Discover More Peers
-             </Link>
+            <Link href="/dashboard/student" className="w-full h-12 rounded-2xl border border-slate-100 flex items-center justify-center text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all duration-300">
+              Discover More Peers
+            </Link>
           </div>
         </div>
 
         {/* Exclusive Mentorship Promo Block */}
-        <div className="relative bg-gradient-to-br from-blue-600 to-indigo-700 rounded-[2.5rem] p-8 text-white overflow-hidden shadow-2xl shadow-blue-200/50 group">
-           <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-[60px]" />
-           <div className="relative z-10">
-              <div className="flex items-center gap-2 mb-6">
-                 <div className="w-8 h-8 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center">
-                    <Users size={16} />
-                 </div>
-                 <span className="text-[10px] font-black uppercase tracking-[0.2em]">Elevate Talent</span>
-              </div>
-              <h4 className="text-2xl font-black leading-tight mb-4 tracking-tighter">Need expert guidance?</h4>
-              <p className="text-white/70 text-sm font-medium mb-8 leading-relaxed">Connect with our industry mentors to accelerate your professional journey.</p>
-              
-              <Link href="/feed/mentorship" className="inline-flex items-center gap-2 px-6 py-3 bg-white text-blue-600 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-black/10 hover:scale-105 transition-transform">
-                 <span>Learn More</span>
-                 <ArrowRight size={14} />
-              </Link>
-           </div>
-        </div>
+
       </aside>
 
       <style jsx global>{`

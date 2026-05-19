@@ -9,6 +9,7 @@ import Script from "next/script";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { SessionGuard } from "@/components/providers/SessionGuard";
+import NextTopLoader from 'nextjs-toploader';
 
 const inter = Inter({
 
@@ -178,6 +179,19 @@ export default function RootLayout({
 
       </head>
       <body className={`${inter.variable} ${hostGrotesk.variable} antialiased`}>
+        <NextTopLoader 
+          color="#2563EB"
+          initialPosition={0.08}
+          crawlSpeed={200}
+          height={3}
+          crawl={true}
+          showSpinner={false}
+          easing="ease"
+          speed={200}
+          shadow="0 0 10px #2563EB,0 0 5px #2563EB"
+          zIndex={1600}
+          showAtBottom={false}
+        />
         <SessionGuard>
           <PushNotificationManager />
           {children}
