@@ -223,10 +223,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 />
               )}
               <AnimatedNavLink
-                href="/buddy"
+                href="/dashboard/zigagent-ai/docs"
                 icon={AiOutlineWechat}
-                label="Ziggy AI"
-                isActive={isRouteActive("/buddy")}
+                label="Zila AI"
+                isActive={isRouteActive("/dashboard/zigagent-ai")}
                 isSpecial
                 onClick={handleNavClick}
               />
