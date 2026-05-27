@@ -11,7 +11,7 @@ export async function subscribeToPushNotifications(subscription: any, origin?: s
             return { success: false, error: "Unauthorized" };
         }
 
-        const { error } = await supabase
+        const { error } = await supabaseAdmin
             .from('push_subscriptions')
             .upsert({
                 user_id: user.id,

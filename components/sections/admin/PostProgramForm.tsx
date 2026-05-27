@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import Image from "next/image";
 import { Select } from "@/components/uiComponent/Select";
 import { Textarea } from "@/components/uiComponent/Textarea";
+import { RichTextEditor } from "@/components/ui/RichTextEditor";
 
 // Reusable layout components
 const FormSection = ({ title, children }: any) => (
@@ -43,6 +44,10 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
   };
 
   const [applicationLocation, setApplicationLocation] = useState(initialData?.location|| "")
+
+  const [isVisible, setIsVisible] = useState(
+    initialData?.is_visible ?? true
+  );
 
   // State initialization for all form fields
   const [title, setTitle] = useState(initialData?.title || "");
@@ -94,8 +99,8 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
       );
     if (programFormat) formData.append("program_format", programFormat);
     if (requiredSkills) formData.append("required_skills", requiredSkills);
+    formData.append("is_visible", isVisible.toString());
     if (programPicture) formData.append("program_picture", programPicture);
-
     // ** THIS IS THE CRITICAL FIX: INCLUDE THE ID FOR PATCH REQUESTS **
     if (isEditMode) {
       formData.append("id", initialData.id);
@@ -198,13 +203,27 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
         </FormField>
       </FormSection>
 
+      <FormSection title="Visibility">
+        <FormField label="Publish Virtual Event" className="md:col-span-2">
+          <label className="flex items-center space-x-3 mt-2">
+            <input
+              type="checkbox"
+              checked={isVisible}
+              onChange={(e) => setIsVisible(e.target.checked)}
+              className="h-5 w-5 rounded border-gray-300 text-[#001D4A] focus:ring-[#001D4A]"
+            />
+            <span className="text-sm text-gray-600">
+              Make this program visible to students immediately
+            </span>
+          </label>
+        </FormField>
+      </FormSection>
+
       <FormSection title="Details & Branding">
         <FormField label="Description & Activities" required className="md:col-span-2">
-          <Textarea
-            rows={8}
+          <RichTextEditor
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            required
+            onChange={setDescription}
           />
         </FormField>
         <FormField
@@ -261,3 +280,6 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
     </form>
   );
 };
+
+
+

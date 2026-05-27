@@ -17,6 +17,7 @@ export const programSchema = z.object({
     created_at: z.string().datetime().optional(),
     updated_at: z.string().datetime().optional(),
     required_skills: z.array(z.string()).optional(),
+    is_visible: z.boolean().default(true).optional(),
 });
 
 export type Program = z.infer<typeof programSchema>;

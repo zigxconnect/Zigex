@@ -66,7 +66,7 @@ export async function PATCH(
     }
 
     const formData = await request.formData();
-    const dataObject = Object.fromEntries(formData.entries());
+    const dataObject: Record<string, any> = Object.fromEntries(formData.entries());
     const eventImage = formData.get("event_image") as File | null;
 
     let eventImageUrl = existingEvent.event_picture_url;
@@ -94,10 +94,13 @@ export async function PATCH(
       eventImageUrl = newImageData.publicUrl;
     }
 
+    const is_visible = formData.get("is_visible") === "true";
+
     // 3. Validate the text fields for the update
     const validatedUpdates = eventSchema.partial().parse({
       ...dataObject,
       event_picture_url: eventImageUrl,
+      is_visible,
     });
 
     // 4. Perform the update in the database

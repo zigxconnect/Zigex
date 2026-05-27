@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Button } from "@/components/ui/button";
 import { 
@@ -57,7 +57,7 @@ export const AdminHeader = ({ stats, companyProfile }: AdminHeaderProps) => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 h-20 shadow-[0_4px_30px_-10px_rgba(0,0,0,0.03)]">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-b border-slate-100 h-20 shadow-[0_4px_30px_-10px_rgba(0,0,0,0.03)]">
       <div className="flex items-center justify-between h-full px-4 lg:px-10">
         {/* Left Section: Logo & Toggle */}
         <div className="flex items-center gap-6 lg:w-80">

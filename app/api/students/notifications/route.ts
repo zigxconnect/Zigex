@@ -112,7 +112,7 @@ export async function POST(request: Request) {
       if (personalIds.length > 0) {
         await supabase
           .from("notifications")
-          .update({ is_read: true })
+          .delete()
           .in("id", personalIds)
           .eq("user_id", user.id);
       }
@@ -136,10 +136,10 @@ export async function POST(request: Request) {
 
     // --- Logic for marking all as read ---
     if (markAll) {
-      // 1. Mark all PERSONAL notifications as read
+      // 1. Delete all PERSONAL notifications to save space
       await supabase
         .from("notifications")
-        .update({ is_read: true })
+        .delete()
         .eq("user_id", user.id)
         .eq("is_read", false);
 

@@ -15,6 +15,7 @@ export const eventSchema = z.object({
   // capacity: z.number().int().positive().optional(),
   // is_virtual: z.boolean().default(false),
   // price: z.number().nonnegative().optional().default(0)
+  is_visible: z.boolean().default(true).optional(),
 });
 
 export type EventFormData = z.infer<typeof eventSchema>;

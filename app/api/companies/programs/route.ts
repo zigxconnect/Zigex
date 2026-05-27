@@ -76,6 +76,8 @@ export async function POST(request: Request) {
           .split(",")
           .map((s) => s.trim())
           .filter((s) => s);
+      } else if (key === "is_visible") {
+        rawData[key] = value === "true";
       } else if (key !== "program_picture") {
         rawData[key] = value;
       }
@@ -246,6 +248,8 @@ export async function PATCH(request: Request) {
           .split(",")
           .map((s) => s.trim())
           .filter((s) => s);
+      } else if (key === "is_visible") {
+        rawUpdates[key] = value === "true";
       } else if (key !== "program_picture" && key !== "id") {
         // Exclude program_picture and id
         rawUpdates[key] = value;
@@ -446,3 +450,4 @@ export async function DELETE(request: Request) {
     );
   }
 }
+

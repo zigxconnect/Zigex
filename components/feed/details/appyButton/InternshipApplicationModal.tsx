@@ -261,12 +261,12 @@ export default function InternshipApplicationModal({
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-md animate-in fade-in duration-300 p-4 z-[9999]">
+    <div className="fixed inset-0 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-md animate-in fade-in duration-300 p-0 sm:p-4 z-[9999]">
       <motion.div
         ref={modalRef}
-        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        initial={{ scale: 0.95, opacity: 0, y: 100 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
-        className="relative w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden max-h-[90vh]"
+        className="relative w-full max-w-2xl bg-white rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden h-[95vh] sm:h-auto sm:max-h-[90vh]"
       >
         {/* Premium Header */}
         <div className="relative bg-[#155DFC] text-white p-8 shrink-0 overflow-hidden">
@@ -281,7 +281,6 @@ export default function InternshipApplicationModal({
               <div className="min-w-0">
                 <h2 className="text-2xl font-black tracking-tight leading-tight truncate">Internship Portal</h2>
                 <div className="flex items-center gap-2 text-blue-100 text-sm font-bold mt-1.5 uppercase tracking-widest opacity-90">
-                  <div className="px-2 py-0.5 rounded bg-white/20 text-[10px]">{internshipId.slice(0, 8)}</div>
                   <span className="truncate max-w-[200px]">{internshipTitle}</span>
                 </div>
               </div>

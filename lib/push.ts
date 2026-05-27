@@ -95,45 +95,52 @@ export async function broadcastPushNotification(payload: { title: string; body: 
 
         console.log(`[PUSH_BROADCAST] Targeting ${subscriptions.length} devices...`);
 
-        // Send push notifications in parallel
-        const results = await Promise.allSettled(
-            subscriptions.map((sub: any) => {
-                const pushSubscription = {
-                    endpoint: sub.endpoint,
-                    keys: {
-                        p256dh: sub.p256dh,
-                        auth: sub.auth,
-                    },
-                };
+        const batchSize = 50;
+        let successful = 0;
+        let failed = 0;
 
-                const siteUrl = sub.origin || process.env.NEXT_PUBLIC_SITE_URL || 'https://www.zigexconnect.com';
-                console.log(`[PUSH_BROADCAST] Sending to origin: ${siteUrl}`);
-                const notificationUrl = payload.url?.startsWith('http') ? payload.url : `${siteUrl}${payload.url || '/'}`;
-                const iconUrl = `${siteUrl}/icons/icon-192x192.png`;
+        for (let i = 0; i < subscriptions.length; i += batchSize) {
+            const batch = subscriptions.slice(i, i + batchSize);
+            console.log(`[PUSH_BROADCAST] Processing batch ${Math.floor(i / batchSize) + 1}...`);
 
-                return webpush.sendNotification(
-                    pushSubscription,
-                    JSON.stringify({
-                        title: payload.title,
-                        body: payload.body,
-                        url: notificationUrl,
-                        icon: payload.icon || iconUrl,
-                        badge: iconUrl,
-                        tag: `broadcast-${Date.now()}`
-                    })
-                ).catch(err => {
-                    if (err.statusCode === 404 || err.statusCode === 410) {
-                        // Cleanup expired subscription
-                        supabaseAdmin.from('push_subscriptions').delete().eq('endpoint', sub.endpoint).then();
-                        throw new Error('Expired');
-                    }
-                    throw err;
-                });
-            })
-        );
+            const results = await Promise.allSettled(
+                batch.map((sub: any) => {
+                    const pushSubscription = {
+                        endpoint: sub.endpoint,
+                        keys: {
+                            p256dh: sub.p256dh,
+                            auth: sub.auth,
+                        },
+                    };
 
-        const successful = results.filter(r => r.status === 'fulfilled').length;
-        const failed = results.filter(r => r.status === 'rejected').length;
+                    const siteUrl = sub.origin || process.env.NEXT_PUBLIC_SITE_URL || 'https://www.zigexconnect.com';
+                    const notificationUrl = payload.url?.startsWith('http') ? payload.url : `${siteUrl}${payload.url || '/'}`;
+                    const iconUrl = `${siteUrl}/icons/icon-192x192.png`;
+
+                    return webpush.sendNotification(
+                        pushSubscription,
+                        JSON.stringify({
+                            title: payload.title,
+                            body: payload.body,
+                            url: notificationUrl,
+                            icon: payload.icon || iconUrl,
+                            badge: iconUrl,
+                            tag: `broadcast-${Date.now()}`
+                        })
+                    ).catch(err => {
+                        if (err.statusCode === 404 || err.statusCode === 410) {
+                            // Cleanup expired subscription
+                            supabaseAdmin.from('push_subscriptions').delete().eq('endpoint', sub.endpoint).then();
+                            throw new Error('Expired');
+                        }
+                        throw err;
+                    });
+                })
+            );
+
+            successful += results.filter(r => r.status === 'fulfilled').length;
+            failed += results.filter(r => r.status === 'rejected').length;
+        }
 
         console.log(`[PUSH_BROADCAST] Finished: ${successful} delivered, ${failed} failed.`);
         

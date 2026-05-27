@@ -188,7 +188,7 @@ export const ApplicationModal = ({
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-blue-900/95 via-blue-800/95 to-indigo-900/95 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
       {/* Mobile: Slide up from bottom, Desktop: Center modal */}
-      <div className="bg-white w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-2xl sm:rounded-3xl shadow-2xl flex flex-col animate-in slide-in-from-bottom sm:slide-in-from-bottom-0 duration-300">
+      <div className="bg-white w-full h-[95vh] rounded-t-[2.5rem] sm:h-auto sm:max-h-[90vh] sm:max-w-2xl sm:rounded-3xl shadow-2xl flex flex-col animate-in slide-in-from-bottom sm:slide-in-from-bottom-0 duration-300 overflow-hidden">
 
         {/* Header - Sticky on mobile */}
         <div className="sticky top-0 z-10 bg-gradient-to-r from-[#193CB8] to-[#2563eb] text-white px-4 sm:px-6 py-4 sm:py-5 shadow-lg">

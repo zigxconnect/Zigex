@@ -507,12 +507,12 @@ export default function StudentProfileClient({
                 <Calendar size={16} className="text-[#155DFC] dark:text-slate-300" />
                 Cohort & Developer Logs Activity Heatmap
               </h3>
-              <span className="text-[10px] font-black text-muted-foreground bg-secondary px-2 py-0.5 rounded-full uppercase tracking-wider">365-Day Timeline</span>
+              <span className="text-[10px] font-black text-white bg-[#155DFC] px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm">365-Day Timeline</span>
             </div>
 
             <div className="flex flex-col gap-3">
               {/* Vibrant interactive blue contribution map grid */}
-              <div className="w-full rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-150 dark:border-slate-800/80 p-3 sm:p-4 overflow-x-auto">
+              <div className="w-full rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-150 dark:border-slate-800/80 p-3 sm:p-4 overflow-x-auto [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-slate-100 dark:[&::-webkit-scrollbar-track]:bg-slate-800/50 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#155DFC] [&::-webkit-scrollbar-thumb]:rounded-full dark:[&::-webkit-scrollbar-thumb]:bg-blue-500 pb-4">
                 <div className="min-w-[580px] flex flex-col gap-1">
                   <div className="grid grid-flow-col grid-rows-7 gap-1">
                     {Array.from({ length: 364 }).map((_, i) => {

@@ -23,6 +23,7 @@ import { CompanyCard } from "@/components/feed/details/DetailsSidebar"; // This 
 import { DetailsSidebar, DetailItem } from "@/components/feed/details/CompanyCard"; // This file actually exports DetailsSidebar
 import { BackButton } from "@/components/feed/details/BackButton";
 import { RegisterGoDown } from "@/components/feed/details/RegisterDown";
+import { RichContentRenderer } from "@/components/ui/RichContentRenderer";
 
 
 interface FeedDetailPageProps {
@@ -221,9 +222,13 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
                 </h2>
               </div>
               <div className="prose prose-gray max-w-none">
-                <p className="text-foreground/80 leading-relaxed whitespace-pre-wrap font-medium">
-                  {item.description || "No description provided."}
-                </p>
+                {(item as any).description ? (
+                  <RichContentRenderer content={(item as any).description} />
+                ) : (
+                  <p className="text-foreground/80 leading-relaxed whitespace-pre-wrap font-medium">
+                    No description provided.
+                  </p>
+                )}
               </div>
             </Card>
 
@@ -262,7 +267,7 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
                   }
                   opportunityData={{
                     title: item.title,
-                    description: item.description,
+                    description: (item as any).description,
                     type: item._type.slice(0, -1),
                     company_profiles: company,
                     location: item.location,

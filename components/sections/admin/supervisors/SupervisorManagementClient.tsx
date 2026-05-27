@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -110,7 +110,7 @@ export function SupervisorManagementClient({ supervisors, companyId }: Superviso
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-blue-50/30 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+    <div className="min-h-screen bg-gradient-to-b from-white via-blue-50/30 to-white">
       
       {/* Add Supervisor Modal */}
       <AnimatePresence>
@@ -151,17 +151,17 @@ export function SupervisorManagementClient({ supervisors, companyId }: Superviso
       </AnimatePresence>
 
       {/* Header */}
-      <header className="bg-white dark:bg-slate-900 border-b border-blue-100/50 dark:border-slate-800">
+      <header className="bg-white border-b border-blue-100/50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
             <div>
               <Badge className="bg-blue-600 text-white border-0 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md mb-2">
                 Admin Panel
               </Badge>
-              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
                 Supervisor Management
               </h1>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-sm text-slate-500 mt-1">
                 Manage mentors who guide your interns
               </p>
             </div>
@@ -181,19 +181,19 @@ export function SupervisorManagementClient({ supervisors, companyId }: Superviso
         
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
-          <div className="bg-white dark:bg-slate-900 border border-blue-50 dark:border-slate-800 rounded-2xl p-5">
+          <div className="bg-white border border-blue-50 rounded-2xl p-5">
             <Users size={18} className="text-blue-600 mb-3" />
             <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">Total Supervisors</p>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">{supervisors.length}</p>
+            <p className="text-2xl font-bold text-slate-900">{supervisors.length}</p>
           </div>
-          <div className="bg-white dark:bg-slate-900 border border-blue-50 dark:border-slate-800 rounded-2xl p-5">
+          <div className="bg-white border border-blue-50 rounded-2xl p-5">
             <Shield size={18} className="text-green-500 mb-3" />
             <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">Active Mentors</p>
             <p className="text-2xl font-bold text-green-600">
               {supervisors.filter(s => s.assigned_interns?.[0]?.count > 0).length}
             </p>
           </div>
-          <div className="bg-white dark:bg-slate-900 border border-blue-50 dark:border-slate-800 rounded-2xl p-5 col-span-2 sm:col-span-1">
+          <div className="bg-white border border-blue-50 rounded-2xl p-5 col-span-2 sm:col-span-1">
             <User size={18} className="text-amber-500 mb-3" />
             <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">Without Assignment</p>
             <p className="text-2xl font-bold text-amber-600">
@@ -203,10 +203,10 @@ export function SupervisorManagementClient({ supervisors, companyId }: Superviso
         </div>
 
         {/* Supervisors List */}
-        <div className="bg-white dark:bg-slate-900 border border-blue-50 dark:border-slate-800 rounded-2xl overflow-hidden">
-          <div className="p-5 sm:p-6 border-b border-blue-50 dark:border-slate-800">
+        <div className="bg-white border border-blue-50 rounded-2xl overflow-hidden">
+          <div className="p-5 sm:p-6 border-b border-blue-50">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">All Supervisors</h2>
+              <h2 className="text-lg font-bold text-slate-900">All Supervisors</h2>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                 <Input 
@@ -219,13 +219,13 @@ export function SupervisorManagementClient({ supervisors, companyId }: Superviso
             </div>
           </div>
 
-          <div className="divide-y divide-blue-50 dark:divide-slate-800">
+          <div className="divide-y divide-blue-50">
             {filteredSupervisors.length > 0 ? filteredSupervisors.map((supervisor) => {
               const internCount = supervisor.assigned_interns?.[0]?.count || 0;
               
               return (
-                <div key={supervisor.id} className="group flex items-center gap-4 p-4 sm:p-5 hover:bg-blue-50/30 dark:hover:bg-slate-800/30 transition-colors">
-                  <div className="w-12 h-12 rounded-xl overflow-hidden ring-2 ring-white dark:ring-slate-900 shadow-sm shrink-0 bg-gradient-to-br from-blue-600 to-blue-700">
+                <div key={supervisor.id} className="group flex items-center gap-4 p-4 sm:p-5 hover:bg-blue-50/30 transition-colors">
+                  <div className="w-12 h-12 rounded-xl overflow-hidden ring-2 ring-white shadow-sm shrink-0 bg-gradient-to-br from-blue-600 to-blue-700">
                     {supervisor.avatar_url ? (
                       <Image 
                         src={supervisor.avatar_url} 
@@ -242,7 +242,7 @@ export function SupervisorManagementClient({ supervisors, companyId }: Superviso
                   </div>
                   
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-slate-900 dark:text-white truncate">
+                    <h4 className="font-semibold text-slate-900 truncate">
                       {supervisor.full_name}
                     </h4>
                     <div className="flex items-center gap-2 mt-0.5">
@@ -299,7 +299,7 @@ export function SupervisorManagementClient({ supervisors, companyId }: Superviso
               );
             }) : (
               <div className="p-12 text-center">
-                <Users size={40} className="text-slate-200 dark:text-slate-700 mx-auto mb-3" />
+                <Users size={40} className="text-slate-200 mx-auto mb-3" />
                 <p className="text-slate-400 font-semibold">No supervisors found</p>
                 <p className="text-xs text-slate-400 mt-1">Add your first supervisor to get started</p>
                 <Button 
@@ -393,7 +393,7 @@ function AddSupervisorModal({ isOpen, onClose, companyId }: { isOpen: boolean; o
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
-        className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-h-[90vh] overflow-hidden border border-blue-100 dark:border-slate-800"
+        className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl max-h-[90vh] overflow-hidden border border-blue-100"
       >
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-white">
@@ -441,7 +441,7 @@ function AddSupervisorModal({ isOpen, onClose, companyId }: { isOpen: boolean; o
                   className={cn(
                     "w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-left",
                     selectedUser?.user_id === user.user_id
-                      ? "border-blue-500 bg-blue-50 dark:bg-blue-500/10"
+                      ? "border-blue-500 bg-blue-50"
                       : "border-slate-100 hover:border-blue-200 hover:bg-slate-50"
                   )}
                 >
@@ -455,7 +455,7 @@ function AddSupervisorModal({ isOpen, onClose, companyId }: { isOpen: boolean; o
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-slate-900 dark:text-white truncate">{user.full_name}</p>
+                    <p className="font-semibold text-slate-900 truncate">{user.full_name}</p>
                     <p className="text-xs text-slate-500 truncate">{user.email}</p>
                   </div>
                   {selectedUser?.user_id === user.user_id && (
@@ -481,7 +481,7 @@ function AddSupervisorModal({ isOpen, onClose, companyId }: { isOpen: boolean; o
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-4 bg-blue-50/50 dark:bg-blue-500/5 rounded-2xl border border-blue-100 dark:border-blue-900/30 space-y-3"
+              className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100 space-y-3"
             >
               <label className="text-[10px] text-blue-600 font-bold uppercase tracking-wider block px-1">Assign Department (Auto-Matching)</label>
               <Select value={department} onValueChange={setDepartment}>
@@ -507,7 +507,7 @@ function AddSupervisorModal({ isOpen, onClose, companyId }: { isOpen: boolean; o
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-slate-50 dark:border-slate-800 bg-slate-50/30 flex gap-3">
+        <div className="p-6 border-t border-slate-50 bg-slate-50/30 flex gap-3">
           <Button onClick={onClose} variant="ghost" className="flex-1 rounded-xl h-12 font-bold text-xs uppercase tracking-widest text-slate-400 hover:text-slate-600">
             Cancel
           </Button>
@@ -579,7 +579,7 @@ function EditSupervisorModal({ isOpen, onClose, supervisor }: { isOpen: boolean;
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
-        className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-h-[90vh] overflow-hidden border border-blue-100 dark:border-slate-800"
+        className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl max-h-[90vh] overflow-hidden border border-blue-100"
       >
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-white">
           <div className="flex items-center justify-between">
@@ -642,7 +642,7 @@ function EditSupervisorModal({ isOpen, onClose, supervisor }: { isOpen: boolean;
           </div>
         </div>
 
-        <div className="p-5 sm:p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 flex gap-3">
+        <div className="p-5 sm:p-6 border-t border-slate-100 bg-slate-50/50 flex gap-3">
           <Button onClick={onClose} variant="outline" className="flex-1 rounded-xl h-11 font-semibold text-xs">
             Cancel
           </Button>
@@ -689,19 +689,19 @@ function DeleteSupervisorModal({
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
-        className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden border border-red-100 dark:border-red-900/30"
+        className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden border border-red-100"
       >
         <div className="p-8 text-center">
-          <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-2xl flex items-center justify-center mx-auto mb-6 text-red-500">
+          <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-red-500">
             <Trash2 size={32} />
           </div>
           
-          <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+          <h3 className="text-xl font-bold text-slate-900 mb-2">
             Remove Supervisor?
           </h3>
           
-          <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-6">
-            Are you sure you want to remove <strong className="text-slate-900 dark:text-white">{supervisorName}</strong>? 
+          <p className="text-sm text-slate-500 leading-relaxed mb-6">
+            Are you sure you want to remove <strong className="text-slate-900">{supervisorName}</strong>? 
             They will be unassigned from all current interns. This action cannot be undone.
           </p>
 
@@ -722,7 +722,7 @@ function DeleteSupervisorModal({
             <Button 
               onClick={onClose} 
               variant="ghost" 
-              className="w-full rounded-xl h-12 font-bold text-xs uppercase tracking-widest text-slate-400 hover:text-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800"
+              className="w-full rounded-xl h-12 font-bold text-xs uppercase tracking-widest text-slate-400 hover:text-slate-600 hover:bg-slate-50"
             >
               Cancel
             </Button>

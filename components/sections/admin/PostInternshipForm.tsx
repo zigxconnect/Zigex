@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Select } from "@/components/uiComponent/Select";
 import { Textarea } from "@/components/uiComponent/Textarea";
+import { RichTextEditor } from "@/components/ui/RichTextEditor";
 import { ImageUpload } from "@/components/feed/project-form/ImageUpload";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -101,6 +102,10 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
     return new Date(dateString).toISOString().split("T")[0];
   };
 
+  const [isVisible, setIsVisible] = useState(
+    initialData?.is_visible ?? true
+  );
+
   const [title, setTitle] = useState(initialData?.title || "");
   const [location, setLocation] = useState(initialData?.location || "");
   const [description, setDescription] = useState(
@@ -160,6 +165,7 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
       formData.append("compensation_amount", isPaid ? compensationAmount : "");
       formData.append("monthly_rate", String(monthlyRate));
       formData.append("required_skills", JSON.stringify(requiredSkills));
+      formData.append("is_visible", String(isVisible));
       if (coverImage) {
         formData.append("cover_image", coverImage);
       } else if (coverImageUrl) {
@@ -285,17 +291,39 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
          </div>
       </FormSection>
 
+      <FormSection title="Visibility">
+        <div className="md:col-span-2">
+          <div className="flex items-start gap-3">
+            <Checkbox
+              id="visible"
+              className="mt-1"
+              checked={isVisible}
+              onChange={() => setIsVisible(!isVisible)}
+            />
+            <div>
+              <label
+                htmlFor="visible"
+                className="text-sm font-medium text-blue-700"
+              >
+                Publish virtual event
+              </label>
+              <p className="text-sm text-gray-500 mt-1">
+                Is currently live for students to see it in jobs. Also visible for users.
+              </p>
+            </div>
+          </div>
+        </div>
+      </FormSection>
+
       <FormSection title="Job Details">
         <FormField
           label="Job Description & Responsibilities"
           required
           className="md:col-span-2"
         >
-          <Textarea
-            rows={8}
+          <RichTextEditor
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            required
+            onChange={setDescription}
           />
         </FormField>
       </FormSection>
@@ -423,3 +451,6 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
     </form>
   );
 };
+
+
+

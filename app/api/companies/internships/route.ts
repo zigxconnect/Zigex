@@ -114,6 +114,8 @@ export async function POST(request: Request) {
                 }
             } else if (key === "is_paid") {
                 rawData[key] = value === "true";
+            } else if (key === "is_visible") {
+                rawData[key] = value === "true";
             } else if (key !== "cover_image") {
                 rawData[key] = value === "null" ? null : value;
             }

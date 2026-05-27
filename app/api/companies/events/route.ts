@@ -69,8 +69,9 @@ export async function POST(request: Request) {
   try {
     const formData = await request.formData();
     const eventImage = formData.get("event_image") as File | null;
-    const dataobject = Object.fromEntries(formData.entries());
+    const dataobject: Record<string, any> = Object.fromEntries(formData.entries());
 
+    // Parse boolean values
     if (!eventImage) {
       return NextResponse.json(
         { error: "Event image is required" },
@@ -108,10 +109,13 @@ export async function POST(request: Request) {
       .getPublicUrl(imagePath);
     const eventImageUrl = imageData.publicUrl;
 
+    const is_visible = formData.get("is_visible") === "true";
+
     const validatedData = eventSchema.parse({
       ...dataobject,
       event_picture_url: eventImageUrl,
       company_id: company.id,
+      is_visible,
     });
 
     const { data, error } = await supabase
@@ -261,3 +265,4 @@ export async function DELETE(request: Request) {
     );
   }
 }
+

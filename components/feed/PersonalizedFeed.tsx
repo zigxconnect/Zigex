@@ -173,12 +173,12 @@ export default function PersonalizedFeed({ userId, userSkills = [], university }
   };
 
   const getTypeBadgeColor = (type: FeedItem['type'], isOpen: boolean) => {
-    if (!isOpen) return 'bg-gray-100 text-gray-500';
+    if (!isOpen) return 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400';
     
     switch (type) {
-      case 'internship': return 'bg-blue-50 text-blue-700 border border-blue-200';
-      case 'event': return 'bg-purple-50 text-purple-700 border border-purple-200';
-      case 'program': return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+      case 'internship': return 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800';
+      case 'event': return 'bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800';
+      case 'program': return 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800';
     }
   };
   
