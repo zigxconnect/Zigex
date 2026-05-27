@@ -127,9 +127,10 @@ export function InternAnnouncementBoard({ announcements }: InternAnnouncementBoa
                                         {announcement.title}
                                     </h3>
 
-                                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-line mb-4 font-medium">
-                                        {announcement.content}
-                                    </p>
+                                    <div 
+                                        className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-4 font-medium prose prose-sm max-w-none prose-a:text-blue-600 hover:prose-a:text-blue-800 prose-img:rounded-xl prose-img:max-w-full prose-headings:text-slate-900 dark:prose-headings:text-white dark:prose-p:text-slate-400"
+                                        dangerouslySetInnerHTML={{ __html: announcement.content }}
+                                    />
 
                                     {/* Tagged student: Intern of the Week */}
                                     {announcement.tagged_student && (

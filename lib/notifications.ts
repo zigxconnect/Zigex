@@ -4,7 +4,7 @@ import { Resend } from 'resend';
 import { NewPostEmail } from '@/emails/NewPostEmail';
 import React from 'react';
 
-type PostType = 'program' | 'internship' | 'event';
+type PostType = 'program' | 'internship' | 'event' | 'announcement';
 
 interface NotificationPayload {
   title: string;

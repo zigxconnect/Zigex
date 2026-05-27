@@ -1,6 +1,6 @@
 "use server";
 
-import { createServerActionClient } from "@/lib/supabase/server";
+import { createServerActionClient, supabaseAdmin } from "@/lib/supabase/server";
 
 export async function subscribeToPushNotifications(subscription: any, origin?: string) {
     try {

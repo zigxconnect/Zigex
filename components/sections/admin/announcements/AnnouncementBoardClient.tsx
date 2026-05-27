@@ -1,10 +1,10 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/RichTextEditor";
 import { MoreVertical, Pin, PinOff, Trash2, Megaphone, Plus, AlertCircle, Building2, Trophy, Sparkles } from "lucide-react";
 import {
     Dialog,
@@ -180,7 +180,7 @@ export function AnnouncementBoardClient({
                             <Plus className="mr-2 h-4 w-4" /> New Announcement
                         </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
                             <DialogTitle>Create Announcement</DialogTitle>
                             <DialogDescription>
@@ -225,11 +225,10 @@ export function AnnouncementBoardClient({
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Content</label>
-                                <Textarea 
-                                    placeholder="Write your announcement here..." 
-                                    className="min-h-[120px]"
+                                <RichTextEditor
                                     value={content}
-                                    onChange={(e) => setContent(e.target.value)}
+                                    onChange={setContent}
+                                    placeholder="Write your announcement here..."
                                 />
                             </div>
                             <div className="space-y-2">
@@ -361,9 +360,10 @@ export function AnnouncementBoardClient({
                                 </DropdownMenu>
                             </CardHeader>
                             <CardContent>
-                                <p className="text-sm leading-relaxed whitespace-pre-wrap text-slate-600">
-                                    {announcement.content}
-                                </p>
+                                <div 
+                                    className="text-sm leading-relaxed text-slate-600 prose prose-sm max-w-none prose-a:text-blue-600 hover:prose-a:text-blue-800 prose-img:rounded-xl prose-img:shadow-md"
+                                    dangerouslySetInnerHTML={{ __html: announcement.content }}
+                                />
                             </CardContent>
                         </Card>
                     ))

@@ -144,8 +144,8 @@ export async function createAnnouncement(payload: {
         return { success: false, error: "You must be associated with a company to post announcements." };
     }
 
-    // SECURITY: Basic XSS sanitization for user input
-    const sanitizeString = (str: string) => str
+    // Title is plain text — sanitize it. Content is rich HTML from TipTap editor — store as-is.
+    const sanitizeTitle = (str: string) => str
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
@@ -154,8 +154,8 @@ export async function createAnnouncement(payload: {
     const { data, error } = await supabase
         .from("announcements")
         .insert({
-            title: sanitizeString(payload.title.trim()),
-            content: sanitizeString(payload.content.trim()),
+            title: sanitizeTitle(payload.title.trim()),
+            content: payload.content,
             is_pinned: payload.is_pinned || false,
             author_id: user.id,
             company_id: finalCompanyId,
@@ -168,6 +168,20 @@ export async function createAnnouncement(payload: {
     if (error) {
         console.error("Error creating announcement [DB]:", error);
         return { success: false, error: `Database Error: ${error.message || JSON.stringify(error)}` };
+    }
+
+    // Dispatch broadcast notification to all subscribed students
+    try {
+        const { dispatchBroadcastNotification } = await import("@/lib/notifications");
+        await dispatchBroadcastNotification({
+            title: payload.title,
+            message: payload.content.substring(0, 100) + (payload.content.length > 100 ? '...' : ''),
+            type: "announcement" as any, 
+            referenceId: data.id,
+            link: "/dashboard/announcements"
+        });
+    } catch (notifErr) {
+        console.error("Failed to dispatch broadcast:", notifErr);
     }
 
     revalidatePath("/admin/announcements");
