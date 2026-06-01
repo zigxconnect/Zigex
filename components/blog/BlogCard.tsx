@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Calendar, Clock, User, ArrowRight, Bell, Pin, Award } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface UnifiedItem {
   id: string;
@@ -79,9 +81,17 @@ export default function BlogCard({ item, isFeatured = false }: BlogCardProps) {
             </h2>
 
             {item.excerpt && (
-              <p className="text-slate-300 text-sm sm:text-base md:text-lg font-medium leading-relaxed max-w-3xl line-clamp-2 sm:line-clamp-3">
-                {item.excerpt.replace(/<[^>]*>/g, '')}
-              </p>
+              <div className="text-slate-300 text-sm sm:text-base md:text-lg font-medium leading-relaxed max-w-3xl line-clamp-2 sm:line-clamp-3">
+                {isAnnouncement ? (
+                  <div className="prose prose-invert prose-sm max-w-none text-slate-300 [&_p]:text-slate-300 [&_h1]:text-white [&_h2]:text-white [&_h3]:text-white [&_strong]:text-slate-200 [&_em]:text-slate-300 [&_a]:text-blue-300 [&_code]:bg-slate-900/50 [&_code]:text-slate-200 [&_ul]:text-slate-300 [&_ol]:text-slate-300 [&_li]:text-slate-300">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {item.excerpt}
+                    </ReactMarkdown>
+                  </div>
+                ) : (
+                  item.excerpt.replace(/<[^>]*>/g, '')
+                )}
+              </div>
             )}
 
             <div className="flex items-center flex-wrap gap-4 pt-4 border-t border-white/10 text-slate-300 text-xs sm:text-sm">
@@ -187,9 +197,17 @@ export default function BlogCard({ item, isFeatured = false }: BlogCardProps) {
 
             {/* Excerpt */}
             {item.excerpt && (
-              <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium leading-relaxed line-clamp-3">
-                {item.excerpt.replace(/<[^>]*>/g, '')}
-              </p>
+              isAnnouncement ? (
+                <div className="prose prose-sm max-w-none text-slate-600 dark:text-slate-400 [&_p]:text-slate-600 dark:[&_p]:text-slate-400 [&_h1]:text-slate-900 dark:[&_h1]:text-white [&_h2]:text-slate-900 dark:[&_h2]:text-white [&_h3]:text-slate-900 dark:[&_h3]:text-white [&_strong]:text-slate-700 dark:[&_strong]:text-slate-300 [&_em]:text-slate-600 dark:[&_em]:text-slate-400 [&_a]:text-blue-600 dark:[&_a]:text-blue-400 [&_code]:bg-slate-100 dark:[&_code]:bg-slate-900/50 [&_code]:text-slate-700 dark:[&_code]:text-slate-200 [&_ul]:text-slate-600 dark:[&_ul]:text-slate-400 [&_ol]:text-slate-600 dark:[&_ol]:text-slate-400 [&_li]:text-slate-600 dark:[&_li]:text-slate-400 line-clamp-3">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {item.excerpt}
+                  </ReactMarkdown>
+                </div>
+              ) : (
+                <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium leading-relaxed line-clamp-3">
+                  {item.excerpt.replace(/<[^>]*>/g, '')}
+                </p>
+              )
             )}
 
             {/* Spotlight tagged student indicator */}
