@@ -7,8 +7,7 @@ import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { getAnnouncementById } from "@/lib/actions/announcement.actions";
 import { Badge } from "@/components/ui/badge";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { RichContentRenderer } from "@/components/ui/RichContentRenderer";
 
 export const metadata = {
   title: "Announcement Details | Zigex",
@@ -143,11 +142,10 @@ export default async function AnnouncementDetailPage({ params }: { params: Promi
             )}
 
             {/* Content Text */}
-            <div className="prose prose-lg dark:prose-invert max-w-none [&_p]:text-slate-600 dark:[&_p]:text-slate-300 [&_h1]:text-slate-900 dark:[&_h1]:text-white [&_h2]:text-slate-900 dark:[&_h2]:text-white [&_h3]:text-slate-900 dark:[&_h3]:text-white [&_strong]:text-slate-800 dark:[&_strong]:text-slate-200 [&_em]:text-slate-600 dark:[&_em]:text-slate-300 [&_a]:text-blue-600 dark:[&_a]:text-blue-400 [&_code]:bg-slate-100 dark:[&_code]:bg-slate-900/50 [&_code]:text-slate-700 dark:[&_code]:text-slate-200 [&_ul]:text-slate-600 dark:[&_ul]:text-slate-300 [&_ol]:text-slate-600 dark:[&_ol]:text-slate-300 [&_li]:text-slate-600 dark:[&_li]:text-slate-300 [&_blockquote]:border-blue-500 [&_blockquote]:text-slate-700 dark:[&_blockquote]:text-slate-300">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {announcement.content}
-                </ReactMarkdown>
-            </div>
+            <RichContentRenderer 
+              content={announcement.content}
+              className="prose prose-lg dark:prose-invert max-w-none [&_p]:text-slate-600 dark:[&_p]:text-slate-300 [&_h1]:text-slate-900 dark:[&_h1]:text-white [&_h2]:text-slate-900 dark:[&_h2]:text-white [&_h3]:text-slate-900 dark:[&_h3]:text-white [&_strong]:text-slate-800 dark:[&_strong]:text-slate-200 [&_em]:text-slate-600 dark:[&_em]:text-slate-300 [&_a]:text-blue-600 dark:[&_a]:text-blue-400 [&_code]:bg-slate-100 dark:[&_code]:bg-slate-900/50 [&_code]:text-slate-700 dark:[&_code]:text-slate-200 [&_ul]:text-slate-600 dark:[&_ul]:text-slate-300 [&_ol]:text-slate-600 dark:[&_ol]:text-slate-300 [&_li]:text-slate-600 dark:[&_li]:text-slate-300 [&_blockquote]:border-blue-500 [&_blockquote]:text-slate-700 dark:[&_blockquote]:text-slate-300"
+            />
 
             {/* Featured Image (if exists and hasn't been used fully as hero backdrop or if we want it inline) */}
             {announcement.image_url && (
