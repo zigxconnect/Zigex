@@ -33,8 +33,8 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
       {/* ═══ Main Content Column ═══ */}
       <div className="flex-1 min-w-0 space-y-6">
 
-        {/* ── Hero Banner ── */}
-        <section className="relative overflow-hidden rounded-2xl bg-slate-50 dark:bg-[#161b22] border border-slate-100 dark:border-slate-800/60 min-h-[220px]">
+        {/* ── Hero Banner (hidden on mobile) ── */}
+        <section className="hidden md:block relative overflow-hidden rounded-2xl bg-slate-50 dark:bg-[#161b22] border border-slate-100 dark:border-slate-800/60 min-h-[220px]">
           <div className="absolute top-0 right-0 w-1/2 h-full">
             <div className="absolute inset-0 bg-gradient-to-l from-blue-600/5 dark:from-blue-500/10 to-transparent" />
             <div className="absolute right-6 bottom-2 text-slate-200/10 dark:text-white/[0.03] font-black text-[160px] leading-none tracking-tighter select-none pointer-events-none hidden md:block">Z</div>
@@ -88,6 +88,16 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 
         {/* ── Stories ── */}
         <section>
+          {/* Mobile-only header */}
+          <div className="flex items-center gap-3 mb-3 md:hidden px-1">
+            <div className="w-9 h-9 bg-[#155DFC] rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+              <span className="text-white font-black text-sm italic">Z</span>
+            </div>
+            <div>
+              <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tight leading-none">Zigex Announcements</h2>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Latest updates & stories</p>
+            </div>
+          </div>
           <FeedStories currentUser={userData} />
         </section>
 
