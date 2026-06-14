@@ -44,6 +44,7 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
   };
 
   const [applicationLocation, setApplicationLocation] = useState(initialData?.location|| "")
+  const [whatsappCommunityLink, setWhatsappCommunityLink] = useState(initialData?.whatsapp_community_link || "");
 
   const [isVisible, setIsVisible] = useState(
     initialData?.is_visible ?? true
@@ -100,6 +101,7 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
     if (programFormat) formData.append("program_format", programFormat);
     if (requiredSkills) formData.append("required_skills", requiredSkills);
     formData.append("is_visible", isVisible.toString());
+    formData.append("whatsapp_community_link", whatsappCommunityLink);
     if (programPicture) formData.append("program_picture", programPicture);
     // ** THIS IS THE CRITICAL FIX: INCLUDE THE ID FOR PATCH REQUESTS **
     if (isEditMode) {
@@ -201,7 +203,15 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
             required
           />
         </FormField>
-      </FormSection>
+        <FormField label="WhatsApp Community Link">
+          <Input
+            type="url"
+            value={whatsappCommunityLink}
+            onChange={(e) => setWhatsappCommunityLink(e.target.value)}
+            placeholder="e.g., https://chat.whatsapp.com/..."
+          />
+        </FormField>
+        </FormSection>
 
       <FormSection title="Visibility">
         <FormField label="Publish Virtual Event" className="md:col-span-2">

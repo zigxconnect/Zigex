@@ -190,7 +190,7 @@ export const AdminSidebar = ({
         </div>
 
         {/* Pro Invite Banner */}
-        <div className={cn(
+        {/* <div className={cn(
           "p-5 m-4 rounded-[2rem] bg-slate-900 border border-slate-800 text-white relative overflow-hidden group transition-all duration-500",
           !isOpen && "lg:p-2 lg:m-2"
         )}>
@@ -209,7 +209,7 @@ export const AdminSidebar = ({
              )}
           </div>
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-[40px] group-hover:bg-primary/40 transition-all duration-700" />
-        </div>
+        </div> */}
       </aside>
     </>
   );

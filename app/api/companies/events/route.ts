@@ -69,7 +69,9 @@ export async function POST(request: Request) {
   try {
     const formData = await request.formData();
     const eventImage = formData.get("event_image") as File | null;
-    const dataobject: Record<string, any> = Object.fromEntries(formData.entries());
+    const dataobject: Record<string, any> = Object.fromEntries(
+      Array.from(formData.entries()).filter(([key]) => key !== 'event_image')
+    );
 
     // Parse boolean values
     if (!eventImage) {

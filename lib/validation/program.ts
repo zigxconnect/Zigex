@@ -18,6 +18,7 @@ export const programSchema = z.object({
     updated_at: z.string().datetime().optional(),
     required_skills: z.array(z.string()).optional(),
     is_visible: z.boolean().default(true).optional(),
+    whatsapp_community_link: z.string().url().optional().nullable().or(z.literal('')),
 });
 
 export type Program = z.infer<typeof programSchema>;

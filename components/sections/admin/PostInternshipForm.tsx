@@ -108,6 +108,7 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
 
   const [title, setTitle] = useState(initialData?.title || "");
   const [location, setLocation] = useState(initialData?.location || "");
+  const [whatsappCommunityLink, setWhatsappCommunityLink] = useState(initialData?.whatsapp_community_link || "");
   const [description, setDescription] = useState(
     initialData?.description || ""
   );
@@ -164,6 +165,7 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
       formData.append("is_paid", String(isPaid));
       formData.append("compensation_amount", isPaid ? compensationAmount : "");
       formData.append("monthly_rate", String(monthlyRate));
+      formData.append("whatsapp_community_link", whatsappCommunityLink);
       formData.append("required_skills", JSON.stringify(requiredSkills));
       formData.append("is_visible", String(isVisible));
       if (coverImage) {
@@ -239,6 +241,14 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             required
+          />
+        </FormField>
+        <FormField label="WhatsApp Community Link">
+          <Input
+            type="url"
+            value={whatsappCommunityLink}
+            onChange={(e) => setWhatsappCommunityLink(e.target.value)}
+            placeholder="e.g., https://chat.whatsapp.com/..."
           />
         </FormField>
         <FormField label="Internship Type" required>

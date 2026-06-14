@@ -58,6 +58,7 @@ export const PostEventForm = ({ initialData }: { initialData?: any }) => {
   const [isVisible, setIsVisible] = useState(
     initialData?.is_visible ?? true
   );
+  const [whatsappCommunityLink, setWhatsappCommunityLink] = useState(initialData?.whatsapp_community_link || "");
   const [eventImage, setEventImage] = useState<File | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,6 +83,7 @@ export const PostEventForm = ({ initialData }: { initialData?: any }) => {
     formData.append("end_date", new Date(endDate).toISOString());
     formData.append("location", location);
     formData.append("is_visible", isVisible.toString());
+    formData.append("whatsapp_community_link", whatsappCommunityLink);
     if (eventImage) {
       formData.append("event_image", eventImage);
     }
@@ -149,7 +151,14 @@ export const PostEventForm = ({ initialData }: { initialData?: any }) => {
             required
           />
         </FormField>
-      </FormSection>
+        <FormField label="WhatsApp Community Link">
+          <Input
+            type="url"
+            value={whatsappCommunityLink}
+            onChange={(e) => setWhatsappCommunityLink(e.target.value)}
+            placeholder="e.g., https://chat.whatsapp.com/..."
+          />
+        </FormField>
 
       <FormSection title="Event Schedule">
         <FormField label="Start Date" required>
@@ -234,6 +243,7 @@ export const PostEventForm = ({ initialData }: { initialData?: any }) => {
             : "Publish Event"}
         </Button>
       </div>
+      </FormSection>
     </form>
   );
 };
