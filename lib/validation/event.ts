@@ -16,6 +16,7 @@ export const eventSchema = z.object({
   // is_virtual: z.boolean().default(false),
   // price: z.number().nonnegative().optional().default(0)
   is_visible: z.boolean().default(true).optional(),
+  whatsapp_community_link: z.string().url().optional().nullable().or(z.literal('')),
 });
 
 export type EventFormData = z.infer<typeof eventSchema>;

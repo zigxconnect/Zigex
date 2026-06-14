@@ -214,42 +214,60 @@ export async function PATCH(
     console.warn(`[UPDATE_APPLICATION] Warning: Student profile or user_id not found for application ${id}. Notifications will be skipped.`);
   }
 
-  // Get the opportunity title
+  // Get the opportunity title, WhatsApp link, and start date
   let opportunityTitle = "your application";
   let opportunityPrice = 0;
   let opportunityId: string | null = null;
   let appType = application.application_type;
+  let whatsappCommunityLink: string | null = null;
+  let opportunityStartDate: string | null = null;
 
   if (isNewInternshipApp) {
     const internshipData = Array.isArray(application.internship) ? application.internship[0] : application.internship;
     opportunityTitle = internshipData?.title || "Internship";
     opportunityId = internshipData?.id;
     appType = "internship";
+    // Fetch full internship details including whatsapp_community_link and start_date
+    if (opportunityId) {
+      const { data: fullInternship } = await supabaseAdmin
+        .from("internships")
+        .select("whatsapp_community_link, start_date")
+        .eq("id", opportunityId)
+        .single();
+      whatsappCommunityLink = fullInternship?.whatsapp_community_link || null;
+      opportunityStartDate = fullInternship?.start_date || null;
+    }
   } else {
     if (application.application_type === "internship" && application.internship_id) {
       const { data: internship } = await supabaseAdmin
         .from("internships")
-        .select("title")
+        .select("title, whatsapp_community_link, start_date")
         .eq("id", application.internship_id)
         .single();
       opportunityTitle = internship?.title || opportunityTitle;
+      whatsappCommunityLink = internship?.whatsapp_community_link || null;
+      opportunityStartDate = internship?.start_date || null;
       opportunityId = application.internship_id;
     } else if (application.application_type === "program" && application.program_id) {
       const { data: program } = await supabaseAdmin
         .from("programs")
-        .select("title, price_xaf")
+        .select("title, price_xaf, whatsapp_community_link, start_date")
         .eq("id", application.program_id)
         .single();
       opportunityTitle = program?.title || opportunityTitle;
       opportunityPrice = program?.price_xaf || 0;
+      whatsappCommunityLink = program?.whatsapp_community_link || null;
+      opportunityStartDate = program?.start_date || null;
       opportunityId = application.program_id;
     } else if (application.application_type === "event" && application.event_id) {
       const { data: event } = await supabaseAdmin
         .from("event")
-        .select("title")
+        .select("title, whatsapp_community_link, start_date")
         .eq("id", application.event_id)
         .single();
       opportunityTitle = event?.title || opportunityTitle;
+      whatsappCommunityLink = event?.whatsapp_community_link || null;
+      opportunityStartDate = event?.start_date || null;
       opportunityId = application.event_id;
     }
   }
@@ -421,21 +439,14 @@ export async function PATCH(
             // 1. Notify Candidate of Decision
           if (studentEmail) {
             if (status === "accepted") {
-              // Dynamically determine the WhatsApp group link based on the program title
-              let whatsappLink = "https://chat.whatsapp.com/K0RflJDzxyKDIM2yuvzTTQ?mode=gi_t"; // Default link
-              
-              if (opportunityTitle.toLowerCase().includes("seed 50 days") || 
-                  opportunityTitle.toLowerCase().includes("founders program")) {
-                whatsappLink = "https://chat.whatsapp.com/CsA3nNZcT5eDEIG9iQJ0RI";
-              }
-
               emailPromises.push(sendAcceptanceEmail({
                 email: studentEmail,
                 name: studentName,
                 opportunityTitle,
                 opportunityType: appType,
                 companyName,
-                whatsappGroupLink: whatsappLink,
+                whatsappGroupLink: whatsappCommunityLink || undefined,
+                startDate: opportunityStartDate || undefined,
               }));
             } else if (status === "rejected") {
               emailPromises.push(sendRejectionEmail({

@@ -64,6 +64,7 @@ import { markAnnouncementsAsRead } from "@/lib/actions/announcement.actions";
 import { InternAnnouncementBoard } from "@/components/sections/intern/InternAnnouncementBoard";
 import { LogbookPreviewModal } from "./LogbookPreviewModal";
 import { WorkspaceSidebar } from "./WorkspaceSidebar";
+import { AttendanceScannerModal } from "./AttendanceScannerModal";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { toast } from "sonner";
@@ -522,6 +523,14 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                           >
                             <FileText size={14} className="hidden sm:inline-block" /> Logbook
                           </Button>
+                          <AttendanceScannerModal>
+                            <Button
+                              variant="outline"
+                              className="flex-1 sm:flex-none rounded-xl h-10 sm:h-11 px-2 sm:px-6 border-blue-200 dark:border-blue-900 font-bold text-[9px] sm:text-[10px] uppercase tracking-widest bg-blue-50/50 text-[#155DFC] dark:bg-blue-900/20 dark:text-blue-400 gap-1.5 hover:bg-blue-100 dark:hover:bg-blue-900/40 cursor-pointer whitespace-nowrap"
+                            >
+                              <Scan size={14} className="hidden sm:inline-block" /> Scan Attendance
+                            </Button>
+                          </AttendanceScannerModal>
                           <Button
                             disabled={hasLoggedToday || needsPaymentAcknowledgment}
                             onClick={() => setIsLogModalOpen(true)}

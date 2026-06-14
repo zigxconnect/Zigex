@@ -328,12 +328,10 @@ export async function getSupervisorWorkspaceData(workspaceId: string) {
                 .eq("supervisor_id", profile.id)
                 .order("created_at", { ascending: false }),
 
-            // Attendance — only for THIS workspace, today
+            // Attendance — only for THIS workspace, mapping from v2 JSONB
             supabaseAdmin
-                .from("intern_attendance")
+                .from("intern_attendance_v2")
                 .select("*")
-                .eq("attendance_date", today)
-                .eq("supervisor_id", profile.id)
                 .eq("internship_id", workspaceId),
 
             // Evaluations — only for THIS workspace
@@ -365,6 +363,21 @@ export async function getSupervisorWorkspaceData(workspaceId: string) {
             }
         }
 
+        // Extract today's attendance from the v2 JSONB format
+        const todayAttendance = (attendanceRes.data || []).map(record => {
+            const todayLog = record.attendance_logs ? record.attendance_logs[today] : null;
+            if (!todayLog) return null;
+            return {
+                id: record.id,
+                student_id: record.student_id,
+                internship_id: record.internship_id,
+                supervisor_id: todayLog.supervisor_id,
+                attendance_date: today,
+                status: todayLog.status,
+                confirmed_at: todayLog.confirmed_at
+            };
+        }).filter(Boolean);
+
         return {
             profile: { ...profile, company: companyInfo },
             workspace: workspaceMeta,
@@ -372,7 +385,7 @@ export async function getSupervisorWorkspaceData(workspaceId: string) {
             recentLogs,
             unreadLogsCount,
             tasks: tasksRes.data || [],
-            attendance: attendanceRes.data || [],
+            attendance: todayAttendance,
             evaluations
         };
     } catch (err) {
@@ -765,10 +778,8 @@ export async function getSupervisorDashboardData() {
         const today = new Date().toISOString().split("T")[0];
         const [attendanceRes, evaluationsRes] = await Promise.all([
             supabaseAdmin
-                .from("intern_attendance")
-                .select("*")
-                .eq("attendance_date", today)
-                .eq("supervisor_id", profile.id),
+                .from("intern_attendance_v2")
+                .select("*"),
 
             // Fetch recent evaluations
             supabaseAdmin
@@ -778,7 +789,21 @@ export async function getSupervisorDashboardData() {
                 .order("created_at", { ascending: false })
         ]);
 
-        const attendance = attendanceRes.data || [];
+        // Map v2 JSONB to expected array format
+        const attendance = (attendanceRes.data || []).map(record => {
+            const todayLog = record.attendance_logs ? record.attendance_logs[today] : null;
+            // Only include logs supervised by this supervisor (or all for this workspace)
+            if (!todayLog || todayLog.supervisor_id !== profile.id) return null;
+            return {
+                id: record.id,
+                student_id: record.student_id,
+                internship_id: record.internship_id,
+                supervisor_id: todayLog.supervisor_id,
+                attendance_date: today,
+                status: todayLog.status,
+                confirmed_at: todayLog.confirmed_at
+            };
+        }).filter(Boolean);
         const evaluations = (evaluationsRes.data || []).map(evalItem => ({
             ...evalItem,
             student: studentProfiles.find(p => p.user_id === evalItem.student_id) || { full_name: "Intern" }
@@ -1173,18 +1198,47 @@ export async function markInternAttendance(studentId: string, internshipId: stri
 
     const today = now.toISOString().split("T")[0];
 
-    const { data, error } = await supabase
-        .from("intern_attendance")
-        .upsert({
-            student_id: studentId,
-            internship_id: internshipId,
-            supervisor_id: profile.id,
-            attendance_date: today,
-            status,
-            confirmed_at: now.toISOString()
-        })
-        .select()
-        .single();
+    const newLogEntry = {
+        status,
+        confirmed_at: now.toISOString(),
+        supervisor_id: profile.id
+    };
+
+    // Try to get the existing record
+    const { data: existingRecord } = await supabaseAdmin
+        .from("intern_attendance_v2")
+        .select("id, attendance_logs")
+        .eq("student_id", studentId)
+        .eq("internship_id", internshipId)
+        .maybeSingle();
+
+    let data, error;
+    if (existingRecord) {
+        // Append to existing logs
+        const updatedLogs = { ...(existingRecord.attendance_logs as any), [today]: newLogEntry };
+        const res = await supabaseAdmin
+            .from("intern_attendance_v2")
+            .update({ attendance_logs: updatedLogs })
+            .eq("id", existingRecord.id)
+            .select()
+            .single();
+        data = res.data;
+        error = res.error;
+    } else {
+        // Create new row for this intern
+        const res = await supabaseAdmin
+            .from("intern_attendance_v2")
+            .insert({
+                student_id: studentId,
+                internship_id: internshipId,
+                supervisor_id: profile.id,
+                attendance_logs: { [today]: newLogEntry }
+            })
+            .select()
+            .single();
+        data = res.data;
+        error = res.error;
+    }
 
     if (error) {
         console.error("Error marking attendance:", error);
@@ -1221,28 +1275,50 @@ export async function submitBatchAttendance(records: { studentId: string, intern
 
     const today = now.toISOString().split("T")[0];
 
-    const attendanceData = records.map(r => ({
-        student_id: r.studentId,
-        internship_id: r.internshipId,
-        supervisor_id: profile.id,
-        attendance_date: today,
-        status: r.status,
-        confirmed_at: now.toISOString()
-    }));
+    // Fetch all existing v2 records for these students in this internship
+    const studentIds = records.map(r => r.studentId);
+    const internshipId = records[0]?.internshipId; // assuming batch is same internship
+    
+    if (!internshipId) return { success: false, error: "No internship ID found in batch" };
 
-    const { data, error } = await supabase
-        .from("intern_attendance")
-        .upsert(attendanceData, { onConflict: 'student_id,attendance_date' })
-        .select();
+    const { data: existingRecords } = await supabaseAdmin
+        .from("intern_attendance_v2")
+        .select("id, student_id, attendance_logs")
+        .in("student_id", studentIds)
+        .eq("internship_id", internshipId);
 
-    if (error) {
-        console.error("Error submitting batch attendance:", JSON.stringify(error, null, 2));
-        return { success: false, error: error.message || "Unknown error occurred" };
+    const existingMap = new Map((existingRecords || []).map(r => [r.student_id, r]));
+    let successCount = 0;
+
+    for (const record of records) {
+        const newLogEntry = {
+            status: record.status,
+            confirmed_at: now.toISOString(),
+            supervisor_id: profile.id
+        };
+
+        const existing = existingMap.get(record.studentId);
+        if (existing) {
+            const updatedLogs = { ...(existing.attendance_logs as any), [today]: newLogEntry };
+            const { error } = await supabaseAdmin
+                .from("intern_attendance_v2")
+                .update({ attendance_logs: updatedLogs })
+                .eq("id", existing.id);
+            if (!error) successCount++;
+        } else {
+            const { error } = await supabaseAdmin
+                .from("intern_attendance_v2")
+                .insert({
+                    student_id: record.studentId,
+                    internship_id: record.internshipId,
+                    supervisor_id: profile.id,
+                    attendance_logs: { [today]: newLogEntry }
+                });
+            if (!error) successCount++;
+        }
     }
 
-    revalidatePath("/supervisor");
-    revalidatePath("/admin/interns");
-    return { success: true, count: data?.length || 0 };
+    return { success: true, count: successCount };
 }
 
 /**

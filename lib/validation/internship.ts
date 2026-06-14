@@ -20,6 +20,7 @@ export const internshipSchema = z.object({
     category: z.string().min(2),
     monthly_rate: z.coerce.number().default(0).optional(),
     is_visible: z.boolean().default(true).optional(),
+    whatsapp_community_link: z.string().url().optional().nullable().or(z.literal('')),
 });
 
 export type Internship = z.infer<typeof internshipSchema>;
