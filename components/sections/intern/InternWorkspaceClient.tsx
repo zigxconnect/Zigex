@@ -48,7 +48,8 @@ import {
   Link as LinkIcon,
   Paperclip,
   Building2,
-  Filter
+  Filter,
+  Scan
 } from "lucide-react";
 import { format } from "date-fns";
 import Link from "next/link";
