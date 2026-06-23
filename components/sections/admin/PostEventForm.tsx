@@ -244,7 +244,6 @@ export const PostEventForm = ({ initialData }: { initialData?: any }) => {
             : "Publish Event"}
         </Button>
       </div>
-      </FormSection>
     </form>
   );
 };
