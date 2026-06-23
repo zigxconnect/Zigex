@@ -82,6 +82,10 @@ export const ApplicantActions = ({
 
   // Determine the correct WhatsApp community link based on the program/internship title
   const getWhatsAppLink = () => {
+    if (applicant.whatsappLink) {
+      return applicant.whatsappLink;
+    }
+
     const title = (applicant.internshipTitle || "").toLowerCase();
     if (title.includes("seed 50 days") || title.includes("founders program")) {
       return "https://chat.whatsapp.com/CsA3nNZcT5eDEIG9iQJ0RI";

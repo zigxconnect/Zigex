@@ -416,8 +416,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
           <DailyReportModal
             isOpen={isLogModalOpen}
             onClose={() => setIsLogModalOpen(false)}
-            applicationId={application.id}
-            opportunityType={application.application_type || "internship"}
+            internshipId={opportunity?.id || application?.internship_id || application?.program_id || application?.event_id}
           />
         )}
       </AnimatePresence>

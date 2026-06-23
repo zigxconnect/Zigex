@@ -215,7 +215,8 @@ export async function GET(request: Request) {
           id: supervisor.id,
           full_name: supervisor.full_name,
           avatar_url: supervisor.avatar_url
-        } : undefined
+        } : undefined,
+        whatsappLink: opportunity?.whatsapp_link || null
       };
 
     });
@@ -263,7 +264,8 @@ export async function GET(request: Request) {
           id: supervisor.id,
           full_name: supervisor.full_name,
           avatar_url: supervisor.avatar_url
-        } : undefined
+        } : undefined,
+        whatsappLink: internship?.whatsapp_link || null
       };
     });
 

@@ -159,6 +159,7 @@ export const PostEventForm = ({ initialData }: { initialData?: any }) => {
             placeholder="e.g., https://chat.whatsapp.com/..."
           />
         </FormField>
+      </FormSection>
 
       <FormSection title="Event Schedule">
         <FormField label="Start Date" required>

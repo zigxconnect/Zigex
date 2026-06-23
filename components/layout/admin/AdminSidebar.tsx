@@ -51,7 +51,7 @@ const baseNavigationGroups = [
     links: [
       { href: "/admin/postings", icon: Briefcase, label: "Postings" },
       { href: "/admin/applicants", icon: Users, label: "Applicants" },
-      { href: "/admin/interns", icon: GraduationCap, label: "Interns", badge: "New" },
+      { href: "/admin/interns", icon: GraduationCap, label: "Participants", badge: "New" },
       { href: "/admin/accepted", icon: CheckCheck, label: "Hires" },
       { href: "/admin/supervisors", icon: ShieldCheck, label: "Supervisors" },
       { href: "/admin/programs/content", icon: BookOpen, label: "Content" },
