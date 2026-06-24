@@ -114,32 +114,70 @@ export async function scanAttendanceQR(token: string) {
             return { success: false, error: "Sorry, it seems you have not been accepted for this internship.", code: "not_accepted" };
         }
 
-        // Check if student has an accepted application for this internship
-        const possibleIds = [studentProfile.id, studentProfile.user_id].filter(Boolean);
+        // Both IDs we need to check against:
+        // - studentProfile.user_id (auth user id) → used as student_id in internship_applications
+        // - studentProfile.id (profile row id) → used as student_id in Applications
+        const authUserId = studentProfile.user_id;   // e.g. auth.users.id
+        const profileId = studentProfile.id;          // e.g. student_profiles.id
 
-        const { data: application } = await supabaseAdmin
+        // Check internship_applications table (student_id = auth user id)
+        const { data: application, error: appErr } = await supabaseAdmin
             .from("internship_applications")
             .select("id, supervisor_id")
-            .or(`student_id.in.(${possibleIds.join(",")}),user_id.in.(${possibleIds.join(",")})`)
+            .eq("student_id", authUserId)
             .eq("internship_id", internshipId)
             .in("status", ["accepted", "rsvp_confirmed"])
             .maybeSingle();
 
-        // Also check unified Applications table
+        if (appErr) {
+            console.error("[ATTENDANCE] internship_applications query error:", appErr);
+        }
+
+        // Also check unified Applications table (student_id = student_profiles.id)
         let supervisorId = application?.supervisor_id;
         if (!application) {
-            const { data: unifiedApp } = await supabaseAdmin
+            const { data: unifiedApp, error: unifiedErr } = await supabaseAdmin
                 .from("Applications")
                 .select("id, supervisor_id")
-                .or(`student_id.in.(${possibleIds.join(",")}),user_id.in.(${possibleIds.join(",")})`)
+                .eq("student_id", profileId)
                 .or(`internship_id.eq.${internshipId},program_id.eq.${internshipId}`)
                 .in("status", ["accepted", "rsvp_confirmed"])
                 .maybeSingle();
 
-            if (!unifiedApp) {
-                return { success: false, error: "Sorry, it seems you have not been accepted for this internship.", code: "not_accepted" };
+            if (unifiedErr) {
+                console.error("[ATTENDANCE] Applications query error:", unifiedErr);
             }
-            supervisorId = unifiedApp.supervisor_id;
+
+            if (!unifiedApp) {
+                // Last resort: also try with auth user id in Applications
+                const { data: fallbackApp } = await supabaseAdmin
+                    .from("Applications")
+                    .select("id, supervisor_id")
+                    .eq("student_id", authUserId)
+                    .or(`internship_id.eq.${internshipId},program_id.eq.${internshipId}`)
+                    .in("status", ["accepted", "rsvp_confirmed"])
+                    .maybeSingle();
+
+                if (!fallbackApp) {
+                    // Also try internship_applications with profile id
+                    const { data: fallbackApp2 } = await supabaseAdmin
+                        .from("internship_applications")
+                        .select("id, supervisor_id")
+                        .eq("student_id", profileId)
+                        .eq("internship_id", internshipId)
+                        .in("status", ["accepted", "rsvp_confirmed"])
+                        .maybeSingle();
+
+                    if (!fallbackApp2) {
+                        return { success: false, error: "Sorry, it seems you have not been accepted for this internship.", code: "not_accepted" };
+                    }
+                    supervisorId = fallbackApp2.supervisor_id;
+                } else {
+                    supervisorId = fallbackApp.supervisor_id;
+                }
+            } else {
+                supervisorId = unifiedApp.supervisor_id;
+            }
         }
 
         // ── Log attendance (JSONB append) ──
