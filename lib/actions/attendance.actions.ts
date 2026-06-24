@@ -120,9 +120,9 @@ export async function scanAttendanceQR(token: string) {
         const { data: application } = await supabaseAdmin
             .from("internship_applications")
             .select("id, supervisor_id")
-            .or(`student_id.in.(${possibleIds.map(id => `"${id}"`).join(",")}),user_id.in.(${possibleIds.map(id => `"${id}"`).join(",")})`)
+            .or(`student_id.in.(${possibleIds.join(",")}),user_id.in.(${possibleIds.join(",")})`)
             .eq("internship_id", internshipId)
-            .eq("status", "accepted")
+            .ilike("status", "accepted")
             .maybeSingle();
 
         // Also check unified Applications table
@@ -131,9 +131,9 @@ export async function scanAttendanceQR(token: string) {
             const { data: unifiedApp } = await supabaseAdmin
                 .from("Applications")
                 .select("id, supervisor_id")
-                .or(`student_id.in.(${possibleIds.map(id => `"${id}"`).join(",")}),user_id.in.(${possibleIds.map(id => `"${id}"`).join(",")})`)
+                .or(`student_id.in.(${possibleIds.join(",")}),user_id.in.(${possibleIds.join(",")})`)
                 .or(`internship_id.eq.${internshipId},program_id.eq.${internshipId}`)
-                .eq("status", "accepted")
+                .ilike("status", "accepted")
                 .maybeSingle();
 
             if (!unifiedApp) {
