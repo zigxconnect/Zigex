@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle, XCircle, Scan, Loader2, ShieldCheck, Clock } from "lucide-react";
+import { CheckCircle, XCircle, Scan, Loader2, ShieldCheck, Clock, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { scanAttendanceQR } from "@/lib/actions/attendance.actions";
 import { toast } from "sonner";
@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 
 export function AttendanceQRScanner() {
     const [isScanning, setIsScanning] = useState(false);
-    const [status, setStatus] = useState<"idle" | "processing" | "success" | "already" | "error">("idle");
+    const [status, setStatus] = useState<"idle" | "processing" | "success" | "already" | "error" | "not_accepted">("idle");
     const [message, setMessage] = useState("");
     const router = useRouter();
 
@@ -44,7 +44,11 @@ export function AttendanceQRScanner() {
                 }
                 router.refresh();
             } else {
-                setStatus("error");
+                if (res.code === "not_accepted") {
+                    setStatus("not_accepted");
+                } else {
+                    setStatus("error");
+                }
                 setMessage(res.error || "Failed to log attendance");
             }
         } catch (error) {
@@ -261,6 +265,61 @@ export function AttendanceQRScanner() {
                             </motion.div>
                         )}
 
+                        {/* ─── Error ─── */}
+                        {status === "error" && (
+                            <motion.div
+                                key="error"
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="absolute inset-0 flex flex-col items-center justify-center bg-red-50 dark:bg-red-950/30 p-6 text-center"
+                            >
+                                <motion.div
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{ type: "spring", bounce: 0.3 }}
+                                >
+                                    <XCircle size={56} className="text-red-500 mb-4" />
+                                </motion.div>
+                                <h3 className="text-lg font-bold text-red-700 dark:text-red-400 mb-2">Scan Failed</h3>
+                                <p className="text-xs font-medium text-red-600/80 dark:text-red-400/80 max-w-xs">{message}</p>
+
+                                <Button
+                                    onClick={resetScanner}
+                                    className="mt-6 bg-red-500 hover:bg-red-600 text-white rounded-xl"
+                                >
+                                    Try Again
+                                </Button>
+                            </motion.div>
+                        )}
+
+                        {/* ─── Not Accepted ─── */}
+                        {status === "not_accepted" && (
+                            <motion.div
+                                key="not_accepted"
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="absolute inset-0 flex flex-col items-center justify-center bg-orange-50 dark:bg-orange-950/30 p-6 text-center"
+                            >
+                                <motion.div
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{ type: "spring", bounce: 0.3 }}
+                                >
+                                    <ShieldAlert size={56} className="text-orange-500 mb-4" />
+                                </motion.div>
+                                <h3 className="text-lg font-bold text-orange-700 dark:text-orange-400 mb-2">Access Denied</h3>
+                                <p className="text-xs font-medium text-orange-600/80 dark:text-orange-400/80 max-w-xs">{message}</p>
+
+                                <Button
+                                    onClick={resetScanner}
+                                    className="mt-6 bg-orange-500 hover:bg-orange-600 text-white rounded-xl"
+                                >
+                                    Close
+                                </Button>
+                            </motion.div>
+                        )}
                         {/* ─── Error ─── */}
                         {status === "error" && (
                             <motion.div

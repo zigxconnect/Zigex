@@ -111,7 +111,7 @@ export async function scanAttendanceQR(token: string) {
             .maybeSingle();
 
         if (!studentProfile) {
-            return { success: false, error: "Student profile not found." };
+            return { success: false, error: "Sorry, it seems you have not been accepted for this internship.", code: "not_accepted" };
         }
 
         // Check if student has an accepted application for this internship
@@ -137,7 +137,7 @@ export async function scanAttendanceQR(token: string) {
                 .maybeSingle();
 
             if (!unifiedApp) {
-                return { success: false, error: "You are not assigned to this internship program." };
+                return { success: false, error: "Sorry, it seems you have not been accepted for this internship.", code: "not_accepted" };
             }
             supervisorId = unifiedApp.supervisor_id;
         }
