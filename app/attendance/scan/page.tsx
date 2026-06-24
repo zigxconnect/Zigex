@@ -1,6 +1,6 @@
 import React from "react";
 import { scanAttendanceQR } from "@/lib/actions/attendance.actions";
-import { CheckCircle, XCircle, ShieldCheck, ArrowLeft } from "lucide-react";
+import { CheckCircle, XCircle, ShieldCheck, ArrowLeft, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 
 export default async function AttendanceScanPage(props: {
@@ -47,6 +47,14 @@ export default async function AttendanceScanPage(props: {
                             <p className="text-sm text-slate-500 mb-8 font-medium">Your attendance for today has been logged securely.</p>
                         </>
                     )
+                ) : result.code === "not_accepted" ? (
+                    <>
+                        <div className="w-20 h-20 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <ShieldAlert size={40} className="text-orange-500" />
+                        </div>
+                        <h1 className="text-2xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">Access Denied</h1>
+                        <p className="text-sm text-slate-500 mb-8 font-medium">{result.error}</p>
+                    </>
                 ) : (
                     <>
                         <div className="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-6">

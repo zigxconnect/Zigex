@@ -144,7 +144,7 @@ export function AttendanceQRGenerator({ internshipId, internshipTitle, companyNa
                             
                             <div className="p-3 border-4 border-slate-100 rounded-2xl">
                                 <QRCodeSVG 
-                                    value={`http://10.145.144.236:3000/attendance/scan?token=${qrToken}`} 
+                                    value={`${typeof window !== 'undefined' ? window.location.origin : 'https://zigexconnect.com'}/attendance/scan?token=${qrToken}`} 
                                     size={180}
                                     bgColor="#ffffff"
                                     fgColor="#000000"
