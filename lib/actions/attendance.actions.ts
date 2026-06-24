@@ -122,7 +122,7 @@ export async function scanAttendanceQR(token: string) {
             .select("id, supervisor_id")
             .or(`student_id.in.(${possibleIds.join(",")}),user_id.in.(${possibleIds.join(",")})`)
             .eq("internship_id", internshipId)
-            .ilike("status", "accepted")
+            .in("status", ["accepted", "rsvp_confirmed"])
             .maybeSingle();
 
         // Also check unified Applications table
@@ -133,7 +133,7 @@ export async function scanAttendanceQR(token: string) {
                 .select("id, supervisor_id")
                 .or(`student_id.in.(${possibleIds.join(",")}),user_id.in.(${possibleIds.join(",")})`)
                 .or(`internship_id.eq.${internshipId},program_id.eq.${internshipId}`)
-                .ilike("status", "accepted")
+                .in("status", ["accepted", "rsvp_confirmed"])
                 .maybeSingle();
 
             if (!unifiedApp) {
