@@ -128,7 +128,7 @@ export async function getInternLogsForAdmin(studentId: string, internshipId?: st
     return data || [];
 }
 
-export async function getCompanyInternsPerformanceSummary(companyId: string) {
+export async function getCompanyInternsPerformanceSummary(companyId: string, studentIds?: string[]) {
     if (!companyId) return {};
     const supabase = await createServerActionClient();
 
@@ -142,8 +142,30 @@ export async function getCompanyInternsPerformanceSummary(companyId: string) {
             return {};
         }
 
+        const summaries = data || {};
 
-        return data || {};
+        if (studentIds && studentIds.length > 0) {
+            const validIds = studentIds.filter(id => id && id.length > 10);
+            if (validIds.length > 0) {
+                const { data: v2Attendance } = await supabaseAdmin
+                    .from("intern_attendance_v2")
+                    .select("student_id, attendance_logs")
+                    .in("student_id", validIds);
+
+                if (v2Attendance) {
+                    v2Attendance.forEach(att => {
+                        const count = att.attendance_logs ? Object.keys(att.attendance_logs).length : 0;
+                        if (summaries[att.student_id]) {
+                            summaries[att.student_id].attendanceCount = count;
+                        } else {
+                            summaries[att.student_id] = { attendanceCount: count, totalMarks: 0, latestObservation: "" };
+                        }
+                    });
+                }
+            }
+        }
+
+        return summaries;
 
     } catch (err) {
         console.error("Unexpected error in performance summary RPC:", err);

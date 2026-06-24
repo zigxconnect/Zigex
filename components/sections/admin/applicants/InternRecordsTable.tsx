@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useMemo, useEffect } from "react";
 import { 
@@ -51,7 +51,8 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
     const fetchSummaries = async () => {
       setFetchingSummaries(true);
       try {
-        const data = await getCompanyInternsPerformanceSummary(companyId);
+        const studentIds = applicants.map(a => a.studentId).concat(applicants.map(a => a.userId)).filter(Boolean) as string[];
+        const data = await getCompanyInternsPerformanceSummary(companyId, studentIds);
         setSummaries(data || {});
       } catch (err) {
         console.error("Error fetching performance summaries:", err);
@@ -60,7 +61,7 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
       }
     };
     fetchSummaries();
-  }, [companyId]);
+  }, [companyId, applicants]);
 
   // Helper function to look up summary with proper ID fallbacks
   const getSummary = (intern: Applicant | null) => {
