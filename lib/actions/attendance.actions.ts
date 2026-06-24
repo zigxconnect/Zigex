@@ -101,6 +101,9 @@ export async function scanAttendanceQR(token: string) {
         }
 
         const internshipId = data.internshipId;
+        if (!internshipId) {
+            return { success: false, error: "Invalid QR code: missing internship ID." };
+        }
 
         // ── Verify student is assigned to this internship ──
         // Check student_profiles first
@@ -202,7 +205,7 @@ export async function scanAttendanceQR(token: string) {
 
         if (existingRecord) {
             // Check if already scanned today (idempotent)
-            const logs = existingRecord.attendance_logs as Record<string, any>;
+            const logs = (existingRecord.attendance_logs as Record<string, any>) || {};
             if (logs[today]) {
                 return {
                     success: true,
