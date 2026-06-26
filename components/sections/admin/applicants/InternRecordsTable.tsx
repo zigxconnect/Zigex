@@ -65,8 +65,16 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
 
   // Helper function to look up summary with proper ID fallbacks
   const getSummary = (intern: Applicant | null) => {
-    if (!intern) return { attendanceCount: 0, totalMarks: 0, latestObservation: "" };
-    return summaries[intern.id] || summaries[intern.userId || ""] || summaries[intern.studentId || ""] || { attendanceCount: 0, totalMarks: 0, latestObservation: "" };
+    if (!intern) return { attendanceCount: 0, totalMarks: 0, latestObservation: "", taskCount: 0, avgMark: null, performanceRating: null };
+    
+    // Base summary from application ID
+    const baseSummary = summaries[intern.id] || summaries[intern.userId || ""] || summaries[intern.studentId || ""] || { attendanceCount: 0, totalMarks: 0, latestObservation: "", taskCount: 0, avgMark: null, performanceRating: null };
+    
+    // Extract V2 attendance which is keyed directly by studentId or userId
+    const v2Summary = summaries[intern.studentId || ""] || summaries[intern.userId || ""];
+    const attendanceCount = v2Summary?.attendanceCount !== undefined ? v2Summary.attendanceCount : baseSummary.attendanceCount;
+
+    return { ...baseSummary, attendanceCount };
   };
 
   // Filter only active (accepted) interns
@@ -175,9 +183,8 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
             <tbody className="divide-y divide-slate-50">
               {activeInterns.map((intern) => {
                 const daysWorked = intern.appliedDate ? differenceInDays(new Date(), new Date(intern.appliedDate)) : 0;
-                // Try lookup by application ID first, then by user ID as fallback
-                // Try all ID fallbacks: application ID, userId (auth user), studentId (profile id)
-                const summary = summaries[intern.id] || summaries[intern.userId || ""] || summaries[intern.studentId || ""] || { attendanceCount: 0, totalMarks: 0, latestObservation: "", taskCount: 0, avgMark: null, performanceRating: null };
+                // Use robust getSummary to extract correct V2 attendance
+                const summary = getSummary(intern);
                 
                 return (
                   <tr key={intern.id} className="group hover:bg-blue-50/30 transition-colors duration-300">

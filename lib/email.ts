@@ -102,7 +102,7 @@ const generateEmailHTML = (params: {
               </div>
               ` : ''}
               
-              <div style="color: #475569; font-size: 15px; line-height: 1.7;">${message.replace(/\n/g, '<br/>')}</div>
+              <div style="color: #475569; font-size: 15px; line-height: 1.7;">${message.replace(/\\n/g, '<br/>').replace(/\n/g, '<br/>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>
             </td>
           </tr>
 

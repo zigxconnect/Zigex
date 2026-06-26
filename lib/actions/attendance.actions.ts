@@ -225,7 +225,7 @@ export async function scanAttendanceQR(token: string) {
                 .insert({
                     student_id: studentProfile.id,
                     internship_id: internshipId,
-                    supervisor_id: supervisorId || data.createdBy,
+                    supervisor_id: supervisorId || data.createdBy || null,
                     attendance_logs: { [today]: newLogEntry }
                 });
             updateError = error;
@@ -236,8 +236,12 @@ export async function scanAttendanceQR(token: string) {
             return { success: false, error: "Failed to save attendance." };
         }
 
-        revalidatePath("/supervisor");
-        revalidatePath("/intern/workspace");
+        try {
+            revalidatePath("/supervisor");
+            revalidatePath("/intern/workspace");
+        } catch (e) {
+            console.warn("[ATTENDANCE] Revalidation failed (ignoring):", e);
+        }
 
         return {
             success: true,
@@ -245,8 +249,8 @@ export async function scanAttendanceQR(token: string) {
             alreadyLogged: false
         };
 
-    } catch (err) {
-        console.error("[ATTENDANCE] Unexpected error:", err);
-        return { success: false, error: "An unexpected error occurred." };
+    } catch (err: any) {
+        console.error("[ATTENDANCE] Unexpected error:", err?.message || err);
+        return { success: false, error: "An unexpected error occurred: " + (err?.message || "Unknown error") };
     }
 }
