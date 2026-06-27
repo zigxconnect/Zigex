@@ -1,4 +1,4 @@
-﻿// components/layout/dashboard/ProfileDropdown.tsx
+// components/layout/dashboard/ProfileDropdown.tsx
 "use client";
 
 import {
@@ -19,6 +19,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { cn, slugifyUsername } from "@/lib/utils";
 import NameInitials from "@/components/NameInitials";
+import { createClient } from "@/lib/supabase/client";
 
 interface ProfileDropdownProps {
   user: any;
@@ -49,6 +50,17 @@ export const ProfileDropdown = ({ user }: ProfileDropdownProps) => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const handleSignOut = async () => {
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      await fetch("/api/auth/logout", { method: "POST" });
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   const menuItems = [
     { label: "My Profile", icon: User, href: profileUrl },
@@ -81,7 +93,7 @@ export const ProfileDropdown = ({ user }: ProfileDropdownProps) => {
         </div>
 
         <div className="hidden sm:flex flex-col items-start gap-0">
-          <span className="text-[11px] font-black text-slate-900 leading-none uppercase tracking-tighter">
+          <span className="text-[11px] font-black text-slate-900 dark:text-white leading-none uppercase tracking-tighter">
             {userName}
           </span>
           <span className="text-[8px] font-bold text-[#155DFC] uppercase tracking-widest mt-0.5">
@@ -111,7 +123,7 @@ export const ProfileDropdown = ({ user }: ProfileDropdownProps) => {
             {/* Header info */}
             <div className="px-6 py-5 border-b border-border bg-muted/20">
               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Authenticated As</p>
-              <p className="text-xs font-black text-slate-900 truncate">{userName}</p>
+              <p className="text-xs font-black text-slate-900 dark:text-white truncate">{userName}</p>
             </div>
 
             <div className="py-2">
@@ -155,10 +167,10 @@ export const ProfileDropdown = ({ user }: ProfileDropdownProps) => {
 
             <div className="border-t border-border mt-2">
               <button
-                className="w-full flex items-center gap-3 px-6 py-4 text-[11px] font-black text-red-500 hover:bg-red-50 transition-all uppercase tracking-widest"
+                className="w-full flex items-center gap-3 px-6 py-4 text-[11px] font-black text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all uppercase tracking-widest"
                 onClick={() => {
-                  // Add logout logic
                   setIsOpen(false);
+                  handleSignOut();
                 }}
               >
                 <LogOut size={14} strokeWidth={3} />
