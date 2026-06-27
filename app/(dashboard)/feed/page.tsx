@@ -8,6 +8,25 @@ import Link from "next/link";
 import Image from "next/image";
 import FeedStories from '@/components/feed/FeedStories';
 import { cn } from "@/lib/utils";
+import { FeedBlogCarousel } from "@/components/feed/FeedBlogCarousel";
+import { sanityFetch } from "@/sanity/lib/client";
+import { urlFor } from "@/sanity/lib/image";
+
+const RECENT_BLOGS_QUERY = `*[_type == "post"] | order(publishedAt desc)[0...6] {
+  _id,
+  title,
+  "slug": slug.current,
+  excerpt,
+  mainImage,
+  publishedAt,
+  author->{
+    name,
+    image
+  },
+  categories[]->{
+    title
+  }
+}`;
 
 interface FeedPageProps {
   searchParams: Promise<{ q?: string }>;
@@ -22,11 +41,25 @@ export const metadata = {
 
 export default async function FeedPage({ searchParams }: FeedPageProps) {
   const resolvedParams = await searchParams;
-  const [userData, stats, workspaces] = await Promise.all([
+  const [userData, stats, workspaces, sanityPosts] = await Promise.all([
     getProfileInfo(),
     getPlatformStats(),
-    import('@/lib/actions/intenship.actions').then(m => m.getUserWorkspaces())
+    import('@/lib/actions/intenship.actions').then(m => m.getUserWorkspaces()),
+    sanityFetch({ query: RECENT_BLOGS_QUERY })
   ]);
+
+  // Transform Sanity posts to match the carousel format
+  const formattedPosts = (sanityPosts || []).map((post: any) => ({
+    _id: post._id,
+    title: post.title,
+    slug: post.slug,
+    excerpt: post.excerpt,
+    imageUrl: post.mainImage ? urlFor(post.mainImage).width(600).height(400).url() : undefined,
+    publishedAt: post.publishedAt || new Date().toISOString(),
+    authorName: post.author?.name || 'Zigex Team',
+    authorImage: post.author?.image ? urlFor(post.author.image).width(40).height(40).url() : undefined,
+    categories: post.categories?.map((c: any) => c.title) || [],
+  }));
 
   return (
     <div className="flex flex-col xl:flex-row gap-6 pb-12">
@@ -119,6 +152,11 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 
           <MainFeedPage searchQuery={resolvedParams.q} />
         </section>
+
+        {/* ── Blog Carousel ── */}
+        {formattedPosts && formattedPosts.length > 0 && (
+          <FeedBlogCarousel posts={formattedPosts} />
+        )}
 
         {/* ── Platform Stats ── */}
         <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-5 border-t border-slate-100 dark:border-slate-800/50">
