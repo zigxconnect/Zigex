@@ -188,21 +188,13 @@ export const sendAcceptanceEmail = async (params: {
   const transporter = createTransporter();
   if (!transporter) return;
 
-  const formattedStartDate = params.startDate
-    ? new Date(params.startDate).toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })
-    : null;
-
-  const startDateMessage = formattedStartDate
-    ? `\\n\\n📅 **Start Date:** ${formattedStartDate}\\nPlease make sure to be present on this date for your level assessment so we can best support your learning journey.`
-    : '';
-
   const whatsappMessage = params.whatsappGroupLink
-    ? `\\n\\nTo begin your onboarding and meet your fellow cohort members, please join our official community group via the button below.`
+    ? `\\n\\nTo begin your onboarding, meet your fellow team members, and get started, please join our official community group via the button below.`
     : `\\n\\nYou can view your application status and next steps on your dashboard.`;
 
   const html = generateEmailHTML({
     heading: `Congratulations, ${params.name}!`,
-    message: `We are thrilled to inform you that your application for "${params.opportunityTitle}" has been accepted! This is a significant milestone in your professional journey.${startDateMessage}${whatsappMessage}`,
+    message: `We are absolutely thrilled to inform you that you have been accepted into "${params.opportunityTitle}"! 🎉\\n\\nYou stood out amongst many applicants, and we can't wait to see what you achieve with us. This is a significant milestone in your professional journey.${whatsappMessage}`,
     ctaText: params.whatsappGroupLink ? "Join WhatsApp Community" : "Go to Dashboard",
     ctaLink: params.whatsappGroupLink || "https://zigexconnect.com/dashboard",
     statusBadge: "Selection Confirmed",
