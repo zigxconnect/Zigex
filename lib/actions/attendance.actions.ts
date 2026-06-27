@@ -6,6 +6,22 @@ import crypto from "crypto";
 
 const SECRET_KEY = process.env.JWT_SECRET || "zigex_super_secret_attendance_key_2026";
 
+// Helper: Calculate distance between two points in meters (Haversine formula)
+function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: number) {
+    const R = 6371e3; // Earth's radius in meters
+    const φ1 = lat1 * Math.PI/180;
+    const φ2 = lat2 * Math.PI/180;
+    const Δφ = (lat2-lat1) * Math.PI/180;
+    const Δλ = (lon2-lon1) * Math.PI/180;
+
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    return R * c;
+}
+
 // ═══════════════════════════════════════════════════════════════
 // STATIC QR CODE — Designed to be printed and placed in departments
 // ═══════════════════════════════════════════════════════════════
@@ -68,8 +84,9 @@ export async function generateStaticAttendanceToken(internshipId: string) {
  * 2. Token signature must be valid (prevents tampering)
  * 3. Student must have an accepted application for this internship
  * 4. Duplicate scans for the same day are silently accepted (idempotent)
+ * 5. If geolocation is required by the internship, distance is verified.
  */
-export async function scanAttendanceQR(token: string) {
+export async function scanAttendanceQR(token: string, studentLat?: number, studentLng?: number) {
     try {
         const supabase = await createServerActionClient();
         const { data: { user } } = await supabase.auth.getUser();
@@ -103,6 +120,38 @@ export async function scanAttendanceQR(token: string) {
         const internshipId = data.internshipId;
         if (!internshipId) {
             return { success: false, error: "Invalid QR code: missing internship ID." };
+        }
+
+        // ── Geolocation Verification ──
+        // Fetch internship geolocation settings
+        const { data: internshipData } = await supabaseAdmin
+            .from("internships")
+            .select("require_geolocation, geo_latitude, geo_longitude, geo_radius_meters")
+            .eq("id", internshipId)
+            .maybeSingle();
+
+        if (internshipData?.require_geolocation) {
+            if (!studentLat || !studentLng) {
+                return { success: false, error: "Location access is required to take attendance for this program." };
+            }
+
+            if (internshipData.geo_latitude && internshipData.geo_longitude) {
+                const distance = getDistanceInMeters(
+                    studentLat,
+                    studentLng,
+                    internshipData.geo_latitude,
+                    internshipData.geo_longitude
+                );
+
+                const allowedRadius = internshipData.geo_radius_meters || 100;
+                
+                if (distance > allowedRadius) {
+                    return { 
+                        success: false, 
+                        error: `You are too far from the office (${Math.round(distance)}m). You must be within ${allowedRadius}m of the premises to check in.` 
+                    };
+                }
+            }
         }
 
         // ── Verify student is assigned to this internship ──

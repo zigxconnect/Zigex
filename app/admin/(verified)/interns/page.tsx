@@ -171,6 +171,7 @@ function InternsPageComponent() {
   const [filterDomain, setFilterDomain] = useState<string | null>(null);
   const [filterSchool, setFilterSchool] = useState<string | null>(null);
   const [filterCohort, setFilterCohort] = useState<string | null>(null);
+  const [filterType, setFilterType] = useState<string | null>(null);
   const [cohortDetails, setCohortDetails] = useState<any[]>([]);
   const [viewMode, setViewMode] = useState<"grid" | "table" | "ledger" | "management" | "records" | "analytics">("table");
   const [companyId, setCompanyId] = useState<string | null>(null);
@@ -414,8 +415,9 @@ function InternsPageComponent() {
     const matchesDomain = !filterDomain || app.domain === filterDomain;
     const matchesSchool = !filterSchool || app.school === filterSchool;
     const matchesCohort = !filterCohort || app.internshipTitle === filterCohort;
+    const matchesType = !filterType || app.applicationType === filterType;
 
-    return matchesSearch && matchesDomain && matchesSchool && matchesCohort;
+    return matchesSearch && matchesDomain && matchesSchool && matchesCohort && matchesType;
   });
 
   const selectedApplicant = applicants.find(app => app.id === selectedApplicantId);
@@ -643,65 +645,119 @@ function InternsPageComponent() {
         </div>
 
         {/* Command Center: Premium Filter & Search */}
-        {/* Command Center: Premium Filter & Search */}
-        <div className="bg-white/70 backdrop-blur-xl p-3 md:p-4 rounded-[2.5rem] border-2 border-blue-50/50 shadow-2xl shadow-blue-500/5 flex flex-col gap-4 ring-4 ring-blue-50/20">
+        <div className="bg-white/70 backdrop-blur-xl p-4 md:p-6 rounded-3xl border border-blue-50/50 shadow-xl shadow-blue-500/5 flex flex-col gap-6">
           <div className="relative w-full group">
-            <div className="absolute left-6 top-1/2 -translate-y-1/2 pointer-events-none z-10">
-              <Search className="w-5 h-5 text-slate-300 group-focus-within:text-[#155DFC] group-focus-within:scale-110 transition-all duration-500" />
+            <div className="absolute left-5 top-1/2 -translate-y-1/2 pointer-events-none z-10">
+              <Search className="w-5 h-5 text-slate-400 group-focus-within:text-[#155DFC] transition-all duration-300" />
             </div>
             <Input
-              placeholder="Deep intelligence search: name, school, email, or domain..."
+              placeholder="Search by name, school, email, or domain..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-16 h-14 md:h-16 rounded-[2rem] border-none bg-slate-100/50 focus:bg-white focus:ring-[8px] md:focus:ring-[12px] focus:ring-blue-50/50 transition-all font-bold text-slate-900 placeholder:text-slate-400 shadow-inner w-full"
+              className="pl-14 h-14 md:h-16 rounded-2xl border-slate-200 bg-white focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium text-slate-900 placeholder:text-slate-400 shadow-sm w-full text-base"
             />
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+            {/* Type Filter Pill */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "group relative gap-3 h-14 px-5 rounded-xl border transition-all duration-300 w-full justify-between overflow-hidden",
+                    filterType
+                      ? "bg-blue-50 border-blue-200 text-blue-700 shadow-sm"
+                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300 shadow-sm"
+                  )}
+                >
+                  <div className="flex items-center gap-3 relative z-10 w-full overflow-hidden">
+                    <Filter size={18} className={cn("shrink-0", filterType ? "text-blue-600" : "text-slate-400")} />
+                    <div className="flex flex-col items-start leading-none ml-1 w-full overflow-hidden">
+                      <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Type</span>
+                      <span className="text-sm font-semibold truncate w-full text-left block">
+                        {filterType ? (filterType.charAt(0).toUpperCase() + filterType.slice(1)) : "All Types"}
+                      </span>
+                    </div>
+                  </div>
+                  <ChevronDown size={16} className={cn("transition-transform duration-300 group-hover:translate-y-0.5 relative z-10 shrink-0", filterType ? "text-blue-600" : "text-slate-400")} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-[280px] rounded-2xl p-2 border-slate-200 shadow-xl bg-white z-[100]">
+                <DropdownMenuItem
+                  onClick={() => setFilterType(null)}
+                  className="rounded-xl py-3 px-4 font-semibold text-sm cursor-pointer hover:bg-slate-50 text-slate-700"
+                >
+                  All Types
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="my-1 bg-slate-100" />
+                <DropdownMenuItem
+                  onClick={() => setFilterType("internship")}
+                  className={cn(
+                    "rounded-xl py-3 px-4 font-medium text-sm cursor-pointer transition-all",
+                    filterType === "internship"
+                      ? "bg-blue-50 text-blue-700"
+                      : "hover:bg-slate-50 text-slate-700"
+                  )}
+                >
+                  Internships
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setFilterType("program")}
+                  className={cn(
+                    "rounded-xl py-3 px-4 font-medium text-sm cursor-pointer transition-all",
+                    filterType === "program"
+                      ? "bg-blue-50 text-blue-700"
+                      : "hover:bg-slate-50 text-slate-700"
+                  )}
+                >
+                  Programs
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             {/* Cohort / Program Filter Pill */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
                   className={cn(
-                    "group relative gap-3 h-14 md:h-16 px-5 rounded-[2rem] border-2 transition-all duration-300 flex-1 min-w-[200px] justify-between overflow-hidden",
+                    "group relative gap-3 h-14 px-5 rounded-xl border transition-all duration-300 w-full justify-between overflow-hidden",
                     filterCohort
-                      ? "bg-[#155DFC] border-transparent text-white shadow-lg shadow-blue-200"
-                      : "border-slate-100 bg-slate-50/50 text-slate-500 hover:bg-white hover:border-blue-200"
+                      ? "bg-blue-50 border-blue-200 text-blue-700 shadow-sm"
+                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300 shadow-sm"
                   )}
                 >
                   <div className="flex items-center gap-3 relative z-10 w-full overflow-hidden">
+                    <Target size={18} className={cn("shrink-0", filterCohort ? "text-blue-600" : "text-slate-400")} />
                     <div className="flex flex-col items-start leading-none ml-1 w-full overflow-hidden">
-                      <span className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 opacity-70">Active Cohort</span>
-                      <span className="text-xs font-black uppercase tracking-widest truncate w-full text-left block">
-                        {filterCohort || "All Applications"}
+                      <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Cohort</span>
+                      <span className="text-sm font-semibold truncate w-full text-left block">
+                        {filterCohort || "All Cohorts"}
                       </span>
                     </div>
                   </div>
-                  <ChevronDown size={16} className={cn("transition-transform duration-300 group-hover:translate-y-0.5 relative z-10 shrink-0", filterCohort ? "text-white" : "text-slate-400")} />
+                  <ChevronDown size={16} className={cn("transition-transform duration-300 group-hover:translate-y-0.5 relative z-10 shrink-0", filterCohort ? "text-blue-600" : "text-slate-400")} />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-[300px] md:w-[400px] rounded-[2rem] p-3 border-blue-50 shadow-2xl backdrop-blur-3xl bg-white/95 z-[100]">
+              <DropdownMenuContent align="start" className="w-[320px] rounded-2xl p-2 border-slate-200 shadow-xl bg-white z-[100]">
                 <DropdownMenuItem
                   onClick={() => setFilterCohort(null)}
-                  className="rounded-2xl py-4 px-4 font-black text-[11px] uppercase tracking-widest text-[#155DFC] cursor-pointer hover:bg-blue-50 transition-colors"
+                  className="rounded-xl py-3 px-4 font-semibold text-sm cursor-pointer hover:bg-slate-50 text-slate-700"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
-                    View All Applications
-                  </div>
+                  All Cohorts
                 </DropdownMenuItem>
-                <DropdownMenuSeparator className="my-2 opacity-50" />
-                <div className="max-h-[350px] overflow-y-auto custom-scrollbar pr-1 flex flex-col gap-1">
+                <DropdownMenuSeparator className="my-1 bg-slate-100" />
+                <div className="max-h-[300px] overflow-y-auto custom-scrollbar flex flex-col gap-1 p-1">
                   {cohorts.map(cohort => (
                     <DropdownMenuItem
                       key={cohort}
                       onClick={() => setFilterCohort(cohort!)}
                       className={cn(
-                        "rounded-2xl py-3 px-4 font-bold text-xs uppercase tracking-wider cursor-pointer border border-transparent transition-all",
+                        "rounded-xl py-3 px-4 font-medium text-sm cursor-pointer transition-all",
                         filterCohort === cohort 
-                          ? "bg-blue-50 border-blue-100 text-blue-700" 
-                          : "hover:bg-slate-50 hover:border-slate-200 text-slate-700"
+                          ? "bg-blue-50 text-blue-700" 
+                          : "hover:bg-slate-50 text-slate-700"
                       )}
                     >
                       <div className="truncate w-full">{cohort}</div>
@@ -717,42 +773,45 @@ function InternsPageComponent() {
                 <Button
                   variant="outline"
                   className={cn(
-                    "group relative gap-3 h-14 md:h-16 px-5 rounded-[2rem] border-2 transition-all duration-300 flex-1 min-w-[180px] justify-between overflow-hidden",
+                    "group relative gap-3 h-14 px-5 rounded-xl border transition-all duration-300 w-full justify-between overflow-hidden",
                     filterSchool
-                      ? "bg-[#155DFC] border-transparent text-white shadow-lg shadow-blue-200"
-                      : "border-slate-100 bg-slate-50/50 text-slate-500 hover:bg-white hover:border-blue-200"
+                      ? "bg-blue-50 border-blue-200 text-blue-700 shadow-sm"
+                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300 shadow-sm"
                   )}
                 >
                   <div className="flex items-center gap-3 relative z-10 w-full overflow-hidden">
+                    <Building2 size={18} className={cn("shrink-0", filterSchool ? "text-blue-600" : "text-slate-400")} />
                     <div className="flex flex-col items-start leading-none ml-1 w-full overflow-hidden">
-                      <span className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 opacity-70">Institute</span>
-                      <span className="text-xs font-black uppercase tracking-widest truncate w-full text-left block">
-                        {filterSchool || "All Facilities"}
+                      <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Institute</span>
+                      <span className="text-sm font-semibold truncate w-full text-left block">
+                        {filterSchool || "All Institutes"}
                       </span>
                     </div>
                   </div>
-                  <ChevronDown size={16} className={cn("transition-transform duration-300 group-hover:translate-y-0.5 relative z-10 shrink-0", filterSchool ? "text-white" : "text-slate-400")} />
+                  <ChevronDown size={16} className={cn("transition-transform duration-300 group-hover:translate-y-0.5 relative z-10 shrink-0", filterSchool ? "text-blue-600" : "text-slate-400")} />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-72 rounded-[2rem] p-3 border-blue-50 shadow-2xl backdrop-blur-3xl bg-white/90 z-[100]">
+              <DropdownMenuContent align="start" className="w-[320px] rounded-2xl p-2 border-slate-200 shadow-xl bg-white z-[100]">
                 <DropdownMenuItem
                   onClick={() => setFilterSchool(null)}
-                  className="rounded-2xl py-4 px-4 font-black text-[10px] uppercase tracking-widest text-[#155DFC] cursor-pointer hover:bg-blue-50"
+                  className="rounded-xl py-3 px-4 font-semibold text-sm cursor-pointer hover:bg-slate-50 text-slate-700"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-blue-500" />
-                    Reset Facility Filter
-                  </div>
+                  All Institutes
                 </DropdownMenuItem>
-                <DropdownMenuSeparator className="my-2 opacity-50" />
-                <div className="max-h-[350px] overflow-y-auto custom-scrollbar pr-1">
+                <DropdownMenuSeparator className="my-1 bg-slate-100" />
+                <div className="max-h-[300px] overflow-y-auto custom-scrollbar flex flex-col gap-1 p-1">
                   {schools.map(school => (
                     <DropdownMenuItem
                       key={school}
                       onClick={() => setFilterSchool(school!)}
-                      className="rounded-2xl py-4 px-4 font-bold text-[11px] uppercase tracking-wider cursor-pointer hover:bg-slate-50 border border-transparent hover:border-blue-100 transition-all mb-1"
+                      className={cn(
+                        "rounded-xl py-3 px-4 font-medium text-sm cursor-pointer transition-all",
+                        filterSchool === school 
+                          ? "bg-blue-50 text-blue-700" 
+                          : "hover:bg-slate-50 text-slate-700"
+                      )}
                     >
-                      {school}
+                      <div className="truncate w-full">{school}</div>
                     </DropdownMenuItem>
                   ))}
                 </div>
@@ -765,42 +824,45 @@ function InternsPageComponent() {
                 <Button
                   variant="outline"
                   className={cn(
-                    "group relative gap-3 h-14 md:h-16 px-5 rounded-[2rem] border-2 transition-all duration-300 flex-1 min-w-[180px] justify-between overflow-hidden",
+                    "group relative gap-3 h-14 px-5 rounded-xl border transition-all duration-300 w-full justify-between overflow-hidden",
                     filterDomain
-                      ? "bg-[#155DFC] border-transparent text-white shadow-lg shadow-blue-200"
-                      : "border-slate-100 bg-slate-50/50 text-slate-500 hover:bg-white hover:border-blue-200"
+                      ? "bg-blue-50 border-blue-200 text-blue-700 shadow-sm"
+                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300 shadow-sm"
                   )}
                 >
                   <div className="flex items-center gap-3 relative z-10 w-full overflow-hidden">
+                    <Briefcase size={18} className={cn("shrink-0", filterDomain ? "text-blue-600" : "text-slate-400")} />
                     <div className="flex flex-col items-start leading-none ml-1 w-full overflow-hidden">
-                      <span className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 opacity-70">Expertise</span>
-                      <span className="text-xs font-black uppercase tracking-widest truncate w-full text-left block">
-                        {filterDomain || "Cross Domain"}
+                      <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Domain</span>
+                      <span className="text-sm font-semibold truncate w-full text-left block">
+                        {filterDomain || "All Domains"}
                       </span>
                     </div>
                   </div>
-                  <ChevronDown size={16} className={cn("transition-transform duration-300 group-hover:translate-y-0.5 relative z-10 shrink-0", filterDomain ? "text-white" : "text-slate-400")} />
+                  <ChevronDown size={16} className={cn("transition-transform duration-300 group-hover:translate-y-0.5 relative z-10 shrink-0", filterDomain ? "text-blue-600" : "text-slate-400")} />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-72 rounded-[2rem] p-3 border-indigo-50 shadow-2xl backdrop-blur-3xl bg-white/90">
+              <DropdownMenuContent align="start" className="w-[320px] rounded-2xl p-2 border-slate-200 shadow-xl bg-white z-[100]">
                 <DropdownMenuItem
                   onClick={() => setFilterDomain(null)}
-                  className="rounded-2xl py-4 px-4 font-black text-[10px] uppercase tracking-widest text-[#155DFC] cursor-pointer hover:bg-blue-50"
+                  className="rounded-xl py-3 px-4 font-semibold text-sm cursor-pointer hover:bg-slate-50 text-slate-700"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-blue-500" />
-                    Reset All Domains
-                  </div>
+                  All Domains
                 </DropdownMenuItem>
-                <DropdownMenuSeparator className="my-2 opacity-50" />
-                <div className="max-h-[350px] overflow-y-auto custom-scrollbar pr-1">
+                <DropdownMenuSeparator className="my-1 bg-slate-100" />
+                <div className="max-h-[300px] overflow-y-auto custom-scrollbar flex flex-col gap-1 p-1">
                   {domains.map(domain => (
                     <DropdownMenuItem
                       key={domain}
                       onClick={() => setFilterDomain(domain!)}
-                      className="rounded-2xl py-4 px-4 font-bold text-[11px] uppercase tracking-wider cursor-pointer hover:bg-slate-50 border border-transparent hover:border-indigo-100 transition-all mb-1"
+                      className={cn(
+                        "rounded-xl py-3 px-4 font-medium text-sm cursor-pointer transition-all",
+                        filterDomain === domain 
+                          ? "bg-blue-50 text-blue-700" 
+                          : "hover:bg-slate-50 text-slate-700"
+                      )}
                     >
-                      {domain}
+                      <div className="truncate w-full">{domain}</div>
                     </DropdownMenuItem>
                   ))}
                 </div>

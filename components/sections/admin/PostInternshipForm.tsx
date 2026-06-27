@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import React, { useState } from "react";
+import React, { useState, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Select } from "@/components/uiComponent/Select";
@@ -18,7 +18,14 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, MapPin } from "lucide-react";
+
+// Lazy-load the map to avoid SSR issues with Leaflet
+const GeolocationPicker = lazy(() =>
+  import("@/components/sections/admin/GeolocationPicker").then((mod) => ({
+    default: mod.GeolocationPicker,
+  }))
+);
 
 // Helper UI Components
 
@@ -141,6 +148,20 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
     formatDateForInput(initialData?.end_date)
   );
 
+  // Geolocation state
+  const [requireGeolocation, setRequireGeolocation] = useState(
+    initialData?.require_geolocation ?? false
+  );
+  const [geoLatitude, setGeoLatitude] = useState<number | null>(
+    initialData?.geo_latitude ?? null
+  );
+  const [geoLongitude, setGeoLongitude] = useState<number | null>(
+    initialData?.geo_longitude ?? null
+  );
+  const [geoRadius, setGeoRadius] = useState<number>(
+    initialData?.geo_radius_meters ?? 100
+  );
+
   const addSkill = () => {
     const trimmed = skillInput.trim();
     if (trimmed && !requiredSkills.includes(trimmed)) {
@@ -168,6 +189,12 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
       formData.append("whatsapp_community_link", whatsappCommunityLink);
       formData.append("required_skills", JSON.stringify(requiredSkills));
       formData.append("is_visible", String(isVisible));
+      formData.append("require_geolocation", String(requireGeolocation));
+      if (requireGeolocation && geoLatitude !== null && geoLongitude !== null) {
+        formData.append("geo_latitude", String(geoLatitude));
+        formData.append("geo_longitude", String(geoLongitude));
+        formData.append("geo_radius_meters", String(geoRadius));
+      }
       if (coverImage) {
         formData.append("cover_image", coverImage);
       } else if (coverImageUrl) {
@@ -404,6 +431,54 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
                 />
               </FormField>
             </div>
+          )}
+        </div>
+      </FormSection>
+
+      {/* ── Geolocation Attendance Section ── */}
+      <FormSection title="Geolocation Attendance">
+        <div className="md:col-span-2 space-y-5">
+          <div className="flex items-start gap-3">
+            <Checkbox
+              id="requireGeo"
+              className="mt-1"
+              checked={requireGeolocation}
+              onChange={() => setRequireGeolocation(!requireGeolocation)}
+            />
+            <div>
+              <label
+                htmlFor="requireGeo"
+                className="text-sm font-medium text-blue-700 flex items-center gap-2"
+              >
+                <MapPin size={16} />
+                Require On-Site Attendance Check-in
+              </label>
+              <p className="text-sm text-gray-500 mt-1">
+                When enabled, students must be physically present at your office to log attendance via the QR code.
+                They cannot scan from a different location.
+              </p>
+            </div>
+          </div>
+
+          {requireGeolocation && (
+            <Suspense
+              fallback={
+                <div className="h-[300px] bg-slate-100 rounded-xl flex items-center justify-center">
+                  <div className="animate-pulse text-slate-500 text-sm">Loading map...</div>
+                </div>
+              }
+            >
+              <GeolocationPicker
+                latitude={geoLatitude}
+                longitude={geoLongitude}
+                radius={geoRadius}
+                onLocationChange={(lat, lng) => {
+                  setGeoLatitude(lat);
+                  setGeoLongitude(lng);
+                }}
+                onRadiusChange={setGeoRadius}
+              />
+            </Suspense>
           )}
         </div>
       </FormSection>

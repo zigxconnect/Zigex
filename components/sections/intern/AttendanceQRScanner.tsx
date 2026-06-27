@@ -31,9 +31,29 @@ export function AttendanceQRScanner() {
 
         setStatus("processing");
         setIsScanning(false);
+        setMessage("Acquiring location...");
 
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    await processScan(tokenToScan, position.coords.latitude, position.coords.longitude);
+                },
+                async (error) => {
+                    console.error("Geolocation error:", error);
+                    // Still attempt scan; the server will reject it if geolocation is strictly required
+                    await processScan(tokenToScan);
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        } else {
+            await processScan(tokenToScan);
+        }
+    };
+
+    const processScan = async (tokenToScan: string, lat?: number, lng?: number) => {
+        setMessage("Verifying Attendance...");
         try {
-            const res = await scanAttendanceQR(tokenToScan);
+            const res = await scanAttendanceQR(tokenToScan, lat, lng);
             if (res.success) {
                 if (res.alreadyLogged) {
                     setStatus("already");
