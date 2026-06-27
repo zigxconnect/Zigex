@@ -96,8 +96,17 @@ export const ApplicantActions = ({
       toast.error("No WhatsApp community link set for this program. Please add one in the posting settings.");
       return;
     }
+    
+    const phoneString = applicant.phone || "";
+    const phoneNum = phoneString.replace(/\D/g, '');
+    
+    if (!phoneNum || phoneNum.length < 8) {
+      toast.error("Candidate doesn't have a valid phone number.");
+      return;
+    }
+
     const message = encodeURIComponent(`Hi ${applicant.name}, this is the ZIGEX recruitment team. Congratulations on being accepted into ${applicant.internshipTitle || 'our program'}! 🎉\n\nJoin our official community here: ${WHATSAPP_GROUP_LINK}`);
-    window.open(`https://wa.me/${applicant.phone.replace(/\D/g, '')}?text=${message}`, '_blank');
+    window.open(`https://wa.me/${phoneNum}?text=${message}`, '_blank');
   };
 
   const handleEmailSend = async () => {
