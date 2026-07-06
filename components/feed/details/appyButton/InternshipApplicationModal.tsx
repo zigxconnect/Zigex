@@ -64,14 +64,14 @@ interface FormFieldProps {
 }
 
 const FormField = ({ label, required, error, children, hint }: FormFieldProps) => (
-  <div className="space-y-2">
-    <label className="flex items-center gap-1.5 text-sm font-semibold text-slate-700">
+  <div className="space-y-2 relative group">
+    <label className="flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 transition-colors group-focus-within:text-[#155DFC]">
       {label}
-      {required && <span className="text-[#155DFC] text-xs font-bold">*</span>}
+      {required && <span className="text-[#155DFC] text-[10px]">*</span>}
     </label>
     {children}
     {hint && !error && (
-      <p className="text-xs text-slate-400 italic font-medium">{hint}</p>
+      <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wide">{hint}</p>
     )}
     {error && (
       <p className="text-xs text-rose-500 font-bold flex items-center gap-1 mt-1 animate-in fade-in slide-in-from-left-2">
@@ -81,7 +81,7 @@ const FormField = ({ label, required, error, children, hint }: FormFieldProps) =
   </div>
 );
 
-const inputBaseClass = "w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/30 focus:bg-white focus:border-[#155DFC] focus:ring-4 focus:ring-[#155DFC]/10 transition-all duration-300 outline-none text-slate-900 font-semibold placeholder:text-slate-400 shadow-sm";
+const inputBaseClass = "w-full px-4 py-3.5 rounded-xl border border-slate-200/70 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-[#155DFC] focus:ring-4 focus:ring-[#155DFC]/20 transition-all duration-300 outline-none text-slate-900 font-bold placeholder:text-slate-400 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] hover:shadow-[0_4px_12px_-3px_rgba(6,81,237,0.1)] focus:shadow-[0_4px_15px_-3px_rgba(6,81,237,0.15)]";
 const selectBaseClass = `
   ${inputBaseClass}
   appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20fill%3D%22%23155DFC%22%20d%3D%22M10%2012.5l-5-5h10l-5%205z%22/%3E%3C/svg%3E')]

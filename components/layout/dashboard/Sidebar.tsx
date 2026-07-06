@@ -211,8 +211,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <AnimatedNavLink
                   href="/student/workspace"
                   icon={LayoutDashboard}
-                  label="My Learning"
-                  isActive={isRouteActive("/student/workspace")}
+                  label="My Workspace"
+                  isActive={isRouteActive("/student/workspace", ["/student/workspace", "/intern/workspace"])}
                   onClick={handleNavClick}
                 />
               )}

@@ -377,35 +377,42 @@ export function AttendanceQRScanner() {
 // Wrapper for html5-qrcode
 const Html5QrcodePlugin = (props: any) => {
     useEffect(() => {
-        // dynamic import so it doesn't break SSR
-        import('html5-qrcode').then(({ Html5QrcodeScanner }) => {
+        let html5QrCode: any;
+
+        import('html5-qrcode').then(({ Html5Qrcode }) => {
+            html5QrCode = new Html5Qrcode("reader");
             const config = {
                 fps: props.fps || 10,
-                qrbox: props.qrbox || 250,
-                disableFlip: props.disableFlip !== undefined ? props.disableFlip : false,
+                qrbox: props.qrbox || { width: 250, height: 250 },
+                aspectRatio: 1.0,
             };
 
-            const html5QrcodeScanner = new Html5QrcodeScanner(
-                "reader",
+            // Start immediately with the back camera
+            html5QrCode.start(
+                { facingMode: "environment" },
                 config,
-                false
-            );
-
-            html5QrcodeScanner.render(
-                (text) => {
+                (text: string) => {
                     if (props.qrCodeSuccessCallback) props.qrCodeSuccessCallback(text);
                 },
-                (err) => {
+                (err: any) => {
                     if (props.qrCodeErrorCallback) props.qrCodeErrorCallback(err);
                 }
-            );
-
-            return () => {
-                html5QrcodeScanner.clear().catch(error => {
-                    console.error("Failed to clear html5QrcodeScanner. ", error);
-                });
-            };
+            ).catch((err: any) => {
+                console.error("Failed to start camera", err);
+            });
         });
+
+        return () => {
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().then(() => {
+                    html5QrCode.clear();
+                }).catch((error: any) => {
+                    console.error("Failed to clear html5QrCode. ", error);
+                });
+            } else if (html5QrCode) {
+                try { html5QrCode.clear(); } catch (e) {}
+            }
+        };
     }, []);
 
     return null;

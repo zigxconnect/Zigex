@@ -3,13 +3,21 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Image from "next/image";
 import { Select } from "@/components/uiComponent/Select";
 import { Textarea } from "@/components/uiComponent/Textarea";
 import { RichTextEditor } from "@/components/ui/RichTextEditor";
+import { MapPin } from "lucide-react";
+
+// Lazy-load the map to avoid SSR issues with Leaflet
+const GeolocationPicker = lazy(() =>
+  import("@/components/sections/admin/GeolocationPicker").then((mod) => ({
+    default: mod.GeolocationPicker,
+  }))
+);
 
 // Reusable layout components
 const FormSection = ({ title, children }: any) => (
@@ -29,6 +37,17 @@ const FormField = ({ label, children, className, required }: any) => (
     </label>
     {children}
   </div>
+);
+
+const Checkbox = ({ id, className, ...props }: any) => (
+  <input
+    id={id}
+    type="checkbox"
+    className={`h-4 w-4 rounded border-gray-300 text-black focus:ring-blue-500 ${
+      className ?? ""
+    }`}
+    {...props}
+  />
 );
 
 export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
@@ -75,6 +94,20 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
   );
   const [programPicture, setProgramPicture] = useState<File | null>(null);
 
+  // Geolocation state
+  const [requireGeolocation, setRequireGeolocation] = useState(
+    initialData?.require_geolocation ?? false
+  );
+  const [geoLatitude, setGeoLatitude] = useState<number | null>(
+    initialData?.geo_latitude ?? null
+  );
+  const [geoLongitude, setGeoLongitude] = useState<number | null>(
+    initialData?.geo_longitude ?? null
+  );
+  const [geoRadius, setGeoRadius] = useState<number>(
+    initialData?.geo_radius_meters ?? 100
+  );
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setProgramPicture(e.target.files[0]);
@@ -102,6 +135,10 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
     if (requiredSkills) formData.append("required_skills", requiredSkills);
     formData.append("is_visible", isVisible.toString());
     formData.append("whatsapp_community_link", whatsappCommunityLink);
+    formData.append("require_geolocation", requireGeolocation.toString());
+    if (geoLatitude !== null) formData.append("geo_latitude", geoLatitude.toString());
+    if (geoLongitude !== null) formData.append("geo_longitude", geoLongitude.toString());
+    formData.append("geo_radius_meters", geoRadius.toString());
     if (programPicture) formData.append("program_picture", programPicture);
     // ** THIS IS THE CRITICAL FIX: INCLUDE THE ID FOR PATCH REQUESTS **
     if (isEditMode) {
@@ -227,6 +264,54 @@ export const PostProgramForm = ({ initialData }: { initialData?: any }) => {
             </span>
           </label>
         </FormField>
+      </FormSection>
+
+      {/* ── Geolocation Attendance Section ── */}
+      <FormSection title="Geolocation Attendance">
+        <div className="md:col-span-2 space-y-5">
+          <div className="flex items-start gap-3">
+            <Checkbox
+              id="requireGeo"
+              className="mt-1"
+              checked={requireGeolocation}
+              onCheckedChange={(checked) => setRequireGeolocation(!!checked)}
+            />
+            <div>
+              <label
+                htmlFor="requireGeo"
+                className="text-sm font-medium text-blue-700 flex items-center gap-2"
+              >
+                <MapPin size={16} />
+                Require On-Site Attendance Check-in
+              </label>
+              <p className="text-sm text-gray-500 mt-1">
+                When enabled, students must be physically present at your office to log attendance via the QR code.
+                They cannot scan from a different location.
+              </p>
+            </div>
+          </div>
+
+          {requireGeolocation && (
+            <Suspense
+              fallback={
+                <div className="h-[300px] bg-slate-100 rounded-xl flex items-center justify-center">
+                  <div className="animate-pulse text-slate-500 text-sm">Loading map...</div>
+                </div>
+              }
+            >
+              <GeolocationPicker
+                latitude={geoLatitude}
+                longitude={geoLongitude}
+                radius={geoRadius}
+                onLocationChange={(lat, lng) => {
+                  setGeoLatitude(lat);
+                  setGeoLongitude(lng);
+                }}
+                onRadiusChange={setGeoRadius}
+              />
+            </Suspense>
+          )}
+        </div>
       </FormSection>
 
       <FormSection title="Details & Branding">

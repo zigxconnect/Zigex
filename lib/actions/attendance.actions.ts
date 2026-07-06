@@ -124,26 +124,37 @@ export async function scanAttendanceQR(token: string, studentLat?: number, stude
 
         // ── Geolocation Verification ──
         // Fetch internship geolocation settings
-        const { data: internshipData } = await supabaseAdmin
+        let { data: locationData } = await supabaseAdmin
             .from("internships")
             .select("require_geolocation, geo_latitude, geo_longitude, geo_radius_meters")
             .eq("id", internshipId)
             .maybeSingle();
+            
+        if (!locationData) {
+            const { data: programData } = await supabaseAdmin
+                .from("programs")
+                .select("require_geolocation, geo_latitude, geo_longitude, geo_radius_meters")
+                .eq("id", internshipId)
+                .maybeSingle();
+            if (programData) {
+                locationData = programData;
+            }
+        }
 
-        if (internshipData?.require_geolocation) {
+        if (locationData?.require_geolocation) {
             if (!studentLat || !studentLng) {
                 return { success: false, error: "Location access is required to take attendance for this program." };
             }
 
-            if (internshipData.geo_latitude && internshipData.geo_longitude) {
+            if (locationData.geo_latitude && locationData.geo_longitude) {
                 const distance = getDistanceInMeters(
                     studentLat,
                     studentLng,
-                    internshipData.geo_latitude,
-                    internshipData.geo_longitude
+                    locationData.geo_latitude,
+                    locationData.geo_longitude
                 );
 
-                const allowedRadius = internshipData.geo_radius_meters || 100;
+                const allowedRadius = locationData.geo_radius_meters || 100;
                 
                 if (distance > allowedRadius) {
                     return { 
