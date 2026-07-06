@@ -1225,7 +1225,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
       </main>
 
       {/* Floating QR Scan Button */}
-      <div className="fixed bottom-6 right-6 lg:bottom-8 lg:right-8 z-50">
+      <div className="fixed bottom-28 right-4 lg:bottom-8 lg:right-8 z-50">
         <AttendanceScannerModal>
           <button className="group relative flex h-14 w-14 lg:h-16 lg:w-16 items-center justify-center rounded-full bg-gradient-to-tr from-[#155DFC] to-[#3B82F6] text-white shadow-[0_8px_30px_rgb(21,93,252,0.4)] transition-all hover:scale-105 hover:shadow-[0_8px_30px_rgb(21,93,252,0.6)] focus:outline-none focus:ring-2 focus:ring-[#155DFC] focus:ring-offset-2 dark:focus:ring-offset-slate-950">
             <Camera className="h-6 w-6 lg:h-7 lg:w-7 transition-transform group-hover:scale-110" />
