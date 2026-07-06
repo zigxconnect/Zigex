@@ -71,7 +71,20 @@ export function ProgramDetailsSlideOver({ item, isOpen, onClose }: ProgramDetail
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent className="w-[97vw] sm:max-w-xl p-0 flex flex-col h-full bg-white dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800 shadow-[-20px_0_80px_rgba(0,0,0,0.1)] overflow-hidden">
+      <SheetContent 
+        className="w-[97vw] sm:max-w-xl p-0 flex flex-col h-full bg-white dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800 shadow-[-20px_0_80px_rgba(0,0,0,0.1)] overflow-hidden"
+        onInteractOutside={(e) => {
+          // Prevent Sheet from closing when the internship modal portal is open
+          if (showInternshipModal || showModal) {
+            e.preventDefault();
+          }
+        }}
+        onPointerDownOutside={(e) => {
+          if (showInternshipModal || showModal) {
+            e.preventDefault();
+          }
+        }}
+      >
         
         {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto custom-scrollbar">

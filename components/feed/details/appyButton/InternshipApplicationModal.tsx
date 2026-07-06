@@ -281,13 +281,14 @@ export default function InternshipApplicationModal({
   if (!isOpen) return null;
 
   return createPortal(
-    <div ref={wrapperRef} className="fixed inset-0 overflow-y-auto bg-black/60 backdrop-blur-md animate-in fade-in duration-300 z-[9999]">
+    <div ref={wrapperRef} className="fixed inset-0 overflow-y-auto bg-black/60 backdrop-blur-md animate-in fade-in duration-300 z-[9999]" onClick={handleClose}>
       <div className="min-h-full flex items-start sm:items-center justify-center px-3 sm:px-4 py-6 sm:py-8">
         <motion.div
           ref={modalRef}
           initial={{ scale: 0.95, opacity: 0, y: 40 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
-          className="relative w-full max-w-2xl bg-white rounded-[2rem] sm:rounded-[2.5rem] shadow-2xl flex flex-col my-auto origin-top scale-[0.88] sm:scale-100"
+          onClick={(e) => e.stopPropagation()}
+          className="relative w-full max-w-2xl bg-white rounded-[2rem] sm:rounded-[2.5rem] shadow-2xl flex flex-col my-auto origin-top scale-[0.88] sm:scale-[0.80]"
         >
           {/* Premium Header */}
         <div className="relative bg-[#155DFC] text-white p-8 shrink-0 overflow-hidden">
