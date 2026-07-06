@@ -259,16 +259,35 @@ export default function InternshipApplicationModal({
     }
   };
 
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      // Prevent iOS bounce/pull-to-refresh
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.top = `-${window.scrollY}px`;
+    }
+    return () => {
+      const scrollY = document.body.style.top;
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.top = '';
+      window.scrollTo(0, parseInt(scrollY || '0') * -1);
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return createPortal(
     <div ref={wrapperRef} className="fixed inset-0 overflow-y-auto bg-black/60 backdrop-blur-md animate-in fade-in duration-300 z-[9999]">
-      <div className="min-h-full flex items-center justify-center p-[5vw] sm:p-4 py-12 sm:py-8">
+      <div className="min-h-full flex items-start sm:items-center justify-center px-3 sm:px-4 py-6 sm:py-8">
         <motion.div
           ref={modalRef}
-          initial={{ scale: 0.95, opacity: 0, y: 100 }}
+          initial={{ scale: 0.95, opacity: 0, y: 40 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
-          className="relative w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl flex flex-col my-auto"
+          className="relative w-full max-w-2xl bg-white rounded-[2rem] sm:rounded-[2.5rem] shadow-2xl flex flex-col my-auto origin-top scale-[0.88] sm:scale-100"
         >
           {/* Premium Header */}
         <div className="relative bg-[#155DFC] text-white p-8 shrink-0 overflow-hidden">
@@ -350,7 +369,7 @@ export default function InternshipApplicationModal({
                 initial={{ opacity: 0, x: 10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -10 }}
-                className="p-8 space-y-8"
+                className="p-5 sm:p-8 space-y-5 sm:space-y-8"
               >
                 {/* Step Header Block */}
                 <div className="flex items-center gap-5 p-6 bg-blue-50/40 rounded-3xl border border-blue-100/50">

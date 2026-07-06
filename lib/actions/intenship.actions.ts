@@ -329,13 +329,13 @@ export async function getInternshipWorkspaceData(applicationId?: string) {
       .from("announcement_reads")
       .select("announcement_id")
       .eq("student_id", profile.id),
-    // 8. Attendance
+    // 8. Attendance (student_id = student_profiles.id, column = internship_id)
     supabaseAdmin
       .from("intern_attendance_v2")
       .select("*")
-      .eq("student_id", user.id)
-      .eq("reference_id", referenceId)
-      .order("date", { ascending: false }),
+      .eq("student_id", profile.id)
+      .eq("internship_id", referenceId)
+      .order("created_at", { ascending: false }),
   ]);
 
   // Enrich announcements manually

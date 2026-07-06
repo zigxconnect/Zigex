@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 export function AttendanceQRScanner() {
-    const [isScanning, setIsScanning] = useState(false);
+    const [isScanning, setIsScanning] = useState(true);
     const [status, setStatus] = useState<"idle" | "processing" | "success" | "already" | "error" | "not_accepted">("idle");
     const [message, setMessage] = useState("");
     const router = useRouter();
