@@ -286,7 +286,7 @@ export default function InternshipApplicationModal({
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="fixed inset-0 overflow-y-auto bg-black/60 backdrop-blur-md z-[9999]" onClick={handleClose}>
           <div className="min-h-full flex items-end sm:items-center justify-center px-0 pt-12 pb-0 sm:px-4 sm:py-8">
-            <div className="w-full max-w-2xl origin-center sm:origin-top sm:scale-[0.80] flex justify-center mt-auto sm:my-auto pointer-events-none">
+            <div className="w-full max-w-2xl origin-bottom sm:origin-top scale-[0.95] sm:scale-[0.80] flex justify-center mt-auto sm:my-auto pointer-events-none mb-0 sm:mb-auto pb-4 sm:pb-0">
               <DialogPrimitive.Content asChild>
                 <motion.div
                   ref={modalRef}
@@ -294,10 +294,10 @@ export default function InternshipApplicationModal({
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ type: "spring", damping: 25, stiffness: 200 }}
                   onClick={(e) => e.stopPropagation()}
-                  className="relative w-full bg-white rounded-t-[2.5rem] rounded-b-none sm:rounded-[2.5rem] shadow-[0_-10px_40px_rgba(0,0,0,0.2)] flex flex-col pointer-events-auto"
+                  className="relative w-full max-h-[88vh] sm:max-h-[85vh] bg-white rounded-t-[2.5rem] rounded-b-[1rem] sm:rounded-[2.5rem] shadow-[0_-10px_40px_rgba(0,0,0,0.2)] flex flex-col pointer-events-auto overflow-hidden"
                 >
                   {/* Premium Header */}
-                <div className="relative bg-[#155DFC] text-white p-6 sm:p-8 shrink-0 overflow-hidden rounded-t-[2.5rem] sm:rounded-t-[2.5rem]">
+                <div className="relative bg-[#155DFC] text-white p-6 sm:p-8 shrink-0 overflow-hidden">
                   <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20" />
                   <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-400/20 rounded-full blur-2xl -ml-20 -mb-20" />
                   
@@ -352,7 +352,7 @@ export default function InternshipApplicationModal({
                 </div>
 
                 {/* Form Content */}
-                <div className="flex-1 bg-white">
+                <div className="flex-1 bg-white overflow-y-auto overflow-x-hidden min-h-0 relative custom-scrollbar">
                   <AnimatePresence mode="wait">
                     {success ? (
                       <motion.div 
