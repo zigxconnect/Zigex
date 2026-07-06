@@ -447,7 +447,7 @@ export default function InternshipApplicationModal({
                                 <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#155DFC]" />
                                 <input
                                   className={cn(inputBaseClass, "pl-11", errors.address && touched.address && "border-rose-300")}
-                                  placeholder="e.g., Buea, Cameroon"
+                                  placeholder="eg Mile 4, Nkewn"
                                   value={formData.address}
                                   onChange={(e) => handleInputChange("address", e.target.value)}
                                   onBlur={() => handleBlur("address")}
