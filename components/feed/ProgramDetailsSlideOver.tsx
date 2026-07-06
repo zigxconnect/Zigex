@@ -26,6 +26,8 @@ import {
 import { checkApplicationStatus, type ApplicationStatus } from "@/lib/actions/applications.actions";
 import { cn, normalizeImageSrc } from "@/lib/utils";
 import { RichContentRenderer } from "@/components/ui/RichContentRenderer";
+import ApplicationModal from "./details/appyButton/Modal";
+import InternshipApplicationModal from "./details/appyButton/InternshipApplicationModal";
 
 interface ProgramDetailsSlideOverProps {
   item: any;
@@ -36,6 +38,8 @@ interface ProgramDetailsSlideOverProps {
 export function ProgramDetailsSlideOver({ item, isOpen, onClose }: ProgramDetailsSlideOverProps) {
   const [status, setStatus] = useState<ApplicationStatus>("not_applied");
   const [loading, setLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [showInternshipModal, setShowInternshipModal] = useState(false);
 
   useEffect(() => {
     if (isOpen && item?.id) {
@@ -182,12 +186,36 @@ export function ProgramDetailsSlideOver({ item, isOpen, onClose }: ProgramDetail
               Registration Closed
             </Button>
           ) : (
-            <Link href={`/feed/${item.id}`} className="block w-full">
-              <Button className="w-full h-14 rounded-2xl bg-[#155DFC] hover:bg-[#0D47A1] text-white font-black uppercase tracking-[0.2em] text-[11px] shadow-2xl shadow-blue-500/30 transition-all active:scale-95 cursor-pointer group">
+            <div className="w-full">
+              <Button 
+                onClick={() => {
+                  if (item._type === 'internships') {
+                    setShowInternshipModal(true);
+                  } else {
+                    setShowModal(true);
+                  }
+                }}
+                className="w-full h-14 rounded-2xl bg-[#155DFC] hover:bg-[#0D47A1] text-white font-black uppercase tracking-[0.2em] text-[11px] shadow-2xl shadow-blue-500/30 transition-all active:scale-95 cursor-pointer group"
+              >
                 Register Now
                 <ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
-            </Link>
+              
+              <ApplicationModal 
+                isOpen={showModal} 
+                onClose={() => setShowModal(false)}
+                type={item._type === 'programs' ? 'program' : 'event'}
+                id={item.id}
+                title={item.title}
+              />
+
+              <InternshipApplicationModal
+                isOpen={showInternshipModal}
+                onClose={() => setShowInternshipModal(false)}
+                internshipId={item.id}
+                internshipTitle={item.title}
+              />
+            </div>
           )}
         </div>
       </SheetContent>
