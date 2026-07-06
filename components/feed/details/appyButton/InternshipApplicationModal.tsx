@@ -102,7 +102,7 @@ export default function InternshipApplicationModal({
   const [success, setSuccess] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
   const [formData, setFormData] = useState({
     full_name: "",
@@ -143,6 +143,7 @@ export default function InternshipApplicationModal({
         return "";
       case "address":
         if (!value.trim()) return "Address is required";
+        if (value.trim().length < 5) return "Address must be at least 5 characters (e.g., City, Country)";
         return "";
       case "domain":
         return !value ? "Please select a domain" : "";
@@ -203,13 +204,13 @@ export default function InternshipApplicationModal({
 
     if (isValid) {
       setStep(prev => Math.min(prev + 1, 3));
-      contentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+      wrapperRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   const prevStep = () => {
     setStep(prev => Math.max(prev - 1, 1));
-    contentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    wrapperRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSubmit = async () => {
@@ -261,14 +262,15 @@ export default function InternshipApplicationModal({
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-md animate-in fade-in duration-300 p-0 sm:p-4 z-[9999]">
-      <motion.div
-        ref={modalRef}
-        initial={{ scale: 0.95, opacity: 0, y: 100 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        className="relative w-full max-w-2xl bg-white rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden h-[95vh] sm:h-auto sm:max-h-[90vh]"
-      >
-        {/* Premium Header */}
+    <div ref={wrapperRef} className="fixed inset-0 overflow-y-auto bg-black/60 backdrop-blur-md animate-in fade-in duration-300 z-[9999]">
+      <div className="min-h-full flex items-center justify-center p-[5vw] sm:p-4 py-12 sm:py-8">
+        <motion.div
+          ref={modalRef}
+          initial={{ scale: 0.95, opacity: 0, y: 100 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          className="relative w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl flex flex-col my-auto"
+        >
+          {/* Premium Header */}
         <div className="relative bg-[#155DFC] text-white p-8 shrink-0 overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-400/20 rounded-full blur-2xl -ml-20 -mb-20" />
@@ -321,7 +323,7 @@ export default function InternshipApplicationModal({
         </div>
 
         {/* Form Content */}
-        <div ref={contentRef} className="flex-1 overflow-y-auto overscroll-contain bg-white">
+        <div className="flex-1 bg-white">
           <AnimatePresence mode="wait">
             {success ? (
               <motion.div 
@@ -416,7 +418,7 @@ export default function InternshipApplicationModal({
                         <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#155DFC]" />
                         <input
                           className={cn(inputBaseClass, "pl-11", errors.address && touched.address && "border-rose-300")}
-                          placeholder="City, Neighborhood"
+                          placeholder="e.g., Buea, Cameroon"
                           value={formData.address}
                           onChange={(e) => handleInputChange("address", e.target.value)}
                           onBlur={() => handleBlur("address")}
@@ -577,6 +579,7 @@ export default function InternshipApplicationModal({
           </div>
         )}
       </motion.div>
+      </div>
     </div>,
     document.body
   );
