@@ -55,7 +55,7 @@ export function SmartApplyPreview({
     // Use fallback email if company email is not available
     const emailToUse = (companyEmail && companyEmail.trim() !== "") 
       ? companyEmail 
-      : "iwstechnical7@gmail.com";
+      : "seed.techcom@gmail.com";
 
     try {
       const result = await submitSmartApplication(
@@ -108,7 +108,7 @@ export function SmartApplyPreview({
     // Use fallback email if company email is not available
     const emailToUse = (companyEmail && companyEmail.trim() !== "") 
       ? companyEmail 
-      : "iwstechnical7@gmail.com";
+      : "seed.techcom@gmail.com";
 
     try {
       const result = await submitSmartApplication(
