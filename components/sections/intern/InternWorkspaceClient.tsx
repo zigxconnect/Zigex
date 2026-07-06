@@ -104,7 +104,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
   const [activeTab, setActiveTab] = useState("overview");
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [unreadAnnouncements, setUnreadAnnouncements] = useState(data.unreadCount || 0);
-  const { application, curriculum, logs, tasks: initialTasks, announcements = [], fellowInterns = [], fellowSupervisors = [], studentProfile } = data;
+  const { application, curriculum, logs, tasks: initialTasks, announcements = [], fellowInterns = [], fellowSupervisors = [], studentProfile, attendance = [] } = data;
   const [tasks, setTasks] = useState(initialTasks || []);
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [isTaskDetailsOpen, setIsTaskDetailsOpen] = useState(false);
@@ -591,6 +591,57 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                           <p className="text-sm font-black text-slate-900 dark:text-white tracking-tight">{stat.value}</p>
                         </div>
                       ))}
+                    </div>
+
+                    {/* Attendance Tracker */}
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-8 shadow-sm">
+                      <div className="flex items-center gap-3 mb-4 sm:mb-6">
+                        <div className="w-1 h-4 sm:h-5 bg-emerald-500 rounded-full" />
+                        <h3 className="text-xs sm:text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Attendance Tracker</h3>
+                      </div>
+                      
+                      {attendance && attendance.length > 0 ? (
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+                          <div className="flex items-center gap-6 w-full sm:w-auto">
+                            <div className="flex-shrink-0 w-16 h-16 rounded-full bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center border-4 border-white dark:border-slate-900 shadow-sm ring-1 ring-slate-100 dark:ring-slate-800">
+                              <span className="text-xl font-black text-emerald-600 dark:text-emerald-400">{attendance.filter((a: any) => a.status === 'present').length}</span>
+                            </div>
+                            <div>
+                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Days Present</p>
+                              <p className="text-sm font-medium text-slate-600 dark:text-slate-400">You have successfully scanned in on {attendance.length} occasion(s).</p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex-1 w-full lg:max-w-sm">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
+                              Recent Check-ins
+                            </p>
+                            <div className="space-y-2">
+                              {attendance.slice(0, 3).map((record: any, idx: number) => (
+                                <div key={idx} className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                                      {new Date(record.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                                    </span>
+                                  </div>
+                                  <Badge className="text-[9px] uppercase font-black tracking-widest bg-emerald-100 hover:bg-emerald-100 text-emerald-700 border-none">
+                                    {record.status}
+                                  </Badge>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center py-6 text-center">
+                          <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-3">
+                            <Scan size={20} className="text-slate-400" />
+                          </div>
+                          <p className="text-sm font-bold text-slate-600 dark:text-slate-400">No attendance records yet</p>
+                          <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">Scan the QR code at your department to log attendance</p>
+                        </div>
+                      )}
                     </div>
 
                     {/* About This Program */}

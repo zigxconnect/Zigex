@@ -293,6 +293,7 @@ export async function getInternshipWorkspaceData(applicationId?: string) {
     { data: notes },
     { data: rawAnnouncements },
     { data: readRecords },
+    { data: attendance },
   ] = await Promise.all([
     // 2. Curriculum
     supabase
@@ -328,6 +329,13 @@ export async function getInternshipWorkspaceData(applicationId?: string) {
       .from("announcement_reads")
       .select("announcement_id")
       .eq("student_id", profile.id),
+    // 8. Attendance
+    supabaseAdmin
+      .from("intern_attendance_v2")
+      .select("*")
+      .eq("student_id", user.id)
+      .eq("reference_id", referenceId)
+      .order("date", { ascending: false }),
   ]);
 
   // Enrich announcements manually
@@ -456,7 +464,8 @@ export async function getInternshipWorkspaceData(applicationId?: string) {
     fellowInterns: fellowInterns || [],
     fellowSupervisors: colleaguesSupervisors || [],
     userWorkspaces,
-    studentProfile: profile
+    studentProfile: profile,
+    attendance: attendance || []
   };
 }
 
