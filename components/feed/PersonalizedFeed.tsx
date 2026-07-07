@@ -186,9 +186,14 @@ export default function PersonalizedFeed({ userId, userSkills = [], university }
     return type.charAt(0).toUpperCase() + type.slice(1);
   };
 
+  const stripHtml = (html: string) => {
+    return html.replace(/<[^>]*>?/gm, '');
+  };
+
   const truncateDescription = (text: string, maxLength: number = 150) => {
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength).trim() + '...';
+    const plainText = stripHtml(text || '');
+    if (plainText.length <= maxLength) return plainText;
+    return plainText.substring(0, maxLength).trim() + '...';
   };
 
   if (isLoading) {

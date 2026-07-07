@@ -69,7 +69,7 @@ const formContents: Record<
         placeholder: "Any questions or additional information? (Optional)",
       },
       {
-        label: "I understand this is a year-long program running every weekend",
+        label: "I accept the program rules and policies",
         name: "info",
         type: "checkbox",
         required: true,
