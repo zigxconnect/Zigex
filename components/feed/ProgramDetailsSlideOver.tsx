@@ -26,8 +26,6 @@ import {
 import { checkApplicationStatus, type ApplicationStatus } from "@/lib/actions/applications.actions";
 import { cn, normalizeImageSrc } from "@/lib/utils";
 import { RichContentRenderer } from "@/components/ui/RichContentRenderer";
-import ApplicationModal from "./details/appyButton/Modal";
-import InternshipApplicationModal from "./details/appyButton/InternshipApplicationModal";
 
 interface ProgramDetailsSlideOverProps {
   item: any;
@@ -38,8 +36,6 @@ interface ProgramDetailsSlideOverProps {
 export function ProgramDetailsSlideOver({ item, isOpen, onClose }: ProgramDetailsSlideOverProps) {
   const [status, setStatus] = useState<ApplicationStatus>("not_applied");
   const [loading, setLoading] = useState(false);
-  const [showModal, setShowModal] = useState(false);
-  const [showInternshipModal, setShowInternshipModal] = useState(false);
 
   useEffect(() => {
     if (isOpen && item?.id) {
@@ -73,17 +69,6 @@ export function ProgramDetailsSlideOver({ item, isOpen, onClose }: ProgramDetail
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <SheetContent 
         className="w-[97vw] sm:max-w-xl p-0 flex flex-col h-full bg-white dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800 shadow-[-20px_0_80px_rgba(0,0,0,0.1)] overflow-hidden"
-        onInteractOutside={(e) => {
-          // Prevent Sheet from closing when the internship modal portal is open
-          if (showInternshipModal || showModal) {
-            e.preventDefault();
-          }
-        }}
-        onPointerDownOutside={(e) => {
-          if (showInternshipModal || showModal) {
-            e.preventDefault();
-          }
-        }}
       >
         
         {/* Scrollable Content Area */}
@@ -199,36 +184,14 @@ export function ProgramDetailsSlideOver({ item, isOpen, onClose }: ProgramDetail
               Registration Closed
             </Button>
           ) : (
-            <div className="w-full">
+            <Link href={`/feed/${item.id}`} className="block w-full" onClick={onClose}>
               <Button 
-                onClick={() => {
-                  if (item._type === 'internships') {
-                    setShowInternshipModal(true);
-                  } else {
-                    setShowModal(true);
-                  }
-                }}
                 className="w-full h-14 rounded-2xl bg-[#155DFC] hover:bg-[#0D47A1] text-white font-black uppercase tracking-[0.2em] text-[11px] shadow-2xl shadow-blue-500/30 transition-all active:scale-95 cursor-pointer group"
               >
                 Register Now
                 <ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
-              
-              <ApplicationModal 
-                isOpen={showModal} 
-                onClose={() => setShowModal(false)}
-                type={item._type === 'programs' ? 'program' : 'event'}
-                id={item.id}
-                title={item.title}
-              />
-
-              <InternshipApplicationModal
-                isOpen={showInternshipModal}
-                onClose={() => setShowInternshipModal(false)}
-                internshipId={item.id}
-                internshipTitle={item.title}
-              />
-            </div>
+            </Link>
           )}
         </div>
       </SheetContent>
