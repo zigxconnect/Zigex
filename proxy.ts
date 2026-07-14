@@ -67,6 +67,7 @@ export async function proxy(request: NextRequest) {
     "/forgot-password",
     "/update-password",
     "/demo",
+    "/feed",
   ];
 
   // Helper helper to create a redirect that preserves session cookies
@@ -104,6 +105,9 @@ export async function proxy(request: NextRequest) {
   if (!user) {
     if (
       publicPaths.includes(pathname) ||
+      // Public feed: allow any /feed/* path for unauthenticated visitors.
+      // The page itself gates all write/apply actions client-side.
+      pathname.startsWith("/feed/") ||
       pathname === "/create-profile" ||
       pathname === "/profile-complete" ||
       publicApiPaths.includes(pathname)
@@ -122,7 +126,14 @@ export async function proxy(request: NextRequest) {
       });
       return errorResponse;
     }
-    return createRedirectResponse("/sign-in");
+    // Append the intended path as a ?next= param so the sign-in page can
+    // redirect the user back after successful authentication.
+    const signInUrl = new URL("/sign-in", request.url);
+    const isRelativePath = pathname.startsWith("/") && !pathname.startsWith("//");
+    if (isRelativePath) {
+      signInUrl.searchParams.set("next", pathname);
+    }
+    return createRedirectResponse(signInUrl.pathname + signInUrl.search);
   }
 
   // --- 2. Handle Authenticated Users ---
@@ -227,7 +238,7 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     // Protect all routes except static/image/favicon/pwa-assets
-    "/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|icons/|images/).*)",
+    "/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|push-sw.js|icons/|images/).*)",
   ],
 };
 

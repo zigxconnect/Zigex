@@ -20,12 +20,65 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 interface WidgetProps {
-  user: any;
+  user: any | null;
   workspaces?: any[];
 }
 
 export function DashboardWidgets({ user, workspaces }: WidgetProps) {
   const [searchQuery, setSearchQuery] = useState("");
+
+  // For unauthenticated visitors, show a conversion widget instead of the
+  // profile/workspaces panel that requires user data.
+  if (!user) {
+    return (
+      <div className="hidden xl:flex flex-col gap-5 w-72 shrink-0 sticky top-20 h-fit pb-8">
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, ease: "circOut" }}
+          className="bg-card border border-border rounded-2xl p-5 shadow-sm overflow-hidden relative"
+        >
+          {/* Decorative background */}
+          <div className="absolute -top-10 -right-10 w-36 h-36 bg-[#155DFC]/5 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="relative space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-[#155DFC]/10 flex items-center justify-center">
+              <Zap size={22} className="text-[#155DFC]" />
+            </div>
+
+            <div className="space-y-1">
+              <h3 className="text-sm font-black text-foreground uppercase tracking-tight">
+                Join Zigex
+              </h3>
+              <p className="text-[11px] font-medium text-muted-foreground leading-relaxed">
+                Create a free account to track applications, build your profile, and unlock smart-apply.
+              </p>
+            </div>
+
+            <div className="space-y-2 pt-1">
+              <Link
+                href="/sign-up"
+                className="w-full h-10 bg-[#155DFC] hover:bg-[#0D47A1] text-white rounded-xl text-[11px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all duration-300 shadow-lg shadow-blue-500/20"
+              >
+                Get Started — It&apos;s Free
+                <ChevronRight size={14} />
+              </Link>
+              <Link
+                href="/sign-in"
+                className="w-full h-10 bg-muted hover:bg-muted/80 text-foreground rounded-xl text-[11px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all duration-300"
+              >
+                Sign In
+              </Link>
+            </div>
+
+            <p className="text-[9px] font-semibold text-muted-foreground text-center uppercase tracking-wide pt-1">
+              Join 3,000+ students on Zigex
+            </p>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   const filteredWorkspaces = [...(workspaces || [])]
     .reverse()

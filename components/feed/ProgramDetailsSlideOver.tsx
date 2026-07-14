@@ -31,9 +31,11 @@ interface ProgramDetailsSlideOverProps {
   item: any;
   isOpen: boolean;
   onClose: () => void;
+  /** When false the register/apply CTA redirects to sign-in instead of opening a modal. */
+  isAuthenticated?: boolean;
 }
 
-export function ProgramDetailsSlideOver({ item, isOpen, onClose }: ProgramDetailsSlideOverProps) {
+export function ProgramDetailsSlideOver({ item, isOpen, onClose, isAuthenticated = true }: ProgramDetailsSlideOverProps) {
   const [status, setStatus] = useState<ApplicationStatus>("not_applied");
   const [loading, setLoading] = useState(false);
 
@@ -183,9 +185,23 @@ export function ProgramDetailsSlideOver({ item, isOpen, onClose }: ProgramDetail
             <Button disabled className="w-full h-14 rounded-2xl bg-slate-100 dark:bg-slate-900 text-slate-300 dark:text-slate-700 border-none font-black uppercase tracking-[0.2em] text-[11px] opacity-50 cursor-pointer blur-[0.5px]">
               Registration Closed
             </Button>
+          ) : !isAuthenticated ? (
+            // Anonymous visitor — redirect to sign-in with return URL
+            <Link
+              href={`/sign-in?next=${encodeURIComponent(`/feed/${item.id}`)}`}
+              className="block w-full"
+              onClick={onClose}
+            >
+              <Button
+                className="w-full h-14 rounded-2xl bg-[#155DFC] hover:bg-[#0D47A1] text-white font-black uppercase tracking-[0.2em] text-[11px] shadow-2xl shadow-blue-500/30 transition-all active:scale-95 cursor-pointer group"
+              >
+                Sign in to Register
+                <ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
           ) : (
             <Link href={`/feed/${item.id}`} className="block w-full" onClick={onClose}>
-              <Button 
+              <Button
                 className="w-full h-14 rounded-2xl bg-[#155DFC] hover:bg-[#0D47A1] text-white font-black uppercase tracking-[0.2em] text-[11px] shadow-2xl shadow-blue-500/30 transition-all active:scale-95 cursor-pointer group"
               >
                 Register Now

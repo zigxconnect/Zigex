@@ -6,20 +6,23 @@ import { getAllFeedData } from "@/lib/actions/feed/feed.action";
 
 interface MainFeedPageProps {
   searchQuery?: string;
+  /** Whether the visiting user is authenticated. Defaults to true so existing
+   *  dashboard usage is unaffected. Pass false from the public feed layout. */
+  isAuthenticated?: boolean;
 }
 
 /**
  * MainFeedPage - Server Component
- * 
+ *
  * Optimized for SSR:
  * - Uses React cache() for automatic request deduplication
  * - Data fetched on server, passed to client for interactivity
  * - FeedGridClient handles search, tabs, and load more
- * - HappeningNow section removed per design spec
  */
 export default async function MainFeedPage({
   searchQuery,
-}: MainFeedPageProps) { 
+  isAuthenticated = true,
+}: MainFeedPageProps) {
   // Fetch data on the server with React cache deduplication
   const feedData = await getAllFeedData(searchQuery);
 
@@ -32,6 +35,7 @@ export default async function MainFeedPage({
         <FeedGridClient
           initialData={{ internships, events, programs, announcements, companies }}
           error={error}
+          isAuthenticated={isAuthenticated}
         />
       </Suspense>
     </div>

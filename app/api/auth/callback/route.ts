@@ -3,11 +3,14 @@
 import { createSupabaseServerClient, supabaseAdmin } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { sanitizeRedirectUrl } from "@/lib/utils/redirect";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/dashboard";
+  // Validate the return URL to prevent open-redirect attacks.
+  // sanitizeRedirectUrl enforces a strict allowlist of permitted path prefixes.
+  const next = sanitizeRedirectUrl(searchParams.get("next"));
 
   if (code) {
     const supabase = await createSupabaseServerClient();

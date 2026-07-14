@@ -20,6 +20,8 @@ interface FeedGridClientProps {
     companies?: any[];
   };
   error: string | null;
+  /** Whether the visitor is authenticated. Defaults true to keep existing behaviour. */
+  isAuthenticated?: boolean;
 }
 
 type CategoryId = "all" | "internships" | "programs" | "events" | "announcements";
@@ -34,7 +36,7 @@ const categories = [
 
 import { ProgramDetailsSlideOver } from "@/components/feed/ProgramDetailsSlideOver";
 
-export function FeedGridClient({ initialData, error }: FeedGridClientProps) {
+export function FeedGridClient({ initialData, error, isAuthenticated = true }: FeedGridClientProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeCategory, setActiveCategory] = useState<CategoryId>("all");
   const [activeSlide, setActiveSlide] = useState(0);
@@ -217,6 +219,7 @@ export function FeedGridClient({ initialData, error }: FeedGridClientProps) {
         item={selectedItem}
         isOpen={isDetailsOpen}
         onClose={() => setIsDetailsOpen(false)}
+        isAuthenticated={isAuthenticated}
       />
 
       {modalData && (

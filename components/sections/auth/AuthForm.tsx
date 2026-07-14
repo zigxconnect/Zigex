@@ -14,6 +14,7 @@ import { Spinner } from "@/components/uiComponent/Spinner";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "react-hot-toast";
+import { getReturnUrl } from "@/lib/utils/redirect";
 
 // --- Schemas ---
 const signUpSchema = z.object({
@@ -206,9 +207,10 @@ export const AuthForm = ({ type }: AuthFormProps) => {
               .eq("user_id", data.user.id)
               .maybeSingle();
 
-            // Redirect based on profile status
+            // Redirect based on profile status, honouring any ?next= return URL
+            const returnUrl = getReturnUrl("/dashboard");
             if (profile?.profile_status === "complete") {
-              window.location.href = "/dashboard";
+              window.location.href = returnUrl;
             } else {
               window.location.href = "/create-profile";
             }
@@ -317,8 +319,11 @@ export const AuthForm = ({ type }: AuthFormProps) => {
           router.push(`/verify-otp?email=${encodeURIComponent(data.email)}`);
         } else {
           toast.success("Logged in successfully!");
+          // Honour the ?next= return URL (sanitized server-side in the API route;
+          // we mirror the same validation here on the client for defence-in-depth).
+          const returnUrl = getReturnUrl("/dashboard");
           router.push(
-            responseData.profileComplete ? "/dashboard" : "/create-profile"
+            responseData.profileComplete ? returnUrl : "/create-profile"
           );
         }
       } catch (err) {

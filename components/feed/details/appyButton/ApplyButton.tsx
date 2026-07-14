@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, X, CheckCircle2, AlertCircle, Zap, Loader, Lock, BookOpen, ChevronRight, Clock } from "lucide-react";
 import DynamicForm from "@/components/sections/dashboard/Application/application";
@@ -35,6 +36,8 @@ interface ApplyButtonProps {
   buttonText?: string;
   opportunityData?: any;
   applicationStatus?: ApplicationStatus;
+  /** When false, all apply actions redirect to sign-in with the current page as the return URL. */
+  isAuthenticated?: boolean;
 }
 
 interface Draft {
@@ -53,8 +56,10 @@ export function ApplyButton({
   fullWidth = false, 
   buttonText = "Apply Now",
   opportunityData,
-  applicationStatus
+  applicationStatus,
+  isAuthenticated = true,
 }: ApplyButtonProps) {
+  const router = useRouter();
   const [showModal, setShowModal] = useState(false);
   const [showInternshipModal, setShowInternshipModal] = useState(false);
   const [showSmartPreview, setShowSmartPreview] = useState(false);
@@ -66,10 +71,18 @@ export function ApplyButton({
 
   // Triggered when user clicks "Smart Apply"
   const handleSmartApplyClick = () => {
+    if (!isAuthenticated) {
+      router.push(`/sign-in?next=${encodeURIComponent(window.location.pathname)}`);
+      return;
+    }
     setShowWaitingList(true);
   };
   
   const handleApplyClick = () => {
+    if (!isAuthenticated) {
+      router.push(`/sign-in?next=${encodeURIComponent(window.location.pathname)}`);
+      return;
+    }
     if (type === "internship") {
       setShowInternshipModal(true);
     } else {

@@ -244,7 +244,7 @@ const BamendaHeroSection = () => {
                     src="https://i.ibb.co/1YqtdCtK/Chat-GPT-Image-Apr-23-2026-03-29-43-PM.png"
                     alt="Zigex Dashboard Preview"
                     loading="eager"
-                    fetchpriority="high"
+                    fetchPriority="high"
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   />
 
