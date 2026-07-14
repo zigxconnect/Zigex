@@ -32,6 +32,7 @@
     "@radix-ui/react-slot": "^1.2.4",
     "@radix-ui/react-switch": "^1.2.6",
     "@radix-ui/react-tooltip": "^1.2.8",
+    "@radix-ui/react-visually-hidden": "^1.2.7",
     "@react-email/components": "^0.5.2",
     "@react-email/render": "^1.2.2",
     "@reduxjs/toolkit": "^2.11.2",
