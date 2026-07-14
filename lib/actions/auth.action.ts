@@ -56,7 +56,7 @@ export async function signUpAction(formData: z.infer<typeof signUpSchema>) {
     email,
     password,
     options: {
-      emailRedirectTo: `${getURL()}api/auth/callback?next=/create-profile`,
+      emailRedirectTo: `${getURL()}api/auth/callback`,
       data: {
         full_name: fullName, // Pass fullName to be used by the database trigger
       },
@@ -80,8 +80,9 @@ export async function signUpAction(formData: z.infer<typeof signUpSchema>) {
     };
   }
 
-  // 3. If everything is successful, redirect to the profile creation page.
-  redirect("/create-profile");
+  // 3. Deferred completion: land on the dashboard. Profile setup happens
+  // later via the dismissible banner linking to /dashboard/edit-profile.
+  redirect("/dashboard");
 }
 
 /**
@@ -108,17 +109,8 @@ export async function signInAction(formData: z.infer<typeof signInSchema>) {
     return { error: "Invalid email or password. Please try again." };
   }
 
-  // 2. Check the user's profile status.
-  const { data: profile } = await supabase
-    .from("student_profiles")
-    .select("profile_status")
-    .eq("user_id", data.user.id)
-    .single();
-
-  // 3. Redirect based on the profile status.
-  if (profile?.profile_status === "complete") {
-    redirect("/dashboard");
-  } else {
-    redirect("/create-profile");
-  }
+  // 2. Deferred completion: always land on the dashboard regardless of
+  // profile completeness. The dashboard banner nudges incomplete profiles
+  // toward /dashboard/edit-profile.
+  redirect("/dashboard");
 }

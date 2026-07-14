@@ -3,6 +3,7 @@
 import { DashboardHeader } from "@/components/layout/dashboard/DashboardHeader";
 import { Sidebar } from "@/components/layout/dashboard/Sidebar";
 import { MobileTabBar } from "@/components/layout/dashboard/MobileTabBar";
+import { ProfileCompletionBanner } from "@/components/sections/dashboard/ProfileCompletionBanner";
 import { useState, useEffect } from "react";
 import { UserProfile } from "@/app/types/type";
 import { usePathname } from "next/navigation";
@@ -97,6 +98,7 @@ export function DashboardClientLayout({
               // Standard Dashboard Padding
               <div className="p-4 sm:p-6 lg:p-8">
                 <div className="max-w-7xl mx-auto">
+                  <ProfileCompletionBanner profileStatus={user?.profile?.profile_status} />
                   {children}
                 </div>
               </div>

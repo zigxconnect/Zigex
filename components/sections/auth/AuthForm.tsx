@@ -188,19 +188,9 @@ export const AuthForm = ({ type }: AuthFormProps) => {
               console.warn("[AuthForm] Session refresh failed, continuing anyway:", refreshErr);
             }
 
-            // Check if profile exists and is complete
-            const { data: profile } = await supabase
-              .from("student_profiles")
-              .select("profile_status")
-              .eq("user_id", data.user.id)
-              .maybeSingle();
-
-            // Redirect based on profile status
-            if (profile?.profile_status === "complete") {
-              window.location.href = "/dashboard";
-            } else {
-              window.location.href = "/create-profile";
-            }
+            // Deferred completion: always land on the dashboard. Incomplete
+            // profiles are nudged toward /dashboard/edit-profile from there.
+            window.location.href = "/dashboard";
           } catch (err: any) {
             console.error("[AuthForm] Unexpected error during Google sign-in:", err);
             // Specifically catch the "Cannot create property 'user' on string" error
@@ -306,9 +296,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
           router.push(`/verify-otp?email=${encodeURIComponent(data.email)}`);
         } else {
           toast.success("Logged in successfully!");
-          router.push(
-            responseData.profileComplete ? "/dashboard" : "/create-profile"
-          );
+          router.push("/dashboard");
         }
       } catch (err) {
         toast.error((err as Error).message);

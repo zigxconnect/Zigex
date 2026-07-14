@@ -176,8 +176,8 @@ export default function StudentProfileClient({
                   {/* Mobile Edit Button */}
                   {isOwner && (
                     <div className="mt-5 md:hidden flex justify-center">
-                        <Link 
-                          href="/create-profile" 
+                        <Link
+                          href="/dashboard/edit-profile"
                           className="flex items-center gap-2 px-6 py-2 w-full justify-center bg-white border border-slate-300 text-slate-700 rounded-full font-bold hover:bg-slate-50 transition-all shadow-sm"
                         >
                           <Edit size={16} />
@@ -190,8 +190,8 @@ export default function StudentProfileClient({
                {/* Desktop Actions (Right Side) */}
                <div className="hidden md:flex gap-3 shrink-0 pt-2">
                   {isOwner ? (
-                       <Link 
-                         href="/create-profile" 
+                       <Link
+                         href="/dashboard/edit-profile"
                          className="flex items-center gap-2 px-6 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-full font-bold hover:bg-slate-50 hover:border-slate-400 transition-all shadow-sm group"
                        >
                          <Edit size={16} className="text-slate-400 group-hover:text-slate-600 transition-colors" />
