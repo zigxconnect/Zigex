@@ -1,7 +1,6 @@
 // app/api/auth/callback/route.ts
 
-import { supabaseAdmin } from "@/lib/supabase/server";
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { createSupabaseServerClient, supabaseAdmin } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
@@ -11,24 +10,7 @@ export async function GET(request: Request) {
   const next = searchParams.get("next") ?? "/dashboard";
 
   if (code) {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value;
-          },
-          set(name, value, options) {
-            cookieStore.set({ name, value, ...options });
-          },
-          remove(name, options) {
-            cookieStore.set({ name, value: "", ...options });
-          },
-        },
-      }
-    );
+    const supabase = await createSupabaseServerClient();
 
     try {
       const { data, error } = await supabase.auth.exchangeCodeForSession(code);

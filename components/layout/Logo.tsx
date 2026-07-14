@@ -11,7 +11,7 @@ export const Logo = ({ className }: LogoProps) => {
       <img
         src="https://i.ibb.co/Cp502Yby/logo.png"
         alt="Zigex Logo"
-        className="h-full w-auto object-contain dark:brightness-0 dark:invert"
+        className="h-full w-auto object-contain"
       />
     </div>
   );

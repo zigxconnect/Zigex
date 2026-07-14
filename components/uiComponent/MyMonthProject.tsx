@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Play, Calendar, Github, Clock as ClockIcon, ExternalLink, Edit, Share2, Sparkles } from "lucide-react";
 import ContributeModal from "./ContributeModal";
+import CreateProjectButton from "@/components/project/CreateProjectButton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { normalizeImageSrc } from "@/lib/utils";
@@ -165,9 +166,11 @@ export default function MyMonthProject({
              : "You haven't showcased a project this month. Ready to inspire the community?"}
          </p>
          {!isVisitor && (
-            <Button asChild className="w-full h-11 bg-white text-[#155DFC] hover:bg-blue-50 border border-blue-100 rounded-xl font-bold shadow-sm">
-               <Link href="/dashboard/projects">Launch Project</Link>
-            </Button>
+            <CreateProjectButton variant="custom" customTrigger={
+               <Button className="w-full h-11 bg-white text-[#155DFC] hover:bg-blue-50 border border-blue-100 rounded-xl font-bold shadow-sm">
+                  Launch Project
+               </Button>
+            } />
          )}
       </aside>
     );

@@ -15,7 +15,6 @@ import {
   MessageSquare,
   Newspaper,
 } from "lucide-react";
-import { AiOutlineWechat } from "react-icons/ai";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -48,10 +47,10 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
       excludePaths: ["/feed/projects"]
     },
     {
-      href: "/intern/workspace",
+      href: "/student/workspace",
       icon: Briefcase,
       label: "Workspace",
-     
+      matchPaths: ["/student/workspace/"]
     },
      {
               href: "/dashboard/blog",

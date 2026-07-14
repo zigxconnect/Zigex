@@ -22,7 +22,7 @@ export function CompanySidebar({ companies }: CompanySidebarProps) {
   return (
     <div className="flex flex-col gap-6 sticky top-24">
       {/* Company Directory Card */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-sm">
+      <div className="bg-card border border-slate-100 dark:border-slate-850 rounded-[2.5rem] p-8 shadow-sm">
         <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-8 flex items-center gap-2">
           Partner Ecosystem
         </h3>
@@ -31,10 +31,10 @@ export function CompanySidebar({ companies }: CompanySidebarProps) {
           {companies.slice(0, 10).map((company) => (
             <div 
               key={company.id} 
-              className="flex items-center justify-between group py-2 border-b border-slate-50 last:border-0"
+              className="flex items-center justify-between group py-2 border-b border-slate-50 dark:border-slate-850 last:border-0"
             >
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-2xl overflow-hidden bg-slate-50 flex-shrink-0 border border-slate-100 dark:border-slate-800">
+                <div className="w-10 h-10 rounded-2xl overflow-hidden bg-slate-50 dark:bg-slate-950 flex-shrink-0 border border-slate-100 dark:border-slate-850">
                   <Image
                     src={normalizeImageSrc(company.logo_url || "/zigex.svg")}
                     alt={company.company_name}

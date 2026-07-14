@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
 import { Inter, Host_Grotesk } from "next/font/google";
+import { PushNotificationManager } from "@/components/providers/PushNotificationManager";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import "./globals.css";
 // import { Toaster } from "@/components/ui/sonner";
 import { Toaster } from "react-hot-toast";
+import Script from "next/script";
 
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
+import { SessionGuard } from "@/components/providers/SessionGuard";
+import NextTopLoader from 'nextjs-toploader';
 
 const inter = Inter({
 
@@ -128,8 +133,72 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        {/* 
+          CRITICAL: This script must run SYNCHRONOUSLY before any other JS.
+          It purges corrupted Supabase auth tokens from localStorage to prevent
+          "TypeError: Cannot create property 'user' on string".
+          
+          It also handles double-stringified values (the root cause):
+          If JSON.parse returns a string instead of an object, it tries
+          parsing one more time. If that succeeds, it fixes the stored value.
+          If not, it removes the key entirely.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  // --- 1. LOCAL STORAGE GUARD ---
+                  var keys = [];
+                  for (var i = 0; i < localStorage.length; i++) {
+                    keys.push(localStorage.key(i));
+                  }
+                  for (var j = 0; j < keys.length; j++) {
+                    var key = keys[j];
+                    if (!key) continue;
+                    if (key.indexOf('sb-') !== 0 && key !== 'supabase.auth.token') continue;
+                    if (key.indexOf('-code-verifier') !== -1) continue;
+                    var val = localStorage.getItem(key);
+                    if (!val) continue;
+                    try {
+                      var parsed = JSON.parse(val);
+                      if (typeof parsed === 'string' || parsed === null || typeof parsed !== 'object') {
+                        console.warn('[ZApp] Invalid localStorage session detected for ' + key + '. Removing.');
+                        localStorage.removeItem(key);
+                      }
+                    } catch (e) {
+                      localStorage.removeItem(key);
+                    }
+                  }
+
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+
+      </head>
       <body className={`${inter.variable} ${hostGrotesk.variable} antialiased`}>
-        {children}
+        <NextTopLoader 
+          color="#2563EB"
+          initialPosition={0.08}
+          crawlSpeed={200}
+          height={3}
+          crawl={true}
+          showSpinner={false}
+          easing="ease"
+          speed={200}
+          shadow="0 0 10px #2563EB,0 0 5px #2563EB"
+          zIndex={1600}
+          showAtBottom={false}
+        />
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+          <SessionGuard>
+            <PushNotificationManager />
+            {children}
+          </SessionGuard>
+        </ThemeProvider>
 
         <Toaster position="top-center" reverseOrder={false} />
         <Analytics />

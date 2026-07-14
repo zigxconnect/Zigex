@@ -114,3 +114,12 @@ export async function signInAction(formData: z.infer<typeof signInSchema>) {
   // toward /dashboard/edit-profile.
   redirect("/dashboard");
 }
+/**
+ * Server Action for User Sign-Out
+ * Clears the session and redirects to the sign-in page.
+ */
+export async function signOutAction() {
+  const supabase = await createServerActionClient();
+  await supabase.auth.signOut();
+  redirect("/sign-in");
+}

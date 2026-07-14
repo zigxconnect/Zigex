@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient, supabaseAdmin } from '@/lib/supabase/server';
 import { authMiddleware } from '@/lib/middleware/auth';
 import { internshipSchema } from '@/lib/validation/internship';
+import { dispatchBroadcastNotification } from '@/lib/notifications';
 
 
 /**
@@ -174,79 +175,21 @@ export async function POST(request: Request) {
         }
         console.log("Internship created successfully:", internship.id);
 
-        // --- NOTIFICATION & EMAIL LOGIC ---
-        // Note: We don't want to block the response too long if this is slow.
-        console.log("Starting notification process...");
+        // --- BROADCAST NOTIFICATIONS ---
         try {
-            // 1. Get subscribed users
-            const { data: users, error: userError } = await (await createClient()).rpc("get_subscribed_emails");
-
-            let recipients = users || [];
-            if (userError) {
-                console.error("RPC get_subscribed_emails failed:", userError);
-            }
-
-            if (recipients.length > 0) {
-                // Deduplicate recipients based on user_id/id
-                const uniqueRecipientsMap = new Map();
-                recipients.forEach((item: any) => {
-                    const uid = item.id || item.user_id;
-                    if (uid && !uniqueRecipientsMap.has(uid)) {
-                        uniqueRecipientsMap.set(uid, item);
-                    }
-                });
-                const uniqueRecipients = Array.from(uniqueRecipientsMap.values());
-                const recipientEmails = uniqueRecipients.map((u: any) => u.email).filter(Boolean);
-
-                // 2. Send Email (Batch BCC with Generic To)
-                // Note: Resend has a limit on BCC recipients (usually 50-100).
-                // We'll cap it at 50 for now or ideally use a mailing list/loop.
-                if (process.env.RESEND_API_KEY && recipientEmails.length > 0) {
-                    const { Resend } = await import("resend");
-                    const resend = new Resend(process.env.RESEND_API_KEY);
-                    const { NewPostEmail } = await import("@/emails/NewPostEmail");
-
-                    // Resend BCC limit is usually 50. We cap it to avoid hanging/errors.
-                    const limitedRecipients = recipientEmails.slice(0, 50);
-
-                    console.log(`Sending notification emails to ${limitedRecipients.length} recipients...`);
-
-                    try {
-                        await resend.emails.send({
-                            from: "ZIGEX <notifications@zigexconnect.com>",
-                            to: "notifications@zigexconnect.com",
-                            bcc: limitedRecipients,
-                            subject: `New Internship Posted: ${internship.title}`,
-                            react: NewPostEmail({
-                                postTitle: internship.title,
-                                postType: "Internship",
-                                postLocation: internship.location,
-                                viewPostUrl: `https://zigexconnect.com/internships/${internship.id}`,
-                                companyLogoUrl: "https://tmvipinvvhgklmqwvows.supabase.co/storage/v1/object/public/company-assets/Seed%20Company/events/SEED%20community%20Challenge-1757769838240.jpg",
-                                managePreferencesUrl: "https://zigexconnect.com/profile/notifications",
-                                postedDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
-                            }),
-                        });
-                    } catch (emailErr) {
-                        console.error("Resend email sending failed:", emailErr);
-                    }
-                }
-
-                // 3. Create Notifications in DB (using unique recipients)
-                const notifications = uniqueRecipients.map((u: any) => ({
-                    user_id: u.id || u.user_id,
-                    title: "New Internship Posted!",
-                    message: `A new internship "${internship.title}" is available.`,
-                    type: "internship",
-                    reference_id: internship.id,
-                }));
-
-                const { error: notifError } = await (await createClient()).from("notifications").insert(notifications);
-                if (notifError) console.error("Failed to create notifications:", notifError);
-            }
-        } catch (innerErr) {
-            console.error("Async notification error:", innerErr);
+            await dispatchBroadcastNotification({
+                title: internship.title,
+                message: `A new internship "${internship.title}" is available.`,
+                type: 'internship',
+                referenceId: internship.id,
+                link: `/internships/${internship.id}`,
+                location: internship.location || 'Remote'
+            });
+            console.log("[INTERNSHIP_NOTIFY] Broadcast dispatched successfully.");
+        } catch (notifErr) {
+            console.error("[INTERNSHIP_NOTIFY] Failed to dispatch broadcast:", notifErr);
         }
+        // ---------------------------------
         // ---------------------------------------------------------------
 
         return NextResponse.json(internship, { status: 201 });

@@ -36,7 +36,8 @@ import {
   Upload,
   ChevronLeft,
   StarHalf,
-  UserX
+  UserX,
+  ArrowLeft
 } from "lucide-react";
 import { format } from "date-fns";
 import Image from "next/image";
@@ -69,6 +70,12 @@ const isWithinWeeklyLimit = (dateString: string) => {
 interface SupervisorDashboardClientProps {
   data: {
     profile: any;
+    workspace?: {
+      id: string;
+      type: "internship" | "program";
+      title: string;
+      company?: any;
+    };
     interns: any[];
     recentLogs: any[];
     tasks: any[];
@@ -112,6 +119,8 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
   const [internSearchTerm, setInternSearchTerm] = useState("");
   const [evalSearchTerm, setEvalSearchTerm] = useState("");
   const [evalFilter, setEvalFilter] = useState("all"); // all, pending, high, low
+  const [selectedEvalIntern, setSelectedEvalIntern] = useState<any>(null);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
 
   const { interns, recentLogs, tasks, attendance, evaluations } = data;
   const router = useRouter();
@@ -127,7 +136,7 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
         groups.get(key)!.members.push(task);
       }
       // Resolve student name for this task
-      const targetIntern = interns.find((i: any) => i.internship_id === task.internship_id);
+      const targetIntern = interns.find((i: any) => i.id === task.internship_id);
       const student = targetIntern ? (Array.isArray(targetIntern.student) ? targetIntern.student[0] : targetIntern.student) : null;
       if (student?.full_name) groups.get(key)!.studentNames.push(student.full_name);
     });
@@ -169,11 +178,31 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
   }, [interns, evalSearchTerm, evalFilter, evaluations]);
 
   const filteredEvalLedger = useMemo(() => {
-    return evaluations.filter(e => {
+    // 1. Group by student_id and get the latest evaluation for each
+    const latestEvals = new Map<string, any>();
+    evaluations.forEach(e => {
+      const studentId = e.student_id;
+      if (!latestEvals.has(studentId) || new Date(e.created_at) > new Date(latestEvals.get(studentId).created_at)) {
+        latestEvals.set(studentId, e);
+      }
+    });
+
+    const uniqueEvals = Array.from(latestEvals.values());
+
+    // 2. Filter by search term
+    return uniqueEvals.filter(e => {
       const studentName = e.student?.full_name?.toLowerCase() || "";
       return studentName.includes(evalSearchTerm.toLowerCase());
     });
   }, [evaluations, evalSearchTerm]);
+
+  const selectedInternHistory = useMemo(() => {
+    if (!selectedEvalIntern) return [];
+    const student = Array.isArray(selectedEvalIntern.student) ? selectedEvalIntern.student[0] : selectedEvalIntern.student;
+    const studentId = student?.user_id || selectedEvalIntern.student_id;
+    return evaluations.filter(e => e.student_id === studentId)
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [evaluations, selectedEvalIntern]);
 
   const pendingReviews = recentLogs.filter(l => l.status === "pending" || !l.status).length;
   const approvedCount = recentLogs.filter(l => l.status === "approved").length;
@@ -524,6 +553,28 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
       {/* ===== HEADER ===== */}
       <header className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-slate-900/80">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8">
+          {/* Workspace Context Bar */}
+          {data.workspace && (
+            <div className="flex items-center gap-3 mb-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+              <a href="/supervisor" className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 hover:text-[#155DFC] transition-colors group">
+                <ArrowLeft size={13} className="group-hover:-translate-x-0.5 transition-transform" />
+                Switch
+              </a>
+              <div className="w-px h-4 bg-slate-200 dark:bg-slate-700" />
+              <Badge className={cn(
+                "text-[8px] font-extrabold tracking-widest px-2 py-0.5 rounded-md border-0",
+                data.workspace.type === "program" 
+                  ? "bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300"
+                  : "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300"
+              )}>
+                {data.workspace.type === "program" ? "PROGRAM" : "INTERNSHIP"}
+              </Badge>
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate">
+                {data.workspace.title}
+              </span>
+            </div>
+          )}
+
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -536,7 +587,10 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                 Hello, {data.profile?.full_name?.split(" ")[0]}! 👋
               </h1>
               <p className="text-[10px] sm:text-xs text-slate-500 font-medium mt-1 tracking-tight">
-                Synchronize your team, track milestones, and drive internship excellence.
+                {data.workspace 
+                  ? `Managing ${data.workspace.title} — ${interns.length} intern${interns.length !== 1 ? "s" : ""} assigned.`
+                  : "Synchronize your team, track milestones, and drive internship excellence."
+                }
               </p>
             </div>
 
@@ -992,8 +1046,7 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {groupedTasks.length > 0 ? groupedTasks.map((task: any, idx: number) => {
-                  // For single tasks, resolve inline; for groups, we already have studentNames
-                  const targetIntern = !task.isGroup ? interns.find((i: any) => i.internship_id === task.internship_id) : null;
+                  const targetIntern = interns.find((i: any) => i.id === task.internship_id);
                   const student = targetIntern ? (Array.isArray(targetIntern.student) ? targetIntern.student[0] : targetIntern.student) : null;
                   
                   return (
@@ -1262,11 +1315,19 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                                 <td className="px-6 py-4 text-[10px] font-bold text-slate-500 tracking-wider">
                                   {format(new Date(e.created_at), "MMMM dd, yyyy")}
                                 </td>
-                                <td className="px-6 py-4 text-right">
-                                   <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-lg text-slate-300 hover:text-[#155DFC] hover:bg-blue-50 transition-all">
-                                     <Eye size={14} strokeWidth={2} />
-                                   </Button>
-                                </td>
+                                 <td className="px-6 py-4 text-right">
+                                    <Button 
+                                      onClick={() => {
+                                        setSelectedEvalIntern(e);
+                                        setIsHistoryModalOpen(true);
+                                      }}
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="h-8 w-8 p-0 rounded-lg text-slate-300 hover:text-[#155DFC] hover:bg-blue-50 transition-all"
+                                    >
+                                      <Eye size={14} strokeWidth={2} />
+                                    </Button>
+                                 </td>
                              </tr>
                           ))}
                        </tbody>
@@ -1347,6 +1408,44 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                             ))}
                           </select>
                         </div>
+
+                        {newTask.internship_id && (
+                          <motion.div 
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="space-y-1.5 md:col-span-2"
+                          >
+                             <div className="p-3 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl border border-blue-100/50 dark:border-blue-900/20 flex items-center justify-between gap-3">
+                               <div className="flex items-center gap-3">
+                                  <div className="w-9 h-9 rounded-lg bg-white dark:bg-slate-800 p-0.5 shadow-sm overflow-hidden shrink-0">
+                                    {newTask.internship_id === "all" ? (
+                                      <div className="w-full h-full bg-[#155DFC] flex items-center justify-center text-white">
+                                        <UsersRound size={18} />
+                                      </div>
+                                    ) : (
+                                      <div className="relative w-full h-full">
+                                        <Image 
+                                          src={(Array.isArray(interns.find(i => i.id === newTask.internship_id)?.student) 
+                                            ? interns.find(i => i.id === newTask.internship_id)?.student[0] 
+                                            : interns.find(i => i.id === newTask.internship_id)?.student)?.avatar_url || "/default-avatar.svg"} 
+                                          alt="" fill className="object-cover" 
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div>
+                                    <p className="text-[10px] font-bold text-slate-900 dark:text-white">
+                                      {newTask.internship_id === "all" ? "Strategic Team Deployment" : (Array.isArray(interns.find(i => i.id === newTask.internship_id)?.student) 
+                                        ? interns.find(i => i.id === newTask.internship_id)?.student[0] 
+                                        : interns.find(i => i.id === newTask.internship_id)?.student)?.full_name}
+                                    </p>
+                                    <p className="text-[8px] font-bold text-[#155DFC] tracking-widest uppercase mt-0.5">Mission Recipient Locked</p>
+                                  </div>
+                               </div>
+                               <Badge className="bg-[#155DFC] text-white text-[8px] font-bold border-0 h-6">DYNAMIC</Badge>
+                             </div>
+                          </motion.div>
+                        )}
 
                         <div className="space-y-1.5">
                           <label className="text-[9px] font-bold text-slate-400 tracking-widest px-1 uppercase">Mission Priority</label>
@@ -1839,6 +1938,76 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                 >
                   {isDeletingTask ? <Loader2 className="animate-spin" size={16} /> : "Delete Task"}
                 </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+      {/* EVALUATION HISTORY MODAL */}
+      <AnimatePresence>
+        {isHistoryModalOpen && selectedEvalIntern && (
+          <div className="fixed inset-0 z-[130] flex items-center justify-center p-4">
+            <motion.div 
+               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+               onClick={() => setIsHistoryModalOpen(false)}
+               className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 30 }}
+              className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] border border-slate-100 dark:border-slate-800"
+            >
+              <div className="p-8 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/30">
+                <div className="flex items-center gap-4">
+                  <div className="relative w-12 h-12 rounded-xl overflow-hidden border-2 border-white dark:border-slate-700 shadow-sm">
+                    <Image 
+                      src={(selectedEvalIntern.student?.avatar_url || selectedEvalIntern.avatar_url) || "/default-avatar.svg"} 
+                      alt="" fill className="object-cover" 
+                    />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
+                      {(selectedEvalIntern.student?.full_name || selectedEvalIntern.full_name) || "Student Performance History"}
+                    </h3>
+                    <p className="text-[9px] text-slate-400 font-bold tracking-widest uppercase">Verified Session Records</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setIsHistoryModalOpen(false)}
+                  className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all flex items-center justify-center shadow-sm"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-8 space-y-6">
+                {selectedInternHistory.map((entry: any, index: number) => (
+                  <div key={entry.id} className="relative pl-8 border-l-2 border-slate-100 dark:border-slate-800 last:border-l-0 pb-2">
+                    <div className="absolute left-[-9px] top-0 w-4 h-4 rounded-full bg-white dark:bg-slate-900 border-2 border-[#155DFC]" />
+                    <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-6 border border-slate-50 dark:border-slate-700/50">
+                      <div className="flex justify-between items-start mb-4">
+                        <span className="text-[10px] font-bold text-[#155DFC] tracking-widest uppercase">
+                          Week Record • {format(new Date(entry.created_at || entry.evaluation_date), "MMM dd, yyyy")}
+                        </span>
+                        <div className="flex gap-1">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star key={i} size={12} className={cn(i < entry.overall_rating ? "text-amber-500 fill-amber-500" : "text-slate-200")} />
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-sm text-slate-600 dark:text-slate-300 font-medium leading-relaxed italic">
+                        "{entry.comments || entry.feedback}"
+                      </p>
+                    </div>
+                  </div>
+                ))}
+                {selectedInternHistory.length === 0 && (
+                  <div className="text-center py-20">
+                    <Award className="mx-auto mb-4 text-slate-100" size={48} />
+                    <p className="text-slate-300 font-bold text-lg">No history recorded yet</p>
+                  </div>
+                )}
               </div>
             </motion.div>
           </div>

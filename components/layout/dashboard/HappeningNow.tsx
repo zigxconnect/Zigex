@@ -1,10 +1,24 @@
+// components/layout/dashboard/HappeningNow.tsx
 "use client";
 
 import { useState, useEffect } from "react";
-import { Play, Eye, Clock, Zap, Loader2, AlertCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  Play, 
+  Eye, 
+  Clock, 
+  Zap, 
+  Loader2, 
+  AlertCircle,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  TrendingUp
+} from "lucide-react";
 import { type HappeningNowItem } from "@/lib/actions/happening-now.actions";
 import { getRandomViewCount, formatSimpleViewCount } from "@/lib/utils/randomViews";
 import Image from "next/image";
+import { cn } from "@/lib/utils";
 
 export const HappeningNowGrid = ({ initialData = [] }: { initialData?: HappeningNowItem[] }) => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -13,7 +27,6 @@ export const HappeningNowGrid = ({ initialData = [] }: { initialData?: Happening
   const [viewCounts, setViewCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    // Generate random view counts for each item on client mount
     const newViewCounts: Record<string, number> = {};
     data.forEach((item) => {
       newViewCounts[item.id] = getRandomViewCount();
@@ -21,65 +34,91 @@ export const HappeningNowGrid = ({ initialData = [] }: { initialData?: Happening
     setViewCounts(newViewCounts);
   }, [data]);
 
-
-
-  // Empty state
   if (data.length === 0) {
     return (
-      <div className="w-full mb-6">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="relative">
-              <Zap className="w-8 h-8 text-primary fill-primary animate-pulse" />
+      <div className="w-full mb-12">
+        <div className="max-w-[1600px] mx-auto px-6">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+              <Zap className="w-6 h-6 text-slate-300 fill-slate-300" />
             </div>
-            <h2 className="text-3xl font-bold text-foreground">Happening Now</h2>
+            <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Happening Now</h2>
           </div>
-          <div className="flex items-center justify-center h-64 bg-destructive/10 rounded-lg border border-destructive/20">
-            <div className="flex flex-col items-center gap-2 text-center">
-              <AlertCircle className="w-8 h-8 text-destructive" />
-              <p className="text-destructive">
-                No happening now content available
-              </p>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-center h-80 bg-slate-50 dark:bg-slate-900/50 rounded-[3rem] border border-dashed border-slate-200 dark:border-slate-800"
+          >
+            <div className="flex flex-col items-center gap-4 text-center p-8">
+              <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                 <AlertCircle className="w-8 h-8 text-slate-300" />
+              </div>
+              <div>
+                <p className="text-slate-500 font-bold">No active sessions or events found</p>
+                <p className="text-slate-400 text-xs mt-1">Check back later for live workshops and networking fairs.</p>
+              </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full mb-12">
-      <div className="max-w-7xl mx-auto px-4">
-        {/* Section Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="relative">
-            <Zap className="w-8 h-8 text-primary fill-primary" />
-          </div>
-          <div>
-            <h2 className="text-3xl font-bold text-foreground">
+    <div className="w-full mb-16 pt-4">
+      <div className="max-w-[1600px] mx-auto px-6">
+        {/* Premium Section Header */}
+        <div className="flex items-end justify-between mb-10">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="w-8 h-[2px] bg-[#155DFC] rounded-full" />
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[#155DFC]">Live Stream</span>
+            </div>
+            <h2 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter flex items-center gap-3">
               Happening Now
+              <motion.div
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)]"
+              />
             </h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Don't miss out on what's live right now
-            </p>
+          </div>
+          <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700/50">
+            <TrendingUp size={14} className="text-[#155DFC]" />
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Top Interactions</span>
           </div>
         </div>
 
-        {/* Responsive Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+        {/* High-Fidelity Responsive Grid */}
+        <motion.div 
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true }}
+          variants={{
+            hidden: { opacity: 0 },
+            show: {
+              opacity: 1,
+              transition: {
+                staggerChildren: 0.1
+              }
+            }
+          }}
+          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 lg:gap-8"
+        >
           {data.map((item, index) => {
-            const isHovered = hoveredId === item.id;
             const isFirstItem = index === 0;
 
             return (
-              <div
+              <motion.div
                 key={item.id}
-                className={`
-                  relative group cursor-pointer overflow-hidden rounded-2xl
-                  ${isFirstItem ? 'col-span-2 row-span-2' : 'aspect-3/4'}
-                  transform transition-all duration-300
-                  ${isHovered ? 'scale-[1.02] z-10' : 'scale-100'}
-                `}
+                variants={{
+                  hidden: { opacity: 0, y: 30, scale: 0.95 },
+                  show: { opacity: 1, y: 0, scale: 1 }
+                }}
+                className={cn(
+                  "relative group cursor-pointer overflow-hidden rounded-[2.5rem] shadow-sm hover:shadow-2xl transition-all duration-700",
+                  isFirstItem ? 'col-span-2 row-span-2' : 'aspect-[4/5]'
+                )}
                 onMouseEnter={() => setHoveredId(item.id)}
                 onMouseLeave={() => setHoveredId(null)}
                 onClick={() => {
@@ -92,244 +131,225 @@ export const HappeningNowGrid = ({ initialData = [] }: { initialData?: Happening
                 }}
               >
                 {isFirstItem ? (
-                  <div className="relative w-full h-full bg-[#155DFC] flex flex-col items-center justify-center p-8 text-center overflow-hidden">
-                    {/* Background Overlay Image */}
-                    <div className="absolute inset-0 z-0">
+                  <div className="relative w-full h-full bg-[#155DFC] flex flex-col items-center justify-center p-12 text-center overflow-hidden">
+                    {/* Atmospheric Background */}
+                    <div className="absolute inset-0">
                       <Image
                         src="https://i.ibb.co/hxT5NZVR/home.png"
                         alt="Background"
                         fill
-                        className="object-cover opacity-40 mix-blend-overlay"
+                        className="object-cover opacity-30 mix-blend-overlay group-hover:scale-110 transition-transform duration-[2s]"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-br from-[#155DFC]/80 via-[#1A38B1]/90 to-[#0A1D56] mix-blend-multiply" />
+                      <div className="absolute inset-0 bg-gradient-to-br from-[#155DFC] via-[#1A38B1] to-[#0A1D56] opacity-90" />
+                      
+                      {/* Animated Orbs */}
+                      <div className="absolute top-1/4 -right-20 w-64 h-64 bg-blue-400 rounded-full blur-[100px] opacity-20 animate-pulse" />
+                      <div className="absolute bottom-1/4 -left-20 w-64 h-64 bg-purple-500 rounded-full blur-[100px] opacity-20 animate-pulse" />
                     </div>
 
-                    <div className="relative z-10 space-y-6">
-                      <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-2 border border-white/20">
-                        <Zap className="w-8 h-8 text-white fill-white" />
-                      </div>
-                      <div>
-                        <h3 className="text-3xl font-black text-white leading-tight tracking-tight">
-                          Discover <br/>Programs on Zigex
+                    <div className="relative z-10 space-y-8">
+                      <motion.div 
+                        whileHover={{ scale: 1.1, rotate: 5 }}
+                        className="w-20 h-20 bg-white/10 backdrop-blur-2xl rounded-3xl flex items-center justify-center mx-auto border border-white/20 shadow-2xl"
+                      >
+                        <Zap className="w-10 h-10 text-white fill-white" />
+                      </motion.div>
+                      
+                      <div className="space-y-4">
+                        <h3 className="text-4xl md:text-5xl font-black text-white leading-none tracking-tighter">
+                          Discover <br/>New Horizon
                         </h3>
-                        <p className="text-white/60 text-[10px] font-bold tracking-[0.2em] uppercase mt-3">
+                        <p className="text-white/50 text-[10px] font-black tracking-[0.4em] uppercase">
                           Programs • Internships • Events
                         </p>
                       </div>
-                      <div className="pt-2">
-                        <span className="px-8 py-3.5 bg-white text-[#155DFC] rounded-xl font-black text-[10px] uppercase tracking-widest shadow-2xl shadow-black/30 hover:bg-blue-50 transition-colors inline-block">
-                          Discover Opportunities
+
+                      <div className="pt-4">
+                        <span className="h-14 px-10 bg-white text-slate-950 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl shadow-black/30 hover:scale-105 transition-all duration-500 inline-flex items-center justify-center gap-3 group/btn">
+                          Explore Hub
+                          <ChevronRight size={18} strokeWidth={3} className="group-hover/btn:translate-x-1 transition-transform" />
                         </span>
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="relative w-full h-full bg-muted">
+                  <div className="relative w-full h-full bg-slate-200 dark:bg-slate-800">
                     <img
                       src={item.type === "video" ? item.thumbnail : item.src || "/placeholder.png"}
                       alt={item.caption}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[1.5s] ease-out"
                       onError={(e) => {
                         e.currentTarget.src = "/placeholder.png";
                       }}
                     />
-                    {/* ... (rest of the image content) */}
-
-                  {/* Gradient Overlay - Kept for text readability but standard black */}
-                  <div className="absolute bottom-0 left-0 right-0 h-[35%] bg-gradient-to-t from-black/80 to-transparent" />
-
-                  {/* Live Badge (for live items) */}
-                  {item.isLive && (
-                    <div className="absolute top-3 left-3 flex items-center gap-2 px-3 py-1.5 bg-destructive rounded-full shadow-lg">
-                      <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                      <span className="text-white text-xs font-bold uppercase tracking-wide">
-                        Live
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Video Play Button */}
-                  {item.type === "video" && (
-                    <div
-                      className={`
-                      absolute inset-0 flex items-center justify-center
-                      transition-opacity duration-300
-                      ${isHovered ? 'opacity-100' : 'opacity-80'}
-                    `}
-                    >
-                      <div className="relative">
-                        <div className="w-16 h-16 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg transform transition-transform duration-300 group-hover:scale-110">
-                          <Play className="w-7 h-7 text-primary fill-primary ml-1" />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* View Count */}
-                  <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-full border border-white/10">
-                    <Eye className="w-3.5 h-3.5 text-white" />
-                    <span className="text-white text-xs font-semibold">
-                      {formatSimpleViewCount(viewCounts[item.id] || 0)}
-                    </span>
-                  </div>
-
-                  {/* Content Info */}
-                  <div className="absolute bottom-0 left-0 right-0 p-4">
-                    <div className="transform transition-transform duration-300 group-hover:-translate-y-1">
-                      <p
-                        className={`
-                        text-white font-semibold mb-1 line-clamp-2
-                        ${isFirstItem ? 'text-lg' : 'text-sm'}
-                      `}
-                      >
-                        {item.caption}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <span className="text-gray-200 text-xs font-medium">
-                          {item.company}
-                        </span>
-                        {!item.isLive && (
-                          <>
-                            <span className="text-gray-400">•</span>
-                            <div className="flex items-center gap-1">
-                              <Clock className="w-3 h-3 text-gray-400" />
-                              <span className="text-gray-300 text-xs">Now</span>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Hover Border Effect */}
-                  <div
-                    className={`
-                      absolute inset-0 rounded-2xl border-2 border-transparent
-                      transition-all duration-300 pointer-events-none
-                      ${isHovered ? "border-primary/50" : ""}
-                    `}
-                  />
-                </div>
-              )}
-            </div>
-          );
-        })}
-        </div>
-      </div>
-
-      {/* Modal for expanded view */}
-      {selectedItem && (
-        <div
-          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-          onClick={() => setSelectedItem(null)}
-        >
-          <div
-            className="relative w-full max-w-5xl mx-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Close Button */}
-            <button
-              onClick={() => setSelectedItem(null)}
-              className="absolute top-4 right-4 sm:top-6 sm:right-6 z-10 w-10 h-10 sm:w-12 sm:h-12 bg-black/50 hover:bg-black/70 backdrop-blur-md rounded-full flex items-center justify-center text-white transition-all duration-300 hover:rotate-90 border border-white/10 flex-shrink-0"
-            >
-              <span className="text-xl sm:text-2xl font-light">✕</span>
-            </button>
-
-            {/* Content Container */}
-            <div className="relative bg-card rounded-3xl overflow-hidden border border-border shadow-2xl">
-              {selectedItem.type === "video" ? (
-                <div className="aspect-video bg-black">
-                  <iframe
-                    src={selectedItem.src}
-                    className="w-full h-full"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                </div>
-              ) : (
-                <div className="relative bg-black">
-                  <img
-                    src={selectedItem.src || "/placeholder.png"}
-                    alt={selectedItem.caption}
-                    className="w-full max-h-[70vh] object-contain mx-auto"
-                    onError={(e) => {
-                      e.currentTarget.src = "/placeholder.png";
-                    }}
-                  />
-                </div>
-              )}
-
-              {/* Info Overlay Panel */}
-              <div className="p-6 bg-card border-t border-border">
-                <div className="max-w-3xl">
-                  {selectedItem.isLive && (
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="flex items-center gap-2 px-3 py-1.5 bg-destructive rounded-full">
-                        <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                        <span className="text-white text-xs font-bold uppercase tracking-wide">
+                    
+                    {/* Modern Glass Overlays */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
+                    
+                    {/* Live Badge */}
+                    {item.isLive && (
+                      <div className="absolute top-4 left-4 flex items-center gap-2.5 px-3.5 py-1.5 bg-rose-500 rounded-full shadow-lg border border-rose-400/30">
+                        <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                        <span className="text-white text-[9px] font-black uppercase tracking-widest">
                           Live
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-full">
-                        <Eye className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-muted-foreground text-sm font-semibold">
-                          {formatSimpleViewCount(viewCounts[selectedItem.id] || 0)} watching
-                        </span>
+                    )}
+
+                    {/* View Count Glass Badge */}
+                    <div className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 bg-white/10 backdrop-blur-md rounded-full border border-white/20 shadow-xl">
+                      <Eye className="w-3.5 h-3.5 text-white" />
+                      <span className="text-white text-[10px] font-black tracking-tight">
+                        {formatSimpleViewCount(viewCounts[item.id] || 0)}
+                      </span>
+                    </div>
+
+                    {/* Video Interaction Indicator */}
+                    {item.type === "video" && (
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500">
+                        <div className="w-14 h-14 bg-[#155DFC] rounded-2xl flex items-center justify-center shadow-2xl shadow-blue-500/50 scale-90 group-hover:scale-100 transition-transform duration-500">
+                          <Play className="w-7 h-7 text-white fill-white ml-1" />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Bottom Meta Data */}
+                    <div className="absolute bottom-0 left-0 right-0 p-6 space-y-3">
+                      <div className="transform transition-transform duration-700 group-hover:-translate-y-2">
+                        <p className="text-white font-black text-sm leading-tight line-clamp-2 tracking-tight group-hover:text-blue-300 transition-colors">
+                          {item.caption}
+                        </p>
+                        <div className="flex items-center gap-3 mt-3">
+                          <span className="text-white/60 text-[9px] font-black uppercase tracking-widest truncate">
+                            {item.company}
+                          </span>
+                          {!item.isLive && (
+                            <div className="flex items-center gap-1.5 px-2 py-0.5 bg-white/5 rounded-md border border-white/5">
+                              <Clock className="w-2.5 h-2.5 text-blue-400" />
+                              <span className="text-white/40 text-[8px] font-black uppercase tracking-tighter">Now</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  )}
-                  <h3 className="text-2xl font-bold text-foreground mb-2">
-                    {selectedItem.caption}
-                  </h3>
-                  <div className="flex items-center gap-3 text-muted-foreground">
-                    <span className="text-lg font-medium text-foreground">{selectedItem.company}</span>
-                    <span>•</span>
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4" />
-                      <span>Happening Now</span>
-                    </div>
+
+                    {/* Interactive Frame Effect */}
+                    <div className="absolute inset-0 border-[3px] border-transparent group-hover:border-[#155DFC]/30 rounded-[2.5rem] transition-colors duration-700 pointer-events-none" />
                   </div>
-                </div>
+                )}
+              </motion.div>
+            );
+          })}
+        </motion.div>
+      </div>
+
+      {/* Expanded Immersive Modal */}
+      <AnimatePresence>
+        {selectedItem && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-slate-950/95 backdrop-blur-2xl z-[100] flex items-center justify-center p-4 sm:p-10"
+            onClick={() => setSelectedItem(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 50 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 50 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="relative w-full max-w-6xl aspect-video bg-black rounded-[3rem] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] border border-white/10"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Controls */}
+              <div className="absolute top-8 right-8 z-50 flex items-center gap-4">
+                <button
+                  onClick={() => setSelectedItem(null)}
+                  className="w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-2xl rounded-full flex items-center justify-center text-white transition-all border border-white/20 group"
+                >
+                  <X size={20} className="group-hover:rotate-90 transition-transform duration-500" />
+                </button>
               </div>
 
-              {/* Navigation Arrows for Slideshow */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const currentIndex = data.findIndex((item: HappeningNowItem) => item.id === selectedItem.id);
-                  const prevIndex = currentIndex === 0 ? data.length - 1 : currentIndex - 1;
-                  setSelectedItem(data[prevIndex]);
-                }}
-                className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-black/70 transition-all duration-300 border border-white/10 hover:scale-110"
-              >
-                ‹
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const currentIndex = data.findIndex((item: HappeningNowItem) => item.id === selectedItem.id);
-                  const nextIndex = currentIndex === data.length - 1 ? 0 : currentIndex + 1;
-                  setSelectedItem(data[nextIndex]);
-                }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-black/70 transition-all duration-300 border border-white/10 hover:scale-110"
-              >
-                ›
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+              {/* Navigation */}
+              <div className="absolute inset-y-0 left-6 flex items-center z-40">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const currentIndex = data.findIndex(i => i.id === selectedItem.id);
+                    const prevIndex = currentIndex === 0 ? data.length - 1 : currentIndex - 1;
+                    setSelectedItem(data[prevIndex]);
+                  }}
+                  className="w-14 h-14 bg-white/5 hover:bg-white/10 backdrop-blur-xl rounded-full flex items-center justify-center text-white transition-all border border-white/10 hover:scale-110"
+                >
+                  <ChevronLeft size={24} strokeWidth={3} />
+                </button>
+              </div>
+              <div className="absolute inset-y-0 right-6 flex items-center z-40">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const currentIndex = data.findIndex(i => i.id === selectedItem.id);
+                    const nextIndex = currentIndex === data.length - 1 ? 0 : currentIndex + 1;
+                    setSelectedItem(data[nextIndex]);
+                  }}
+                  className="w-14 h-14 bg-white/5 hover:bg-white/10 backdrop-blur-xl rounded-full flex items-center justify-center text-white transition-all border border-white/10 hover:scale-110"
+                >
+                  <ChevronRight size={24} strokeWidth={3} />
+                </button>
+              </div>
 
-      <style jsx>{`
-        @keyframes pulse {
-          0%, 100% {
-            opacity: 1;
-          }
-          50% {
-            opacity: 0.5;
-          }
-        }
-      `}</style>
+              {/* Media Content */}
+              <div className="w-full h-full bg-black flex items-center justify-center">
+                {selectedItem.type === "video" ? (
+                  <iframe
+                    src={selectedItem.src}
+                    className="w-full h-full border-none"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                ) : (
+                  <img
+                    src={selectedItem.src || "/placeholder.png"}
+                    alt={selectedItem.caption}
+                    className="w-full h-full object-contain"
+                  />
+                )}
+              </div>
+
+              {/* Immersive Info Panel */}
+              <div className="absolute bottom-0 left-0 right-0 p-10 bg-gradient-to-t from-black via-black/80 to-transparent">
+                 <div className="max-w-4xl space-y-4">
+                    <div className="flex items-center gap-4">
+                       {selectedItem.isLive && (
+                         <div className="flex items-center gap-2 px-4 py-2 bg-rose-500 rounded-2xl shadow-2xl">
+                           <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                           <span className="text-white text-[10px] font-black uppercase tracking-[0.2em]">Live Stream</span>
+                         </div>
+                       )}
+                       <div className="px-4 py-2 bg-white/10 backdrop-blur-2xl rounded-2xl border border-white/10">
+                          <span className="text-white text-[10px] font-black uppercase tracking-widest">{selectedItem.company}</span>
+                       </div>
+                    </div>
+                    <h3 className="text-3xl font-black text-white tracking-tight leading-tight max-w-3xl">
+                      {selectedItem.caption}
+                    </h3>
+                    <div className="flex items-center gap-6">
+                       <div className="flex items-center gap-2 text-slate-400">
+                          <Eye size={16} />
+                          <span className="text-xs font-bold">{formatSimpleViewCount(viewCounts[selectedItem.id] || 0)} Viewers</span>
+                       </div>
+                       <div className="flex items-center gap-2 text-slate-400">
+                          <Clock size={16} />
+                          <span className="text-xs font-bold uppercase tracking-widest">Active Now</span>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -49,31 +49,30 @@
   }
 
   .dark {
-    /* Dark Mode - Inverting Cloud White logic */
-    --background: #000000;
-    /* Charcoal base */
-    --foreground: #F6F8FF;
+    /* GitHub dark_default colors */
+    --background: #0d1117;
+    --foreground: #c9d1d9;
 
-    --card: #0F172A;
-    --card-foreground: #F6F8FF;
-    --popover: #0F172A;
-    --popover-foreground: #F6F8FF;
+    --card: #161b22;
+    --card-foreground: #c9d1d9;
+    --popover: #161b22;
+    --popover-foreground: #c9d1d9;
 
-    --primary: #155DFC;
-    --primary-foreground: #FFFFFF;
+    --primary: #1f6feb;
+    --primary-foreground: #ffffff;
 
-    --secondary: #1A3CB9;
-    --secondary-foreground: #FFFFFF;
+    --secondary: #21262d;
+    --secondary-foreground: #c9d1d9;
 
-    --muted: #1E293B;
-    --muted-foreground: #94A3B8;
+    --muted: #21262d;
+    --muted-foreground: #8b949e;
 
-    --accent: #1E293B;
-    --accent-foreground: #F6F8FF;
+    --accent: #30363d;
+    --accent-foreground: #f0f6fc;
 
-    --border: #1E293B;
-    --input: #1E293B;
-    --ring: #155DFC;
+    --border: #30363d;
+    --input: #21262d;
+    --ring: #1f6feb;
   }
 }
 
@@ -110,7 +109,7 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground transition-colors duration-300 ease-in-out;
   }
 
   /* Custom Scrollbar Styles - Premium Minimal Design */

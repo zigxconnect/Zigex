@@ -7,7 +7,7 @@ export async function GET() {
   return NextResponse.json({ csrfToken: token });
 }
 
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { createSupabaseServerClient, supabaseAdmin } from "@/lib/supabase/server";
 import { cookies, headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { Ratelimit } from "@upstash/ratelimit";
@@ -75,26 +75,7 @@ const _POST = async function (request: Request) {
     );
   }
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get: async (name: string) => {
-          const cookieStore = await cookies();
-          return cookieStore.get(name)?.value;
-        },
-        set: async (name: string, value: string, options: CookieOptions) => {
-          const cookieStore = await cookies();
-          cookieStore.set({ name, value, ...options });
-        },
-        remove: async (name: string, options: CookieOptions) => {
-          const cookieStore = await cookies();
-          cookieStore.set({ name, value: "", ...options });
-        },
-      },
-    }
-  );
+  const supabase = await createSupabaseServerClient();
 
   // 1. Check if user is a company
   const { data: companyProfile } = await supabase
@@ -188,7 +169,6 @@ const _POST = async function (request: Request) {
       {
         message: "Login successful",
         profileComplete: studentProfile.profile_status === "complete",
-        session: data.session,
       },
       { status: 200 }
     );

@@ -85,9 +85,9 @@ const stepsData = [
   },
 ];
 
-export const MultiStepForm = () => {
+export const MultiStepForm = ({ initialUserId }: { initialUserId?: string }) => {
   const [currentStep, setCurrentStep] = useState(1);
-  const [userId, setUserId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(initialUserId || null);
   const [isNavigating, setIsNavigating] = useState(false);
   const router = useRouter();
   const supabase = createClient();
@@ -136,15 +136,19 @@ export const MultiStepForm = () => {
   }, [currentStep]);
 
   useEffect(() => {
-    const getUser = async () => {
+    // If we already have a userId from server or previous sync, we're good
+    if (userId) return;
+
+    const syncUser = async () => {
       try {
         const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        if (session) {
-          setUserId(session.user.id);
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (user) {
+          setUserId(user.id);
         } else {
-          toast.error("Session not found. Redirecting to sign-in.");
+          // Only redirect if we've explicitly failed to get a user after a reasonable check
+          console.warn("[MultiStepForm] No user found on client. Falling back to sign-in.");
           router.push("/sign-in");
         }
       } catch (error) {
@@ -152,12 +156,11 @@ export const MultiStepForm = () => {
           "[getUser Error] Failed to retrieve user session:",
           error
         );
-        toast.error("Unable to load your session. Please sign in again.");
         router.push("/sign-in");
       }
     };
-    getUser();
-  }, [supabase, router]);
+    syncUser();
+  }, [supabase, router, userId]);
 
   const handleNext = async () => {
     const fieldsToValidate = stepsFields[currentStep - 1];

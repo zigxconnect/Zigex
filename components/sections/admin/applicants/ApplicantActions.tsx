@@ -80,7 +80,16 @@ export const ApplicantActions = ({
     }
   }
 
-  const WHATSAPP_GROUP_LINK = "https://chat.whatsapp.com/K0RflJDzxyKDIM2yuvzTTQ?mode=gi_t";
+  // Determine the correct WhatsApp community link based on the program/internship title
+  const getWhatsAppLink = () => {
+    const title = (applicant.internshipTitle || "").toLowerCase();
+    if (title.includes("seed 50 days") || title.includes("founders program")) {
+      return "https://chat.whatsapp.com/CsA3nNZcT5eDEIG9iQJ0RI";
+    }
+    return "https://chat.whatsapp.com/K0RflJDzxyKDIM2yuvzTTQ?mode=gi_t"; // Default link
+  };
+
+  const WHATSAPP_GROUP_LINK = getWhatsAppLink();
 
   const handleWhatsAppInvite = () => {
     const message = encodeURIComponent(`Hi ${applicant.name}, this is the ZIGEX recruitment team. Congratulations on your progress for the ${applicant.internshipTitle || 'opportunity'}! Join our official community here: ${WHATSAPP_GROUP_LINK}`);

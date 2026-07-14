@@ -227,7 +227,7 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     // Protect all routes except static/image/favicon/pwa-assets
-    "/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|icons/).*)",
+    "/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|icons/|images/).*)",
   ],
 };
 

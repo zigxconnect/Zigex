@@ -3,6 +3,7 @@ import { authMiddleware } from "@/lib/middleware/auth";
 import { programSchema } from "@/lib/validation/program";
 import { v4 as uuidv4 } from "uuid";
 import { NextResponse } from "next/server";
+import { dispatchBroadcastNotification } from "@/lib/notifications";
 
 /*
  * Function to handle CRUD operations for company programs
@@ -180,63 +181,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // --- NOTIFICATION & EMAIL LOGIC ---
+    // --- BROADCAST NOTIFICATIONS ---
     try {
-      // 1. Get subscribed users
-      const { data: users, error: userError } = await (await createClient()).rpc("get_subscribed_emails");
-
-      let recipients = users || [];
-      if (userError) {
-        console.error("RPC get_subscribed_emails failed:", userError);
-      }
-
-      if (recipients.length > 0) {
-        const recipientEmails = recipients.map((u: any) => u.email).filter(Boolean);
-
-        // 2. Send Email (Batch BCC)
-        // Use "notifications@zigexconnect.com" as 'to' and everyone else as 'bcc'
-        if (process.env.RESEND_API_KEY && recipientEmails.length > 0) {
-          const { Resend } = await import("resend");
-          const resend = new Resend(process.env.RESEND_API_KEY);
-          const { NewPostEmail } = await import("@/emails/NewPostEmail");
-
-          // Send to "notifications@zigexconnect.com" (ourselves) and BCC everyone else
-          await resend.emails.send({
-            from: "ZigX <notifications@zigexconnect.online>",
-            to: "notifications@zigexconnect.online",
-            bcc: recipientEmails.slice(0, 50),
-            subject: `New Program Posted: ${data.title}`,
-            react: NewPostEmail({
-              postTitle: data.title,
-              postType: "Program",
-              postLocation: data.location || "Online", // Fallback
-              viewPostUrl: `https://zigexconnect.com/programs/${data.id}`,
-              companyLogoUrl: "https://tmvipinvvhgklmqwvows.supabase.co/storage/v1/object/public/company-assets/Seed%20Company/events/SEED%20community%20Challenge-1757769838240.jpg",
-              managePreferencesUrl: "https://zigexconnect.com/profile/notifications",
-              postedDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
-            }),
-          });
-        }
-
-        // 3. Create Notifications in DB
-        // Deduplicate recipients to ensure only one notification per user
-        const uniqueRecipients = Array.from(new Map(recipients.map((item: any) => [item.id || item.user_id, item])).values());
-
-        const notifications = uniqueRecipients.map((u: any) => ({
-          user_id: u.id || u.user_id,
-          title: "New Program Posted!",
-          message: `A new program "${data.title}" is available.`,
-          type: "program",
-          reference_id: data.id,
-        }));
-
-        const { error: notifError } = await (await createClient()).from("notifications").insert(notifications);
-        if (notifError) console.error("Failed to create notifications:", notifError);
-      }
-    } catch (innerErr) {
-      console.error("Async notification error:", innerErr);
+      await dispatchBroadcastNotification({
+        title: validatedData.title,
+        message: `A new program "${validatedData.title}" has been launched.`,
+        type: 'program',
+        referenceId: data.id,
+        link: `/programs/${data.id}`,
+        location: validatedData.location || 'Remote'
+      });
+      console.log("[PROGRAM_NOTIFY] Broadcast dispatched successfully.");
+    } catch (notifErr) {
+      console.error("[PROGRAM_NOTIFY] Failed to dispatch broadcast:", notifErr);
     }
-    // ---------------------------------------------------------------
+    // ---------------------------------
 
     return NextResponse.json(data, { status: 201 });
   } catch (err) {

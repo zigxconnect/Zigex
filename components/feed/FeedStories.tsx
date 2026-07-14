@@ -414,27 +414,26 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
   const hasMyStory = myStories.length > 0;
 
   return (
-    <div className="relative w-full max-w-full py-4 overflow-hidden group/tray">
+    <div className="relative w-full py-2 overflow-hidden group/tray">
       {/* Scroll Controls (Desktop) */}
-      <div className="absolute left-0 top-0 bottom-4 w-20 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none hidden md:block" />
+      <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-white dark:from-slate-950 to-transparent z-10 pointer-events-none hidden md:block" />
       <Button
         variant="outline" size="icon"
-        className="absolute left-4 top-[45%] -translate-y-1/2 z-20 bg-background/80 backdrop-blur-md shadow-xl rounded-full opacity-0 group-hover/tray:opacity-100 transition-all duration-300 hidden md:flex border-border/50 hover:bg-background hover:scale-110"
+        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-2xl rounded-2xl opacity-0 group-hover/tray:opacity-100 transition-all duration-500 hidden md:flex border-slate-100 dark:border-slate-800 hover:scale-110 hover:bg-[#155DFC] hover:text-white group/btn"
         onClick={() => scroll('left')}
       >
-        <ChevronLeft className="w-5 h-5 text-foreground/80" />
+        <ChevronLeft className="w-5 h-5 transition-transform group-hover/btn:-translate-x-0.5" />
       </Button>
 
-      <div className="absolute right-0 top-0 bottom-4 w-20 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none hidden md:block" />
+      <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-white dark:from-slate-950 to-transparent z-10 pointer-events-none hidden md:block" />
       <Button
         variant="outline" size="icon"
-        className="absolute right-4 top-[45%] -translate-y-1/2 z-20 bg-background/80 backdrop-blur-md shadow-xl rounded-full opacity-0 group-hover/tray:opacity-100 transition-all duration-300 hidden md:flex border-border/50 hover:bg-background hover:scale-110"
+        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-2xl rounded-2xl opacity-0 group-hover/tray:opacity-100 transition-all duration-500 hidden md:flex border-slate-100 dark:border-slate-800 hover:scale-110 hover:bg-[#155DFC] hover:text-white group/btn"
         onClick={() => scroll('right')}
       >
-        <ChevronRight className="w-5 h-5 text-foreground/80" />
+        <ChevronRight className="w-5 h-5 transition-transform group-hover/btn:translate-x-0.5" />
       </Button>
 
-      {/* Hidden File Input */}
       <input 
         type="file" 
         ref={fileInputRef} 
@@ -443,416 +442,363 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
         className="hidden" 
       />
 
-      {/* Scroll Container */}
       <div 
         ref={scrollContainerRef}
-        className="flex gap-4 overflow-x-auto pb-4 px-4 sm:px-6 snap-x hide-scrollbar scroll-smooth"
+        className="flex gap-5 overflow-x-auto pb-6 px-4 sm:px-2 snap-x hide-scrollbar scroll-smooth"
       >
-        {/* ... existing items ... */}
-        
-        {/* YOUR STORY SLOT */}
-        {hasMyStory ? (
-           /* ... existing my story card ... */
-           <motion.div 
-             className="relative flex-none w-[140px] h-[220px] rounded-2xl overflow-hidden cursor-pointer group shadow-sm hover:shadow-md transition-shadow border border-border"
-             onClick={() => handleStoryClick(myStories[0])}
-             whileHover={{ scale: 1.02 }}
-             whileTap={{ scale: 0.98 }}
-           >
-             {/* ... content ... */}
-             <div className="absolute inset-0 z-0">
-               {(myStories[0].type === 'image' || myStories[0].type === 'mixed') ? (
-                 <img src={myStories[0].content} alt="Your story" className="w-full h-full object-cover" />
-               ) : (
-                 <div className={cn("w-full h-full flex items-center justify-center p-2 text-center", myStories[0].color || 'bg-blue-600')}>
-                    <p className="text-white text-[10px] leading-tight line-clamp-4">{myStories[0].content}</p>
-                 </div>
-               )}
-             </div>
-             
-             {/* ... overlays ... */}
-             <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
-
-             <div 
-               className="absolute bottom-2 right-2 p-1 bg-card rounded-full z-20 shadow-md transform translate-y-1/2 translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
-               onClick={(e) => { e.stopPropagation(); setIsCreating(true); }}
-             >
-                <div className="bg-primary rounded-full p-1 text-white">
-                  <Plus size={12} strokeWidth={3} />
+        {/* CREATE/YOUR STORY SLOT */}
+        <motion.div 
+          className="relative flex-none w-20 h-32 sm:w-[100px] sm:h-[160px] rounded-2xl overflow-hidden cursor-pointer group shadow-sm hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-700 bg-card border border-slate-100 dark:border-slate-850"
+          onClick={() => hasMyStory ? handleStoryClick(myStories[0]) : setIsCreating(true)}
+          whileHover={{ y: -4 }}
+        >
+          {hasMyStory ? (
+            <div className="absolute inset-0">
+              {(myStories[0].type === 'image' || myStories[0].type === 'mixed') ? (
+                <img src={myStories[0].content} alt="Your story" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+              ) : (
+                <div className={cn("w-full h-full flex items-center justify-center p-4 text-center", myStories[0].color || 'bg-[#155DFC]')}>
+                  <p className="text-white text-[10px] font-black leading-tight line-clamp-4 uppercase tracking-wider">{myStories[0].content}</p>
                 </div>
-             </div>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
+            </div>
+          ) : (
+            <div className="absolute inset-0 flex flex-col">
+              {/* Top part with image/avatar */}
+              <div className="h-3/4 w-full bg-slate-100 dark:bg-slate-800/50 relative overflow-hidden">
+                {currentUser?.avatarUrl ? (
+                  <img src={currentUser.avatarUrl} alt="You" className="w-full h-full object-cover opacity-60 grayscale group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-1000" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <User className="w-10 h-10 text-slate-300 dark:text-slate-700" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/10 dark:to-slate-900/10" />
+              </div>
+              
+              {/* Bottom white/dark section */}
+              <div className="flex-1 bg-card flex flex-col items-center justify-center pb-3">
+                <span className="text-[10px] font-black text-[#155DFC] dark:text-blue-400 uppercase tracking-[0.2em]">Create</span>
+              </div>
 
-             <div className="absolute top-2 left-2 z-20 rounded-full border-2 border-primary overflow-hidden w-8 h-8">
-               <Avatar className="w-full h-full">
-                 <AvatarImage src={currentUser?.image || currentUser?.userAvatar} />
-                 <AvatarFallback>Me</AvatarFallback>
-               </Avatar>
-             </div>
-             
-             <div className="absolute bottom-3 left-2 z-20">
-               <p className="text-white text-xs font-bold shadow-black drop-shadow-md">Your Story</p>
-             </div>
-           </motion.div>
-        ) : (
-          /* ... existing create story card ... */
-          <motion.div 
-            className="relative flex-none w-[140px] h-[220px] rounded-2xl overflow-hidden cursor-pointer group shadow-sm hover:shadow-md transition-shadow bg-card border border-border"
-            onClick={() => setIsCreating(true)}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            {/* ... card content ... */}
-            <div className="h-2/3 w-full bg-muted/50 relative">
-               {currentUser?.image ? (
-                 <img src={currentUser.image} alt="You" className="w-full h-full object-cover opacity-80" />
-               ) : (
-                 <div className="w-full h-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
-                   <ImageIcon className="w-8 h-8 text-slate-400" />
-                 </div>
-               )}
-            </div>
-            <div className="absolute bottom-0 w-full h-1/3 bg-card flex flex-col items-center justify-end pb-3 z-10">
-              <span className="text-xs font-bold text-foreground/90">Create Story</span>
-            </div>
-            <div className="absolute top-[66.6%] left-1/2 -translate-x-1/2 -translate-y-1/2 p-1 bg-card rounded-full z-20 shadow-md">
-              <div className="bg-primary rounded-full p-2 text-white shadow-lg ring-4 ring-card">
-                <Plus size={20} strokeWidth={3} />
+              {/* Centered Plus Button */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+                <div className="bg-[#155DFC] rounded-full p-3 text-white shadow-[0_10px_30px_rgba(21,93,252,0.5)] ring-8 ring-white dark:ring-card transition-transform duration-500 group-hover:scale-110 group-hover:rotate-90">
+                  <Plus className="w-6 h-6" strokeWidth={4} />
+                </div>
               </div>
             </div>
-            <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-10 transition-opacity" />
-          </motion.div>
-        )}
+          )}
 
-        {/* ... other stories ... */}
-        {otherStories.map((story) => (
+          {hasMyStory && (
+            <div className="absolute bottom-5 left-0 right-0 z-20 text-center">
+              <p className="text-white text-[10px] font-black uppercase tracking-[0.2em] drop-shadow-md">Your Story</p>
+            </div>
+          )}
+        </motion.div>
+
+        {/* OTHER STORIES */}
+        {otherStories.map((story, idx) => (
           <motion.div
             key={story.id}
-            /* ... existing classes ... */
+            initial={{ opacity: 0, scale: 0.9, x: 20 }}
+            animate={{ opacity: 1, scale: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: idx * 0.05 }}
             className={cn(
-              "relative flex-none w-[140px] h-[220px] rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300 border border-border/50 group",
-              story.viewed 
-                ? "ring-1 ring-border" 
-                : (story as any).isAnnouncement 
-                  ? "ring-2 ring-offset-2 ring-offset-background ring-transparent bg-gradient-to-tr from-blue-700 to-sky-400 p-[2px]" // Blue for Official
-                  : "ring-2 ring-offset-2 ring-offset-background ring-transparent bg-gradient-to-tr from-orange-500 to-pink-500 p-[2px]" // Gradient for Users
+              "relative flex-none w-20 h-32 sm:w-[100px] sm:h-[160px] rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-700 group",
+              !story.viewed && (story as any).isAnnouncement 
+                ? "ring-2 ring-[#155DFC] ring-offset-4 ring-offset-white dark:ring-offset-slate-950" 
+                : !story.viewed 
+                  ? "ring-2 ring-slate-200 dark:ring-slate-800 ring-offset-4 ring-offset-white dark:ring-offset-slate-950"
+                  : "border border-slate-100 dark:border-slate-800"
             )}
             onClick={() => handleStoryClick(story)}
-            whileHover={{ scale: 1.03, y: -2 }}
-            whileTap={{ scale: 0.97 }}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
+            whileHover={{ y: -6 }}
           >
-            {/* ... story card content ... */}
-            <div className="absolute inset-0 rounded-2xl overflow-hidden bg-card h-full w-full">
-                <div className={cn("absolute inset-0 z-0 h-full w-full", story.color || "bg-slate-900")}>
-                   {(story.type === 'image' || story.type === 'mixed') && (
-                     <img src={story.content} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                   )}
-                   {story.type === 'text' && (
-                     <div className="w-full h-full flex items-center justify-center p-4 text-center">
-                        <p className={cn("text-white font-semibold leading-snug line-clamp-6 drop-shadow-md", story.fontSize || "text-sm")}>{story.content}</p>
-                     </div>
-                   )}
-                </div>
+            <div className="absolute inset-0 bg-slate-900">
+               {(story.type === 'image' || story.type === 'mixed') && (
+                 <img src={story.content} alt="" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+               )}
+               {story.type === 'text' && (
+                 <div className={cn("w-full h-full flex items-center justify-center p-6 text-center", story.color || "bg-slate-800")}>
+                    <p className={cn("text-white font-black leading-tight tracking-tight drop-shadow-2xl uppercase", story.fontSize || "text-xs")}>{story.content}</p>
+                 </div>
+               )}
+            </div>
 
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent z-10 opacity-80 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent opacity-80 group-hover:opacity-95 transition-opacity" />
 
-                <div className={cn(
-                   "absolute top-3 left-3 z-20 rounded-full border-2 bg-background/10 backdrop-blur-sm overflow-hidden w-10 h-10 shadow-lg group-hover:scale-110 transition-transform",
-                   (story as any).isAnnouncement ? "border-blue-500" : "border-primary/20"
-                )}>
+            {/* Profile Icon Top Left */}
+            <div className="absolute top-4 left-4 z-20">
+              <div className={cn(
+                "rounded-full border-2 overflow-hidden w-8 h-8 shadow-2xl transition-all duration-500 group-hover:scale-110 flex items-center justify-center bg-blue-600 border-white/40",
+                (story as any).isAnnouncement ? "bg-[#155DFC]" : "bg-slate-800"
+              )}>
+                {(story as any).isAnnouncement ? (
+                  <span className="text-white font-black text-sm">Z</span>
+                ) : (
                   <Avatar className="w-full h-full">
-                    <AvatarImage src={story.userAvatar} />
-                    <AvatarFallback>{story.userName[0]}</AvatarFallback>
+                    <AvatarImage src={story.userAvatar} className="object-cover" />
+                    <AvatarFallback className="bg-slate-800 text-white font-black text-[10px]">{story.userName[0]}</AvatarFallback>
                   </Avatar>
-                </div>
-                
-                <div className="absolute bottom-3 left-3 right-3 z-20">
-                  <p className="text-white text-sm font-bold truncate drop-shadow-lg group-hover:translate-x-1 transition-transform">
-                      {story.userName}
-                      {(story as any).isAnnouncement && (
-                         <span className="block text-[10px] text-blue-300 font-medium uppercase tracking-wider mt-0.5">Official Update</span>
-                      )}
-                  </p>
-                </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="absolute bottom-5 left-4 right-4 z-20 flex flex-col items-center">
+              <div className="space-y-1.5 w-full text-center">
+
+                <p className="text-white text-[11px] font-black truncate uppercase tracking-[0.15em] drop-shadow-md group-hover:translate-y-[-2px] transition-transform">
+                  {story.userName}
+                </p>
+              </div>
             </div>
           </motion.div>
         ))}
       </div>
 
-      {/* ... existing modal ... */}
       <AnimatePresence>
-         {/* ... modal content ... */}
-         {selectedStory && (
-           <motion.div 
-             initial={{ opacity: 0 }}
-             animate={{ opacity: 1 }}
-             exit={{ opacity: 0 }}
-             className="fixed inset-0 z-[100] flex items-center justify-center bg-black backdrop-blur-md p-0 sm:p-4"
-           >
-              {/* ... viewer ... */}
-              <motion.div 
-                className="relative w-full h-full sm:max-w-md sm:h-[85vh] sm:rounded-2xl overflow-hidden bg-black shadow-2xl flex flex-col touch-none"
-                drag="y"
-                dragConstraints={{ top: 0, bottom: 0 }}
-                dragElastic={0.2}
-                onDragEnd={(e, { offset, velocity }) => {
-                  const swipeThreshold = 50;
-                  if (offset.y < -swipeThreshold) {
-                    // Swipe UP -> Next Story
-                    handleNextStory();
-                  } else if (offset.y > swipeThreshold) {
-                    // Swipe DOWN -> Close or Prev? Let's Close
-                    setSelectedStory(null);
-                  }
-                }}
-              >
-                 {/* ... viewer content ... */}
-                 
-                 {/* Progress Bar */}
-                 <div className="absolute top-2 left-2 right-2 flex gap-1 z-50">
-                   {stories.map((s, idx) => (
-                      <div key={s.id} className="h-1 bg-white/30 rounded-full flex-1 overflow-hidden">
-                        <div 
-                          className={cn("h-full bg-white transition-all duration-300", 
-                            s.id === selectedStory.id ? "w-full opacity-100" : 
-                            stories.indexOf(s) < stories.indexOf(selectedStory) ? "w-full opacity-100" : "w-0"
-                          )}
-                        />
-                      </div>
-                   ))}
-                 </div>
-
-                 {/* Header */}
-                 <div className="absolute top-6 left-4 right-12 z-50 flex items-center gap-3">
-                    {/* ... */}
-                   <Avatar className="w-10 h-10 border-2 border-white/20">
-                      <AvatarImage src={selectedStory.userAvatar} />
-                      <AvatarFallback>{selectedStory.userName[0]}</AvatarFallback>
-                    </Avatar>
-                    <div className="text-white drop-shadow-md">
-                      <p className="font-semibold text-sm">{selectedStory.userName}</p>
-                      <p className="text-xs opacity-80">{selectedStory.timestamp}</p>
-                    </div>
-                    
-                    {/* Delete Button */}
-                    {selectedStory.userId === (currentUser?.profile?.user_id || currentUser?.id || 'me') && (
-                       <Button 
-                         variant="ghost" 
-                         size="icon" 
-                         className="ml-auto text-white/70 hover:text-red-500 hover:bg-white/10 rounded-full"
-                         onClick={(e) => {
-                            e.stopPropagation();
-                            promptDeleteStory(selectedStory.id);
-                         }}
-                       >
-                         <Trash2 size={20} />
-                       </Button>
-                    )}
-                 </div>
-
-                 {/* Close Button */}
-                 <Button variant="ghost" size="icon" className="absolute top-4 right-2 z-50 text-white hover:bg-white/20 rounded-full" onClick={() => setSelectedStory(null)}>
-                   <X size={24} />
-                 </Button>
-
-                 {/* ... content viewer ... */}
-                 <div className="flex-1 relative flex items-center justify-center bg-neutral-900 w-full overflow-hidden">
-                    {/* Tap Zones for Navigation */}
-                    <div className="absolute inset-y-0 left-0 w-1/3 z-30 cursor-pointer" onClick={(e) => { e.stopPropagation(); handlePrevStory(); }} />
-                    <div className="absolute inset-y-0 right-0 w-1/3 z-30 cursor-pointer" onClick={(e) => { e.stopPropagation(); handleNextStory(); }} />
-
-                    {(selectedStory.type === 'image' || selectedStory.type === 'mixed') ? (
-                      <div className="relative w-full h-full flex flex-col">
-                        <img src={selectedStory.content} className="w-full h-full object-contain bg-black" alt="story" />
-                        {selectedStory.caption && (
-                           <div className="absolute bottom-36 left-0 right-0 p-6 text-center bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-12">
-                              <p className="text-white text-lg font-medium drop-shadow-md leading-relaxed">{selectedStory.caption}</p>
-                           </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className={cn("w-full h-full flex items-center justify-center p-8 text-center", selectedStory.color || 'bg-blue-600')}>
-                        <p className={cn("text-white font-bold leading-relaxed max-w-lg", selectedStory.fontSize || "text-2xl")}>{selectedStory.content}</p>
-                      </div>
-                    )}
-                    
-                    {/* Swipe Up Indicator */}
+        {selectedStory && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/90 backdrop-blur-3xl p-0 sm:p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="relative w-full h-full sm:max-w-lg sm:h-[90vh] sm:rounded-[3rem] overflow-hidden bg-black shadow-[0_0_100px_rgba(0,0,0,0.5)] flex flex-col touch-none"
+              drag="y"
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragElastic={0.4}
+              onDragEnd={(e, { offset }) => {
+                if (Math.abs(offset.y) > 100) setSelectedStory(null);
+              }}
+            >
+              {/* Progress Indicators */}
+              <div className="absolute top-4 left-6 right-6 flex gap-1.5 z-50">
+                {stories.map((s) => (
+                  <div key={s.id} className="h-1 bg-white/20 rounded-full flex-1 overflow-hidden">
                     <motion.div 
-                      initial={{ opacity: 0.5, y: 0 }}
-                      animate={{ opacity: [0.5, 1, 0.5], y: [-5, 0, -5] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                      className="absolute bottom-28 left-0 right-0 flex flex-col items-center justify-center text-white/60 pointer-events-none z-40"
-                    >
-                      <ChevronUp size={24} />
-                      <span className="text-[10px] font-medium uppercase tracking-widest mt-1">Swipe Up for Next</span>
-                    </motion.div>
-                 </div>
-
-                 {/* ... rest of viewer (messages etc) ... */}
-                 <div className="absolute bottom-20 sm:bottom-10 left-6 right-6 z-50 flex gap-4 justify-between items-center">
-                    {/* Profile / Details Button */}
-                    <Button 
-                      className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-full h-12 gap-2 backdrop-blur-md transition-all shadow-lg text-sm sm:text-base font-medium"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // Navigate using username if available, else fallback to userId
-                        if (selectedStory.isAnnouncement) {
-                            // Extract ID from "announcement-{id}"
-                            const announcementId = selectedStory.id.replace('announcement-', '');
-                            window.location.href = `/feed/announcements/${announcementId}`;
-                        } else {
-                            const target = slugifyUsername(selectedStory.userSlug || selectedStory.userId);
-                            window.location.href = `/dashboard/student/${target}`; 
-                        }
+                      className="h-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.5)]"
+                      initial={{ width: "0%" }}
+                      animate={{ 
+                        width: s.id === selectedStory.id ? "100%" : 
+                               stories.indexOf(s) < stories.indexOf(selectedStory) ? "100%" : "0%"
                       }}
-                    >
-                      {/* Change Icon based on type */}
-                      {selectedStory.isAnnouncement ? <ExternalLink size={18} /> : <User size={18} />}
-                      
-                      {/* Change Text based on type */}
-                      {selectedStory.isAnnouncement ? "View Details" : "View Profile"}
-                    </Button>
-
-                    <Button 
-                      className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-full h-12 gap-2 backdrop-blur-md transition-all shadow-lg text-sm sm:text-base font-medium"
-                      disabled={isPosting}
-                      onClick={async (e) => {
-                         e.stopPropagation();
-                         if (!navigator.share) {
-                            navigator.clipboard.writeText(window.location.href);
-                            showAlert("Link Copied", "Sharing not supported on this browser. Link copied to clipboard!");
-                            return;
-                         }
-
-                         try {
-                           const shareData: any = {
-                             title: `Zigex Story - ${selectedStory.userName}`,
-                             text: selectedStory.type === 'text' ? selectedStory.content : (selectedStory.caption || 'Check out my story on Zigex!'),
-                           };
-
-                           // Handle Image Sharing
-                           if (selectedStory.type === 'image') {
-                              try {
-                                const response = await fetch(selectedStory.content);
-                                const blob = await response.blob();
-                                const file = new File([blob], 'story.jpg', { type: blob.type });
-                                
-                                if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                                  shareData.files = [file];
-                                  // For file sharing, text is often treated as the caption
-                                }
-                              } catch (fileErr) {
-                                console.error("Could not prepare image file for sharing:", fileErr);
-                              }
-                           } else {
-                             // For text stories, we also include the URL so people can visit the app
-                             shareData.url = window.location.href;
-                           }
-
-                           await navigator.share(shareData);
-                         } catch (err) {
-                           console.log("Share cancelled or failed:", err);
-                         }
+                      transition={{ duration: s.id === selectedStory.id ? 5 : 0.3, ease: "linear" }}
+                      onAnimationComplete={() => {
+                        if (s.id === selectedStory.id) handleNextStory();
                       }}
-                    >
-                      <Share2 size={18} />
-                      Share
-                    </Button>
-                 </div>
-              </motion.div>
-           </motion.div>
-         )}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Header Profile */}
+              <div className="absolute top-10 left-6 right-16 z-50 flex items-center gap-4">
+                <div className="rounded-2xl border-2 border-white/30 p-0.5 overflow-hidden w-12 h-12 shadow-xl">
+                  <Avatar className="w-full h-full">
+                    <AvatarImage src={selectedStory.userAvatar} className="object-cover" />
+                    <AvatarFallback className="bg-[#155DFC] text-white font-black">{selectedStory.userName[0]}</AvatarFallback>
+                  </Avatar>
+                </div>
+                <div className="text-white">
+                  <p className="font-black text-sm uppercase tracking-widest drop-shadow-md">{selectedStory.userName}</p>
+                  <p className="text-[10px] font-bold text-white/60 uppercase tracking-wider">{selectedStory.timestamp}</p>
+                </div>
+                
+                {selectedStory.userId === (currentUser?.profile?.user_id || currentUser?.id || 'me') && (
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="ml-auto text-white/50 hover:text-rose-500 hover:bg-white/10 rounded-2xl"
+                    onClick={(e) => { e.stopPropagation(); promptDeleteStory(selectedStory.id); }}
+                  >
+                    <Trash2 size={20} />
+                  </Button>
+                )}
+              </div>
+
+              {/* Close Button */}
+              <Button 
+                variant="ghost" size="icon" 
+                className="absolute top-10 right-4 z-50 text-white/70 hover:text-white hover:bg-white/10 rounded-2xl transition-all" 
+                onClick={() => setSelectedStory(null)}
+              >
+                <X size={28} strokeWidth={2.5} />
+              </Button>
+
+              {/* Main Content Area */}
+              <div className="flex-1 relative flex items-center justify-center bg-black w-full overflow-hidden">
+                {/* Navigation Zones */}
+                <div className="absolute inset-y-0 left-0 w-1/4 z-40 cursor-pointer" onClick={(e) => { e.stopPropagation(); handlePrevStory(); }} />
+                <div className="absolute inset-y-0 right-0 w-1/4 z-40 cursor-pointer" onClick={(e) => { e.stopPropagation(); handleNextStory(); }} />
+
+                {(selectedStory.type === 'image' || selectedStory.type === 'mixed') ? (
+                  <div className="relative w-full h-full flex flex-col items-center justify-center">
+                    <img src={selectedStory.content} className="w-full h-full object-contain" alt="story" />
+                    {selectedStory.caption && (
+                      <div className="absolute bottom-40 left-0 right-0 p-8 text-center bg-gradient-to-t from-black/90 via-black/40 to-transparent pt-20">
+                        <p className="text-white text-xl font-black leading-tight drop-shadow-2xl uppercase tracking-tight">{selectedStory.caption}</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className={cn("w-full h-full flex items-center justify-center p-12 text-center", selectedStory.color || 'bg-[#155DFC]')}>
+                    <p className={cn("text-white font-black leading-[1.1] tracking-tighter uppercase drop-shadow-2xl", selectedStory.fontSize || "text-4xl")}>
+                      {selectedStory.content}
+                    </p>
+                  </div>
+                )}
+                
+                {/* Swipe Guidance */}
+                <motion.div 
+                  animate={{ y: [0, -10, 0] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="absolute bottom-32 left-0 right-0 flex flex-col items-center text-white/40 pointer-events-none z-40"
+                >
+                  <ChevronUp size={24} strokeWidth={3} />
+                  <span className="text-[8px] font-black uppercase tracking-[0.3em] mt-2">Swipe to close</span>
+                </motion.div>
+              </div>
+
+              {/* Footer Actions */}
+              <div className="absolute bottom-10 left-8 right-8 z-50 flex gap-4">
+                <Button 
+                  className="flex-1 bg-white/10 hover:bg-[#155DFC] text-white border border-white/20 rounded-2xl h-16 gap-3 backdrop-blur-xl transition-all shadow-2xl font-black uppercase tracking-widest text-[10px]"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (selectedStory.isAnnouncement) {
+                        const announcementId = selectedStory.id.replace('announcement-', '');
+                        window.location.href = `/feed/announcements/${announcementId}`;
+                    } else {
+                        const target = slugifyUsername(selectedStory.userSlug || selectedStory.userId);
+                        window.location.href = `/dashboard/student/${target}`; 
+                    }
+                  }}
+                >
+                  {selectedStory.isAnnouncement ? <ExternalLink size={18} strokeWidth={3} /> : <User size={18} strokeWidth={3} />}
+                  {selectedStory.isAnnouncement ? "Explore Update" : "View Profile"}
+                </Button>
+
+                <Button 
+                  className="w-16 h-16 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-2xl backdrop-blur-xl transition-all shadow-2xl"
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    if (!navigator.share) {
+                        navigator.clipboard.writeText(window.location.href);
+                        showAlert("Link Copied", "Sharing not supported. Link copied!");
+                        return;
+                    }
+                    try {
+                      await navigator.share({
+                        title: `Zigex Story - ${selectedStory.userName}`,
+                        text: selectedStory.caption || selectedStory.content,
+                        url: window.location.href
+                      });
+                    } catch (err) { console.log(err); }
+                  }}
+                >
+                  <Share2 size={20} strokeWidth={3} />
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
       </AnimatePresence>
 
       {/* CREATE STORY MODAL */}
       <Dialog open={isCreating} onOpenChange={setIsCreating}>
-        <DialogContent className="sm:max-w-md bg-card border-border p-0 overflow-hidden gap-0">
-          <div className="p-4 border-b border-border flex items-center justify-between bg-muted/30">
-            <h2 className="text-lg font-semibold">Create Story</h2>
-            <Button variant="ghost" size="sm" onClick={() => setIsCreating(false)}><X size={20}/></Button>
+        <DialogContent className="sm:max-w-md bg-white dark:bg-slate-950 border-none p-0 overflow-hidden rounded-[3rem] shadow-[0_50px_100px_-20px_rgba(21,93,252,0.3)]">
+          <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">New Activity</h2>
           </div>
           
-          <div className="h-[400px] relative bg-muted/20 flex flex-col">
+          <div className="h-[450px] relative bg-slate-50 dark:bg-slate-900/50 flex flex-col">
              <div className={cn(
-                "flex-1 flex items-center justify-center p-6 transition-all relative",
+                "flex-1 flex items-center justify-center p-8 transition-all relative",
                 !newStoryImage && createType === 'text' ? selectedColor : 'bg-transparent'
              )}>
                 {createType === 'text' && !newStoryImage ? (
                   <textarea 
                     autoFocus
-                    placeholder="Type something..."
+                    placeholder="What's on your mind?..."
                     value={newStoryText}
                     onChange={(e) => setNewStoryText(e.target.value)}
                     className={cn(
-                      "w-full h-full bg-transparent border-none text-white font-bold text-center placeholder:text-white/50 focus:ring-0 resize-none outline-none transition-all",
+                      "w-full h-full bg-transparent border-none text-white font-black text-center placeholder:text-white/40 focus:ring-0 resize-none outline-none transition-all uppercase tracking-tight leading-tight",
                       selectedFontSize
                     )}
                     maxLength={150}
                   />
                 ) : (
-                  <div className="w-full h-full border-2 border-dashed border-muted-foreground/20 rounded-xl flex flex-col items-center justify-center text-muted-foreground gap-2">
-                    <ImageIcon className="w-12 h-12 opacity-50" />
-                    <p className="text-sm">Upload Photo</p>
-                    <Button variant="secondary" size="sm" onClick={() => fileInputRef.current?.click()}>
-                      Select Image
+                  <div className="w-full h-full border-4 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] flex flex-col items-center justify-center text-slate-300 dark:text-slate-700 gap-4 group/upload hover:border-[#155DFC] hover:text-[#155DFC] transition-all duration-500">
+                    <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-3xl flex items-center justify-center group-hover/upload:scale-110 group-hover/upload:bg-blue-500/10 transition-all">
+                      <ImageIcon className="w-8 h-8" />
+                    </div>
+                    <p className="text-[10px] font-black uppercase tracking-widest">Drop Image or Click</p>
+                    <Button variant="secondary" size="sm" className="rounded-xl font-black uppercase tracking-widest text-[10px]" onClick={() => fileInputRef.current?.click()}>
+                      Select Media
                     </Button>
                   </div>
                 )}
                 
                 {newStoryImage && (
-                  <div className="absolute inset-0 bg-black">
+                  <div className="absolute inset-0 bg-slate-950">
                      <img src={newStoryImage} alt="preview" className="w-full h-full object-contain" />
                      <Button 
                         variant="destructive" size="icon" 
-                        className="absolute top-2 right-2 rounded-full w-8 h-8"
+                        className="absolute top-4 right-4 rounded-2xl w-10 h-10 shadow-2xl"
                         onClick={() => { setNewStoryImage(null); setCreateType('text'); setSelectedFile(null); }}
                       >
-                       <X size={14} />
+                       <X size={18} strokeWidth={3} />
                      </Button>
-                     <div className="absolute bottom-4 left-4 right-4">
+                     <div className="absolute bottom-6 left-6 right-6">
                        <Input 
-                         placeholder="Add caption..." 
+                         placeholder="Add a caption..." 
                          value={newStoryText} 
                          onChange={(e) => setNewStoryText(e.target.value)}
-                         className="bg-black/50 border-white/20 text-white placeholder:text-white/70 backdrop-blur-sm"
+                         className="h-14 bg-black/60 border-white/10 text-white placeholder:text-white/50 backdrop-blur-xl rounded-2xl px-6 font-bold"
                        />
                      </div>
                   </div>
                 )}
              </div>
 
-             {/* Customization Controls (Colors & Font Size) */}
+             {/* Personalization Controls */}
              {createType === 'text' && !newStoryImage && (
-               <div className="absolute bottom-20 left-0 right-0 p-4 flex flex-col gap-4 bg-black/20 backdrop-blur-sm">
-                  {/* Colors */}
-                  <div className="flex justify-center gap-3">
+               <div className="px-6 py-4 flex flex-col gap-6 bg-white dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800">
+                  <div className="flex justify-center gap-2">
                     {STORY_COLORS.map((color) => (
                       <button
                         key={color}
                         onClick={() => setSelectedColor(color)}
                         className={cn(
-                          "w-8 h-8 rounded-full border-2 transition-all",
+                          "w-10 h-10 rounded-2xl border-4 transition-all duration-500",
                           color,
-                          selectedColor === color ? "border-white scale-125 shadow-lg" : "border-transparent hover:scale-110"
+                          selectedColor === color ? "border-white dark:border-slate-800 scale-110 shadow-xl shadow-blue-500/20" : "border-transparent opacity-60 hover:opacity-100 hover:scale-105"
                         )}
                       />
                     ))}
                   </div>
                   
-                  {/* Font Size Selector */}
-                  <div className="flex justify-center items-center gap-4">
-                     <span className="text-white/70 text-[10px] uppercase tracking-widest font-bold">Font Size</span>
-                     <div className="flex bg-white/10 rounded-full p-1 border border-white/20">
+                  <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900 p-2 rounded-2xl">
+                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3">Style</span>
+                     <div className="flex gap-1">
                         {FONT_SIZES.map((size) => (
                           <button
                             key={size.value}
                             onClick={() => setSelectedFontSize(size.value)}
                             className={cn(
-                              "px-3 py-1 rounded-full text-xs transition-all",
+                              "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
                               selectedFontSize === size.value 
-                                ? "bg-white text-black font-bold" 
-                                : "text-white hover:bg-white/10"
+                                ? "bg-white dark:bg-slate-800 text-[#155DFC] shadow-sm" 
+                                : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                             )}
                           >
                             {size.label[0]}
@@ -863,59 +809,66 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
                </div>
              )}
 
-             <div className="p-4 bg-card border-t border-border flex items-center gap-2 justify-between">
+             <div className="p-6 bg-white dark:bg-slate-950 flex items-center gap-4">
                 <div className="flex gap-2">
                   <Button 
-                    variant={createType === 'text' && !newStoryImage ? "primary" : "outline"}
-                    className="h-10 w-10 p-0 rounded-full"
+                    variant={createType === 'text' && !newStoryImage ? "default" : "outline"}
+                    className={cn(
+                      "h-14 w-14 rounded-2xl transition-all duration-500",
+                      createType === 'text' && !newStoryImage ? "bg-[#155DFC] text-white" : "text-slate-400"
+                    )}
                     onClick={() => { setCreateType('text'); setNewStoryImage(null); setSelectedFile(null); }}
                   >
-                    <Type size={18} />
+                    <Type size={20} strokeWidth={3} />
                   </Button>
                   <Button 
-                    variant={createType === 'image' || newStoryImage ? "primary" : "outline"} 
-                    className="h-10 w-10 p-0 rounded-full"
+                    variant={createType === 'image' || newStoryImage ? "default" : "outline"} 
+                    className={cn(
+                      "h-14 w-14 rounded-2xl transition-all duration-500",
+                      createType === 'image' || newStoryImage ? "bg-[#155DFC] text-white" : "text-slate-400"
+                    )}
                     onClick={() => { setCreateType('image'); }}
                   >
-                    <ImageIcon size={18} />
+                    <ImageIcon size={20} strokeWidth={3} />
                   </Button>
                 </div>
                 
-                <Button onClick={handleCreatePost} disabled={(!newStoryText && !newStoryImage) || isPosting} className="rounded-full px-6">
-                  {isPosting ? 'Sharing...' : 'Share to Story'}
+                <Button 
+                  onClick={handleCreatePost} 
+                  disabled={(!newStoryText && !newStoryImage) || isPosting} 
+                  className="flex-1 h-14 bg-[#155DFC] hover:bg-[#0D47A1] text-white rounded-3xl font-black uppercase tracking-[0.2em] text-[10px] shadow-xl shadow-blue-500/25 transition-all active:scale-95"
+                >
+                  {isPosting ? 'Publishing...' : 'Share Activity'}
                 </Button>
              </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Alert Dialog */}
+      {/* Alert Modals */}
       <AlertDialog open={alertOpen} onOpenChange={setAlertOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-[2.5rem]">
           <AlertDialogHeader>
-            <AlertDialogTitle>{alertConfig.title}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {alertConfig.message}
-            </AlertDialogDescription>
+            <AlertDialogTitle className="font-black uppercase tracking-widest text-sm">{alertConfig.title}</AlertDialogTitle>
+            <AlertDialogDescription className="font-bold text-slate-500">{alertConfig.message}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction onClick={() => setAlertOpen(false)}>OK</AlertDialogAction>
+            <AlertDialogAction onClick={() => setAlertOpen(false)} className="bg-[#155DFC] rounded-2xl font-black uppercase tracking-widest text-[10px] px-8">Got it</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-[2.5rem]">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Story?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently remove your story from the feed.
+            <AlertDialogTitle className="font-black uppercase tracking-widest text-sm text-rose-500">Remove Activity?</AlertDialogTitle>
+            <AlertDialogDescription className="font-bold text-slate-500">
+              This will permanently delete your story. Are you sure?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={executeDeleteStory} className="bg-red-600 hover:bg-red-700">Delete</AlertDialogAction>
+            <AlertDialogCancel onClick={() => setDeleteDialogOpen(false)} className="rounded-2xl font-black uppercase tracking-widest text-[10px]">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={executeDeleteStory} className="bg-rose-500 hover:bg-rose-600 rounded-2xl font-black uppercase tracking-widest text-[10px]">Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

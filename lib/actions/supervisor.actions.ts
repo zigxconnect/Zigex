@@ -4,6 +4,382 @@ import { createServerActionClient, supabaseAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { sendEmail, sendSupervisorWelcomeEmail, sendSupervisorAssignmentEmail } from "@/lib/email";
 import { createNotification } from "@/lib/notifications";
+import { sendPushNotification } from "@/lib/push";
+
+// ═══════════════════════════════════════════════════════════════
+// ISOLATED WORKSPACE FUNCTIONS  — Data is scoped per internship
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Helper: Resolve the supervisor profile for the current authenticated user.
+ * Includes email-fallback & auto-repair logic.
+ */
+async function resolveSupervisorProfile() {
+    const supabase = await createServerActionClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return null;
+
+    // 1. Try by user_id
+    let { data: profile } = await supabaseAdmin
+        .from("supervisor_profiles")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+    // 2. Fallback by email
+    if (!profile && user.email) {
+        const { data: emailProfile } = await supabaseAdmin
+            .from("supervisor_profiles")
+            .select("*")
+            .ilike("email", user.email)
+            .maybeSingle();
+
+        if (emailProfile) {
+            profile = emailProfile;
+            // Auto-repair link
+            await supabaseAdmin
+                .from("supervisor_profiles")
+                .update({ user_id: user.id })
+                .eq("id", profile.id);
+        }
+    }
+
+    return profile;
+}
+
+/**
+ * Fetches all distinct internships/programs this supervisor is assigned to.
+ * Used for the workspace selection screen.
+ * Returns grouped assignments with intern count per slot.
+ */
+export async function getSupervisorAssignments() {
+    try {
+        const profile = await resolveSupervisorProfile();
+        if (!profile) return null;
+
+        // 1. Fetch from internship_applications (structured table)
+        const { data: structApps } = await supabaseAdmin
+            .from("internship_applications")
+            .select(`
+                id, 
+                internship_id, 
+                student_id,
+                internship:internships(
+                    id, title, location, company_id, cover_image_url, start_date, end_date,
+                    company_profiles(id, company_name, logo_url)
+                )
+            `)
+            .eq("supervisor_id", profile.id)
+            .eq("status", "accepted");
+
+        // 2. Fetch from Applications (unified table — supports programs & events)
+        let unifiedApps: any[] = [];
+        try {
+            const { data: uApps } = await supabaseAdmin
+                .from("Applications")
+                .select(`
+                    id,
+                    internship_id,
+                    program_id,
+                    event_id,
+                    application_type,
+                    student_id,
+                    internships(id, title, location, company_id, cover_image_url, start_date, end_date, company_profiles(id, company_name, logo_url)),
+                    programs(id, title, location, company_id, program_picture_url, start_date, end_date, company_profiles(id, company_name, logo_url))
+                `)
+                .eq("supervisor_id", profile.id)
+                .eq("status", "accepted");
+            unifiedApps = uApps || [];
+        } catch (e) {
+            console.warn("[SUPERVISOR_ASSIGNMENTS] Unified Applications table not accessible");
+        }
+
+        // 3. Group by internship_id/program_id → create workspace slots
+        const workspaceMap = new Map<string, {
+            id: string;
+            type: "internship" | "program";
+            title: string;
+            location: string | null;
+            company: { id: string; name: string; logo: string | null } | null;
+            coverImage: string | null;
+            startDate: string | null;
+            endDate: string | null;
+            internCount: number;
+        }>();
+
+        // Process structured internship_applications
+        (structApps || []).forEach(app => {
+            const internship = Array.isArray(app.internship) ? app.internship[0] : app.internship;
+            if (!internship?.id) return;
+
+            const key = internship.id;
+            if (workspaceMap.has(key)) {
+                workspaceMap.get(key)!.internCount++;
+            } else {
+                const company = Array.isArray(internship.company_profiles) ? internship.company_profiles[0] : internship.company_profiles;
+                workspaceMap.set(key, {
+                    id: internship.id,
+                    type: "internship",
+                    title: internship.title || "Internship Program",
+                    location: internship.location,
+                    company: company ? { id: company.id, name: company.company_name, logo: company.logo_url } : null,
+                    coverImage: internship.cover_image_url,
+                    startDate: internship.start_date,
+                    endDate: internship.end_date,
+                    internCount: 1
+                });
+            }
+        });
+
+        // Process unified Applications
+        unifiedApps.forEach(app => {
+            const appType = (app.application_type || "internship").toLowerCase();
+            let refId: string | null = null;
+            let opportunity: any = null;
+
+            if (appType === "program" && app.program_id) {
+                refId = app.program_id;
+                opportunity = Array.isArray(app.programs) ? app.programs[0] : app.programs;
+            } else if (app.internship_id) {
+                refId = app.internship_id;
+                opportunity = Array.isArray(app.internships) ? app.internships[0] : app.internships;
+            }
+
+            if (!refId || !opportunity) return;
+
+            if (workspaceMap.has(refId)) {
+                workspaceMap.get(refId)!.internCount++;
+            } else {
+                const company = Array.isArray(opportunity.company_profiles) ? opportunity.company_profiles[0] : opportunity.company_profiles;
+                workspaceMap.set(refId, {
+                    id: refId,
+                    type: appType === "program" ? "program" : "internship",
+                    title: opportunity.title || "Program",
+                    location: opportunity.location,
+                    company: company ? { id: company.id, name: company.company_name, logo: company.logo_url } : null,
+                    coverImage: opportunity.cover_image_url || opportunity.program_picture_url,
+                    startDate: opportunity.start_date,
+                    endDate: opportunity.end_date,
+                    internCount: 1
+                });
+            }
+        });
+
+        // Company info fallback
+        let companyInfo = null;
+        if (profile.company_id) {
+            const { data: company } = await supabaseAdmin
+                .from("company_profiles")
+                .select("id, company_name, logo_url")
+                .eq("id", profile.company_id)
+                .single();
+            companyInfo = company;
+        }
+
+        return {
+            profile: { ...profile, company: companyInfo },
+            workspaces: Array.from(workspaceMap.values())
+        };
+    } catch (err) {
+        console.error("[SUPERVISOR_ASSIGNMENTS] Unexpected error:", err);
+        return null;
+    }
+}
+
+/**
+ * Fetches ISOLATED data for a supervisor workspace, scoped to a single internship/program.
+ * SECURITY: Verifies the supervisor is actually assigned to this internship.
+ */
+export async function getSupervisorWorkspaceData(workspaceId: string) {
+    try {
+        const profile = await resolveSupervisorProfile();
+        if (!profile) {
+            console.error("[SUPERVISOR_WORKSPACE] No supervisor profile found");
+            return null;
+        }
+
+        // Manual Company Join
+        let companyInfo = null;
+        if (profile.company_id) {
+            const { data: company } = await supabaseAdmin
+                .from("company_profiles")
+                .select("id, company_name, logo_url")
+                .eq("id", profile.company_id)
+                .single();
+            companyInfo = company;
+        }
+
+        // 1. Get ONLY applications for THIS workspace assigned to THIS supervisor
+        const { data: structApps } = await supabaseAdmin
+            .from("internship_applications")
+            .select(`
+                *,
+                internship:internships(
+                    id, title, location, company_id, cover_image_url, start_date, end_date,
+                    company_profiles(id, company_name, logo_url)
+                )
+            `)
+            .eq("supervisor_id", profile.id)
+            .eq("internship_id", workspaceId)
+            .eq("status", "accepted");
+
+        let legacyApps: any[] = [];
+        try {
+            const { data: lApps } = await supabaseAdmin
+                .from("Applications")
+                .select(`
+                    *,
+                    internship:internships(
+                        id, title, location, company_id, cover_image_url, start_date, end_date,
+                        company_profiles(id, company_name, logo_url)
+                    ),
+                    programs(id, title, location, company_id, company_profiles(id, company_name, logo_url))
+                `)
+                .eq("supervisor_id", profile.id)
+                .or(`internship_id.eq.${workspaceId},program_id.eq.${workspaceId}`)
+                .eq("status", "accepted");
+            if (lApps) legacyApps = lApps;
+        } catch (e) {
+            console.warn("[SUPERVISOR_WORKSPACE] Legacy Applications table not accessible");
+        }
+
+        const rawApps = [...(structApps || []), ...legacyApps];
+
+        // SECURITY: If no apps found for this workspace, the supervisor has no access
+        if (rawApps.length === 0) {
+            console.warn(`[SECURITY] Supervisor ${profile.id} has no assignments for workspace ${workspaceId}`);
+            return null;
+        }
+
+        // Resolve workspace metadata from first app
+        const firstInternship = rawApps[0]?.internship;
+        const firstProgram = rawApps[0]?.programs;
+        const workspaceMeta = firstInternship 
+            ? {
+                id: workspaceId,
+                type: "internship" as const,
+                title: (Array.isArray(firstInternship) ? firstInternship[0] : firstInternship)?.title || "Internship",
+                company: (Array.isArray(firstInternship) ? firstInternship[0] : firstInternship)?.company_profiles
+            }
+            : {
+                id: workspaceId,
+                type: "program" as const,
+                title: (Array.isArray(firstProgram) ? firstProgram[0] : firstProgram)?.title || "Program",
+                company: (Array.isArray(firstProgram) ? firstProgram[0] : firstProgram)?.company_profiles
+            };
+
+        // Robust student profile resolution
+        const allPossibleStudentIds = [
+            ...new Set([
+                ...rawApps.map(app => app.student_id),
+                ...rawApps.map((app: any) => app.user_id)
+            ])
+        ].filter(Boolean) as string[];
+
+        let studentProfiles: any[] = [];
+        if (allPossibleStudentIds.length > 0) {
+            const { data: profiles } = await supabaseAdmin
+                .from("student_profiles")
+                .select("id, user_id, full_name, avatar_url")
+                .or(`id.in.(${allPossibleStudentIds.map(id => `"${id}"`).join(",")}),user_id.in.(${allPossibleStudentIds.map(id => `"${id}"`).join(",")})`);
+            studentProfiles = profiles || [];
+        }
+
+        // Map apps → interns
+        const interns = rawApps.map(app => {
+            const student = studentProfiles.find(p => 
+                p.id === app.student_id || p.user_id === app.student_id || 
+                p.id === (app as any).user_id || p.user_id === (app as any).user_id
+            );
+            return {
+                ...app,
+                internship: app.internship || { id: app.internship_id, title: workspaceMeta.title },
+                student: student || {
+                    full_name: app.full_name || "New Intern",
+                    user_id: app.student_id || (app as any).user_id,
+                    avatar_url: "/default-avatar.svg"
+                }
+            };
+        });
+
+        const internUserIds = allPossibleStudentIds;
+
+        // 2. ISOLATED queries — all filtered by workspaceId (internship_id)
+        const today = new Date().toISOString().split("T")[0];
+
+        const [logsRes, tasksRes, attendanceRes, evaluationsRes] = await Promise.all([
+            // Logs — only for interns in THIS workspace
+            internUserIds.length > 0
+                ? supabaseAdmin
+                    .from("intern_logs")
+                    .select("*")
+                    .in("student_id", internUserIds)
+                    .eq("internship_id", workspaceId)
+                    .order("log_date", { ascending: false })
+                    .limit(30)
+                : Promise.resolve({ data: [] as any[], error: null }),
+
+            // Tasks — only for THIS workspace
+            supabaseAdmin
+                .from("internship_tasks")
+                .select("*")
+                .eq("internship_id", workspaceId)
+                .eq("supervisor_id", profile.id)
+                .order("created_at", { ascending: false }),
+
+            // Attendance — only for THIS workspace, today
+            supabaseAdmin
+                .from("intern_attendance")
+                .select("*")
+                .eq("attendance_date", today)
+                .eq("supervisor_id", profile.id)
+                .eq("internship_id", workspaceId),
+
+            // Evaluations — only for THIS workspace
+            supabaseAdmin
+                .from("intern_evaluations")
+                .select("*")
+                .eq("supervisor_id", profile.id)
+                .eq("internship_id", workspaceId)
+                .order("created_at", { ascending: false })
+        ]);
+
+        const recentLogs = (logsRes.data || []).map(log => ({
+            ...log,
+            student: studentProfiles.find(p => p.user_id === log.student_id) || { full_name: "Intern" }
+        }));
+
+        const unreadLogsCount = (logsRes.data || []).filter(log => !log.read_at).length;
+
+        const evaluations = (evaluationsRes.data || []).map(evalItem => ({
+            ...evalItem,
+            student: studentProfiles.find(p => p.user_id === evalItem.student_id) || { full_name: "Intern" }
+        }));
+
+        // Fallback company info
+        if (!companyInfo && interns.length > 0) {
+            const firstIntern = interns[0];
+            if (firstIntern?.internship?.company_profiles) {
+                companyInfo = firstIntern.internship.company_profiles;
+            }
+        }
+
+        return {
+            profile: { ...profile, company: companyInfo },
+            workspace: workspaceMeta,
+            interns: interns || [],
+            recentLogs,
+            unreadLogsCount,
+            tasks: tasksRes.data || [],
+            attendance: attendanceRes.data || [],
+            evaluations
+        };
+    } catch (err) {
+        console.error("[SUPERVISOR_WORKSPACE] Unexpected runtime error:", err);
+        return null;
+    }
+}
 
 /**
  * Fetches all supervisors. 
@@ -508,7 +884,7 @@ export async function assignInternshipTask(taskData: {
                     .eq("status", "accepted"),
                 supabaseAdmin
                     .from("Applications")
-                    .select("id, internship_id, student_id")
+                    .select("id, internship_id, program_id, student_id")
                     .eq("supervisor_id", profile.id)
                     .eq("status", "accepted")
             ]);
@@ -521,15 +897,15 @@ export async function assignInternshipTask(taskData: {
                 return { success: false, error: "No active interns found." };
             }
 
-            // 3. Manual Join for Student Profiles
-            const studentIds = allApps.map(i => i.student_id).filter(Boolean);
-            let studentProfiles: any[] = [];
-            if (studentIds.length > 0) {
+            // 3. Ultra-Robust Student Profile Resolution (Handles both Profile UUID and Auth ID)
+            const inputStudentIds = allApps.map(i => i.student_id).filter(Boolean);
+            let resolvedProfiles: any[] = [];
+            if (inputStudentIds.length > 0) {
                 const { data: profiles } = await supabaseAdmin
                     .from("student_profiles")
-                    .select("user_id, full_name, email")
-                    .in("user_id", studentIds);
-                studentProfiles = profiles || [];
+                    .select("id, user_id, full_name, email")
+                    .or(`id.in.(${inputStudentIds.join(',')}),user_id.in.(${inputStudentIds.join(',')})`);
+                resolvedProfiles = profiles || [];
             }
 
             // 4. Map Applications to Students & Deduplicate
@@ -537,19 +913,21 @@ export async function assignInternshipTask(taskData: {
             const uniqueRecipientsMap = new Map();
 
             allApps.forEach(app => {
-                const student = studentProfiles.find(p => p.user_id === app.student_id);
-                if (student) {
-                    // Task deduplication by student_id
-                    if (!uniqueTasksMap.has(app.student_id)) {
-                        uniqueTasksMap.set(app.student_id, {
-                            internship_id: app.internship_id,
-                            student_id: app.student_id,
+                // Find profile by matching either ID or User ID
+                const profile = resolvedProfiles.find(p => p.id === app.student_id || p.user_id === app.student_id);
+                
+                if (profile) {
+                    // ALWAYS use the Profile UUID (profile.id) for the task table to ensure visibility in student workspace
+                    if (!uniqueTasksMap.has(profile.id)) {
+                        uniqueTasksMap.set(profile.id, {
+                            internship_id: app.internship_id || app.program_id,
+                            student_id: profile.id,
                             ...taskPayload
                         });
                     }
                     // Email deduplication
-                    if (student.email && !uniqueRecipientsMap.has(student.email)) {
-                        uniqueRecipientsMap.set(student.email, student);
+                    if (profile.email && !uniqueRecipientsMap.has(profile.email)) {
+                        uniqueRecipientsMap.set(profile.email, profile);
                     }
                 }
             });
@@ -567,11 +945,10 @@ export async function assignInternshipTask(taskData: {
                 .eq("id", taskData.internship_id)
                 .maybeSingle();
 
-            // Try legacy if not found
             if (!app) {
                 const { data: legacyApp } = await supabaseAdmin
                     .from("Applications")
-                    .select("id, internship_id, student_id")
+                    .select("id, internship_id, program_id, student_id")
                     .eq("id", taskData.internship_id)
                     .maybeSingle();
                 app = legacyApp;
@@ -582,20 +959,27 @@ export async function assignInternshipTask(taskData: {
                 return { success: false, error: "Target intern record not found." };
             }
 
-            // Fetch student profile manually
-            const { data: student } = await supabaseAdmin
+            // IMPORTANT: The student workspace fetches tasks by profile.id (student_profiles table UUID).
+            // Legacy internship_applications stores AUTH_ID, while unified Applications stores PROFILE_ID.
+            // We must resolve to PROFILE_ID regardless.
+            let studentProfileId = app.student_id;
+            const { data: profileCheck } = await supabaseAdmin
                 .from("student_profiles")
-                .select("user_id, full_name, email")
-                .eq("user_id", app.student_id)
+                .select("id, user_id, full_name, email")
+                .or(`id.eq.${app.student_id},user_id.eq.${app.student_id}`)
                 .maybeSingle();
+            
+            if (profileCheck) {
+                studentProfileId = profileCheck.id;
+            }
 
             tasksToCreate = [{
-                internship_id: app.internship_id,
-                student_id: app.student_id,
+                internship_id: app.internship_id || app.program_id,
+                student_id: studentProfileId,
                 ...taskPayload
             }];
 
-            if (student) recipients.push(student);
+            if (profileCheck) recipients.push(profileCheck);
         }
 
         console.log(`[SUPERVISOR_ACTIONS] Attempting to insert ${tasksToCreate.length} tasks`);
@@ -609,26 +993,29 @@ export async function assignInternshipTask(taskData: {
             return { success: false, error: error.message };
         }
 
-        console.log("[SUPERVISOR_ACTIONS] Tasks created successfully. Sending emails...");
+        console.log("[SUPERVISOR_ACTIONS] Tasks created successfully. Sending notifications...");
 
-        // Await all emails to ensure they are sent before the function returns
-        try {
-            await Promise.all(recipients.map(async (recipient: any) => {
-                let targetEmail = recipient.email;
+        // Send email, in-app notification, and push notification INDEPENDENTLY per recipient.
+        // Each channel runs in its own try/catch so one failure doesn't block the others.
+        await Promise.allSettled(recipients.map(async (recipient: any) => {
+            let targetEmail = recipient.email;
 
-                // Fallback: If email is missing in profile, fetch from Auth
-                if (!targetEmail && recipient.user_id) {
+            // Fallback: If email is missing in profile, fetch from Auth
+            if (!targetEmail && recipient.user_id) {
+                try {
                     const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(recipient.user_id);
                     if (authUser?.user?.email) {
                         targetEmail = authUser.user.email;
                     }
+                } catch (authErr) {
+                    console.warn(`[SUPERVISOR_ACTIONS] Auth lookup failed for ${recipient.user_id}:`, authErr);
                 }
+            }
 
-                if (!targetEmail) {
-                    console.warn(`[SUPERVISOR_ACTIONS] No email found for student ${recipient.full_name} (${recipient.user_id})`);
-                    return;
-                }
+            console.log(`[SUPERVISOR_ACTIONS] Processing recipient: ${recipient.full_name} | email=${targetEmail || "NONE"} | user_id=${recipient.user_id}`);
 
+            // 1. Gmail Notification (independent)
+            if (targetEmail) {
                 try {
                     await sendTaskAssignmentEmail({
                         email: targetEmail,
@@ -639,8 +1026,17 @@ export async function assignInternshipTask(taskData: {
                         priority: taskData.priority,
                         supervisorName: profile.full_name || "Supervisor"
                     });
+                    console.log(`[SUPERVISOR_ACTIONS] ✅ Email sent to ${targetEmail}`);
+                } catch (emailErr) {
+                    console.error(`[SUPERVISOR_ACTIONS] ❌ Email FAILED for ${targetEmail}:`, emailErr);
+                }
+            } else {
+                console.warn(`[SUPERVISOR_ACTIONS] ⚠️ No email found for ${recipient.full_name} (${recipient.user_id}), skipping email.`);
+            }
 
-                    // Add Real-time Notification
+            // 2. In-App Real-time Notification (independent)
+            if (recipient.user_id) {
+                try {
                     await createNotification({
                         userId: recipient.user_id,
                         title: "New Milestone Assigned 🚀",
@@ -648,16 +1044,30 @@ export async function assignInternshipTask(taskData: {
                         type: "task_assigned",
                         referenceId: taskData.internship_id === "all" ? undefined : taskData.internship_id
                     });
-                } catch (err) {
-                    console.error(`[SUPERVISOR_ACTIONS] Failed to send email/notification to ${targetEmail}:`, err);
+                    console.log(`[SUPERVISOR_ACTIONS] ✅ In-app notification created for ${recipient.user_id}`);
+                } catch (notifyErr) {
+                    console.error(`[SUPERVISOR_ACTIONS] ❌ In-app notification FAILED for ${recipient.user_id}:`, notifyErr);
                 }
-            }));
-            console.log("[SUPERVISOR_ACTIONS] All emails processed.");
-        } catch (emailErr) {
-            console.error("[SUPERVISOR_ACTIONS] Error in email broadcast loop:", emailErr);
-        }
+            }
+
+            // 3. Push Notification (independent)
+            if (recipient.user_id) {
+                try {
+                    await sendPushNotification(recipient.user_id, {
+                        title: "New Milestone Assigned 🚀",
+                        body: `A new task "${taskData.title}" has been assigned to you by ${profile.full_name}.`,
+                        url: "/student/workspace"
+                    });
+                    console.log(`[SUPERVISOR_ACTIONS] ✅ Push notification sent for ${recipient.user_id}`);
+                } catch (pushErr) {
+                    console.error(`[SUPERVISOR_ACTIONS] ❌ Push notification FAILED for ${recipient.user_id}:`, pushErr);
+                }
+            }
+        }));
+        console.log("[SUPERVISOR_ACTIONS] All notification channels processed.");
 
         revalidatePath("/supervisor");
+        revalidatePath("/student/workspace");
         revalidatePath("/intern/workspace");
 
         return { success: true, count: data?.length || 0 };
@@ -871,6 +1281,12 @@ export async function reviewInternshipLog(logId: string, status: "approved" | "r
                 message: `Your report for ${logData.log_date} has been ${status}. ${feedback ? `Feedback: ${feedback}` : ""}`,
                 type: "log_reviewed",
                 referenceId: logId
+            });
+
+            await sendPushNotification(logData.student_id, {
+                title: status === "approved" ? "Report Approved ✅" : "Report Rejected ❌",
+                body: `Your report for ${logData.log_date} has been ${status}. ${feedback ? `Feedback: ${feedback}` : ""}`,
+                url: "/student/workspace"
             });
         }
     } catch (notifyErr) {

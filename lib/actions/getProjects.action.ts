@@ -2,6 +2,7 @@
 
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { supabaseAdmin } from '@/lib/supabase/server';
 
 interface ActiveProjectResult {
   success: boolean;
@@ -24,7 +25,6 @@ interface ActiveProjectResult {
 
 export async function fetchActiveProject(): Promise<ActiveProjectResult> {
   try {
-    // Set up Supabase client
     const cookieStore = await cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -35,16 +35,15 @@ export async function fetchActiveProject(): Promise<ActiveProjectResult> {
             return cookieStore.get(name)?.value;
           },
           set(name: string, value: string, options: CookieOptions) {
-            cookieStore.set({ name, value, ...options });
+            try { cookieStore.set({ name, value, ...options }); } catch {}
           },
           remove(name: string, options: CookieOptions) {
-            cookieStore.set({ name, value: '', ...options });
+            try { cookieStore.set({ name, value: '', ...options }); } catch {}
           },
         },
       }
     );
 
-    // Authenticate user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
@@ -55,8 +54,7 @@ export async function fetchActiveProject(): Promise<ActiveProjectResult> {
       };
     }
 
-    // Get student profile
-    const { data: studentProfile, error: profileError } = await supabase
+    const { data: studentProfile, error: profileError } = await supabaseAdmin
       .from('student_profiles')
       .select('id')
       .eq('user_id', user.id)
@@ -70,26 +68,16 @@ export async function fetchActiveProject(): Promise<ActiveProjectResult> {
       };
     }
 
-    // Fetch the active project (end_date is in the future)
-    const { data: activeProject, error: projectError } = await supabase
+    const { data: dbProject, error: projectError } = await supabaseAdmin
       .from('projects')
       .select('*')
-      .eq('student_id', studentProfile.id)
-      .gt('end_date', new Date().toISOString())
+      .eq('owner_id', user.id)
       .order('created_at', { ascending: false })
       .limit(1)
-      .single();
-
-    // If no active project found, return success with null data
-    if (projectError && projectError.code === 'PGRST116') {
-      return {
-        success: true,
-        data: null
-      };
-    }
+      .maybeSingle();
 
     if (projectError) {
-      console.error('Project fetch error:', projectError);
+      console.error('Project fetch error:', projectError.message || projectError);
       return {
         success: false,
         error: 'Failed to fetch project.',
@@ -97,25 +85,31 @@ export async function fetchActiveProject(): Promise<ActiveProjectResult> {
       };
     }
 
-    // Check if project is invalid and older than 48 hours
-    if (activeProject && activeProject.status !== 'valid') {
-      const createdAt = new Date(activeProject.created_at);
-      const now = new Date();
-      const fortyEightHoursInMs = 48 * 60 * 60 * 1000;
-      const timeDifference = now.getTime() - createdAt.getTime();
-
-      // If invalid project is older than 48 hours, return null (don't show it)
-      if (timeDifference > fortyEightHoursInMs) {
-        return {
-          success: true,
-          data: null
-        };
-      }
+    if (!dbProject) {
+      return {
+        success: true,
+        data: null
+      };
     }
+
+    const mappedProject = {
+      id: dbProject.id,
+      student_id: studentProfile.id,
+      project_title: dbProject.title || '',
+      description: dbProject.solution_description || dbProject.problem_statement || dbProject.tagline || '',
+      cover_image_url: dbProject.cover_images?.[0] || null,
+      github_repository: dbProject.github_url || null,
+      project_video_url: dbProject.video_url || null,
+      uploaded_video_url: null,
+      project_duration: '6 months',
+      end_date: new Date(new Date(dbProject.created_at).getTime() + 180 * 24 * 60 * 60 * 1000).toISOString(),
+      created_at: dbProject.created_at,
+      status: dbProject.is_published ? 'valid' : 'pending',
+    };
 
     return {
       success: true,
-      data: activeProject
+      data: mappedProject
     };
   } catch (error: any) {
     console.error('Critical error in fetchActiveProject:', error);
@@ -130,39 +124,45 @@ export async function fetchActiveProject(): Promise<ActiveProjectResult> {
 // Helper function to fetch all projects for a specific student profile ID
 export async function fetchAllUserProjects(studentProfileId: string): Promise<{ success: boolean; data: any[]; error?: string }> {
   try {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value;
-          },
-          set(name: string, value: string, options: CookieOptions) {
-            cookieStore.set({ name, value, ...options });
-          },
-          remove(name: string, options: CookieOptions) {
-            cookieStore.set({ name, value: '', ...options });
-          },
-        },
-      }
-    );
+    const { data: profile, error: profileErr } = await supabaseAdmin
+      .from('student_profiles')
+      .select('user_id')
+      .eq('id', studentProfileId)
+      .single();
 
-    const { data: projects, error: projectError } = await supabase
+    if (profileErr || !profile) {
+      return { success: true, data: [] };
+    }
+
+    const { data: projects, error: projectError } = await supabaseAdmin
       .from('projects')
       .select('*')
-      .eq('student_id', studentProfileId)
+      .eq('owner_id', profile.user_id)
       .order('created_at', { ascending: false });
 
     if (projectError) {
-      console.error('Projects fetch error:', projectError);
+      console.error('Projects fetch error:', projectError.message || projectError);
       return { success: false, data: [] };
     }
 
+    const mappedProjects = (projects || []).map((dbProject: any) => ({
+      id: dbProject.id,
+      student_id: studentProfileId,
+      project_title: dbProject.title || '',
+      description: dbProject.solution_description || dbProject.problem_statement || dbProject.tagline || '',
+      cover_image_url: dbProject.cover_images?.[0] || null,
+      github_repository: dbProject.github_url || null,
+      project_video_url: dbProject.video_url || null,
+      uploaded_video_url: null,
+      project_duration: '6 months',
+      end_date: new Date(new Date(dbProject.created_at).getTime() + 180 * 24 * 60 * 60 * 1000).toISOString(),
+      created_at: dbProject.created_at,
+      status: dbProject.is_published ? 'valid' : 'pending',
+    }));
+
     return {
       success: true,
-      data: projects || []
+      data: mappedProjects
     };
   } catch (error: any) {
     console.error('Critical error in fetchAllUserProjects:', error);
@@ -173,45 +173,26 @@ export async function fetchAllUserProjects(studentProfileId: string): Promise<{ 
 // Helper function to fetch project for a specific student profile ID (for visitor view)
 export async function fetchUserActiveProject(studentProfileId: string): Promise<ActiveProjectResult> {
   try {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value;
-          },
-          set(name: string, value: string, options: CookieOptions) {
-            cookieStore.set({ name, value, ...options });
-          },
-          remove(name: string, options: CookieOptions) {
-            cookieStore.set({ name, value: '', ...options });
-          },
-        },
-      }
-    );
-
-    // Fetch the active project directly using the student_id (which is the profile ID)
-    const { data: activeProject, error: projectError } = await supabase
-      .from('projects')
-      .select('*')
-      .eq('student_id', studentProfileId)
-      .gt('end_date', new Date().toISOString())
-      .order('created_at', { ascending: false })
-      .limit(1)
+    const { data: profile, error: profileErr } = await supabaseAdmin
+      .from('student_profiles')
+      .select('user_id')
+      .eq('id', studentProfileId)
       .single();
 
-    // If no active project found, return success with null data
-    if (projectError && projectError.code === 'PGRST116') {
-      return {
-        success: true,
-        data: null
-      };
+    if (profileErr || !profile) {
+      return { success: true, data: null };
     }
 
+    const { data: dbProject, error: projectError } = await supabaseAdmin
+      .from('projects')
+      .select('*')
+      .eq('owner_id', profile.user_id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
     if (projectError) {
-      console.error('Project fetch error:', projectError);
+      console.error('Project fetch error:', projectError.message || projectError);
       return {
         success: false,
         error: 'Failed to fetch project.',
@@ -219,25 +200,31 @@ export async function fetchUserActiveProject(studentProfileId: string): Promise<
       };
     }
 
-    // Check if project is invalid and older than 48 hours
-    if (activeProject && activeProject.status !== 'valid') {
-      const createdAt = new Date(activeProject.created_at);
-      const now = new Date();
-      const fortyEightHoursInMs = 48 * 60 * 60 * 1000;
-      const timeDifference = now.getTime() - createdAt.getTime();
-
-      // If invalid project is older than 48 hours, return null (don't show it)
-      if (timeDifference > fortyEightHoursInMs) {
-        return {
-          success: true,
-          data: null
-        };
-      }
+    if (!dbProject) {
+      return {
+        success: true,
+        data: null
+      };
     }
+
+    const mappedProject = {
+      id: dbProject.id,
+      student_id: studentProfileId,
+      project_title: dbProject.title || '',
+      description: dbProject.solution_description || dbProject.problem_statement || dbProject.tagline || '',
+      cover_image_url: dbProject.cover_images?.[0] || null,
+      github_repository: dbProject.github_url || null,
+      project_video_url: dbProject.video_url || null,
+      uploaded_video_url: null,
+      project_duration: '6 months',
+      end_date: new Date(new Date(dbProject.created_at).getTime() + 180 * 24 * 60 * 60 * 1000).toISOString(),
+      created_at: dbProject.created_at,
+      status: dbProject.is_published ? 'valid' : 'pending',
+    };
 
     return {
       success: true,
-      data: activeProject
+      data: mappedProject
     };
 
   } catch (error: any) {

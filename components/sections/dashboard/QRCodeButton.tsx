@@ -84,7 +84,7 @@ export default function QRCodeButton({
       {/* QR Code Button */}
       <button
         onClick={() => isOwner && setIsOpen(true)}
-        className={`w-12 h-12 md:w-14 md:h-14 bg-white rounded-xl border border-border flex items-center justify-center transition-all duration-300 group relative z-10 ${isOwner ? 'hover:border-primary hover:bg-muted cursor-pointer' : 'opacity-70 cursor-not-allowed'}`}
+        className={`w-12 h-12 md:w-14 md:h-14 bg-card rounded-xl border border-border flex items-center justify-center transition-all duration-300 group relative z-10 ${isOwner ? 'hover:border-primary hover:bg-muted cursor-pointer' : 'opacity-70 cursor-not-allowed'}`}
         aria-label="Show QR Code"
         aria-disabled={!isOwner}
         title={!isOwner ? 'Only the profile owner can open and share this QR code' : 'Show QR Code'}
@@ -122,10 +122,10 @@ export default function QRCodeButton({
               {/* Close Button */}
               <button
                 onClick={() => setIsOpen(false)}
-                className="absolute top-4 right-4 p-2 hover:bg-white/50 rounded-full transition-all duration-200 group"
+                className="absolute top-4 right-4 p-2 hover:bg-muted rounded-full transition-all duration-200 group"
                 aria-label="Close"
               >
-                <X size={20} className="text-gray-600 group-hover:text-gray-900 group-hover:rotate-90 transition-all duration-200" />
+                <X size={20} className="text-muted-foreground group-hover:text-foreground group-hover:rotate-90 transition-all duration-200" />
               </button>
             </div>
 
@@ -172,7 +172,7 @@ export default function QRCodeButton({
                 <button
                   onClick={handleShare}
                   disabled={!isOwner}
-                  className={`w-full flex items-center justify-center gap-3 px-6 py-3 font-semibold rounded-xl transition-all duration-200 transform active:scale-95 ${isOwner ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:scale-105' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
+                  className={`w-full flex items-center justify-center gap-3 px-6 py-3 font-semibold rounded-xl transition-all duration-200 transform active:scale-95 ${isOwner ? 'bg-muted text-foreground hover:bg-muted/80 hover:scale-105' : 'bg-muted text-muted-foreground cursor-not-allowed'}`}
                 >
                   <Share2 size={20} />
                   <span>Share Profile</span>
@@ -180,8 +180,8 @@ export default function QRCodeButton({
               </div>
 
               {/* Quick Connect Links */}
-              <div className="border-t border-gray-200 pt-6">
-                <p className="text-sm font-semibold text-gray-700 mb-3 text-center">
+              <div className="border-t border-border pt-6">
+                <p className="text-sm font-semibold text-foreground mb-3 text-center">
                   Or connect directly:
                 </p>
                 <div className="grid grid-cols-3 gap-3">
@@ -231,7 +231,7 @@ export default function QRCodeButton({
               </div>
 
               {/* Footer Text */}
-              <p className="text-xs text-gray-500 flex items-center justify-center gap-2">
+              <p className="text-xs text-muted-foreground flex items-center justify-center gap-2">
                 <Smartphone size={14} /> Scan this QR code with your phone camera to instantly access the profile
               </p>
             </div>

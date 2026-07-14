@@ -36,9 +36,9 @@ const TABS = [
   { id: "preferences", label: "Preferences", icon: Settings, component: Step5Additional },
 ];
 
-export const SettingsForm = () => {
+export const SettingsForm = ({ initialUserId }: { initialUserId?: string }) => {
   const [activeTab, setActiveTab] = useState("personal");
-  const [userId, setUserId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(initialUserId || null);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
@@ -52,16 +52,19 @@ export const SettingsForm = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-            // Check if we are on the client side before redirecting
-            if (typeof window !== 'undefined') {
-                 window.location.href = "/sign-in";
-            }
-            return;
+        let currentUserId = userId;
+        
+        if (!currentUserId) {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) {
+              if (typeof window !== 'undefined') {
+                   window.location.href = "/sign-in";
+              }
+              return;
+          }
+          currentUserId = user.id;
+          setUserId(currentUserId);
         }
-
-        setUserId(session.user.id);
 
         const { data: profile, error } = await supabase
           .from("student_profiles")

@@ -1,5 +1,4 @@
-import { supabaseAdmin } from "@/lib/supabase/server";
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { createSupabaseServerClient, supabaseAdmin } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
@@ -63,25 +62,9 @@ export async function POST(request: Request) {
 
     const session = verifyData?.session;
     if (session && session.access_token && session.refresh_token) {
-      const cookieStore = await cookies();
-      const anonUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-      const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-      const ss = createServerClient(anonUrl, anonKey, {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value;
-          },
-          set(name: string, value: string, options: CookieOptions) {
-            cookieStore.set({ name, value, ...options });
-          },
-          remove(name: string, options: CookieOptions) {
-            cookieStore.set({ name, value: "", ...options });
-          },
-        },
-      });
-
-      const { data: setData, error: setError } = await ss.auth.setSession({
+      const supabase = await createSupabaseServerClient();
+      
+      const { data: setData, error: setError } = await supabase.auth.setSession({
         access_token: session.access_token,
         refresh_token: session.refresh_token,
       });

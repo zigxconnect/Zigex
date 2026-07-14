@@ -16,6 +16,7 @@ const withPWA = withPWAInit({
   workboxOptions: {
     disableDevLogs: true,
     maximumFileSizeToCacheInBytes: 5000000,
+    importScripts: ["/push-sw.js"],
   },
   fallbacks: {
     document: "/offline",
@@ -121,6 +122,9 @@ const nextConfig = {
       }
     ]
   },
+
+  // Turbopack compatibility (Next.js 16 defaults to Turbopack)
+  turbopack: {},
 
   // Console removal in production
   compiler: {

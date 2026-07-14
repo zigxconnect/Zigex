@@ -109,9 +109,9 @@ export default function ProjectDetailsView({
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                <div className="flex items-center gap-4">
                   <Link
-                     href="/dashboard/projects"
+                     href="/dashboard/programs"
                      className="p-2 -ml-2 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors"
-                     title="Back to Projects"
+                     title="Back to Programs"
                   >
                      <ArrowLeft className="w-5 h-5" />
                   </Link>

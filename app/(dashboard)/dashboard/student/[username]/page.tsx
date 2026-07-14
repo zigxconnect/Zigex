@@ -5,6 +5,7 @@ import { fetchAllUserProjects } from "@/lib/actions/getProjects.action";
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
 import StudentProfileClient from "@/components/sections/dashboard/StudentProfileClient";
+import { getProfileConnections, getEarnedBadges } from "@/lib/actions/gamification.action";
 
 interface Props {
   params: Promise<{ username: string }>;
@@ -119,14 +120,27 @@ export default async function StudentDetailPage({ params }: Props) {
     );
   }
 
-  // Fetch internship count from BOTH legacy Applications AND modern internship_applications tables
-  const [internResLegacy, internResModern, progRes, eventRes, projectsResult, storiesRes] = await Promise.all([
+  // Fetch internship count, projects, stories and supervisor profile in parallel
+  const [
+    internResLegacy,
+    internResModern,
+    progRes,
+    eventRes,
+    projectsResult,
+    storiesRes,
+    supervisorProfileRes,
+    connectionStats,
+    badges
+  ] = await Promise.all([
     supabaseAdmin.from("Applications").select("id", { count: "exact", head: true }).eq("student_id", data.id).eq("application_type", "internship").neq("status", "rejected"),
     supabaseAdmin.from("internship_applications").select("id", { count: "exact", head: true }).or(`student_id.eq.${data.user_id},student_id.eq.${data.id}`).eq("status", "accepted"),
     supabaseAdmin.from("Applications").select("id", { count: "exact", head: true }).eq("student_id", data.id).eq("application_type", "program").neq("status", "rejected"),
     supabaseAdmin.from("Applications").select("id", { count: "exact", head: true }).eq("student_id", data.id).eq("application_type", "event").neq("status", "rejected"),
     fetchAllUserProjects(data.id),
-    supabaseAdmin.from("stories").select("*").eq("user_id", data.user_id).gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false })
+    supabaseAdmin.from("stories").select("*").eq("user_id", data.user_id).gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false }),
+    supabaseAdmin.from("supervisor_profiles").select("*").or(`user_id.eq.${data.user_id},email.eq.${data.email}`).maybeSingle(),
+    getProfileConnections(data.id, data.user_id),
+    getEarnedBadges(data.id, data.user_id)
   ]);
 
   const stats = {
@@ -136,6 +150,7 @@ export default async function StudentDetailPage({ params }: Props) {
   };
   const projects = projectsResult.success ? projectsResult.data : [];
   const activeStories = storiesRes?.data || [];
+  const supervisorProfile = supervisorProfileRes?.data || null;
 
   let myProfile: any = null;
   try {
@@ -145,7 +160,7 @@ export default async function StudentDetailPage({ params }: Props) {
     }
   } catch (err) {}
 
-  const { data: candidatesData } = await supabase.from("student_profiles").select("id, username, full_name, avatar_url, university, linkedin_url, phone, email, hard_skills, soft_skills").neq("id", data.id).limit(10);
+  const { data: candidatesData } = await supabase.from("student_profiles").select("id, username, full_name, avatar_url, university, linkedin_url, phone, email, hard_skills, soft_skills").neq("id", data.id).limit(300);
   const candidates = (candidatesData || []) as Array<any>;
   const similarlyScored = candidates.map((c) => {
     const hard = (c.hard_skills || []).filter((s: string) => (data.hard_skills || []).includes(s)).length;
@@ -158,7 +173,7 @@ export default async function StudentDetailPage({ params }: Props) {
     .from("Applications")
     .select("id, application_type, status, program_id, event_id, programs(title), events(title)")
     .eq("student_id", data.id)
-    .neq("status", "rejected");
+    .eq("status", "accepted");
 
   const applicationsList = appsData?.map((app: any) => ({
     type: app.application_type,
@@ -210,31 +225,41 @@ export default async function StudentDetailPage({ params }: Props) {
   }
 
   if (activeApp?.internships) {
-    const { data: logsData } = await supabaseAdmin
-      .from("internship_daily_logs")
-      .select("id, log_date")
-      .eq("application_id", activeApp.id);
-
-    // Try to get supervisor info by domain
-    let supervisorInfo = null;
-    const { data: supervisorData } = await supabaseAdmin
-      .from("supervisor_profiles")
-      .select("id, full_name, avatar_url, role, email")
-      .eq("domain", (activeApp as any).domain)
-      .maybeSingle();
-    supervisorInfo = supervisorData;
+    // Parallelize active internship details (logs and supervisor)
+    const [logsRes, supervisorRes] = await Promise.all([
+      supabaseAdmin.from("intern_logs").select("id, log_date").eq("student_id", data.user_id).eq("internship_id", activeApp.internship_id),
+      supabaseAdmin.from("supervisor_profiles").select("id, full_name, avatar_url, role, email").eq("domain", (activeApp as any).domain).maybeSingle()
+    ]);
 
     activeInternshipInfo = {
       internship: activeApp.internships,
       company: (activeApp.internships as any)?.company_profiles || null,
-      supervisor: supervisorInfo,
-      logs: logsData || []
+      supervisor: supervisorRes.data || null,
+      logs: logsRes.data || []
     };
     console.log(`[VisitorProfile] SUCCESS - activeInternshipInfo set with internship: ${(activeApp.internships as any)?.title}`);
   } else {
     console.log(`[VisitorProfile] No active internship found - activeInternshipInfo is null`);
   }
   // ========== END ACTIVE INTERNSHIP DETECTION ==========
+
+  // Check if viewed user is a supervisor (calculate supervisees count if they are)
+  let superviseesCount = 0;
+  if (supervisorProfile) {
+    const [legacyApps, modernApps] = await Promise.all([
+      supabaseAdmin
+        .from("Applications")
+        .select("student_id", { count: "exact", head: true })
+        .eq("supervisor_id", supervisorProfile.id)
+        .eq("status", "accepted"),
+      supabaseAdmin
+        .from("internship_applications")
+        .select("student_id", { count: "exact", head: true })
+        .eq("supervisor_id", supervisorProfile.id)
+        .eq("status", "accepted")
+    ]);
+    superviseesCount = (legacyApps?.count || 0) + (modernApps?.count || 0);
+  }
 
   return (
     <StudentProfileClient
@@ -247,6 +272,10 @@ export default async function StudentDetailPage({ params }: Props) {
       username={username}
       applicationsList={applicationsList}
       activeInternshipInfo={activeInternshipInfo}
+      supervisorProfile={supervisorProfile}
+      superviseesCount={superviseesCount}
+      connectionStats={connectionStats}
+      badges={badges}
     />
   );
 }

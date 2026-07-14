@@ -10,6 +10,14 @@ import { Select } from "@/components/uiComponent/Select";
 import { Textarea } from "@/components/uiComponent/Textarea";
 import { ImageUpload } from "@/components/feed/project-form/ImageUpload";
 import { createClient } from "@/lib/supabase/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { CheckCircle2 } from "lucide-react";
 
 // Helper UI Components
 
@@ -85,6 +93,7 @@ const FormField: React.FC<FormFieldProps> = ({
 export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const isEditMode = Boolean(initialData);
 
   const formatDateForInput = (dateString: string) => {
@@ -143,9 +152,9 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
       formData.append("description", description);
       formData.append("location", location);
       formData.append("category", category);
-      formData.append("start_date", startDate);
-      formData.append("end_date", endDate);
-      formData.append("deadline", deadline);
+      formData.append("start_date", new Date(startDate).toISOString());
+      formData.append("end_date", endDate ? new Date(endDate).toISOString() : "");
+      formData.append("deadline", new Date(deadline).toISOString());
       formData.append("type", internshipType);
       formData.append("is_paid", String(isPaid));
       formData.append("compensation_amount", isPaid ? compensationAmount : "");
@@ -178,10 +187,7 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
         throw new Error(result?.error?.message || result?.error || "Failed to submit form");
       }
       toast.success(`Internship ${isEditMode ? "updated" : "published"} successfully!`);
-      setTimeout(() => {
-        router.push("/admin/postings");
-        router.refresh();
-      }, 1000);
+      setShowSuccessModal(true);
     } catch (error: any) {
       console.error("Form submission error details:", error);
       toast.error(error.message || "An unexpected error occurred. Please check your internet connection.");
@@ -255,13 +261,6 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
             onChange={(e) => setEndDate(e.target.value)}
           />
         </FormField>
-        <FormField label="End Date">
-          <Input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
-        </FormField>
         <FormField label="Application Deadline" required>
           <Input
             type="date"
@@ -270,20 +269,6 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
             required
           />
         </FormField>
-      </FormSection>
-
-      <FormSection title="Visuals">
-         <div className="md:col-span-2">
-            <ImageUpload 
-              previewUrl={coverImage ? URL.createObjectURL(coverImage) : coverImageUrl}
-              onImageChange={(file) => setCoverImage(file)}
-              onRemove={() => {
-                setCoverImage(null);
-                setCoverImageUrl(null);
-              }}
-              maxSize="5MB"
-            />
-         </div>
       </FormSection>
 
       <FormSection title="Visuals">
@@ -404,6 +389,37 @@ export const PostInternshipForm = ({ initialData }: { initialData?: any }) => {
             : "Publish Internship"}
         </Button>
       </div>
+
+      <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
+        <DialogContent className="sm:max-w-md bg-white border-2 border-blue-50">
+          <div className="flex flex-col items-center justify-center py-6 text-center">
+            <div className="h-20 w-20 rounded-full bg-blue-50 flex items-center justify-center mb-6 animate-in zoom-in-50 duration-500">
+              <CheckCircle2 className="h-12 w-12 text-blue-600" />
+            </div>
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-gray-900 mb-2">
+                {isEditMode ? "Update Successful!" : "Publication Successful!"}
+              </DialogTitle>
+              <DialogDescription className="text-gray-500 text-lg max-w-[280px] mx-auto">
+                The internship has been {isEditMode ? "updated" : "published"} and is now live on the platform.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-8 w-full">
+              <Button 
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  router.push("/admin/postings");
+                  router.refresh();
+                }}
+                variant="primary"
+                className="w-full py-6 text-lg font-semibold shadow-lg shadow-blue-100 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                Go to Postings
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </form>
   );
 };

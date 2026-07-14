@@ -123,7 +123,7 @@ export async function POST(request: Request) {
         );
         const existing: string[] =
           adminUser?.user?.user_metadata?.read_notifications || [];
-        const merged = Array.from(new Set([...existing, ...globalIds]));
+        const merged = Array.from(new Set([...existing, ...globalIds])).slice(-20);
         await supabaseAdmin.auth.admin.updateUserById(user.id, {
           user_metadata: {
             ...adminUser?.user?.user_metadata,
@@ -154,7 +154,7 @@ export async function POST(request: Request) {
       );
       const existing: string[] =
         adminUser?.user?.user_metadata?.read_notifications || [];
-      const merged = Array.from(new Set([...existing, ...globalIds]));
+      const merged = Array.from(new Set([...existing, ...globalIds])).slice(-20);
       await supabaseAdmin.auth.admin.updateUserById(user.id, {
         user_metadata: {
           ...adminUser?.user?.user_metadata,
