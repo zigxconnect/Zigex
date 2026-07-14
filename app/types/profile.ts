@@ -119,4 +119,15 @@ export const profileEditSchema = profileSchema.extend({
   languages: z.array(z.string()).optional(),
   preferred_industries: z.array(z.string()).optional(),
   work_mode: z.enum(["Remote", "On-site", "Hybrid"]).optional(),
+  graduation_year: z.preprocess(
+    (val) => (val === "" || val === undefined ? null : val),
+    z.coerce
+      .number()
+      .int()
+      .min(1950, { message: "Please enter a valid year." })
+      .max(new Date().getFullYear() + 10, {
+        message: "Please enter a valid future year.",
+      })
+      .nullable()
+  ),
 });

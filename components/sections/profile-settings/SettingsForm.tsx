@@ -87,7 +87,7 @@ export const SettingsForm = ({ initialUserId }: { initialUserId?: string }) => {
             university: profile.university || "",
             degree: profile.degree || "",
             field_of_study: profile.field_of_study || "",
-            graduation_year: profile.graduation_year || undefined,
+            graduation_year: profile.graduation_year ?? null,
             gpa: profile.gpa || "",
             hard_skills: profile.hard_skills || [],
             soft_skills: profile.soft_skills || [],
