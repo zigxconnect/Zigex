@@ -1,13 +1,19 @@
 import webpush from 'web-push';
 import { supabaseAdmin } from '@/lib/supabase/server';
 
-webpush.setVapidDetails(
-    process.env.VAPID_SUBJECT as string,
-    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY as string,
-    process.env.VAPID_PRIVATE_KEY as string
-);
+const { VAPID_SUBJECT, NEXT_PUBLIC_VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY } = process.env;
+
+const isVapidConfigured = Boolean(VAPID_SUBJECT && NEXT_PUBLIC_VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY);
+
+if (isVapidConfigured) {
+    webpush.setVapidDetails(VAPID_SUBJECT!, NEXT_PUBLIC_VAPID_PUBLIC_KEY!, VAPID_PRIVATE_KEY!);
+} else {
+    console.warn('[PUSH] VAPID env vars not set — push notifications are disabled.');
+}
 
 export async function sendPushNotification(userId: string, payload: { title: string; body: string; url?: string; icon?: string }) {
+    if (!isVapidConfigured) return;
+
     try {
         // Fetch user's push subscriptions
         const { data: subscriptions, error } = await supabaseAdmin
@@ -67,6 +73,8 @@ export async function sendPushNotification(userId: string, payload: { title: str
 }
 
 export async function broadcastPushNotification(payload: { title: string; body: string; url?: string; icon?: string }) {
+    if (!isVapidConfigured) return;
+
     try {
         console.log(`[PUSH_BROADCAST] Starting broadcast for: ${payload.title}`);
 

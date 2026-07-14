@@ -68,7 +68,7 @@ export function PushNotificationManager() {
 
             const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
             if (!publicVapidKey) {
-                console.error("[PUSH_MANAGER] Public VAPID key missing from env!");
+                console.warn("[PUSH_MANAGER] Public VAPID key missing from env — push notifications disabled.");
                 return;
             }
 
