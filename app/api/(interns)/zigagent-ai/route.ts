@@ -20,8 +20,8 @@ const getGenAI = () => {
 // --- TYPE DEFINITIONS ---
 interface UserProfile {
   full_name: string;
-  university: string;
-  hard_skills: string[];
+  university: string | null;
+  hard_skills: string[] | null;
   // Add any other relevant fields from your student_profiles table
 }
 

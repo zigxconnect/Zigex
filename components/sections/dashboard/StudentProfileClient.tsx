@@ -231,7 +231,7 @@ export default function StudentProfileClient({
                   <div className="flex items-center gap-2 flex-wrap">
                     <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-1.5">
                       {isOwner ? (
-                        <>Good Afternoon, {data.full_name.split(' ')[0]}! <span className="text-amber-500">☀️</span></>
+                        <>Good Afternoon, {(data.full_name || "Student").split(' ')[0]}! <span className="text-amber-500">☀️</span></>
                       ) : (
                         data.full_name
                       )}

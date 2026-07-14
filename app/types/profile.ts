@@ -92,3 +92,31 @@ export const profileSchema = z.object({
 });
 
 export type ProfileFormData = z.infer<typeof profileSchema>;
+
+// Editing an existing profile (SettingsForm) must not force a user to
+// backfill every "required" onboarding field just to save one section —
+// deferred-completion profiles can legitimately have any of these empty.
+// MultiStepForm keeps the strict `profileSchema` above so onboarding still
+// requires each step to be filled before advancing.
+export const profileEditSchema = profileSchema.extend({
+  first_name: z.string().optional().or(z.literal("")),
+  last_name: z.string().optional().or(z.literal("")),
+  username: z.string().optional().or(z.literal("")),
+  phone: z
+    .string()
+    .optional()
+    .or(z.literal(""))
+    .refine((val) => !val || isValidPhoneNumber(val), {
+      message: "The phone number is invalid.",
+    }),
+  location: z.string().optional().or(z.literal("")),
+  about: z.string().optional().or(z.literal("")),
+  university: z.string().optional().or(z.literal("")),
+  degree: z.string().optional().or(z.literal("")),
+  field_of_study: z.string().optional().or(z.literal("")),
+  hard_skills: z.array(z.string()).optional(),
+  soft_skills: z.array(z.string()).optional(),
+  languages: z.array(z.string()).optional(),
+  preferred_industries: z.array(z.string()).optional(),
+  work_mode: z.enum(["Remote", "On-site", "Hybrid"]).optional(),
+});

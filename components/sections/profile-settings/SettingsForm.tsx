@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { profileSchema, ProfileFormData } from "@/app/types/profile";
+import { profileEditSchema, ProfileFormData } from "@/app/types/profile";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
@@ -43,7 +43,7 @@ export const SettingsForm = ({ initialUserId }: { initialUserId?: string }) => {
   const supabase = createClient();
 
   const methods = useForm<ProfileFormData>({
-    resolver: zodResolver(profileSchema),
+    resolver: zodResolver(profileEditSchema) as any,
     mode: "onTouched",
   });
 
@@ -69,7 +69,7 @@ export const SettingsForm = ({ initialUserId }: { initialUserId?: string }) => {
         const { data: profile, error } = await supabase
           .from("student_profiles")
           .select("*")
-          .eq("user_id", session.user.id)
+          .eq("user_id", currentUserId)
           .single();
 
         if (error) throw error;
