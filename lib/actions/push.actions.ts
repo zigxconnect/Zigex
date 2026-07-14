@@ -1,6 +1,6 @@
 "use server";
 
-import { createServerActionClient } from "@/lib/supabase/server";
+import { createServerActionClient, supabaseAdmin } from "@/lib/supabase/server";
 
 export async function subscribeToPushNotifications(subscription: any, origin?: string) {
     try {
@@ -11,7 +11,7 @@ export async function subscribeToPushNotifications(subscription: any, origin?: s
             return { success: false, error: "Unauthorized" };
         }
 
-        const { error } = await supabase
+        const { error } = await supabaseAdmin
             .from('push_subscriptions')
             .upsert({
                 user_id: user.id,

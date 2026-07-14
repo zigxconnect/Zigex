@@ -18,7 +18,13 @@ export const internshipSchema = z.object({
     updated_at: z.string().datetime().optional(),
     required_skills: z.array(z.string()).optional(),
     category: z.string().min(2),
-    monthly_rate: z.coerce.number().default(0).optional()
+    monthly_rate: z.coerce.number().default(0).optional(),
+    is_visible: z.boolean().default(true).optional(),
+    whatsapp_community_link: z.string().url().optional().nullable().or(z.literal('')),
+    require_geolocation: z.boolean().default(false).optional(),
+    geo_latitude: z.coerce.number().min(-90).max(90).nullable().optional(),
+    geo_longitude: z.coerce.number().min(-180).max(180).nullable().optional(),
+    geo_radius_meters: z.coerce.number().min(10).max(5000).default(100).optional(),
 });
 
 export type Internship = z.infer<typeof internshipSchema>;

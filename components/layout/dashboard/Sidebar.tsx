@@ -31,6 +31,7 @@ import AnimatedNavLink from "@/components/customButtons/AnimatedNavLink";
 import NameInitials from "@/components/NameInitials";
 import { slugifyUsername, cn } from "@/lib/utils";
 import { Logo } from "@/components/layout/Logo";
+import { createClient } from "@/lib/supabase/client";
 
 interface SidebarProps {
   user: any;
@@ -63,6 +64,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const handleSignOut = async () => {
     try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
       await fetch("/api/auth/logout", { method: "POST" });
       window.location.href = "/";
     } catch (error) {
@@ -208,8 +211,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <AnimatedNavLink
                   href="/student/workspace"
                   icon={LayoutDashboard}
-                  label="My Learning"
-                  isActive={isRouteActive("/student/workspace")}
+                  label="My Workspace"
+                  isActive={isRouteActive("/student/workspace", ["/student/workspace", "/intern/workspace"])}
                   onClick={handleNavClick}
                 />
               )}
@@ -245,7 +248,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               className="w-full flex items-center gap-3 p-2 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-all duration-300 group"
             >
               <div className="relative shrink-0">
-                <div className="w-11 h-11 rounded-2xl overflow-hidden ring-2 ring-slate-100 dark:ring-slate-800 group-hover:ring-[#155DFC]/30 transition-all">
+                <div className="w-11 h-11 rounded-full overflow-hidden ring-2 ring-slate-100 dark:ring-slate-800 group-hover:ring-[#155DFC]/30 transition-all">
                   {userAvatar ? (
                     <Image src={userAvatar} alt={userName} fill className="object-cover" />
                   ) : (

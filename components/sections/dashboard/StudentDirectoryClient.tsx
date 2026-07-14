@@ -1,10 +1,53 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import StudentCard from "./StudentCard";
 import { Search, TrendingUp, Filter, Users, LayoutGrid } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+
+// Skeleton Component for Smooth Loading
+const StudentCardSkeleton = () => (
+  <div className="w-full bg-white dark:bg-slate-950 rounded-xl border border-slate-150 dark:border-slate-800 shadow-[0_1px_5px_-1px_rgba(0,0,0,0.03)] overflow-hidden animate-pulse">
+    <div className="h-16 sm:h-20 w-full bg-slate-200 dark:bg-slate-800/60 relative">
+       <div className="absolute top-2 right-2 flex gap-1.5">
+          <div className="w-16 h-4 bg-slate-300 dark:bg-slate-700 rounded-full"></div>
+          <div className="w-20 h-4 bg-slate-300 dark:bg-slate-700 rounded-full"></div>
+       </div>
+    </div>
+    <div className="px-3.5 pb-3.5 relative">
+      <div className="flex gap-3">
+        <div className="-mt-6 flex-shrink-0 relative z-10">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl border-[2.5px] border-white dark:border-slate-950 bg-slate-200 dark:bg-slate-800/60"></div>
+        </div>
+        <div className="flex-1 pt-1 min-w-0">
+          <div className="flex items-start justify-between gap-3">
+            <div className="w-full max-w-[200px]">
+              <div className="h-4 bg-slate-200 dark:bg-slate-800/60 rounded mb-2 w-3/4"></div>
+              <div className="h-2 bg-slate-200 dark:bg-slate-800/60 rounded w-1/2"></div>
+            </div>
+            <div className="hidden sm:flex gap-3">
+              <div className="w-8 h-6 bg-slate-200 dark:bg-slate-800/60 rounded"></div>
+              <div className="w-8 h-6 bg-slate-200 dark:bg-slate-800/60 rounded"></div>
+            </div>
+          </div>
+          <div className="mt-4 border-l-2 border-slate-200 dark:border-slate-800/60 pl-2">
+            <div className="h-2 bg-slate-200 dark:bg-slate-800/60 rounded w-full mb-1"></div>
+            <div className="h-2 bg-slate-200 dark:bg-slate-800/60 rounded w-4/5"></div>
+          </div>
+          <div className="mt-4 flex items-center justify-between gap-4 border-t border-slate-100 dark:border-slate-900/50 pt-2.5">
+            <div className="flex gap-1.5">
+              <div className="w-12 h-4 bg-slate-200 dark:bg-slate-800/60 rounded"></div>
+              <div className="w-16 h-4 bg-slate-200 dark:bg-slate-800/60 rounded"></div>
+              <div className="w-10 h-4 bg-slate-200 dark:bg-slate-800/60 rounded"></div>
+            </div>
+            <div className="w-12 h-4 bg-slate-200 dark:bg-slate-800/60 rounded-full"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
 
 interface StudentStats {
   internshipsApplied?: number;
@@ -45,6 +88,42 @@ export const StudentDirectoryClient: React.FC<{ profiles: RawUserProfile[] }> = 
       return name.includes(q) || uni.includes(q) || skills.includes(q) || user.includes(q);
     });
   }, [profiles, query]);
+
+  const [visibleCount, setVisibleCount] = useState(10);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  // Reset visible count when search query changes
+  useEffect(() => {
+    setVisibleCount(10);
+  }, [query]);
+
+  // Infinite scroll observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isLoadingMore && visibleCount < filtered.length) {
+          setIsLoadingMore(true);
+          // Simulate network delay for smooth skeleton loading experience
+          setTimeout(() => {
+            setVisibleCount((prev) => Math.min(prev + 10, filtered.length));
+            setIsLoadingMore(false);
+          }, 800);
+        }
+      },
+      { threshold: 0.1, rootMargin: "100px" }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => {
+      if (observerTarget.current) {
+        observer.unobserve(observerTarget.current);
+      }
+    };
+  }, [isLoadingMore, visibleCount, filtered.length]);
 
   return (
     <div className="relative overflow-hidden space-y-4">
@@ -146,20 +225,30 @@ export const StudentDirectoryClient: React.FC<{ profiles: RawUserProfile[] }> = 
           className="grid grid-cols-1 md:grid-cols-2 gap-4"
         >
           {filtered.length > 0 ? (
-            filtered.map((s, index) => (
-              <motion.div
-                key={s.id}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.03 }}
-                layout
-              >
-                <StudentCard 
-                  student={s} 
-                  stats={s.stats}
-                />
-              </motion.div>
-            ))
+            <>
+              {filtered.slice(0, visibleCount).map((s, index) => (
+                <motion.div
+                  key={s.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index % 10 * 0.03 }}
+                  layout
+                >
+                  <StudentCard 
+                    student={s} 
+                    stats={s.stats}
+                  />
+                </motion.div>
+              ))}
+              {isLoadingMore && (
+                <>
+                  <StudentCardSkeleton />
+                  <StudentCardSkeleton />
+                  <StudentCardSkeleton />
+                  <StudentCardSkeleton />
+                </>
+              )}
+            </>
           ) : (
             <motion.div 
               initial={{ opacity: 0 }}
@@ -185,10 +274,17 @@ export const StudentDirectoryClient: React.FC<{ profiles: RawUserProfile[] }> = 
       {/* 4. Footer Pagination / Load More Sentiment */}
       {filtered.length > 0 && (
         <div className="mt-12 py-6 text-center border-t border-slate-100 dark:border-slate-800/60">
-           <div className="inline-flex items-center gap-2.5 px-4 py-2 bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-full shadow-sm">
-              <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-ping" />
-              <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">End of Transmission</span>
-           </div>
+           {visibleCount < filtered.length ? (
+             <div ref={observerTarget} className="py-4">
+               {/* Invisible target for intersection observer */}
+               <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto opacity-50" />
+             </div>
+           ) : (
+             <div className="inline-flex items-center gap-2.5 px-4 py-2 bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-full shadow-sm">
+                <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-ping" />
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">End of Transmission</span>
+             </div>
+           )}
         </div>
       )}
 

@@ -102,3 +102,5 @@ export function PushNotificationManager() {
 
     return null; // Silent global manager
 }
+
+export default PushNotificationManager;

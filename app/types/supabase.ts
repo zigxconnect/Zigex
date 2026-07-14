@@ -40,6 +40,32 @@ export type Database = {
                     created_at?: string
                     expires_at?: string
                 }
+            },
+            intern_attendance_v2: {
+                Row: {
+                    id: string
+                    created_at: string
+                    student_id: string
+                    internship_id: string
+                    supervisor_id: string
+                    attendance_logs: Json
+                }
+                Insert: {
+                    id?: string
+                    created_at?: string
+                    student_id: string
+                    internship_id: string
+                    supervisor_id: string
+                    attendance_logs?: Json
+                }
+                Update: {
+                    id?: string
+                    created_at?: string
+                    student_id?: string
+                    internship_id?: string
+                    supervisor_id?: string
+                    attendance_logs?: Json
+                }
             }
         }
     }

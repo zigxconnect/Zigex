@@ -1,6 +1,7 @@
 // components/feed/DashboardWidgets.tsx
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import {
   Calendar,
@@ -12,7 +13,8 @@ import {
   Zap,
   Activity,
   Terminal,
-  Briefcase
+  Briefcase,
+  Search
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -23,6 +25,18 @@ interface WidgetProps {
 }
 
 export function DashboardWidgets({ user, workspaces }: WidgetProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredWorkspaces = [...(workspaces || [])]
+    .reverse()
+    .filter((workspace: any) => {
+      const q = searchQuery.toLowerCase();
+      return (
+        workspace.title?.toLowerCase().includes(q) ||
+        workspace.company_name?.toLowerCase().includes(q)
+      );
+    });
+
   return (
     <div className="hidden xl:flex flex-col gap-5 w-72 shrink-0 sticky top-20 h-fit pb-8">
 
@@ -94,8 +108,20 @@ export function DashboardWidgets({ user, workspaces }: WidgetProps) {
           </div>
         </div>
 
-        <div className="space-y-4">
-          {(workspaces || []).map((workspace: any) => (
+        {/* Search Bar */}
+        <div className="relative mb-4">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search workspaces..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full h-9 pl-9 pr-3 rounded-xl border border-border bg-muted/50 text-[11px] font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-[#155DFC] transition-all"
+          />
+        </div>
+
+        <div className="space-y-4 max-h-[400px] overflow-y-auto custom-scrollbar pr-1">
+          {filteredWorkspaces.map((workspace: any) => (
             <Link
               key={workspace.id}
               href={`/intern/workspace/${workspace.type}/${encodeURIComponent(workspace.title || 'workspace')}?appId=${workspace.id}`}
@@ -120,10 +146,12 @@ export function DashboardWidgets({ user, workspaces }: WidgetProps) {
             </Link>
           ))}
 
-          {(workspaces || []).length === 0 && (
+          {filteredWorkspaces.length === 0 && (
             <div className="text-center py-6">
               <Activity size={20} className="mx-auto text-slate-300 mb-2" />
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">No active workspaces</p>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                {searchQuery ? "No workspaces found" : "No active workspaces"}
+              </p>
             </div>
           )}
         </div>

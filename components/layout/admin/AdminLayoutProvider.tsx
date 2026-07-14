@@ -9,6 +9,7 @@ import React, {
   ReactNode,
 } from "react";
 import { usePathname } from "next/navigation";
+import { useTheme } from "next-themes";
 
 interface SidebarContextType {
   isOpen: boolean;
@@ -31,6 +32,12 @@ export const AdminLayoutProvider = ({ children }: { children: ReactNode }) => {
   const [isOpen, setIsOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const pathname = usePathname();
+  const { setTheme } = useTheme();
+
+  // Force light theme in admin layout
+  useEffect(() => {
+    setTheme("light");
+  }, [setTheme]);
 
   const checkScreenSize = useCallback(() => {
     const mobile = window.innerWidth < 1024;

@@ -48,7 +48,9 @@ import {
   Link as LinkIcon,
   Paperclip,
   Building2,
-  Filter
+  Filter,
+  Scan,
+  Camera
 } from "lucide-react";
 import { format } from "date-fns";
 import Link from "next/link";
@@ -64,6 +66,7 @@ import { markAnnouncementsAsRead } from "@/lib/actions/announcement.actions";
 import { InternAnnouncementBoard } from "@/components/sections/intern/InternAnnouncementBoard";
 import { LogbookPreviewModal } from "./LogbookPreviewModal";
 import { WorkspaceSidebar } from "./WorkspaceSidebar";
+import { AttendanceScannerModal } from "./AttendanceScannerModal";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { toast } from "sonner";
@@ -101,7 +104,7 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
   const [activeTab, setActiveTab] = useState("overview");
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [unreadAnnouncements, setUnreadAnnouncements] = useState(data.unreadCount || 0);
-  const { application, curriculum, logs, tasks: initialTasks, announcements = [], fellowInterns = [], fellowSupervisors = [], studentProfile } = data;
+  const { application, curriculum, logs, tasks: initialTasks, announcements = [], fellowInterns = [], fellowSupervisors = [], studentProfile, attendance = [] } = data;
   const [tasks, setTasks] = useState(initialTasks || []);
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [isTaskDetailsOpen, setIsTaskDetailsOpen] = useState(false);
@@ -414,14 +417,13 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
           <DailyReportModal
             isOpen={isLogModalOpen}
             onClose={() => setIsLogModalOpen(false)}
-            applicationId={application.id}
-            opportunityType={application.application_type || "internship"}
+            internshipId={opportunity?.id || application?.internship_id || application?.program_id || application?.event_id}
           />
         )}
       </AnimatePresence>
 
       {/* ===== NAVIGATION TABS ===== */}
-      <nav className="sticky top-[52px] z-[60] bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 shadow-sm">
+      <nav className="sticky top-[52px] z-[40] bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 shadow-sm">
         <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-12">
           <div className="flex items-center gap-1 sm:gap-4 py-0.5 px-2 sm:px-0 overflow-x-auto hide-scrollbar w-full">
             {getTabs(
@@ -591,6 +593,96 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                       ))}
                     </div>
 
+                    {/* Attendance Tracker */}
+                    {(() => {
+                      // Flatten attendance_logs JSONB from all attendance rows into a sorted list
+                      const allCheckIns: { date: string; status: string; confirmed_at: string }[] = [];
+                      if (attendance && attendance.length > 0) {
+                        attendance.forEach((record: any) => {
+                          const logs = record.attendance_logs || {};
+                          Object.entries(logs).forEach(([dateKey, entry]: [string, any]) => {
+                            allCheckIns.push({
+                              date: dateKey,
+                              status: entry?.status || "present",
+                              confirmed_at: entry?.confirmed_at || "",
+                            });
+                          });
+                        });
+                        allCheckIns.sort((a, b) => b.date.localeCompare(a.date));
+                      }
+                      const presentCount = allCheckIns.filter(c => c.status === "present").length;
+
+                      return (
+                        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden transition-all hover:border-emerald-500/30 group/attendance">
+                          <Accordion type="single" collapsible className="w-full">
+                            <AccordionItem value="attendance" className="border-none">
+                              <AccordionTrigger className="hover:no-underline p-5 sm:p-6 !no-underline w-full">
+                                <div className="flex items-center justify-between w-full text-left">
+                                  <div className="flex items-center gap-4 sm:gap-5">
+                                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center border border-emerald-100 dark:border-emerald-500/20 group-hover/attendance:scale-105 transition-transform shadow-inner shrink-0">
+                                      <Scan size={24} className="text-emerald-600 dark:text-emerald-400 sm:w-7 sm:h-7" />
+                                    </div>
+                                    <div>
+                                      <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-white uppercase tracking-widest leading-tight">Attendance</h3>
+                                      <div className="flex items-center gap-2 mt-1">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                        <p className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+                                          <span className="text-emerald-600 dark:text-emerald-400 font-black">{presentCount}</span> Days Present
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </AccordionTrigger>
+                              <AccordionContent className="px-5 sm:px-6 pb-6 pt-2">
+                                <div className="pt-5 border-t border-slate-100 dark:border-slate-800/50">
+                                  {allCheckIns.length > 0 ? (
+                                    <div className="flex flex-col gap-6">
+                                      <div className="w-full">
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
+                                          Recent Check-ins
+                                        </p>
+                                        <div className="space-y-2">
+                                          {allCheckIns.map((entry, idx) => (
+                                            <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/30 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                                              <div className="flex items-center gap-4">
+                                                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                                                <span className="text-[11px] sm:text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                                                  {new Date(entry.date + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
+                                                </span>
+                                              </div>
+                                              <div className="flex flex-col items-end">
+                                                <Badge className="text-[9px] uppercase font-black tracking-widest bg-emerald-100 hover:bg-emerald-100 text-emerald-700 border-none px-2 py-0.5 rounded-md">
+                                                  {entry.status}
+                                                </Badge>
+                                                {entry.confirmed_at && (
+                                                  <span className="text-[8px] text-slate-400 font-bold mt-1 uppercase tracking-widest">
+                                                    {new Date(entry.confirmed_at).toLocaleTimeString("en-US", { hour: '2-digit', minute: '2-digit' })}
+                                                  </span>
+                                                )}
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="flex flex-col items-center justify-center py-8 text-center bg-slate-50 dark:bg-slate-800/30 rounded-xl border border-slate-100 dark:border-slate-800/50">
+                                      <div className="w-12 h-12 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center mb-3 shadow-sm border border-slate-100 dark:border-slate-700">
+                                        <Scan size={20} className="text-slate-400" />
+                                      </div>
+                                      <p className="text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-400">No attendance records yet</p>
+                                      <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1.5 max-w-[200px] leading-relaxed">Scan the QR code at your department to log attendance</p>
+                                    </div>
+                                  )}
+                                </div>
+                              </AccordionContent>
+                            </AccordionItem>
+                          </Accordion>
+                        </div>
+                      );
+                    })()}
+
                     {/* About This Program */}
                     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-8 shadow-sm">
                       <div className="flex items-center gap-3 mb-4 sm:mb-6">
@@ -598,16 +690,17 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
                         <h3 className="text-xs sm:text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">About This Program</h3>
                       </div>
                       <div className="space-y-4">
-                        <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-bold">
-                          {isDescriptionExpanded
-                            ? (opportunity?.description || "No description provided.")
-                            : (opportunity?.description?.split(' ').slice(0, 45).join(' ') + (opportunity?.description?.split(' ').length > 45 ? "..." : ""))
-                          }
-                        </p>
-                        {opportunity?.description?.split(' ').length > 45 && (
+                        <div 
+                          className={cn(
+                            "prose dark:prose-invert max-w-none text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed",
+                            !isDescriptionExpanded && "line-clamp-4 overflow-hidden"
+                          )}
+                          dangerouslySetInnerHTML={{ __html: opportunity?.description || "No description provided." }}
+                        />
+                        {(opportunity?.description?.replace(/<[^>]*>/g, '') || "").split(/\s+/).filter(Boolean).length > 45 && (
                           <button
                             onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                            className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:text-blue-700 cursor-pointer flex items-center gap-1"
+                            className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:text-blue-700 cursor-pointer flex items-center gap-1 mt-2"
                           >
                             {isDescriptionExpanded ? "Show Less" : "Read More"}
                             <ChevronRight size={12} className={cn("transition-transform", isDescriptionExpanded ? "rotate-90" : "")} />
@@ -1220,6 +1313,28 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
           />
         </div>
       </main>
+
+      {/* Floating QR Scan Button */}
+      <div className="fixed bottom-28 right-4 lg:bottom-8 lg:right-8 z-50">
+        <AttendanceScannerModal>
+          <button className="group relative flex h-14 w-14 lg:h-16 lg:w-16 items-center justify-center rounded-full bg-gradient-to-tr from-[#155DFC] to-[#3B82F6] text-white shadow-[0_8px_30px_rgb(21,93,252,0.4)] transition-all hover:scale-105 hover:shadow-[0_8px_30px_rgb(21,93,252,0.6)] focus:outline-none focus:ring-2 focus:ring-[#155DFC] focus:ring-offset-2 dark:focus:ring-offset-slate-950">
+            <Camera className="h-6 w-6 lg:h-7 lg:w-7 transition-transform group-hover:scale-110" />
+            <div className="absolute -top-12 right-0 w-max translate-y-2 opacity-0 transition-all group-hover:-translate-y-0 group-hover:opacity-100 pointer-events-none">
+              <div className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-bold text-white shadow-xl dark:bg-slate-800 flex items-center gap-2">
+                <Scan size={12} className="text-blue-400" />
+                Scan Attendance
+              </div>
+            </div>
+            {/* Little indicator ping */}
+            <div className="absolute -top-1 -right-1">
+              <span className="relative flex h-3 w-3 lg:h-4 lg:w-4">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 lg:h-4 lg:w-4 bg-emerald-500 border-2 border-white dark:border-slate-950"></span>
+              </span>
+            </div>
+          </button>
+        </AttendanceScannerModal>
+      </div>
 
       {/* Task Details Modal */}
       <AnimatePresence>

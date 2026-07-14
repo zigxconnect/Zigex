@@ -102,7 +102,7 @@ const generateEmailHTML = (params: {
               </div>
               ` : ''}
               
-              <div style="color: #475569; font-size: 15px; line-height: 1.7;">${message.replace(/\n/g, '<br/>')}</div>
+              <div style="color: #475569; font-size: 15px; line-height: 1.7;">${message.replace(/\\n/g, '<br/>').replace(/\n/g, '<br/>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>
             </td>
           </tr>
 
@@ -174,7 +174,7 @@ export const sendEmail = async (params: {
 };
 
 /**
- * Sends acceptance email to candidate
+ * Sends acceptance email to candidate with WhatsApp link and start date
  */
 export const sendAcceptanceEmail = async (params: {
   email: string;
@@ -183,14 +183,19 @@ export const sendAcceptanceEmail = async (params: {
   opportunityType: string;
   companyName: string;
   whatsappGroupLink?: string;
+  startDate?: string;
 }) => {
   const transporter = createTransporter();
   if (!transporter) return;
 
+  const whatsappMessage = params.whatsappGroupLink
+    ? `\\n\\nTo begin your onboarding, meet your fellow team members, and get started, please join our official community group via the button below.`
+    : `\\n\\nYou can view your application status and next steps on your dashboard.`;
+
   const html = generateEmailHTML({
     heading: `Congratulations, ${params.name}!`,
-    message: `We are thrilled to inform you that your application for "${params.opportunityTitle}" has been accepted! This is a significant milestone in your professional journey.\n\nTo begin your onboarding and meet your fellow cohort members, please join our official community group via the button below.`,
-    ctaText: "Join WhatsApp Community",
+    message: `We are absolutely thrilled to inform you that you have been accepted into "${params.opportunityTitle}"! 🎉\\n\\nYou stood out amongst many applicants, and we can't wait to see what you achieve with us. This is a significant milestone in your professional journey.${whatsappMessage}`,
+    ctaText: params.whatsappGroupLink ? "Join WhatsApp Community" : "Go to Dashboard",
     ctaLink: params.whatsappGroupLink || "https://zigexconnect.com/dashboard",
     statusBadge: "Selection Confirmed",
     statusColor: "#10b981",
@@ -203,6 +208,40 @@ export const sendAcceptanceEmail = async (params: {
     from: `"${params.companyName || "SEED INC"}" <${GMAIL_USER}>`,
     to: params.email,
     subject: `Welcome to the Program: ${params.opportunityTitle}!`,
+    html
+  });
+};
+
+/**
+ * Sends a notification email to the company when a student submits a new application
+ */
+export const sendNewApplicationNotification = async (params: {
+  companyEmail: string;
+  companyName: string;
+  studentName: string;
+  studentEmail: string;
+  opportunityTitle: string;
+  opportunityType: string;
+}) => {
+  const transporter = createTransporter();
+  if (!transporter) return;
+
+  const html = generateEmailHTML({
+    heading: `New Application Received`,
+    message: `A new applicant has applied to your opportunity.\\n\\n👤 **Applicant:** ${params.studentName}\\n📧 **Email:** ${params.studentEmail}\\n\\nPlease review their application on the admin dashboard.`,
+    ctaText: "Review Applications",
+    ctaLink: "https://zigexconnect.com/admin/applicants",
+    statusBadge: "New Application",
+    statusColor: "#3B82F6",
+    opportunityTitle: params.opportunityTitle,
+    opportunityType: params.opportunityType,
+    companyName: params.companyName
+  });
+
+  await transporter.sendMail({
+    from: `"Zigex Notifications" <${GMAIL_USER}>`,
+    to: params.companyEmail,
+    subject: `📩 New Application: ${params.studentName} applied to ${params.opportunityTitle}`,
     html
   });
 };

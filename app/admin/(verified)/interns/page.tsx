@@ -170,6 +170,9 @@ function InternsPageComponent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterDomain, setFilterDomain] = useState<string | null>(null);
   const [filterSchool, setFilterSchool] = useState<string | null>(null);
+  const [filterCohort, setFilterCohort] = useState<string | null>(null);
+  const [filterType, setFilterType] = useState<string | null>(null);
+  const [cohortDetails, setCohortDetails] = useState<any[]>([]);
   const [viewMode, setViewMode] = useState<"grid" | "table" | "ledger" | "management" | "records" | "analytics">("table");
   const [companyId, setCompanyId] = useState<string | null>(null);
 
@@ -193,13 +196,31 @@ function InternsPageComponent() {
         throw new Error(errorData.error || `Error ${response.status}`);
       }
       const data: Applicant[] = await response.json();
-      // Filter internship applications
-      const internshipApps = data.filter(app =>
-        app.applicationType === "internship" ||
-        (app.internshipId && app.applicationType !== "program" && app.applicationType !== "event")
+      // Filter internship and program applications
+      const targetApps = data.filter(app =>
+        app.applicationType === "internship" || app.applicationType === "program" ||
+        (app.internshipId && app.applicationType !== "event")
       );
-      console.log("[INTERNS] Total apps:", data.length, "Internship apps:", internshipApps.length);
-      setApplicants(internshipApps);
+      console.log("[INTERNS] Total apps:", data.length, "Intern/Program apps:", targetApps.length);
+      setApplicants(targetApps);
+
+      // Fetch cohorts (internships + programs)
+      try {
+        const [internshipsResp, programsResp] = await Promise.all([
+          fetch("/api/companies/internships"),
+          fetch("/api/companies/programs")
+        ]);
+        const internships = internshipsResp.ok ? await internshipsResp.json() : [];
+        const programs = programsResp.ok ? await programsResp.json() : [];
+        
+        const combinedCohorts = [
+          ...(Array.isArray(internships) ? internships : []).map((i: any) => ({ ...i, type: 'Internship' })),
+          ...(Array.isArray(programs) ? programs : []).map((p: any) => ({ ...p, type: 'Program' }))
+        ];
+        setCohortDetails(combinedCohorts);
+      } catch (err) {
+        console.error("Failed to fetch cohort details", err);
+      }
 
       // Fetch company profile to get ID
       const companyResp = await fetch("/api/companies/profiles");
@@ -373,9 +394,10 @@ function InternsPageComponent() {
     }
   };
 
-  // Get unique domains and schools for filtering
+  // Get unique domains, schools, and cohorts for filtering
   const domains = [...new Set(applicants.map(a => a.domain).filter(Boolean))];
   const schools = [...new Set(applicants.map(a => a.school).filter(Boolean))].sort();
+  const cohorts = [...new Set(applicants.map(a => a.internshipTitle).filter(Boolean))].sort();
 
   const filteredApplicants = applicants.filter(app => {
     const searchTerms = [
@@ -392,8 +414,10 @@ function InternsPageComponent() {
     const matchesSearch = !searchQuery || searchTerms.some(term => term.includes(searchQuery.toLowerCase()));
     const matchesDomain = !filterDomain || app.domain === filterDomain;
     const matchesSchool = !filterSchool || app.school === filterSchool;
+    const matchesCohort = !filterCohort || app.internshipTitle === filterCohort;
+    const matchesType = !filterType || app.applicationType === filterType;
 
-    return matchesSearch && matchesDomain && matchesSchool;
+    return matchesSearch && matchesDomain && matchesSchool && matchesCohort && matchesType;
   });
 
   const selectedApplicant = applicants.find(app => app.id === selectedApplicantId);
@@ -621,63 +645,173 @@ function InternsPageComponent() {
         </div>
 
         {/* Command Center: Premium Filter & Search */}
-        {/* Command Center: Premium Filter & Search */}
-        <div className="bg-white/70 backdrop-blur-xl p-3 md:p-4 rounded-[2.5rem] border-2 border-blue-50/50 shadow-2xl shadow-blue-500/5 flex flex-col md:flex-row gap-4 items-center ring-4 ring-blue-50/20">
-          <div className="relative flex-1 w-full group">
-            <div className="absolute left-6 top-1/2 -translate-y-1/2 pointer-events-none z-10">
-              <Search className="w-5 h-5 text-slate-300 group-focus-within:text-[#155DFC] group-focus-within:scale-110 transition-all duration-500" />
+        <div className="bg-white/70 backdrop-blur-xl p-4 md:p-6 rounded-3xl border border-blue-50/50 shadow-xl shadow-blue-500/5 flex flex-col gap-6">
+          <div className="relative w-full group">
+            <div className="absolute left-5 top-1/2 -translate-y-1/2 pointer-events-none z-10">
+              <Search className="w-5 h-5 text-slate-400 group-focus-within:text-[#155DFC] transition-all duration-300" />
             </div>
             <Input
-              placeholder="Deep intelligence search: name, school, email, or domain..."
+              placeholder="Search by name, school, email, or domain..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-16 h-16 rounded-[2rem] border-none bg-slate-100/50 focus:bg-white focus:ring-[12px] focus:ring-blue-50/50 transition-all font-bold text-slate-900 placeholder:text-slate-300 shadow-inner"
+              className="pl-14 h-14 md:h-16 rounded-2xl border-slate-200 bg-white focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium text-slate-900 placeholder:text-slate-400 shadow-sm w-full text-base"
             />
           </div>
 
-          <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+            {/* Type Filter Pill */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "group relative gap-3 h-14 px-5 rounded-xl border transition-all duration-300 w-full justify-between overflow-hidden",
+                    filterType
+                      ? "bg-blue-50 border-blue-200 text-blue-700 shadow-sm"
+                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300 shadow-sm"
+                  )}
+                >
+                  <div className="flex items-center gap-3 relative z-10 w-full overflow-hidden">
+                    <Filter size={18} className={cn("shrink-0", filterType ? "text-blue-600" : "text-slate-400")} />
+                    <div className="flex flex-col items-start leading-none ml-1 w-full overflow-hidden">
+                      <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Type</span>
+                      <span className="text-sm font-semibold truncate w-full text-left block">
+                        {filterType ? (filterType.charAt(0).toUpperCase() + filterType.slice(1)) : "All Types"}
+                      </span>
+                    </div>
+                  </div>
+                  <ChevronDown size={16} className={cn("transition-transform duration-300 group-hover:translate-y-0.5 relative z-10 shrink-0", filterType ? "text-blue-600" : "text-slate-400")} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-[280px] rounded-2xl p-2 border-slate-200 shadow-xl bg-white z-[100]">
+                <DropdownMenuItem
+                  onClick={() => setFilterType(null)}
+                  className="rounded-xl py-3 px-4 font-semibold text-sm cursor-pointer hover:bg-slate-50 text-slate-700"
+                >
+                  All Types
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="my-1 bg-slate-100" />
+                <DropdownMenuItem
+                  onClick={() => setFilterType("internship")}
+                  className={cn(
+                    "rounded-xl py-3 px-4 font-medium text-sm cursor-pointer transition-all",
+                    filterType === "internship"
+                      ? "bg-blue-50 text-blue-700"
+                      : "hover:bg-slate-50 text-slate-700"
+                  )}
+                >
+                  Internships
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setFilterType("program")}
+                  className={cn(
+                    "rounded-xl py-3 px-4 font-medium text-sm cursor-pointer transition-all",
+                    filterType === "program"
+                      ? "bg-blue-50 text-blue-700"
+                      : "hover:bg-slate-50 text-slate-700"
+                  )}
+                >
+                  Programs
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Cohort / Program Filter Pill */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "group relative gap-3 h-14 px-5 rounded-xl border transition-all duration-300 w-full justify-between overflow-hidden",
+                    filterCohort
+                      ? "bg-blue-50 border-blue-200 text-blue-700 shadow-sm"
+                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300 shadow-sm"
+                  )}
+                >
+                  <div className="flex items-center gap-3 relative z-10 w-full overflow-hidden">
+                    <Target size={18} className={cn("shrink-0", filterCohort ? "text-blue-600" : "text-slate-400")} />
+                    <div className="flex flex-col items-start leading-none ml-1 w-full overflow-hidden">
+                      <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Cohort</span>
+                      <span className="text-sm font-semibold truncate w-full text-left block">
+                        {filterCohort || "All Cohorts"}
+                      </span>
+                    </div>
+                  </div>
+                  <ChevronDown size={16} className={cn("transition-transform duration-300 group-hover:translate-y-0.5 relative z-10 shrink-0", filterCohort ? "text-blue-600" : "text-slate-400")} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-[320px] rounded-2xl p-2 border-slate-200 shadow-xl bg-white z-[100]">
+                <DropdownMenuItem
+                  onClick={() => setFilterCohort(null)}
+                  className="rounded-xl py-3 px-4 font-semibold text-sm cursor-pointer hover:bg-slate-50 text-slate-700"
+                >
+                  All Cohorts
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="my-1 bg-slate-100" />
+                <div className="max-h-[300px] overflow-y-auto custom-scrollbar flex flex-col gap-1 p-1">
+                  {cohorts.map(cohort => (
+                    <DropdownMenuItem
+                      key={cohort}
+                      onClick={() => setFilterCohort(cohort!)}
+                      className={cn(
+                        "rounded-xl py-3 px-4 font-medium text-sm cursor-pointer transition-all",
+                        filterCohort === cohort 
+                          ? "bg-blue-50 text-blue-700" 
+                          : "hover:bg-slate-50 text-slate-700"
+                      )}
+                    >
+                      <div className="truncate w-full">{cohort}</div>
+                    </DropdownMenuItem>
+                  ))}
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             {/* School Filter Pill */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
                   className={cn(
-                    "group relative gap-3 h-16 px-8 rounded-[2rem] border-2 transition-all duration-300 flex-1 md:flex-none min-w-[220px] justify-between overflow-hidden",
+                    "group relative gap-3 h-14 px-5 rounded-xl border transition-all duration-300 w-full justify-between overflow-hidden",
                     filterSchool
-                      ? "bg-[#155DFC] border-transparent text-white shadow-lg shadow-blue-200"
-                      : "border-slate-100 bg-slate-50/50 text-slate-400 hover:bg-white hover:border-blue-200"
+                      ? "bg-blue-50 border-blue-200 text-blue-700 shadow-sm"
+                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300 shadow-sm"
                   )}
                 >
-                  <div className="flex items-center gap-3 relative z-10">
-                    <div className="flex flex-col items-start leading-none ml-1">
-                      <span className="text-[8px] font-black uppercase tracking-[0.2em] mb-0.5 opacity-60">Institute</span>
-                      <span className="text-[11px] font-black uppercase tracking-widest truncate max-w-[140px]">
-                        {filterSchool || "All Facilities"}
+                  <div className="flex items-center gap-3 relative z-10 w-full overflow-hidden">
+                    <Building2 size={18} className={cn("shrink-0", filterSchool ? "text-blue-600" : "text-slate-400")} />
+                    <div className="flex flex-col items-start leading-none ml-1 w-full overflow-hidden">
+                      <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Institute</span>
+                      <span className="text-sm font-semibold truncate w-full text-left block">
+                        {filterSchool || "All Institutes"}
                       </span>
                     </div>
                   </div>
-                  <ChevronDown size={14} className={cn("transition-transform duration-300 group-hover:translate-y-0.5 relative z-10", filterSchool ? "text-white" : "text-slate-300")} />
+                  <ChevronDown size={16} className={cn("transition-transform duration-300 group-hover:translate-y-0.5 relative z-10 shrink-0", filterSchool ? "text-blue-600" : "text-slate-400")} />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-72 rounded-[2rem] p-3 border-blue-50 shadow-2xl backdrop-blur-3xl bg-white/90 z-[100]">
+              <DropdownMenuContent align="start" className="w-[320px] rounded-2xl p-2 border-slate-200 shadow-xl bg-white z-[100]">
                 <DropdownMenuItem
                   onClick={() => setFilterSchool(null)}
-                  className="rounded-2xl py-4 px-4 font-black text-[10px] uppercase tracking-widest text-[#155DFC] cursor-pointer hover:bg-blue-50"
+                  className="rounded-xl py-3 px-4 font-semibold text-sm cursor-pointer hover:bg-slate-50 text-slate-700"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-blue-500" />
-                    Reset Facility Filter
-                  </div>
+                  All Institutes
                 </DropdownMenuItem>
-                <DropdownMenuSeparator className="my-2 opacity-50" />
-                <div className="max-h-[350px] overflow-y-auto custom-scrollbar pr-1">
+                <DropdownMenuSeparator className="my-1 bg-slate-100" />
+                <div className="max-h-[300px] overflow-y-auto custom-scrollbar flex flex-col gap-1 p-1">
                   {schools.map(school => (
                     <DropdownMenuItem
                       key={school}
                       onClick={() => setFilterSchool(school!)}
-                      className="rounded-2xl py-4 px-4 font-bold text-[11px] uppercase tracking-wider cursor-pointer hover:bg-slate-50 border border-transparent hover:border-blue-100 transition-all mb-1"
+                      className={cn(
+                        "rounded-xl py-3 px-4 font-medium text-sm cursor-pointer transition-all",
+                        filterSchool === school 
+                          ? "bg-blue-50 text-blue-700" 
+                          : "hover:bg-slate-50 text-slate-700"
+                      )}
                     >
-                      {school}
+                      <div className="truncate w-full">{school}</div>
                     </DropdownMenuItem>
                   ))}
                 </div>
@@ -690,42 +824,45 @@ function InternsPageComponent() {
                 <Button
                   variant="outline"
                   className={cn(
-                    "group relative gap-3 h-16 px-8 rounded-[2rem] border-2 transition-all duration-300 flex-1 md:flex-none min-w-[220px] justify-between overflow-hidden",
+                    "group relative gap-3 h-14 px-5 rounded-xl border transition-all duration-300 w-full justify-between overflow-hidden",
                     filterDomain
-                      ? "bg-[#155DFC] border-transparent text-white shadow-lg shadow-blue-200"
-                      : "border-slate-100 bg-slate-50/50 text-slate-400 hover:bg-white hover:border-blue-200"
+                      ? "bg-blue-50 border-blue-200 text-blue-700 shadow-sm"
+                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300 shadow-sm"
                   )}
                 >
-                  <div className="flex items-center gap-3 relative z-10">
-                    <div className="flex flex-col items-start leading-none ml-1">
-                      <span className="text-[8px] font-black uppercase tracking-[0.2em] mb-0.5 opacity-60">Expertise</span>
-                      <span className="text-[11px] font-black uppercase tracking-widest truncate max-w-[140px]">
-                        {filterDomain || "Cross Domain"}
+                  <div className="flex items-center gap-3 relative z-10 w-full overflow-hidden">
+                    <Briefcase size={18} className={cn("shrink-0", filterDomain ? "text-blue-600" : "text-slate-400")} />
+                    <div className="flex flex-col items-start leading-none ml-1 w-full overflow-hidden">
+                      <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Domain</span>
+                      <span className="text-sm font-semibold truncate w-full text-left block">
+                        {filterDomain || "All Domains"}
                       </span>
                     </div>
                   </div>
-                  <ChevronDown size={14} className={cn("transition-transform duration-300 group-hover:translate-y-0.5 relative z-10", filterDomain ? "text-white" : "text-slate-300")} />
+                  <ChevronDown size={16} className={cn("transition-transform duration-300 group-hover:translate-y-0.5 relative z-10 shrink-0", filterDomain ? "text-blue-600" : "text-slate-400")} />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-72 rounded-[2rem] p-3 border-indigo-50 shadow-2xl backdrop-blur-3xl bg-white/90">
+              <DropdownMenuContent align="start" className="w-[320px] rounded-2xl p-2 border-slate-200 shadow-xl bg-white z-[100]">
                 <DropdownMenuItem
                   onClick={() => setFilterDomain(null)}
-                  className="rounded-2xl py-4 px-4 font-black text-[10px] uppercase tracking-widest text-[#155DFC] cursor-pointer hover:bg-blue-50"
+                  className="rounded-xl py-3 px-4 font-semibold text-sm cursor-pointer hover:bg-slate-50 text-slate-700"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-blue-500" />
-                    Reset All Domains
-                  </div>
+                  All Domains
                 </DropdownMenuItem>
-                <DropdownMenuSeparator className="my-2 opacity-50" />
-                <div className="max-h-[350px] overflow-y-auto custom-scrollbar pr-1">
+                <DropdownMenuSeparator className="my-1 bg-slate-100" />
+                <div className="max-h-[300px] overflow-y-auto custom-scrollbar flex flex-col gap-1 p-1">
                   {domains.map(domain => (
                     <DropdownMenuItem
                       key={domain}
                       onClick={() => setFilterDomain(domain!)}
-                      className="rounded-2xl py-4 px-4 font-bold text-[11px] uppercase tracking-wider cursor-pointer hover:bg-slate-50 border border-transparent hover:border-indigo-100 transition-all mb-1"
+                      className={cn(
+                        "rounded-xl py-3 px-4 font-medium text-sm cursor-pointer transition-all",
+                        filterDomain === domain 
+                          ? "bg-blue-50 text-blue-700" 
+                          : "hover:bg-slate-50 text-slate-700"
+                      )}
                     >
-                      {domain}
+                      <div className="truncate w-full">{domain}</div>
                     </DropdownMenuItem>
                   ))}
                 </div>
@@ -733,6 +870,79 @@ function InternsPageComponent() {
             </DropdownMenu>
           </div>
         </div>
+
+        {/* Dynamic Cohort Info Card */}
+        {filterCohort && (() => {
+          const cohort = cohortDetails.find(c => c.title === filterCohort);
+          if (cohort) {
+            return (
+              <div className="bg-white/80 backdrop-blur-xl p-6 md:p-8 rounded-[2.5rem] border-2 border-indigo-50/50 shadow-2xl shadow-indigo-500/5 ring-4 ring-indigo-50/20 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-5">
+                  <GraduationCap size={160} />
+                </div>
+                <div className="flex flex-col md:flex-row gap-6 items-start relative z-10">
+                  {cohort.program_picture_url || cohort.cover_image_url ? (
+                    <div className="w-24 h-24 md:w-32 md:h-32 rounded-[2rem] overflow-hidden shrink-0 ring-4 ring-white shadow-xl bg-slate-100">
+                      <img src={cohort.program_picture_url || cohort.cover_image_url} alt={cohort.title} className="w-full h-full object-cover" />
+                    </div>
+                  ) : (
+                    <div className="w-24 h-24 md:w-32 md:h-32 rounded-[2rem] shrink-0 ring-4 ring-white shadow-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center">
+                      <GraduationCap className="w-12 h-12 text-white/90" />
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="px-4 py-1.5 bg-indigo-100 text-indigo-700 text-[10px] font-black uppercase tracking-widest rounded-full shadow-sm">
+                        {cohort.type}
+                      </span>
+                      {cohort.is_paid && (
+                        <span className="px-4 py-1.5 bg-green-100 text-green-700 text-[10px] font-black uppercase tracking-widest rounded-full flex items-center gap-1.5 shadow-sm">
+                          <Landmark size={12} /> Paid Opportunity
+                        </span>
+                      )}
+                      {cohort.status === 'active' && (
+                        <span className="px-4 py-1.5 bg-blue-100 text-blue-700 text-[10px] font-black uppercase tracking-widest rounded-full shadow-sm">
+                          Currently Active
+                        </span>
+                      )}
+                    </div>
+                    <h2 className="text-2xl md:text-3xl font-black text-slate-900 mb-3">{cohort.title}</h2>
+                    <div className="flex flex-wrap gap-5 text-sm font-bold text-slate-500 mb-5">
+                      {cohort.location && (
+                        <div className="flex items-center gap-2"><MapPin size={18} className="text-indigo-400"/> {cohort.location}</div>
+                      )}
+                      {(cohort.start_date || cohort.end_date) && (
+                        <div className="flex items-center gap-2"><Calendar size={18} className="text-blue-400"/> 
+                          {cohort.start_date ? format(new Date(cohort.start_date), 'MMM d, yyyy') : 'TBD'} - {cohort.end_date ? format(new Date(cohort.end_date), 'MMM d, yyyy') : 'TBD'}
+                        </div>
+                      )}
+                      {cohort.whatsapp_link && (
+                        <a href={cohort.whatsapp_link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-green-600 hover:text-green-700 hover:underline bg-green-50 px-3 py-1 rounded-xl transition-colors">
+                          <Sparkles size={16} /> Community Link
+                        </a>
+                      )}
+                    </div>
+                    {cohort.required_skills && cohort.required_skills.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {cohort.required_skills.slice(0, 6).map((skill: string, i: number) => (
+                          <span key={i} className="px-3 py-1.5 bg-slate-100/80 text-slate-600 text-[10px] font-bold uppercase tracking-wider rounded-xl border border-slate-200">
+                            {skill}
+                          </span>
+                        ))}
+                        {cohort.required_skills.length > 6 && (
+                          <span className="px-3 py-1.5 bg-slate-50 text-slate-400 text-[10px] font-bold uppercase tracking-wider rounded-xl border border-slate-100">
+                            +{cohort.required_skills.length - 6} more
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          }
+          return null;
+        })()}
 
         {/* View content */}
         {filteredApplicants.length === 0 ? (

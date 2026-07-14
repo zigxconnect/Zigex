@@ -74,6 +74,7 @@ export type Applicant = {
   monthlyRate?: number;
   paymentLedger?: PaymentRecord[];
   programId?: string | null;
+  whatsappLink?: string | null;
 
   // Supervisor
   supervisorId?: string | null;

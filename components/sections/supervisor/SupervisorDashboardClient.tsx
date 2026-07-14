@@ -47,6 +47,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { LogReviewModal } from "./LogReviewModal";
+import { AttendanceQRGenerator } from "./AttendanceQRGenerator";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -890,6 +891,15 @@ export function SupervisorDashboardClient({ data }: SupervisorDashboardClientPro
                   </div>
                 </div>
               </div>
+
+              {/* QR Code Generator for Printed Posters */}
+              {data.workspace && (
+                <AttendanceQRGenerator 
+                  internshipId={data.workspace.id}
+                  internshipTitle={data.workspace.title}
+                  companyName={data.workspace.company?.company_name}
+                />
+              )}
 
               <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2rem] p-6 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
                  <div>

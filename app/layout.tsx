@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
 import { Inter, Host_Grotesk } from "next/font/google";
-import { PushNotificationManager } from "@/components/providers/PushNotificationManager";
-import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import PushNotificationManager from "@/components/providers/PushNotificationManager";
+import ThemeProvider from "@/components/providers/ThemeProvider";
 import "./globals.css";
+import "@/styles/rich-content.css";
 // import { Toaster } from "@/components/ui/sonner";
 import { Toaster } from "react-hot-toast";
 import Script from "next/script";
 
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
-import { SessionGuard } from "@/components/providers/SessionGuard";
-import NextTopLoader from 'nextjs-toploader';
+import SessionGuard from "@/components/providers/SessionGuard";
+import LoaderProvider from "@/components/providers/LoaderProvider";
 
 const inter = Inter({
 
@@ -180,19 +181,7 @@ export default function RootLayout({
 
       </head>
       <body className={`${inter.variable} ${hostGrotesk.variable} antialiased`}>
-        <NextTopLoader 
-          color="#2563EB"
-          initialPosition={0.08}
-          crawlSpeed={200}
-          height={3}
-          crawl={true}
-          showSpinner={false}
-          easing="ease"
-          speed={200}
-          shadow="0 0 10px #2563EB,0 0 5px #2563EB"
-          zIndex={1600}
-          showAtBottom={false}
-        />
+        <LoaderProvider />
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
           <SessionGuard>
             <PushNotificationManager />

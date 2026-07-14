@@ -345,3 +345,4 @@ async function uploadToSupabaseStorage(
 
   return publicUrlData.publicUrl;
 }
+

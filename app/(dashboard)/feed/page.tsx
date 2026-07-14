@@ -8,6 +8,25 @@ import Link from "next/link";
 import Image from "next/image";
 import FeedStories from '@/components/feed/FeedStories';
 import { cn } from "@/lib/utils";
+import { FeedBlogCarousel } from "@/components/feed/FeedBlogCarousel";
+import { sanityFetch } from "@/sanity/lib/client";
+import { urlFor } from "@/sanity/lib/image";
+
+const RECENT_BLOGS_QUERY = `*[_type == "post"] | order(publishedAt desc)[0...6] {
+  _id,
+  title,
+  "slug": slug.current,
+  excerpt,
+  mainImage,
+  publishedAt,
+  author->{
+    name,
+    image
+  },
+  categories[]->{
+    title
+  }
+}`;
 
 interface FeedPageProps {
   searchParams: Promise<{ q?: string }>;
@@ -22,19 +41,33 @@ export const metadata = {
 
 export default async function FeedPage({ searchParams }: FeedPageProps) {
   const resolvedParams = await searchParams;
-  const [userData, stats, workspaces] = await Promise.all([
+  const [userData, stats, workspaces, sanityPosts] = await Promise.all([
     getProfileInfo(),
     getPlatformStats(),
-    import('@/lib/actions/intenship.actions').then(m => m.getUserWorkspaces())
+    import('@/lib/actions/intenship.actions').then(m => m.getUserWorkspaces()),
+    sanityFetch({ query: RECENT_BLOGS_QUERY })
   ]);
+
+  // Transform Sanity posts to match the carousel format
+  const formattedPosts = (sanityPosts || []).map((post: any) => ({
+    _id: post._id,
+    title: post.title,
+    slug: post.slug,
+    excerpt: post.excerpt,
+    imageUrl: post.mainImage ? urlFor(post.mainImage).width(600).height(400).url() : undefined,
+    publishedAt: post.publishedAt || new Date().toISOString(),
+    authorName: post.author?.name || 'Zigex Team',
+    authorImage: post.author?.image ? urlFor(post.author.image).width(40).height(40).url() : undefined,
+    categories: post.categories?.map((c: any) => c.title) || [],
+  }));
 
   return (
     <div className="flex flex-col xl:flex-row gap-6 pb-12">
       {/* ═══ Main Content Column ═══ */}
       <div className="flex-1 min-w-0 space-y-6">
 
-        {/* ── Hero Banner ── */}
-        <section className="relative overflow-hidden rounded-2xl bg-slate-50 dark:bg-[#161b22] border border-slate-100 dark:border-slate-800/60 min-h-[220px]">
+        {/* ── Hero Banner (hidden on mobile) ── */}
+        <section className="hidden md:block relative overflow-hidden rounded-2xl bg-slate-50 dark:bg-[#161b22] border border-slate-100 dark:border-slate-800/60 min-h-[220px]">
           <div className="absolute top-0 right-0 w-1/2 h-full">
             <div className="absolute inset-0 bg-gradient-to-l from-blue-600/5 dark:from-blue-500/10 to-transparent" />
             <div className="absolute right-6 bottom-2 text-slate-200/10 dark:text-white/[0.03] font-black text-[160px] leading-none tracking-tighter select-none pointer-events-none hidden md:block">Z</div>
@@ -88,6 +121,16 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 
         {/* ── Stories ── */}
         <section>
+          {/* Mobile-only header */}
+          <div className="flex items-center gap-3 mb-3 md:hidden px-1">
+            <div className="w-9 h-9 bg-[#155DFC] rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+              <span className="text-white font-black text-sm italic">Z</span>
+            </div>
+            <div>
+              <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tight leading-none">Zigex Announcements</h2>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Latest updates & stories</p>
+            </div>
+          </div>
           <FeedStories currentUser={userData} />
         </section>
 
@@ -109,6 +152,11 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 
           <MainFeedPage searchQuery={resolvedParams.q} />
         </section>
+
+        {/* ── Blog Carousel ── */}
+        {formattedPosts && formattedPosts.length > 0 && (
+          <FeedBlogCarousel posts={formattedPosts} />
+        )}
 
         {/* ── Platform Stats ── */}
         <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-5 border-t border-slate-100 dark:border-slate-800/50">

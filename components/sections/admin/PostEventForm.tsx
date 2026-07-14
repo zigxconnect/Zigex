@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import Image from "next/image";
 import { Select } from "@/components/uiComponent/Select";
 import { Textarea } from "@/components/uiComponent/Textarea";
+import { RichTextEditor } from "@/components/ui/RichTextEditor";
 
 const FormSection = ({ title, children }: any) => (
   <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
@@ -54,6 +55,10 @@ export const PostEventForm = ({ initialData }: { initialData?: any }) => {
     formatDateForInput(initialData?.end_date)
   );
   const [location, setLocation] = useState(initialData?.location || "");
+  const [isVisible, setIsVisible] = useState(
+    initialData?.is_visible ?? true
+  );
+  const [whatsappCommunityLink, setWhatsappCommunityLink] = useState(initialData?.whatsapp_community_link || "");
   const [eventImage, setEventImage] = useState<File | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -77,6 +82,8 @@ export const PostEventForm = ({ initialData }: { initialData?: any }) => {
     formData.append("start_date", new Date(startDate).toISOString());
     formData.append("end_date", new Date(endDate).toISOString());
     formData.append("location", location);
+    formData.append("is_visible", isVisible.toString());
+    formData.append("whatsapp_community_link", whatsappCommunityLink);
     if (eventImage) {
       formData.append("event_image", eventImage);
     }
@@ -144,6 +151,14 @@ export const PostEventForm = ({ initialData }: { initialData?: any }) => {
             required
           />
         </FormField>
+        <FormField label="WhatsApp Community Link">
+          <Input
+            type="url"
+            value={whatsappCommunityLink}
+            onChange={(e) => setWhatsappCommunityLink(e.target.value)}
+            placeholder="e.g., https://chat.whatsapp.com/..."
+          />
+        </FormField>
       </FormSection>
 
       <FormSection title="Event Schedule">
@@ -165,13 +180,27 @@ export const PostEventForm = ({ initialData }: { initialData?: any }) => {
         </FormField>
       </FormSection>
 
+      <FormSection title="Visibility">
+        <FormField label="Publish Virtual Event" className="md:col-span-2">
+          <label className="flex items-center space-x-3 mt-2">
+            <input
+              type="checkbox"
+              checked={isVisible}
+              onChange={(e) => setIsVisible(e.target.checked)}
+              className="h-5 w-5 rounded border-gray-300 text-[#001D4A] focus:ring-[#001D4A]"
+            />
+            <span className="text-sm text-gray-600">
+              Make this event visible to students immediately
+            </span>
+          </label>
+        </FormField>
+      </FormSection>
+
       <FormSection title="Details & Branding">
         <FormField label="Event Description" required className="md:col-span-2">
-          <Textarea
-            rows={8}
+          <RichTextEditor
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            required
+            onChange={setDescription}
           />
         </FormField>
         <FormField label="Event Image" className="md:col-span-2">
@@ -218,3 +247,6 @@ export const PostEventForm = ({ initialData }: { initialData?: any }) => {
     </form>
   );
 };
+
+
+

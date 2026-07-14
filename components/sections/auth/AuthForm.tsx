@@ -33,12 +33,12 @@ type FormData = z.infer<typeof signUpSchema>;
 type AuthFormProps = { type: "signIn" | "signUp" };
 
 const Divider = () => (
-  <div className="relative my-6">
+  <div className="relative my-4">
     <div className="absolute inset-0 flex items-center">
       <span className="w-full border-t border-border" />
     </div>
     <div className="relative flex justify-center text-sm uppercase">
-      <span className="bg-card px-3 text-muted-foreground font-medium">Or</span>
+      <span className="bg-white dark:bg-slate-900 px-3 text-muted-foreground font-medium">Or</span>
     </div>
   </div>
 );
@@ -121,7 +121,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
     },
     signUp: {
       Icon: GraduationCap,
-      title: "Create Your Student Account",
+      title: "",
       subtitle: "Join thousands of students finding amazing internships",
       buttonText: "Create Account",
       socialButtonText: "Sign Up",
@@ -377,17 +377,26 @@ export const AuthForm = ({ type }: AuthFormProps) => {
   }
 
   return (
-    <div className="w-full max-w-md p-8 bg-card rounded-xl shadow-2xl flex flex-col justify-center min-h-[650px]">
-      <div className="text-center">
-        <div className="mx-auto w-12 h-12 bg-primary rounded-full flex items-center justify-center">
-          <currentContent.Icon className="w-7 h-7 text-primary-foreground" />
+    <div className="w-full max-w-md p-6 md:p-8 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl flex flex-col justify-center relative overflow-hidden transition-all duration-300">
+      {/* Subtle shine effect */}
+      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/10 to-transparent pointer-events-none rounded-3xl" />
+      
+      <div className="text-center relative z-10">
+        <div className="mx-auto w-14 h-14 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-md border border-slate-100 dark:border-slate-800 mb-3 transform hover:scale-105 transition-transform">
+          <img
+            src="https://i.ibb.co/Cp502Yby/logo.png"
+            alt="Zigex Logo"
+            className="w-9 h-9 object-contain drop-shadow-md"
+          />
         </div>
-        <h1 className="mt-4 text-2xl font-bold text-foreground">
-          {currentContent.title}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">{currentContent.subtitle}</p>
+        {currentContent.title && (
+          <h1 className="mt-2 text-xl md:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+            {currentContent.title}
+          </h1>
+        )}
+        <p className={`mt-2 text-sm font-semibold ${currentContent.title ? 'text-slate-600 dark:text-slate-400' : 'text-[#155DFC] dark:text-blue-400 text-base'}`}>{currentContent.subtitle}</p>
       </div>
-      <div className="mt-5 space-y-3">
+      <div className="mt-5 space-y-3 relative z-10">
         {/* Custom Google Button matching App Theme with Invisible Overlay */}
         <div className="relative w-full">
           {/* The visible custom button */}
@@ -405,97 +414,97 @@ export const AuthForm = ({ type }: AuthFormProps) => {
         </div>
       </div>
       <Divider />
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 relative z-10">
         {isSignUp && (
-          <div>
-            <label className="text-sm font-medium text-foreground">
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100 fill-mode-both">
+            <label className="text-sm font-bold tracking-wide text-slate-700 dark:text-slate-300">
               Full Name
             </label>
             <Input
               id="fullName"
               type="text"
               placeholder="Enter your full name"
-              className="mt-1 text-foreground focus:border-primary focus:ring-2 focus:ring-ring"
+              className="mt-1 h-11 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-[#155DFC] focus:ring-4 focus:ring-[#155DFC]/20 rounded-xl transition-all duration-300 shadow-sm placeholder:text-slate-400 font-medium"
               {...register("fullName")}
               disabled={isSubmitting}
             />
             {errors.fullName && (
-              <p className="text-xs text-red-500 mt-1">
+              <p className="text-xs font-bold text-rose-500 mt-1.5 animate-in slide-in-from-left-2">
                 {errors.fullName.message}
               </p>
             )}
           </div>
         )}
-        <div>
-          <label className="text-sm font-medium text-foreground">Email</label>
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200 fill-mode-both">
+          <label className="text-sm font-bold tracking-wide text-slate-700 dark:text-slate-300">Email Address</label>
           <Input
             id="email"
             type="email"
             autoComplete="email"
-            placeholder="Enter your email address"
-            className="mt-1 text-foreground focus:border-primary focus:ring-2 focus:ring-ring"
+            placeholder="name@example.com"
+            className="mt-1 h-11 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-[#155DFC] focus:ring-4 focus:ring-[#155DFC]/20 rounded-xl transition-all duration-300 shadow-sm placeholder:text-slate-400 font-medium"
             {...register("email")}
             disabled={isSubmitting}
           />
           {errors.email && (
-            <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>
+            <p className="text-xs font-bold text-rose-500 mt-1.5 animate-in slide-in-from-left-2">{errors.email.message}</p>
           )}
         </div>
-        <div>
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300 fill-mode-both">
           <div className="flex justify-between items-center">
-            <label className="text-sm font-medium text-foreground">
+            <label className="text-sm font-bold tracking-wide text-slate-700 dark:text-slate-300">
               Password
             </label>
             {!isSignUp && (
               <Link
                 href="/forgot-password"
-                className="text-sm text-primary hover:underline cursor-pointer"
+                className="text-sm font-bold text-[#155DFC] hover:text-[#1A3CB9] hover:underline transition-colors"
               >
                 Forgot Password?
               </Link>
             )}
           </div>
-          <div className="relative mt-1">
+          <div className="relative mt-1.5">
             <Input
               id="password"
               type={showPassword ? "text" : "password"}
               autoComplete={isSignUp ? "new-password" : "current-password"}
-              placeholder="Enter your password"
-              className="focus:border-primary focus:ring-2 focus:ring-ring"
+              placeholder="••••••••"
+              className="h-11 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-[#155DFC] focus:ring-4 focus:ring-[#155DFC]/20 rounded-xl transition-all duration-300 shadow-sm placeholder:text-slate-400 font-medium"
               {...register("password")}
               disabled={isSubmitting}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
+              className="absolute inset-y-0 right-0 flex items-center pr-4 cursor-pointer text-slate-400 hover:text-[#155DFC] transition-colors"
               disabled={isSubmitting}
               aria-label={showPassword ? "Hide password" : "Show password"}
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
-          {isSignUp && (
-            <p className="text-xs text-gray-500 mt-1">
+          {isSignUp && !errors.password && (
+            <p className="text-xs font-medium text-slate-500 mt-1.5">
               Must be at least 6 characters long.
             </p>
           )}
           {errors.password && (
-            <p className="text-xs text-red-500 mt-1">
+            <p className="text-xs font-bold text-rose-500 mt-1.5 animate-in slide-in-from-left-2">
               {errors.password.message}
             </p>
           )}
         </div>
         <Button
           type="submit"
-          className="w-full !mt-6 text-base py-2.5 flex items-center justify-center gap-2 bg-primary text-primary-foreground font-semibold rounded-lg shadow-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring transition-all duration-200"
-          disabled={isSubmitting || signInCooldown > 0}
+          className="w-full h-11 bg-[#155DFC] hover:bg-[#1A3CB9] text-white font-bold rounded-xl shadow-lg shadow-blue-500/25 transition-all hover:-translate-y-0.5 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-500 fill-mode-both"
+          disabled={isSubmitting || (signInCooldown > 0 && !isSignUp)}
         >
           {isSubmitting ? (
-            <>
-              <Spinner />
-              <span>Processing...</span>
-            </>
+            <div className="flex items-center justify-center gap-2">
+              <Spinner className="h-5 w-5 text-white" />
+              <span>Please wait...</span>
+            </div>
           ) : (
             currentContent.buttonText
           )}
@@ -509,7 +518,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
             : `Please wait ${signInCooldown}s before retrying sign-in.`}
         </p>
       )}
-      <div className="space-y-4 text-center mt-5">
+      <div className="space-y-3 text-center mt-4">
         {isSignUp && (
           <p className="text-sm text-muted-foreground">
             {/* Looking to hire?{" "} */}
@@ -531,7 +540,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
           </Link>
         </p>
       </div>
-      <p className="text-center text-xs text-muted-foreground/60 pt-4 mt-2">{finePrint}</p>
+      <p className="text-center text-xs text-muted-foreground/60 pt-2 mt-1">{finePrint}</p>
     </div>
   );
 };

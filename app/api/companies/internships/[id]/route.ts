@@ -63,8 +63,14 @@ export async function PATCH(
         } catch {
           rawData[key] = [];
         }
-      } else if (key === "is_paid") {
+      } else if (key === "is_paid" || key === "is_visible" || key === "require_geolocation") {
         rawData[key] = value === "true";
+      } else if (key === "geo_latitude" || key === "geo_longitude") {
+        const num = parseFloat(value as string);
+        rawData[key] = isNaN(num) ? null : num;
+      } else if (key === "geo_radius_meters") {
+        const num = parseInt(value as string, 10);
+        rawData[key] = isNaN(num) ? 100 : num;
       } else if (key !== "cover_image") {
         rawData[key] = value === "null" ? null : value;
       }

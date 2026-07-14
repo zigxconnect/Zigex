@@ -51,7 +51,8 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
     const fetchSummaries = async () => {
       setFetchingSummaries(true);
       try {
-        const data = await getCompanyInternsPerformanceSummary(companyId);
+        const studentIds = applicants.map(a => a.studentId).concat(applicants.map(a => a.userId)).filter(Boolean) as string[];
+        const data = await getCompanyInternsPerformanceSummary(companyId, studentIds);
         setSummaries(data || {});
       } catch (err) {
         console.error("Error fetching performance summaries:", err);
@@ -60,12 +61,20 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
       }
     };
     fetchSummaries();
-  }, [companyId]);
+  }, [companyId, applicants]);
 
   // Helper function to look up summary with proper ID fallbacks
   const getSummary = (intern: Applicant | null) => {
-    if (!intern) return { attendanceCount: 0, totalMarks: 0, latestObservation: "" };
-    return summaries[intern.id] || summaries[intern.userId || ""] || summaries[intern.studentId || ""] || { attendanceCount: 0, totalMarks: 0, latestObservation: "" };
+    if (!intern) return { attendanceCount: 0, totalMarks: 0, latestObservation: "", taskCount: 0, avgMark: null, performanceRating: null };
+    
+    // Base summary from application ID
+    const baseSummary = summaries[intern.id] || summaries[intern.userId || ""] || summaries[intern.studentId || ""] || { attendanceCount: 0, totalMarks: 0, latestObservation: "", taskCount: 0, avgMark: null, performanceRating: null };
+    
+    // Extract V2 attendance which is keyed directly by studentId or userId
+    const v2Summary = summaries[intern.studentId || ""] || summaries[intern.userId || ""];
+    const attendanceCount = v2Summary?.attendanceCount !== undefined ? v2Summary.attendanceCount : baseSummary.attendanceCount;
+
+    return { ...baseSummary, attendanceCount };
   };
 
   // Filter only active (accepted) interns
@@ -174,9 +183,8 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
             <tbody className="divide-y divide-slate-50">
               {activeInterns.map((intern) => {
                 const daysWorked = intern.appliedDate ? differenceInDays(new Date(), new Date(intern.appliedDate)) : 0;
-                // Try lookup by application ID first, then by user ID as fallback
-                // Try all ID fallbacks: application ID, userId (auth user), studentId (profile id)
-                const summary = summaries[intern.id] || summaries[intern.userId || ""] || summaries[intern.studentId || ""] || { attendanceCount: 0, totalMarks: 0, latestObservation: "", taskCount: 0, avgMark: null, performanceRating: null };
+                // Use robust getSummary to extract correct V2 attendance
+                const summary = getSummary(intern);
                 
                 return (
                   <tr key={intern.id} className="group hover:bg-blue-50/30 transition-colors duration-300">
@@ -413,9 +421,9 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
                       </motion.div>
                     ))
                   ) : (
-                    <div className="py-20 text-center bg-slate-50/50 dark:bg-slate-900/50 rounded-2xl border-2 border-dashed border-slate-100 dark:border-slate-800">
+                    <div className="py-20 text-center bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-100">
                       <FileText className="mx-auto h-16 w-16 text-slate-200 mb-6 drop-shadow-sm" />
-                      <h4 className="text-slate-900 dark:text-white font-bold text-lg mb-1">No Records Found</h4>
+                      <h4 className="text-slate-900 font-bold text-lg mb-1">No Records Found</h4>
                       <p className="text-slate-500 text-xs font-medium max-w-xs mx-auto leading-relaxed">
                         We couldn't find any detailed supervisor observations or record history for this intern yet.
                       </p>
@@ -443,16 +451,16 @@ export function InternRecordsTable({ applicants, companyId }: InternRecordsTable
 
  // Stats Box Component
 const StatBox = ({ label, value, icon: Icon, color, trend }: any) => (
-  <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-5 rounded-[1.5rem] shadow-sm relative overflow-hidden group hover:border-[#155DFC]/20 transition-all duration-300">
+  <div className="bg-white border border-slate-100 p-5 rounded-[1.5rem] shadow-sm relative overflow-hidden group hover:border-[#155DFC]/20 transition-all duration-300">
     <div className={`absolute top-0 left-0 w-1.5 h-full ${color} opacity-10 group-hover:opacity-100 transition-opacity`} />
     <div className="flex items-center gap-4 relative z-10">
       <div className={`p-3 rounded-2xl ${color} shadow-lg shadow-black/5 group-hover:scale-110 transition-transform duration-500`}>
         <Icon size={20} className="text-white" />
       </div>
       <div className="min-w-0">
-        <p className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">{label}</p>
+        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">{label}</p>
         <div className="flex items-center gap-2">
-          <p className="text-xl font-black text-black dark:text-white leading-none tracking-tight">{value}</p>
+          <p className="text-xl font-black text-black leading-none tracking-tight">{value}</p>
           {trend && (
             <span className="text-[10px] font-bold text-emerald-500 flex items-center gap-0.5">
                {trend}
@@ -461,7 +469,7 @@ const StatBox = ({ label, value, icon: Icon, color, trend }: any) => (
         </div>
       </div>
     </div>
-    <div className="absolute -bottom-6 -right-6 w-16 h-16 bg-slate-50 dark:bg-slate-800/50 rounded-full group-hover:scale-150 transition-transform duration-700 opacity-50" />
+    <div className="absolute -bottom-6 -right-6 w-16 h-16 bg-slate-50 rounded-full group-hover:scale-150 transition-transform duration-700 opacity-50" />
   </div>
 );
 

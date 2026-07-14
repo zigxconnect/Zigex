@@ -148,7 +148,7 @@ export const UnifiedFeedCard = memo(({ item, onLiveClick, onClick, index = 0, is
 
         {/* Description */}
         <p className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold leading-relaxed line-clamp-2 italic">
-          {item.description || `${companyName} opportunity — explore this and grow.`}
+          {(item.description || `${companyName} opportunity — explore this and grow.`).replace(/<[^>]*>/g, "")}
         </p>
 
         {/* Footer */}

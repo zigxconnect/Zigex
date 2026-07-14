@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { Applicant, PaymentRecord } from "@/lib/types/applicants";
@@ -368,22 +368,22 @@ export const InternLedgerTable = ({
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-blue-100 dark:border-blue-900/30 shadow-sm relative overflow-hidden group hover:border-[#155DFC] transition-all duration-500"
+            className="bg-white rounded-3xl p-8 border border-blue-100 shadow-sm relative overflow-hidden group hover:border-[#155DFC] transition-all duration-500"
           >
             <div className="relative z-10 flex flex-col justify-between h-full space-y-6">
-              <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-[#155DFC] group-hover:bg-[#155DFC] group-hover:text-white transition-all duration-500">
+              <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center text-[#155DFC] group-hover:bg-[#155DFC] group-hover:text-white transition-all duration-500">
                 <Landmark size={28} />
               </div>
               <div>
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Total Liquid Balance</p>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-black text-slate-900 dark:text-white tabular-nums">
+                  <span className="text-4xl font-black text-slate-900 tabular-nums">
                     {totals.currentBalance.toLocaleString()}
                   </span>
                   <span className="text-sm font-bold text-[#155DFC]">XAF</span>
                 </div>
               </div>
-              <div className="flex items-center justify-between pt-4 border-t border-slate-50 dark:border-slate-800">
+              <div className="flex items-center justify-between pt-4 border-t border-slate-50">
                 <span className="text-[10px] font-black text-[#155DFC] uppercase tracking-widest">Available Funds</span>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -404,22 +404,22 @@ export const InternLedgerTable = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-blue-50/50 dark:border-slate-800 shadow-sm relative overflow-hidden group hover:border-[#155DFC] transition-all duration-500"
+            className="bg-white rounded-3xl p-8 border border-blue-50/50 shadow-sm relative overflow-hidden group hover:border-[#155DFC] transition-all duration-500"
           >
             <div className="relative z-10 flex flex-col justify-between h-full space-y-6">
-              <div className="w-14 h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 group-hover:bg-[#155DFC] group-hover:text-white transition-all duration-500">
+              <div className="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-600 group-hover:bg-[#155DFC] group-hover:text-white transition-all duration-500">
                 <TrendingUp size={28} />
               </div>
               <div>
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Rough Expected Gross Revenue</p>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-black text-slate-900 dark:text-white tabular-nums">
+                  <span className="text-4xl font-black text-slate-900 tabular-nums">
                     {totals.expectedIncome.toLocaleString()}
                   </span>
                   <span className="text-sm font-bold text-slate-400">XAF</span>
                 </div>
               </div>
-              <div className="flex items-center gap-2 pt-4 border-t border-slate-50 dark:border-slate-800 text-[10px] font-black text-slate-400 uppercase tracking-widest group-hover:text-[#155DFC] transition-colors">
+              <div className="flex items-center gap-2 pt-4 border-t border-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest group-hover:text-[#155DFC] transition-colors">
                 <Briefcase size={12} />
                 Contract Pipeline
               </div>
@@ -467,22 +467,22 @@ export const InternLedgerTable = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group hover:border-[#155DFC] transition-all duration-500"
+            className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm relative overflow-hidden group hover:border-[#155DFC] transition-all duration-500"
           >
             <div className="relative z-10 flex flex-col justify-between h-full space-y-6">
-              <div className="w-14 h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 group-hover:bg-[#155DFC] group-hover:text-white transition-all duration-500">
+              <div className="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-600 group-hover:bg-[#155DFC] group-hover:text-white transition-all duration-500">
                 <Receipt size={28} />
               </div>
               <div>
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Corporate Expenses</p>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-black text-slate-900 dark:text-white tabular-nums">
+                  <span className="text-4xl font-black text-slate-900 tabular-nums">
                     {totals.totalExpenses.toLocaleString()}
                   </span>
                   <span className="text-sm font-bold text-slate-400">XAF</span>
                 </div>
               </div>
-              <div className="flex items-center justify-between pt-4 border-t border-slate-50 dark:border-slate-800">
+              <div className="flex items-center justify-between pt-4 border-t border-slate-50">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -505,12 +505,12 @@ export const InternLedgerTable = ({
               placeholder="Search ledger by name, school, or option..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-14 pl-12 rounded-2xl border-none bg-white dark:bg-slate-900 shadow-xl shadow-slate-200/40 dark:shadow-none focus:ring-4 focus:ring-blue-50 dark:focus:ring-blue-900/10 text-sm font-bold placeholder:text-slate-300"
+              className="h-14 pl-12 rounded-2xl border-none bg-white shadow-xl shadow-slate-200/40 focus:ring-4 focus:ring-blue-50 text-sm font-bold placeholder:text-slate-300"
             />
           </div>
 
           <div className="flex items-center gap-3 w-full md:w-auto">
-            <div className="flex items-center bg-white dark:bg-slate-900 rounded-2xl border-2 border-slate-100 dark:border-slate-800 p-1.5 shadow-sm">
+            <div className="flex items-center bg-white rounded-2xl border-2 border-slate-100 p-1.5 shadow-sm">
               <Button
                 variant="ghost"
                 size="sm"
@@ -556,7 +556,7 @@ export const InternLedgerTable = ({
             <Button
               variant="outline"
               onClick={handleExportAudit}
-              className="h-14 px-6 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 font-bold uppercase text-[10px] tracking-widest hover:border-[#155DFC] hover:text-[#155DFC] transition-all gap-2"
+              className="h-14 px-6 rounded-2xl border-2 border-slate-100 bg-white text-slate-600 font-bold uppercase text-[10px] tracking-widest hover:border-[#155DFC] hover:text-[#155DFC] transition-all gap-2"
             >
               <Download size={18} /> Export Audit
             </Button>
@@ -564,13 +564,13 @@ export const InternLedgerTable = ({
         </div>
 
         {/* --- MAIN LEDGER TABLE --- */}
-        <div id="ledger-table-container" className="bg-white dark:bg-slate-900 rounded-[2.5rem] border-2 border-slate-50 dark:border-slate-800 shadow-3xl shadow-slate-200/30 overflow-hidden ring-8 ring-slate-50/50 dark:ring-slate-900/50">
+        <div id="ledger-table-container" className="bg-white rounded-[2.5rem] border-2 border-slate-50 shadow-3xl shadow-slate-200/30 overflow-hidden ring-8 ring-slate-50/50">
           <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full border-separate border-spacing-0">
               <thead>
-                <tr className="bg-slate-50/50 dark:bg-slate-800/40">
+                <tr className="bg-slate-50/50">
                   <th
-                    className="px-8 py-8 text-left border-b border-slate-100 dark:border-slate-800 cursor-pointer group/th"
+                    className="px-8 py-8 text-left border-b border-slate-100 cursor-pointer group/th"
                     onClick={() => {
                       if (sortBy === "name") setSortOrder(prev => prev === "asc" ? "desc" : "asc");
                       else { setSortBy("name"); setSortOrder("asc"); }
@@ -585,13 +585,13 @@ export const InternLedgerTable = ({
                       )}
                     </div>
                   </th>
-                  <th className="px-8 py-8 text-left border-b border-slate-100 dark:border-slate-800"><span className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Academic Option</span></th>
-                  <th className="px-8 py-8 text-center border-b border-slate-100 dark:border-slate-800"><span className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Monthly Ledger Audit</span></th>
-                  <th className="px-8 py-8 text-right border-b border-slate-100 dark:border-slate-800"><span className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Financial status</span></th>
-                  <th className="px-8 py-8 border-b border-slate-100 dark:border-slate-800"></th>
+                  <th className="px-8 py-8 text-left border-b border-slate-100"><span className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Academic Option</span></th>
+                  <th className="px-8 py-8 text-center border-b border-slate-100"><span className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Monthly Ledger Audit</span></th>
+                  <th className="px-8 py-8 text-right border-b border-slate-100"><span className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Financial status</span></th>
+                  <th className="px-8 py-8 border-b border-slate-100"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50 dark:divide-slate-800/60">
+              <tbody className="divide-y divide-slate-50">
                 <AnimatePresence mode="popLayout">
                   {sortedData.map((app, appIdx) => {
                     const intel = getFinancials(app);
@@ -601,7 +601,7 @@ export const InternLedgerTable = ({
                         initial={{ opacity: 0, scale: 0.98 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: appIdx * 0.04 }}
-                        className="group hover:bg-blue-50/20 dark:hover:bg-blue-900/5 transition-all duration-300"
+                        className="group hover:bg-blue-50/20 transition-all duration-300"
                       >
                         {/* ID Column */}
                         <td className="px-8 py-6 whitespace-nowrap">
@@ -614,12 +614,12 @@ export const InternLedgerTable = ({
                                   <div className="w-full h-full flex items-center justify-center text-white font-black text-lg uppercase">{app.name.charAt(0)}</div>
                                 )}
                               </div>
-                              <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-xl bg-white dark:bg-slate-800 shadow-lg border-2 border-slate-100 dark:border-slate-700 flex items-center justify-center z-20">
+                              <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-xl bg-white shadow-lg border-2 border-slate-100 flex items-center justify-center z-20">
                                 <CheckCircle2 size={12} className={cn(intel.remainingBalance === 0 ? "text-emerald-500" : "text-slate-300")} />
                               </div>
                             </div>
                             <div>
-                              <p className="text-base font-black text-slate-900 dark:text-white leading-none mb-1 group-hover:text-[#155DFC] transition-colors">{app.name}</p>
+                              <p className="text-base font-black text-slate-900 leading-none mb-1 group-hover:text-[#155DFC] transition-colors">{app.name}</p>
                               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{app.email}</p>
                             </div>
                           </div>
@@ -629,7 +629,7 @@ export const InternLedgerTable = ({
                         <td className="px-8 py-6">
                           <div className="space-y-2">
                             <div className="flex items-center gap-2">
-                              <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 border-none text-[9px] font-black uppercase px-2 py-0.5 rounded-md">
+                              <Badge className="bg-slate-100 text-slate-600 hover:bg-slate-200 border-none text-[9px] font-black uppercase px-2 py-0.5 rounded-md">
                                 {app.domain || "Not Specified"}
                               </Badge>
                             </div>
@@ -671,7 +671,7 @@ export const InternLedgerTable = ({
                                         "relative flex flex-col items-center justify-center w-12 h-12 rounded-xl border-2 transition-all duration-300 group/month shadow-sm",
                                         isPaid
                                           ? (isAdvance ? "bg-amber-50 border-amber-200 text-amber-700" : "bg-blue-50 border-blue-200 text-blue-700 shadow-blue-200/50")
-                                          : "bg-slate-50 dark:bg-slate-800/40 border-slate-100 dark:border-slate-800 text-slate-200 hover:border-blue-300 hover:bg-white"
+                                          : "bg-slate-50 border-slate-100 text-slate-200 hover:border-blue-300 hover:bg-white"
                                       )}
                                     >
                                       <span className={cn(
@@ -714,25 +714,25 @@ export const InternLedgerTable = ({
                           <div className="flex flex-col items-end gap-1">
                             <div className="flex items-center gap-5">
                               <div className="text-right">
-                                <p className="text-[8px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest mb-1">Realized</p>
+                                <p className="text-[8px] font-black text-slate-300 uppercase tracking-widest mb-1">Realized</p>
                                 <div className="flex items-center gap-1.5 justify-end">
                                   <span className="text-sm font-black text-[#155DFC] tabular-nums">{intel.totalPaid.toLocaleString()}</span>
                                   <span className="text-[10px] font-bold text-slate-400">XAF</span>
                                 </div>
                               </div>
-                              <div className="w-px h-10 bg-slate-100 dark:bg-slate-800" />
+                              <div className="w-px h-10 bg-slate-100" />
                               <div className="text-right">
-                                <p className="text-[8px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest mb-1">Status</p>
+                                <p className="text-[8px] font-black text-slate-300 uppercase tracking-widest mb-1">Status</p>
                                 <div className="flex items-center gap-2 justify-end">
                                   {intel.debt > 0 ? (
-                                    <Badge className="bg-rose-50 dark:bg-rose-900/30 text-rose-500 border-none font-black text-[10px] h-7 px-3 flex items-center gap-2 rounded-lg">
+                                    <Badge className="bg-rose-50 text-rose-500 border-none font-black text-[10px] h-7 px-3 flex items-center gap-2 rounded-lg">
                                       -{intel.debt.toLocaleString()} OWED
                                       <AlertCircle size={12} className="animate-pulse" />
                                     </Badge>
                                   ) : (
                                     <Badge className={cn(
                                       "border-none font-black text-[10px] h-7 px-3 flex items-center gap-2 rounded-lg",
-                                      intel.remainingBalance === 0 ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600" : "bg-blue-50 dark:bg-blue-900/30 text-blue-600"
+                                      intel.remainingBalance === 0 ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-blue-600"
                                     )}>
                                       {intel.remainingBalance === 0 ? "SETTLED" : "CURRENT"}
                                       <ShieldCheck size={12} />
@@ -741,7 +741,7 @@ export const InternLedgerTable = ({
                                 </div>
                               </div>
                             </div>
-                            <div className="w-full max-w-[160px] h-2 bg-slate-50 dark:bg-slate-800/40 rounded-full mt-2 relative overflow-hidden ring-1 ring-slate-100 dark:ring-slate-800">
+                            <div className="w-full max-w-[160px] h-2 bg-slate-50 rounded-full mt-2 relative overflow-hidden ring-1 ring-slate-100">
                               <motion.div
                                 initial={{ width: 0 }}
                                 animate={{ width: `${intel.totalDue > 0 ? (intel.totalPaid / intel.totalDue) * 100 : 0}%` }}
@@ -782,7 +782,7 @@ export const InternLedgerTable = ({
           setIsWithdrawModalOpen(open);
           if (!open) setWithdrawError("");
         }}>
-          <DialogContent className="max-w-md bg-white dark:bg-slate-900 rounded-[2.5rem] border-none shadow-3xl p-0 overflow-hidden ring-1 ring-slate-100 dark:ring-slate-800">
+          <DialogContent className="max-w-md bg-white rounded-[2.5rem] border-none shadow-3xl p-0 overflow-hidden ring-1 ring-slate-100">
             <div className="bg-[#155DFC] p-8 text-white relative">
               <DialogTitle className="text-2xl font-black mb-1">
                 {isDeleting ? "Delete expense record" : (withdrawData.id ? "Edit Financial Record" : "Corporate withdrawal")}
@@ -804,7 +804,7 @@ export const InternLedgerTable = ({
                         value={withdrawData.amount}
                         onChange={(e) => setWithdrawData(prev => ({ ...prev, amount: e.target.value }))}
                         placeholder="e.g. 50000"
-                        className="h-14 pl-12 rounded-2xl border-slate-100 bg-slate-50 dark:bg-slate-800/40 text-lg font-bold focus:ring-4 focus:ring-blue-50 dark:focus:ring-blue-900/10 transition-all placeholder:text-slate-300"
+                        className="h-14 pl-12 rounded-2xl border-slate-100 bg-slate-50 text-lg font-bold focus:ring-4 focus:ring-blue-50 transition-all placeholder:text-slate-300"
                       />
                     </div>
                   </div>
@@ -817,7 +817,7 @@ export const InternLedgerTable = ({
                         value={withdrawData.reason}
                         onChange={(e) => setWithdrawData(prev => ({ ...prev, reason: e.target.value }))}
                         placeholder="e.g. Office Supplies, Maintenance..."
-                        className="h-14 pl-12 rounded-2xl border-slate-100 bg-slate-50 dark:bg-slate-800/40 text-sm font-bold focus:ring-4 focus:ring-blue-50 dark:focus:ring-blue-900/10 transition-all placeholder:text-slate-300"
+                        className="h-14 pl-12 rounded-2xl border-slate-100 bg-slate-50 text-sm font-bold focus:ring-4 focus:ring-blue-50 transition-all placeholder:text-slate-300"
                       />
                     </div>
                   </div>
@@ -825,8 +825,8 @@ export const InternLedgerTable = ({
               )}
 
               {isDeleting && (
-                <div className="bg-rose-50 dark:bg-rose-900/20 p-4 rounded-2xl border-2 border-rose-100 dark:border-rose-900/30">
-                  <p className="text-xs font-bold text-rose-600 dark:text-rose-400 mb-1">Confirm Deletion</p>
+                <div className="bg-rose-50 p-4 rounded-2xl border-2 border-rose-100">
+                  <p className="text-xs font-bold text-rose-600 mb-1">Confirm Deletion</p>
                   <p className="text-[10px] text-rose-500 font-medium">
                     You are deleting the expense: <span className="font-black uppercase">"{withdrawData.reason}"</span> for <span className="font-black">{Number(withdrawData.amount).toLocaleString()} XAF</span>.
                   </p>
@@ -846,7 +846,7 @@ export const InternLedgerTable = ({
                     }}
                     placeholder="••••"
                     className={cn(
-                      "h-14 pl-12 pr-12 rounded-2xl border-slate-100 bg-slate-50 dark:bg-slate-800/40 text-lg font-black tracking-[0.5em] focus:ring-4 focus:ring-blue-50 dark:focus:ring-blue-900/10 transition-all placeholder:tracking-normal placeholder:text-slate-300",
+                      "h-14 pl-12 pr-12 rounded-2xl border-slate-100 bg-slate-50 text-lg font-black tracking-[0.5em] focus:ring-4 focus:ring-blue-50 transition-all placeholder:tracking-normal placeholder:text-slate-300",
                       showPin && "tracking-normal"
                     )}
                   />
@@ -895,7 +895,7 @@ export const InternLedgerTable = ({
 
         {/* --- EXPENSES AUDIT DIALOG --- */}
         <Dialog open={isExpensesAuditOpen} onOpenChange={setIsExpensesAuditOpen}>
-          <DialogContent className="max-w-2xl bg-white dark:bg-slate-900 rounded-[2.5rem] border-none shadow-3xl p-0 overflow-hidden ring-1 ring-slate-100 dark:ring-slate-800">
+          <DialogContent className="max-w-2xl bg-white rounded-[2.5rem] border-none shadow-3xl p-0 overflow-hidden ring-1 ring-slate-100">
             <div className="bg-slate-900 p-8 text-white relative">
               <div className="flex justify-between items-start">
                 <div>
@@ -933,14 +933,14 @@ export const InternLedgerTable = ({
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: idx * 0.05 }}
-                    className="p-5 rounded-2xl border-2 border-slate-50 dark:border-slate-800 flex items-center justify-between group hover:border-indigo-100 transition-all"
+                    className="p-5 rounded-2xl border-2 border-slate-50 flex items-center justify-between group hover:border-indigo-100 transition-all"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-rose-50 dark:bg-rose-900/20 flex items-center justify-center text-rose-500">
+                      <div className="w-12 h-12 rounded-xl bg-rose-50 flex items-center justify-center text-rose-500">
                         <ArrowDownLeft size={20} />
                       </div>
                       <div>
-                        <p className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-tight">{expense.reason}</p>
+                        <p className="text-sm font-black text-slate-800 uppercase tracking-tight">{expense.reason}</p>
                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
                           {format(new Date(expense.created_at), 'MMM dd, yyyy • HH:mm')}
                         </p>
@@ -948,7 +948,7 @@ export const InternLedgerTable = ({
                     </div>
                     <div className="text-right flex items-center gap-4">
                       <div>
-                        <p className="text-lg font-black text-slate-900 dark:text-white tabular-nums">{expense.amount.toLocaleString()}</p>
+                        <p className="text-lg font-black text-slate-900 tabular-nums">{expense.amount.toLocaleString()}</p>
                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">XAF</p>
                       </div>
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -979,7 +979,7 @@ export const InternLedgerTable = ({
 
         {/* --- PAYMENT ENTRY DIALOG --- */}
         <Dialog open={isAmountModalOpen} onOpenChange={setIsAmountModalOpen}>
-          <DialogContent className="sm:max-w-md bg-white dark:bg-slate-900 rounded-[2.5rem] border-none shadow-3xl p-0 overflow-hidden ring-1 ring-slate-100 dark:ring-slate-800">
+          <DialogContent className="sm:max-w-md bg-white rounded-[2.5rem] border-none shadow-3xl p-0 overflow-hidden ring-1 ring-slate-100">
             <div className="bg-gradient-to-br from-[#155DFC] via-blue-700 to-indigo-800 p-8 text-white relative">
               <div className="relative z-10 text-center">
                 <DialogTitle className="text-2xl font-black mb-1">Manual Receipt logging</DialogTitle>
@@ -997,7 +997,7 @@ export const InternLedgerTable = ({
                     type="number"
                     value={customAmount}
                     onChange={(e) => setCustomAmount(e.target.value)}
-                    className="h-16 pl-14 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border-none text-xl font-black tabular-nums transition-all focus:ring-8 focus:ring-blue-50 dark:focus:ring-blue-900/10"
+                    className="h-16 pl-14 bg-slate-50 rounded-2xl border-none text-xl font-black tabular-nums transition-all focus:ring-8 focus:ring-blue-50"
                     autoFocus
                   />
                 </div>

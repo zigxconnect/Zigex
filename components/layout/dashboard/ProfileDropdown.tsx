@@ -19,6 +19,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { cn, slugifyUsername } from "@/lib/utils";
 import NameInitials from "@/components/NameInitials";
+import { createClient } from "@/lib/supabase/client";
 
 interface ProfileDropdownProps {
   user: any;
@@ -49,6 +50,17 @@ export const ProfileDropdown = ({ user }: ProfileDropdownProps) => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const handleSignOut = async () => {
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      await fetch("/api/auth/logout", { method: "POST" });
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   const menuItems = [
     { label: "My Profile", icon: User, href: profileUrl },
@@ -84,7 +96,7 @@ export const ProfileDropdown = ({ user }: ProfileDropdownProps) => {
           <span className="text-[11px] font-black text-slate-900 dark:text-white leading-none uppercase tracking-tighter">
             {userName}
           </span>
-          <span className="text-[8px] font-bold text-[#155DFC] dark:text-slate-300 uppercase tracking-widest mt-0.5">
+          <span className="text-[8px] font-bold text-[#155DFC] uppercase tracking-widest mt-0.5">
             {role}
           </span>
         </div>
@@ -106,7 +118,7 @@ export const ProfileDropdown = ({ user }: ProfileDropdownProps) => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.98 }}
             transition={{ duration: 0.2 }}
-            className="absolute right-0 top-full mt-4 w-60 bg-card border border-border shadow-[20px_40px_80px_rgba(0,0,0,0.15)] dark:shadow-none z-[100] rounded-2xl overflow-hidden"
+            className="absolute right-0 top-full mt-4 w-60 bg-card border border-border shadow-[20px_40px_80px_rgba(0,0,0,0.15)] z-[100] rounded-2xl overflow-hidden"
           >
             {/* Header info */}
             <div className="px-6 py-5 border-b border-border bg-muted/20">
@@ -141,10 +153,10 @@ export const ProfileDropdown = ({ user }: ProfileDropdownProps) => {
                     <span>Theme: {theme === "dark" ? "Dark" : "Light"}</span>
                   </div>
                   {/* Premium Switch Indicator */}
-                  <div className="w-8 h-4.5 rounded-full bg-slate-200 dark:bg-slate-700 p-0.5 transition-colors duration-300 relative flex items-center">
+                  <div className="w-8 h-4.5 rounded-full bg-slate-200 p-0.5 transition-colors duration-300 relative flex items-center">
                     <div
                       className={cn(
-                        "w-3.5 h-3.5 rounded-full bg-white dark:bg-[#155DFC] shadow-sm transform duration-300 ease-out",
+                        "w-3.5 h-3.5 rounded-full bg-white shadow-sm transform duration-300 ease-out",
                         theme === "dark" ? "translate-x-3.5" : "translate-x-0"
                       )}
                     />
@@ -155,10 +167,10 @@ export const ProfileDropdown = ({ user }: ProfileDropdownProps) => {
 
             <div className="border-t border-border mt-2">
               <button
-                className="w-full flex items-center gap-3 px-6 py-4 text-[11px] font-black text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all uppercase tracking-widest"
+                className="w-full flex items-center gap-3 px-6 py-4 text-[11px] font-black text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all uppercase tracking-widest"
                 onClick={() => {
-                  // Add logout logic
                   setIsOpen(false);
+                  handleSignOut();
                 }}
               >
                 <LogOut size={14} strokeWidth={3} />

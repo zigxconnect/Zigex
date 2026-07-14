@@ -112,7 +112,7 @@ export const getInternships = cache(async (searchQuery?: string) => {
               search_term: query,
             }
           );
-          internships = data;
+          internships = data?.filter((i: any) => i.is_visible !== false);
           error = rpcError;
         } else {
           const { data, error: fetchError } = await supabaseAdmin
@@ -135,6 +135,7 @@ export const getInternships = cache(async (searchQuery?: string) => {
               )
             `
             )
+            .eq("is_visible", true)
             .order("created_at", { ascending: false });
           internships = data;
           error = fetchError;
@@ -167,6 +168,7 @@ export const getEvents = cache(async (searchQuery?: string) => {
         let dbQuery = supabaseAdmin
           .from("event")
           .select("*, company:company_profiles (id, company_name, logo_url)")
+          .eq("is_visible", true)
           .order("created_at", { ascending: false });
 
         if (query) {
@@ -203,7 +205,8 @@ export const getPrograms = cache(async (searchQuery?: string) => {
       async (query?: string) => {
         let dbQuery = supabaseAdmin
           .from("programs")
-          .select("*, company:company_profiles (id, company_name, logo_url)");
+          .select("*, company:company_profiles (id, company_name, logo_url)")
+          .eq("is_visible", true);
 
         if (query) {
           dbQuery = dbQuery.or(

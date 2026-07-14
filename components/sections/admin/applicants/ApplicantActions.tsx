@@ -80,20 +80,33 @@ export const ApplicantActions = ({
     }
   }
 
-  // Determine the correct WhatsApp community link based on the program/internship title
+  // Use the dynamic WhatsApp community link from the specific internship/program
   const getWhatsAppLink = () => {
-    const title = (applicant.internshipTitle || "").toLowerCase();
-    if (title.includes("seed 50 days") || title.includes("founders program")) {
-      return "https://chat.whatsapp.com/CsA3nNZcT5eDEIG9iQJ0RI";
+    // The whatsappLink comes from the internship/program's whatsapp_community_link field
+    if (applicant.whatsappLink) {
+      return applicant.whatsappLink;
     }
-    return "https://chat.whatsapp.com/K0RflJDzxyKDIM2yuvzTTQ?mode=gi_t"; // Default link
+    return null; // No link available
   };
 
   const WHATSAPP_GROUP_LINK = getWhatsAppLink();
 
   const handleWhatsAppInvite = () => {
-    const message = encodeURIComponent(`Hi ${applicant.name}, this is the ZIGEX recruitment team. Congratulations on your progress for the ${applicant.internshipTitle || 'opportunity'}! Join our official community here: ${WHATSAPP_GROUP_LINK}`);
-    window.open(`https://wa.me/${applicant.phone.replace(/\D/g, '')}?text=${message}`, '_blank');
+    if (!WHATSAPP_GROUP_LINK) {
+      toast.error("No WhatsApp community link set for this program. Please add one in the posting settings.");
+      return;
+    }
+    
+    const phoneString = applicant.phone || "";
+    const phoneNum = phoneString.replace(/\D/g, '');
+    
+    if (!phoneNum || phoneNum.length < 8) {
+      toast.error("Candidate doesn't have a valid phone number.");
+      return;
+    }
+
+    const message = encodeURIComponent(`Hi ${applicant.name}, this is the ZIGEX recruitment team. Congratulations on being accepted into ${applicant.internshipTitle || 'our program'}! 🎉\n\nJoin our official community here: ${WHATSAPP_GROUP_LINK}`);
+    window.open(`https://wa.me/${phoneNum}?text=${message}`, '_blank');
   };
 
   const handleEmailSend = async () => {
@@ -321,7 +334,7 @@ export const ApplicantActions = ({
             </div>
 
             <div className="text-center">
-              <p className="text-sm text-slate-500">Connect with your new team member</p>
+              <p className="text-sm text-slate-500">Send invite to <span className="font-semibold text-slate-700">{applicant.name}</span></p>
             </div>
             
             {/* Communication Actions */}

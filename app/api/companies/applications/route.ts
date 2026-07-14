@@ -36,9 +36,9 @@ export async function GET(request: Request) {
         program_id,
         internship_id,
         event_id,
-        internship:internships(id, title, description, monthly_rate),
-        program:programs(id, title, description, price_xaf),
-        event:event(id, title, description),
+        internship:internships(id, title, description, monthly_rate, whatsapp_community_link),
+        program:programs(id, title, description, price_xaf, whatsapp_community_link),
+        event:event(id, title, description, whatsapp_community_link),
         supervisor:supervisor_profiles(id, full_name, avatar_url),
         student:student_profiles (
           id,
@@ -93,7 +93,7 @@ export async function GET(request: Request) {
             .from("internship_applications")
             .select(`
               *,
-              internship:internships(id, title, description),
+              internship:internships(id, title, description, whatsapp_community_link),
               supervisor:supervisor_profiles(id, full_name, avatar_url)
             `)
             .in("internship_id", internshipIds)
@@ -215,7 +215,8 @@ export async function GET(request: Request) {
           id: supervisor.id,
           full_name: supervisor.full_name,
           avatar_url: supervisor.avatar_url
-        } : undefined
+        } : undefined,
+        whatsappLink: opportunity?.whatsapp_community_link || null
       };
 
     });
@@ -263,7 +264,8 @@ export async function GET(request: Request) {
           id: supervisor.id,
           full_name: supervisor.full_name,
           avatar_url: supervisor.avatar_url
-        } : undefined
+        } : undefined,
+        whatsappLink: internship?.whatsapp_community_link || null
       };
     });
 
@@ -280,3 +282,4 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
+

@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { v4 as uuidv4, validate as isUUID } from "uuid";
-import { sendApplicationConfirmation, sendApplicationAlert, sendEventRSVPConfirmation } from "@/lib/email";
+import { sendApplicationConfirmation, sendApplicationAlert, sendEventRSVPConfirmation, sendNewApplicationNotification } from "@/lib/email";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
 
 
@@ -275,14 +275,13 @@ const handleInternshipApplication = async (
 
   // Send to company if email exists
   if (postingInfo.company_profiles?.email) {
-    await sendApplicationAlert({
-      adminEmail: postingInfo.company_profiles.email,
+    await sendNewApplicationNotification({
+      companyEmail: postingInfo.company_profiles.email,
+      companyName: postingInfo.company_profiles?.company_name || "ZIGEX Partner",
       studentName: studentData.full_name,
       studentEmail: user.email,
       opportunityTitle: postingInfo.title,
       opportunityType: "Internship",
-      status: "pending",
-      companyName: postingInfo.company_profiles?.company_name
     });
   }
 
@@ -396,14 +395,13 @@ const handleProgramApplication = async (
 
   // Send to company if email exists
   if (postingInfo.company_profiles?.email) {
-    await sendApplicationAlert({
-      adminEmail: postingInfo.company_profiles.email,
+    await sendNewApplicationNotification({
+      companyEmail: postingInfo.company_profiles.email,
+      companyName: postingInfo.company_profiles?.company_name || "ZIGEX Partner",
       studentName: studentData.full_name,
       studentEmail: user.email,
       opportunityTitle: postingInfo.title,
       opportunityType: "Program",
-      status: "pending",
-      companyName: postingInfo.company_profiles?.company_name
     });
   }
 
@@ -524,14 +522,13 @@ const handleEventRSVP = async (
 
   // Send to company if email exists
   if (companyEmail) {
-    await sendApplicationAlert({
-      adminEmail: companyEmail,
+    await sendNewApplicationNotification({
+      companyEmail: companyEmail,
+      companyName: companyName,
       studentName: studentData.full_name,
       studentEmail: user.email,
       opportunityTitle: postingInfo.title,
       opportunityType: "Event",
-      status: "accepted",
-      companyName: companyName
     });
   }
 

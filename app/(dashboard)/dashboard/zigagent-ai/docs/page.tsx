@@ -121,7 +121,7 @@ export default function ZilaAIDocsPage() {
         <div className="space-y-3">
           <h1 className="text-3xl sm:text-4xl font-black text-foreground tracking-tight leading-tight">
             Meet{" "}
-            <span className="bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+            <span className="text-blue-600 dark:text-blue-400">
               Zila AI
             </span>
           </h1>
@@ -286,7 +286,7 @@ export default function ZilaAIDocsPage() {
                 </p>
               </div>
               <div className="px-5 py-4 flex items-start gap-3">
-                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shrink-0 mt-0.5">
+                <div className="w-7 h-7 rounded-lg bg-blue-600 dark:bg-blue-500 flex items-center justify-center shrink-0 mt-0.5">
                   <Brain size={14} className="text-white" />
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed font-medium">
@@ -360,7 +360,7 @@ export default function ZilaAIDocsPage() {
         </p>
         <Link
           href="/dashboard/zigagent-ai"
-          className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:opacity-90 transition-all active:scale-95 shadow-lg shadow-blue-500/20"
+          className="inline-flex items-center gap-2 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 shadow-md shadow-blue-500/10"
         >
           <Brain size={18} />
           Start Chatting with Zila

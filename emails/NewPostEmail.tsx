@@ -17,7 +17,7 @@ import * as React from "react";
 
 interface NewPostEmailProps {
   postTitle: string;
-  postType: "Program" | "Internship" | "Event";
+  postType: string;
   postLocation?: string;
   viewPostUrl: string;
   companyLogoUrl: string;

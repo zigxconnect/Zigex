@@ -22,7 +22,7 @@ export async function POST(request: Request) {
           cookieStore.set({ name, value, ...options });
         },
         remove(name: string, options: CookieOptions) {
-          cookieStore.set({ name, value: '', ...options });
+          cookieStore.set({ name, value: '', ...options, maxAge: 0 });
         },
       },
     }

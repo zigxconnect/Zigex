@@ -396,7 +396,7 @@ function ApplicantsPageComponent() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] text-slate-400">
         <Loader2 className="h-10 w-10 animate-spin mb-4 text-primary" />
-        <h3 className="text-sm font-bold uppercase tracking-widest">Hydrating Pipeline...</h3>
+        <h3 className="text-sm font-bold  tracking-widest">Loading Info...</h3>
       </div>
     );
   }

@@ -76,6 +76,14 @@ export async function POST(request: Request) {
           .split(",")
           .map((s) => s.trim())
           .filter((s) => s);
+      } else if (key === "is_visible" || key === "require_geolocation") {
+        rawData[key] = value === "true";
+      } else if (key === "geo_latitude" || key === "geo_longitude") {
+        const num = parseFloat(value as string);
+        rawData[key] = isNaN(num) ? null : num;
+      } else if (key === "geo_radius_meters") {
+        const num = parseInt(value as string, 10);
+        rawData[key] = isNaN(num) ? 100 : num;
       } else if (key !== "program_picture") {
         rawData[key] = value;
       }
@@ -246,6 +254,14 @@ export async function PATCH(request: Request) {
           .split(",")
           .map((s) => s.trim())
           .filter((s) => s);
+      } else if (key === "is_visible" || key === "require_geolocation") {
+        rawUpdates[key] = value === "true";
+      } else if (key === "geo_latitude" || key === "geo_longitude") {
+        const num = parseFloat(value as string);
+        rawUpdates[key] = isNaN(num) ? null : num;
+      } else if (key === "geo_radius_meters") {
+        const num = parseInt(value as string, 10);
+        rawUpdates[key] = isNaN(num) ? 100 : num;
       } else if (key !== "program_picture" && key !== "id") {
         // Exclude program_picture and id
         rawUpdates[key] = value;
@@ -446,3 +462,4 @@ export async function DELETE(request: Request) {
     );
   }
 }
+
