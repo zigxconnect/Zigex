@@ -208,7 +208,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
               .maybeSingle();
 
             // Redirect based on profile status, honouring any ?next= return URL
-            const returnUrl = getReturnUrl("/dashboard");
+            const returnUrl = getReturnUrl("/feed");
             if (profile?.profile_status === "complete") {
               window.location.href = returnUrl;
             } else {
@@ -321,7 +321,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
           toast.success("Logged in successfully!");
           // Honour the ?next= return URL (sanitized server-side in the API route;
           // we mirror the same validation here on the client for defence-in-depth).
-          const returnUrl = getReturnUrl("/dashboard");
+          const returnUrl = getReturnUrl("/feed");
           router.push(
             responseData.profileComplete ? returnUrl : "/create-profile"
           );

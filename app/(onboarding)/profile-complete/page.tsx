@@ -13,7 +13,7 @@ export default function ProfileCompletePage() {
 
   useEffect(() => {
     const redirectTimer = setTimeout(() => {
-      router.push("/dashboard");
+      router.push("/feed");
     }, redirectDelay);
 
     const progressInterval = setInterval(() => {
@@ -52,9 +52,9 @@ export default function ProfileCompletePage() {
         </p>
 
         <div className="mt-8 animate-in fade-in slide-in-from-bottom-3 duration-500 delay-500">
-          <Link href="/dashboard">
+          <Link href="/feed">
             <Button className="w-full group">
-              Go to Dashboard
+              Go to Feed
               <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
             </Button>
           </Link>

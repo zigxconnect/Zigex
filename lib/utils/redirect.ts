@@ -38,7 +38,7 @@ const ALLOWED_NEXT_PREFIXES = [
  */
 export function sanitizeRedirectUrl(
   next: string | null | undefined,
-  fallback = "/dashboard"
+  fallback = "/feed"
 ): string {
   if (!next || typeof next !== "string") return fallback;
 
@@ -69,7 +69,7 @@ export function sanitizeRedirectUrl(
  * @param fallback  The safe fallback when the param is absent or invalid
  * @returns         A validated, safe relative URL string
  */
-export function getReturnUrl(fallback = "/dashboard"): string {
+export function getReturnUrl(fallback = "/feed"): string {
   if (typeof window === "undefined") return fallback;
   const params = new URLSearchParams(window.location.search);
   return sanitizeRedirectUrl(params.get("next"), fallback);

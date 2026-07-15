@@ -84,7 +84,7 @@ const BamendaHeroSection = () => {
               >
                 Sign In
               </Link>
-              <Link href="/sign-up">
+              <Link href="/feed">
                 <button className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-full shadow-lg hover:shadow-blue-500/30 transition-all hover:-translate-y-0.5 active:translate-y-0 cursor-pointer">
                   Get Started
                 </button>
@@ -118,7 +118,7 @@ const BamendaHeroSection = () => {
             <Link href="/sign-in" className="text-base font-medium text-gray-600 py-2 hover:text-blue-600 cursor-pointer" onClick={() => setMobileMenuOpen(false)}>
               Sign In
             </Link>
-            <Link href="/sign-up" onClick={() => setMobileMenuOpen(false)}>
+            <Link href="/feed" onClick={() => setMobileMenuOpen(false)}>
               <button className="w-full px-6 py-3 bg-blue-600 text-white text-base font-semibold rounded-xl shadow-md cursor-pointer">
                 Get Started
               </button>
@@ -154,7 +154,7 @@ const BamendaHeroSection = () => {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                <Link href="/sign-up">
+                <Link href="/feed">
                   <button className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold text-lg shadow-xl shadow-blue-500/20 hover:shadow-2xl hover:shadow-blue-500/30 transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2 cursor-pointer">
                     Get Started
                     <ArrowRight className="w-5 h-5" />
@@ -291,7 +291,7 @@ const BamendaHeroSection = () => {
                 </div>
               </div>
 
-              <Link href="/sign-up" className="absolute -bottom-6 right-12 animate-bounce-slow">
+              <Link href="/feed" className="absolute -bottom-6 right-12 animate-bounce-slow">
                 <button className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-full shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 transition-all hover:-translate-y-0.5 flex items-center gap-2 cursor-pointer border-2 border-white">
                   Get Started
                   <ArrowRight size={16} />

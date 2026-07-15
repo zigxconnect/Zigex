@@ -23,6 +23,50 @@ interface FeedBlogCarouselProps {
   posts: BlogPost[];
 }
 
+function BlogImage({ post }: { post: BlogPost }) {
+  const [error, setError] = useState(false);
+
+  if (!post.imageUrl || error) {
+    return (
+      <div className="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 flex items-center justify-center">
+        <BookOpen size={32} className="text-slate-300 dark:text-slate-700" />
+      </div>
+    );
+  }
+
+  return (
+    <Image
+      src={post.imageUrl}
+      alt={post.title}
+      fill
+      className="object-cover transition-transform duration-700 group-hover:scale-105"
+      onError={() => setError(true)}
+    />
+  );
+}
+
+function BlogAuthorImage({ post }: { post: BlogPost }) {
+  const [error, setError] = useState(false);
+
+  if (!post.authorImage || error) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 text-[9px] font-bold">
+        {post.authorName ? post.authorName.charAt(0) : "U"}
+      </div>
+    );
+  }
+
+  return (
+    <Image
+      src={post.authorImage}
+      alt={post.authorName}
+      fill
+      className="object-cover"
+      onError={() => setError(true)}
+    />
+  );
+}
+
 export function FeedBlogCarousel({ posts }: FeedBlogCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeSlide, setActiveSlide] = useState(0);
@@ -121,18 +165,7 @@ export function FeedBlogCarousel({ posts }: FeedBlogCarouselProps) {
               <article className="flex flex-col h-full bg-white dark:bg-[#161b22] border border-slate-100 dark:border-slate-800/80 rounded-2xl overflow-hidden shadow-[0_2px_8px_-3px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_20px_-8px_rgba(0,0,0,0.3)] hover:shadow-xl dark:hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
                 {/* Image */}
                 <div className="relative h-40 sm:h-44 w-full bg-slate-100 dark:bg-slate-900 overflow-hidden shrink-0">
-                  {post.imageUrl ? (
-                    <Image
-                      src={post.imageUrl}
-                      alt={post.title}
-                      fill
-                      className="object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 flex items-center justify-center">
-                      <BookOpen size={32} className="text-slate-300 dark:text-slate-700" />
-                    </div>
-                  )}
+                  <BlogImage post={post} />
 
                   {/* Category Badge */}
                   {post.categories.length > 0 && (
@@ -172,18 +205,7 @@ export function FeedBlogCarousel({ posts }: FeedBlogCarouselProps) {
                   <div className="flex items-center justify-between pt-3 border-t border-slate-50 dark:border-slate-800/80">
                     <div className="flex items-center gap-2">
                       <div className="relative w-6 h-6 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
-                        {post.authorImage ? (
-                          <Image
-                            src={post.authorImage}
-                            alt={post.authorName}
-                            fill
-                            className="object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 text-[9px] font-bold">
-                            {post.authorName.charAt(0)}
-                          </div>
-                        )}
+                        <BlogAuthorImage post={post} />
                       </div>
                       <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 truncate max-w-[100px]">
                         {post.authorName}

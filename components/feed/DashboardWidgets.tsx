@@ -57,7 +57,7 @@ export function DashboardWidgets({ user, workspaces }: WidgetProps) {
 
             <div className="space-y-2 pt-1">
               <Link
-                href="/sign-up"
+                href="/feed"
                 className="w-full h-10 bg-[#155DFC] hover:bg-[#0D47A1] text-white rounded-xl text-[11px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all duration-300 shadow-lg shadow-blue-500/20"
               >
                 Get Started — It&apos;s Free

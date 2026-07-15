@@ -39,9 +39,12 @@ interface ProgramDetailsSlideOverProps {
 export function ProgramDetailsSlideOver({ item, isOpen, onClose, isAuthenticated = true }: ProgramDetailsSlideOverProps) {
   const [status, setStatus] = useState<ApplicationStatus>("not_applied");
   const [loading, setLoading] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     if (isOpen && item?.id) {
+      // Reset image error state for each new item
+      setImageError(false);
       const fetchStatus = async () => {
         setLoading(true);
         const res = await checkApplicationStatus(item.id);
@@ -55,11 +58,12 @@ export function ProgramDetailsSlideOver({ item, isOpen, onClose, isAuthenticated
   if (!item) return null;
 
   const getImageUrl = () => {
+    if (imageError) return "/placeholder.png";
     switch (item._type) {
-      case "internships": return normalizeImageSrc(item.cover_image_url);
-      case "programs": return normalizeImageSrc(item.program_picture_url);
-      case "events": return normalizeImageSrc(item.event_picture_url);
-      case "announcements": return normalizeImageSrc(item.image_url);
+      case "internships": return normalizeImageSrc(item.cover_image_url) || "/placeholder.png";
+      case "programs": return normalizeImageSrc(item.program_picture_url) || "/placeholder.png";
+      case "events": return normalizeImageSrc(item.event_picture_url) || "/placeholder.png";
+      case "announcements": return normalizeImageSrc(item.image_url) || "/placeholder.png";
       default: return "/placeholder.png";
     }
   };
@@ -87,6 +91,7 @@ export function ProgramDetailsSlideOver({ item, isOpen, onClose, isAuthenticated
               fill
               className="object-cover transition-transform duration-1000 group-hover:scale-105"
               priority
+              onError={() => setImageError(true)}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent opacity-90" />
             

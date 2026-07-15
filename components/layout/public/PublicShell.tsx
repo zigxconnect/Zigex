@@ -87,7 +87,7 @@ function PublicHeader() {
             Sign In
           </Link>
           <Link
-            href="/sign-up"
+            href="/feed"
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13px] font-bold bg-[#155DFC] text-white hover:bg-[#0D47A1] transition-all shadow-lg shadow-blue-500/20 active:scale-95"
           >
             <UserPlus size={14} />
@@ -136,7 +136,7 @@ function PublicHeader() {
               Sign In
             </Link>
             <Link
-              href="/sign-up"
+              href="/feed"
               onClick={() => setMenuOpen(false)}
               className="w-full text-center py-3 rounded-xl text-sm font-bold bg-[#155DFC] text-white hover:bg-[#0D47A1] transition-all shadow-lg shadow-blue-500/20"
             >
