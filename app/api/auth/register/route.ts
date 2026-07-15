@@ -103,7 +103,7 @@ export async function POST(request: Request) {
     email,
     password,
     options: {
-      redirectTo: `${getURL()}api/auth/callback?next=/create-profile`,
+      redirectTo: `${getURL()}api/auth/callback`,
       data: {
         full_name: fullName,
         user_role: "student",

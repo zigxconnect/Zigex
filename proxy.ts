@@ -170,9 +170,6 @@ export async function proxy(request: NextRequest) {
     userRole = "company";
   }
 
-  const isStudentProfileComplete =
-    studentProfile?.profile_status === "complete";
-
   // --- 3. Handle Unassigned Users (No Profile Yet) ---
   if (userRole === "unassigned") {
     if (
@@ -185,13 +182,11 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
-  // --- 4. Enforce Profile Creation for Students ---
-  if (userRole === "student" && !isStudentProfileComplete) {
-    if (pathname !== "/create-profile" && !pathname.startsWith("/api")) {
-      return createRedirectResponse("/create-profile");
-    }
-    return response;
-  }
+  // --- 4. Deferred completion for students ---
+  // Incomplete profiles are no longer force-redirected to /create-profile.
+  // Students land on their requested page (typically /dashboard or /feed)
+  // and are nudged toward /dashboard/edit-profile via a dismissible banner
+  // instead of a hard gate here.
 
   // --- 5. Redirect Authenticated Users from Restricted Pages ---
 

@@ -138,7 +138,7 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile, stats }: WelcomeC
             <div>
               <div className="flex items-center gap-2 md:gap-3 mb-1">
                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 tracking-tighter">
-                  {greeting.text}, {user.name.split(' ')[0]}!
+                  {greeting.text}, {(user.name || "Student").split(' ')[0]}!
                 </h1>
                  <div className="p-1.5 md:p-2 bg-slate-50 rounded-lg md:rounded-xl">
                     <GreetingIcon size={18} className={cn("w-5 h-5 md:w-6 md:h-6", greeting.color)} fill="currentColor" />
@@ -151,7 +151,7 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile, stats }: WelcomeC
             </div>
 
             <p className="text-slate-500 text-sm md:text-lg font-medium leading-relaxed italic border-l-4 border-blue-600 pl-4 md:pl-6 py-1">
-               {user.profile.about ? `"${user.profile.about.slice(0, 100)}..."` : `"You're shaping the future of African technology. Your journey continues here."`}
+               {user.profile?.about ? `"${user.profile.about.slice(0, 100)}..."` : `"You're shaping the future of African technology. Your journey continues here."`}
             </p>
           </div>
 

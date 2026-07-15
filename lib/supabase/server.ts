@@ -22,10 +22,15 @@ if (!supabaseServiceRoleKey) {
 }
 
 const fetchWithRetry = async (url: any, options: any) => {
+  // Skip retries during build to prevent timeout loops
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    return fetch(url, { ...options, signal: AbortSignal.timeout(2000) });
+  }
+  
   const MAX_RETRIES = 3;
   for (let i = 0; i < MAX_RETRIES; i++) {
     try {
-      return await fetch(url, options);
+      return await fetch(url, { ...options, signal: AbortSignal.timeout(10000) });
     } catch (error: any) {
       if (i === MAX_RETRIES - 1) throw error;
       const isTimeout = error.cause?.code === 'UND_ERR_CONNECT_TIMEOUT' || error.name === 'AbortError';
@@ -34,7 +39,7 @@ const fetchWithRetry = async (url: any, options: any) => {
       await new Promise(r => setTimeout(r, 500 * Math.pow(2, i)));
     }
   }
-  return fetch(url, options);
+  return fetch(url, { ...options, signal: AbortSignal.timeout(10000) });
 }
 
 export const supabaseAdmin = createSupabaseClient(supabaseUrl, supabaseServiceRoleKey, {

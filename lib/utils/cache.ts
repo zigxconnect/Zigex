@@ -3,9 +3,14 @@ import { unstable_cache } from 'next/cache';
 // Cache program details for 4 minutes
 export const getProgramDetails = unstable_cache(
   async (id: string) => {
+    // Skip at build time to prevent timeout errors
+    if (process.env.NEXT_PHASE === 'phase-production-build') {
+      return null;
+    }
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/programs/${id}`, {
-        next: { tags: [`program-${id}`] }
+        next: { tags: [`program-${id}`] },
+        signal: AbortSignal.timeout(5000)
       });
       
       if (!response.ok) {
@@ -25,9 +30,14 @@ export const getProgramDetails = unstable_cache(
 // Cache internship details for 4 minutes
 export const getInternshipDetails = unstable_cache(
   async (id: string) => {
+    // Skip at build time to prevent timeout errors
+    if (process.env.NEXT_PHASE === 'phase-production-build') {
+      return null;
+    }
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/internships/${id}`, {
-        next: { tags: [`internship-${id}`] }
+        next: { tags: [`internship-${id}`] },
+        signal: AbortSignal.timeout(5000)
       });
       
       if (!response.ok) {
@@ -47,9 +57,14 @@ export const getInternshipDetails = unstable_cache(
 // Cache event details for 4 minutes
 export const getEventDetails = unstable_cache(
   async (id: string) => {
+    // Skip at build time to prevent timeout errors
+    if (process.env.NEXT_PHASE === 'phase-production-build') {
+      return null;
+    }
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/events/${id}`, {
-        next: { tags: [`event-${id}`] }
+        next: { tags: [`event-${id}`] },
+        signal: AbortSignal.timeout(5000)
       });
       
       if (!response.ok) {

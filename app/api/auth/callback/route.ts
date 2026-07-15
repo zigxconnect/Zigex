@@ -66,13 +66,16 @@ export async function GET(request: Request) {
             string,
             unknown
           >;
-          const full_name = metadata.full_name || metadata.name || null;
+          // Leave full_name undefined (never null) when unknown so the
+          // insert omits the column entirely and the DB default ('Student')
+          // applies — an explicit NULL would violate its NOT NULL constraint.
+          const full_name = metadata.full_name || metadata.name || undefined;
           const avatar_url = metadata.avatar_url || metadata.picture || null;
 
           await supabaseAdmin.from("student_profiles").insert({
             user_id: user.id,
             email: user.email,
-            full_name,
+            ...(full_name ? { full_name } : {}),
             avatar_url,
             profile_status: "incomplete",
           });
@@ -83,8 +86,10 @@ export async function GET(request: Request) {
           return NextResponse.redirect(`${origin}${next}`);
         }
 
-        // If profile is incomplete or new, force redirect to completion flow
-        return NextResponse.redirect(`${origin}/create-profile`);
+        // Deferred completion: land the user on the dashboard even with an
+        // incomplete profile. The dashboard surfaces a dismissible banner
+        // prompting them to finish setup at /dashboard/edit-profile.
+        return NextResponse.redirect(`${origin}${next}`);
       }
     } catch (err) {
       console.error("Auth callback unexpected error:", err);

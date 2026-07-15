@@ -177,7 +177,7 @@ export default function StudentProfileClient({
               <div className="relative inline-block self-start">
                 <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-[3.5px] border-card bg-card overflow-hidden shadow-sm relative z-10">
                   {avatarUrl ? (
-                    <Image src={avatarUrl} fill className="object-cover" alt={data.full_name || "Profile"} priority priority={true} />
+                    <Image src={avatarUrl} fill className="object-cover" alt={data.full_name || "Profile"} priority />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-[#155DFC] to-blue-800 text-white flex items-center justify-center font-bold text-2xl">
                       {initials}
@@ -231,7 +231,7 @@ export default function StudentProfileClient({
                   <div className="flex items-center gap-2 flex-wrap">
                     <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-1.5">
                       {isOwner ? (
-                        <>Good Afternoon, {data.full_name.split(' ')[0]}! <span className="text-amber-500">☀️</span></>
+                        <>Good Afternoon, {(data.full_name || "Student").split(' ')[0]}! <span className="text-amber-500">☀️</span></>
                       ) : (
                         data.full_name
                       )}
