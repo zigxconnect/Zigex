@@ -195,9 +195,8 @@ export async function proxy(request: NextRequest) {
 
   // --- 5. Redirect Authenticated Users from Restricted Pages ---
 
-  // Create a list of all pages an authenticated and fully set-up user should NOT be able to access.
   const authRedirectPaths = [
-    ...publicPaths.filter((path) => path !== "/demo"),
+    ...publicPaths.filter((path) => path !== "/demo" && path !== "/feed"),
     "/create-profile",
     "/profile-complete",
   ];
