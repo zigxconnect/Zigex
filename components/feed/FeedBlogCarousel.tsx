@@ -39,6 +39,7 @@ function BlogImage({ post }: { post: BlogPost }) {
       src={post.imageUrl}
       alt={post.title}
       fill
+      unoptimized={true}
       className="object-cover transition-transform duration-700 group-hover:scale-105"
       onError={() => setError(true)}
     />
@@ -61,6 +62,7 @@ function BlogAuthorImage({ post }: { post: BlogPost }) {
       src={post.authorImage}
       alt={post.authorName}
       fill
+      unoptimized={true}
       className="object-cover"
       onError={() => setError(true)}
     />
