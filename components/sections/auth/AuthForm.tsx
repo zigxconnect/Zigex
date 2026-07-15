@@ -200,9 +200,10 @@ export const AuthForm = ({ type }: AuthFormProps) => {
               console.warn("[AuthForm] Session refresh failed, continuing anyway:", refreshErr);
             }
 
-            // Deferred completion: always land on the dashboard. Incomplete
-            // profiles are nudged toward /dashboard/edit-profile from there.
-            window.location.href = "/dashboard";
+            // Deferred completion: land the user on their intended destination
+            // (defaults to /feed), even if their profile is incomplete.
+            const returnUrl = getReturnUrl("/feed");
+            window.location.href = returnUrl;
           } catch (err: any) {
             console.error("[AuthForm] Unexpected error during Google sign-in:", err);
             // Specifically catch the "Cannot create property 'user' on string" error
@@ -308,7 +309,10 @@ export const AuthForm = ({ type }: AuthFormProps) => {
           router.push(`/verify-otp?email=${encodeURIComponent(data.email)}`);
         } else {
           toast.success("Logged in successfully!");
-          router.push("/dashboard");
+          // Honour the ?next= return URL (sanitized server-side in the API route;
+          // we mirror the same validation here on the client for defence-in-depth).
+          const returnUrl = getReturnUrl("/feed");
+          router.push(returnUrl);
         }
       } catch (err) {
         toast.error((err as Error).message);
