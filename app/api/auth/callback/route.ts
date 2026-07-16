@@ -3,10 +3,15 @@
 import { createSupabaseServerClient, supabaseAdmin } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { sanitizeRedirectUrl } from "@/lib/utils/redirect";
+import { getURL } from "@/lib/utils";
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
+  // Built from NEXT_PUBLIC_SITE_URL rather than request.url's origin — behind
+  // a reverse proxy that doesn't forward the original Host header, that origin
+  // resolves to the app's internal address (e.g. localhost) instead of the
+  // public domain, sending users to the wrong host after auth.
+  const origin = getURL().replace(/\/$/, "");
   const code = searchParams.get("code");
   // Validate the return URL to prevent open-redirect attacks.
   // sanitizeRedirectUrl enforces a strict allowlist of permitted path prefixes.

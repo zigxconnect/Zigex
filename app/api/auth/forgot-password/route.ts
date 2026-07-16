@@ -3,6 +3,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { getURL } from "@/lib/utils";
 
 export async function POST(request: Request) {
   let email: string | undefined;
@@ -55,7 +56,11 @@ export async function POST(request: Request) {
 
   // This is the URL the user will be redirected to after clicking the reset link.
   // We point to our server-side callback to handle the PKCE code exchange reliably.
-  const redirectTo = `${new URL(request.url).origin}/api/auth/callback?next=/update-password`;
+  // Built from NEXT_PUBLIC_SITE_URL rather than request.url — behind a reverse
+  // proxy that doesn't forward the original Host header, request.url's origin
+  // resolves to the app's internal address (e.g. localhost) instead of the
+  // public domain.
+  const redirectTo = `${getURL()}api/auth/callback?next=/update-password`;
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo,
