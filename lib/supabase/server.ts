@@ -105,3 +105,7 @@ export const createSupabaseServerClient = async () => {
 };
 
 export { createSupabaseServerClient as createClient };
+
+export type SupabaseServerClient = Awaited<
+  ReturnType<typeof createSupabaseServerClient>
+>;
