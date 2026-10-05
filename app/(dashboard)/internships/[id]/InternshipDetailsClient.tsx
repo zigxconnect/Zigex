@@ -13,6 +13,7 @@ import { InternshipDetailsLoadingSkeleton } from "@/components/SinglePageLoading
 import { normalizeImageSrc } from "@/lib/utils";
 import InternshipApplicationModal from "@/components/feed/details/appyButton/InternshipApplicationModal";
 import { DollarSign } from "lucide-react";
+import { fetchCompanyPrograms } from "@/lib/api/feed-client";
 
 const DetailItem = ({
   label,
@@ -84,8 +85,7 @@ function useOtherPrograms(internship: InternshipWithCompany | null) {
 
     async function fetchPrograms() {
       try {
-        const response = await fetch(`/api/public/companies/${companyId}/programs`);
-        const data = await response.json();
+        const data = { programs: await fetchCompanyPrograms(companyId) };
         setPrograms(data.programs || []);
       } catch (error) {
         console.error('Error fetching other programs:', error);
@@ -104,34 +104,15 @@ export default function InternshipDetailsClient({ id }: { id: string }) {
   const [companyData, setCompanyData] = useState<InternshipWithCompany['company'] | null>(null);
   
   const { data: internship, isLoading, error } = useFetchDetails<InternshipWithCompany>(
-    "/api/students/internships",
+    "/feed/internships",
     id
   );
   const otherPrograms = useOtherPrograms(internship);
 
   useEffect(() => {
     if (!internship) return;
-    if (internship.company) {
-      setCompanyData(internship.company);
-      return;
-    }
-    const companyId = internship.company_id;
-    if (!companyId) return;
-
-    let mounted = true;
-    fetch(`/api/public/companies/${companyId}`)
-      .then((r) => r.json())
-      .then((j) => {
-        if (!mounted) return;
-        setCompanyData(j.company || j);
-      })
-      .catch((e) => {
-        console.error('Failed to fetch company data:', e);
-      });
-
-    return () => {
-      mounted = false;
-    };
+    // The backend detail response embeds the company; there is no separate company endpoint.
+    setCompanyData(internship.company ?? null);
   }, [internship]);
 
   if (isLoading) return <InternshipDetailsLoadingSkeleton />;

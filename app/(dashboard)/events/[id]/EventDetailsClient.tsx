@@ -12,6 +12,7 @@ import DynamicForm from "@/components/sections/dashboard/Application/application
 import { useFetchDetails } from "@/hooks/useFetchDetails";
 import { InternshipDetailsLoadingSkeleton } from "@/components/SinglePageLoadingSkeleton";
 import { normalizeImageSrc } from "@/lib/utils";
+import { fetchCompanyPrograms } from "@/lib/api/feed-client";
 
 const DetailItem = ({
   label,
@@ -75,10 +76,7 @@ function useOtherPrograms(event: EventWithCompany | null) {
 
     async function fetchPrograms() {
       try {
-        const response = await fetch(
-          `/api/public/companies/${companyId}/programs`
-        );
-        const data = await response.json();
+        const data = { programs: await fetchCompanyPrograms(companyId) };
         setPrograms(
           (data.programs || []).filter((p: any) => p.id !== event.id)
         );
@@ -102,7 +100,7 @@ export default function EventDetailsClient({ id }: { id: string }) {
     isLoading,
     error,
   } = useFetchDetails<EventWithCompany>(
-    "/api/students/events",
+    "/feed/events",
     id
   );
 

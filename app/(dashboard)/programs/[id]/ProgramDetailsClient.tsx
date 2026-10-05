@@ -14,6 +14,7 @@ import { useFetchDetails } from "@/hooks/useFetchDetails";
 import { hasExpired } from "@/components/uiComponent/ExpiredOverlay";
 import { InternshipDetailsLoadingSkeleton } from "@/components/SinglePageLoadingSkeleton";
 import { normalizeImageSrc } from "@/lib/utils";
+import { fetchCompanyPrograms } from "@/lib/api/feed-client";
 
 const MOCK_LIVE_IDS = ["p1", "e1", "i1"];
 
@@ -88,8 +89,7 @@ function useOtherPrograms(program: ProgramWithCompany | null) {
 
     async function fetchPrograms() {
       try {
-        const response = await fetch(`/api/public/companies/${companyId}/programs`);
-        const data = await response.json();
+        const data = { programs: await fetchCompanyPrograms(companyId) };
         setPrograms((data.programs || []).filter((p: any) => p.id !== program?.id));
       } catch (error) {
         console.error('Error fetching other programs:', error);
@@ -154,7 +154,7 @@ export default function ProgramDetailsClient({ id }: { id: string }) {
     data: program,
     isLoading,
     error,
-  } = useFetchDetails<ProgramWithCompany>("/api/students/programs", id);
+  } = useFetchDetails<ProgramWithCompany>("/feed/programs", id);
 
   const otherPrograms = useOtherPrograms(program);
   const initialEnrollmentStatus = useEnrollmentStatus(id);

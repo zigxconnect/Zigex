@@ -1,14 +1,17 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { api } from "@/lib/api/browser-client";
+import { ApiClientError } from "@/lib/api/errors";
+import { normaliseFeedItem } from "@/lib/api/feed-shape";
 
 /**
- * A reusable hook to fetch details for a specific item (internship, event, program).
+ * A reusable hook to fetch details for a specific feed item from the backend.
  * It handles loading, error, and 404 states automatically.
- * @param apiUrl The base API URL for the resource (e.g., '/api/students/events').
+ * @param path The backend feed path (e.g. '/feed/events').
  * @param id The ID of the item to fetch.
  * @returns An object with the fetched data, isLoading state, and error state.
  */
-export function useFetchDetails<T>(apiUrl: string, id: string) {
+export function useFetchDetails<T>(path: string, id: string) {
   const router = useRouter();
   const [data, setData] = useState<T | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -25,27 +28,21 @@ export function useFetchDetails<T>(apiUrl: string, id: string) {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await fetch(`${apiUrl}/${encodeURIComponent(id)}`);
-
-        if (!response.ok) {
-          if (response.status === 404) {
-            router.replace("/404"); // Or a custom 'not found' page
-            return;
-          }
-          throw new Error("Failed to fetch details.");
-        }
-
-        const jsonData = await response.json();
-        setData(jsonData);
+        const res = await api.get<Record<string, any>>(`${path}/${encodeURIComponent(id)}`);
+        setData(normaliseFeedItem(res.data) as T);
       } catch (err) {
-        setError((err as Error).message);
+        if (err instanceof ApiClientError && err.status === 404) {
+          router.replace("/404");
+          return;
+        }
+        setError(err instanceof Error ? err.message : "Failed to fetch details.");
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchDetails();
-  }, [id, apiUrl, router]);
+  }, [id, path, router]);
 
   return { data, isLoading, error };
 }
