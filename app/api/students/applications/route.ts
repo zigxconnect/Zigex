@@ -1,598 +1,324 @@
-import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { v4 as uuidv4, validate as isUUID } from "uuid";
+import { validate as isUUID } from "uuid";
 import { sendApplicationConfirmation, sendApplicationAlert, sendEventRSVPConfirmation, sendNewApplicationNotification } from "@/lib/email";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
+import { getSession } from "@/lib/api/auth";
+import { getFeedItem } from "@/lib/api/services/feed";
+import {
+  COVER_LETTER_MIME_TYPES,
+  CV_MIME_TYPES,
+  applicationErrorResponse,
+  createApplication,
+  getApplicantProfile,
+  uploadCoverLetter,
+  uploadCv,
+  type ApplicantProfile,
+} from "@/lib/api/services/applications";
 
+/**
+ * Unified apply endpoint used by the apply modals (multipart FormData).
+ *
+ * Creates the application on the backend (POST /applications), uploads the
+ * documents (POST /uploads/cv, /uploads/cover-letter/{id}), then sends the
+ * same confirmation emails / WhatsApp alerts as before.
+ *
+ * In-app notifications are no longer inserted here: the admin backend creates
+ * notifications natively (see the backend's deprecated /notifications/broadcast).
+ */
 
-// --- Types ---
-type ApplicationType = "internship" | "program" | "event";
+type Applicant = { email: string; fullName: string; phone?: string };
 
-interface NotificationParams {
-  supabase: any;
-  studentId: string;
-  title: string;
-  message: string;
-  type: ApplicationType;
-  referenceId: string;
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const ZIGEX_ADMIN_EMAILS = "zigex.connect@gmail.com,zigexconnect.com@gmail.com";
+
+// Backend enum is remote | onsite | hybrid.
+const WORK_MODE_MAP: Record<string, "remote" | "onsite" | "hybrid"> = {
+  "On-site": "onsite",
+  Remote: "remote",
+  Hybrid: "hybrid",
+};
+
+/** "3-6 months" → 6; "Flexible" → undefined */
+function durationMonths(duration: string | null): number | undefined {
+  const numbers = duration?.match(/\d+/g)?.map(Number);
+  return numbers?.length ? Math.max(...numbers) : undefined;
 }
 
-// --- Helper Functions ---
+/** Form fields the backend has no column for are kept as labelled lines in `comments`. */
+function joinComments(...parts: [label: string, value: FormDataEntryValue | null][]) {
+  const lines = parts
+    .filter(([, value]) => typeof value === "string" && value.trim())
+    .map(([label, value]) => (label ? `${label}: ${value}` : String(value)));
+  return lines.length ? lines.join("\n") : undefined;
+}
 
-const createNotification = async ({
-  supabase,
-  studentId,
-  title,
-  message,
-  type,
-  referenceId,
-}: NotificationParams) => {
-  const { error } = await supabase.from("notifications").insert({
-    user_id: studentId,
-    title,
-    message,
-    type,
-    reference_id: referenceId,
-  });
-  if (error) {
-    console.error("Failed to create notification:", error);
-  }
-};
+const text = (formData: FormData, key: string) => (formData.get(key) as string | null) || undefined;
 
-// --- Email Helpers moved to lib/mail ---
+function validateFile(file: File | null, label: string, allowed: string[], allowedLabel: string) {
+  if (!file || file.size === 0) return `A ${label} file is required.`;
+  if (file.size > MAX_FILE_SIZE) return `${label[0].toUpperCase()}${label.slice(1)} file size exceeds 10MB limit.`;
+  if (!allowed.includes(file.type)) return `The ${label} must be a ${allowedLabel} document.`;
+  return null;
+}
 
-
-const getSupabaseClient = async () => {
-  const cookieStore = await cookies();
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get: (name: string) => cookieStore.get(name)?.value,
-      },
-    }
-  );
-};
-
-const getAuthenticatedStudent = async (supabase: any) => {
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    return { error: "Unauthorized. Please log in.", status: 401 };
-  }
-
-  const { data: studentData, error: studentError } = await supabase
-    .from("student_profiles")
-    .select("id, full_name, phone")
-    .eq("user_id", user.id)
-    .single();
-
-  if (studentError || !studentData?.id) {
-    return { error: "Student profile not found.", status: 404 };
-  }
-
-  return { user, studentData };
-};
+const fail = (error: string, status: number) => NextResponse.json({ error }, { status });
 
 // --- Application Handlers ---
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-
-const handleInternshipApplication = async (
-  supabase: any,
-  user: any,
-  studentData: any,
-  formData: FormData
-) => {
+const handleInternshipApplication = async (applicant: Applicant, formData: FormData) => {
   const internship_id = formData.get("internship_id") as string;
-  if (!isUUID(internship_id)) {
-    return NextResponse.json(
-      { error: "A valid Internship ID is required." },
-      { status: 400 }
-    );
+  if (!isUUID(internship_id)) return fail("A valid Internship ID is required.", 400);
+
+  const posting = await getFeedItem("internships", internship_id);
+  if (!posting) return fail("The internship you are applying for could not be found.", 404);
+  if (posting.deadline && new Date(posting.deadline) < new Date()) {
+    return fail("The deadline for this internship has passed.", 400);
   }
 
-  // Check duplicate
-  const { data: existingApp } = await supabase
-    .from("Applications")
-    .select("id")
-    .eq("student_id", studentData.id)
-    .eq("internship_id", internship_id)
-    .maybeSingle();
+  const resume = formData.get("resume") as File | null;
+  const coverLetter = formData.get("cover_letter") as File | null;
+  const fileError =
+    validateFile(resume, "resume", CV_MIME_TYPES, "PDF or DOC") ??
+    validateFile(coverLetter, "cover letter", COVER_LETTER_MIME_TYPES, "PDF");
+  if (fileError) return fail(fileError, 400);
 
-  if (existingApp) {
-    return NextResponse.json(
-      { error: "You have already applied to this internship." },
-      { status: 409 }
-    );
-  }
-
-  // Get posting info
-  const { data: postingInfo, error: postingError } = await supabase
-    .from("internships")
-    .select("company_id, title, deadline, company_profiles(company_name, email)")
-    .eq("id", internship_id)
-    .single();
-
-  if (postingError || !postingInfo?.company_id) {
-    return NextResponse.json(
-      { error: "The internship you are applying for could not be found." },
-      { status: 404 }
-    );
-  }
-
-  if (new Date(postingInfo.deadline) < new Date()) {
-    return NextResponse.json(
-      { error: "The deadline for this internship has passed." },
-      { status: 400 }
-    );
-  }
-
-  // Handle Resume
-  const resume_file = formData.get("resume") as File | null;
-  if (!resume_file || resume_file.size === 0) {
-    return NextResponse.json(
-      { error: "A resume file is required." },
-      { status: 400 }
-    );
-  }
-
-  if (resume_file.size > MAX_FILE_SIZE) {
-    return NextResponse.json(
-      { error: "Resume file size exceeds 10MB limit." },
-      { status: 400 }
-    );
-  }
-
-  // Handle Cover Letter
-  const cover_letter_file = formData.get("cover_letter") as File | null;
-  if (!cover_letter_file || cover_letter_file.size === 0) {
-    return NextResponse.json(
-      { error: "A cover letter is required." },
-      { status: 400 }
-    );
-  }
-
-  if (cover_letter_file.size > MAX_FILE_SIZE) {
-    return NextResponse.json(
-      { error: "Cover letter file size exceeds 10MB limit." },
-      { status: 400 }
-    );
-  }
-
-  const allowedTypes = [
-    "application/pdf",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  ];
-
-  if (!allowedTypes.includes(resume_file.type) || !allowedTypes.includes(cover_letter_file.type)) {
-    return NextResponse.json(
-      { error: "Only PDF and Word (DOC, DOCX) documents are allowed." },
-      { status: 400 }
-    );
-  }
-
-  // Upload Files in Parallel
-  const resumeExt = resume_file.name.split(".").pop() || "pdf";
-  const resumeFileName = `resume_${uuidv4()}.${resumeExt}`;
-  const resumePath = `students/${user.id}/applications/${internship_id}/${resumeFileName}`;
-
-  const clExt = cover_letter_file.name.split(".").pop() || "pdf";
-  const clFileName = `cover_letter_${uuidv4()}.${clExt}`;
-  const clPath = `students/${user.id}/applications/${internship_id}/${clFileName}`;
-
-  const [resumeUpload, clUpload] = await Promise.all([
-    supabase.storage.from("student-assets").upload(resumePath, resume_file),
-    supabase.storage.from("student-assets").upload(clPath, cover_letter_file),
-  ]);
-
-  if (resumeUpload.error) {
-    console.error("Resume upload error:", resumeUpload.error);
-    return NextResponse.json(
-      { error: "Failed to upload resume." },
-      { status: 500 }
-    );
-  }
-
-  if (clUpload.error) {
-    console.error("Cover letter upload error:", clUpload.error);
-    return NextResponse.json(
-      { error: "Failed to upload cover letter." },
-      { status: 500 }
-    );
-  }
-
-  const resumeUrl = supabase.storage
-    .from("student-assets")
-    .getPublicUrl(resumePath).data.publicUrl;
-
-  const coverLetterUrl = supabase.storage
-    .from("student-assets")
-    .getPublicUrl(clPath).data.publicUrl;
-
-  // Map location to work_mode
-  const location = formData.get("location") as string;
-  const WORK_MODE_MAP: Record<string, string> = {
-    "On-site": "onsite",
-    "Remote": "online",
-    "Hybrid": "hybrid",
-  };
-  const dbWorkMode = WORK_MODE_MAP[location] || location?.toLowerCase() || "onsite";
-
-  // Insert Application
-  const { data: appData, error: appError } = await supabase
-    .from("Applications")
-    .insert({
-      student_id: studentData.id,
-      internship_id,
-      company_id: postingInfo.company_id,
+  const location = text(formData, "location");
+  let application;
+  try {
+    application = await createApplication({
       application_type: "internship",
-      resume_url: resumeUrl,
-      cover_letter_url: coverLetterUrl,
-      duration: (formData.get("duration") as string) || null,
-      department: (formData.get("department") as string) || null,
-      work_mode: dbWorkMode,
-      expectations: (formData.get("expectations") as string) || null,
-      status: "pending",
-    })
-    .select("id")
-    .single();
-
-  if (appError) {
-    console.error("Internship application insert error:", appError);
-    return NextResponse.json(
-      { error: "Failed to submit internship application." },
-      { status: 500 }
-    );
-  }
-
-  // Notifications
-  await createNotification({
-    supabase,
-    studentId: user.id,
-    title: "Application Submitted!",
-    message: `Your application for "${postingInfo.title}" is under review.`,
-    type: "internship",
-    referenceId: internship_id,
-  });
-
-  // Centralized Alerts
-  await sendApplicationAlert({
-    adminEmail: "zigex.connect@gmail.com,zigexconnect.com@gmail.com",
-    studentName: studentData.full_name,
-    studentEmail: user.email,
-    opportunityTitle: postingInfo.title,
-    opportunityType: "Internship",
-    status: "pending",
-    companyName: postingInfo.company_profiles?.company_name
-  });
-
-  // Send to company if email exists
-  if (postingInfo.company_profiles?.email) {
-    await sendNewApplicationNotification({
-      companyEmail: postingInfo.company_profiles.email,
-      companyName: postingInfo.company_profiles?.company_name || "ZIGEX Partner",
-      studentName: studentData.full_name,
-      studentEmail: user.email,
-      opportunityTitle: postingInfo.title,
-      opportunityType: "Internship",
+      internship_id,
+      department: text(formData, "department"),
+      location,
+      work_mode: location ? WORK_MODE_MAP[location] ?? "onsite" : undefined,
+      duration_months: durationMonths(text(formData, "duration") ?? null),
+      expectations: text(formData, "expectations"),
+      comments: joinComments(["Preferred duration", formData.get("duration")]),
     });
+  } catch (error) {
+    const { error: message, status } = applicationErrorResponse(error, "Failed to submit internship application.");
+    return fail(message, status);
   }
 
-  // Send confirmation to candidate
-  await sendApplicationConfirmation({
-    email: user.email,
-    name: studentData.full_name,
-    opportunityTitle: postingInfo.title,
-    opportunityType: "Internship",
-    companyName: postingInfo.company_profiles?.company_name || "ZIGEX Partner",
-    isRSVP: false
+  // The application exists now; a failed upload is reported but does not undo it.
+  const uploadWarnings: string[] = [];
+  const [cvResult, coverResult] = await Promise.allSettled([
+    uploadCv(resume!),
+    uploadCoverLetter(application.id, coverLetter!),
+  ]);
+  if (cvResult.status === "rejected") {
+    console.error("Resume upload error:", cvResult.reason);
+    uploadWarnings.push("Your resume could not be uploaded. Please upload it from your profile.");
+  }
+  if (coverResult.status === "rejected") {
+    console.error("Cover letter upload error:", coverResult.reason);
+    uploadWarnings.push("Your cover letter could not be uploaded.");
+  }
+
+  const company = posting.company;
+  await notifyApplication(applicant, {
+    title: posting.title,
+    type: "Internship",
+    status: "pending",
+    companyName: company?.company_name,
+    companyEmail: company?.email,
+    whatsApp: `✅ *Application Received!*\n\nHi ${firstName(applicant)}, your application for the *${posting.title}* internship at ${company?.company_name} has been received and is under review. Good luck! 🚀`,
   });
-
-  // Automated WhatsApp Alert
-  if (studentData.phone) {
-    const waMessage = `✅ *Application Received!*\n\nHi ${studentData.full_name.split(' ')[0]}, your application for the *${postingInfo.title}* internship at ${postingInfo.company_profiles?.company_name} has been received and is under review. Good luck! 🚀`;
-    await sendWhatsAppMessage(studentData.phone, waMessage);
-  }
 
   return NextResponse.json(
     {
       message: "Internship application submitted successfully!",
-      applicationId: appData.id,
+      applicationId: application.id,
+      ...(uploadWarnings.length ? { warnings: uploadWarnings } : {}),
     },
     { status: 201 }
   );
 };
 
-const handleProgramApplication = async (
-  supabase: any,
-  user: any,
-  studentData: any,
-  formData: FormData
-) => {
+const handleProgramApplication = async (applicant: Applicant, formData: FormData) => {
   const program_id = formData.get("program_id") as string;
-  if (!isUUID(program_id)) {
-    return NextResponse.json(
-      { error: "A valid Program ID is required." },
-      { status: 400 }
-    );
-  }
+  if (!isUUID(program_id)) return fail("A valid Program ID is required.", 400);
 
-  const { data: existingApp } = await supabase
-    .from("Applications")
-    .select("id")
-    .eq("student_id", studentData.id)
-    .eq("program_id", program_id)
-    .maybeSingle();
+  const posting = await getFeedItem("programs", program_id);
+  if (!posting) return fail("The program you are applying for could not be found.", 404);
 
-  if (existingApp) {
-    return NextResponse.json(
-      { error: "You have already applied to this program." },
-      { status: 409 }
-    );
-  }
-
-  const { data: postingInfo, error: postingError } = await supabase
-    .from("programs")
-    .select("company_id, title, company_profiles(company_name, email)")
-    .eq("id", program_id)
-    .single();
-
-  if (postingError || !postingInfo?.company_id) {
-    return NextResponse.json(
-      { error: "The program you are applying for could not be found." },
-      { status: 404 }
-    );
-  }
-
-  const { data: appData, error: appError } = await supabase
-    .from("Applications")
-    .insert({
-      student_id: studentData.id,
-      program_id,
-      company_id: postingInfo.company_id,
+  let application;
+  try {
+    application = await createApplication({
       application_type: "program",
-      level: (formData.get("level") as string)?.toLowerCase() || null,
-      expectations: (formData.get("expectations") as string) || null,
-      comments: (formData.get("comments") as string) || null,
-      status: "pending",
-    })
-    .select("id")
-    .single();
-
-  if (appError) {
-    return NextResponse.json(
-      { error: "Failed to submit program application." },
-      { status: 500 }
-    );
-  }
-
-  await createNotification({
-    supabase,
-    studentId: user.id,
-    title: "Application Submitted!",
-    message: `Your application for "${postingInfo.title}" is under review.`,
-    type: "program",
-    referenceId: program_id,
-  });
-
-  // Centralized Alerts
-  await sendApplicationAlert({
-    adminEmail: "zigex.connect@gmail.com,zigexconnect.com@gmail.com",
-    studentName: studentData.full_name,
-    studentEmail: user.email,
-    opportunityTitle: postingInfo.title,
-    opportunityType: "Program",
-    status: "pending",
-    companyName: postingInfo.company_profiles?.company_name
-  });
-
-  // Send to company if email exists
-  if (postingInfo.company_profiles?.email) {
-    await sendNewApplicationNotification({
-      companyEmail: postingInfo.company_profiles.email,
-      companyName: postingInfo.company_profiles?.company_name || "ZIGEX Partner",
-      studentName: studentData.full_name,
-      studentEmail: user.email,
-      opportunityTitle: postingInfo.title,
-      opportunityType: "Program",
+      program_id,
+      expectations: text(formData, "expectations"),
+      // TODO(backend): no `level` field on POST /applications yet.
+      comments: joinComments(["Level", formData.get("level")], ["", formData.get("comments")]),
     });
+  } catch (error) {
+    const { error: message, status } = applicationErrorResponse(error, "Failed to submit program application.");
+    return fail(message, status);
   }
 
-  // Send confirmation to candidate
-  await sendApplicationConfirmation({
-    email: user.email,
-    name: studentData.full_name,
-    opportunityTitle: postingInfo.title,
-    opportunityType: "Program",
-    companyName: postingInfo.company_profiles?.company_name || "ZIGEX Partner",
-    isRSVP: false
+  const company = posting.company;
+  await notifyApplication(applicant, {
+    title: posting.title,
+    type: "Program",
+    status: "pending",
+    companyName: company?.company_name,
+    companyEmail: company?.email,
+    whatsApp: `🚀 *Program Application Received!*\n\nHi ${firstName(applicant)}, you've successfully applied for the *${posting.title}* program. We'll notify you once your application is reviewed. Stay tuned! ✨`,
   });
-
-  // Automated WhatsApp Alert
-  if (studentData.phone) {
-    const waMessage = `🚀 *Program Application Received!*\n\nHi ${studentData.full_name.split(' ')[0]}, you've successfully applied for the *${postingInfo.title}* program. We'll notify you once your application is reviewed. Stay tuned! ✨`;
-    await sendWhatsAppMessage(studentData.phone, waMessage);
-  }
 
   return NextResponse.json(
-    {
-      message: "Program application submitted successfully!",
-      applicationId: appData.id,
-    },
+    { message: "Program application submitted successfully!", applicationId: application.id },
     { status: 201 }
   );
 };
 
-const handleEventRSVP = async (
-  supabase: any,
-  user: any,
-  studentData: any,
-  formData: FormData
-) => {
+const handleEventRSVP = async (applicant: Applicant, formData: FormData) => {
   const event_id = formData.get("event_id") as string;
-  if (!isUUID(event_id)) {
-    return NextResponse.json(
-      { error: "A valid Event ID is required." },
-      { status: 400 }
-    );
-  }
+  if (!isUUID(event_id)) return fail("A valid Event ID is required.", 400);
 
-  const { data: existingRsvp } = await supabase
-    .from("Applications")
-    .select("id")
-    .eq("student_id", studentData.id)
-    .eq("event_id", event_id)
-    .maybeSingle();
+  const posting = await getFeedItem("events", event_id);
+  if (!posting) return fail("The event you are RSVPing to could not be found.", 404);
 
-  if (existingRsvp) {
-    return NextResponse.json(
-      { error: "You have already RSVP'd to this event." },
-      { status: 409 }
-    );
-  }
-
-  const { data: postingInfo, error: postingError } = await supabase
-    .from("event")
-    .select("company_id, title, start_date, location, description, company_profiles(company_name, email)")
-    .eq("id", event_id)
-    .single();
-
-  if (postingError || !postingInfo?.company_id) {
-    return NextResponse.json(
-      { error: "The event you are RSVPing to could not be found." },
-      { status: 404 }
-    );
-  }
-
-  // Safely extract company info
-  const companyProfile = Array.isArray(postingInfo.company_profiles)
-    ? postingInfo.company_profiles[0]
-    : postingInfo.company_profiles;
-  const companyName = companyProfile?.company_name || "ZIGEX Partner";
-  const companyEmail = companyProfile?.email;
-
-  const { data: appData, error: appError } = await supabase
-    .from("Applications")
-    .insert({
-      student_id: studentData.id,
-      event_id,
-      company_id: postingInfo.company_id,
+  let application;
+  try {
+    application = await createApplication({
       application_type: "event",
-      expectations: (formData.get("expectations") as string) || null,
-      comments: (formData.get("comments") as string) || null,
-      rsvp_status: formData.get("rsvp_status") === "true",
-      status: "accepted", // Automatically accepted for events
-    })
-    .select("id")
-    .single();
-
-  if (appError) {
-    return NextResponse.json(
-      { error: "Failed to submit RSVP." },
-      { status: 500 }
-    );
+      event_id,
+      expectations: text(formData, "expectations"),
+      // TODO(backend): no `rsvp_status` field on POST /applications; the RSVP itself is the application.
+      comments: text(formData, "comments"),
+    });
+  } catch (error) {
+    const { error: message, status } = applicationErrorResponse(error, "Failed to submit RSVP.");
+    return fail(message, status);
   }
 
-  await createNotification({
-    supabase,
-    studentId: user.id,
-    title: "RSVP Confirmed!",
-    message: `You have successfully RSVP'd for "${postingInfo.title}".`,
-    type: "event",
-    referenceId: event_id,
-  });
+  const company = posting.company;
+  const companyName = company?.company_name || "ZIGEX Partner";
 
-  // Centralized Alerts (Zigex Admins)
   await sendApplicationAlert({
-    adminEmail: "zigex.connect@gmail.com,zigexconnect.com@gmail.com",
-    studentName: studentData.full_name,
-    studentEmail: user.email,
-    opportunityTitle: postingInfo.title,
+    adminEmail: ZIGEX_ADMIN_EMAILS,
+    studentName: applicant.fullName,
+    studentEmail: applicant.email,
+    opportunityTitle: posting.title,
     opportunityType: "Event",
     status: "accepted",
-    companyName: companyName
+    companyName,
   });
-
-  // Send to company if email exists
-  if (companyEmail) {
+  if (company?.email) {
     await sendNewApplicationNotification({
-      companyEmail: companyEmail,
-      companyName: companyName,
-      studentName: studentData.full_name,
-      studentEmail: user.email,
-      opportunityTitle: postingInfo.title,
+      companyEmail: company.email,
+      companyName,
+      studentName: applicant.fullName,
+      studentEmail: applicant.email,
+      opportunityTitle: posting.title,
       opportunityType: "Event",
     });
   }
-
-  // Send RSVP confirmation to candidate
   const emailResult = await sendEventRSVPConfirmation({
-    email: user.email,
-    name: studentData.full_name,
-    eventName: postingInfo.title,
-    companyName: companyName,
-    eventDate: postingInfo.start_date ? new Date(postingInfo.start_date).toDateString() : "TBA",
-    eventLocation: postingInfo.location || "TBA",
-    eventRequirements: postingInfo.description
+    email: applicant.email,
+    name: applicant.fullName,
+    eventName: posting.title,
+    companyName,
+    eventDate: posting.start_date ? new Date(posting.start_date).toDateString() : "TBA",
+    eventLocation: posting.location || "TBA",
+    eventRequirements: posting.description,
   });
-  console.log(`[RSVP Email] Sent to ${user.email}. Success: ${emailResult.success}. Error: ${emailResult.error || 'None'}`);
+  console.log(`[RSVP Email] Sent to ${applicant.email}. Success: ${emailResult.success}. Error: ${emailResult.error || "None"}`);
 
-  // Automated WhatsApp Alert
-  if (studentData.phone) {
-    const waMessage = `🎟️ *RSVP Confirmed!*\n\nHi ${studentData.full_name.split(' ')[0]}, your spot for *${postingInfo.title}* is confirmed! We've sent the details to your email. See you there! 🙌`;
-    await sendWhatsAppMessage(studentData.phone, waMessage);
+  if (applicant.phone) {
+    await sendWhatsAppMessage(
+      applicant.phone,
+      `🎟️ *RSVP Confirmed!*\n\nHi ${firstName(applicant)}, your spot for *${posting.title}* is confirmed! We've sent the details to your email. See you there! 🙌`
+    );
   }
 
   return NextResponse.json(
-    { message: "RSVP submitted successfully!", applicationId: appData.id },
+    { message: "RSVP submitted successfully!", applicationId: application.id },
     { status: 201 }
   );
 };
 
-// --- Main Handler ---
+// --- Notifications (email + WhatsApp) ---
 
-export async function POST(request: Request) {
-  try {
-    const supabase = await getSupabaseClient();
-    const authResult = await getAuthenticatedStudent(supabase);
+const firstName = (applicant: Applicant) => applicant.fullName.split(" ")[0];
 
-    if (authResult.error) {
-      return NextResponse.json(
-        { error: authResult.error },
-        { status: authResult.status }
-      );
-    }
+async function notifyApplication(
+  applicant: Applicant,
+  opportunity: {
+    title: string;
+    type: "Internship" | "Program";
+    status: string;
+    companyName?: string;
+    companyEmail?: string;
+    whatsApp: string;
+  }
+) {
+  const companyName = opportunity.companyName || "ZIGEX Partner";
 
-    const { user, studentData } = authResult;
-    const formData = await request.formData();
+  await sendApplicationAlert({
+    adminEmail: ZIGEX_ADMIN_EMAILS,
+    studentName: applicant.fullName,
+    studentEmail: applicant.email,
+    opportunityTitle: opportunity.title,
+    opportunityType: opportunity.type,
+    status: opportunity.status,
+    // Empty string = no "via <company>" line, same as the old undefined.
+    companyName: opportunity.companyName ?? "",
+  });
 
-    if (formData.has("internship_id")) {
-      return await handleInternshipApplication(supabase, user, studentData, formData);
-    } else if (formData.has("program_id")) {
-      return await handleProgramApplication(supabase, user, studentData, formData);
-    } else if (formData.has("event_id")) {
-      return await handleEventRSVP(supabase, user, studentData, formData);
-    } else {
-      return NextResponse.json(
-        {
-          error: "Invalid application type. Missing 'internship_id', 'program_id', or 'event_id'.",
-        },
-        { status: 400 }
-      );
-    }
-  } catch (error: any) {
-    console.error("Critical error in application submission API:", error);
-    return NextResponse.json(
-      { error: "An unexpected server error occurred." },
-      { status: 500 }
-    );
+  if (opportunity.companyEmail) {
+    await sendNewApplicationNotification({
+      companyEmail: opportunity.companyEmail,
+      companyName,
+      studentName: applicant.fullName,
+      studentEmail: applicant.email,
+      opportunityTitle: opportunity.title,
+      opportunityType: opportunity.type,
+    });
+  }
+
+  await sendApplicationConfirmation({
+    email: applicant.email,
+    name: applicant.fullName,
+    opportunityTitle: opportunity.title,
+    opportunityType: opportunity.type,
+    companyName,
+    isRSVP: false,
+  });
+
+  if (applicant.phone) {
+    await sendWhatsAppMessage(applicant.phone, opportunity.whatsApp);
   }
 }
 
+function toApplicant(session: { email: string }, profile: ApplicantProfile | null): Applicant {
+  return {
+    email: profile?.email || session.email,
+    fullName: profile?.full_name || session.email.split("@")[0],
+    phone: profile?.phone,
+  };
+}
+
+// --- Main Handler ---
+export async function POST(request: Request) {
+  try {
+    const session = await getSession();
+    if (!session) return fail("Unauthorized. Please log in.", 401);
+
+    const profile = await getApplicantProfile();
+    if (!profile) return fail("Student profile not found.", 404);
+    const applicant = toApplicant(session, profile);
+
+    const formData = await request.formData();
+
+    if (formData.has("internship_id")) return await handleInternshipApplication(applicant, formData);
+    if (formData.has("program_id")) return await handleProgramApplication(applicant, formData);
+    if (formData.has("event_id")) return await handleEventRSVP(applicant, formData);
+
+    return fail("Invalid application type. Missing 'internship_id', 'program_id', or 'event_id'.", 400);
+  } catch (error: any) {
+    console.error("Critical error in application submission API:", error);
+    return fail("An unexpected server error occurred.", 500);
+  }
+}

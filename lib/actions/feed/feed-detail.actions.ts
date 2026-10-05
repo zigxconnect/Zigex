@@ -2,8 +2,8 @@
 "use server";
 
 import { cache } from "react";
-import { serverApi } from "@/lib/api/server-client";
 import { findFeedItemBySlug, getFeedItem, listCompanyFeed, type FeedKind, type FeedRow } from "@/lib/api/services/feed";
+import { findApplicationFor } from "@/lib/api/services/applications";
 
 export type FeedType = "internships" | "programs" | "events" | "announcements";
 
@@ -72,17 +72,6 @@ export const getCompanyRelatedItems = cache(
   }
 );
 
-type ApplicationRow = {
-  id: string;
-  status: string;
-  application_type?: string;
-  internship_id?: string | null;
-  program_id?: string | null;
-  event_id?: string | null;
-  payment_completed?: boolean;
-  created_at?: string;
-};
-
 /**
  * The current student's application for an opportunity (GET /applications).
  * Returns hasApplied: false when signed out.
@@ -96,17 +85,11 @@ export async function getApplicationStatus(
   paymentCompleted?: boolean;
   applicationId?: string;
 }> {
-  const foreignKey = ({ internships: "internship_id", programs: "program_id", events: "event_id" } as const)[
-    opportunityType as FeedKind
-  ];
-  if (!foreignKey) return { hasApplied: false, status: null };
+  // Announcements can't be applied to.
+  if (opportunityType === "announcements") return { hasApplied: false, status: null };
 
   try {
-    const res = await serverApi.get<ApplicationRow[]>("/applications");
-    const application = (res.data ?? [])
-      .filter((app) => app[foreignKey] === opportunityId)
-      .sort((a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime())[0];
-
+    const application = await findApplicationFor(opportunityId);
     if (!application) return { hasApplied: false, status: null };
     return {
       hasApplied: true,
