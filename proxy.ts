@@ -110,7 +110,9 @@ export async function proxy(request: NextRequest) {
       pathname.startsWith("/feed/") ||
       pathname === "/create-profile" ||
       pathname === "/profile-complete" ||
-      publicApiPaths.includes(pathname)
+      publicApiPaths.includes(pathname) ||
+      // Passthrough to the standalone backend, which enforces its own auth.
+      pathname.startsWith("/api/v1/")
     ) {
       return response;
     }
