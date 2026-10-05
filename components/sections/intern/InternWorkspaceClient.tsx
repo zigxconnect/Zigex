@@ -61,8 +61,6 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { DailyReportModal } from "./DailyReportModal";
-import { createClient } from "@/lib/supabase/client";
-import { markAnnouncementsAsRead } from "@/lib/actions/announcement.actions";
 import { InternAnnouncementBoard } from "@/components/sections/intern/InternAnnouncementBoard";
 import { LogbookPreviewModal } from "./LogbookPreviewModal";
 import { WorkspaceSidebar } from "./WorkspaceSidebar";
@@ -99,6 +97,8 @@ const getTabs = (reportsCount: number, paymentsCount: number, tasksCount: number
   { id: "announcements", label: "Updates", icon: Megaphone, badge: unreadAnnouncements > 0 ? unreadAnnouncements : undefined },
   { id: "payments", label: "Payments", icon: CreditCard },
 ];
+
+const WORKSPACE_REFRESH_MS = 45_000;
 
 export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
   const [activeTab, setActiveTab] = useState("overview");
@@ -178,213 +178,26 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
 
   const router = useRouter();
 
+  // Keep tasks in sync when the server data refreshes.
   useEffect(() => {
-    const supabase = createClient();
+    setTasks(initialTasks || []);
+  }, [initialTasks]);
 
-    // Listen for changes to the current application (e.g., supervisor assignment)
-    const channel = supabase
-      .channel(`application-${application?.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'internship_applications',
-          filter: `id=eq.${application?.id}`
-        },
-        (payload) => {
-          console.log('[REALTIME] Application update detected:', payload);
-          router.refresh();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
+  // TODO(backend): Supabase realtime used to push application, announcement,
+  // log, task, payment, evaluation and notification changes. The backend has
+  // no push channel yet (SSE/WebSocket), so re-fetch the workspace while the
+  // tab is visible, and as soon as it becomes visible again.
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState === "visible") router.refresh();
     };
-  }, [application?.id, router]);
-
-  // Handle Tab Change and Mark Announcements as Read
-  useEffect(() => {
-    if (activeTab === "announcements" && unreadAnnouncements > 0) {
-      const studentId = application?.student_id;
-      const announcementIds = announcements.map((a: any) => a.id);
-
-      if (studentId && announcementIds.length > 0) {
-        markAnnouncementsAsRead(studentId, announcementIds).then(res => {
-          if (res.success) {
-            setUnreadAnnouncements(0);
-          }
-        });
-      }
-    }
-  }, [activeTab, unreadAnnouncements, application?.student_id, announcements]);
-
-  // Real-time Announcements Listener
-  useEffect(() => {
-    const supabase = createClient();
-    const companyId = opportunity?.company_id;
-
-    const announcementsChannel = supabase
-      .channel('announcements-realtime')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'announcements',
-        },
-        async (payload) => {
-          const newAnnouncement = payload.new as any;
-
-          // Check if relevant: Global (company_id is null) or specific to student's company
-          const isRelevant = !newAnnouncement.company_id || newAnnouncement.company_id === companyId;
-
-          if (isRelevant) {
-            // Re-fetch enriched announcements or manually refresh to get company info
-            router.refresh();
-
-            if (activeTab !== "announcements") {
-              setUnreadAnnouncements(prev => prev + 1);
-            }
-
-            // Notification with company info
-            toast.info("New Announcement", {
-              description: newAnnouncement.title,
-              icon: <Megaphone className="h-4 w-4 text-blue-600" />
-            });
-          }
-        }
-      )
-      .subscribe();
-
+    const interval = setInterval(refresh, WORKSPACE_REFRESH_MS);
+    document.addEventListener("visibilitychange", refresh);
     return () => {
-      supabase.removeChannel(announcementsChannel);
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", refresh);
     };
-  }, [opportunity?.company_id, activeTab, router]);
-
-  // Real-time Logs Listener (for Approval Status)
-  useEffect(() => {
-    const supabase = createClient();
-
-    const logsChannel = supabase
-      .channel(`logs-${application?.student_id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'intern_logs',
-          filter: `student_id=eq.${application?.student_id}`
-        },
-        (payload) => {
-          console.log('[REALTIME] Log update detected:', payload);
-          router.refresh();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(logsChannel);
-    };
-  }, [application?.student_id, router]);
-
-  // Real-time Tasks Listener
-  useEffect(() => {
-    const supabase = createClient();
-
-    const tasksChannel = supabase
-      .channel(`tasks-${application?.student_id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'internship_tasks',
-          filter: `student_id=eq.${application?.student_id}`
-        },
-        (payload) => {
-          console.log('[REALTIME] Task change detected:', payload);
-
-          if (payload.eventType === 'INSERT') {
-            const newTask = payload.new as any;
-            setTasks(prev => [newTask, ...prev]);
-          } else if (payload.eventType === 'UPDATE') {
-            const updatedTask = payload.new as any;
-            setTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
-          } else if (payload.eventType === 'DELETE') {
-            const deletedId = (payload.old as any).id;
-            setTasks(prev => prev.filter(t => t.id !== deletedId));
-          }
-        }
-      )
-      .subscribe();
-
-    // Listen for Payment Confirmation
-    const paymentChannel = supabase
-      .channel(`payments-${application?.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'payment_ledger',
-          filter: `application_id=eq.${application?.id}`
-        },
-        (payload) => {
-          console.log('[REALTIME] Payment update detected:', payload);
-          router.refresh();
-        }
-      )
-      .subscribe();
-
-    // Listen for Evaluation Updates
-    const evaluationChannel = supabase
-      .channel(`evaluations-${application?.student_id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'intern_evaluations',
-          filter: `student_id=eq.${application?.student_id}`
-        },
-        (payload) => {
-          console.log('[REALTIME] Evaluation update detected:', payload);
-          router.refresh();
-        }
-      )
-      .subscribe();
-
-    // Listen for Generic Notifications
-    const notificationChannel = supabase
-      .channel(`intern-notifications-${application?.student_id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${application?.student_id}`
-        },
-        (payload) => {
-          const newNotif = payload.new as any;
-          toast.info(newNotif.title, {
-            description: newNotif.message,
-            duration: 8000,
-          });
-          router.refresh();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(tasksChannel);
-      supabase.removeChannel(paymentChannel);
-      supabase.removeChannel(evaluationChannel);
-      supabase.removeChannel(notificationChannel);
-    };
-  }, [application?.student_id, application?.id, router]);
+  }, [router]);
 
   // Reset unread count when switching to announcements tab
   useEffect(() => {
