@@ -19,7 +19,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { cn, slugifyUsername } from "@/lib/utils";
 import NameInitials from "@/components/NameInitials";
-import { createClient } from "@/lib/supabase/client";
+import { api } from "@/lib/api/browser-client";
 
 interface ProfileDropdownProps {
   user: any;
@@ -53,9 +53,7 @@ export const ProfileDropdown = ({ user }: ProfileDropdownProps) => {
 
   const handleSignOut = async () => {
     try {
-      const supabase = createClient();
-      await supabase.auth.signOut();
-      await fetch("/api/auth/logout", { method: "POST" });
+      await api.post("/auth/logout").catch(() => {});
       window.location.href = "/";
     } catch (error) {
       console.error("Logout failed:", error);

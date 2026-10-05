@@ -3,24 +3,27 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { SocialButton } from "./SocialButton";
-import { GoogleIcon } from "./GoogleIcon";
-import { Cloud, GraduationCap, Eye, EyeOff, MailCheck } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/uiComponent/Spinner";
 import { Button } from "@/components/ui/button";
-import { createClient } from "@/lib/supabase/client";
 import { toast } from "react-hot-toast";
 import { getReturnUrl } from "@/lib/utils/redirect";
+import { api } from "@/lib/api/browser-client";
+import { ApiClientError } from "@/lib/api/errors";
 
 // --- Schemas ---
 const signUpSchema = z.object({
   fullName: z
     .string()
-    .min(2, { message: "Full name must be at least 2 characters." }),
+    .trim()
+    // The backend needs firstName + lastName, each at least 2 characters.
+    .regex(/^\S{2,}(\s+\S+)*\s+\S{2,}$/, {
+      message: "Please enter your first and last name.",
+    }),
   email: z.string().email({ message: "Please enter a valid email address." }),
   password: z
     .string()
@@ -33,72 +36,46 @@ const signInSchema = z.object({
 type FormData = z.infer<typeof signUpSchema>;
 type AuthFormProps = { type: "signIn" | "signUp" };
 
-const Divider = () => (
-  <div className="relative my-4">
-    <div className="absolute inset-0 flex items-center">
-      <span className="w-full border-t border-border" />
-    </div>
-    <div className="relative flex justify-center text-sm uppercase">
-      <span className="bg-white dark:bg-slate-900 px-3 text-muted-foreground font-medium">Or</span>
-    </div>
-  </div>
-);
+/** "Ada Lovelace King" → { firstName: "Ada", lastName: "Lovelace King" } */
+function splitFullName(fullName: string) {
+  const [firstName, ...rest] = fullName.trim().split(/\s+/);
+  return { firstName, lastName: rest.join(" ") };
+}
+
+/** Cooldown before the next sign-in attempt after the backend rate-limits us. */
+function retryAfterSeconds(error: ApiClientError): number {
+  const body = error.body as { retryAfter?: number } | undefined;
+  return Number(body?.retryAfter) || 60;
+}
 
 export const AuthForm = ({ type }: AuthFormProps) => {
   const isSignUp = type === "signUp";
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
   const [signInCooldown, setSignInCooldown] = useState(0);
   const [rateLimitError, setRateLimitError] = useState<string | null>(null);
-  const [csrfToken, setCsrfToken] = useState<string | null>(null);
-
-  const [supabase] = useState(() => createClient());
-  const googleButtonRef = typeof window !== 'undefined' ? (window as any).googleButtonRef : null;
-
-  // Fetch CSRF token on mount
-  useEffect(() => {
-    if (!isSignUp) {
-      fetch("/api/auth/login")
-        .then((res) => res.json())
-        .then((data) => setCsrfToken(data.csrfToken))
-        .catch(() => setCsrfToken(null));
-    }
-  }, [isSignUp]);
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
-    resolver: zodResolver(isSignUp ? signUpSchema : signInSchema),
+    // Sign-in validates a subset of the sign-up fields (no fullName).
+    resolver: (isSignUp ? zodResolver(signUpSchema) : zodResolver(signInSchema)) as unknown as Resolver<FormData>,
   });
 
   useEffect(() => {
-    const errorDescription = searchParams.get("error_description");
-    if (errorDescription) {
-      const replaced = errorDescription.replace(/\+/g, " ");
-      let decoded = replaced;
-      try {
-        decoded = decodeURIComponent(replaced);
-      } catch { }
-      toast.error(decoded);
+    const error = searchParams.get("error");
+    if (error === "wrong_portal") {
+      toast.error("This account is not a student account. Please use the company portal.", { duration: 6000 });
     }
-
-    // Handle the session_corrupted error param set by SessionGuard
-    // when it detects a corrupted Supabase session in localStorage.
-    const errorParam = searchParams.get("error");
-    if (errorParam === "session_corrupted") {
-      toast.error(
-        "Your session data was corrupted and has been cleared. Please sign in again.",
-        { duration: 6000 }
-      );
+    if (searchParams.get("verified") === "1") {
+      toast.success("Email verified! Please sign in.");
     }
   }, [searchParams]);
 
-
-  // Cooldown timer for sign-in to avoid spamming OTP requests
+  // Cooldown timer after the backend rate-limits sign-in attempts
   useEffect(() => {
     if (signInCooldown <= 0) return;
     const t = setInterval(
@@ -108,24 +85,19 @@ export const AuthForm = ({ type }: AuthFormProps) => {
     return () => clearInterval(t);
   }, [signInCooldown]);
 
-  // --- THIS IS THE CORRECTED OBJECT ---
   const content = {
     signIn: {
-      Icon: Cloud,
       title: "Welcome Back",
       subtitle: "Sign in to your ZIGEX account",
       buttonText: "Log In",
-      socialButtonText: "Sign In",
       linkText: "Don't have an account?",
       linkHref: "/sign-up",
       linkActionText: "Sign Up",
     },
     signUp: {
-      Icon: GraduationCap,
       title: "",
       subtitle: "Join thousands of students finding amazing internships",
       buttonText: "Create Account",
-      socialButtonText: "Sign Up",
       linkText: "Already have an account?",
       linkHref: "/sign-in",
       linkActionText: "Sign In",
@@ -135,251 +107,60 @@ export const AuthForm = ({ type }: AuthFormProps) => {
   const finePrint =
     "By continuing, you agree to our Terms of Service and Privacy Policy.";
 
-  const handleGoogleSignIn = async () => {
-    // console.log("[AuthForm] handleGoogleSignIn triggered");
-    const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-    const isGoogleScriptLoaded = typeof window !== 'undefined' && (window as any).google;
-
-    // console.log("[AuthForm] Google Client ID exists:", !!googleClientId);
-    // console.log("[AuthForm] Google Script loaded:", !!isGoogleScriptLoaded);
-
-    if (!isGoogleScriptLoaded || !googleClientId) {
-      // console.log("[AuthForm] Falling back to standard OAuth flow");
-      await startStandardOAuth();
-    } else {
-      // console.log("[AuthForm] Google script is loaded, the invisible overlay should have handled this click. If you see this, the overlay might have failed.");
-      // As an emergency fallback, trigger the ID token prompt manually
-      (window as any).google.accounts.id.prompt();
-    }
-  };
-  // Initialize Google Identity Services
-  useEffect(() => {
-    let isMounted = true;
-    const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-
-    if (!googleClientId) {
-      console.warn("[AuthForm] NEXT_PUBLIC_GOOGLE_CLIENT_ID is missing");
-    }
-
-    if (googleClientId && (window as any).google) {
-      console.log("[AuthForm] Initializing Google Identity Services");
-      const google = (window as any).google;
-
-      google.accounts.id.initialize({
-        client_id: googleClientId,
-        itp_support: true,
-        use_fedcm_for_prompt: true,
-        callback: async (response: any) => {
-          if (!isMounted) return;
-          console.log("[AuthForm] Google ID Token received, signing in with Supabase...");
-          try {
-            const { data, error } = await supabase.auth.signInWithIdToken({
-              provider: "google",
-              token: response.credential,
-            });
-
-            if (error) {
-              console.error("[AuthForm] Supabase ID Token Auth Error:", error);
-              toast.error(error.message);
-              return;
-            }
-
-            if (!data || !data.user) {
-              console.error("[AuthForm] Sign-in successful but no user data returned", data);
-              toast.error("Authentication failed: No user data received.");
-              return;
-            }
-
-            console.log("[AuthForm] Supabase sign-in successful, user:", data.user.id);
-            toast.success("Logged in successfully!");
-
-            // Refresh session to ensure cookies are synced
-            try {
-              await supabase.auth.refreshSession();
-            } catch (refreshErr) {
-              console.warn("[AuthForm] Session refresh failed, continuing anyway:", refreshErr);
-            }
-
-            // Deferred completion: land the user on their intended destination
-            // (defaults to /feed), even if their profile is incomplete.
-            const returnUrl = getReturnUrl("/feed");
-            window.location.href = returnUrl;
-          } catch (err: any) {
-            console.error("[AuthForm] Unexpected error during Google sign-in:", err);
-            // Specifically catch the "Cannot create property 'user' on string" error
-            // which often indicates a corrupted Supabase session state in localStorage.
-            if (err instanceof TypeError && err.message.includes("property 'user' on string")) {
-              toast.error("Login issue: Session data is corrupted. Please refresh the page and try again.");
-              // Optional: Clear any potentially corrupted session data
-              if (typeof window !== 'undefined') {
-                localStorage.removeItem('supabase.auth.token');
-              }
-            } else {
-              toast.error(`Sign-in error: ${err.message || "An unexpected error occurred"}`);
-            }
-          }
-        },
-      });
-
-      // Render the official Google button INVISIBLY on top of our custom button
-      const parent = document.getElementById("google-button-overlay");
-      if (parent) {
-        console.log("[AuthForm] Rendering invisible Google button onto overlay");
-        google.accounts.id.renderButton(parent, {
-          theme: "filled_black",
-          size: "large",
-          type: "standard",
-          shape: "rectangular",
-          text: isSignUp ? "signup_with" : "signin_with",
-          width: 400,
-        });
-      }
-    } else {
-      console.log("[AuthForm] Google script or Client ID not ready for Identity Services");
-    }
-
-    return () => {
-      isMounted = false;
-    };
-  }, [isSignUp, router, supabase]);
-
-
-
-  const startStandardOAuth = async () => {
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/api/auth/callback`,
-      },
-    });
-    if (error) {
-      toast.error(error.message);
-    } else if (data.url) {
-      router.push(data.url);
-    }
-  };
+  const goToVerifyEmail = (email: string) =>
+    router.push(`/verify-email?email=${encodeURIComponent(email)}`);
 
   const onSubmit = async (data: FormData) => {
-    if (isSignUp) {
-      try {
-        const response = await fetch("/api/auth/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...data, origin: window.location.origin }),
+    try {
+      if (isSignUp) {
+        await api.post("/auth/register/student", {
+          email: data.email,
+          password: data.password,
+          ...splitFullName(data.fullName),
         });
-        const responseData = await response.json();
-        if (!response.ok)
-          throw new Error(responseData.error || "Sign-up failed.");
-        setEmailSent(true);
-        toast.success("Verification email sent! Please check your inbox.");
-      } catch (err) {
-        toast.error((err as Error).message);
+        toast.success("Account created! Enter the code we emailed you.");
+        goToVerifyEmail(data.email);
+        return;
       }
-    } else {
-      // Sign-in logic
-      try {
-        const response = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(csrfToken ? { "x-csrf-token": csrfToken } : {}),
-          },
-          body: JSON.stringify({ email: data.email, password: data.password }),
-        });
-        const responseData = await response.json();
-        if (response.status === 429) {
-          // Rate limit exceeded
-          const ra = response.headers?.get?.("Retry-After");
-          const retryAfter = ra ? Number(ra) : responseData.retryAfter || 10;
-          setSignInCooldown(Number.isFinite(retryAfter) ? retryAfter : 10);
-          const errorMsg = responseData.error || "Too many login attempts. Please wait before retrying.";
-          setRateLimitError(errorMsg);
-          toast.error(errorMsg);
-          return;
-        }
-        if (!response.ok)
-          throw new Error(responseData.error || "Login failed.");
-        // If the server indicates an OTP was sent (company flow), redirect
-        // to the verify page and include the email in the query string.
-        if (responseData?.otpSent) {
-          const ra = response.headers?.get?.("Retry-After");
-          const retryAfter = ra ? Number(ra) : responseData.retryAfter || 10;
-          setSignInCooldown(Number.isFinite(retryAfter) ? retryAfter : 10);
-          toast.success("OTP sent to your email.");
-          router.push(`/verify-otp?email=${encodeURIComponent(data.email)}`);
-        } else {
-          toast.success("Logged in successfully!");
-          // Honour the ?next= return URL (sanitized server-side in the API route;
-          // we mirror the same validation here on the client for defence-in-depth).
-          const returnUrl = getReturnUrl("/feed");
-          router.push(returnUrl);
-        }
-      } catch (err) {
-        toast.error((err as Error).message);
+
+      const res = await api.post<{ user: { role: string } }>("/auth/login", {
+        email: data.email,
+        password: data.password,
+      });
+
+      if (res.data.user.role !== "student") {
+        await api.post("/auth/logout").catch(() => {});
+        toast.error("This is not a student account. Please use the company portal.");
+        return;
       }
+
+      toast.success("Logged in successfully!");
+      // Full navigation so proxy.ts and server components see the new cookie.
+      window.location.href = getReturnUrl("/feed");
+    } catch (err) {
+      if (!(err instanceof ApiClientError)) {
+        toast.error("Something went wrong. Please try again.");
+        return;
+      }
+      if (err.status === 429) {
+        const msg = "Too many attempts. Please wait before retrying.";
+        setSignInCooldown(retryAfterSeconds(err));
+        setRateLimitError(msg);
+        toast.error(msg);
+        return;
+      }
+      // Login of an account that has not verified its OTP yet.
+      if (!isSignUp && err.status === 401 && /verify your email/i.test(err.message)) {
+        toast.error(err.message);
+        await api.post("/auth/resend-otp", { email: data.email }).catch(() => {});
+        goToVerifyEmail(data.email);
+        return;
+      }
+      toast.error(
+        err.status === 401 && !isSignUp ? "Invalid email or password." : err.message
+      );
     }
   };
-
-
-  if (isSignUp && emailSent) {
-    return (
-      <div className="w-full max-w-md p-8 bg-card rounded-3xl shadow-2xl flex flex-col justify-center items-center text-center min-h-[650px] relative overflow-hidden">
-        {/* Background gradient decoration */}
-        <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-primary/10 via-primary/5 to-transparent" />
-        <div className="absolute top-10 left-1/2 -translate-x-1/2 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
-
-        {/* Content */}
-        <div className="relative z-10">
-          {/* Animated Icon */}
-          <div className="mx-auto w-20 h-20 bg-gradient-to-br from-primary to-blue-600 rounded-3xl flex items-center justify-center shadow-lg shadow-primary/30 mb-6">
-            <MailCheck className="w-10 h-10 text-white" />
-          </div>
-
-          {/* Main Title */}
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
-            Check your inbox!
-          </h1>
-
-          {/* Subtitle */}
-          <p className="mt-3 text-muted-foreground leading-relaxed max-w-sm">
-            We&apos;ve sent a verification link to your email address. Click the link to activate your account.
-          </p>
-
-          {/* Visual Divider */}
-          <div className="my-6 flex items-center gap-4">
-            <div className="flex-1 h-px bg-border" />
-            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">or</span>
-            <div className="flex-1 h-px bg-border" />
-          </div>
-
-          {/* Spam Notice Card */}
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-left">
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center shrink-0">
-                <span className="text-lg">📁</span>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-amber-800">
-                  Not in your inbox?
-                </p>
-                <p className="text-xs text-amber-700 mt-1">
-                  Check your <span className="font-bold">Spam</span> or <span className="font-bold">Promotions</span> folder. Sometimes emails take a minute to arrive.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Back to Sign In */}
-          <p className="mt-6 text-sm text-muted-foreground">
-            Already verified?{" "}
-            <Link href="/sign-in" className="font-semibold text-primary hover:underline">
-              Sign In
-            </Link>
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="w-full max-w-md p-6 md:p-8 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl flex flex-col justify-center relative overflow-hidden transition-all duration-300">
@@ -401,25 +182,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
         )}
         <p className={`mt-2 text-sm font-semibold ${currentContent.title ? 'text-slate-600 dark:text-slate-400' : 'text-[#155DFC] dark:text-blue-400 text-base'}`}>{currentContent.subtitle}</p>
       </div>
-      <div className="mt-5 space-y-3 relative z-10">
-        {/* Custom Google Button matching App Theme with Invisible Overlay */}
-        <div className="relative w-full">
-          {/* The visible custom button */}
-          <SocialButton
-            icon={GoogleIcon}
-            onClick={handleGoogleSignIn} // Now has fallback logic
-            text={`${currentContent.socialButtonText} with Google`}
-          />
-          {/* The invisible official Google button layered on top */}
-          <div
-            id="google-button-overlay"
-            className="absolute inset-0 z-10 opacity-0 overflow-hidden"
-            style={{ transform: 'scale(1.05)' }} // Slight scale to ensure full coverage
-          />
-        </div>
-      </div>
-      <Divider />
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 relative z-10">
+      <form onSubmit={handleSubmit(onSubmit)} className="mt-5 space-y-4 relative z-10">
         {isSignUp && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100 fill-mode-both">
             <label className="text-sm font-bold tracking-wide text-slate-700 dark:text-slate-300">

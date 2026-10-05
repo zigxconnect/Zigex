@@ -1,20 +1,14 @@
 import { AuthForm } from "@/components/sections/auth/AuthForm";
-import { checkAuthStatus } from "@/lib/actions/auth.action";
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { Spinner } from "@/components/uiComponent/Spinner";
 
 export const metadata: Metadata = {
   title: "Sign In",
 };
 
-export default async function SignInPage() {
-  try {
-    await checkAuthStatus();
-    redirect("/feed");
-  } catch (error) {}
-
+// Signed-in students never reach this page: proxy.ts redirects them to /feed.
+export default function SignInPage() {
   return (
     <Suspense
       fallback={

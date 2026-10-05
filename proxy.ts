@@ -1,234 +1,140 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { createServerClient } from "@supabase/ssr";
+import { ACCESS_TOKEN_COOKIE } from "@/lib/api/config";
+import { readSession } from "@/lib/api/jwt";
+
+const SECURITY_HEADERS: Record<string, string> = {
+  "X-Frame-Options": "SAMEORIGIN",
+  "X-Content-Type-Options": "nosniff",
+  "X-XSS-Protection": "1; mode=block",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=(self), payment=()",
+};
+
+// Pages anyone can open. Signed-in students are bounced off the auth pages.
+const AUTH_PAGES = ["/sign-in", "/sign-up", "/verify-email", "/forgot-password"];
+const PUBLIC_PAGES = ["/", "/demo", "/feed", "/update-password", ...AUTH_PAGES];
+
+// API routes that must work without a session.
+const PUBLIC_API_PREFIXES = [
+  // Passthrough to the backend, which enforces its own auth.
+  "/api/v1/",
+  "/api/cron/",
+  // Legacy company auth — moves out with the admin app (feat/admin-split).
+  "/api/auth/",
+];
+
+// Company/admin area: still on Supabase until it is split into its own app.
+const LEGACY_ADMIN_PREFIXES = ["/admin", "/company", "/verify-otp", "/api/companies", "/api/admin"];
+
+function withSecurityHeaders(response: NextResponse) {
+  for (const [name, value] of Object.entries(SECURITY_HEADERS)) response.headers.set(name, value);
+  return response;
+}
+
+function redirectTo(request: NextRequest, path: string) {
+  return withSecurityHeaders(NextResponse.redirect(new URL(path, request.url)));
+}
+
+function signInRedirect(request: NextRequest) {
+  const url = new URL("/sign-in", request.url);
+  const { pathname, search } = request.nextUrl;
+  if (pathname.startsWith("/") && !pathname.startsWith("//")) {
+    url.searchParams.set("next", pathname + search);
+  }
+  return withSecurityHeaders(NextResponse.redirect(url));
+}
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  let response = NextResponse.next({
-    request: { headers: request.headers },
-  });
+
+  if (LEGACY_ADMIN_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
+    return legacyAdminProxy(request);
+  }
+
+  const session = readSession(request.cookies.get(ACCESS_TOKEN_COOKIE)?.value);
+  const isApi = pathname.startsWith("/api/");
+
+  if (isApi) {
+    if (session || PUBLIC_API_PREFIXES.some((p) => pathname.startsWith(p))) {
+      return withSecurityHeaders(NextResponse.next());
+    }
+    return withSecurityHeaders(
+      NextResponse.json({ success: false, error: { code: "UNAUTHORIZED", message: "Authentication required" } }, { status: 401 })
+    );
+  }
+
+  const isPublic = PUBLIC_PAGES.includes(pathname) || pathname.startsWith("/feed/");
+
+  if (!session) {
+    return isPublic ? withSecurityHeaders(NextResponse.next()) : signInRedirect(request);
+  }
+
+  // This app is for students; companies and supervisors use the admin app.
+  if (session.role !== "student") {
+    return isPublic ? withSecurityHeaders(NextResponse.next()) : redirectTo(request, "/sign-in?error=wrong_portal");
+  }
+
+  if (AUTH_PAGES.includes(pathname)) {
+    return redirectTo(request, "/feed");
+  }
+
+  return withSecurityHeaders(NextResponse.next());
+}
+
+/**
+ * Supabase-session guard for the company/admin area, kept only until
+ * feat/admin-split moves it into its own app. Delete with that split.
+ */
+async function legacyAdminProxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  let response = NextResponse.next({ request: { headers: request.headers } });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value;
-        },
-        set(name, value, options) {
-          request.cookies.set({ name, value, ...options });
-          const headers = new Headers(request.headers);
-          headers.set('cookie', request.cookies.toString());
-          response = NextResponse.next({
-            request: { headers },
-          });
-          response.cookies.set({ name, value, ...options });
-        },
-        remove(name, options) {
-          request.cookies.set({ name, value: "", ...options });
-          const headers = new Headers(request.headers);
-          headers.set('cookie', request.cookies.toString());
-          response = NextResponse.next({
-            request: { headers },
-          });
-          response.cookies.set({ name, value: "", ...options });
+        getAll: () => request.cookies.getAll(),
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+          response = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
         },
       },
     }
   );
 
-  // === SECURITY HEADERS ===
-  const headers = response.headers;
-  headers.set("X-Frame-Options", "SAMEORIGIN");
-  headers.set("X-Content-Type-Options", "nosniff");
-  headers.set("X-XSS-Protection", "1; mode=block");
-  headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  headers.set(
-    "Permissions-Policy",
-    "camera=(), microphone=(), geolocation=(self), payment=()"
-  );
-
+  const publicPaths = ["/company/sign-up", "/verify-otp"];
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  console.log(`[Proxy] Pathname: ${pathname}, User Authenticated: ${!!user}`);
-  if (user) {
-    console.log(`[Proxy] User ID: ${user.id}`);
-  }
-
-  const publicPaths = [
-    "/",
-    "/sign-in",
-    "/sign-up",
-    "/company/sign-up",
-    "/api/auth/callback",
-    "/verify-otp",
-    "/forgot-password",
-    "/update-password",
-    "/demo",
-    "/feed",
-  ];
-
-  // Helper helper to create a redirect that preserves session cookies
-  const createRedirectResponse = (targetPath: string) => {
-    const redirectUrl = new URL(targetPath, request.url);
-    const redirectResponse = NextResponse.redirect(redirectUrl);
-    // Copy all cookies from our intermediate 'response' object to the redirect
-    response.cookies.getAll().forEach((cookie) => {
-      redirectResponse.cookies.set(cookie.name, cookie.value, {
-        domain: cookie.domain,
-        expires: cookie.expires,
-        httpOnly: cookie.httpOnly,
-        maxAge: cookie.maxAge,
-        path: cookie.path,
-        sameSite: cookie.sameSite,
-        secure: cookie.secure,
-      });
-    });
-    return redirectResponse;
-  };
-
-  // --- 1. Handle Unauthenticated Users ---
-  const publicApiPaths = [
-    "/api/auth/login",
-    "/api/auth/register",
-    "/api/auth/forgot-password",
-    "/api/auth/verify-otp",
-    "/api/auth/verify-otp-server",
-    "/api/auth/resend-otp",
-    "/api/auth/callback",
-    "/api/auth/company/register",
-    "/api/cron/reminders",
-    // add more public API endpoints as needed
-  ];
   if (!user) {
-    if (
-      publicPaths.includes(pathname) ||
-      // Public feed: allow any /feed/* path for unauthenticated visitors.
-      // The page itself gates all write/apply actions client-side.
-      pathname.startsWith("/feed/") ||
-      pathname === "/create-profile" ||
-      pathname === "/profile-complete" ||
-      publicApiPaths.includes(pathname) ||
-      // Passthrough to the standalone backend, which enforces its own auth.
-      pathname.startsWith("/api/v1/")
-    ) {
-      return response;
+    if (publicPaths.includes(pathname)) return withSecurityHeaders(response);
+    if (pathname.startsWith("/api/")) {
+      return withSecurityHeaders(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
     }
-    // If API route, return JSON error instead of redirect
-    if (pathname.startsWith('/api')) {
-      const errorResponse = new NextResponse(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
-      // Even error responses should try to sync cookies if any were updated (e.g. clearing stale ones)
-      response.cookies.getAll().forEach((cookie) => {
-        errorResponse.cookies.set(cookie.name, cookie.value, cookie);
-      });
-      return errorResponse;
-    }
-    // Append the intended path as a ?next= param so the sign-in page can
-    // redirect the user back after successful authentication.
-    const signInUrl = new URL("/sign-in", request.url);
-    const isRelativePath = pathname.startsWith("/") && !pathname.startsWith("//");
-    if (isRelativePath) {
-      signInUrl.searchParams.set("next", pathname);
-    }
-    return createRedirectResponse(signInUrl.pathname + signInUrl.search);
+    return signInRedirect(request);
   }
 
-  // --- 2. Handle Authenticated Users ---
-
-  if (pathname === "/update-password") {
-    return response;
-  }
-
-  const { data: studentProfile, error: studentError } = await supabase
-    .from("student_profiles")
-    .select("role, profile_status")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  const { data: companyProfile, error: companyError } = await supabase
+  const { data: companyProfile } = await supabase
     .from("company_profiles")
     .select("role")
     .eq("user_id", user.id)
     .maybeSingle();
 
-  // Log any errors for debugging
-  if (studentError) {
-    console.error("[Proxy] Error fetching student profile:", studentError);
-  }
-  if (companyError) {
-    console.error("[Proxy] Error fetching company profile:", companyError);
+  if (companyProfile?.role !== "company" && !publicPaths.includes(pathname)) {
+    return pathname.startsWith("/api/")
+      ? withSecurityHeaders(NextResponse.json({ error: "Forbidden" }, { status: 403 }))
+      : redirectTo(request, "/feed");
   }
 
-  // Determine user role, or mark as "unassigned" if neither profile exists
-  let userRole: "student" | "company" | "unassigned" = "unassigned";
-  if (studentProfile?.role === "student") {
-    userRole = "student";
-  } else if (companyProfile?.role === "company") {
-    userRole = "company";
+  if (publicPaths.includes(pathname) && companyProfile?.role === "company") {
+    return redirectTo(request, "/admin/dashboard");
   }
 
-  // --- 3. Handle Unassigned Users (No Profile Yet) ---
-  if (userRole === "unassigned") {
-    if (
-      pathname !== "/create-profile" &&
-      pathname !== "/company/sign-up" &&
-      !pathname.startsWith("/api")
-    ) {
-      return createRedirectResponse("/create-profile");
-    }
-    return response;
-  }
-
-  // --- 4. Deferred completion for students ---
-  // Incomplete profiles are no longer force-redirected to /create-profile.
-  // Students land on their requested page (typically /dashboard or /feed)
-  // and are nudged toward /dashboard/edit-profile via a dismissible banner
-  // instead of a hard gate here.
-
-  // --- 5. Redirect Authenticated Users from Restricted Pages ---
-
-  const authRedirectPaths = [
-    ...publicPaths.filter((path) => path !== "/demo" && path !== "/feed"),
-    "/create-profile",
-    "/profile-complete",
-  ];
-
-  // If the user is on any of these restricted pages, redirect them to their dashboard.
-  if (authRedirectPaths.includes(pathname)) {
-    if (userRole === "company") {
-      return createRedirectResponse("/admin/dashboard");
-    }
-    if (userRole === "student") {
-      return createRedirectResponse("/dashboard");
-    }
-  }
-
-  // --- 6. Role-Based Authorization ---
-  if (pathname.startsWith("/admin") && userRole !== "company") {
-    return createRedirectResponse("/dashboard");
-  }
-
-  const studentPaths = [
-    "/dashboard",
-    "/profile-settings",
-    "/upload-resume",
-    "/applied-internships",
-    "/track-progress",
-    "/chat",
-  ];
-  if (
-    studentPaths.some((p) => pathname.startsWith(p)) &&
-    userRole !== "student"
-  ) {
-    return createRedirectResponse("/admin/dashboard");
-  }
-
-  return response;
+  return withSecurityHeaders(response);
 }
 
 export const config = {
@@ -237,4 +143,3 @@ export const config = {
     "/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|push-sw.js|icons/|images/).*)",
   ],
 };
-
