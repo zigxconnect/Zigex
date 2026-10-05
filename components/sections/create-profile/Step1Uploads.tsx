@@ -4,8 +4,7 @@ import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { ProfileFormData } from "@/app/types/profile";
 import { FormField } from "@/components/uiComponent/FormField";
-import { createClient } from "@/lib/supabase/client";
-import { v4 as uuidv4 } from "uuid";
+import { uploadAvatar } from "@/lib/api/uploads";
 import { toast } from "react-hot-toast";
 import { Camera, Image as ImageIcon, X, UploadCloud } from "lucide-react";
 import Image from "next/image";
@@ -23,85 +22,28 @@ export const Step1Uploads = () => {
   const avatarUrl = watch("avatar_url");
   const coverImageUrl = watch("cover_image");
 
-  const supabase = createClient();
-
-  const validateFile = (file: File) => {
-    const validTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-    if (!validTypes.includes(file.type)) {
-      throw new Error("Invalid file type. Please upload a JPEG, PNG, WEBP, or GIF image.");
-    }
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    if (file.size > maxSize) {
-      throw new Error("File size too large. Maximum size is 10MB.");
-    }
-  };
-
-  const sanitizeFileName = (fileName: string) => {
-    // Remove non-alphanumeric characters except dots and dashes
-    return fileName.replace(/[^a-zA-Z0-9.-]/g, "_");
-  };
-
-  const handleUpload = async (
-    file: File,
-    bucket: string,
-    pathPrefix: string,
-    field: "avatar_url" | "cover_image",
-    setLoading: (loading: boolean) => void
-  ) => {
+  const onAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
     try {
-      setLoading(true);
-      validateFile(file);
-
-      const fileExt = file.name.split(".").pop();
-      const sanitizedName = sanitizeFileName(file.name.split(".")[0]);
-      const fileName = `${uuidv4()}-${sanitizedName}.${fileExt}`;
-      const filePath = `${pathPrefix}/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from(bucket)
-        .upload(filePath, file, {
-          cacheControl: "3600",
-          upsert: false,
-        });
-
-      if (uploadError) throw uploadError;
-
-      const { data: publicUrlData } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(filePath);
-
-      setValue(field, publicUrlData.publicUrl, { shouldValidate: true });
+      setIsUploadingAvatar(true);
+      // Validates type (JPEG/PNG/WEBP/GIF) and the backend's 5 MB limit.
+      const { url } = await uploadAvatar(file);
+      setValue("avatar_url", url, { shouldValidate: true });
       toast.success("Image uploaded successfully!");
     } catch (error: any) {
       console.error("Upload error:", error);
       toast.error(`Upload failed: ${error.message}`);
     } finally {
-      setLoading(false);
-    }
-  };
-
-  const onAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      handleUpload(
-        e.target.files[0],
-        "student-assets",
-        "avatars",
-        "avatar_url",
-        setIsUploadingAvatar
-      );
+      setIsUploadingAvatar(false);
     }
   };
 
   const onCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      handleUpload(
-        e.target.files[0],
-        "student-assets",
-        "cover-images",
-        "cover_image",
-        setIsUploadingCover
-      );
-    }
+    if (!e.target.files?.[0]) return;
+    // TODO(backend): no cover image upload endpoint yet (see "Missing endpoints: Profile cover image").
+    toast.error("Cover image uploads are temporarily unavailable.");
+    e.target.value = "";
   };
 
   const removeImage = (field: "avatar_url" | "cover_image") => {

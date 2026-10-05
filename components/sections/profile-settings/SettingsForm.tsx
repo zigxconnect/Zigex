@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { profileEditSchema, ProfileFormData } from "@/app/types/profile";
-import { createClient } from "@/lib/supabase/client";
+import { api } from "@/lib/api/browser-client";
+import { saveMyProfile } from "@/lib/actions/profile.actions";
 import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/uiComponent/Spinner";
@@ -40,7 +41,6 @@ export const SettingsForm = ({ initialUserId }: { initialUserId?: string }) => {
   const [activeTab, setActiveTab] = useState("personal");
   const [userId, setUserId] = useState<string | null>(initialUserId || null);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
 
   const methods = useForm<ProfileFormData>({
     resolver: zodResolver(profileEditSchema) as any,
@@ -52,27 +52,8 @@ export const SettingsForm = ({ initialUserId }: { initialUserId?: string }) => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        let currentUserId = userId;
-        
-        if (!currentUserId) {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) {
-              if (typeof window !== 'undefined') {
-                   window.location.href = "/sign-in";
-              }
-              return;
-          }
-          currentUserId = user.id;
-          setUserId(currentUserId);
-        }
-
-        const { data: profile, error } = await supabase
-          .from("student_profiles")
-          .select("*")
-          .eq("user_id", currentUserId)
-          .single();
-
-        if (error) throw error;
+        // proxy.ts guarantees a signed-in student here.
+        const { data: profile } = await api.get<Record<string, any>>("/students/me");
 
         if (profile) {
           reset({
@@ -112,7 +93,7 @@ export const SettingsForm = ({ initialUserId }: { initialUserId?: string }) => {
     };
 
     fetchUserData();
-  }, [supabase, reset]);
+  }, [reset]);
 
   const onSubmit = async (data: ProfileFormData) => {
     if (!userId) return;
@@ -124,18 +105,16 @@ export const SettingsForm = ({ initialUserId }: { initialUserId?: string }) => {
     // BUT Step1Personal has `first_name` input. 
     // Let's assume the API/Backend expects the flat structure or handles mapping.
     // If table has `full_name`, and form has `first_name`, we might need to map it. 
-    // MultiStepForm sends `data` directly to `/api/students/student/${userId}`.
     
     try {
-      const response = await fetch(`/api/students/student/${userId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
+      const result = await saveMyProfile(data as Record<string, unknown>);
+      if (!result.success) throw new Error(result.error || "Failed to update profile");
 
-      if (!response.ok) throw new Error("Failed to update profile");
-      
       toast.success("Profile updated successfully!");
+      // TODO(backend): these fields have no PATCH /students/me equivalent yet.
+      if (result.unsupported?.length) {
+        console.warn("[SettingsForm] not saved yet:", result.unsupported.join(", "));
+      }
       // Optionally refresh data or keep as is
       reset(data); // Reset dirty state with new data
     } catch (error) {

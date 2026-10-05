@@ -17,6 +17,7 @@ import { Step3Skills } from "@/components/sections/create-profile/Step3Skills";
 import { Step4Experience } from "@/components/sections/create-profile/Step4Experience";
 import { Step5Additional } from "@/components/sections/create-profile/Step5Additional";
 import { Spinner } from "@/components/uiComponent/Spinner";
+import { saveMyProfile } from "@/lib/actions/profile.actions";
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -109,16 +110,10 @@ export const EditProfileModal = ({
     }
 
     try {
-      const response = await fetch(`/api/students/student/${userId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      const responseData = await response.json();
-
-      if (!response.ok) {
-        throw new Error(responseData.error || "Failed to update profile.");
+      // TODO(backend): username is validated above but not saved — PATCH /students/me has no username field yet.
+      const result = await saveMyProfile(formData);
+      if (!result.success) {
+        throw new Error(result.error || "Failed to update profile.");
       }
 
       toast.success("Profile updated successfully!", { id: toastId });

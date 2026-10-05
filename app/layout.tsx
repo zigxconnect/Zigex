@@ -10,7 +10,6 @@ import Script from "next/script";
 
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
-import SessionGuard from "@/components/providers/SessionGuard";
 import LoaderProvider from "@/components/providers/LoaderProvider";
 
 const inter = Inter({
@@ -135,7 +134,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* 
+        {/*
+          Students no longer use Supabase (their session is the httpOnly backend
+          cookie). This guard only protects the company/admin area's Supabase
+          session — delete it with feat/admin-split.
+
           CRITICAL: This script must run SYNCHRONOUSLY before any other JS.
           It purges corrupted Supabase auth tokens from localStorage to prevent
           "TypeError: Cannot create property 'user' on string".
@@ -183,10 +186,8 @@ export default function RootLayout({
       <body className={`${inter.variable} ${hostGrotesk.variable} antialiased`}>
         <LoaderProvider />
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
-          <SessionGuard>
-            <PushNotificationManager />
-            {children}
-          </SessionGuard>
+          <PushNotificationManager />
+          {children}
         </ThemeProvider>
 
         <Toaster position="top-center" reverseOrder={false} />

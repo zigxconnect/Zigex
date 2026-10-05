@@ -9,7 +9,7 @@ import { Step2Education } from '@/components/sections/create-profile/Step2Educat
 import { Step3Skills } from '@/components/sections/create-profile/Step3Skills';
 import { Step4Experience } from '@/components/sections/create-profile/Step4Experience';
 import { Step5Additional } from '@/components/sections/create-profile/Step5Additional';
-import { createClient } from '@/lib/supabase/client';
+import { saveMyProfile } from '@/lib/actions/profile.actions';
 
 const steps = [
   { label: 'Personal Info', component: Step1Personal, icon: User, color: 'from-blue-900 to-blue-800' },
@@ -59,26 +59,17 @@ export default function EditProfilePage() {
     try {
       setCompletedSteps([...completedSteps, activeStep]);
 
-      // Get current user
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (!session?.user) {
-        alert("You must be logged in to update your profile.");
-        return;
-      }
-
       // Show success animation immediately for better UX, then save
       setShowSuccessAnimation(true);
 
-      const response = await fetch(`/api/students/student/${session.user.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update profile");
+      const result = await saveMyProfile(data);
+      if (!result.success) {
+        if (result.error === "Not authenticated") {
+          alert("You must be logged in to update your profile.");
+          setShowSuccessAnimation(false);
+          return;
+        }
+        throw new Error(result.error || "Failed to update profile");
       }
 
       setTimeout(() => {
