@@ -1,14 +1,19 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/api/auth";
 
 const MENTOR_EMAIL = "fonyuyjudegita@gmail.com";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { studentEmail, mentorEmail, content, pointsEffect } = body;
+    const { studentEmail, content, pointsEffect } = body;
 
-    if (mentorEmail !== MENTOR_EMAIL) {
+    // The mentor is identified by the backend-verified session. A mentorEmail
+    // in the request body proves nothing: the client code itself contains it.
+    // TODO(backend): replace the hardcoded mentor with a supervisor role check.
+    const user = await getCurrentUser();
+    if (user?.email !== MENTOR_EMAIL) {
       return NextResponse.json({ error: "Forbidden: not authorized" }, { status: 403 });
     }
 
@@ -44,7 +49,7 @@ export async function POST(req: Request) {
 
     const feedback = {
       id: crypto.randomUUID(),
-      mentorEmail,
+      mentorEmail: user.email,
       content,
       pointsEffect,
       created_at: new Date().toISOString(),

@@ -272,7 +272,7 @@ const ProgressTreeTracker: React.FC = () => {
                                     const studentEmail = (document.getElementById('mentor-student-email') as HTMLInputElement).value;
                                     const content = (document.getElementById('mentor-feedback') as HTMLTextAreaElement).value;
                                     if (!studentEmail || !content) return alert('Provide student email and feedback');
-                                    const res = await fetch('/api/reports/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ studentEmail, mentorEmail: 'fonyuyjudegita@gmail.com', content, pointsEffect: 30 }) });
+                                    const res = await fetch('/api/reports/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ studentEmail, content, pointsEffect: 30 }) });
                                     if (!res.ok) return alert('Failed to post feedback');
                                     alert('Feedback posted');
                                 }} className="px-3 py-1 bg-green-600 text-white rounded">Post Feedback</button>
