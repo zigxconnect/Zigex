@@ -37,3 +37,29 @@ export async function parseResponse<T>(res: Response): Promise<ApiResponse<T>> {
 
   return payload as ApiResponse<T>;
 }
+
+/**
+ * True when the backend has not deployed this route yet (Express's default
+ * 404: "Cannot GET /api/v1/..."), as opposed to a real "resource not found".
+ *
+ * Features built against docs/backend-missing-endpoints.md use this to show
+ * a "coming soon" / empty state until the endpoint ships, then start working
+ * with no frontend change.
+ */
+export function isEndpointMissing(error: unknown): boolean {
+  return (
+    error instanceof ApiClientError &&
+    error.status === 404 &&
+    /^Cannot (GET|POST|PUT|PATCH|DELETE) /.test(error.message)
+  );
+}
+
+/** Runs a backend call; resolves to `fallback` if the endpoint is not deployed yet. */
+export async function whenAvailable<T>(call: () => Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await call();
+  } catch (error) {
+    if (isEndpointMissing(error)) return fallback;
+    throw error;
+  }
+}

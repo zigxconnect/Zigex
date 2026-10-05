@@ -6,6 +6,8 @@ The student frontend now authenticates against `api.zigexconnect.com` and is rea
 
 Live version (with comments): https://claude.ai/code/artifact/9425f2d8-9780-4947-b394-a7f340ecace5
 
+To see which of these endpoints are deployed, run `BACKEND_TOKEN=<student JWT> npm run check:backend` in the frontend repo.
+
 ## Contents
 
 - [Blockers](#blockers)
@@ -28,7 +30,7 @@ Live version (with comments): https://claude.ai/code/artifact/9425f2d8-9780-4947
 
 These three must be fixed before the student app can go live on the backend.
 
-1. **Login rate limit counts the frontend server, not the student.** `POST /auth/login` allows 10 attempts per hour per IP. The browser cannot call the API directly (CORS only allows `http://localhost:3000`), so every request reaches the backend from the frontend server's IP. Without a fix, the whole site shares 10 logins per hour.
+1. **Rate limits count the frontend server, not the student.** `POST /auth/login` allows 10 attempts per hour per IP, and every other route shares a global limit of 100 requests per 15 minutes per IP. The browser cannot call the API directly (CORS only allows `http://localhost:3000`), so every request reaches the backend from the frontend server's IP. Without a fix, the whole site shares 10 logins per hour and 100 API calls per 15 minutes; a single busy page load can use up the global limit.
    - Fix: the frontend sends the real client IP in `X-Forwarded-For`. Trust it with `app.set('trust proxy', <hops>)` and key the limiter on `req.ip`.
 2. **Response bodies are not documented.** Every feed, applications, attendance, gamification and `students/me` response is typed only as `object` in Swagger. The frontend cannot map fields without guessing.
    - Fix: add response schemas (field names, types, nullability, nested company/curriculum objects) for each endpoint, or share one sample JSON response per endpoint.

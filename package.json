@@ -7,7 +7,8 @@
     "dev": "node --max-http-header-size=128000 node_modules/next/dist/bin/next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "check:backend": "node scripts/check-backend-endpoints.mjs"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
