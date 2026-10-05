@@ -8,7 +8,13 @@ import crypto from "crypto";
  * and secret stay in one place.
  */
 
-const SECRET_KEY = process.env.JWT_SECRET || "zigex_super_secret_attendance_key_2026";
+// Read lazily and fail closed: a hardcoded fallback would let anyone with the
+// source forge check-in codes.
+function secretKey(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error("JWT_SECRET is not set; attendance QR codes cannot be signed or verified.");
+  return secret;
+}
 const TOKEN_TYPE = "zigex_attendance_v2";
 
 export type AttendanceTokenPayload = {
@@ -19,7 +25,7 @@ export type AttendanceTokenPayload = {
 };
 
 const sign = (payload: unknown) =>
-  crypto.createHmac("sha256", SECRET_KEY).update(JSON.stringify(payload)).digest("hex");
+  crypto.createHmac("sha256", secretKey()).update(JSON.stringify(payload)).digest("hex");
 
 export function signAttendanceToken(internshipId: string, createdBy?: string): string {
   const payload: AttendanceTokenPayload = {

@@ -17,7 +17,13 @@ import { ApiClientError } from "@/lib/api/errors";
  * 4. Duplicate scans for the same day are accepted (idempotent)
  */
 export async function scanAttendanceQR(token: string, studentLat?: number, studentLng?: number) {
-    const verified = verifyAttendanceToken(token);
+    let verified: ReturnType<typeof verifyAttendanceToken>;
+    try {
+        verified = verifyAttendanceToken(token);
+    } catch (err) {
+        console.error("[attendance] QR verification unavailable:", err);
+        return { success: false, error: "Attendance scanning is temporarily unavailable. Please contact support." };
+    }
     if ("error" in verified) return { success: false, error: verified.error };
 
     try {
