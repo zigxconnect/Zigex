@@ -4,6 +4,8 @@ import { useState, FormEvent, ChangeEvent, useEffect } from "react";
 import { X, User, Image as ImageIcon, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { toast } from "sonner";
+import { uploadAvatar } from "@/lib/api/uploads";
+import { saveMyProfile } from "@/lib/actions/profile.actions";
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -109,40 +111,30 @@ export const EditProfileModal = ({
     setIsLoading(true);
     setError(null);
 
-    const formData = new FormData();
-    if (avatarFile) {
-      formData.append("avatar", avatarFile);
-    }
-    if (coverImageFile) {
-      formData.append("cover_image", coverImageFile);
-    }
-
     if (!avatarFile && !coverImageFile) {
       setError("Please select at least one image to upload.");
       setIsLoading(false);
       return;
     }
 
-    if (!userId) {
-      setError("User ID is not defined.");
+    // TODO(backend): no cover image upload endpoint yet (see "Missing endpoints: Profile cover image").
+    if (!avatarFile) {
+      setError("Cover image uploads are temporarily unavailable. You can still change your profile picture.");
       setIsLoading(false);
       return;
     }
 
     try {
-      const response = await fetch(`/api/students/stud/${userId}`, {
-        method: "PUT",
-        body: formData,
-      });
+      const { url } = await uploadAvatar(avatarFile);
+      // Keep student_profiles.avatar_url in step with the uploaded file.
+      const saved = await saveMyProfile({ avatar_url: url });
+      if (!saved.success) throw new Error(saved.error || "Failed to update profile.");
 
-      const responseData = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          responseData.details ||
-          responseData.error ||
-          "Failed to update profile."
-        );
+      if (coverImageFile) {
+        toast.warning("Cover image not saved", {
+          description: "Cover image uploads are temporarily unavailable.",
+          duration: 4000,
+        });
       }
 
       toast.success("Profile updated successfully!", {

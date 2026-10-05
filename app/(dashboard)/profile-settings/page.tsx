@@ -1,5 +1,5 @@
 import { SettingsForm } from "@/components/sections/profile-settings/SettingsForm";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getSession } from "@/lib/api/auth";
 import { redirect } from "next/navigation";
 
 export const metadata = {
@@ -8,10 +8,9 @@ export const metadata = {
 };
 
 export default async function ProfileSettingsPage() {
-  const supabase = await createSupabaseServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const session = await getSession();
 
-  if (!user) {
+  if (!session) {
     redirect("/sign-in");
   }
 
@@ -25,7 +24,7 @@ export default async function ProfileSettingsPage() {
           </p>
         </div>
 
-        <SettingsForm initialUserId={user.id} />
+        <SettingsForm initialUserId={session.userId} />
       </div>
     </div>
   );
