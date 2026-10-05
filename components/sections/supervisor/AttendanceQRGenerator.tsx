@@ -5,7 +5,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { motion, AnimatePresence } from "framer-motion";
 import { QrCode, Printer, Download, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { generateStaticAttendanceToken } from "@/lib/actions/attendance.actions";
+import { generateStaticAttendanceToken } from "@/lib/actions/supervisor-attendance.actions";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
