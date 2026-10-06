@@ -16,6 +16,9 @@ import { clearAccessToken, getAccessToken, setAccessToken } from "@/lib/api/sess
 // Endpoints whose successful response carries data.token.
 const TOKEN_ISSUING_PATHS = new Set(["auth/login", "auth/verify-email"]);
 
+// Long-lived streams that must not get the request timeout.
+const STREAMING_PATHS = new Set(["events/stream"]);
+
 // Request headers worth forwarding. Browser cookies are deliberately NOT
 // forwarded — the backend only ever sees the Bearer token.
 const FORWARDED_REQUEST_HEADERS = ["content-type", "accept", "accept-language", "if-none-match"];
@@ -48,7 +51,10 @@ async function handler(req: NextRequest, { params }: RouteContext) {
       body: hasBody ? await req.arrayBuffer() : undefined,
       cache: "no-store",
       redirect: "manual",
-      signal: AbortSignal.timeout(path.startsWith("uploads/") ? UPLOAD_TIMEOUT_MS : DEFAULT_TIMEOUT_MS),
+      // Server-sent events stay open; the browser's EventSource closes them.
+      signal: STREAMING_PATHS.has(path)
+        ? req.signal
+        : AbortSignal.timeout(path.startsWith("uploads/") ? UPLOAD_TIMEOUT_MS : DEFAULT_TIMEOUT_MS),
     });
   } catch (error) {
     const timedOut = error instanceof Error && error.name === "TimeoutError";

@@ -1,72 +1,58 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient, supabaseAdmin } from "@/lib/supabase/server";
+import { getSession } from "@/lib/api/auth";
+import { serverApi } from "@/lib/api/server-client";
+import { whenAvailable } from "@/lib/api/errors";
+import { getProgramEnrollment, resolveProgramId } from "@/lib/api/services/programs";
+
+type ProgramReceipt = {
+    student_name: string;
+    program_title: string;
+    company?: { company_name?: string; logo_url?: string; address?: string };
+    amount_paid_xaf: number;
+    paid_at: string;
+    reference: string;
+};
 
 export async function GET(
     req: NextRequest,
     { params }: { params: Promise<{ programId: string }> }
 ) {
     try {
-        const { programId } = await params;
-        const supabase = await createSupabaseServerClient();
-        const { data: { user } } = await supabase.auth.getUser();
-
-        if (!user) {
+        const { programId: idOrSlug } = await params;
+        if (!(await getSession())) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
+        const programId = (await resolveProgramId(idOrSlug)) ?? idOrSlug;
 
-        // 1. Get student profile
-        const { data: student } = await supabase
-            .from("student_profiles")
-            .select("id, full_name")
-            .eq("user_id", user.id)
-            .single();
-
-        if (!student) return new NextResponse("Profile not found", { status: 404 });
-
-        // 2. Get application and payment
-        const { data: application } = await supabase
-            .from("Applications")
-            .select(`
-                *,
-                program:programs (
-                    title,
-                    price_xaf,
-                    company_profiles(company_name, logo_url)
-                )
-            `)
-            .eq("program_id", programId)
-            .eq("student_id", student.id)
-            .single();
-
-        if (!application || !application.payment_completed) {
+        // GET /programs/{id}/receipt (spec'd); until it ships, build the receipt
+        // from the application's embedded payment details.
+        const receipt = await whenAvailable(
+            async () => (await serverApi.get<ProgramReceipt>(`/programs/${encodeURIComponent(programId)}/receipt`)).data,
+            null
+        );
+        const enrollment = receipt ? null : await getProgramEnrollment(programId);
+        if (!receipt && !enrollment?.isPaid) {
             return new NextResponse("Payment not found or not completed", { status: 403 });
         }
 
-        const { data: payment } = await supabase
-            .from("program_student_payment")
-            .select("*")
-            .eq("application_id", application.id)
-            .maybeSingle();
+        const companyName = receipt?.company?.company_name || enrollment?.companyName || "SEED INC";
+        const companyLogo = receipt?.company?.logo_url || enrollment?.companyLogoUrl || "/seedLogo.png";
 
-        const program = Array.isArray(application.program) ? application.program[0] : application.program;
-        const company = (program as any)?.company_profiles;
-        const companyName = company?.company_name || "SEED INC";
-        const companyLogo = company?.logo_url || "/seedLogo.png";
+        const name = receipt?.student_name || enrollment?.studentName || "Student";
+        const programTitle = receipt?.program_title || enrollment?.programTitle || "Program";
+        const date = receipt?.paid_at || enrollment?.paymentDetails?.date || new Date().toISOString();
+        const ref =
+            receipt?.reference ||
+            enrollment?.paymentDetails?.ref ||
+            `ZGX-APP-${(enrollment?.applicationId ?? "").substring(0, 6).toUpperCase()}`;
 
-        const name = student.full_name;
-        const programTitle = program?.title || "Program";
-        const date = payment?.payment_date || payment?.created_at || new Date().toISOString();
-        const ref = payment?.payment_ref || `ZGX-APP-${application.id.substring(0, 6).toUpperCase()}`;
-
-        // Use 10,000 for Weekend of Code if requested, otherwise use program price or payment amount
-        let amount = payment?.amount_paid_xaf || program?.price_xaf || 0;
+        // Use 10,000 for Weekend of Code if requested, otherwise the amount paid
+        let amount = receipt?.amount_paid_xaf ?? enrollment?.paymentDetails?.amount ?? 0;
         if (programTitle.toLowerCase().includes("weekend of code")) {
             amount = 10000;
         }
 
-        const month = payment?.notes?.includes('Month')
-            ? payment.notes
-            : new Date(date).toLocaleString('default', { month: 'long' });
+        const month = new Date(date).toLocaleString('default', { month: 'long' });
 
         const html = `
 <!DOCTYPE html>

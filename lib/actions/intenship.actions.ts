@@ -13,7 +13,14 @@ import {
   logsToAttendance,
 } from "@/lib/api/services/attendance";
 import {
+  acknowledgePayment,
+  getAnnouncements,
+  getInternshipCurriculum,
+  getInternshipTasks,
+  getInternshipTeam,
   listPlacements,
+  markAnnouncementsRead,
+  markTaskRead,
   placementOpportunity,
   placementTargetId,
   type Placement,
@@ -53,7 +60,10 @@ export async function getInternshipWorkspaceData(applicationId?: string) {
   const referenceId = placementTargetId(application);
   const opportunity = placementOpportunity(application);
 
-  const [logs, notes, studentProfile, userWorkspaces] = await Promise.all([
+  const isProgram = application.application_type === "program";
+  const internshipId = !isProgram ? referenceId : null;
+
+  const [logs, notes, studentProfile, userWorkspaces, tasks, curriculum, announcements, team] = await Promise.all([
     referenceId ? orEmpty("logs", () => listLogs(referenceId), []) : [],
     referenceId ? orEmpty("notes", () => listNotes(referenceId), []) : [],
     orEmpty(
@@ -65,21 +75,27 @@ export async function getInternshipWorkspaceData(applicationId?: string) {
       null
     ),
     toWorkspaceList(placements),
+    internshipId ? orEmpty("tasks", () => getInternshipTasks(internshipId), []) : [],
+    internshipId ? orEmpty("curriculum", () => getInternshipCurriculum(internshipId), null) : null,
+    referenceId
+      ? orEmpty("announcements", () => getAnnouncements(isProgram ? { programId: referenceId } : { internshipId: referenceId }), [])
+      : [],
+    internshipId
+      ? orEmpty("team", () => getInternshipTeam(internshipId), { fellowInterns: [], fellowSupervisors: [] })
+      : { fellowInterns: [], fellowSupervisors: [] },
   ]);
 
   return {
     application,
-    // The internship detail endpoint embeds its curriculum when one exists.
-    curriculum: opportunity?.curriculum ?? opportunity?.internship_curriculum ?? [],
+    // GET /internships/{id}/curriculum; until deployed, the curriculum embedded in the internship detail.
+    curriculum: curriculum ?? opportunity?.curriculum ?? opportunity?.internship_curriculum ?? [],
     logs,
-    // TODO(backend): no endpoints yet for tasks, announcements (+ read state),
-    // fellow interns or supervisors — see "Missing endpoints: Intern workspace".
-    tasks: [] as any[],
+    tasks,
     notes,
-    announcements: [] as any[],
-    unreadCount: 0,
-    fellowInterns: [] as any[],
-    fellowSupervisors: [] as any[],
+    announcements,
+    unreadCount: announcements.filter((a) => a.is_read === false).length,
+    fellowInterns: team.fellowInterns,
+    fellowSupervisors: team.fellowSupervisors,
     userWorkspaces,
     studentProfile,
     // Check-ins live on the daily logs now; derived for the attendance tracker.
@@ -159,20 +175,43 @@ export async function submitInternshipLog(formData: {
 }
 
 /**
- * Server Action to acknowledge payment terms for a paid internship.
- * TODO(backend): no endpoint yet (see "Missing endpoints: Intern workspace").
+ * Server Action to acknowledge payment terms for a paid internship
+ * (POST /applications/{id}/payment-acknowledgement).
  */
-export async function acknowledgePaidInternship(_applicationId: string) {
-  return {
-    success: false,
-    error: "Payment acknowledgement is temporarily unavailable. Please contact your supervisor.",
-  };
+export async function acknowledgePaidInternship(applicationId: string) {
+  try {
+    const result = await acknowledgePayment(applicationId);
+    if (result.pending) {
+      return { success: false, error: "Payment acknowledgement is coming soon. Please contact your supervisor." };
+    }
+    revalidatePath("/intern/workspace");
+    revalidatePath("/student/workspace");
+    return { success: true };
+  } catch (error) {
+    console.error("Error acknowledging payment:", error);
+    return { success: false, error: "Failed to save your acknowledgement. Please try again." };
+  }
 }
 
-/**
- * Server Action to mark an internship task as read by the intern.
- * TODO(backend): no tasks endpoint yet (see "Missing endpoints: Intern workspace").
- */
-export async function markTaskAsRead(_taskId: string) {
-  return { success: false, error: "Tasks are temporarily unavailable." };
+/** Server Action to mark an internship task as read (PATCH /tasks/{id}/read). */
+export async function markTaskAsRead(taskId: string) {
+  try {
+    const result = await markTaskRead(taskId);
+    return result.pending ? { success: false, error: "Tasks are coming soon." } : { success: true };
+  } catch (error) {
+    console.error("Error marking task as read:", error);
+    return { success: false, error: "Failed to update the task." };
+  }
+}
+
+/** Server Action to mark workspace announcements as read (POST /announcements/read). */
+export async function markWorkspaceAnnouncementsRead(announcementIds: string[]) {
+  if (announcementIds.length === 0) return { success: true };
+  try {
+    const result = await markAnnouncementsRead(announcementIds);
+    return { success: result.success };
+  } catch (error) {
+    console.error("Error marking announcements as read:", error);
+    return { success: false };
+  }
 }

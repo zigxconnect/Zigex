@@ -151,7 +151,7 @@ const formContents: Record<
         name: "resume",
         type: "file",
         required: true,
-        helperText: "PDF or DOC • Max 10MB",
+        helperText: "PDF, DOC or DOCX • Max 10MB",
       },
       {
         label: "Cover Letter",
@@ -212,9 +212,9 @@ export default function ApplicationModal({
       return `File "${file.name}" exceeds the 10MB limit.`;
     }
     const isCoverLetter = name === "cover_letter";
-    const allowedTypes = isCoverLetter ? ["application/pdf"] : ["application/pdf", "application/msword"];
+    const allowedTypes = isCoverLetter ? ["application/pdf"] : ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
     if (!allowedTypes.includes(file.type)) {
-      return `File "${file.name}" is not a valid document type (${isCoverLetter ? "PDF" : "PDF or DOC"}).`;
+      return `File "${file.name}" is not a valid document type (${isCoverLetter ? "PDF" : "PDF, DOC or DOCX"}).`;
     }
     return null;
   };
@@ -544,7 +544,7 @@ export default function ApplicationModal({
                         <input
                           type="file"
                           id={field.name}
-                          accept={field.name === "cover_letter" ? ".pdf" : ".pdf,.doc"}
+                          accept={field.name === "cover_letter" ? ".pdf" : ".pdf,.doc,.docx"}
                           onChange={(e) => handleFileChange(e, field.name)}
                           className="hidden"
                         />

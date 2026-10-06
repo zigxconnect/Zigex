@@ -1,6 +1,6 @@
 import "server-only";
 import { serverApi } from "../server-client";
-import { ApiClientError } from "../errors";
+import { ApiClientError, isEndpointMissing } from "../errors";
 import { getFeedItem } from "./feed";
 import {
   hydrateApplications,
@@ -23,7 +23,41 @@ export type CreateApplicationInput = {
   duration_months?: number;
   expectations?: string;
   comments?: string;
+} & SpecApplicationFields;
+
+/**
+ * Fields requested in docs/backend-missing-endpoints.md (Applications and
+ * uploads) but maybe not deployed yet. createApplication sends them and
+ * retries without them if the backend rejects the request; callers also put
+ * the same answers in `comments` so nothing is lost meanwhile.
+ */
+type SpecApplicationFields = {
+  level?: string;
+  rsvp_status?: string;
+  school?: string;
+  school_level?: string;
+  date_of_birth?: string;
+  address?: string;
+  domain?: string;
+  duration?: string;
+  experience_level?: string;
+  reason?: string;
+  is_paid_acknowledgement?: boolean;
 };
+
+const SPEC_APPLICATION_FIELDS: (keyof SpecApplicationFields)[] = [
+  "level",
+  "rsvp_status",
+  "school",
+  "school_level",
+  "date_of_birth",
+  "address",
+  "domain",
+  "duration",
+  "experience_level",
+  "reason",
+  "is_paid_acknowledgement",
+];
 
 /**
  * The signed-in student's applications, newest first. With `withPostings`
@@ -51,8 +85,22 @@ export async function findApplicationFor(postingId: string): Promise<Application
 }
 
 export async function createApplication(input: CreateApplicationInput): Promise<ApplicationRow> {
-  const res = await serverApi.post<ApplicationRow>("/applications", input);
-  return res.data;
+  try {
+    const res = await serverApi.post<ApplicationRow>("/applications", input);
+    return res.data;
+  } catch (error) {
+    const hasSpecFields = SPEC_APPLICATION_FIELDS.some((key) => input[key] !== undefined);
+    const rejected =
+      error instanceof ApiClientError &&
+      (error.status === 422 || (error.status === 400 && !isDuplicate(error)));
+    if (!hasSpecFields || !rejected) throw error;
+
+    const legacy = { ...input };
+    for (const key of SPEC_APPLICATION_FIELDS) delete legacy[key];
+    console.warn("[applications] backend rejected spec'd fields; retrying without them");
+    const res = await serverApi.post<ApplicationRow>("/applications", legacy);
+    return res.data;
+  }
 }
 
 export async function withdrawApplication(id: string): Promise<ApplicationRow> {
@@ -65,14 +113,34 @@ async function toUploadBody(file: File) {
 }
 
 /** Accepted by POST /uploads/cv. */
-export const CV_MIME_TYPES = ["application/pdf", "application/msword"];
+export const CV_MIME_TYPES = [
+  "application/pdf",
+  "application/msword",
+  // Requested in docs/backend-missing-endpoints.md; the backend's error is shown if it still refuses.
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+];
 /** Accepted by POST /uploads/cover-letter/{applicationId}. */
 export const COVER_LETTER_MIME_TYPES = ["application/pdf"];
 
 /**
- * Replaces the student's CV (it is stored on the profile, not per application).
- * TODO(backend): no per-application resume upload yet.
+ * Uploads the resume for one application (POST /uploads/resume/{id}, spec'd).
+ * Until that ships, replaces the student's profile CV instead.
  */
+export async function uploadResume(applicationId: string, file: File) {
+  try {
+    const res = await serverApi.post<{ key?: string; url?: string }>(
+      `/uploads/resume/${encodeURIComponent(applicationId)}`,
+      await toUploadBody(file),
+      { timeoutMs: 60_000 }
+    );
+    return res.data;
+  } catch (error) {
+    if (!isEndpointMissing(error)) throw error;
+    return uploadCv(file);
+  }
+}
+
+/** Replaces the student's profile CV. */
 export async function uploadCv(file: File) {
   const res = await serverApi.post<{ key: string; signedUrl: string }>("/uploads/cv", await toUploadBody(file), {
     timeoutMs: 60_000,
@@ -113,13 +181,21 @@ export async function getApplicantProfile(): Promise<ApplicantProfile | null> {
 }
 
 /**
- * Turns a backend error into the { error, status } the apply routes return.
- * POST /applications answers 400 for duplicates as well as missing targets.
+ * A duplicate application: 409 DUPLICATE_APPLICATION per the spec, or the
+ * backend's current 400 whose message says "already" / "duplicate".
  */
+function isDuplicate(error: ApiClientError) {
+  return (
+    error.code === "DUPLICATE_APPLICATION" ||
+    error.status === 409 ||
+    (error.status === 400 && /already|duplicate/i.test(error.message))
+  );
+}
+
+/** Turns a backend error into the { error, status } the apply routes return. */
 export function applicationErrorResponse(error: unknown, fallback: string) {
   if (error instanceof ApiClientError) {
-    const duplicate = error.status === 400 && /already|duplicate/i.test(error.message);
-    return { error: error.message || fallback, status: duplicate ? 409 : error.status };
+    return { error: error.message || fallback, status: isDuplicate(error) ? 409 : error.status };
   }
   console.error(fallback, error);
   return { error: fallback, status: 500 };

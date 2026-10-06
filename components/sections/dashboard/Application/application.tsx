@@ -133,7 +133,7 @@ const formContents: Record<FormType, FormContentProps> = {
         name: "resume",
         type: "file",
         required: true,
-        helperText: "PDF or DOC format • Max 10MB",
+        helperText: "PDF, DOC or DOCX format • Max 10MB",
       },
     ],
   },
@@ -321,7 +321,7 @@ export default function DynamicForm({ type, id }: DynamicFormProps) {
                   type="file"
                   id={field.name}
                   name={field.name}
-                  accept={field.name === "cover_letter" ? ".pdf" : ".pdf,.doc"}
+                  accept={field.name === "cover_letter" ? ".pdf" : ".pdf,.doc,.docx"}
                   required={field.required}
                   className="block w-full text-xs text-muted-foreground 
                     file:mr-4 file:py-2.5 file:px-5 

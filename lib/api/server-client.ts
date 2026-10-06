@@ -40,3 +40,19 @@ export const serverApi = {
     request<T>(path, { ...options, method: "PATCH", body }),
   delete: <T>(path: string, options?: RequestOptions) => request<T>(path, { ...options, method: "DELETE" }),
 };
+
+/**
+ * Raw backend response, for endpoints that may return a file (e.g. a PDF)
+ * instead of JSON. Errors are not thrown; check `res.ok` / `res.status`.
+ */
+export async function serverApiRaw(path: string, init: Omit<RequestInit, "body"> = {}): Promise<Response> {
+  const token = await getAccessToken();
+  const headers = new Headers(init.headers);
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  return fetch(`${BACKEND_URL}${API_PREFIX}${path}`, {
+    cache: "no-store",
+    ...init,
+    headers,
+    signal: init.signal ?? AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
+  });
+}
