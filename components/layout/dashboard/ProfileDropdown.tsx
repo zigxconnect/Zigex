@@ -65,7 +65,7 @@ export const ProfileDropdown = ({ user }: { user: any }) => {
         >
           <div className="px-3 py-2.5">
             <p className="truncate text-sm font-semibold text-[#0B1B3F]">{name}</p>
-            {email && <p className="truncate text-[13px] text-[#4A5670]">{email}</p>}
+            {email && <p className="truncate text-sm text-[#4A5670]">{email}</p>}
           </div>
           <div className="my-1 h-px bg-[#EEF2FA]" />
           {links.map((l) => (

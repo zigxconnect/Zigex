@@ -17,6 +17,10 @@ import FeedStories from "@/components/feed/FeedStories";
 import { OpportunityBoard } from "@/components/feed/board/OpportunityBoard";
 import { OpportunityCardSkeleton } from "@/components/feed/board/OpportunityCard";
 import { BoardRail } from "@/components/feed/board/BoardRail";
+import { StudentRail, type ApplicationsSummary, type ProfileStrength } from "@/components/feed/board/StudentRail";
+import { listApplications } from "@/lib/api/services/applications";
+import { getMyProfile } from "@/lib/api/services/profile";
+import { applicationKind, targetId, toApplicationStatus } from "@/lib/api/applications-shape";
 import { toBoardItem, type BoardItem } from "@/components/feed/board/board-types";
 import { listPublicFeed, type FeedKind } from "@/lib/api/services/feed";
 import { getOptionalAuth } from "@/lib/utils/auth-context";
@@ -67,26 +71,96 @@ function BoardSkeleton() {
   );
 }
 
+async function loadApplications(): Promise<ApplicationsSummary | null> {
+  try {
+    const rows = await listApplications({ withPostings: true });
+    const statuses = rows.map((r) => toApplicationStatus(r.status)).filter((s) => s !== "not_applied");
+    const latestRow = rows.find((r) => toApplicationStatus(r.status) !== "not_applied");
+    const kind = latestRow ? applicationKind(latestRow) : null;
+    const id = latestRow ? targetId(latestRow) : null;
+    return {
+      total: statuses.length,
+      inReview: statuses.filter((s) => s === "pending").length,
+      accepted: statuses.filter((s) => s === "accepted").length,
+      notSelected: statuses.filter((s) => s === "rejected").length,
+      latest:
+        latestRow && kind
+          ? {
+              title: latestRow[kind]?.title ?? "Your application",
+              status: toApplicationStatus(latestRow.status) as "pending" | "accepted" | "rejected",
+              href: id ? `/feed/${id}` : null,
+            }
+          : null,
+    };
+  } catch (error) {
+    console.error("[feed] applications failed:", error);
+    return null;
+  }
+}
+
+const filled = (v: unknown) => (Array.isArray(v) ? v.length > 0 : Boolean(v));
+
+/** What companies look at first, in the order worth doing. */
+async function loadProfileStrength(): Promise<ProfileStrength | null> {
+  try {
+    const row = await getMyProfile();
+    const p = (row?.profile ?? row) as Record<string, unknown> | null;
+    if (!p) return null;
+    const steps = [
+      { label: "Profile photo", done: filled(p.avatar_url) || filled(p.profile_picture) },
+      { label: "School and course", done: filled(p.university) && filled(p.field_of_study) },
+      { label: "About you", done: filled(p.about) },
+      { label: "Skills", done: filled(p.hard_skills) },
+      { label: "Location", done: filled(p.location) },
+      { label: "Portfolio or LinkedIn link", done: filled(p.portfolio_url) || filled(p.github_url) || filled(p.linkedin_url) },
+    ];
+    return { steps, percent: Math.round((steps.filter((s) => s.done).length / steps.length) * 100) };
+  } catch (error) {
+    console.error("[feed] profile failed:", error);
+    return null;
+  }
+}
+
+/** One plain sentence about the student's own situation, under the greeting. */
+function statusLine(apps: ApplicationsSummary | null): string {
+  if (!apps) return "Find an internship, program or event and apply with your profile.";
+  if (apps.accepted > 0 && apps.latest?.status === "accepted") return `You were accepted to ${apps.latest.title}.`;
+  if (apps.inReview > 0) return `${apps.inReview} application${apps.inReview === 1 ? " is" : "s are"} waiting for a reply.`;
+  if (apps.total === 0) return "Find an internship, program or event and apply with your profile.";
+  return "Here's what's open right now.";
+}
+
 export default async function FeedPage() {
   const { user, isAuthenticated } = await getOptionalAuth();
-  const workspaces = isAuthenticated
-    ? await import("@/lib/actions/intenship.actions").then((m) => m.getUserWorkspaces()).catch(() => [])
-    : [];
+  const [workspaces, applications, profile] = isAuthenticated
+    ? await Promise.all([
+        import("@/lib/actions/intenship.actions").then((m) => m.getUserWorkspaces()).catch(() => []),
+        loadApplications(),
+        loadProfileStrength(),
+      ])
+    : [[], null, null];
 
   return (
     <div className="mx-auto w-full max-w-6xl pb-16">
-      <header className="mb-8">
-        <h1 className="font-heading text-3xl font-bold tracking-tight text-[#0B1B3F] sm:text-4xl">
-          {isAuthenticated ? `Welcome back${user?.name ? `, ${user.name.split(" ")[0]}` : ""}` : "Opportunities"}
-        </h1>
-        <p className="mt-2 text-lg text-[#4A5670]">
-          Open internships, programs and events from companies in Bamenda and across Cameroon.
-        </p>
-      </header>
+      {isAuthenticated ? (
+        <header className="mb-6">
+          <h1 className="font-heading text-[28px] font-bold leading-tight tracking-tight text-[#0B1B3F]">
+            Welcome back{user?.name ? `, ${user.name.split(" ")[0]}` : ""}
+          </h1>
+          <p className="mt-1 text-base text-[#4A5670]">{statusLine(applications)}</p>
+        </header>
+      ) : (
+        <header className="mb-8">
+          <h1 className="font-heading text-3xl font-bold tracking-tight text-[#0B1B3F] sm:text-4xl">Opportunities</h1>
+          <p className="mt-2 text-lg text-[#4A5670]">
+            Open internships, programs and events from companies in Bamenda and across Cameroon.
+          </p>
+        </header>
+      )}
 
       {/* Stories are a community feature for members; signed-out visitors can't post. */}
       {isAuthenticated && (
-        <section aria-label="Stories" className="mb-8">
+        <section aria-label="Stories" className="mb-6">
           <FeedStories currentUser={user} />
         </section>
       )}
@@ -99,7 +173,11 @@ export default async function FeedPage() {
         </section>
         <aside className="lg:col-span-3">
           <div className="lg:sticky lg:top-24">
-            <BoardRail signedIn={isAuthenticated} workspaces={workspaces} />
+            {isAuthenticated ? (
+              <StudentRail applications={applications} profile={profile} workspaces={workspaces} />
+            ) : (
+              <BoardRail signedIn={false} workspaces={[]} />
+            )}
           </div>
         </aside>
       </div>

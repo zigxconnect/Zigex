@@ -41,7 +41,7 @@ export function BoardRail({ signedIn, workspaces }: { signedIn: boolean; workspa
       <div className="rounded-2xl bg-white p-5 ring-1 ring-[#DCE5F5]">
         <h2 className="font-heading text-base font-semibold text-[#0B1B3F]">Your workspaces</h2>
         {workspaces.length === 0 ? (
-          <p className="mt-2 text-[15px] leading-relaxed text-[#4A5670]">
+          <p className="mt-2 text-base leading-relaxed text-[#4A5670]">
             When a company accepts you, your internship or program workspace appears here.
           </p>
         ) : (
@@ -61,7 +61,7 @@ export function BoardRail({ signedIn, workspaces }: { signedIn: boolean; workspa
                   )}
                   <span className="min-w-0">
                     <span className="block truncate text-sm font-semibold text-[#0B1B3F]">{ws.title}</span>
-                    {ws.company_name && <span className="block truncate text-[13px] text-[#4A5670]">{ws.company_name}</span>}
+                    {ws.company_name && <span className="block truncate text-sm text-[#4A5670]">{ws.company_name}</span>}
                   </span>
                 </Link>
               </li>

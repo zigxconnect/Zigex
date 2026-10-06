@@ -171,14 +171,14 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
           <div className="flex items-center justify-between gap-3 border-b border-[#EEF2FA] px-4 py-3">
             <div>
               <h3 className="font-heading text-base font-semibold text-[#0B1B3F]">Notifications</h3>
-              <p className="text-[13px] text-[#4A5670]">{unreadCount > 0 ? `${unreadCount} unread` : "You're all caught up"}</p>
+              <p className="text-sm text-[#4A5670]">{unreadCount > 0 ? `${unreadCount} unread` : "You're all caught up"}</p>
             </div>
             <div className="flex items-center gap-1">
               {unreadCount > 0 && (
                 <button
                   type="button"
                   onClick={markAllAsRead}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-[13px] font-semibold text-[#155DFC] hover:bg-[#F3F7FF]"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-sm font-semibold text-[#155DFC] hover:bg-[#F3F7FF]"
                 >
                   <CheckCheck className="h-4 w-4" aria-hidden="true" />
                   Mark all read
@@ -200,7 +200,7 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
               <div className="px-6 py-12 text-center">
                 <Inbox className="mx-auto h-8 w-8 text-[#B9C8E6]" aria-hidden="true" />
                 <p className="mt-3 text-sm font-semibold text-[#0B1B3F]">No notifications yet</p>
-                <p className="mt-1 text-[13px] text-[#4A5670]">Updates about your applications will show up here.</p>
+                <p className="mt-1 text-sm text-[#4A5670]">Updates about your applications will show up here.</p>
               </div>
             ) : (
               <ul className="divide-y divide-[#EEF2FA]">
@@ -223,7 +223,7 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
                           {notification.title}
                         </span>
                         {notification.content && (
-                          <span className="mt-0.5 line-clamp-2 block text-[13px] text-[#4A5670]">{notification.content}</span>
+                          <span className="mt-0.5 line-clamp-2 block text-sm text-[#4A5670]">{notification.content}</span>
                         )}
                       </span>
                       <span className="shrink-0 text-xs text-[#7B869C]">{formatTime(notification.timestamp)}</span>

@@ -28,7 +28,7 @@ const PAGE_SIZE = 12;
 
 /** Shared look for every form control on the board: 48px tall, 12px radius, one focus ring. */
 const control =
-  "h-12 rounded-xl border border-[#DCE5F5] bg-white text-[15px] text-[#0B1B3F] transition-colors " +
+  "h-12 rounded-xl border border-[#DCE5F5] bg-white text-base text-[#0B1B3F] transition-colors " +
   "hover:border-[#B9C8E6] focus-visible:outline-none focus-visible:border-[#155DFC] focus-visible:ring-4 focus-visible:ring-[#155DFC]/15";
 const fieldLabel = "mb-1.5 block text-sm font-medium text-[#0B1B3F]";
 
@@ -130,8 +130,9 @@ export function OpportunityBoard({ items }: { items: BoardItem[] }) {
     <div>
       {/* Filters: every control has a visible label, the same height and the same focus ring. */}
       <div className="rounded-2xl bg-[#F8FAFF] p-4 ring-1 ring-[#DCE5F5] sm:p-5">
-        <div className="grid gap-4 sm:grid-cols-[1fr_11rem] sm:items-end">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-[1fr_11rem] sm:items-end">
           <form
+            className="order-1 col-span-2 sm:order-none sm:col-span-1"
             role="search"
             onSubmit={(e) => {
               e.preventDefault();
@@ -172,7 +173,7 @@ export function OpportunityBoard({ items }: { items: BoardItem[] }) {
               )}
             </div>
           </form>
-          <div>
+          <div className="order-3 min-w-0 sm:order-none">
             <span id={`${uid}-sort`} className={fieldLabel}>
               Sort by
             </span>
@@ -205,7 +206,7 @@ export function OpportunityBoard({ items }: { items: BoardItem[] }) {
                       <SelectPrimitive.Item
                         key={option.id}
                         value={option.id}
-                        className="relative flex h-10 cursor-pointer select-none items-center rounded-lg pl-3 pr-9 text-[15px] text-[#0B1B3F] outline-none data-[highlighted]:bg-[#F3F7FF] data-[state=checked]:font-semibold"
+                        className="relative flex h-10 cursor-pointer select-none items-center rounded-lg pl-3 pr-9 text-base text-[#0B1B3F] outline-none data-[highlighted]:bg-[#F3F7FF] data-[state=checked]:font-semibold"
                       >
                         <SelectPrimitive.ItemText>
                           {option.label}
@@ -223,10 +224,8 @@ export function OpportunityBoard({ items }: { items: BoardItem[] }) {
               </SelectPrimitive.Portal>
             </SelectPrimitive.Root>
           </div>
-        </div>
 
-        <div className="mt-4 grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
-          <div>
+          <div className="order-2 col-span-2 sm:order-none sm:col-span-1">
             <span id={`${uid}-type`} className={fieldLabel}>
               Type
             </span>
@@ -246,7 +245,7 @@ export function OpportunityBoard({ items }: { items: BoardItem[] }) {
                     onClick={() =>
                       setParam("type", t.id === "all" ? null : t.id)
                     }
-                    className={`flex items-center justify-center gap-1.5 rounded-lg px-1 text-[13px] font-semibold transition-colors sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] ${
+                    className={`flex items-center justify-center gap-1.5 rounded-lg px-1 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] ${
                       active
                         ? "bg-[#0B1B3F] text-white"
                         : "text-[#4A5670] hover:bg-[#F3F7FF] hover:text-[#0B1B3F]"
@@ -265,13 +264,13 @@ export function OpportunityBoard({ items }: { items: BoardItem[] }) {
             </div>
           </div>
 
-          <div>
+          <div className="order-4 min-w-0 sm:order-none">
             <span className={fieldLabel} aria-hidden="true">
               Price
             </span>
             <label
               htmlFor={`${uid}-free`}
-              className={`${control} flex cursor-pointer items-center justify-between gap-3 px-4 font-medium md:w-40`}
+              className={`${control} flex w-full cursor-pointer items-center justify-between gap-2 whitespace-nowrap px-3 font-medium sm:gap-3 sm:px-4`}
             >
               Free only
               <SwitchPrimitive.Root
@@ -300,7 +299,7 @@ export function OpportunityBoard({ items }: { items: BoardItem[] }) {
             <p className="font-heading text-lg font-semibold text-[#0B1B3F]">
               Nothing is open right now.
             </p>
-            <p className="mt-1 text-[15px] text-[#4A5670]">
+            <p className="mt-1 text-base text-[#4A5670]">
               Companies post new internships, programs and events regularly. See
               what was posted recently below.
             </p>
@@ -310,7 +309,7 @@ export function OpportunityBoard({ items }: { items: BoardItem[] }) {
             <p className="font-heading text-lg font-semibold text-[#0B1B3F]">
               No opportunities match these filters.
             </p>
-            <p className="mt-1 text-[15px] text-[#4A5670]">
+            <p className="mt-1 text-base text-[#4A5670]">
               Try another word, or clear the filters to see everything
               that&apos;s open.
             </p>

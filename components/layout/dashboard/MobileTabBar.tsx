@@ -155,7 +155,7 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
                 href={item.href}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
-                  "flex h-full flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors",
+                  "flex h-full flex-col items-center justify-center gap-1 text-xs font-medium transition-colors",
                   isActive ? "text-[#155DFC]" : "text-[#7B869C] hover:text-[#0B1B3F]"
                 )}
               >

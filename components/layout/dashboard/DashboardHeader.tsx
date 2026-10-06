@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Menu, Search } from "lucide-react";
 import { NotificationDropdown } from "./NotificationDropdown";
 import { ProfileDropdown } from "./ProfileDropdown";
@@ -19,6 +19,8 @@ interface DashboardHeaderProps {
 export const DashboardHeader = ({ user, onMenuClick }: DashboardHeaderProps) => {
   const router = useRouter();
   const [query, setQuery] = useState("");
+  // /feed has its own search with filters; a second box there would compete.
+  const onFeed = usePathname() === "/feed";
 
   return (
     <header className="sticky top-0 z-40 border-b border-[#DCE5F5] bg-white/90 backdrop-blur lg:pl-64">
@@ -43,7 +45,7 @@ export const DashboardHeader = ({ user, onMenuClick }: DashboardHeaderProps) => 
             const q = query.trim();
             router.push(q ? `/feed?q=${encodeURIComponent(q)}` : "/feed");
           }}
-          className="relative hidden w-full max-w-md md:block"
+          className={`relative hidden w-full max-w-md ${onFeed ? "" : "md:block"}`}
         >
           <label htmlFor="global-search" className="sr-only">
             Search opportunities

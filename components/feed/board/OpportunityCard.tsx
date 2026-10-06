@@ -33,17 +33,17 @@ export function OpportunityCard({ item, headingLevel = 3 }: { item: BoardItem; h
       <div className="relative aspect-[16/9] overflow-hidden bg-[#F3F7FF]">
         <CoverImage src={item.image} kind={item.kind} closed={closed} />
 
-        <span className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 text-[11px] font-semibold text-[#0B1B3F] shadow-sm backdrop-blur">
+        <span className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 text-xs font-semibold text-[#0B1B3F] shadow-sm backdrop-blur">
           <meta.icon className="h-3.5 w-3.5 text-[#155DFC]" aria-hidden="true" />
           {meta.label}
         </span>
         {closed ? (
-          <span className="absolute right-2.5 top-2.5 rounded-full bg-[#0B1B3F]/85 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur">
+          <span className="absolute right-2.5 top-2.5 rounded-full bg-[#0B1B3F]/85 px-2 py-0.5 text-xs font-semibold text-white backdrop-blur">
             {item.kind === "events" && !item.closesAt ? "Ended" : "Closed"}
           </span>
         ) : (
           when?.urgent && (
-            <span className="absolute right-2.5 top-2.5 rounded-full bg-[#C2410C] px-2 py-0.5 text-[11px] font-semibold text-white shadow-sm">
+            <span className="absolute right-2.5 top-2.5 rounded-full bg-[#C2410C] px-2 py-0.5 text-xs font-semibold text-white shadow-sm">
               {when.text}
             </span>
           )
@@ -68,17 +68,17 @@ export function OpportunityCard({ item, headingLevel = 3 }: { item: BoardItem; h
               {item.companyName.charAt(0)}
             </span>
           )}
-          <p className="flex min-w-0 items-center gap-1 pb-0.5 text-[13px] text-[#4A5670]">
+          <p className="flex min-w-0 items-center gap-1 pb-0.5 text-sm text-[#4A5670]">
             <span className="truncate">{item.companyName}</span>
             {item.companyVerified && <BadgeCheck className="h-4 w-4 shrink-0 text-[#155DFC]" aria-label="Verified company" />}
           </p>
         </div>
 
-        <Heading className="mt-2.5 line-clamp-2 font-heading text-[15px] font-semibold leading-snug text-[#0B1B3F] group-hover:text-[#155DFC]">
+        <Heading className="mt-2.5 line-clamp-2 font-heading text-base font-semibold leading-snug text-[#0B1B3F] group-hover:text-[#155DFC]">
           {item.title}
         </Heading>
 
-        <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-[#4A5670]">
+        <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm text-[#4A5670]">
           {item.location && (
             <li className="inline-flex min-w-0 items-center gap-1">
               <MapPin className="h-3.5 w-3.5 shrink-0 text-[#7B869C]" aria-hidden="true" />
@@ -101,7 +101,7 @@ export function OpportunityCard({ item, headingLevel = 3 }: { item: BoardItem; h
           </ul>
         )}
 
-        <div className="mt-auto flex items-center justify-between gap-3 border-t border-[#EEF2FA] pt-3 text-xs">
+        <div className="mt-auto flex items-center justify-between gap-3 border-t border-[#EEF2FA] pt-3 text-sm">
           {when ? (
             <span className={`inline-flex items-center gap-1.5 ${when.urgent && !closed ? "font-semibold text-[#C2410C]" : "text-[#4A5670]"}`}>
               <Clock className="h-3.5 w-3.5" aria-hidden="true" />
@@ -110,7 +110,7 @@ export function OpportunityCard({ item, headingLevel = 3 }: { item: BoardItem; h
           ) : (
             <span />
           )}
-          {item.postedAt && <span className="text-[#7B869C]">{postedAgo(item.postedAt)}</span>}
+          {item.postedAt && <span className="text-xs text-[#7B869C]">{postedAgo(item.postedAt)}</span>}
         </div>
       </div>
     </Link>
