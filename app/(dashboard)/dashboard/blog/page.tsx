@@ -13,7 +13,7 @@ import { sanityFetch } from "@/sanity/lib/client";
 import { urlFor } from "@/sanity/lib/image";
 import { getProfileInfo } from "@/lib/actions/profile.actions";
 import { getAnnouncements } from "@/lib/api/services/workspace";
-import { AnnouncementItem, type AnnouncementView } from "@/components/blog/AnnouncementItem";
+import { AnnouncementTimeline, type AnnouncementView } from "@/components/blog/AnnouncementTimeline";
 
 export const metadata: Metadata = { title: "Announcements" };
 export const revalidate = 60;
@@ -61,53 +61,61 @@ export default async function AnnouncementsPage() {
         )}
       </header>
 
-      <div className="grid gap-10 lg:grid-cols-[minmax(0,42rem)_320px]">
+      <div className="grid gap-10 lg:grid-cols-[minmax(0,44rem)_300px] xl:gap-12">
         <section aria-label="Announcements" className="min-w-0">
-          {announcements.length === 0 ? (
-            <p className="rounded-2xl bg-white px-6 py-10 text-center text-base text-[#4A5670] ring-1 ring-[#DCE5F5]">
-              No announcements yet. Companies and Zigex post news about programs and opportunities here.
-            </p>
-          ) : (
-            <ul className="space-y-4">
-              {announcements.map((a) => (
-                <li key={a.id}>
-                  <AnnouncementItem a={a} />
-                </li>
-              ))}
-            </ul>
-          )}
+          <AnnouncementTimeline items={announcements} />
         </section>
 
         {posts.length > 0 && (
           <aside aria-labelledby="articles-title">
             <div className="lg:sticky lg:top-24">
-              <h2 id="articles-title" className="font-heading text-lg font-semibold text-[#0B1B3F]">
-                Articles
+              <h2 id="articles-title" className="font-heading text-base font-semibold text-[#0B1B3F]">
+                From the Zigex blog
               </h2>
-              <ul className="mt-3 divide-y divide-[#EEF2FA] rounded-2xl bg-white ring-1 ring-[#DCE5F5]">
-                {posts.map((post) => (
-                  <li key={post._id}>
-                    <Link
-                      href={`/dashboard/blog/${post.slug.current}`}
-                      className="flex gap-3 p-4 hover:bg-[#F8FAFF] focus-visible:bg-[#F8FAFF] focus-visible:outline-none"
-                    >
-                      <div className="h-14 w-20 shrink-0 overflow-hidden rounded-lg bg-[#F3F7FF]">
-                        {Boolean(post.mainImage) && (
-                          <img src={urlFor(post.mainImage).width(160).height(112).url()} alt="" loading="lazy" className="h-full w-full object-cover" />
+              {/* Latest article as a card, the rest as a list. */}
+              {(() => {
+                const [first, ...rest] = posts;
+                const date = (d?: string) =>
+                  d ? new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : null;
+                return (
+                  <div className="mt-3 overflow-hidden rounded-2xl bg-white ring-1 ring-[#DCE5F5]">
+                    <Link href={`/dashboard/blog/${first.slug.current}`} className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#155DFC]">
+                      <div className="aspect-[16/9] bg-[#F3F7FF]">
+                        {Boolean(first.mainImage) && (
+                          <img src={urlFor(first.mainImage).width(640).height(360).url()} alt="" className="h-full w-full object-cover" />
                         )}
                       </div>
-                      <div className="min-w-0">
-                        <p className="line-clamp-2 text-sm font-semibold leading-snug text-[#0B1B3F]">{post.title}</p>
-                        {post.publishedAt && (
-                          <p className="mt-1 text-xs text-[#7B869C]">
-                            {new Date(post.publishedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-                          </p>
-                        )}
+                      <div className="p-4">
+                        <p className="font-heading text-base font-semibold leading-snug text-[#0B1B3F] group-hover:text-[#155DFC]">{first.title}</p>
+                        {first.excerpt && <p className="mt-1 line-clamp-2 text-sm text-[#4A5670]">{first.excerpt}</p>}
+                        {date(first.publishedAt) && <p className="mt-2 text-xs text-[#7B869C]">{date(first.publishedAt)}</p>}
                       </div>
                     </Link>
-                  </li>
-                ))}
-              </ul>
+                    {rest.length > 0 && (
+                      <ul className="divide-y divide-[#EEF2FA] border-t border-[#EEF2FA]">
+                        {rest.map((post) => (
+                          <li key={post._id}>
+                            <Link
+                              href={`/dashboard/blog/${post.slug.current}`}
+                              className="flex gap-3 p-4 hover:bg-[#F8FAFF] focus-visible:bg-[#F8FAFF] focus-visible:outline-none"
+                            >
+                              <div className="h-12 w-16 shrink-0 overflow-hidden rounded-lg bg-[#F3F7FF]">
+                                {Boolean(post.mainImage) && (
+                                  <img src={urlFor(post.mainImage).width(128).height(96).url()} alt="" loading="lazy" className="h-full w-full object-cover" />
+                                )}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="line-clamp-2 text-sm font-semibold leading-snug text-[#0B1B3F]">{post.title}</p>
+                                {date(post.publishedAt) && <p className="mt-1 text-xs text-[#7B869C]">{date(post.publishedAt)}</p>}
+                              </div>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           </aside>
         )}
