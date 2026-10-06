@@ -1,283 +1,170 @@
 "use client";
 
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Send, 
-  MessageCircle, 
-  Lightbulb, 
-  HelpCircle, 
-  AlertTriangle,
-  Check,
-  X,
-  Loader2,
-  ChevronDown
-} from "lucide-react";
+import { useId, useState } from "react";
+import { CheckCircle2, ChevronDown, Loader2 } from "lucide-react";
 
-interface BlogFeedbackFormProps {
-  postTitle: string;
-  postSlug: string;
-}
+type FeedbackType = "comment" | "suggestion" | "question" | "issue";
 
-type FeedbackType = 'comment' | 'suggestion' | 'question' | 'issue';
-
-const feedbackTypes: { value: FeedbackType; label: string; icon: any; color: string }[] = [
-  { value: 'comment', label: 'Comment', icon: MessageCircle, color: 'blue' },
-  { value: 'suggestion', label: 'Suggestion', icon: Lightbulb, color: 'green' },
-  { value: 'question', label: 'Question', icon: HelpCircle, color: 'amber' },
-  { value: 'issue', label: 'Report Issue', icon: AlertTriangle, color: 'red' },
+const TYPES: { value: FeedbackType; label: string }[] = [
+  { value: "comment", label: "Comment" },
+  { value: "suggestion", label: "Suggestion" },
+  { value: "question", label: "Question" },
+  { value: "issue", label: "Report a problem" },
 ];
 
-export default function BlogFeedbackForm({ postTitle, postSlug }: BlogFeedbackFormProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [feedbackType, setFeedbackType] = useState<FeedbackType>('comment');
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  const [errorMessage, setErrorMessage] = useState('');
+const input =
+  "w-full rounded-xl border border-[#DCE5F5] bg-white px-4 text-base text-[#0B1B3F] placeholder:text-[#7B869C] transition-[border-color,box-shadow] hover:border-[#B9C8E6] focus:border-[#155DFC] focus:outline-none focus:ring-4 focus:ring-[#155DFC]/15";
 
-  const handleSubmit = async (e: React.FormEvent) => {
+/**
+ * Feedback on an article, emailed to the Zigex team (/api/blog/feedback).
+ * Folded by default; signed-in students don't retype their name and email.
+ */
+export default function BlogFeedbackForm({
+  postTitle,
+  postSlug,
+  defaultName = "",
+  defaultEmail = "",
+}: {
+  postTitle: string;
+  postSlug: string;
+  defaultName?: string;
+  defaultEmail?: string;
+}) {
+  const uid = useId();
+  const [open, setOpen] = useState(false);
+  const [type, setType] = useState<FeedbackType>("comment");
+  const [name, setName] = useState(defaultName);
+  const [email, setEmail] = useState(defaultEmail);
+  const [message, setMessage] = useState("");
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [error, setError] = useState("");
+  const knownSender = Boolean(defaultName && defaultEmail);
+
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    setSubmitStatus('idle');
-    setErrorMessage('');
-
+    if (message.trim().length < 10) {
+      setStatus("error");
+      setError("Write at least 10 characters so the team understands your feedback.");
+      return;
+    }
+    setStatus("sending");
+    setError("");
     try {
-      const response = await fetch('/api/blog/feedback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          postTitle,
-          postSlug,
-          senderName: name,
-          senderEmail: email,
-          message,
-          feedbackType,
-        }),
+      const res = await fetch("/api/blog/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postTitle, postSlug, senderName: name, senderEmail: email, message, feedbackType: type }),
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setSubmitStatus('success');
-        // Reset form after success
-        setTimeout(() => {
-          setName('');
-          setEmail('');
-          setMessage('');
-          setFeedbackType('comment');
-          setIsOpen(false);
-          setSubmitStatus('idle');
-        }, 3000);
-      } else {
-        setSubmitStatus('error');
-        setErrorMessage(data.error || 'Something went wrong');
-      }
-    } catch (error) {
-      setSubmitStatus('error');
-      setErrorMessage('Network error. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "The feedback couldn't be sent.");
+      setStatus("sent");
+      setMessage("");
+    } catch (err) {
+      setStatus("error");
+      setError(err instanceof Error ? err.message : "The feedback couldn't be sent. Check your connection and try again.");
     }
   };
 
-  const selectedType = feedbackTypes.find(t => t.value === feedbackType)!;
-
   return (
-    <div className="mt-16 border-t border-slate-100 dark:border-slate-800 pt-12">
-      {/* Toggle Button */}
-      <motion.button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-6 bg-gradient-to-r from-slate-50 to-blue-50/50 dark:from-slate-900 dark:to-slate-900/60 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-blue-200 dark:hover:border-slate-700 transition-all group"
-        whileHover={{ scale: 1.005 }}
-        whileTap={{ scale: 0.995 }}
+    <section className="rounded-2xl bg-white ring-1 ring-[#DCE5F5]">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-controls={`${uid}-form`}
+        className="flex w-full items-center justify-between gap-4 rounded-2xl p-5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC]"
       >
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-white dark:bg-slate-950 rounded-xl flex items-center justify-center text-blue-600 shadow-sm group-hover:shadow-md transition-shadow">
-            <MessageCircle size={24} />
-          </div>
-          <div className="text-left">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Share Your Thoughts</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Have feedback? We'd love to hear from you!</p>
-          </div>
-        </div>
-        <motion.div
-          animate={{ rotate: isOpen ? 180 : 0 }}
-          transition={{ duration: 0.2 }}
-          className="w-10 h-10 bg-white dark:bg-slate-950 rounded-full flex items-center justify-center text-slate-400 shadow-sm"
-        >
-          <ChevronDown size={20} />
-        </motion.div>
-      </motion.button>
+        <span>
+          <span className="block font-heading text-base font-semibold text-[#0B1B3F]">Feedback on this article</span>
+          <span className="mt-0.5 block text-sm text-[#4A5670]">Questions, suggestions or a mistake to fix. It goes straight to the Zigex team.</span>
+        </span>
+        <ChevronDown className={`h-5 w-5 shrink-0 text-[#4A5670] transition-transform ${open ? "rotate-180" : ""}`} aria-hidden="true" />
+      </button>
 
-      {/* Form Panel */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="overflow-hidden"
-          >
-            <form onSubmit={handleSubmit} className="p-6 md:p-8 bg-white dark:bg-[#161b22] rounded-2xl border border-slate-100 dark:border-slate-800/80 mt-4 shadow-sm">
-              
-              {/* Success State */}
-              {submitStatus === 'success' && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="flex flex-col items-center justify-center py-12 text-center"
-                >
-                  <div className="w-16 h-16 bg-green-100 dark:bg-green-950/40 rounded-full flex items-center justify-center text-green-600 mb-4">
-                     <Check size={32} strokeWidth={3} />
-                  </div>
-                  <h4 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Thank You!</h4>
-                  <p className="text-slate-500 dark:text-slate-400">Your feedback has been sent successfully.</p>
-                </motion.div>
-              )}
-
-              {submitStatus !== 'success' && (
-                <>
-                  {/* Feedback Type Selection */}
-                  <div className="mb-6">
-                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
-                      Type of Feedback
-                    </label>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      {feedbackTypes.map((type) => {
-                        const Icon = type.icon;
-                        const isSelected = feedbackType === type.value;
-                        return (
-                          <button
-                            key={type.value}
-                            type="button"
-                            onClick={() => setFeedbackType(type.value)}
-                            className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
-                              isSelected
-                                ? `border-${type.color}-500 bg-${type.color}-50 text-${type.color}-600`
-                                : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-400 dark:text-slate-500 hover:border-slate-200 dark:hover:border-slate-700'
-                            }`}
-                            style={{
-                              borderColor: isSelected 
-                                ? type.color === 'blue' ? '#3b82f6' 
-                                : type.color === 'green' ? '#22c55e'
-                                : type.color === 'amber' ? '#f59e0b'
-                                : '#ef4444'
-                                : undefined,
-                              backgroundColor: isSelected
-                                ? type.color === 'blue' ? '#eff6ff'
-                                : type.color === 'green' ? '#f0fdf4'
-                                : type.color === 'amber' ? '#fefce8'
-                                : '#fef2f2'
-                                : undefined,
-                              color: isSelected
-                                ? type.color === 'blue' ? '#2563eb'
-                                : type.color === 'green' ? '#16a34a'
-                                : type.color === 'amber' ? '#d97706'
-                                : '#dc2626'
-                                : undefined
-                            }}
-                          >
-                            <Icon size={20} />
-                            <span className="text-xs font-bold">{type.label}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Name & Email */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
-                        Your Name
-                      </label>
-                      <input
-                        type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="John Doe"
-                        required
-                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
-                        Your Email
-                      </label>
-                      <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="john@example.com"
-                        required
-                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Message */}
-                  <div className="mb-6">
-                    <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
-                      Your Message
-                    </label>
-                    <textarea
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      placeholder="Share your thoughts, questions, or suggestions..."
-                      required
-                      rows={5}
-                      maxLength={2000}
-                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
-                    />
-                    <p className="text-xs text-slate-400 mt-1 text-right">{message.length}/2000</p>
-                  </div>
-
-                  {/* Error Message */}
-                  {submitStatus === 'error' && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-950/30 rounded-xl text-red-600 mb-4"
+      {open && (
+        <div id={`${uid}-form`} className="border-t border-[#EEF2FA] p-5">
+          {status === "sent" ? (
+            <div role="status" className="flex items-start gap-3 rounded-xl bg-[#ECFDF3] p-4 text-sm text-[#067647]">
+              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+              <div>
+                <p className="font-semibold">Feedback sent</p>
+                <p className="mt-0.5">Thanks. If it needs a reply, the team will write to {email}.</p>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={submit} noValidate className="space-y-5">
+              <fieldset>
+                <legend className="mb-2 text-sm font-medium text-[#0B1B3F]">What kind of feedback?</legend>
+                <div className="flex flex-wrap gap-2">
+                  {TYPES.map((t) => (
+                    <label
+                      key={t.value}
+                      className={`inline-flex h-9 cursor-pointer items-center rounded-full px-3.5 text-sm font-medium transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[#155DFC] ${
+                        type === t.value ? "bg-[#0B1B3F] text-white" : "bg-white text-[#4A5670] ring-1 ring-[#DCE5F5] hover:text-[#0B1B3F]"
+                      }`}
                     >
-                      <X size={18} />
-                      <span className="text-sm font-medium">{errorMessage}</span>
-                    </motion.div>
-                  )}
+                      <input type="radio" name={`${uid}-type`} value={t.value} checked={type === t.value} onChange={() => setType(t.value)} className="sr-only" />
+                      {t.label}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
 
-                  {/* Submit Button */}
-                  <motion.button
-                    type="submit"
-                    disabled={isSubmitting || !name || !email || !message}
-                    className="w-full py-4 bg-slate-900 dark:bg-slate-800 text-white rounded-xl font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-3 hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-slate-900/10"
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 size={18} className="animate-spin" />
-                        Sending...
-                      </>
-                    ) : (
-                      <>
-                        <Send size={18} />
-                        Send Feedback
-                      </>
-                    )}
-                  </motion.button>
-
-                  <p className="text-xs text-slate-400 text-center mt-4">
-                    Your feedback will be sent directly to the Zigex team. We'll respond via email if needed.
-                  </p>
-                </>
+              {knownSender ? (
+                <p className="text-sm text-[#4A5670]">
+                  Sending as <span className="font-semibold text-[#0B1B3F]">{name}</span> ({email})
+                </p>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor={`${uid}-name`} className="mb-1.5 block text-sm font-medium text-[#0B1B3F]">
+                      Your name
+                    </label>
+                    <input id={`${uid}-name`} value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" required className={`${input} h-12`} />
+                  </div>
+                  <div>
+                    <label htmlFor={`${uid}-email`} className="mb-1.5 block text-sm font-medium text-[#0B1B3F]">
+                      Your email
+                    </label>
+                    <input id={`${uid}-email`} type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" placeholder="you@example.com" required className={`${input} h-12`} />
+                  </div>
+                </div>
               )}
+
+              <div>
+                <label htmlFor={`${uid}-msg`} className="mb-1.5 block text-sm font-medium text-[#0B1B3F]">
+                  Message
+                </label>
+                <textarea
+                  id={`${uid}-msg`}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  rows={4}
+                  maxLength={2000}
+                  required
+                  className={`${input} resize-y py-3`}
+                />
+                <p className="mt-1 text-right text-xs text-[#7B869C]">{message.length} / 2000</p>
+              </div>
+
+              {status === "error" && (
+                <p role="alert" className="rounded-xl bg-[#FEF3F2] px-4 py-3 text-sm text-[#B42318]">
+                  {error}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={status === "sending" || !name || !email || !message.trim()}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#155DFC] px-5 text-[15px] font-semibold text-white hover:bg-[#0F3FB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {status === "sending" && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+                {status === "sending" ? "Sending…" : "Send feedback"}
+              </button>
             </form>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+          )}
+        </div>
+      )}
+    </section>
   );
 }
