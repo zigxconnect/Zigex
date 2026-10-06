@@ -268,7 +268,7 @@ export function FormAlert({ tone, children }: { tone: "error" | "success" | "inf
 /** "or" separator between Google and email sign-in. */
 export function OrDivider() {
   return (
-    <div className="my-5 flex items-center gap-4 text-sm text-[#7B869C]" role="separator">
+    <div className="my-4 flex items-center gap-4 text-sm text-[#7B869C]" role="separator">
       <span className="h-px flex-1 bg-[#DCE5F5]" />
       or
       <span className="h-px flex-1 bg-[#DCE5F5]" />

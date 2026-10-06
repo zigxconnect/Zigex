@@ -48,8 +48,6 @@ const signUpSchema = z.object({
 type SignInData = z.infer<typeof signInSchema>;
 type SignUpData = z.infer<typeof signUpSchema>;
 
-const hasGoogle = Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
-
 /** Seconds to wait after the backend rate-limits us. */
 function retryAfterSeconds(error: ApiClientError): number {
   const body = error.body as { retryAfter?: number } | undefined;
@@ -145,12 +143,8 @@ function SignInForm() {
         }
       />
 
-      {hasGoogle && (
-        <>
-          <GoogleSignInButton text="signin_with" />
-          <OrDivider />
-        </>
-      )}
+      <GoogleSignInButton text="signin_with" />
+      <OrDivider />
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
         {(error || portalError || notice) && (
@@ -272,9 +266,12 @@ function SignUpForm() {
         description={
           applying
             ? "It's free and takes about a minute. We'll bring you back to the opportunity afterwards."
-            : "Free for students. Apply to internships, programs and events with one profile."
+            : "Free for students. One profile for every application."
         }
       />
+
+      <GoogleSignInButton text="signup_with" />
+      <OrDivider />
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
         {error && <FormAlert tone="error">{error}</FormAlert>}
@@ -359,14 +356,6 @@ function SignUpForm() {
           .
         </p>
       </form>
-
-      {/* Below the form on sign-up, so the page fits a laptop screen without scrolling. */}
-      {hasGoogle && (
-        <>
-          <OrDivider />
-          <GoogleSignInButton text="signup_with" />
-        </>
-      )}
 
       <AuthFooter>
         Already have an account?{" "}
