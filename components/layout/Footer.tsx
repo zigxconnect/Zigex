@@ -28,7 +28,7 @@ export const Footer: React.FC = () => {
       <div className="mx-auto w-full max-w-6xl px-5 sm:px-8">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-12 lg:gap-10 mb-16">
           {/* Brand & Mission */}
-          <div className="space-y-6 lg:col-span-4">
+          <div className="space-y-6 lg:col-span-5">
             <Link href="/" aria-label="Zigex home" className="inline-block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
               {/* The logo has its own blue tile; the old invert filter turned it into a white square. */}
               <span className="flex items-center gap-2.5">
@@ -58,7 +58,7 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* Platform Links */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-3">
             <h4 className="text-lg font-bold mb-8 text-white relative inline-block">
               Platform
               <span className="absolute -bottom-2 left-0 w-8 h-1 bg-[#155DFC] rounded-full"></span>
@@ -75,7 +75,7 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* Contact Info */}
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-4">
             <h4 className="text-lg font-bold mb-8 text-white relative inline-block">
               Get in touch
               <span className="absolute -bottom-2 left-0 w-8 h-1 bg-[#155DFC] rounded-full"></span>
@@ -96,21 +96,6 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Improved Newsletter */}
-          <div className="bg-white/5 p-6 rounded-2xl ring-1 ring-white/10 lg:col-span-3">
-            <h4 className="text-lg font-bold mb-3 text-white">Join the community</h4>
-            <p className="text-xs text-[#AFC0E6] mb-6 leading-relaxed">
-              Get notified about new internship roles and career bootcamps.
-            </p>
-            {/* UX: replaces a newsletter form that silently did nothing. New
-                opportunities reach students through their account notifications. */}
-            <Link
-              href="/sign-up"
-              className="w-full h-11 px-4 whitespace-nowrap bg-[#155DFC] hover:bg-[#3B78FF] rounded-xl text-white font-semibold text-[15px] transition-colors flex items-center justify-center gap-2 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-            >
-              Create a free account
-                          </Link>
-          </div>
         </div>
 
         {/* Footer Bottom */}

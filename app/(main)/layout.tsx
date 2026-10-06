@@ -1,19 +1,15 @@
 import { Footer } from "@/components/layout/Footer";
-import Navbar from "@/components/layout/Navbar";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Zigex-Home",
-  description: "Helping you build the future, one prospect at a time.",
+  title: "Zigex | Internships, programs and events for students in Cameroon",
+  description:
+    "Apply to internships, join training programs and attend events from verified companies in Bamenda and across Cameroon.",
 };
 
 /**
- * RootLayout
- * This is the primary layout for the application.
- * It includes the main Navbar and Footer.
+ * Layout for the landing and privacy pages: page content plus the footer
+ * (each page renders its own header).
  * The flexbox classes ensure the footer sticks to the bottom of the viewport
  * on pages with short content.
  */
@@ -23,8 +19,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className={`${inter.className} flex flex-col min-h-screen`}>
-      {/* <Navbar /> */}
+    // Uses the root layout's Inter via font-sans. A second Inter instance here
+    // failed to load and fell back to a serif font on some machines.
+    <div className="font-sans flex flex-col min-h-screen">
       <main className="flex-1">{children}</main>
       <Footer />
     </div>
