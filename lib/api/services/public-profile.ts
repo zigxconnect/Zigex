@@ -43,7 +43,7 @@ export const getPublicProfileRow = cache(async (username: string): Promise<Publi
   }
 });
 
-/** Everything StudentProfileClient renders, or null when the student is not found. */
+/** A profile with projects and context for the profile page, or null when the student is not found. */
 export async function getPublicProfile(username: string) {
   const data = await getPublicProfileRow(username);
   if (!data) return null;

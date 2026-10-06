@@ -1,59 +1,44 @@
-import React from "react";
+import Link from "next/link";
+import type { Metadata } from "next";
 import { getPublicProfile, getPublicProfileRow } from "@/lib/api/services/public-profile";
-import { slugifyUsername } from "@/lib/utils";
-import { Metadata } from "next";
-import { redirect } from "next/navigation";
-import StudentProfileClient from "@/components/sections/dashboard/StudentProfileClient";
+import { StudentProfile } from "@/components/students/StudentProfile";
+import { landingButton } from "@/components/sections/landing/landing-ui";
 
-interface Props {
-  params: Promise<{ username: string }>;
-}
+type Props = { params: Promise<{ username: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const p = await params;
-  const username = p.username;
-  const data = await getPublicProfileRow(username);
-
-  if (!data) return { title: "Student Not Found" };
-
-  const title = `${data.full_name} | Zigex Student`;
-  const description = data.about || `View ${data.full_name}'s professional profile and projects on Zigex.`;
-  const image = data.cover_image || "https://i.ibb.co/9kLrm6KY/og-image-2x-100-1.jpg";
-
-  return {
-    title,
-    description,
-    openGraph: { title, description, images: [{ url: image }], type: "profile" },
-    twitter: { card: "summary_large_image", title, description, images: [image] },
-  };
+  const { username } = await params;
+  const data = await getPublicProfileRow(decodeURIComponent(username)).catch(() => null);
+  if (!data) return { title: "Student not found" };
+  const name = String(data.full_name ?? "").replace(/\s+/g, " ").trim() || "Zigex student";
+  const description = (data.about ? String(data.about) : `${name} on Zigex.`).slice(0, 160);
+  return { title: name, description, openGraph: { title: name, description, type: "profile" } };
 }
 
-export default async function StudentDetailPage({ params }: Props) {
+/** Profile pages are found by profile id or exact username (see student-ui profileHref). */
+export default async function Page({ params }: Props) {
   const { username } = await params;
-  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(username);
-
-  // Force slugified URL if non-UUID and contains spaces
-  if (!isUuid && username.includes(" ")) {
-    redirect(`/dashboard/student/${slugifyUsername(username)}`);
-  }
-
-  const profile = await getPublicProfile(username);
+  const profile = await getPublicProfile(decodeURIComponent(username)).catch(() => null);
 
   if (!profile) {
-    console.warn(`[StudentLookup] FAILED for username: ${username}`);
     return (
-      <div className="min-h-screen p-6 flex flex-col items-center justify-center text-center">
-        <h2 className="text-2xl font-bold mb-2">Student not found</h2>
-        <p className="text-muted-foreground mb-4">Could not find a profile for &quot;{username}&quot;</p>
-        <p className="text-xs text-muted-foreground">Try searching by the exact full name or ID.</p>
+      <div className="mx-auto max-w-md py-16 text-center">
+        <h1 className="font-heading text-2xl font-bold text-[#0B1B3F]">This profile isn&apos;t available</h1>
+        <p className="mt-2 text-base text-[#4A5670]">The link may be old, or the student may have changed their username.</p>
+        <Link href="/dashboard/student" className={`${landingButton("primary", "md")} mt-6`}>
+          Find them in Students
+        </Link>
       </div>
     );
   }
 
   return (
-    <StudentProfileClient
-      {...profile}
-      username={username}
+    <StudentProfile
+      data={profile.data}
+      projects={profile.projects as any[]}
+      accepted={profile.applicationsList}
+      isMe={Boolean(profile.myProfile && profile.myProfile.id === profile.data.id)}
+      back={{ href: "/dashboard/student", label: "Students" }}
     />
   );
 }
