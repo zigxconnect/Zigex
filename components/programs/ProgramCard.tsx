@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BadgeCheck, CalendarClock, MapPin, Monitor, Timer } from "lucide-react";
+import { BadgeCheck, CalendarClock } from "lucide-react";
 import type { FeedRow } from "@/lib/api/services/feed";
 
 const DAY = 86_400_000;
@@ -72,21 +72,30 @@ const TONE = {
   muted: "text-[#7B869C]",
 };
 
+/** "18 Jul – 8 Aug 2026"; the year once, on the end date. */
+function dateRange(start: string | null, end: string | null) {
+  if (!start) return null;
+  const sameYear = end && new Date(start).getFullYear() === new Date(end).getFullYear();
+  const from = fmt(start, sameYear || !end ? { day: "numeric", month: "short" } : { day: "numeric", month: "short", year: "numeric" });
+  if (!end) return `From ${fmt(start, { day: "numeric", month: "short", year: "numeric" })}`;
+  return `${from} – ${fmt(end, { day: "numeric", month: "short", year: "numeric" })}`;
+}
+
 /**
- * One program as a card: who runs it and what it is on top, the photo in the
- * middle with the start date pinned to it (a program is a cohort that begins
- * on a day), then the practical facts and whether you can still register.
+ * One program as a card: who runs it and what it is on top; the organiser's
+ * flyer in the middle, untouched (flyers carry their own text, so nothing is
+ * laid over them); then when it runs, how, and whether you can still join.
  */
 export function ProgramCard({ program: p }: { program: ProgramView }) {
   const reg = registration(p);
   const length = duration(p.startsAt, p.endsAt);
+  const when = dateRange(p.startsAt, p.endsAt);
+  const where = [p.mode && p.mode[0].toUpperCase() + p.mode.slice(1), p.location].filter(Boolean).join(", ");
 
   return (
     <Link
       href={`/feed/${p.id}`}
-      className={`group flex h-full flex-col rounded-2xl bg-white p-4 ring-1 ring-[#DCE5F5] transition-shadow hover:shadow-[0_18px_40px_-20px_rgba(11,27,63,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] ${
-        p.open ? "" : "opacity-85"
-      }`}
+      className="group flex h-full flex-col rounded-2xl bg-white p-4 ring-1 ring-[#DCE5F5] transition-shadow hover:shadow-[0_18px_40px_-20px_rgba(11,27,63,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC]"
     >
       {/* Top: who and what */}
       <div className="flex items-center gap-2 text-sm text-[#4A5670]">
@@ -100,67 +109,50 @@ export function ProgramCard({ program: p }: { program: ProgramView }) {
         <span className="truncate font-medium">{p.company}</span>
         {p.verified && <BadgeCheck className="h-4 w-4 shrink-0 text-[#155DFC]" aria-label="Verified company" />}
       </div>
-      <h3 className="mt-2 line-clamp-2 min-h-[2.75rem] font-heading text-lg font-semibold leading-snug text-[#0B1B3F] group-hover:text-[#155DFC]">
+      <h3 className="mt-2 line-clamp-2 min-h-[2.75rem] font-heading text-lg font-semibold leading-snug text-[#0B1B3F]">
         {p.title}
       </h3>
 
-      {/* Middle: photo with the start date pinned to it */}
-      <div className="relative mt-3 aspect-[16/10] overflow-hidden rounded-xl bg-[#F3F7FF]">
+      {/* Middle: the flyer, top-anchored so its own headline stays visible */}
+      <div className="mt-3 aspect-[4/3] overflow-hidden rounded-xl bg-[#F3F7FF] ring-1 ring-[#EEF2FA]">
         {p.image && (
           <img
             src={p.image}
             alt=""
             loading="lazy"
-            className={`h-full w-full object-cover transition-transform duration-300 motion-safe:group-hover:scale-[1.03] ${p.open ? "" : "grayscale-[60%]"}`}
+            className={`h-full w-full object-cover object-top ${p.open ? "" : "saturate-[0.6]"}`}
           />
         )}
-        <div
-          className={`absolute left-3 top-3 flex w-14 flex-col items-center rounded-lg py-1.5 text-center shadow-sm ${
-            p.open ? "bg-[#0B1B3F] text-white" : "bg-white/95 text-[#4A5670]"
-          }`}
-        >
-          {p.startsAt ? (
-            <>
-              <span className="text-xs font-medium opacity-80">{p.open ? "Starts" : "Started"}</span>
-              <span className="font-heading text-xl font-bold leading-tight tabular-nums">{fmt(p.startsAt, { day: "numeric" })}</span>
-              <span className="text-xs font-semibold">{fmt(p.startsAt, { month: "short" })}</span>
-            </>
-          ) : (
-            <span className="px-1 text-xs font-medium">Date soon</span>
-          )}
-        </div>
       </div>
 
-      {/* Bottom: the practical facts */}
-      <ul className="mb-3 mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-sm text-[#4A5670]">
-        {length && (
-          <li className="inline-flex items-center gap-1.5">
-            <Timer className="h-4 w-4 text-[#7B869C]" aria-hidden="true" />
-            {length}
-          </li>
+      {/* Bottom: when, how, cost */}
+      <div className="mt-4">
+        {when && (
+          <p className="flex flex-wrap items-baseline gap-x-2 text-[15px]">
+            <span className="font-semibold text-[#0B1B3F]">{when}</span>
+            {length && <span className="text-sm text-[#7B869C]">{length}</span>}
+          </p>
         )}
-        {p.mode && (
-          <li className="inline-flex items-center gap-1.5 capitalize">
-            <Monitor className="h-4 w-4 text-[#7B869C]" aria-hidden="true" />
-            {p.mode}
-          </li>
-        )}
-        <li className={p.hasFee ? "" : "font-medium text-[#067647]"}>
-          {p.hasFee ? (p.priceXaf ? `${p.priceXaf.toLocaleString("en-US")} XAF` : "Fee applies") : "Free"}
-        </li>
-        {p.location && (
-          <li className="inline-flex w-full min-w-0 items-center gap-1.5">
-            <MapPin className="h-4 w-4 shrink-0 text-[#7B869C]" aria-hidden="true" />
-            <span className="truncate">{p.location}</span>
-          </li>
-        )}
-      </ul>
+        <p className="mt-1 flex min-w-0 items-center gap-2 text-sm text-[#4A5670]">
+          <span className="truncate">{where || "Details on the program page"}</span>
+          <span className={`shrink-0 ${p.hasFee ? "" : "font-medium text-[#067647]"}`}>
+            {p.hasFee ? (p.priceXaf ? `${p.priceXaf.toLocaleString("en-US")} XAF` : "Fee applies") : "Free"}
+          </span>
+        </p>
+      </div>
 
-      <p className={`mt-auto flex items-center gap-1.5 border-t border-[#EEF2FA] pt-3 text-sm ${TONE[reg.tone]}`}>
-        <CalendarClock className="h-4 w-4 shrink-0" aria-hidden="true" />
-        {reg.text}
-        {p.open && p.deadline && <span className="text-[#7B869C]">(by {fmt(p.deadline, { day: "numeric", month: "short" })})</span>}
-      </p>
+      {/* Footer only when there is something to do */}
+      {p.open && (
+        <div className="mt-auto pt-4">
+          <div className="flex items-center justify-between gap-3 border-t border-[#EEF2FA] pt-3">
+          <span className={`inline-flex items-center gap-1.5 text-sm ${TONE[reg.tone]}`}>
+            <CalendarClock className="h-4 w-4 shrink-0" aria-hidden="true" />
+            {p.deadline ? `Register by ${fmt(p.deadline, { day: "numeric", month: "short" })}` : reg.text}
+          </span>
+            <span className="text-sm font-semibold text-[#155DFC] group-hover:underline">View program</span>
+          </div>
+        </div>
+      )}
     </Link>
   );
 }
