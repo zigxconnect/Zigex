@@ -61,7 +61,7 @@ export async function proxy(request: NextRequest) {
     );
   }
 
-  const isPublic = PUBLIC_PAGES.includes(pathname) || pathname.startsWith("/feed/");
+  const isPublic = PUBLIC_PAGES.includes(pathname) || pathname.startsWith("/feed/") || pathname.startsWith("/company/");
 
   if (!session) {
     return isPublic ? withSecurityHeaders(NextResponse.next()) : signInRedirect(request);

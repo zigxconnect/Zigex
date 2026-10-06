@@ -108,8 +108,7 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
               </span>
             )}
             <div className="min-w-0">
-              {/* The company page needs an account, so only link it for signed-in students. */}
-              {companyId && isAuthenticated ? (
+              {companyId ? (
                 <Link href={`/company/${companyId}`} className="font-semibold text-[#0B1B3F] hover:text-[#155DFC] hover:underline">
                   {item.companyName}
                 </Link>
