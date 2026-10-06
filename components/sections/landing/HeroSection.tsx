@@ -1,28 +1,27 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import {
-  ArrowRight,
-  Menu,
-  X,
-  Search,
-  CheckCircle2,
-  TrendingUp,
-  Globe,
-  Briefcase,
-  Users
-} from "lucide-react";
-// Use relative path to ensure no alias resolution issues
-import DeveloperAvatarOverlap from "../../ui/DeveloperAvatarOverlap";
+import { Menu, X, MapPin, Clock, CheckCircle2 } from "lucide-react";
+import { landingButton, landingContainer } from "./landing-ui";
+
+const NAV_LINKS = [
+  { label: "Features", href: "#features" },
+  { label: "Mission", href: "#mission" },
+  { label: "Services", href: "#services" },
+  { label: "Community", href: "#community" },
+];
+
+// Real Zigex students, the strongest proof the page has; it leads the visual.
+const HERO_PHOTO = "https://i.ibb.co/1YqtdCtK/Chat-GPT-Image-Apr-23-2026-03-29-43-PM.png";
 
 const BamendaHeroSection = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
+    const handleScroll = () => setScrolled(window.scrollY > 8);
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
@@ -37,315 +36,159 @@ const BamendaHeroSection = () => {
   }, [mobileMenuOpen]);
 
   return (
-    <div className="relative min-h-screen bg-white overflow-hidden selection:bg-blue-100 selection:text-blue-900">
-      {/* Background Gradients */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-blue-50/80 rounded-full blur-3xl opacity-70" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-50/80 rounded-full blur-3xl opacity-70" />
-      </div>
+    <div className="relative bg-white">
+      {/* One quiet wash behind the hero instead of scattered blur blobs. */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[720px] bg-gradient-to-b from-[#F3F7FF] to-white" />
 
-      {/* Navigation Header */}
+      {/* Header */}
       <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? "bg-white/90 backdrop-blur-md shadow-sm py-3" : "bg-transparent py-5"
-          }`}
+        className={`fixed inset-x-0 top-0 z-50 border-b transition-[background-color,border-color] duration-200 ${
+          scrolled || mobileMenuOpen
+            ? "border-[#DCE5F5] bg-white/90 backdrop-blur-md"
+            : "border-transparent bg-transparent"
+        }`}
       >
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            {/* Logo */}
-            <Link href="/" className="flex items-center gap-2 group cursor-pointer hover:opacity-80 transition-opacity">
-              <div className="w-10 h-10 flex items-center justify-center">
-                <img
-                  src="https://i.ibb.co/Cp502Yby/logo.png"
-                  alt="Zigex Logo"
-                  width="40"
-                  height="40"
-                  className="object-contain"
-                />
-              </div>
-              <span className={`text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-blue-600`}>
-                Zigex
-              </span>
-            </Link>
+        <div className={`${landingContainer} flex h-[72px] items-center justify-between gap-6`}>
+          <Link href="/" className="flex items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC]">
+            <img src="https://i.ibb.co/Cp502Yby/logo.png" alt="" width={32} height={32} className="h-8 w-8 object-contain" />
+            <span className="font-heading text-xl font-bold tracking-tight text-[#0B1B3F]">Zigex</span>
+          </Link>
 
-            {/* Desktop Menu */}
-            <div className="hidden md:flex items-center gap-8">
-              {['Features', 'Mission', 'Services', 'Community'].map((item) => (
-                <Link
-                  key={item}
-                  href={`#${item.toLowerCase()}`}
-                  className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors relative group cursor-pointer"
-                >
-                  {item}
-                  <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
-                </Link>
+          {/* Links sit with the actions on the right: one group to scan, not three. */}
+          <div className="hidden items-center gap-8 md:flex">
+            <ul className="flex items-center gap-7">
+              {NAV_LINKS.map((link) => (
+                <li key={link.href}>
+                  <a href={link.href} className="text-[15px] font-medium text-[#4A5670] transition-colors hover:text-[#0B1B3F]">
+                    {link.label}
+                  </a>
+                </li>
               ))}
-            </div>
-
-            {/* CTA Buttons */}
-            <div className="hidden md:flex items-center gap-4">
-              <Link
-                href="/sign-in"
-                className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors"
-                style={{ cursor: 'pointer' }}
-              >
-                Sign In
+            </ul>
+            <div className="flex items-center gap-2">
+              <Link href="/sign-in" className={landingButton("ghost", "md")}>
+                Sign in
               </Link>
-              {/* UX: "Get Started" means create an account; browsing is the secondary path. */}
-              <Link
-                href="/sign-up"
-                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-full shadow-lg hover:shadow-blue-500/30 transition-all hover:-translate-y-0.5 active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
-              >
-                Get Started
+              <Link href="/sign-up" className={landingButton("primary", "md")}>
+                Get started
               </Link>
             </div>
-
-            {/* Mobile Menu Button */}
-            <button
-              type="button"
-              className="md:hidden p-2.5 -mr-2 text-gray-600 cursor-pointer rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-              aria-expanded={mobileMenuOpen}
-              aria-controls="landing-mobile-menu"
-            >
-              {mobileMenuOpen ? <X /> : <Menu />}
-            </button>
           </div>
+
+          <button
+            type="button"
+            className="-mr-2 inline-flex h-11 w-11 items-center justify-center rounded-xl text-[#0B1B3F] hover:bg-[#F3F7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] md:hidden"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="landing-mobile-menu"
+          >
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
 
-        {/* Mobile Menu Overlay */}
         {mobileMenuOpen && (
-          <div id="landing-mobile-menu" className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-gray-100 shadow-xl p-4 flex flex-col gap-4 animate-slide-down">
-            {['Features', 'Mission', 'Services', 'Community'].map((item) => (
-              <Link
-                key={item}
-                href={`#${item.toLowerCase()}`}
-                className="text-base font-medium text-gray-800 py-2 hover:text-blue-600 cursor-pointer"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                {item}
-              </Link>
-            ))}
-            <div className="h-px bg-gray-100 my-2" />
-            <Link href="/sign-in" className="text-base font-medium text-gray-600 py-2 hover:text-blue-600 cursor-pointer" onClick={() => setMobileMenuOpen(false)}>
-              Sign In
-            </Link>
-            <Link
-              href="/sign-up"
-              onClick={() => setMobileMenuOpen(false)}
-              className="w-full px-6 py-3 bg-blue-600 text-white text-base font-semibold rounded-xl shadow-md text-center"
-            >
-              Get Started
-            </Link>
+          <div id="landing-mobile-menu" className="border-t border-[#DCE5F5] bg-white md:hidden">
+            <div className={`${landingContainer} flex flex-col py-3`}>
+              {NAV_LINKS.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex h-12 items-center text-base font-medium text-[#0B1B3F]"
+                >
+                  {link.label}
+                </a>
+              ))}
+              <div className="mt-3 grid grid-cols-2 gap-3 border-t border-[#DCE5F5] pt-4">
+                <Link href="/sign-in" onClick={() => setMobileMenuOpen(false)} className={landingButton("secondary", "md")}>
+                  Sign in
+                </Link>
+                <Link href="/sign-up" onClick={() => setMobileMenuOpen(false)} className={landingButton("primary", "md")}>
+                  Get started
+                </Link>
+              </div>
+            </div>
           </div>
         )}
       </nav>
 
-      {/* Hero Content */}
-      <div className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+      {/* Hero */}
+      <section className={`${landingContainer} relative grid items-center gap-12 pb-20 pt-32 lg:grid-cols-12 lg:gap-12 lg:pb-32 lg:pt-40`}>
+        {/* Copy: left-aligned at every size, so the eye starts in one place. */}
+        <div className="hero-enter lg:col-span-6">
+          <h1 className="font-heading text-[2.5rem] font-bold leading-[1.05] tracking-[-0.02em] text-[#0B1B3F] sm:text-5xl lg:text-[3.5rem]">
+            Get real work experience before you graduate.
+          </h1>
 
-            {/* Left Column: Text */}
-            {/* UX: visible without JavaScript (the old opacity-0-until-hydrated hid the
-                headline on slow connections); the entrance animation is CSS-only. */}
-            <div className="hero-enter space-y-8 max-w-2xl mx-auto lg:mx-0 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 border border-blue-100 rounded-full text-blue-700 text-xs font-semibold uppercase tracking-wide">
-                <span className="relative flex h-2 w-2">
-                  <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-                </span>
-                The Future of Work is Here
+          <p className="mt-6 max-w-xl text-lg leading-relaxed text-[#4A5670]">
+            Apply to internships, join training programs and attend events from verified companies in Bamenda
+            and across Cameroon. One profile for every opportunity.
+          </p>
+
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <Link href="/sign-up" className={landingButton("primary", "lg")}>
+              Create your free account
+            </Link>
+            <Link href="/feed" className={landingButton("secondary", "lg")}>
+              Browse opportunities
+            </Link>
+          </div>
+
+          <p className="mt-6 flex items-center gap-2 text-[15px] text-[#4A5670]">
+            <CheckCircle2 className="h-5 w-5 shrink-0 text-[#155DFC]" aria-hidden="true" />
+            Free for students. 2,000+ already on Zigex.
+          </p>
+        </div>
+
+        {/* Visual: the student photo, with one opportunity card showing what Zigex is. */}
+        <div className="hero-enter hero-enter-delay relative lg:col-span-6">
+          <div className="relative overflow-hidden rounded-3xl bg-[#E8EFFE] ring-1 ring-[#DCE5F5]">
+            <Image
+              src={HERO_PHOTO}
+              alt="Three Zigex students in blue Zigex T-shirts"
+              width={1200}
+              height={900}
+              priority
+              sizes="(min-width: 1024px) 560px, 100vw"
+              className="aspect-[4/3] h-auto w-full object-cover"
+            />
+          </div>
+
+          {/* Opportunity card: overlaps the photo on desktop, sits under it on phones. */}
+          <div className="relative -mt-10 ml-4 mr-4 rounded-2xl border border-[#DCE5F5] bg-white p-3.5 shadow-[0_12px_32px_-12px_rgba(11,27,63,0.25)] sm:ml-auto sm:mr-6 sm:max-w-[320px] lg:absolute lg:-bottom-14 lg:left-6 lg:m-0 lg:w-[288px]">
+            <div className="flex items-start gap-3">
+              <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#155DFC] font-heading text-base font-bold text-white">
+                S
+              </span>
+              <div className="min-w-0">
+                <p className="font-semibold leading-snug text-[#0B1B3F]">Frontend Developer Intern</p>
+                <p className="mt-0.5 text-sm text-[#4A5670]">SEED Inc.</p>
               </div>
-
-              <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold text-gray-900 leading-[1.1] tracking-tight">
-                Unlock Your <br className="hidden lg:block" />
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-700">
-                  True Potential
-                </span>
-              </h1>
-
-              <p className="text-lg text-gray-600 leading-relaxed max-w-lg mx-auto lg:mx-0">
-                Connect with world-class opportunities, build your professional identity, and accelerate your career growth with Zigex’s AI-powered ecosystem.
-              </p>
-
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                <Link
-                  href="/sign-up"
-                  className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold text-lg shadow-xl shadow-blue-500/20 hover:shadow-2xl hover:shadow-blue-500/30 transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
-                >
-                  Get Started
-                  <ArrowRight className="w-5 h-5" aria-hidden="true" />
-                </Link>
-                {/* UX: replaces a "Watch Demo" button that did nothing (there is no demo video). */}
-                <Link
-                  href="/feed"
-                  className="w-full sm:w-auto px-8 py-4 bg-white border-2 border-gray-200 hover:border-blue-200 text-gray-700 hover:text-blue-700 rounded-2xl font-bold text-lg shadow-sm hover:shadow-lg transition-all flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
-                >
-                  <Search className="w-5 h-5" aria-hidden="true" />
-                  Browse opportunities
-                </Link>
-              </div>
-
-              <div className="pt-6 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-8">
-                <div className="flex flex-col items-center lg:items-start">
-                  <DeveloperAvatarOverlap
-                    developers={[
-                      {
-                        id: '1',
-                        name: 'Abdul Fadiga',
-                        role: 'AI Research Scientist',
-                        avatar: 'https://i.ibb.co/wFVCrg5K/Whats-App-Image-2025-11-23-at-11-14-41-AM.jpg',
-                      },
-                      {
-                        id: '2',
-                        name: 'John Brindi',
-                        role: 'Cybersecurity & Backend',
-                        avatar: 'https://i.ibb.co/xqWXw548/Whats-App-Image-2025-11-23-at-12-38-01-PM.jpg',
-                      },
-                      {
-                        id: '3',
-                        name: 'Tayuh Favour',
-                        role: 'Frontend & ML',
-                        avatar: 'https://i.ibb.co/JFpCHS9h/Whats-App-Image-2025-11-23-at-11-12-52-AM.jpg',
-                      },
-                      {
-                        id: '4',
-                        name: 'Tracy Jacy',
-                        role: 'Cybersecurity Specialist',
-                        avatar: 'https://i.ibb.co/zH2c0MhN/Whats-App-Image-2025-11-23-at-2-56-03-PM.jpg',
-                      },
-                    ]}
-                    maxDisplay={4}
-                    size="md"
-                    title="World Class Team"
-                    subtitle="Building the future of talent"
-                  />
-                </div>
-
-                <div className="hidden sm:block h-12 w-px bg-gray-100" />
-
-                <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
-                  <div className="flex -space-x-1 mb-2">
-                    {[1, 2, 3, 4, 5].map(i => (
-                      <CheckCircle2 key={i} className="w-4 h-4 text-green-500 fill-green-50" />
-                    ))}
-                  </div>
-                  <div className="text-sm font-semibold text-gray-900">
-                    2,000+ Students Joined
-                  </div>
-                  <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">
-                    Active Professionals
-                  </div>
-                </div>
-              </div>
-
             </div>
-
-            {/* Right Column: Visuals (MacBook Inspiration / Floating Dashboard) */}
-            <div className="hero-enter hero-enter-delay relative perspective-1000">
-              {/* Main Dashboard Window */}
-              <div className="relative rounded-[1.5rem] bg-white border border-gray-100 shadow-2xl transform rotate-[-2deg] hover:rotate-0 transition-transform duration-700 overflow-hidden max-w-lg mx-auto">
-
-                {/* Browser Bar */}
-                <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-red-400"></div>
-                  <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
-                  <div className="w-3 h-3 rounded-full bg-green-400"></div>
-                  <div className="ml-4 bg-white border border-gray-200 rounded-full px-3 py-1 flex items-center gap-2 w-full max-w-[200px]">
-                    <div className="w-3 h-3 text-gray-400"><Search size={12} /></div>
-                    <div className="h-2 w-20 bg-gray-100 rounded-full"></div>
-                  </div>
-                </div>
-
-                {/* Dashboard Content */}
-                <div className="relative bg-white aspect-[4/3] overflow-hidden group">
-                  {/* The requested image - raw img tag for perfect layout */}
-                  <img
-                    src="https://i.ibb.co/1YqtdCtK/Chat-GPT-Image-Apr-23-2026-03-29-43-PM.png"
-                    alt="Zigex Dashboard Preview"
-                    loading="eager"
-                    fetchPriority="high"
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-
-                  {/* Edge softening overlays */}
-                  <div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_40px_rgba(255,255,255,0.8)]" />
-                  <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-white via-white/40 to-transparent opacity-60" />
-                  <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white via-white/40 to-transparent opacity-80" />
-                  <div className="absolute top-0 bottom-0 left-0 w-12 bg-gradient-to-r from-white/30 to-transparent" />
-                  <div className="absolute top-0 bottom-0 right-0 w-12 bg-gradient-to-l from-white/30 to-transparent" />
-
-                  {/* Decorative accent for premium feel */}
-                  <div className="absolute top-4 right-4 w-24 h-24 bg-blue-400/10 blur-2xl rounded-full" />
-                  <div className="absolute bottom-4 left-4 w-32 h-32 bg-indigo-400/10 blur-3xl rounded-full" />
-                </div>
-
-                {/* Watermark Logo */}
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-[0.03] pointer-events-none">
-                  <img src="https://i.ibb.co/Cp502Yby/logo.png" width={200} height={200} alt="" aria-hidden="true" />
-                </div>
-              </div>
-
-              {/* Floating Elements */}
-              <div aria-hidden="true" className="hidden md:block absolute -right-8 top-12 bg-white p-4 rounded-2xl shadow-xl float-slow border border-gray-100">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-green-100 rounded-full text-green-600">
-                    <TrendingUp size={20} />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 font-medium">Active Services</p>
-                    <p className="text-lg font-bold text-gray-900">50+</p>
-                  </div>
-                </div>
-              </div>
-
-              <div aria-hidden="true" className="hidden md:flex absolute -left-8 bottom-24 bg-white p-4 rounded-2xl shadow-xl float-slow border border-gray-100" style={{ animationDelay: '1s' }}>
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 rounded-full text-blue-600">
-                    <Users size={20} />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 font-medium">Student Community</p>
-                    <p className="text-lg font-bold text-gray-900">2,000+ Students</p>
-                  </div>
-                </div>
-              </div>
-
-
-              {/* Background Decorative Blur */}
-              <div className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-blue-100/40 to-indigo-100/40 blur-3xl rounded-full" />
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px]">
+              <span className="inline-flex items-center gap-1 rounded-md bg-[#F3F7FF] px-2 py-1 text-[#0B1B3F]">
+                <MapPin className="h-3.5 w-3.5" aria-hidden="true" /> Bamenda · Hybrid
+              </span>
+              {/* Orange is reserved for urgency across the page. */}
+              <span className="inline-flex items-center gap-1 rounded-md bg-[#FFF1E8] px-2 py-1 font-medium text-[#C2410C]">
+                <Clock className="h-3.5 w-3.5" aria-hidden="true" /> Closes in 6 days
+              </span>
             </div>
-
           </div>
         </div>
-      </div>
+      </section>
 
       <style jsx>{`
-        @keyframes float-slow {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
-        }
-        @keyframes slide-down {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @media (prefers-reduced-motion: no-preference) {
-          .float-slow { animation: float-slow 4s ease-in-out infinite; }
-        }
-        .animate-slide-down {
-          animation: slide-down 0.3s ease-out forwards;
-        }
-        .perspective-1000 {
-          perspective: 1000px;
-        }
         @keyframes hero-enter {
-          from { opacity: 0; transform: translateY(16px); }
+          from { opacity: 0; transform: translateY(12px); }
           to { opacity: 1; transform: translateY(0); }
         }
+        /* One orchestrated entrance; content is visible without JavaScript and
+           without motion for people who prefer reduced motion. */
         @media (prefers-reduced-motion: no-preference) {
-          .hero-enter { animation: hero-enter 0.6s ease-out both; }
-          .hero-enter-delay { animation-delay: 0.15s; }
+          .hero-enter { animation: hero-enter 0.5s ease-out both; }
+          .hero-enter-delay { animation-delay: 0.12s; }
         }
       `}</style>
     </div>

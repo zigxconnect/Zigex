@@ -1,106 +1,76 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
-import { Lightbulb, Target, Rocket, Heart, Zap, Globe, Shield } from 'lucide-react';
+import { Lightbulb, Target, Rocket, Globe, Shield } from 'lucide-react';
+import { landingContainer, landingSectionTitle } from './landing-ui';
 
-// UX: full class names, so Tailwind can see them at build time. The old
-// `bg-${color}-100` strings were never generated, leaving the icon tiles colorless.
-const COLOR_CLASSES = {
-    blue: "bg-blue-100 text-blue-600 group-hover:bg-blue-600",
-    indigo: "bg-indigo-100 text-indigo-600 group-hover:bg-indigo-600",
-    sky: "bg-sky-100 text-sky-600 group-hover:bg-sky-600",
-    purple: "bg-purple-100 text-purple-600 group-hover:bg-purple-600",
-} as const;
-
-const cards: { title: string; description: string; icon: typeof Rocket; color: keyof typeof COLOR_CLASSES }[] = [
-    {
-        title: "Innovation",
-        description: "Leveraging technology to solve real problems in career development",
-        icon: Rocket,
-        color: "blue"
-    },
-    {
-        title: "Integrity",
-        description: "Building trust through transparency and verified partnerships",
-        icon: Shield,
-        color: "indigo"
-    },
-    {
-        title: "Excellence",
-        description: "Committed to quality in every opportunity and service we provide",
-        icon: Target,
-        color: "sky"
-    },
-    {
-        title: "Impact",
-        description: "Creating lasting positive change in careers and communities",
-        icon: Globe,
-        color: "purple"
-    }
+const values = [
+  {
+    title: "Innovation",
+    description: "Leveraging technology to solve real problems in career development",
+    icon: Rocket,
+  },
+  {
+    title: "Integrity",
+    description: "Building trust through transparency and verified partnerships",
+    icon: Shield,
+  },
+  {
+    title: "Excellence",
+    description: "Committed to quality in every opportunity and service we provide",
+    icon: Target,
+  },
+  {
+    title: "Impact",
+    description: "Creating lasting positive change in careers and communities",
+    icon: Globe,
+  },
 ];
 
 export const VisionMissionSection: React.FC = () => {
   return (
-    <section id="mission" className="relative py-24 px-4 bg-slate-50 overflow-hidden scroll-mt-20">
-      {/* Watermark Logo */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] opacity-[0.03] pointer-events-none z-0">
-         <img src="https://i.ibb.co/Cp502Yby/logo.png" alt="" aria-hidden="true" className="w-full h-full object-contain" />
-      </div>
-
-      <div className="relative z-10 max-w-7xl mx-auto space-y-20">
-        
-        {/* Mission & Vision Row */}
-        <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
-            {/* Vision */}
-            <div className="group relative bg-white rounded-3xl p-10 shadow-xl shadow-blue-900/5 hover:shadow-2xl hover:shadow-blue-900/10 transition-all duration-300 border border-blue-50 overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-100 rounded-bl-[100px] -mr-8 -mt-8 opacity-50 group-hover:scale-110 transition-transform duration-500 ease-out"/>
-                
-                <div className="relative z-10">
-                    <div className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center text-white mb-6 shadow-lg shadow-blue-600/20 group-hover:scale-110 transition-transform duration-300">
-                        <Lightbulb className="w-7 h-7" />
-                    </div>
-                    <h2 className="text-3xl font-bold text-gray-900 mb-4">Our Vision</h2>
-                    <p className="text-lg text-gray-600 leading-relaxed">
-                        To be the catalyst for a new era of professional excellence, where every aspiring talent in Bamenda and beyond has direct access to the opportunities that shape the future.
-                    </p>
-                </div>
+    // The wash background separates this section; no dividers or watermark needed.
+    <section id="mission" className="relative py-20 sm:py-24 bg-[#F3F7FF] scroll-mt-20">
+      <div className={`${landingContainer} space-y-16`}>
+        {/* Vision & Mission: two equal panels, left-aligned like the rest of the page */}
+        <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
+          <div className="rounded-3xl bg-white p-8 sm:p-10 ring-1 ring-[#DCE5F5]">
+            <div className="w-11 h-11 rounded-xl bg-[#155DFC] text-white flex items-center justify-center mb-6">
+              <Lightbulb className="w-5 h-5" aria-hidden="true" />
             </div>
+            <h2 className="font-heading text-2xl sm:text-3xl font-bold tracking-tight text-[#0B1B3F] mb-4">Our vision</h2>
+            <p className="text-lg text-[#4A5670] leading-relaxed">
+              To be the catalyst for a new era of professional excellence, where every aspiring talent in Bamenda
+              and beyond has direct access to the opportunities that shape the future.
+            </p>
+          </div>
 
-            {/* Mission */}
-            <div className="group relative bg-white rounded-3xl p-10 shadow-xl shadow-indigo-900/5 hover:shadow-2xl hover:shadow-indigo-900/10 transition-all duration-300 border border-indigo-50 overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-100 rounded-bl-[100px] -mr-8 -mt-8 opacity-50 group-hover:scale-110 transition-transform duration-500 ease-out"/>
-                
-                <div className="relative z-10">
-                    <div className="w-14 h-14 rounded-2xl bg-indigo-600 flex items-center justify-center text-white mb-6 shadow-lg shadow-indigo-600/20 group-hover:scale-110 transition-transform duration-300">
-                        <Target className="w-7 h-7" />
-                    </div>
-                    <h2 className="text-3xl font-bold text-gray-900 mb-4">Our Mission</h2>
-                    <p className="text-lg text-gray-600 leading-relaxed">
-                        To bridge the gap between education and industry through an intelligent, community-driven platform that empowers students to launch meaningful careers and helps companies discover exceptional local talent.
-                    </p>
-                </div>
+          <div className="rounded-3xl bg-white p-8 sm:p-10 ring-1 ring-[#DCE5F5]">
+            <div className="w-11 h-11 rounded-xl bg-[#0B1B3F] text-white flex items-center justify-center mb-6">
+              <Target className="w-5 h-5" aria-hidden="true" />
             </div>
+            <h2 className="font-heading text-2xl sm:text-3xl font-bold tracking-tight text-[#0B1B3F] mb-4">Our mission</h2>
+            <p className="text-lg text-[#4A5670] leading-relaxed">
+              To bridge the gap between education and industry through an intelligent, community-driven platform
+              that empowers students to launch meaningful careers and helps companies discover exceptional local talent.
+            </p>
+          </div>
         </div>
 
-        {/* Core Values Grid */}
-        <div className="relative">
-            <div className="text-center mb-12">
-                <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Our Core Principles</h2>
-                <div className="w-20 h-1.5 bg-blue-600 mx-auto mt-4 rounded-full"/>
-            </div>
-
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {cards.map((card, idx) => (
-                    <div key={idx} className="bg-white p-6 rounded-2xl border border-gray-100 hover:border-blue-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
-                        <div className={`w-12 h-12 rounded-xl ${COLOR_CLASSES[card.color]} flex items-center justify-center mb-4 group-hover:text-white transition-colors duration-300`}>
-                             <card.icon className="w-6 h-6" />
-                        </div>
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">{card.title}</h3>
-                        <p className="text-gray-600 text-sm leading-relaxed">{card.description}</p>
-                    </div>
-                ))}
-            </div>
+        {/* Core values */}
+        <div>
+          <h2 className={`${landingSectionTitle} mb-10`}>What we stand for</h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-10">
+            {values.map((value) => (
+              <div key={value.title}>
+                <div className="w-11 h-11 rounded-xl bg-white text-[#155DFC] ring-1 ring-[#DCE5F5] flex items-center justify-center mb-5">
+                  <value.icon className="w-5 h-5" aria-hidden="true" />
+                </div>
+                <h3 className="font-heading text-lg font-semibold text-[#0B1B3F] mb-2">{value.title}</h3>
+                <p className="text-[15px] text-[#4A5670] leading-relaxed">{value.description}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

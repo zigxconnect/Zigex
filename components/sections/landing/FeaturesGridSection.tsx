@@ -2,50 +2,48 @@
 
 import React from 'react';
 import { Briefcase, Zap, Shield, BarChart } from 'lucide-react';
+import { landingContainer, landingSectionLead, landingSectionTitle } from './landing-ui';
 
 const features = [
   {
-    icon: <Briefcase className="w-6 h-6 text-white" />,
+    icon: <Briefcase className="w-5 h-5" aria-hidden="true" />,
     title: 'Smart Matching',
-    description: 'Our AI finds the roles that fit your skills perfectly.',
-    color: 'bg-blue-600'
+    description: 'Our AI finds the roles that fit your skills perfectly.'
   },
   {
-    icon: <Zap className="w-6 h-6 text-white" />,
+    icon: <Zap className="w-5 h-5" aria-hidden="true" />,
     title: 'Instant Apply',
-    description: 'Apply to multiple companies with a single profile.',
-    color: 'bg-amber-500'
+    description: 'Apply to multiple companies with a single profile.'
   },
   {
-    icon: <Shield className="w-6 h-6 text-white" />,
+    icon: <Shield className="w-5 h-5" aria-hidden="true" />,
     title: 'Verified Companies',
-    description: 'We vet every employer to ensure high quality.',
-    color: 'bg-green-600'
+    description: 'We vet every employer to ensure high quality.'
   },
   {
-    icon: <BarChart className="w-6 h-6 text-white" />,
+    icon: <BarChart className="w-5 h-5" aria-hidden="true" />,
     title: 'Career Analytics',
-    description: 'Track your application progress in real-time.',
-    color: 'bg-indigo-600'
+    description: 'Track your application progress in real-time.'
   }
 ];
 
 const FeaturesGridSection: React.FC = () => {
   return (
-    <section id="features" className="py-20 bg-white scroll-mt-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900">Platform Features</h2>
-            <p className="text-gray-600 mt-4">Everything you need to succeed.</p>
+    <section id="features" className="py-20 sm:py-24 bg-white scroll-mt-20">
+      <div className={landingContainer}>
+        <div className="mb-12">
+            <h2 className={landingSectionTitle}>What you get with Zigex</h2>
+            <p className={landingSectionLead}>Everything you need to find, apply to and complete an internship.</p>
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {features.map((feature, index) => (
-            <div key={index} className="p-6 border border-gray-100 rounded-2xl hover:shadow-lg transition-shadow">
-              <div className={`w-12 h-12 rounded-xl ${feature.color} flex items-center justify-center mb-6 shadow-md`}>
+        {/* One blue tint for every icon: the colors blend instead of competing. */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-10">
+          {features.map((feature) => (
+            <div key={feature.title}>
+              <div className="w-11 h-11 rounded-xl bg-[#F3F7FF] text-[#155DFC] ring-1 ring-[#DCE5F5] flex items-center justify-center mb-5">
                 {feature.icon}
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">{feature.title}</h3>
-              <p className="text-gray-600 leading-relaxed">{feature.description}</p>
+              <h3 className="font-heading text-lg font-semibold text-[#0B1B3F] mb-2">{feature.title}</h3>
+              <p className="text-[15px] text-[#4A5670] leading-relaxed">{feature.description}</p>
             </div>
           ))}
         </div>
