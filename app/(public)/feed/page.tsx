@@ -42,7 +42,7 @@ async function loadBoardItems(): Promise<{ items: BoardItem[]; failed: boolean }
   return { items, failed: results.every((r) => r.status === "rejected") };
 }
 
-async function Board() {
+async function Board({ searchInHeader }: { searchInHeader: boolean }) {
   const { items, failed } = await loadBoardItems();
   if (failed) {
     return (
@@ -52,7 +52,8 @@ async function Board() {
       </div>
     );
   }
-  return <OpportunityBoard items={items} />;
+  // Signed in, the top bar search drives the board on wider screens.
+  return <OpportunityBoard items={items} searchInHeader={searchInHeader} />;
 }
 
 /** Same footprint as the loaded board, so the page doesn't jump. */
@@ -161,7 +162,7 @@ export default async function FeedPage() {
       <div className="grid gap-8 lg:grid-cols-12">
         <section aria-label="Opportunities" className="min-w-0 lg:col-span-9">
           <Suspense fallback={<BoardSkeleton />}>
-            <Board />
+            <Board searchInHeader={isAuthenticated} />
           </Suspense>
         </section>
         <aside className="lg:col-span-3">

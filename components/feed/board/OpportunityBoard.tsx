@@ -43,7 +43,7 @@ const matches = (item: BoardItem, query: string) => {
     .every((word) => haystack.includes(word));
 };
 
-export function OpportunityBoard({ items }: { items: BoardItem[] }) {
+export function OpportunityBoard({ items, searchInHeader = false }: { items: BoardItem[]; searchInHeader?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -130,9 +130,9 @@ export function OpportunityBoard({ items }: { items: BoardItem[] }) {
     <div>
       {/* Filters: every control has a visible label, the same height and the same focus ring. */}
       <div className="rounded-2xl bg-[#F8FAFF] p-4 ring-1 ring-[#DCE5F5] sm:p-5">
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-[1fr_11rem] sm:items-end">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-[1fr_11rem] sm:items-end md:grid-cols-[1fr_11rem_11rem]">
           <form
-            className="order-1 col-span-2 sm:order-none sm:col-span-1"
+            className={`order-1 col-span-2 sm:order-none sm:col-span-1 ${searchInHeader ? "md:hidden" : "md:col-span-3"}`}
             role="search"
             onSubmit={(e) => {
               e.preventDefault();
@@ -173,7 +173,7 @@ export function OpportunityBoard({ items }: { items: BoardItem[] }) {
               )}
             </div>
           </form>
-          <div className="order-3 min-w-0 sm:order-none">
+          <div className="order-3 min-w-0 sm:order-none md:order-2">
             <span id={`${uid}-sort`} className={fieldLabel}>
               Sort by
             </span>
@@ -225,7 +225,7 @@ export function OpportunityBoard({ items }: { items: BoardItem[] }) {
             </SelectPrimitive.Root>
           </div>
 
-          <div className="order-2 col-span-2 sm:order-none sm:col-span-1">
+          <div className="order-2 col-span-2 sm:order-none sm:col-span-1 md:order-1">
             <span id={`${uid}-type`} className={fieldLabel}>
               Type
             </span>
@@ -264,7 +264,7 @@ export function OpportunityBoard({ items }: { items: BoardItem[] }) {
             </div>
           </div>
 
-          <div className="order-4 min-w-0 sm:order-none">
+          <div className="order-4 min-w-0 sm:order-none md:order-3">
             <span className={fieldLabel} aria-hidden="true">
               Price
             </span>

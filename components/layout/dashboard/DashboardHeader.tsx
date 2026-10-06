@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Menu, Search } from "lucide-react";
@@ -18,9 +18,26 @@ interface DashboardHeaderProps {
  */
 export const DashboardHeader = ({ user, onMenuClick }: DashboardHeaderProps) => {
   const router = useRouter();
+  const pathname = usePathname();
   const [query, setQuery] = useState("");
-  // /feed has its own search with filters; a second box there would compete.
-  const onFeed = usePathname() === "/feed";
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // On /feed this box filters the board live (via ?q=); elsewhere it opens /feed with the search.
+  const onFeed = pathname === "/feed";
+
+  // Show the current /feed search when arriving there; clear it elsewhere.
+  useEffect(() => {
+    setQuery(onFeed ? new URLSearchParams(window.location.search).get("q") ?? "" : "");
+  }, [onFeed]);
+
+  const updateFeedQuery = (value: string) => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      const params = new URLSearchParams(window.location.search);
+      if (value.trim()) params.set("q", value.trim());
+      else params.delete("q");
+      router.replace(`/feed${params.size ? `?${params}` : ""}`, { scroll: false });
+    }, 250);
+  };
 
   return (
     <header className="sticky top-0 z-40 border-b border-[#DCE5F5] bg-white/90 backdrop-blur lg:pl-64">
@@ -43,9 +60,10 @@ export const DashboardHeader = ({ user, onMenuClick }: DashboardHeaderProps) => 
           onSubmit={(e) => {
             e.preventDefault();
             const q = query.trim();
+            if (onFeed) return updateFeedQuery(q);
             router.push(q ? `/feed?q=${encodeURIComponent(q)}` : "/feed");
           }}
-          className={`relative hidden w-full max-w-md ${onFeed ? "" : "md:block"}`}
+          className="relative hidden w-full max-w-md md:block"
         >
           <label htmlFor="global-search" className="sr-only">
             Search opportunities
@@ -55,8 +73,11 @@ export const DashboardHeader = ({ user, onMenuClick }: DashboardHeaderProps) => 
             id="global-search"
             type="search"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search opportunities"
+            onChange={(e) => {
+              setQuery(e.target.value);
+              if (onFeed) updateFeedQuery(e.target.value);
+            }}
+            placeholder={onFeed ? "Search by title, company, skill or town" : "Search opportunities"}
             className="h-10 w-full rounded-xl border border-[#DCE5F5] bg-[#F8FAFF] pl-10 pr-3 text-sm text-[#0B1B3F] placeholder:text-[#7B869C] transition-colors hover:border-[#B9C8E6] focus:border-[#155DFC] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#155DFC]/15"
           />
         </form>
