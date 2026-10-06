@@ -15,6 +15,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import FeedStories from "@/components/feed/FeedStories";
 import { OpportunityBoard } from "@/components/feed/board/OpportunityBoard";
+import { OpportunityCardSkeleton } from "@/components/feed/board/OpportunityCard";
 import { BoardRail } from "@/components/feed/board/BoardRail";
 import { toBoardItem, type BoardItem } from "@/components/feed/board/board-types";
 import { listPublicFeed, type FeedKind } from "@/lib/api/services/feed";
@@ -55,18 +56,11 @@ async function Board() {
 function BoardSkeleton() {
   return (
     <div aria-busy="true" aria-label="Loading opportunities">
-      <div className="h-12 rounded-xl bg-[#EEF2FA] motion-safe:animate-pulse" />
-      <div className="mt-4 h-12 w-80 max-w-full rounded-xl bg-[#EEF2FA] motion-safe:animate-pulse" />
-      <div className="mt-9 divide-y divide-[#DCE5F5] rounded-2xl ring-1 ring-[#DCE5F5]">
-        {Array.from({ length: 5 }, (_, i) => (
-          <div key={i} className="flex gap-4 px-6 py-5">
-            <div className="h-12 w-12 rounded-xl bg-[#EEF2FA] motion-safe:animate-pulse" />
-            <div className="flex-1 space-y-2">
-              <div className="h-4 w-2/3 rounded bg-[#EEF2FA] motion-safe:animate-pulse" />
-              <div className="h-3 w-1/3 rounded bg-[#EEF2FA] motion-safe:animate-pulse" />
-              <div className="h-6 w-1/2 rounded bg-[#EEF2FA] motion-safe:animate-pulse" />
-            </div>
-          </div>
+      <div className="h-[196px] rounded-2xl bg-[#F8FAFF] ring-1 ring-[#DCE5F5] motion-safe:animate-pulse" />
+      <div className="mt-6 h-4 w-40 rounded bg-[#EEF2FA]" />
+      <div className="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {Array.from({ length: 6 }, (_, i) => (
+          <OpportunityCardSkeleton key={i} />
         ))}
       </div>
     </div>
@@ -98,12 +92,12 @@ export default async function FeedPage() {
       )}
 
       <div className="grid gap-8 lg:grid-cols-12">
-        <section aria-label="Opportunities" className="min-w-0 lg:col-span-8">
+        <section aria-label="Opportunities" className="min-w-0 lg:col-span-9">
           <Suspense fallback={<BoardSkeleton />}>
             <Board />
           </Suspense>
         </section>
-        <aside className="lg:col-span-4">
+        <aside className="lg:col-span-3">
           <div className="lg:sticky lg:top-24">
             <BoardRail signedIn={isAuthenticated} workspaces={workspaces} />
           </div>

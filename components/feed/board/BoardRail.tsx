@@ -12,12 +12,12 @@ export function BoardRail({ signedIn, workspaces }: { signedIn: boolean; workspa
   if (!signedIn) {
     return (
       <div className="space-y-4">
-        <div className="rounded-2xl bg-[#F3F7FF] p-6 ring-1 ring-[#DCE5F5]">
-          <h2 className="font-heading text-lg font-semibold text-[#0B1B3F]">Create an account to apply</h2>
-          <p className="mt-2 text-[15px] leading-relaxed text-[#4A5670]">
+        <div className="rounded-2xl bg-[#F3F7FF] p-5 ring-1 ring-[#DCE5F5]">
+          <h2 className="font-heading text-base font-semibold text-[#0B1B3F]">Create an account to apply</h2>
+          <p className="mt-1.5 text-sm leading-relaxed text-[#4A5670]">
             One free profile lets you apply to any opportunity and follow every application.
           </p>
-          <div className="mt-5 grid gap-2">
+          <div className="mt-4 grid gap-2">
             <Link href="/sign-up" className={landingButton("primary", "md")}>
               Create your free account
             </Link>
@@ -38,8 +38,8 @@ export function BoardRail({ signedIn, workspaces }: { signedIn: boolean; workspa
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl bg-white p-6 ring-1 ring-[#DCE5F5]">
-        <h2 className="font-heading text-lg font-semibold text-[#0B1B3F]">Your workspaces</h2>
+      <div className="rounded-2xl bg-white p-5 ring-1 ring-[#DCE5F5]">
+        <h2 className="font-heading text-base font-semibold text-[#0B1B3F]">Your workspaces</h2>
         {workspaces.length === 0 ? (
           <p className="mt-2 text-[15px] leading-relaxed text-[#4A5670]">
             When a company accepts you, your internship or program workspace appears here.

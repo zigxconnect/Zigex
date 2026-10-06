@@ -8,6 +8,8 @@ export type BoardItem = {
   companyName: string;
   companyLogo: string | null;
   companyVerified: boolean;
+  /** Cover photo for the card (each type stores it in its own column). */
+  image: string | null;
   location: string | null;
   workMode: "remote" | "onsite" | "hybrid" | null;
   /** The date that matters most: when applications close, else when it starts. */
@@ -18,6 +20,12 @@ export type BoardItem = {
   priceXaf: number | null;
   postedAt: string | null;
   skills: string[];
+};
+
+const IMAGE_COLUMN: Record<FeedKind, string> = {
+  internships: "cover_image_url",
+  programs: "program_picture_url",
+  events: "event_picture_url",
 };
 
 const WORK_MODES = new Set(["remote", "onsite", "hybrid"]);
@@ -32,6 +40,7 @@ export function toBoardItem(kind: FeedKind, row: FeedRow): BoardItem {
     companyName: company?.company_name ?? "Zigex partner",
     companyLogo: company?.logo_url ?? null,
     companyVerified: Boolean(company?.is_verified),
+    image: typeof row[IMAGE_COLUMN[kind]] === "string" && row[IMAGE_COLUMN[kind]] ? row[IMAGE_COLUMN[kind]] : null,
     location: row.location ?? row.venue ?? null,
     workMode: mode && WORK_MODES.has(mode) ? (mode as BoardItem["workMode"]) : null,
     closesAt: row.deadline ?? row.application_deadline ?? null,
@@ -48,4 +57,33 @@ export function isClosed(item: BoardItem, now = Date.now()): boolean {
   if (item.closesAt) return new Date(item.closesAt).getTime() < now;
   if (item.kind === "events" && item.startsAt) return new Date(item.startsAt).getTime() < now - 24 * 60 * 60 * 1000;
   return false;
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function daysFromNow(date: string) {
+  return Math.ceil((new Date(date).getTime() - Date.now()) / DAY_MS);
+}
+
+/** The one date line a student cares about for this item. */
+export function timing(item: BoardItem): { text: string; urgent: boolean } | null {
+  if (item.closesAt) {
+    const days = daysFromNow(item.closesAt);
+    if (days < 0) return { text: "Closed", urgent: false };
+    return { text: days === 0 ? "Closes today" : `Closes in ${days} day${days === 1 ? "" : "s"}`, urgent: days <= 7 };
+  }
+  if (item.startsAt) {
+    const date = new Date(item.startsAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+    return { text: daysFromNow(item.startsAt) < 0 ? `Started ${date}` : `Starts ${date}`, urgent: false };
+  }
+  return null;
+}
+
+export function postedAgo(date: string | null) {
+  if (!date) return null;
+  const days = Math.floor((Date.now() - new Date(date).getTime()) / DAY_MS);
+  if (days <= 0) return "Posted today";
+  if (days === 1) return "Posted yesterday";
+  if (days < 30) return `Posted ${days} days ago`;
+  return `Posted ${new Date(date).toLocaleDateString("en-GB", { month: "short", year: "numeric" })}`;
 }
