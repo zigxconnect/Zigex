@@ -12,7 +12,7 @@ import { ArrowRight, ChevronDown } from "lucide-react";
 import { listPublicFeed } from "@/lib/api/services/feed";
 import { listApplications } from "@/lib/api/services/applications";
 import { applicationKind, targetId, toApplicationStatus } from "@/lib/api/applications-shape";
-import { ProgramRow, toProgramView, type ProgramView } from "@/components/programs/ProgramRow";
+import { ProgramCard, toProgramView, type ProgramView } from "@/components/programs/ProgramCard";
 import { landingButton } from "@/components/sections/landing/landing-ui";
 
 export const metadata: Metadata = { title: "Programs" };
@@ -130,10 +130,10 @@ export default async function ProgramsPage() {
             </Link>
           </div>
         ) : (
-          <ul className="mt-4 space-y-3">
+          <ul className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {open.map((p) => (
               <li key={p.id}>
-                <ProgramRow program={p} />
+                <ProgramCard program={p} />
               </li>
             ))}
           </ul>
@@ -148,10 +148,10 @@ export default async function ProgramsPage() {
             <span className="text-base font-normal text-[#7B869C]">{past.length}</span>
             <ChevronDown className="h-5 w-5 text-[#4A5670] transition-transform group-open:rotate-180" aria-hidden="true" />
           </summary>
-          <ul className="mt-4 space-y-3">
+          <ul className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {past.map((p) => (
               <li key={p.id}>
-                <ProgramRow program={p} />
+                <ProgramCard program={p} />
               </li>
             ))}
           </ul>
