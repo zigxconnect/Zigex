@@ -24,7 +24,7 @@ export const inputClass =
 /** Page heading block for the form column. */
 export function AuthHeader({ title, description }: { title: string; description?: ReactNode }) {
   return (
-    <div className="mb-8">
+    <div className="mb-6">
       <h1 className="font-heading text-[28px] font-bold leading-tight tracking-tight text-[#0B1B3F]">{title}</h1>
       {description && <p className="mt-2 text-[15px] leading-relaxed text-[#4A5670]">{description}</p>}
     </div>
@@ -118,23 +118,42 @@ export const PasswordInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HT
   );
 });
 
-/** Live checklist under a new password; only the length is required. */
-export function PasswordChecks({ password }: { password: string }) {
-  const checks = [
-    { label: "8 or more characters", met: password.length >= 8 },
-    { label: "A number", met: /\d/.test(password) },
-    { label: "An uppercase letter", met: /[A-Z]/.test(password) },
-  ];
+const STRENGTH = [
+  { label: "", color: "", text: "" },
+  { label: "Weak", color: "bg-[#D92D20]", text: "text-[#B42318]" },
+  { label: "Strong", color: "bg-[#155DFC]", text: "text-[#155DFC]" },
+  { label: "Stronger", color: "bg-[#12B76A]", text: "text-[#067647]" },
+] as const;
+
+/** 0 = empty, 1 = weak, 2 = strong, 3 = stronger, plus a tip to move up a level. */
+export function passwordStrength(password: string): { level: 0 | 1 | 2 | 3; tip: string } {
+  if (!password) return { level: 0, tip: "Use 8 or more characters." };
+  const kinds = [/[a-z]/, /[A-Z]/, /\d/, /[^A-Za-z0-9]/].filter((re) => re.test(password)).length;
+  if (password.length < 8) return { level: 1, tip: `${8 - password.length} more character${password.length === 7 ? "" : "s"} needed.` };
+  if (password.length >= 14 || (password.length >= 10 && kinds >= 3)) return { level: 3, tip: "Great password." };
+  if (kinds >= 2) return { level: 2, tip: password.length >= 10 ? "Add a symbol to make it stronger." : "Make it 10+ characters to make it stronger." };
+  return { level: 1, tip: "Mix in numbers or capital letters." };
+}
+
+/** Three-segment strength bar under a new password: weak, strong, stronger. */
+export function PasswordStrength({ password }: { password: string }) {
+  const { level, tip } = passwordStrength(password);
+  const current = STRENGTH[level];
   return (
-    <ul className="mt-2 grid gap-1 text-[13px]" aria-label="Password strength">
-      {checks.map((c) => (
-        <li key={c.label} className={`flex items-center gap-1.5 ${c.met ? "text-[#067647]" : "text-[#7B869C]"}`}>
-          <Check className={`h-3.5 w-3.5 ${c.met ? "opacity-100" : "opacity-30"}`} aria-hidden="true" />
-          {c.label}
-          <span className="sr-only">{c.met ? "(done)" : "(not yet)"}</span>
-        </li>
-      ))}
-    </ul>
+    <div className="mt-2">
+      <div className="flex gap-1.5" aria-hidden="true">
+        {[1, 2, 3].map((i) => (
+          <span
+            key={i}
+            className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${i <= level ? current.color : "bg-[#E3E9F5]"}`}
+          />
+        ))}
+      </div>
+      <p className="mt-1.5 flex justify-between gap-3 text-[13px]" aria-live="polite">
+        <span className="text-[#4A5670]">{tip}</span>
+        {level > 0 && <span className={`shrink-0 font-semibold ${current.text}`}>{current.label}</span>}
+      </p>
+    </div>
   );
 }
 
@@ -249,7 +268,7 @@ export function FormAlert({ tone, children }: { tone: "error" | "success" | "inf
 /** "or" separator between Google and email sign-in. */
 export function OrDivider() {
   return (
-    <div className="my-6 flex items-center gap-4 text-sm text-[#7B869C]" role="separator">
+    <div className="my-5 flex items-center gap-4 text-sm text-[#7B869C]" role="separator">
       <span className="h-px flex-1 bg-[#DCE5F5]" />
       or
       <span className="h-px flex-1 bg-[#DCE5F5]" />
@@ -259,7 +278,7 @@ export function OrDivider() {
 
 /** Secondary line under the form, e.g. "New to Zigex? Create an account". */
 export function AuthFooter({ children }: { children: ReactNode }) {
-  return <p className="mt-8 text-[15px] text-[#4A5670]">{children}</p>;
+  return <p className="mt-6 text-[15px] text-[#4A5670]">{children}</p>;
 }
 
 export const authLink =

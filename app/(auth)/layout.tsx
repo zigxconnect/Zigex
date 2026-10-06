@@ -40,7 +40,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         </div>
       </aside>
 
-      <main className="flex min-h-dvh flex-col px-5 py-6 sm:px-10 lg:px-16">
+      <main className="flex min-h-dvh flex-col px-5 py-5 sm:px-10 lg:px-16">
         <Link
           href="/"
           className="inline-flex w-fit items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC]"
@@ -50,7 +50,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           <span className="font-heading text-xl font-bold tracking-tight text-[#0B1B3F]">Zigex</span>
         </Link>
 
-        <div className="flex flex-1 items-center py-10">
+        <div className="flex flex-1 items-center py-6">
           <div className="mx-auto w-full max-w-[400px]">{children}</div>
         </div>
 

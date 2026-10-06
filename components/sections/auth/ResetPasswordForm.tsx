@@ -15,7 +15,7 @@ import {
   AuthHeader,
   Field,
   FormAlert,
-  PasswordChecks,
+  PasswordStrength,
   PasswordInput,
   SubmitButton,
   authLink,
@@ -179,7 +179,7 @@ export const ResetPasswordForm = () => {
                 aria-describedby={describedBy}
                 {...register("password")}
               />
-              {!invalid && <PasswordChecks password={password} />}
+              {!invalid && <PasswordStrength password={password} />}
             </>
           )}
         </Field>

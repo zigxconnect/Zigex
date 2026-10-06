@@ -17,7 +17,7 @@ import {
   Field,
   FormAlert,
   OrDivider,
-  PasswordChecks,
+  PasswordStrength,
   PasswordInput,
   SubmitButton,
   authLink,
@@ -279,10 +279,10 @@ function SignUpForm() {
         </>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
         {error && <FormAlert tone="error">{error}</FormAlert>}
 
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4">
           <Field label="First name" error={errors.firstName?.message}>
             {({ id, describedBy, invalid }) => (
               <input
@@ -316,7 +316,7 @@ function SignUpForm() {
           </Field>
         </div>
 
-        <Field label="Email" error={errors.email?.message} hint="We'll send a 6-digit code here to confirm it's yours.">
+        <Field label="Email" error={errors.email?.message} hint="We'll send a code here to confirm it.">
           {({ id, describedBy, invalid }) => (
             <>
               <input
@@ -345,7 +345,7 @@ function SignUpForm() {
                 aria-describedby={describedBy}
                 {...register("password")}
               />
-              {!invalid && <PasswordChecks password={password} />}
+              {!invalid && <PasswordStrength password={password} />}
             </>
           )}
         </Field>
@@ -354,7 +354,7 @@ function SignUpForm() {
           Create account
         </SubmitButton>
 
-        <p className="text-[13px] leading-relaxed text-[#7B869C]">
+        <p className="-mt-1 text-[13px] leading-relaxed text-[#7B869C]">
           By creating an account you agree to our{" "}
           <Link href="/privacy" className="text-[#4A5670] underline underline-offset-2 hover:text-[#0B1B3F]">
             Privacy Policy
