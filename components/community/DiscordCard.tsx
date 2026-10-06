@@ -24,7 +24,8 @@ type Widget = {
 export function DiscordCard() {
   const [widget, setWidget] = useState<Widget | null>(null);
   const [members, setMembers] = useState<number | null>(null);
-  const [showChat, setShowChat] = useState(false);
+  // The chat is the main way to take part, so it is open by default.
+  const [showChat, setShowChat] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -70,7 +71,8 @@ export function DiscordCard() {
         </div>
 
         <p className="mt-4 max-w-xl text-base leading-relaxed text-[#2B3A55]">
-          Ask questions, share what you&apos;re building and find people to study with. You need a free Discord account to post.
+          Ask questions, share what you&apos;re building and find people to study with. Read and post in the Lounge right here;
+          the first time you send a message, sign in with Discord in the small window that opens.
         </p>
 
         {channels.length > 0 && (
@@ -84,15 +86,16 @@ export function DiscordCard() {
           </ul>
         )}
 
-        <div className="mt-5 flex flex-wrap gap-2">
-          <a href={INVITE} target="_blank" rel="noopener noreferrer" className={landingButton("primary", "md")}>
-            Join on Discord
-            <ExternalLink className="h-4 w-4" aria-hidden="true" />
-            <span className="sr-only">(opens in a new tab)</span>
-          </a>
-          <button type="button" onClick={() => setShowChat((v) => !v)} aria-expanded={showChat} className={landingButton("secondary", "md")}>
-            {showChat ? "Hide the Lounge" : "Read the Lounge here"}
+        <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2">
+          <button type="button" onClick={() => setShowChat((v) => !v)} aria-expanded={showChat} className={landingButton(showChat ? "secondary" : "primary", "md")}>
+            {showChat ? "Hide the chat" : "Chat in the Lounge"}
           </button>
+          {/* Joining the full server (Study Rooms, other channels) happens on Discord itself. */}
+          <a href={INVITE} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#4A5670] hover:text-[#155DFC]">
+            Open the full server in Discord
+            <ExternalLink className="h-4 w-4" aria-hidden="true" />
+            <span className="sr-only">(opens Discord in a new tab; Zigex stays open)</span>
+          </a>
         </div>
       </div>
 
@@ -100,8 +103,8 @@ export function DiscordCard() {
         <div className="border-t border-[#EEF2FA]">
           <iframe
             src={`https://e.widgetbot.io/channels/${GUILD_ID}/${LOUNGE_CHANNEL_ID}?color=155DFC&theme=light`}
-            title="Zigex Lounge on Discord"
-            className="block h-[560px] w-full"
+            title="Zigex Lounge chat"
+            className="block h-[520px] w-full sm:h-[600px]"
             loading="lazy"
             allow="clipboard-write; fullscreen"
           />

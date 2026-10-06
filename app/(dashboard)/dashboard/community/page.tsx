@@ -38,9 +38,9 @@ async function myProgramGroups(): Promise<ProgramGroup[]> {
 }
 
 const STEPS = [
-  { title: "Join the server", text: "Open the invite and sign in with a free Discord account." },
-  { title: "Say hello in the Lounge", text: "Tell people your name, school and what you're learning." },
-  { title: "Study together", text: "Use the Study Rooms to work on assignments or projects with others." },
+  { title: "Say hello in the Lounge", text: "Use the chat on this page. Tell people your name, school and what you're learning." },
+  { title: "Sign in once", text: "The first time you post, a small Discord window asks you to sign in. You stay on Zigex." },
+  { title: "Study together", text: "For the Study Rooms, open the full server in Discord. Zigex stays open in its own tab." },
 ];
 
 export default async function CommunitiesPage() {
