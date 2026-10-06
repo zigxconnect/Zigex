@@ -1,3 +1,4 @@
+import { ADMIN_APP_URL } from "@/lib/app-urls";
 import { NextResponse } from "next/server";
 import { sendAttendanceReminderEmail } from "@/lib/email";
 
@@ -25,7 +26,7 @@ export async function GET(request: Request) {
                 { name: "Jane Smith (Sample)" },
                 { name: "Alex Johnson (Sample)" }
             ],
-            dashboardLink: "https://zigexconnect.com/supervisor"
+            dashboardLink: `${ADMIN_APP_URL}/supervisor`
         });
 
         return NextResponse.json({

@@ -1,3 +1,4 @@
+import { ADMIN_APP_URL } from "@/lib/app-urls";
 /**
  * ZIGEX EmailJS Integration
  * Dynamic email sending for all application notifications
@@ -232,7 +233,7 @@ export const sendApplicationAlert = async (params: {
         status_badge: status.toUpperCase(),
         status_color: status === "pending" ? "#F59E0B" : status === "accepted" ? "#10B981" : "#6B7280",
         cta_text: "View in Dashboard",
-        cta_link: "https://zigexconnect.com/dashboard/admin/applicants",
+        cta_link: `${ADMIN_APP_URL}/admin/applicants`,
         footer_note: "This is an automated alert from ZIGEX.",
     });
 };

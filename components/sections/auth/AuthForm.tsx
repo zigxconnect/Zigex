@@ -15,6 +15,7 @@ import { getReturnUrl } from "@/lib/utils/redirect";
 import { api } from "@/lib/api/browser-client";
 import { ApiClientError } from "@/lib/api/errors";
 import { GoogleSignInButton } from "./GoogleSignInButton";
+import { ADMIN_APP_URL } from "@/lib/app-urls";
 
 // --- Schemas ---
 const signUpSchema = z.object({
@@ -309,7 +310,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
           <p className="text-sm text-muted-foreground">
             {/* Looking to hire?{" "} */}
             <Link
-              href="/company/sign-up"
+              href={`${ADMIN_APP_URL}/company/sign-up`}
               className="font-semibold text-primary hover:underline"
             >
               {/* Sign up as a company */}
