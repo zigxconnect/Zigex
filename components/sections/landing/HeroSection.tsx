@@ -1,120 +1,22 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, X, MapPin, Clock, CheckCircle2 } from "lucide-react";
+import { MapPin, Clock, CheckCircle2 } from "lucide-react";
 import { landingButton, landingContainer } from "./landing-ui";
-
-const NAV_LINKS = [
-  { label: "Features", href: "#features" },
-  { label: "Mission", href: "#mission" },
-  { label: "Services", href: "#services" },
-  { label: "Community", href: "#community" },
-];
 
 // Real Zigex students, the strongest proof the page has; it leads the visual.
 const HERO_PHOTO = "https://i.ibb.co/1YqtdCtK/Chat-GPT-Image-Apr-23-2026-03-29-43-PM.png";
 
 const BamendaHeroSection = () => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 8);
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  // UX: Escape closes the mobile menu, as users expect from any overlay.
-  useEffect(() => {
-    if (!mobileMenuOpen) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setMobileMenuOpen(false);
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [mobileMenuOpen]);
-
   return (
     <div className="relative bg-white">
       {/* One quiet wash behind the hero instead of scattered blur blobs. */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[720px] bg-gradient-to-b from-[#F3F7FF] to-white" />
-
-      {/* Header */}
-      <nav
-        className={`fixed inset-x-0 top-0 z-50 border-b transition-[background-color,border-color] duration-200 ${
-          scrolled || mobileMenuOpen
-            ? "border-[#DCE5F5] bg-white/90 backdrop-blur-md"
-            : "border-transparent bg-transparent"
-        }`}
-      >
-        <div className={`${landingContainer} flex h-[72px] items-center justify-between gap-6`}>
-          <Link href="/" className="flex items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC]">
-            <img src="https://i.ibb.co/Cp502Yby/logo.png" alt="" width={32} height={32} className="h-8 w-8 object-contain" />
-            <span className="font-heading text-xl font-bold tracking-tight text-[#0B1B3F]">Zigex</span>
-          </Link>
-
-          {/* Links sit with the actions on the right: one group to scan, not three. */}
-          <div className="hidden items-center gap-8 md:flex">
-            <ul className="flex items-center gap-7">
-              {NAV_LINKS.map((link) => (
-                <li key={link.href}>
-                  <a href={link.href} className="text-[15px] font-medium text-[#4A5670] transition-colors hover:text-[#0B1B3F]">
-                    {link.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-            <div className="flex items-center gap-2">
-              <Link href="/sign-in" className={landingButton("ghost", "md")}>
-                Sign in
-              </Link>
-              <Link href="/sign-up" className={landingButton("primary", "md")}>
-                Get started
-              </Link>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            className="-mr-2 inline-flex h-11 w-11 items-center justify-center rounded-xl text-[#0B1B3F] hover:bg-[#F3F7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] md:hidden"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-            aria-expanded={mobileMenuOpen}
-            aria-controls="landing-mobile-menu"
-          >
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
-        </div>
-
-        {mobileMenuOpen && (
-          <div id="landing-mobile-menu" className="border-t border-[#DCE5F5] bg-white md:hidden">
-            <div className={`${landingContainer} flex flex-col py-3`}>
-              {NAV_LINKS.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex h-12 items-center text-base font-medium text-[#0B1B3F]"
-                >
-                  {link.label}
-                </a>
-              ))}
-              <div className="mt-3 grid grid-cols-2 gap-3 border-t border-[#DCE5F5] pt-4">
-                <Link href="/sign-in" onClick={() => setMobileMenuOpen(false)} className={landingButton("secondary", "md")}>
-                  Sign in
-                </Link>
-                <Link href="/sign-up" onClick={() => setMobileMenuOpen(false)} className={landingButton("primary", "md")}>
-                  Get started
-                </Link>
-              </div>
-            </div>
-          </div>
-        )}
-      </nav>
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[640px] bg-gradient-to-b from-[#F3F7FF] to-white" />
 
       {/* Hero */}
-      <section className={`${landingContainer} relative grid items-center gap-12 pb-20 pt-32 lg:grid-cols-12 lg:gap-12 lg:pb-32 lg:pt-40`}>
+      <section className={`${landingContainer} relative grid items-center gap-12 pb-24 pt-12 sm:pt-16 lg:grid-cols-12 lg:gap-12 lg:pb-32 lg:pt-24`}>
         {/* Copy: left-aligned at every size, so the eye starts in one place. */}
         <div className="hero-enter lg:col-span-6">
           <h1 className="font-heading text-[2.5rem] font-bold leading-[1.05] tracking-[-0.02em] text-[#0B1B3F] sm:text-5xl lg:text-[3.5rem]">

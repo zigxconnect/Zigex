@@ -74,3 +74,14 @@ export async function listCompanyFeed(kind: FeedKind, companyId: string, exclude
   const rows = await listFeed(kind, undefined, companyId);
   return rows.filter((row) => row.company_id === companyId && row.id !== excludeId).slice(0, limit);
 }
+
+/** The newest few items of one feed: a single page, for teasers like the landing page. */
+export async function latestFeed(kind: FeedKind, limit = 6): Promise<FeedRow[]> {
+  try {
+    const res = await serverApi.get<FeedRow[]>(`/feed/${kind}?page=1&limit=${limit}`);
+    return (res.data ?? []).map(normalise);
+  } catch (error) {
+    if (isUnauthorized(error)) return [];
+    throw error;
+  }
+}

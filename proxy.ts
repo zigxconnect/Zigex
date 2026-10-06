@@ -72,6 +72,11 @@ export async function proxy(request: NextRequest) {
     return isPublic ? withSecurityHeaders(NextResponse.next()) : redirectTo(request, "/sign-in?error=wrong_portal");
   }
 
+  // Signed-in students skip the marketing page and land on their feed.
+  if (pathname === "/") {
+    return redirectTo(request, "/feed");
+  }
+
   if (AUTH_PAGES.includes(pathname)) {
     return redirectTo(request, "/feed");
   }
