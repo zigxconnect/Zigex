@@ -1,140 +1,83 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/uiComponent/Spinner";
-import Link from "next/link";
-import { Mail, AlertTriangle, CheckCircle } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { api } from "@/lib/api/browser-client";
-import { isEndpointMissing } from "@/lib/api/errors";
+import { ApiClientError, isEndpointMissing } from "@/lib/api/errors";
+import { AuthFooter, AuthHeader, Field, FormAlert, SubmitButton, authLink, inputClass } from "./auth-ui";
 
-const forgotPasswordSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address." }),
+const schema = z.object({
+  email: z.string().trim().email({ message: "Enter a valid email address, like name@example.com." }),
 });
+type FormData = z.infer<typeof schema>;
 
-type FormData = z.infer<typeof forgotPasswordSchema>;
-
+/** Step 1 of the reset: POST /auth/forgot-password emails a 6-digit code. */
 export const ForgotPasswordForm = () => {
-  const [formState, setFormState] = useState<"idle" | "success">("idle");
-  const [apiError, setApiError] = useState<string | null>(null);
-  const [submittedEmail, setSubmittedEmail] = useState("");
-
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<FormData>({
-    resolver: zodResolver(forgotPasswordSchema),
-  });
+  } = useForm<FormData>({ resolver: zodResolver(schema) });
 
-  const onSubmit = async (data: FormData) => {
-    setApiError(null);
+  const onSubmit = async ({ email }: FormData) => {
+    setError(null);
     try {
-      // Always succeeds for unknown emails too, so accounts can't be probed.
-      await api.post("/auth/forgot-password", data);
-      setSubmittedEmail(data.email);
-      setFormState("success");
+      // Succeeds for unknown emails too, so nobody can probe for accounts.
+      await api.post("/auth/forgot-password", { email });
+      router.push(`/reset-password?email=${encodeURIComponent(email)}&sent=1`);
     } catch (err) {
-      setApiError(
+      setError(
         isEndpointMissing(err)
-          ? "Password reset is not available yet. Please contact support."
-          : err instanceof Error
-            ? err.message
-            : "An unexpected error occurred"
+          ? "Password reset isn't available yet. Email zigexconnect.com@gmail.com for help."
+          : err instanceof ApiClientError && err.status === 429
+            ? "You've asked for several codes. Wait a few minutes before asking again."
+            : "We couldn't send the code. Check your connection and try again."
       );
     }
   };
 
-  if (formState === "success") {
-    return (
-      <div className="w-full max-w-md p-8 text-center bg-white rounded-xl shadow-2xl">
-        <CheckCircle className="w-16 h-16 mx-auto text-green-500" />
-        <h1 className="mt-4 text-2xl font-bold text-gray-900">
-          Check your inbox
-        </h1>
-        <p className="mt-2 text-sm text-gray-600">
-          If an account exists for <br />
-          <span className="font-semibold text-gray-800">{submittedEmail}</span>, we sent it a 6-digit reset code.
-        </p>
-        <div className="mt-6 flex flex-col items-center gap-3">
-          <Link
-            href={`/update-password?email=${encodeURIComponent(submittedEmail)}`}
-            className="w-full rounded-xl bg-[#155DFC] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1A3CB9]"
-          >
-            Enter the code
-          </Link>
-          <Link
-            href="/sign-in"
-            className="text-sm text-blue-600 hover:underline"
-          >
-            Back to Sign In
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl">
-      <div className="text-center">
-        {/* MODIFIED: Changed icon background to blue-500 */}
-        <div className="mx-auto w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
-          <Mail className="w-7 h-7 text-white" />
-        </div>
-        <h1 className="mt-4 text-2xl font-bold text-gray-900">
-          Forgot Password
-        </h1>
-        <p className="mt-1 text-sm text-gray-600">
-          No worries, we will send you reset instructions.
-        </p>
-      </div>
-      <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-4">
-        <div>
-          <label className="text-sm font-medium text-foreground">Email</label>
-          <Input
-            id="email"
-            type="email"
-            autoComplete="email"
-            placeholder="Enter your email address"
-            // MODIFIED: Added blue focus styles
-            className="mt-1 text-gray-900 focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
-            {...register("email")}
-            disabled={isSubmitting}
-          />
-          {errors.email && (
-            <p className="flex items-center text-xs text-red-500 mt-1">
-              <AlertTriangle className="w-4 h-4 mr-1" />
-              {errors.email.message}
-            </p>
+    <>
+      <AuthHeader
+        title="Reset your password"
+        description="Enter the email you signed up with. We'll send you a 6-digit code to set a new password."
+      />
+
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
+        {error && <FormAlert tone="error">{error}</FormAlert>}
+        <Field label="Email" error={errors.email?.message}>
+          {({ id, describedBy, invalid }) => (
+            <input
+              id={id}
+              type="email"
+              autoComplete="email"
+              inputMode="email"
+              placeholder="name@example.com"
+              aria-invalid={invalid}
+              aria-describedby={describedBy}
+              className={inputClass}
+              {...register("email")}
+            />
           )}
-        </div>
-
-        {apiError && (
-          <p className="flex items-center justify-center text-sm text-red-500 text-center">
-            <AlertTriangle className="w-4 h-4 mr-2" />
-            {apiError}
-          </p>
-        )}
-
-        {/* MODIFIED: Changed button from orange to blue */}
-        <Button
-          type="submit"
-          className="w-full mt-6! text-base py-2.5 flex items-center justify-center gap-2 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? <Spinner /> : "Send Reset Link"}
-        </Button>
+        </Field>
+        <SubmitButton busy={isSubmitting} busyLabel="Sending code…">
+          Send reset code
+        </SubmitButton>
       </form>
-      <div className="text-center mt-4">
-        {/* MODIFIED: Changed link color to blue */}
-        <Link href="/sign-in" className="text-sm text-blue-600 hover:underline">
-          Back to Sign In
+
+      <AuthFooter>
+        <Link href="/sign-in" className={`${authLink} inline-flex items-center gap-1.5`}>
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          Back to sign in
         </Link>
-      </div>
-    </div>
+      </AuthFooter>
+    </>
   );
 };

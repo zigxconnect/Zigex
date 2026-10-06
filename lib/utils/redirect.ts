@@ -16,6 +16,7 @@ const ALLOWED_NEXT_PREFIXES = [
   "/profile",
   "/create-profile",
   "/profile-complete",
+  "/reset-password",
   "/update-password",
   "/notifications",
 ];

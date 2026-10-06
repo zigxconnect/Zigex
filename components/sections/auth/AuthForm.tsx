@@ -3,332 +3,308 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useForm, type Resolver } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Eye, EyeOff } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/uiComponent/Spinner";
-import { Button } from "@/components/ui/button";
-import { toast } from "react-hot-toast";
 import { getReturnUrl } from "@/lib/utils/redirect";
 import { api } from "@/lib/api/browser-client";
 import { ApiClientError } from "@/lib/api/errors";
 import { GoogleSignInButton } from "./GoogleSignInButton";
-import { ADMIN_APP_URL } from "@/lib/app-urls";
+import {
+  AuthFooter,
+  AuthHeader,
+  Field,
+  FormAlert,
+  OrDivider,
+  PasswordInput,
+  SubmitButton,
+  authLink,
+  inputClass,
+} from "./auth-ui";
 
-// --- Schemas ---
-const signUpSchema = z.object({
-  fullName: z
-    .string()
-    .trim()
-    // The backend needs firstName + lastName, each at least 2 characters.
-    .regex(/^\S{2,}(\s+\S+)*\s+\S{2,}$/, {
-      message: "Please enter your first and last name.",
-    }),
-  email: z.string().email({ message: "Please enter a valid email address." }),
-  password: z
-    .string()
-    .min(6, { message: "Password must be at least 6 characters." }),
-});
+const email = z.string().trim().email({ message: "Enter a valid email address, like name@example.com." });
+
 const signInSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address." }),
-  password: z.string().min(1, { message: "Password is required." }),
+  email,
+  password: z.string().min(1, { message: "Enter your password." }),
 });
-type FormData = z.infer<typeof signUpSchema>;
-type AuthFormProps = { type: "signIn" | "signUp" };
 
-/** "Ada Lovelace King" → { firstName: "Ada", lastName: "Lovelace King" } */
-function splitFullName(fullName: string) {
-  const [firstName, ...rest] = fullName.trim().split(/\s+/);
-  return { firstName, lastName: rest.join(" ") };
-}
+// The backend needs firstName and lastName of at least 2 characters each.
+const signUpSchema = z.object({
+  firstName: z.string().trim().min(2, { message: "Enter your first name (2 letters or more)." }),
+  lastName: z.string().trim().min(2, { message: "Enter your last name (2 letters or more)." }),
+  email,
+  password: z.string().min(8, { message: "Use at least 8 characters." }),
+});
 
-/** Cooldown before the next sign-in attempt after the backend rate-limits us. */
+type SignInData = z.infer<typeof signInSchema>;
+type SignUpData = z.infer<typeof signUpSchema>;
+
+const hasGoogle = Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
+
+/** Seconds to wait after the backend rate-limits us. */
 function retryAfterSeconds(error: ApiClientError): number {
   const body = error.body as { retryAfter?: number } | undefined;
   return Number(body?.retryAfter) || 60;
 }
 
-export const AuthForm = ({ type }: AuthFormProps) => {
-  const isSignUp = type === "signUp";
+function useCooldown() {
+  const [seconds, setSeconds] = useState(0);
+  useEffect(() => {
+    if (seconds <= 0) return;
+    const t = setTimeout(() => setSeconds((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [seconds]);
+  return [seconds, setSeconds] as const;
+}
+
+export const AuthForm = ({ type }: { type: "signIn" | "signUp" }) =>
+  type === "signIn" ? <SignInForm /> : <SignUpForm />;
+
+function SignInForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const [showPassword, setShowPassword] = useState(false);
-  const [signInCooldown, setSignInCooldown] = useState(0);
-  const [rateLimitError, setRateLimitError] = useState<string | null>(null);
+  const params = useSearchParams();
+  const [error, setError] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useCooldown();
+
+  // Messages carried over from redirects.
+  const notice =
+    params.get("verified") === "1"
+      ? "Your email is verified. Sign in to continue."
+      : params.get("reset") === "1"
+        ? "Your password was changed. Sign in with your new password."
+        : null;
+  const portalError =
+    params.get("error") === "wrong_portal"
+      ? "That account belongs to a company. Companies sign in on the Zigex company portal."
+      : null;
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<FormData>({
-    // Sign-in validates a subset of the sign-up fields (no fullName).
-    resolver: (isSignUp ? zodResolver(signUpSchema) : zodResolver(signInSchema)) as unknown as Resolver<FormData>,
-  });
+  } = useForm<SignInData>({ resolver: zodResolver(signInSchema) });
 
-  useEffect(() => {
-    const error = searchParams.get("error");
-    if (error === "wrong_portal") {
-      toast.error("This account is not a student account. Please use the company portal.", { duration: 6000 });
-    }
-    if (searchParams.get("verified") === "1") {
-      toast.success("Email verified! Please sign in.");
-    }
-  }, [searchParams]);
-
-  // Cooldown timer after the backend rate-limits sign-in attempts
-  useEffect(() => {
-    if (signInCooldown <= 0) return;
-    const t = setInterval(
-      () => setSignInCooldown((c) => Math.max(0, c - 1)),
-      1000
-    );
-    return () => clearInterval(t);
-  }, [signInCooldown]);
-
-  const content = {
-    signIn: {
-      title: "Welcome Back",
-      subtitle: "Sign in to your ZIGEX account",
-      buttonText: "Log In",
-      linkText: "Don't have an account?",
-      linkHref: "/sign-up",
-      linkActionText: "Sign Up",
-    },
-    signUp: {
-      title: "",
-      subtitle: "Join thousands of students finding amazing internships",
-      buttonText: "Create Account",
-      linkText: "Already have an account?",
-      linkHref: "/sign-in",
-      linkActionText: "Sign In",
-    },
-  };
-  const currentContent = content[type];
-  const finePrint =
-    "By continuing, you agree to our Terms of Service and Privacy Policy.";
-
-  const goToVerifyEmail = (email: string) =>
-    router.push(`/verify-email?email=${encodeURIComponent(email)}`);
-
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data: SignInData) => {
+    setError(null);
     try {
-      if (isSignUp) {
-        await api.post("/auth/register/student", {
-          email: data.email,
-          password: data.password,
-          ...splitFullName(data.fullName),
-        });
-        toast.success("Account created! Enter the code we emailed you.");
-        goToVerifyEmail(data.email);
-        return;
-      }
-
-      const res = await api.post<{ user: { role: string } }>("/auth/login", {
-        email: data.email,
-        password: data.password,
-      });
-
+      const res = await api.post<{ user: { role: string } }>("/auth/login", data);
       if (res.data.user.role !== "student") {
         await api.post("/auth/logout").catch(() => {});
-        toast.error("This is not a student account. Please use the company portal.");
+        setError("That account belongs to a company. Companies sign in on the Zigex company portal.");
         return;
       }
-
-      toast.success("Logged in successfully!");
       // Full navigation so proxy.ts and server components see the new cookie.
       window.location.href = getReturnUrl("/feed");
     } catch (err) {
       if (!(err instanceof ApiClientError)) {
-        toast.error("Something went wrong. Please try again.");
+        setError("We couldn't reach Zigex. Check your connection and try again.");
         return;
       }
       if (err.status === 429) {
-        const msg = "Too many attempts. Please wait before retrying.";
-        setSignInCooldown(retryAfterSeconds(err));
-        setRateLimitError(msg);
-        toast.error(msg);
+        setCooldown(retryAfterSeconds(err));
+        setError("Too many sign-in attempts. Wait a minute, then try again.");
         return;
       }
-      // Login of an account that has not verified its OTP yet.
-      if (!isSignUp && err.status === 401 && /verify your email/i.test(err.message)) {
-        toast.error(err.message);
+      // Account exists but the email code was never entered: send a fresh one.
+      if (err.status === 401 && /verify your email/i.test(err.message)) {
         await api.post("/auth/resend-otp", { email: data.email }).catch(() => {});
-        goToVerifyEmail(data.email);
+        router.push(`/verify-email?email=${encodeURIComponent(data.email)}&sent=1`);
         return;
       }
-      toast.error(
-        err.status === 401 && !isSignUp ? "Invalid email or password." : err.message
+      // Generic on purpose: never reveal whether the email has an account.
+      setError(err.status === 401 ? "The email or password is incorrect." : err.message);
+    }
+  };
+
+  return (
+    <>
+      <AuthHeader title="Sign in to Zigex" description="Pick up where you left off with your applications." />
+
+      {hasGoogle && (
+        <>
+          <GoogleSignInButton text="signin_with" />
+          <OrDivider />
+        </>
+      )}
+
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
+        {(error || portalError || notice) && (
+          <FormAlert tone={error || portalError ? "error" : "success"}>{error ?? portalError ?? notice}</FormAlert>
+        )}
+
+        <Field label="Email" error={errors.email?.message}>
+          {({ id, describedBy, invalid }) => (
+            <input
+              id={id}
+              type="email"
+              autoComplete="email"
+              inputMode="email"
+              placeholder="name@example.com"
+              aria-invalid={invalid}
+              aria-describedby={describedBy}
+              className={inputClass}
+              {...register("email")}
+            />
+          )}
+        </Field>
+
+        <Field
+          label="Password"
+          error={errors.password?.message}
+          aside={
+            <Link href="/forgot-password" className={`${authLink} text-sm`}>
+              Forgot password?
+            </Link>
+          }
+        >
+          {({ id, describedBy, invalid }) => (
+            <PasswordInput
+              id={id}
+              autoComplete="current-password"
+              aria-invalid={invalid}
+              aria-describedby={describedBy}
+              {...register("password")}
+            />
+          )}
+        </Field>
+
+        <SubmitButton busy={isSubmitting} busyLabel="Signing in…" disabled={cooldown > 0}>
+          {cooldown > 0 ? `Try again in ${cooldown}s` : "Sign in"}
+        </SubmitButton>
+      </form>
+
+      <AuthFooter>
+        New to Zigex?{" "}
+        <Link href="/sign-up" className={authLink}>
+          Create a free account
+        </Link>
+      </AuthFooter>
+    </>
+  );
+}
+
+function SignUpForm() {
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<SignUpData>({ resolver: zodResolver(signUpSchema) });
+
+  const onSubmit = async (data: SignUpData) => {
+    setError(null);
+    try {
+      await api.post("/auth/register/student", data);
+      router.push(`/verify-email?email=${encodeURIComponent(data.email)}&sent=1`);
+    } catch (err) {
+      if (err instanceof ApiClientError && err.status === 409) {
+        setError("An account with this email already exists. Sign in instead, or reset your password.");
+        return;
+      }
+      setError(
+        err instanceof ApiClientError
+          ? err.status === 429
+            ? "Too many attempts. Wait a minute, then try again."
+            : err.message
+          : "We couldn't reach Zigex. Check your connection and try again."
       );
     }
   };
 
   return (
-    <div className="w-full max-w-md p-6 md:p-8 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl flex flex-col justify-center relative overflow-hidden transition-all duration-300">
-      {/* Subtle shine effect */}
-      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/10 to-transparent pointer-events-none rounded-3xl" />
-      
-      <div className="text-center relative z-10">
-        <div className="mx-auto w-14 h-14 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-md border border-slate-100 dark:border-slate-800 mb-3 transform hover:scale-105 transition-transform">
-          <img
-            src="https://i.ibb.co/Cp502Yby/logo.png"
-            alt="Zigex Logo"
-            className="w-9 h-9 object-contain drop-shadow-md"
-          />
-        </div>
-        {currentContent.title && (
-          <h1 className="mt-2 text-xl md:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-            {currentContent.title}
-          </h1>
-        )}
-        <p className={`mt-2 text-sm font-semibold ${currentContent.title ? 'text-slate-600 dark:text-slate-400' : 'text-[#155DFC] dark:text-blue-400 text-base'}`}>{currentContent.subtitle}</p>
-      </div>
-      {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
-        <>
-        <div className="mt-5 relative z-10">
-          <GoogleSignInButton text={isSignUp ? "signup_with" : "signin_with"} />
-        </div>
-        <div className="relative my-4">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-border" />
-          </div>
-          <div className="relative flex justify-center text-sm uppercase">
-            <span className="bg-white dark:bg-slate-900 px-3 text-muted-foreground font-medium">Or</span>
-          </div>
-        </div>
-        </>
-      ) : (
-        <div className="mt-5" />
-      )}
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 relative z-10">
-        {isSignUp && (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100 fill-mode-both">
-            <label className="text-sm font-bold tracking-wide text-slate-700 dark:text-slate-300">
-              Full Name
-            </label>
-            <Input
-              id="fullName"
-              type="text"
-              placeholder="Enter your full name"
-              className="mt-1 h-11 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-[#155DFC] focus:ring-4 focus:ring-[#155DFC]/20 rounded-xl transition-all duration-300 shadow-sm placeholder:text-slate-400 font-medium"
-              {...register("fullName")}
-              disabled={isSubmitting}
-            />
-            {errors.fullName && (
-              <p className="text-xs font-bold text-rose-500 mt-1.5 animate-in slide-in-from-left-2">
-                {errors.fullName.message}
-              </p>
-            )}
-          </div>
-        )}
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200 fill-mode-both">
-          <label className="text-sm font-bold tracking-wide text-slate-700 dark:text-slate-300">Email Address</label>
-          <Input
-            id="email"
-            type="email"
-            autoComplete="email"
-            placeholder="name@example.com"
-            className="mt-1 h-11 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-[#155DFC] focus:ring-4 focus:ring-[#155DFC]/20 rounded-xl transition-all duration-300 shadow-sm placeholder:text-slate-400 font-medium"
-            {...register("email")}
-            disabled={isSubmitting}
-          />
-          {errors.email && (
-            <p className="text-xs font-bold text-rose-500 mt-1.5 animate-in slide-in-from-left-2">{errors.email.message}</p>
-          )}
-        </div>
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300 fill-mode-both">
-          <div className="flex justify-between items-center">
-            <label className="text-sm font-bold tracking-wide text-slate-700 dark:text-slate-300">
-              Password
-            </label>
-            {!isSignUp && (
-              <Link
-                href="/forgot-password"
-                className="text-sm font-bold text-[#155DFC] hover:text-[#1A3CB9] hover:underline transition-colors"
-              >
-                Forgot Password?
-              </Link>
-            )}
-          </div>
-          <div className="relative mt-1.5">
-            <Input
-              id="password"
-              type={showPassword ? "text" : "password"}
-              autoComplete={isSignUp ? "new-password" : "current-password"}
-              placeholder="••••••••"
-              className="h-11 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-[#155DFC] focus:ring-4 focus:ring-[#155DFC]/20 rounded-xl transition-all duration-300 shadow-sm placeholder:text-slate-400 font-medium"
-              {...register("password")}
-              disabled={isSubmitting}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 flex items-center pr-4 cursor-pointer text-slate-400 hover:text-[#155DFC] transition-colors"
-              disabled={isSubmitting}
-              aria-label={showPassword ? "Hide password" : "Show password"}
-            >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
-          </div>
-          {isSignUp && !errors.password && (
-            <p className="text-xs font-medium text-slate-500 mt-1.5">
-              Must be at least 6 characters long.
-            </p>
-          )}
-          {errors.password && (
-            <p className="text-xs font-bold text-rose-500 mt-1.5 animate-in slide-in-from-left-2">
-              {errors.password.message}
-            </p>
-          )}
-        </div>
-        <Button
-          type="submit"
-          className="w-full h-11 bg-[#155DFC] hover:bg-[#1A3CB9] text-white font-bold rounded-xl shadow-lg shadow-blue-500/25 transition-all hover:-translate-y-0.5 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-500 fill-mode-both"
-          disabled={isSubmitting || (signInCooldown > 0 && !isSignUp)}
-        >
-          {isSubmitting ? (
-            <div className="flex items-center justify-center gap-2">
-              <Spinner className="h-5 w-5 text-white" />
-              <span>Please wait...</span>
-            </div>
-          ) : (
-            currentContent.buttonText
-          )}
-        </Button>
-      </form>
-      <div className="flex-grow"></div>
-      {signInCooldown > 0 && (
-        <p className="text-center text-sm text-red-500 mt-2">
-          {rateLimitError
-            ? `${rateLimitError} (${signInCooldown}s)`
-            : `Please wait ${signInCooldown}s before retrying sign-in.`}
-        </p>
-      )}
-      <div className="space-y-3 text-center mt-4">
-        {isSignUp && (
-          <p className="text-sm text-muted-foreground">
-            {/* Looking to hire?{" "} */}
-            <Link
-              href={`${ADMIN_APP_URL}/company/sign-up`}
-              className="font-semibold text-primary hover:underline"
-            >
-              {/* Sign up as a company */}
-            </Link>
-          </p>
-        )}
-        <p className="text-sm text-muted-foreground">
-          {currentContent.linkText}{" "}
-          <Link
-            href={currentContent.linkHref}
-            className="font-semibold text-primary hover:underline cursor-pointer"
-          >
-            {currentContent.linkActionText}
-          </Link>
-        </p>
-      </div>
-      <p className="text-center text-xs text-muted-foreground/60 pt-2 mt-1">{finePrint}</p>
-    </div>
-  );
-};
+    <>
+      <AuthHeader
+        title="Create your student account"
+        description="Free for students. Apply to internships, programs and events with one profile."
+      />
 
+      {hasGoogle && (
+        <>
+          <GoogleSignInButton text="signup_with" />
+          <OrDivider />
+        </>
+      )}
+
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
+        {error && <FormAlert tone="error">{error}</FormAlert>}
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field label="First name" error={errors.firstName?.message}>
+            {({ id, describedBy, invalid }) => (
+              <input
+                id={id}
+                autoComplete="given-name"
+                aria-invalid={invalid}
+                aria-describedby={describedBy}
+                className={inputClass}
+                {...register("firstName")}
+              />
+            )}
+          </Field>
+          <Field label="Last name" error={errors.lastName?.message}>
+            {({ id, describedBy, invalid }) => (
+              <input
+                id={id}
+                autoComplete="family-name"
+                aria-invalid={invalid}
+                aria-describedby={describedBy}
+                className={inputClass}
+                {...register("lastName")}
+              />
+            )}
+          </Field>
+        </div>
+
+        <Field label="Email" error={errors.email?.message} hint="We'll send a 6-digit code to confirm it.">
+          {({ id, describedBy, invalid }) => (
+            <input
+              id={id}
+              type="email"
+              autoComplete="email"
+              inputMode="email"
+              placeholder="name@example.com"
+              aria-invalid={invalid}
+              aria-describedby={describedBy}
+              className={inputClass}
+              {...register("email")}
+            />
+          )}
+        </Field>
+
+        <Field label="Password" error={errors.password?.message} hint="At least 8 characters.">
+          {({ id, describedBy, invalid }) => (
+            <PasswordInput
+              id={id}
+              autoComplete="new-password"
+              aria-invalid={invalid}
+              aria-describedby={describedBy}
+              {...register("password")}
+            />
+          )}
+        </Field>
+
+        <SubmitButton busy={isSubmitting} busyLabel="Creating account…">
+          Create account
+        </SubmitButton>
+
+        <p className="text-[13px] leading-relaxed text-[#7B869C]">
+          By creating an account you agree to our{" "}
+          <Link href="/privacy" className="text-[#4A5670] underline underline-offset-2 hover:text-[#0B1B3F]">
+            Privacy Policy
+          </Link>
+          .
+        </p>
+      </form>
+
+      <AuthFooter>
+        Already have an account?{" "}
+        <Link href="/sign-in" className={authLink}>
+          Sign in
+        </Link>
+      </AuthFooter>
+    </>
+  );
+}
