@@ -2,7 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { serverApi } from "../server-client";
 import { ApiClientError } from "../errors";
-import { toProfilePatch } from "../profile-shape";
+import { toProfilePatch, withoutSpecFields } from "../profile-shape";
 
 /**
  * The signed-in student's profile (GET /students/me).
@@ -24,13 +24,27 @@ export const getMyProfile = cache(async (): Promise<StudentProfileRow | null> =>
 
 /**
  * PATCH /students/me from snake_case form fields. Returns the updated profile
- * and the fields the backend does not accept yet (dropped, not saved).
+ * and the fields that were not saved.
+ *
+ * Sends the spec'd fields (username, languages, ...) too. If the backend
+ * rejects the request as invalid (it has not shipped them yet), retries once
+ * without them, so saving the rest of the profile keeps working meanwhile.
  */
 export async function updateMyProfile(updates: Record<string, unknown>) {
   const { body, unsupported } = toProfilePatch(updates);
   if (unsupported.length) {
-    console.warn(`[profile] not saved, no backend field yet: ${unsupported.join(", ")}`);
+    console.warn(`[profile] not saved, unknown field: ${unsupported.join(", ")}`);
   }
-  const res = await serverApi.patch<StudentProfileRow>("/students/me", body);
-  return { profile: res.data ?? null, unsupported };
+  try {
+    const res = await serverApi.patch<StudentProfileRow>("/students/me", body);
+    return { profile: res.data ?? null, unsupported };
+  } catch (error) {
+    const fallback = withoutSpecFields(body);
+    const rejected = error instanceof ApiClientError && (error.status === 400 || error.status === 422);
+    if (!rejected || fallback.dropped.length === 0) throw error;
+
+    console.warn(`[profile] backend rejected spec'd fields, retrying without: ${fallback.dropped.join(", ")}`);
+    const res = await serverApi.patch<StudentProfileRow>("/students/me", fallback.body);
+    return { profile: res.data ?? null, unsupported: [...unsupported, ...fallback.dropped] };
+  }
 }

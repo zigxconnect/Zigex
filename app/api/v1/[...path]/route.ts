@@ -8,13 +8,13 @@ import { clearAccessToken, getAccessToken, setAccessToken } from "@/lib/api/sess
  *   browser → /api/v1/<path> (this app) → BACKEND_URL/api/v1/<path>
  *
  * - Attaches the JWT from our httpOnly cookie as a Bearer token.
- * - On login / verify-email, moves the returned token into that cookie and
+ * - On login / verify-email / reset-password / google, moves the returned token into that cookie and
  *   strips it from the JSON so it never reaches client-side JS.
  * - On logout, clears the cookie even if the backend call fails.
  */
 
 // Endpoints whose successful response carries data.token.
-const TOKEN_ISSUING_PATHS = new Set(["auth/login", "auth/verify-email"]);
+const TOKEN_ISSUING_PATHS = new Set(["auth/login", "auth/verify-email", "auth/reset-password", "auth/google"]);
 
 // Request headers worth forwarding. Browser cookies are deliberately NOT
 // forwarded — the backend only ever sees the Bearer token.

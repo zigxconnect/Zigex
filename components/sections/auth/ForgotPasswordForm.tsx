@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/uiComponent/Spinner";
 import Link from "next/link";
 import { Mail, AlertTriangle, CheckCircle } from "lucide-react";
+import { api } from "@/lib/api/browser-client";
+import { isEndpointMissing } from "@/lib/api/errors";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -32,36 +34,18 @@ export const ForgotPasswordForm = () => {
   const onSubmit = async (data: FormData) => {
     setApiError(null);
     try {
-      // Add timeout via AbortController to avoid hanging requests
-      const controller = new AbortController();
-      const timeoutMs = 30000; // 30 seconds
-      const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
-      const response = await fetch("/api/auth/forgot-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeout);
-      if (response.ok) {
-        setSubmittedEmail(data.email);
-        setFormState("success");
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to send reset link.");
-      }
+      // Always succeeds for unknown emails too, so accounts can't be probed.
+      await api.post("/auth/forgot-password", data);
+      setSubmittedEmail(data.email);
+      setFormState("success");
     } catch (err) {
-      // Handle aborted requests separately. Use safe typing to check the name property.
-      const maybeName = (err as { name?: unknown } | null)?.name;
-      if (typeof maybeName === "string" && maybeName === "AbortError") {
-        setApiError("The request timed out. Please try again.");
-      } else {
-        setApiError(
-          err instanceof Error ? err.message : "An unexpected error occurred"
-        );
-      }
+      setApiError(
+        isEndpointMissing(err)
+          ? "Password reset is not available yet. Please contact support."
+          : err instanceof Error
+            ? err.message
+            : "An unexpected error occurred"
+      );
     }
   };
 
@@ -73,11 +57,16 @@ export const ForgotPasswordForm = () => {
           Check your inbox
         </h1>
         <p className="mt-2 text-sm text-gray-600">
-          We have sent a password reset link to <br />
-          <span className="font-semibold text-gray-800">{submittedEmail}</span>
+          If an account exists for <br />
+          <span className="font-semibold text-gray-800">{submittedEmail}</span>, we sent it a 6-digit reset code.
         </p>
-        <div className="mt-6">
-          {/* MODIFIED: Changed link color to blue */}
+        <div className="mt-6 flex flex-col items-center gap-3">
+          <Link
+            href={`/update-password?email=${encodeURIComponent(submittedEmail)}`}
+            className="w-full rounded-xl bg-[#155DFC] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1A3CB9]"
+          >
+            Enter the code
+          </Link>
           <Link
             href="/sign-in"
             className="text-sm text-blue-600 hover:underline"

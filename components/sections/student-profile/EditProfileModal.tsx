@@ -110,7 +110,6 @@ export const EditProfileModal = ({
     }
 
     try {
-      // TODO(backend): username is validated above but not saved — PATCH /students/me has no username field yet.
       const result = await saveMyProfile(formData);
       if (!result.success) {
         throw new Error(result.error || "Failed to update profile.");

@@ -74,17 +74,19 @@ export const getProfileInfo = cache(async (): Promise<FormattedUserData | null> 
         }`.toUpperCase() || "NU",
     university: profile.university || "University not specified",
     skills: profile.hard_skills || [],
-    coverImageUrl: "/placeholder-cover.jpg",
+    coverImageUrl: profile.cover_image_url || "/placeholder-cover.jpg",
     profile: profile as UserProfile,
     stats: {
       applications: applications.filter((a) => a.status !== "rejected").length,
       profileViews: 0, // Placeholder
     },
     permissions: {
-      // TODO(backend): no supervisor flag on /students/me yet (see "Behaviour to confirm: Profile flags").
-      isSupervisor: false,
-      // Accepted internship / confirmed RSVP, as before. TODO(backend): a dedicated flag would be cheaper.
-      isIntern: applications.some((a) => a.status === "accepted" || a.status === "rsvp_confirmed"),
+      // Spec'd flags on /students/me; derived from applications until the backend sends them.
+      isSupervisor: Boolean(profile.is_supervisor),
+      isIntern:
+        typeof profile.is_intern === "boolean"
+          ? profile.is_intern
+          : applications.some((a) => a.status === "accepted" || a.status === "rsvp_confirmed"),
     },
   };
 

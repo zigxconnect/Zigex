@@ -20,6 +20,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { getUnreadCount } from "@/lib/api/notifications-client";
 
 interface MobileTabBarProps {
   user: any;
@@ -126,9 +127,8 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
     let mounted = true;
     const fetchCount = async () => {
       try {
-        const res = await fetch('/api/students/notifications/unread-count');
-        const data = await res.json();
-        if (mounted) setUnreadCount(data.unreadCount || 0);
+        const count = await getUnreadCount();
+        if (mounted) setUnreadCount(count);
       } catch (e) {
         console.error('Failed to fetch unread count', e);
       }

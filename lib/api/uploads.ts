@@ -7,7 +7,12 @@ import { api } from "./browser-client";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-const CV_TYPES = ["application/pdf", "application/msword"];
+const CV_TYPES = [
+  "application/pdf",
+  "application/msword",
+  // Requested in docs/backend-missing-endpoints.md; the backend's own error is shown if it still refuses.
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+];
 
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -36,9 +41,22 @@ export async function uploadAvatar(file: File) {
   return res.data;
 }
 
+/**
+ * Uploads or replaces the student's profile cover image (POST /uploads/cover-image,
+ * spec'd in docs/backend-missing-endpoints.md). Throws an error that
+ * isEndpointMissing() recognises until the backend deploys it.
+ */
+export async function uploadCoverImage(file: File) {
+  assertFile(file, AVATAR_TYPES, "Cover image");
+  const res = await api.post<{ url: string }>("/uploads/cover-image", {
+    base64: await fileToBase64(file),
+    mimetype: file.type,
+  });
+  return res.data;
+}
+
 /** Uploads or replaces the student's CV (private). Returns its key and a 1-hour signed URL. */
 export async function uploadCv(file: File) {
-  // TODO(backend): .docx (application/vnd.openxmlformats-officedocument.wordprocessingml.document) is not accepted yet.
   assertFile(file, CV_TYPES, "CV");
   const res = await api.post<{ key: string; signedUrl: string }>("/uploads/cv", {
     base64: await fileToBase64(file),

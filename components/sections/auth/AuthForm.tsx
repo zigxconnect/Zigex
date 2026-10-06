@@ -14,6 +14,7 @@ import { toast } from "react-hot-toast";
 import { getReturnUrl } from "@/lib/utils/redirect";
 import { api } from "@/lib/api/browser-client";
 import { ApiClientError } from "@/lib/api/errors";
+import { GoogleSignInButton } from "./GoogleSignInButton";
 
 // --- Schemas ---
 const signUpSchema = z.object({
@@ -182,7 +183,24 @@ export const AuthForm = ({ type }: AuthFormProps) => {
         )}
         <p className={`mt-2 text-sm font-semibold ${currentContent.title ? 'text-slate-600 dark:text-slate-400' : 'text-[#155DFC] dark:text-blue-400 text-base'}`}>{currentContent.subtitle}</p>
       </div>
-      <form onSubmit={handleSubmit(onSubmit)} className="mt-5 space-y-4 relative z-10">
+      {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
+        <>
+        <div className="mt-5 relative z-10">
+          <GoogleSignInButton text={isSignUp ? "signup_with" : "signin_with"} />
+        </div>
+        <div className="relative my-4">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-border" />
+          </div>
+          <div className="relative flex justify-center text-sm uppercase">
+            <span className="bg-white dark:bg-slate-900 px-3 text-muted-foreground font-medium">Or</span>
+          </div>
+        </div>
+        </>
+      ) : (
+        <div className="mt-5" />
+      )}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 relative z-10">
         {isSignUp && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100 fill-mode-both">
             <label className="text-sm font-bold tracking-wide text-slate-700 dark:text-slate-300">
