@@ -1,41 +1,162 @@
-import React from 'react';
-import { redirect } from 'next/navigation';
-import { getRawProfileInfo } from '@/lib/actions/profile.actions';
-import PersonalizedFeed from '@/components/feed/PersonalizedFeed';
+/**
+ * Programs — app/(dashboard)/dashboard/programs/page.tsx
+ *
+ * Bootcamps and training programs only (the old page repeated the whole
+ * feed). Answers three questions in order: which programs am I in, which
+ * can I still join, and what ran before.
+ */
 
-export const revalidate = 60;
+import Link from "next/link";
+import type { Metadata } from "next";
+import { ArrowRight, ChevronDown } from "lucide-react";
+import { listPublicFeed } from "@/lib/api/services/feed";
+import { listApplications } from "@/lib/api/services/applications";
+import { applicationKind, targetId, toApplicationStatus } from "@/lib/api/applications-shape";
+import { ProgramRow, toProgramView, type ProgramView } from "@/components/programs/ProgramRow";
+import { landingButton } from "@/components/sections/landing/landing-ui";
 
-export default async function DashboardProgramsPage() {
+export const metadata: Metadata = { title: "Programs" };
+
+type MyProgram = { id: string; title: string; image: string | null; company: string; status: "pending" | "accepted" | "rejected" };
+
+const STATUS = {
+  pending: { text: "Registration in review", style: "bg-[#FFF7E6] text-[#B54708]" },
+  accepted: { text: "You're in", style: "bg-[#ECFDF3] text-[#067647]" },
+  rejected: { text: "Not selected", style: "bg-[#F2F4F7] text-[#4A5670]" },
+} as const;
+
+async function loadPrograms(): Promise<{ programs: ProgramView[]; failed: boolean }> {
   try {
-    // Get authenticated user's profile
-    const profile = await getRawProfileInfo();
-
-    if (!profile) {
-      redirect('/sign-in');
-    }
-
-    return (
-      <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 selection:bg-blue-100 dark:selection:bg-blue-900 selection:text-blue-900 dark:selection:text-blue-100 py-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800/50 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] overflow-hidden">
-            <PersonalizedFeed 
-              userId={profile.id} 
-              userSkills={profile.hard_skills || []} 
-              university={profile.university || undefined} 
-            />
-          </div>
-        </div>
-      </div>
-    );
-  } catch (err) {
-    console.error('Unexpected error in dashboard programs page', err);
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <div className="text-center p-8">
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Something went wrong</h3>
-          <p className="text-slate-500 dark:text-slate-400">Please refresh the page to try again.</p>
-        </div>
-      </div>
-    );
+    const rows = await listPublicFeed("programs");
+    return { programs: rows.map((r) => toProgramView(r)), failed: false };
+  } catch (error) {
+    console.error("[programs] list failed:", error);
+    return { programs: [], failed: true };
   }
+}
+
+async function loadMyPrograms(): Promise<MyProgram[]> {
+  try {
+    const rows = await listApplications({ withPostings: true });
+    return rows
+      .filter((r) => applicationKind(r) === "program" && toApplicationStatus(r.status) !== "not_applied")
+      .map((r) => ({
+        id: targetId(r) ?? r.id,
+        title: r.program?.title ?? "Program",
+        image: r.program?.program_picture_url ?? null,
+        company: r.program?.company?.company_name ?? r.program?.company_profiles?.company_name ?? "",
+        status: toApplicationStatus(r.status) as MyProgram["status"],
+      }));
+  } catch (error) {
+    console.error("[programs] my programs failed:", error);
+    return [];
+  }
+}
+
+export default async function ProgramsPage() {
+  const [{ programs, failed }, mine] = await Promise.all([loadPrograms(), loadMyPrograms()]);
+  const time = (d: string | null) => (d ? new Date(d).getTime() : Infinity);
+  // Open: soonest start first. Past: most recent first.
+  const open = programs.filter((p) => p.open).sort((a, b) => time(a.startsAt) - time(b.startsAt));
+  const past = programs.filter((p) => !p.open).sort((a, b) => time(b.startsAt) - time(a.startsAt));
+
+  return (
+    <div className="pb-16">
+      <header className="mb-8">
+        <h1 className="font-heading text-[28px] font-bold leading-tight tracking-tight text-[#0B1B3F]">Programs</h1>
+        <p className="mt-1 max-w-2xl text-base text-[#4A5670]">
+          Bootcamps and training programs run by companies on Zigex. Register, learn with a group, and follow updates
+          from the organisers.
+        </p>
+      </header>
+
+      {mine.length > 0 && (
+        <section aria-labelledby="mine-title" className="mb-10">
+          <h2 id="mine-title" className="font-heading text-xl font-semibold text-[#0B1B3F]">
+            Your programs
+          </h2>
+          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+            {mine.map((p) => (
+              <li key={p.id} className="flex items-center gap-4 rounded-2xl bg-white p-4 ring-1 ring-[#DCE5F5]">
+                <div className="h-14 w-20 shrink-0 overflow-hidden rounded-lg bg-[#F3F7FF]">
+                  {p.image && <img src={p.image} alt="" className="h-full w-full object-cover" />}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold text-[#0B1B3F]">{p.title}</p>
+                  {p.company && <p className="truncate text-sm text-[#4A5670]">{p.company}</p>}
+                  <span className={`mt-1.5 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS[p.status].style}`}>
+                    {STATUS[p.status].text}
+                  </span>
+                </div>
+                {p.status === "accepted" ? (
+                  <Link href={`/programs/${p.id}/updates`} className={`${landingButton("primary", "md")} shrink-0 px-4`}>
+                    Updates
+                  </Link>
+                ) : (
+                  <Link href={`/feed/${p.id}`} className={`${landingButton("secondary", "md")} shrink-0 px-4`}>
+                    View
+                  </Link>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <section aria-labelledby="open-title">
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 id="open-title" className="font-heading text-xl font-semibold text-[#0B1B3F]">
+            Open for registration
+            <span className="ml-2 text-base font-normal text-[#7B869C]">{open.length}</span>
+          </h2>
+        </div>
+
+        {failed ? (
+          <div className="mt-4 rounded-2xl bg-white px-6 py-10 text-center ring-1 ring-[#DCE5F5]">
+            <p className="font-heading text-lg font-semibold text-[#0B1B3F]">Programs couldn&apos;t load.</p>
+            <p className="mt-1 text-base text-[#4A5670]">The server is slow to respond. Refresh the page in a moment.</p>
+          </div>
+        ) : open.length === 0 ? (
+          <div className="mt-4 rounded-2xl bg-white px-6 py-10 ring-1 ring-[#DCE5F5] sm:flex sm:items-center sm:justify-between sm:gap-6">
+            <div>
+              <p className="font-heading text-lg font-semibold text-[#0B1B3F]">No programs are taking registrations right now.</p>
+              <p className="mt-1 text-base text-[#4A5670]">
+                Companies open new cohorts through the year. Meanwhile, internships and events are on the opportunities page.
+              </p>
+            </div>
+            <Link href="/feed" className={`${landingButton("secondary", "md")} mt-4 shrink-0 sm:mt-0`}>
+              Browse opportunities
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </div>
+        ) : (
+          <ul className="mt-4 space-y-3">
+            {open.map((p) => (
+              <li key={p.id}>
+                <ProgramRow program={p} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {past.length > 0 && (
+        // Open by default when nothing is open, so the page still shows what Zigex runs.
+        <details className="group mt-10" open={open.length === 0}>
+          <summary className="flex h-11 w-fit cursor-pointer list-none items-center gap-2 rounded-lg font-heading text-xl font-semibold text-[#0B1B3F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] [&::-webkit-details-marker]:hidden">
+            Past programs
+            <span className="text-base font-normal text-[#7B869C]">{past.length}</span>
+            <ChevronDown className="h-5 w-5 text-[#4A5670] transition-transform group-open:rotate-180" aria-hidden="true" />
+          </summary>
+          <ul className="mt-4 space-y-3">
+            {past.map((p) => (
+              <li key={p.id}>
+                <ProgramRow program={p} />
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+    </div>
+  );
 }
