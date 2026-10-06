@@ -32,6 +32,7 @@ import NameInitials from "@/components/NameInitials";
 import { slugifyUsername, cn } from "@/lib/utils";
 import { Logo } from "@/components/layout/Logo";
 import { api } from "@/lib/api/browser-client";
+import { ADMIN_APP_URL } from "@/lib/app-urls";
 
 interface SidebarProps {
   user: any;
@@ -216,7 +217,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               )}
               {user?.permissions?.isSupervisor && (
                 <AnimatedNavLink
-                  href="/supervisor"
+                  href={`${ADMIN_APP_URL}/supervisor`}
                   icon={ShieldCheck}
                   label="Mentorship"
                   isActive={isRouteActive("/supervisor")}

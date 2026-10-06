@@ -8,6 +8,7 @@
 import nodemailer from 'nodemailer';
 import { render } from '@react-email/render';
 import AttendanceReminderEmail from '@/emails/AttendanceReminder';
+import { ADMIN_APP_URL } from "@/lib/app-urls";
 
 
 // Configuration - Strip ALL whitespace from app password
@@ -230,7 +231,7 @@ export const sendNewApplicationNotification = async (params: {
     heading: `New Application Received`,
     message: `A new applicant has applied to your opportunity.\\n\\n👤 **Applicant:** ${params.studentName}\\n📧 **Email:** ${params.studentEmail}\\n\\nPlease review their application on the admin dashboard.`,
     ctaText: "Review Applications",
-    ctaLink: "https://zigexconnect.com/admin/applicants",
+    ctaLink: `${ADMIN_APP_URL}/admin/applicants`,
     statusBadge: "New Application",
     statusColor: "#3B82F6",
     opportunityTitle: params.opportunityTitle,
@@ -378,7 +379,7 @@ export const sendApplicationAlert = async (params: {
     heading: `Application Status Alert`,
     message: `Candidate **${params.studentName}** (${params.studentEmail}) has been moved to state: **${params.status.toUpperCase()}** for the opportunity "${params.opportunityTitle}".`,
     ctaText: "Review in Dashboard",
-    ctaLink: "https://zigexconnect.com/admin/applicants",
+    ctaLink: `${ADMIN_APP_URL}/admin/applicants`,
     statusBadge: `Status: ${params.status}`,
     opportunityTitle: params.opportunityTitle,
     opportunityType: params.opportunityType,
@@ -996,7 +997,7 @@ export const sendReportSubmissionEmail = async (params: {
     heading: "New Report Submitted",
     message: `Hi ${params.supervisorName}, <br/><br/>${params.studentName} has just submitted their daily report for ${params.reportDate}.<br/><br/>Report Preview:<br/>"${params.reportSummary.length > 150 ? params.reportSummary.substring(0, 150) + "..." : params.reportSummary}"<br/><br/>Please review and confirm this report in your dashboard.`,
     ctaText: "Review Report",
-    ctaLink: "https://zigexconnect.com/supervisor",
+    ctaLink: `${ADMIN_APP_URL}/supervisor`,
     statusBadge: "NEW SUBMISSION",
     statusColor: "#3B82F6",
     companyName: "SEED INC"

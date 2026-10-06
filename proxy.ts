@@ -1,5 +1,4 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createServerClient } from "@supabase/ssr";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/api/config";
 import { readSession } from "@/lib/api/jwt";
 
@@ -15,17 +14,14 @@ const SECURITY_HEADERS: Record<string, string> = {
 const AUTH_PAGES = ["/sign-in", "/sign-up", "/verify-email", "/forgot-password"];
 const PUBLIC_PAGES = ["/", "/demo", "/feed", "/update-password", ...AUTH_PAGES];
 
-// API routes that must work without a session.
-const PUBLIC_API_PREFIXES = [
-  // Passthrough to the backend, which enforces its own auth.
-  "/api/v1/",
-  "/api/cron/",
-  // Legacy company auth — moves out with the admin app (feat/admin-split).
-  "/api/auth/",
-];
+// API routes that must work without a session: the passthrough to the
+// backend, which enforces its own auth.
+const PUBLIC_API_PREFIXES = ["/api/v1/"];
 
-// Company/admin area: still on Supabase until it is split into its own app.
-const LEGACY_ADMIN_PREFIXES = ["/admin", "/company", "/verify-otp", "/api/companies", "/api/admin"];
+// Company and supervisor pages live in the admin app now.
+// Not "/company": /company/[id] is the student-facing company page.
+const ADMIN_APP_PREFIXES = ["/admin", "/company/sign-up", "/verify-otp", "/supervisor"];
+const ADMIN_APP_URL = (process.env.NEXT_PUBLIC_ADMIN_APP_URL ?? "https://admin.zigexconnect.com").replace(/\/$/, "");
 
 function withSecurityHeaders(response: NextResponse) {
   for (const [name, value] of Object.entries(SECURITY_HEADERS)) response.headers.set(name, value);
@@ -48,8 +44,9 @@ function signInRedirect(request: NextRequest) {
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (LEGACY_ADMIN_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
-    return legacyAdminProxy(request);
+  // Old links and bookmarks to company/supervisor pages: send them to the admin app.
+  if (ADMIN_APP_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
+    return NextResponse.redirect(`${ADMIN_APP_URL}${pathname}${request.nextUrl.search}`);
   }
 
   const session = readSession(request.cookies.get(ACCESS_TOKEN_COOKIE)?.value);
@@ -80,61 +77,6 @@ export async function proxy(request: NextRequest) {
   }
 
   return withSecurityHeaders(NextResponse.next());
-}
-
-/**
- * Supabase-session guard for the company/admin area, kept only until
- * feat/admin-split moves it into its own app. Delete with that split.
- */
-async function legacyAdminProxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  let response = NextResponse.next({ request: { headers: request.headers } });
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll: () => request.cookies.getAll(),
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          response = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
-        },
-      },
-    }
-  );
-
-  const publicPaths = ["/company/sign-up", "/verify-otp"];
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    if (publicPaths.includes(pathname)) return withSecurityHeaders(response);
-    if (pathname.startsWith("/api/")) {
-      return withSecurityHeaders(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
-    }
-    return signInRedirect(request);
-  }
-
-  const { data: companyProfile } = await supabase
-    .from("company_profiles")
-    .select("role")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (companyProfile?.role !== "company" && !publicPaths.includes(pathname)) {
-    return pathname.startsWith("/api/")
-      ? withSecurityHeaders(NextResponse.json({ error: "Forbidden" }, { status: 403 }))
-      : redirectTo(request, "/feed");
-  }
-
-  if (publicPaths.includes(pathname) && companyProfile?.role === "company") {
-    return redirectTo(request, "/admin/dashboard");
-  }
-
-  return withSecurityHeaders(response);
 }
 
 export const config = {
