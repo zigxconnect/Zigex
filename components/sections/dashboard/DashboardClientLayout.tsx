@@ -78,17 +78,13 @@ export function DashboardClientLayout({
         {/* Mobile Overlay */}
         {isMobile && isSidebarOpen && (
           <div
-            className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+            className="fixed inset-0 z-40 bg-[#0B1B3F]/40 lg:hidden"
             onClick={handleOverlayClick}
           />
         )}
 
         {/* Main Content */}
-        <main className={cn(
-          "flex-1 min-w-0 min-h-[calc(100vh-4rem)] transition-all duration-300 ease-in-out",
-          !isMobile && isSidebarOpen ? 'lg:ml-80' : 'ml-0',
-          "pb-20 lg:pb-0" // Mobile tab bar padding
-        )}>
+        <main className="min-h-[calc(100dvh-4rem)] min-w-0 flex-1 bg-[#F8FAFF] pb-20 lg:pb-0 lg:pl-64">
           {/* Content Container */}
           <div className="w-full max-w-full h-full">
             {isChatPage ? (
@@ -98,8 +94,8 @@ export function DashboardClientLayout({
               </div>
             ) : (
               // Standard Dashboard Padding
-              <div className="p-4 sm:p-6 lg:p-8">
-                <div className="max-w-7xl mx-auto">
+              <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+                <div className="mx-auto max-w-6xl">
                   <ProfileCompletionBanner profileStatus={user?.profile?.profile_status} />
                   {children}
                 </div>

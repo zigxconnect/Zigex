@@ -43,7 +43,7 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
     {
       href: "/feed",
       icon: Globe,
-      label: "Browse",
+      label: "Explore",
       matchPaths: ["/feed", "/feed/", "/programs/"],
       excludePaths: ["/feed/projects"]
     },
@@ -62,13 +62,13 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
     {
       href: "/dashboard/student",
       icon: Users,
-      label: "ZigX",
+      label: "Students",
       matchPaths: ["/dashboard/student", "/dashboard/student/"]
     },
     {
       href: "/dashboard/community",
       icon: MessageSquare,
-      label: "Group",
+      label: "Groups",
       matchPaths: ["/dashboard/community", "/dashboard/community/"]
     },
   ];
@@ -141,63 +141,34 @@ export function MobileTabBar({ user }: MobileTabBarProps) {
   // ... (handleLogout) ...
 
   return (
-    <>
-      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 lg:hidden z-50 safe-area-bottom shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.05)]">
-        <div className="flex items-center justify-around px-2 py-3">
-          {tabItems.map((item: any) => {
-            const Icon = item.icon;
-            const isActive = isRouteActive(item.href, item.matchPaths, item.excludePaths);
-            const showBadge = item.href === "/notifications" && unreadCount > 0;
-
-            return (
+    <nav
+      aria-label="Main"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-[#DCE5F5] bg-white pb-[env(safe-area-inset-bottom)] lg:hidden"
+    >
+      <ul className="flex h-16 items-stretch">
+        {tabItems.map((item: any) => {
+          const Icon = item.icon;
+          const isActive = isRouteActive(item.href, item.matchPaths, item.excludePaths);
+          return (
+            <li key={item.href} className="flex-1">
               <Link
-                key={item.href}
                 href={item.href}
+                aria-current={isActive ? "page" : undefined}
                 className={cn(
-                  "relative flex flex-col items-center justify-center flex-1 py-1 transition-all duration-300",
-                  isActive ? "text-blue-600" : "text-slate-400"
+                  "flex h-full flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors",
+                  isActive ? "text-[#155DFC]" : "text-[#7B869C] hover:text-[#0B1B3F]"
                 )}
               >
-                <div className="relative p-2.5 z-10 flex flex-col items-center">
-                  <Icon
-                    size={20}
-                    strokeWidth={isActive ? 3 : 2.5}
-                    className={cn(
-                      "transition-all duration-300",
-                      isActive 
-                        ? "text-white scale-110 drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" 
-                        : "text-blue-500/70"
-                    )}
-                  />
-                  
-                  {isActive && (
-                    <motion.div
-                      layoutId="mobile-tab-pill"
-                      className="absolute inset-0 bg-blue-600 rounded-2xl shadow-lg shadow-blue-500/30 -z-10"
-                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                    />
-                  )}
-                </div>
-
-                <span className={cn(
-                  "text-[9px] font-bold tracking-tight mt-1 transition-all duration-300",
-                  isActive ? "text-blue-600 dark:text-blue-500" : "text-slate-500"
-                )}>
-                  {item.label}
+                <span className={cn("flex h-7 w-12 items-center justify-center rounded-full", isActive && "bg-[#EEF3FF]")}>
+                  <Icon className="h-5 w-5" strokeWidth={isActive ? 2.25 : 2} aria-hidden="true" />
                 </span>
-
-                {/* Notification Badge */}
-                {showBadge && (
-                  <div className="absolute top-1 right-1/2 translate-x-4 bg-rose-500 text-white text-[9px] font-black rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 shadow-lg border-2 border-white ring-4 ring-blue-50/10 z-20">
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </div>
-                )}
+                {item.label}
               </Link>
-            );
-          })}
-        </div>
-      </div>
-    </>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
   );
 }
 

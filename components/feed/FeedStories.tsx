@@ -115,7 +115,7 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
     setAlertOpen(true);
   };
 
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLUListElement>(null);
 
   // New Creation Customization States
   const [selectedColor, setSelectedColor] = useState(STORY_COLORS[0]);
@@ -364,149 +364,86 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
   const hasMyStory = myStories.length > 0;
 
   return (
-    <div className="relative w-full py-2 overflow-hidden group/tray">
-      {/* Scroll Controls (Desktop) */}
-      <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-white dark:from-slate-950 to-transparent z-10 pointer-events-none hidden md:block" />
-      <Button
-        variant="outline" size="icon"
-        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-2xl rounded-2xl opacity-0 group-hover/tray:opacity-100 transition-all duration-500 hidden md:flex border-slate-100 dark:border-slate-800 hover:scale-110 hover:bg-[#155DFC] hover:text-white group/btn"
-        onClick={() => scroll('left')}
-      >
-        <ChevronLeft className="w-5 h-5 transition-transform group-hover/btn:-translate-x-0.5" />
-      </Button>
+    <div className="relative w-full">
+      <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*" className="hidden" />
 
-      <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-white dark:from-slate-950 to-transparent z-10 pointer-events-none hidden md:block" />
-      <Button
-        variant="outline" size="icon"
-        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-2xl rounded-2xl opacity-0 group-hover/tray:opacity-100 transition-all duration-500 hidden md:flex border-slate-100 dark:border-slate-800 hover:scale-110 hover:bg-[#155DFC] hover:text-white group/btn"
-        onClick={() => scroll('right')}
-      >
-        <ChevronRight className="w-5 h-5 transition-transform group-hover/btn:translate-x-0.5" />
-      </Button>
-
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        onChange={handleFileSelect} 
-        accept="image/*" 
-        className="hidden" 
-      />
-
-      <div 
+      <ul
         ref={scrollContainerRef}
-        className="flex gap-5 overflow-x-auto pb-6 px-4 sm:px-2 snap-x hide-scrollbar scroll-smooth"
+        aria-label="Stories"
+        className="hide-scrollbar -mx-1 flex gap-4 overflow-x-auto scroll-smooth px-1 py-1.5"
       >
-        {/* CREATE/YOUR STORY SLOT */}
-        <motion.div 
-          className="relative flex-none w-20 h-32 sm:w-[100px] sm:h-[160px] rounded-2xl overflow-hidden cursor-pointer group shadow-sm hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-700 bg-card border border-slate-100 dark:border-slate-850"
-          onClick={() => hasMyStory ? handleStoryClick(myStories[0]) : setIsCreating(true)}
-          whileHover={{ y: -4 }}
-        >
-          {hasMyStory ? (
-            <div className="absolute inset-0">
-              {(myStories[0].type === 'image' || myStories[0].type === 'mixed') ? (
-                <img src={myStories[0].content} alt="Your story" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
-              ) : (
-                <div className={cn("w-full h-full flex items-center justify-center p-4 text-center", myStories[0].color || 'bg-[#155DFC]')}>
-                  <p className="text-white text-[10px] font-black leading-tight line-clamp-4 uppercase tracking-wider">{myStories[0].content}</p>
-                </div>
-              )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
-            </div>
-          ) : (
-            <div className="absolute inset-0 flex flex-col">
-              {/* Top part with image/avatar */}
-              <div className="h-3/4 w-full bg-slate-100 dark:bg-slate-800/50 relative overflow-hidden">
-                {currentUser?.avatarUrl ? (
-                  <img src={currentUser.avatarUrl} alt="You" className="w-full h-full object-cover opacity-60 grayscale group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-1000" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <User className="w-10 h-10 text-slate-300 dark:text-slate-700" />
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/10 dark:to-slate-900/10" />
-              </div>
-              
-              {/* Bottom white/dark section */}
-              <div className="flex-1 bg-card flex flex-col items-center justify-center pb-3">
-                <span className="text-[10px] font-black text-[#155DFC] dark:text-blue-400 uppercase tracking-[0.2em]">Create</span>
-              </div>
-
-              {/* Centered Plus Button */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
-                <div className="bg-[#155DFC] rounded-full p-3 text-white shadow-[0_10px_30px_rgba(21,93,252,0.5)] ring-8 ring-white dark:ring-card transition-transform duration-500 group-hover:scale-110 group-hover:rotate-90">
-                  <Plus className="w-6 h-6" strokeWidth={4} />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {hasMyStory && (
-            <div className="absolute bottom-5 left-0 right-0 z-20 text-center">
-              <p className="text-white text-[10px] font-black uppercase tracking-[0.2em] drop-shadow-md">Your Story</p>
-            </div>
-          )}
-        </motion.div>
-
-        {/* OTHER STORIES */}
-        {otherStories.map((story, idx) => (
-          <motion.div
-            key={story.id}
-            initial={{ opacity: 0, scale: 0.9, x: 20 }}
-            animate={{ opacity: 1, scale: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: idx * 0.05 }}
-            className={cn(
-              "relative flex-none w-20 h-32 sm:w-[100px] sm:h-[160px] rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-700 group",
-              !story.viewed && (story as any).isAnnouncement 
-                ? "ring-2 ring-[#155DFC] ring-offset-4 ring-offset-white dark:ring-offset-slate-950" 
-                : !story.viewed 
-                  ? "ring-2 ring-slate-200 dark:ring-slate-800 ring-offset-4 ring-offset-white dark:ring-offset-slate-950"
-                  : "border border-slate-100 dark:border-slate-800"
-            )}
-            onClick={() => handleStoryClick(story)}
-            whileHover={{ y: -6 }}
+        {/* Your story: view it, or add one */}
+        <li className="flex-none">
+          <button
+            type="button"
+            onClick={() => (hasMyStory ? handleStoryClick(myStories[0]) : setIsCreating(true))}
+            className="group flex w-[72px] flex-col items-center gap-1.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC]"
           >
-            <div className="absolute inset-0 bg-slate-900">
-               {(story.type === 'image' || story.type === 'mixed') && (
-                 <img src={story.content} alt="" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
-               )}
-               {story.type === 'text' && (
-                 <div className={cn("w-full h-full flex items-center justify-center p-6 text-center", story.color || "bg-slate-800")}>
-                    <p className={cn("text-white font-black leading-tight tracking-tight drop-shadow-2xl uppercase", story.fontSize || "text-xs")}>{story.content}</p>
-                 </div>
-               )}
-            </div>
-
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent opacity-80 group-hover:opacity-95 transition-opacity" />
-
-            {/* Profile Icon Top Left */}
-            <div className="absolute top-4 left-4 z-20">
-              <div className={cn(
-                "rounded-full border-2 overflow-hidden w-8 h-8 shadow-2xl transition-all duration-500 group-hover:scale-110 flex items-center justify-center bg-blue-600 border-white/40",
-                (story as any).isAnnouncement ? "bg-[#155DFC]" : "bg-slate-800"
-              )}>
-                {(story as any).isAnnouncement ? (
-                  <span className="text-white font-black text-sm">Z</span>
-                ) : (
-                  <Avatar className="w-full h-full">
-                    <AvatarImage src={story.userAvatar} className="object-cover" />
-                    <AvatarFallback className="bg-slate-800 text-white font-black text-[10px]">{story.userName[0]}</AvatarFallback>
-                  </Avatar>
+            <span className="relative">
+              <span
+                className={cn(
+                  "flex h-16 w-16 items-center justify-center overflow-hidden rounded-full",
+                  hasMyStory ? "ring-2 ring-[#155DFC] ring-offset-2" : "border-2 border-dashed border-[#B9C8E6] bg-white"
                 )}
-              </div>
-            </div>
-            
-            <div className="absolute bottom-5 left-4 right-4 z-20 flex flex-col items-center">
-              <div className="space-y-1.5 w-full text-center">
+              >
+                {hasMyStory && (myStories[0].type === "image" || myStories[0].type === "mixed") ? (
+                  <img src={myStories[0].content} alt="" className="h-full w-full object-cover" />
+                ) : currentUser?.avatarUrl ? (
+                  <img src={currentUser.avatarUrl} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <User className="h-6 w-6 text-[#7B869C]" aria-hidden="true" />
+                )}
+              </span>
+              {!hasMyStory && (
+                <span className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-[#155DFC] text-white ring-2 ring-white">
+                  <Plus className="h-3.5 w-3.5" strokeWidth={3} aria-hidden="true" />
+                </span>
+              )}
+            </span>
+            <span className="w-full truncate text-center text-xs font-medium text-[#0B1B3F]">
+              {hasMyStory ? "Your story" : "Add story"}
+            </span>
+          </button>
+        </li>
 
-                <p className="text-white text-[11px] font-black truncate uppercase tracking-[0.15em] drop-shadow-md group-hover:translate-y-[-2px] transition-transform">
+        {otherStories.map((story) => {
+          const isImage = story.type === "image" || story.type === "mixed";
+          return (
+            <li key={story.id} className="flex-none">
+              <button
+                type="button"
+                onClick={() => handleStoryClick(story)}
+                aria-label={`${story.viewed ? "" : "New: "}story from ${story.userName}`}
+                className="group flex w-[72px] flex-col items-center gap-1.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC]"
+              >
+                {/* Blue ring = not seen yet; grey = seen. The letter sits behind the photo, so a slow or broken photo never leaves an empty circle. */}
+                <span
+                  className={cn(
+                    "relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-[#155DFC] ring-offset-2",
+                    story.viewed ? "ring-2 ring-[#DCE5F5]" : "ring-[2.5px] ring-[#155DFC]"
+                  )}
+                >
+                  <span className="font-heading text-lg font-bold text-white" aria-hidden="true">
+                    {story.userName.charAt(0)}
+                  </span>
+                  {(isImage ? story.content : story.userAvatar) && (
+                    <img
+                      src={isImage ? story.content : story.userAvatar}
+                      alt=""
+                      loading="lazy"
+                      onError={(e) => (e.currentTarget.style.display = "none")}
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                  )}
+                </span>
+                <span className={cn("w-full truncate text-center text-xs", story.viewed ? "text-[#7B869C]" : "font-medium text-[#0B1B3F]")}>
                   {story.userName}
-                </p>
-              </div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
 
       <AnimatePresence>
         {selectedStory && (

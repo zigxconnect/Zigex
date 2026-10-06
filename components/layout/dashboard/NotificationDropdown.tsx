@@ -1,23 +1,10 @@
 // components/NotificationDropdown.tsx
 "use client";
 
-import { 
-  Bell, 
-  X, 
-  CheckCheck, 
-  Briefcase, 
-  GraduationCap, 
-  Calendar,
-  Inbox,
-  Clock,
-  Circle,
-  ArrowRight
-} from "lucide-react";
-import Image from "next/image";
+import { Bell, Briefcase, Calendar, CheckCheck, GraduationCap, Inbox, X } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { listNotifications, markAllNotificationsRead, markNotificationsRead } from "@/lib/api/notifications-client";
 
@@ -157,137 +144,105 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
   return (
     <div className="relative" ref={dropdownRef}>
       <button
+        type="button"
         onClick={toggleDropdown}
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
+        aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"}
         className={cn(
-          "relative w-10 h-10 transition-all duration-300 active:scale-90 flex items-center justify-center group outline-none",
-          isOpen ? "text-[#155DFC] dark:text-slate-300" : "text-slate-400 hover:text-[#155DFC] dark:hover:text-slate-300"
+          "relative flex h-10 w-10 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC]",
+          isOpen ? "bg-[#EEF3FF] text-[#155DFC]" : "text-[#4A5670] hover:bg-[#F3F7FF] hover:text-[#0B1B3F]"
         )}
       >
-        <Bell size={20} className={cn("transition-all duration-500", isOpen ? "scale-110" : "group-hover:rotate-12")} strokeWidth={3} />
+        <Bell className="h-5 w-5" aria-hidden="true" />
         {unreadCount > 0 && (
-          <motion.span 
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-600 border-2 border-white dark:border-slate-950 rounded-full flex items-center justify-center text-[10px] font-black text-white shadow-lg" 
-          >
-            {unreadCount}
-          </motion.span>
+          <span className="absolute right-1 top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#D92D20] px-1 text-[10px] font-semibold leading-none text-white ring-2 ring-white">
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </span>
         )}
       </button>
 
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.98 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className="fixed inset-x-0 top-[73px] mx-auto w-full md:absolute md:right-[-20px] md:left-auto md:top-full md:mt-0 md:w-[420px] md:mx-0 md:inset-x-auto bg-card border-x md:border-l border-b border-border shadow-[20px_40px_80px_rgba(0,0,0,0.15)] z-[100] overflow-hidden rounded-none"
-          >
-            {/* Glossy Header */}
-            <div className="px-8 py-6 flex justify-between items-center border-b border-border bg-muted/10">
-               <div>
-                 <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter">Notifications</h3>
-                 <p className="text-[10px] font-black text-red-500 uppercase tracking-widest mt-0.5">
-                   {unreadCount} UNREAD SIGNAL{(unreadCount > 1 || unreadCount === 0) ? 'S' : ''}
-                 </p>
-               </div>
-               <div className="flex items-center gap-2 relative z-10">
-                 {unreadCount > 0 && (
-                   <button
-                     onClick={markAllAsRead}
-                     className="p-3.5 text-slate-400 hover:text-[#155DFC] hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-2xl transition-all"
-                     title="Mark all as read"
-                   >
-                     <CheckCheck size={20} strokeWidth={2.5} />
-                   </button>
-                 )}
-                 <button
-                   onClick={() => setIsOpen(false)}
-                   className="p-3.5 text-slate-400 hover:bg-muted rounded-2xl transition-all"
-                 >
-                   <X size={20} strokeWidth={2.5} />
-                 </button>
-               </div>
+      {isOpen && (
+        <div
+          role="dialog"
+          aria-label="Notifications"
+          className="fixed inset-x-3 top-[72px] z-[100] overflow-hidden rounded-xl border border-[#DCE5F5] bg-white shadow-[0_16px_40px_-12px_rgba(11,27,63,0.25)] md:absolute md:inset-x-auto md:right-0 md:top-full md:mt-2 md:w-[380px]"
+        >
+          <div className="flex items-center justify-between gap-3 border-b border-[#EEF2FA] px-4 py-3">
+            <div>
+              <h3 className="font-heading text-base font-semibold text-[#0B1B3F]">Notifications</h3>
+              <p className="text-[13px] text-[#4A5670]">{unreadCount > 0 ? `${unreadCount} unread` : "You're all caught up"}</p>
             </div>
-
-            {/* Content Area */}
-            <div className="max-h-[min(520px,70vh)] overflow-y-auto hide-scrollbar px-4 pb-4">
-              {notifications.length === 0 ? (
-                <div className="px-12 py-24 text-center">
-                  <div className="w-24 h-24 bg-muted rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 shadow-inner ring-1 ring-border">
-                    <Inbox className="w-12 h-12 text-slate-200 dark:text-slate-700" />
-                  </div>
-                  <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest mb-1">Pure Silence</h4>
-                  <p className="text-[9px] font-black text-slate-300 dark:text-slate-700 uppercase tracking-[0.3em]">No activities to show</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <AnimatePresence mode="popLayout" initial={false}>
-                    {notifications.slice(0, 4).map((notification, index) => (
-                      <motion.button
-                        key={notification.id}
-                        layout
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, scale: 0.9 }}
-                        transition={{ delay: index * 0.05, type: "spring", damping: 25 }}
-                        onClick={() => handleNotificationClick(notification.id, notification.referenceId, notification.type)}
-                        className={cn(
-                          "w-full text-left p-4 transition-all duration-300 relative flex items-center gap-4 group outline-none border-b border-border last:border-0",
-                          !notification.read 
-                            ? "bg-blue-50/30 dark:bg-blue-900/5" 
-                            : "hover:bg-muted/50"
-                        )}
-                      >
-                        {/* Status Dot */}
-                        <div className="shrink-0">
-                          <div className={cn(
-                            "w-2 h-2 rounded-full transition-all duration-500",
-                            !notification.read ? "bg-[#155DFC] shadow-[0_0_10px_rgba(21,93,252,0.8)]" : "bg-slate-200 dark:bg-slate-800"
-                          )} />
-                        </div>
-                        
-                        <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-center gap-2">
-                            <h4 className={cn(
-                              "text-[12px] font-black tracking-tight truncate group-hover:text-[#155DFC] dark:group-hover:text-slate-300 transition-colors uppercase",
-                              !notification.read ? "text-slate-900 dark:text-white" : "text-slate-400"
-                            )}>
-                              {notification.title}
-                            </h4>
-                            <span className="text-[8px] font-bold text-slate-400 shrink-0">
-                              {formatTime(notification.timestamp)}
-                            </span>
-                          </div>
-                        </div>
-                      </motion.button>
-                    ))}
-                  </AnimatePresence>
-                </div>
+            <div className="flex items-center gap-1">
+              {unreadCount > 0 && (
+                <button
+                  type="button"
+                  onClick={markAllAsRead}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-[13px] font-semibold text-[#155DFC] hover:bg-[#F3F7FF]"
+                >
+                  <CheckCheck className="h-4 w-4" aria-hidden="true" />
+                  Mark all read
+                </button>
               )}
-            </div>
-
-            {/* Footer */}
-            <div className="p-4 border-t border-border bg-card">
-              <Link
-                href="/notifications"
+              <button
+                type="button"
                 onClick={() => setIsOpen(false)}
-                className="w-full h-12 bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-[#155DFC] dark:hover:bg-[#155DFC] dark:hover:text-white group/footer"
+                aria-label="Close notifications"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-[#7B869C] hover:bg-[#F3F7FF] hover:text-[#0B1B3F]"
               >
-                <span>Full Activity History</span>
-                <ArrowRight size={14} strokeWidth={3} className="group-hover:translate-x-1 transition-transform" />
-              </Link>
+                <X className="h-4 w-4" />
+              </button>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+
+          <div className="max-h-[min(440px,65vh)] overflow-y-auto">
+            {notifications.length === 0 ? (
+              <div className="px-6 py-12 text-center">
+                <Inbox className="mx-auto h-8 w-8 text-[#B9C8E6]" aria-hidden="true" />
+                <p className="mt-3 text-sm font-semibold text-[#0B1B3F]">No notifications yet</p>
+                <p className="mt-1 text-[13px] text-[#4A5670]">Updates about your applications will show up here.</p>
+              </div>
+            ) : (
+              <ul className="divide-y divide-[#EEF2FA]">
+                {notifications.slice(0, 6).map((notification) => (
+                  <li key={notification.id}>
+                    <button
+                      type="button"
+                      onClick={() => handleNotificationClick(notification.id, notification.referenceId, notification.type)}
+                      className={cn(
+                        "flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-[#F8FAFF] focus-visible:bg-[#F8FAFF] focus-visible:outline-none",
+                        !notification.read && "bg-[#F5F8FF]"
+                      )}
+                    >
+                      <span
+                        className={cn("mt-1.5 h-2 w-2 shrink-0 rounded-full", notification.read ? "bg-transparent" : "bg-[#155DFC]")}
+                        aria-hidden="true"
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className={cn("block truncate text-sm", notification.read ? "text-[#4A5670]" : "font-semibold text-[#0B1B3F]")}>
+                          {notification.title}
+                        </span>
+                        {notification.content && (
+                          <span className="mt-0.5 line-clamp-2 block text-[13px] text-[#4A5670]">{notification.content}</span>
+                        )}
+                      </span>
+                      <span className="shrink-0 text-xs text-[#7B869C]">{formatTime(notification.timestamp)}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <Link
+            href="/notifications"
+            onClick={() => setIsOpen(false)}
+            className="flex h-11 items-center justify-center border-t border-[#EEF2FA] text-sm font-semibold text-[#155DFC] hover:bg-[#F8FAFF]"
+          >
+            See all notifications
+          </Link>
+        </div>
+      )}
     </div>
   );
 };
-
-const ArrowRight = ({ className, size = 16 }: { className?: string, size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
-  </svg>
-);

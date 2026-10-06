@@ -44,7 +44,7 @@ export function PublicShell({
   // Authenticated path — hand off entirely to the existing layout
   if (user) {
     return (
-      <div className="min-h-screen bg-background" style={{ zoom: 0.9 }}>
+      <div className="min-h-screen bg-[#F8FAFF]">
         <DashboardClientLayout user={user} showUploadLive={showUploadLive}>
           {children}
         </DashboardClientLayout>

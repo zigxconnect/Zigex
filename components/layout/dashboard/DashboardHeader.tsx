@@ -1,76 +1,66 @@
-// components/layout/dashboard/DashboardHeader.tsx
 "use client";
 
-import { Search, ChevronDown, Command, Menu } from "lucide-react";
-import Image from "next/image";
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Menu, Search } from "lucide-react";
 import { NotificationDropdown } from "./NotificationDropdown";
 import { ProfileDropdown } from "./ProfileDropdown";
-import Link from "next/link";
-import { cn, slugifyUsername } from "@/lib/utils";
-import { Logo } from "@/components/layout/Logo";
 
 interface DashboardHeaderProps {
   user?: any;
   onMenuClick: () => void;
 }
 
-export const DashboardHeader = ({
-  user,
-  onMenuClick,
-}: DashboardHeaderProps) => {
-  const userName = user?.name || user?.profile?.name || "Guest User";
-  const userAvatar =
-    user?.avatar ||
-    user?.profile?.avatar_url ||
-    user?.avatarUrl;
-
-  const username = user?.profile?.username || user?.username || "";
-  const role = user?.role || user?.profile?.role || "Student";
-  const profileUrl = `/profile/${slugifyUsername(username) || ""}`;
+/**
+ * Top bar for signed-in pages: search (runs the /feed search from anywhere),
+ * notifications and the account menu. 64px, white, sits right of the sidebar.
+ */
+export const DashboardHeader = ({ user, onMenuClick }: DashboardHeaderProps) => {
+  const router = useRouter();
+  const [query, setQuery] = useState("");
 
   return (
-    <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border transition-all duration-700 lg:pl-72">
-      <div className="flex items-center justify-between px-4 lg:px-10 py-3 max-w-[2000px] mx-auto gap-4">
-        
-        {/* Left Side: Personalized Greeting Identity */}
-        <div className="flex items-center gap-4 flex-1">
-          {/* Mobile Hamburger & Logo */}
-          <div className="flex lg:hidden items-center gap-3">
-            <button
-              onClick={onMenuClick}
-              className="p-2 -ml-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
-            >
-              <Menu size={20} />
-            </button>
-            <Link href="/feed" className="flex items-center gap-2">
-              <div className="relative w-8 h-8">
-                <Logo className="w-full h-full" />
-              </div>
-              <span className="font-extrabold text-lg text-foreground tracking-tight">ZIGEX</span>
-            </Link>
-          </div>
+    <header className="sticky top-0 z-40 border-b border-[#DCE5F5] bg-white/90 backdrop-blur lg:pl-64">
+      <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
+        <button
+          type="button"
+          onClick={onMenuClick}
+          aria-label="Open menu"
+          className="-ml-2 flex h-10 w-10 items-center justify-center rounded-lg text-[#4A5670] hover:bg-[#F3F7FF] lg:hidden"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        <Link href="/feed" className="flex items-center gap-2 lg:hidden" aria-label="Zigex home">
+          <img src="https://i.ibb.co/Cp502Yby/logo.png" alt="" width={28} height={28} className="h-7 w-7 object-contain" />
+          <span className="font-heading text-lg font-bold tracking-tight text-[#0B1B3F]">Zigex</span>
+        </Link>
 
-          {/* Desktop Greeting */}
-           <div className="hidden lg:flex items-center gap-2">
-              <span className="text-[14px] font-black text-[#155DFC] dark:text-slate-300 uppercase tracking-tighter leading-none">
-                {new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 18 ? "Good afternoon" : "Good evening"},
-              </span>
-              <h2 className="text-[14px] font-black text-foreground uppercase tracking-tighter truncate max-w-[200px] leading-none">
-                {userName.split(' ')[0]}
-              </h2>
-           </div>
-        </div>
+        <form
+          role="search"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const q = query.trim();
+            router.push(q ? `/feed?q=${encodeURIComponent(q)}` : "/feed");
+          }}
+          className="relative hidden w-full max-w-md md:block"
+        >
+          <label htmlFor="global-search" className="sr-only">
+            Search opportunities
+          </label>
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#7B869C]" aria-hidden="true" />
+          <input
+            id="global-search"
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search opportunities"
+            className="h-10 w-full rounded-xl border border-[#DCE5F5] bg-[#F8FAFF] pl-10 pr-3 text-sm text-[#0B1B3F] placeholder:text-[#7B869C] transition-colors hover:border-[#B9C8E6] focus:border-[#155DFC] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#155DFC]/15"
+          />
+        </form>
 
-        {/* Right Side: Identity & Signals */}
-        <div className="flex items-center gap-3 lg:gap-8">
-          
-          {/* Signal Node */}
+        <div className="ml-auto flex items-center gap-1 sm:gap-2">
           <NotificationDropdown />
-
-          {/* Vertical Separator */}
-          <div className="h-6 w-[1px] bg-border mx-1 hidden sm:block" />
-
-          {/* Identity Protocol Dropdown */}
           <ProfileDropdown user={user} />
         </div>
       </div>

@@ -1,183 +1,86 @@
-// components/layout/dashboard/ProfileDropdown.tsx
 "use client";
 
-import {
-  User,
-  Settings,
-  LogOut,
-  ChevronDown,
-  Shield,
-  CreditCard,
-  ExternalLink,
-  Sun,
-  Moon
-} from "lucide-react";
-import Image from "next/image";
-import { useTheme } from "next-themes";
-import { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { ChevronDown, ClipboardList, LogOut, Settings, User } from "lucide-react";
 import { cn, slugifyUsername } from "@/lib/utils";
 import NameInitials from "@/components/NameInitials";
 import { api } from "@/lib/api/browser-client";
 
-interface ProfileDropdownProps {
-  user: any;
-}
+/** Avatar button in the top bar with the account menu. */
+export const ProfileDropdown = ({ user }: { user: any }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
-export const ProfileDropdown = ({ user }: ProfileDropdownProps) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const userName = user?.name || user?.profile?.name || "Guest User";
-  const userAvatar = user?.avatar || user?.profile?.avatar_url || user?.avatarUrl;
-  const username = user?.profile?.username || user?.username || "";
-  const role = user?.role || user?.profile?.role || "Student";
-  const profileUrl = `/profile/${slugifyUsername(username) || ""}`;
+  const name: string = user?.name || user?.profile?.name || "Student";
+  const email: string | undefined = user?.email || user?.profile?.email;
+  const avatar: string | undefined = user?.avatar || user?.profile?.avatar_url || user?.avatarUrl;
+  const username: string = user?.profile?.username || user?.username || "";
+  const profileUrl = username ? `/profile/${slugifyUsername(username)}` : "/profile";
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
+    if (!open) return;
+    const onDown = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && setOpen(false);
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [open]);
 
-  const handleSignOut = async () => {
-    try {
-      await api.post("/auth/logout").catch(() => {});
-      window.location.href = "/";
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
+  const signOut = async () => {
+    await api.post("/auth/logout").catch(() => {});
+    window.location.href = "/";
   };
 
-  const menuItems = [
-    { label: "My Profile", icon: User, href: profileUrl },
-    { label: "Security", icon: Shield, href: "/settings/security" },
-    { label: "Settings", icon: Settings, href: "/settings" },
+  const links = [
+    { label: "View profile", icon: User, href: profileUrl },
+    { label: "My applications", icon: ClipboardList, href: "/dashboard/applied-internships" },
+    { label: "Settings", icon: Settings, href: "/profile-settings" },
   ];
+  const item = "flex h-10 w-full items-center gap-3 rounded-lg px-3 text-sm font-medium text-[#0B1B3F] hover:bg-[#F3F7FF]";
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative" ref={ref}>
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={cn(
-          "group relative flex items-center gap-3 cursor-pointer p-1 rounded-none bg-transparent transition-all duration-300 outline-none",
-          isOpen ? "opacity-100" : "hover:opacity-80"
-        )}
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label="Account menu"
+        className="flex h-10 items-center gap-1.5 rounded-full pl-0.5 pr-2 hover:bg-[#F3F7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC]"
       >
-        <div className="relative w-9 h-9 rounded-full overflow-hidden ring-1 ring-border shadow-sm transition-all duration-500 group-hover:ring-[#155DFC]/30">
-          {userAvatar ? (
-            <Image
-              src={userAvatar}
-              alt={userName}
-              fill
-              className="object-cover transition-transform duration-700 group-hover:scale-110"
-            />
-          ) : (
-            <NameInitials name={userName} />
-          )}
-          {/* Status Dot */}
-          <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-background" />
-        </div>
-
-        <div className="hidden sm:flex flex-col items-start gap-0">
-          <span className="text-[11px] font-black text-slate-900 dark:text-white leading-none uppercase tracking-tighter">
-            {userName}
-          </span>
-          <span className="text-[8px] font-bold text-[#155DFC] uppercase tracking-widest mt-0.5">
-            {role}
-          </span>
-        </div>
-
-        <ChevronDown
-          size={12}
-          strokeWidth={3}
-          className={cn(
-            "text-slate-300 transition-transform duration-500 ml-1",
-            isOpen ? "rotate-180 text-[#155DFC]" : ""
-          )}
-        />
+        <span className="h-9 w-9 overflow-hidden rounded-full bg-[#EEF3FF] text-sm ring-1 ring-[#DCE5F5]">
+          {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : <NameInitials name={name} />}
+        </span>
+        <ChevronDown className={cn("h-4 w-4 text-[#7B869C] transition-transform", open && "rotate-180")} aria-hidden="true" />
       </button>
 
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.98 }}
-            transition={{ duration: 0.2 }}
-            className="absolute right-0 top-full mt-4 w-60 bg-card border border-border shadow-[20px_40px_80px_rgba(0,0,0,0.15)] z-[100] rounded-2xl overflow-hidden"
-          >
-            {/* Header info */}
-            <div className="px-6 py-5 border-b border-border bg-muted/20">
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Authenticated As</p>
-              <p className="text-xs font-black text-slate-900 dark:text-white truncate">{userName}</p>
-            </div>
-
-            <div className="py-2">
-              {menuItems.map((item, idx) => (
-                <Link
-                  key={idx}
-                  href={item.href}
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-3 px-6 py-3 text-[11px] font-bold text-muted-foreground hover:bg-muted/50 hover:text-[#155DFC] transition-all uppercase tracking-tight"
-                >
-                  <item.icon size={14} className="shrink-0" />
-                  {item.label}
-                </Link>
-              ))}
-
-              {mounted && (
-                <button
-                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                  className="w-full flex items-center justify-between px-6 py-3 text-[11px] font-bold text-muted-foreground hover:bg-muted/50 hover:text-[#155DFC] transition-all uppercase tracking-tight cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    {theme === "dark" ? (
-                      <Moon size={14} className="shrink-0 text-amber-500" />
-                    ) : (
-                      <Sun size={14} className="shrink-0 text-amber-500" />
-                    )}
-                    <span>Theme: {theme === "dark" ? "Dark" : "Light"}</span>
-                  </div>
-                  {/* Premium Switch Indicator */}
-                  <div className="w-8 h-4.5 rounded-full bg-slate-200 p-0.5 transition-colors duration-300 relative flex items-center">
-                    <div
-                      className={cn(
-                        "w-3.5 h-3.5 rounded-full bg-white shadow-sm transform duration-300 ease-out",
-                        theme === "dark" ? "translate-x-3.5" : "translate-x-0"
-                      )}
-                    />
-                  </div>
-                </button>
-              )}
-            </div>
-
-            <div className="border-t border-border mt-2">
-              <button
-                className="w-full flex items-center gap-3 px-6 py-4 text-[11px] font-black text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all uppercase tracking-widest"
-                onClick={() => {
-                  setIsOpen(false);
-                  handleSignOut();
-                }}
-              >
-                <LogOut size={14} strokeWidth={3} />
-                Sign Out
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 top-full z-[100] mt-2 w-64 rounded-xl border border-[#DCE5F5] bg-white p-1 shadow-[0_16px_40px_-12px_rgba(11,27,63,0.25)]"
+        >
+          <div className="px-3 py-2.5">
+            <p className="truncate text-sm font-semibold text-[#0B1B3F]">{name}</p>
+            {email && <p className="truncate text-[13px] text-[#4A5670]">{email}</p>}
+          </div>
+          <div className="my-1 h-px bg-[#EEF2FA]" />
+          {links.map((l) => (
+            <Link key={l.href} role="menuitem" href={l.href} onClick={() => setOpen(false)} className={item}>
+              <l.icon className="h-4 w-4 text-[#7B869C]" aria-hidden="true" />
+              {l.label}
+            </Link>
+          ))}
+          <div className="my-1 h-px bg-[#EEF2FA]" />
+          <button role="menuitem" type="button" onClick={signOut} className={`${item} text-[#B42318] hover:bg-[#FEF3F2]`}>
+            <LogOut className="h-4 w-4" aria-hidden="true" />
+            Sign out
+          </button>
+        </div>
+      )}
     </div>
   );
 };

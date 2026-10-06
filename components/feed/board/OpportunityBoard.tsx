@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import * as SwitchPrimitive from "@radix-ui/react-switch";
@@ -54,7 +54,10 @@ export function OpportunityBoard({ items }: { items: BoardItem[] }) {
   ) as Tab;
   const sort: Sort = params.get("sort") === "closing" ? "closing" : "newest";
   const freeOnly = params.get("free") === "1";
-  const [query, setQuery] = useState(params.get("q") ?? "");
+  const urlQuery = params.get("q") ?? "";
+  const [query, setQuery] = useState(urlQuery);
+  // A search from the top bar changes ?q= while this page stays mounted.
+  useEffect(() => setQuery(urlQuery), [urlQuery]);
   const [visible, setVisible] = useState(PAGE_SIZE);
   const [showClosed, setShowClosed] = useState(false);
   const uid = useId();
