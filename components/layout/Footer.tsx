@@ -26,9 +26,9 @@ export const Footer: React.FC = () => {
   return (
     <footer className="bg-[#0B1B3F] text-white pt-20 pb-10">
       <div className="mx-auto w-full max-w-6xl px-5 sm:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 mb-16">
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-12 lg:gap-10 mb-16">
           {/* Brand & Mission */}
-          <div className="space-y-8">
+          <div className="space-y-6 lg:col-span-4">
             <Link href="/" aria-label="Zigex home" className="inline-block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
               {/* The logo has its own blue tile; the old invert filter turned it into a white square. */}
               <span className="flex items-center gap-2.5">
@@ -58,7 +58,7 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* Platform Links */}
-          <div>
+          <div className="lg:col-span-2">
             <h4 className="text-lg font-bold mb-8 text-white relative inline-block">
               Platform
               <span className="absolute -bottom-2 left-0 w-8 h-1 bg-[#155DFC] rounded-full"></span>
@@ -66,8 +66,7 @@ export const Footer: React.FC = () => {
             <ul className="space-y-4 text-sm text-[#C9D6F2]">
               {PLATFORM_LINKS.map((item) => (
                 <li key={item.label}>
-                  <Link href={item.href} className="hover:text-white hover:translate-x-2 transition-all duration-200 flex items-center group">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mr-2 opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true"></span>
+                  <Link href={item.href} className="hover:text-white transition-colors">
                     {item.label}
                   </Link>
                 </li>
@@ -76,9 +75,9 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* Contact Info */}
-          <div>
+          <div className="lg:col-span-3">
             <h4 className="text-lg font-bold mb-8 text-white relative inline-block">
-              Get in Touch
+              Get in touch
               <span className="absolute -bottom-2 left-0 w-8 h-1 bg-[#155DFC] rounded-full"></span>
             </h4>
             <ul className="space-y-5 text-sm text-[#C9D6F2]">
@@ -98,8 +97,8 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* Improved Newsletter */}
-          <div className="bg-white/5 p-6 rounded-2xl ring-1 ring-white/10">
-            <h4 className="text-lg font-bold mb-4 text-white">Join the Community</h4>
+          <div className="bg-white/5 p-6 rounded-2xl ring-1 ring-white/10 lg:col-span-3">
+            <h4 className="text-lg font-bold mb-3 text-white">Join the community</h4>
             <p className="text-xs text-[#AFC0E6] mb-6 leading-relaxed">
               Get notified about new internship roles and career bootcamps.
             </p>
@@ -107,7 +106,7 @@ export const Footer: React.FC = () => {
                 opportunities reach students through their account notifications. */}
             <Link
               href="/sign-up"
-              className="w-full h-11 px-5 bg-[#155DFC] hover:bg-[#3B78FF] rounded-xl text-white font-semibold text-[15px] transition-colors flex items-center justify-center gap-2 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              className="w-full h-11 px-4 whitespace-nowrap bg-[#155DFC] hover:bg-[#3B78FF] rounded-xl text-white font-semibold text-[15px] transition-colors flex items-center justify-center gap-2 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
             >
               Create a free account
                           </Link>
