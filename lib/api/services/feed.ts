@@ -19,11 +19,13 @@ function isUnauthorized(error: unknown) {
   return error instanceof ApiClientError && error.status === 401;
 }
 
-export async function listFeed(kind: FeedKind, search?: string): Promise<FeedRow[]> {
+export async function listFeed(kind: FeedKind, search?: string, companyId?: string): Promise<FeedRow[]> {
   const rows: FeedRow[] = [];
   for (let page = 1; page <= MAX_PAGES; page++) {
     const params = new URLSearchParams({ page: String(page), limit: String(PAGE_LIMIT) });
     if (search) params.set("search", search);
+    // Spec'd filter; until the backend applies it, callers filter by company_id themselves.
+    if (companyId) params.set("companyId", companyId);
 
     try {
       const res = await serverApi.get<FeedRow[]>(`/feed/${kind}?${params}`);
@@ -67,8 +69,8 @@ export async function findFeedItemBySlug(slug: string): Promise<{ kind: FeedKind
   return null;
 }
 
-/** Other listings from the same company. The backend has no company filter yet. */
+/** Other listings from the same company (GET /feed/{kind}?companyId=, filtered here too). */
 export async function listCompanyFeed(kind: FeedKind, companyId: string, excludeId?: string, limit = 6) {
-  const rows = await listFeed(kind);
+  const rows = await listFeed(kind, undefined, companyId);
   return rows.filter((row) => row.company_id === companyId && row.id !== excludeId).slice(0, limit);
 }

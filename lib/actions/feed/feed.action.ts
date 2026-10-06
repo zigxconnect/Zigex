@@ -3,6 +3,9 @@
 
 import { cache } from "react";
 import { listFeed } from "@/lib/api/services/feed";
+import { listCompanies } from "@/lib/api/services/companies";
+import { serverApi } from "@/lib/api/server-client";
+import { whenAvailable } from "@/lib/api/errors";
 
 // Types
 export type Internship = {
@@ -113,11 +116,15 @@ export const getPrograms = cache(async (searchQuery?: string) => {
 });
 
 /**
- * Company directory for the feed sidebar.
- * TODO(backend): no endpoint yet (see "Missing endpoints: Company profiles").
+ * Company directory for the feed sidebar (GET /companies; empty until deployed).
  */
 export const getCompanyDirectory = cache(async () => {
-  return [] as { id: string; company_name: string; logo_url: string; email?: string; website_url?: string }[];
+  try {
+    return (await listCompanies()) as { id: string; company_name: string; logo_url: string; email?: string; website_url?: string }[];
+  } catch (error) {
+    console.error("Company directory fetch error:", error);
+    return [];
+  }
 });
 
 /**
@@ -146,13 +153,35 @@ export const getAllFeedData = cache(async (searchQuery?: string, _studentId?: st
   };
 });
 
-/**
- * Landing-page statistics.
- * TODO(backend): no endpoint yet (see "Missing endpoints: Platform stats") — shows the static fallback.
- */
-export const getPlatformStats = async () => ({
+const FALLBACK_STATS = {
   activePrograms: "12+",
   students: "2.5K+",
   satisfactionRate: "95%",
   partnerCompanies: "50+",
-});
+};
+
+/**
+ * Landing-page statistics (GET /stats/platform, public). Static fallback
+ * until the endpoint is deployed or if it fails.
+ */
+export const getPlatformStats = async () => {
+  try {
+    const stats = await whenAvailable(
+      async () =>
+        (await serverApi.get<{ activeOpportunities: number; students: number; companies: number; satisfactionRate: number }>(
+          "/stats/platform"
+        )).data,
+      null
+    );
+    if (!stats) return FALLBACK_STATS;
+    return {
+      activePrograms: `${stats.activeOpportunities}+`,
+      students: stats.students > 1000 ? `${(stats.students / 1000).toFixed(1)}K+` : `${stats.students}+`,
+      satisfactionRate: `${Math.round(stats.satisfactionRate)}%`,
+      partnerCompanies: `${stats.companies}+`,
+    };
+  } catch (error) {
+    console.error("Error fetching platform stats:", error);
+    return FALLBACK_STATS;
+  }
+};
