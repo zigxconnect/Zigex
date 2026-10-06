@@ -15,6 +15,7 @@ export type BoardItem = {
   /** The date that matters most: when applications close, else when it starts. */
   closesAt: string | null;
   startsAt: string | null;
+  endsAt: string | null;
   /** The student pays to join ("paid" programs/internships charge a fee). */
   hasFee: boolean;
   priceXaf: number | null;
@@ -45,6 +46,7 @@ export function toBoardItem(kind: FeedKind, row: FeedRow): BoardItem {
     workMode: mode && WORK_MODES.has(mode) ? (mode as BoardItem["workMode"]) : null,
     closesAt: row.deadline ?? row.application_deadline ?? null,
     startsAt: row.start_date ?? null,
+    endsAt: row.end_date ?? null,
     hasFee: Boolean(row.is_paid),
     priceXaf: typeof row.price_xaf === "number" ? row.price_xaf : null,
     postedAt: row.created_at ?? null,

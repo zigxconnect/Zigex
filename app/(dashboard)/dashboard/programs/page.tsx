@@ -90,7 +90,7 @@ export default async function ProgramsPage() {
                     Updates
                   </Link>
                 ) : (
-                  <Link href={`/feed/${p.id}`} className={`${landingButton("secondary", "md")} shrink-0 px-4`}>
+                  <Link href={`/programs/${p.id}`} className={`${landingButton("secondary", "md")} shrink-0 px-4`}>
                     View
                   </Link>
                 )}

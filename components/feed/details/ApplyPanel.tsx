@@ -8,6 +8,16 @@ type ApplicationStatus = { hasApplied: boolean; status: string | null; paymentCo
 
 const ACTION = { internships: "Apply", programs: "Register", events: "RSVP" } as const;
 
+/** "9 weeks", "2 months" from the start and end dates. */
+function length(item: BoardItem) {
+  if (!item.startsAt || !item.endsAt) return null;
+  const days = Math.round((new Date(item.endsAt).getTime() - new Date(item.startsAt).getTime()) / 86_400_000);
+  if (days <= 0) return null;
+  if (days < 14) return `${days} day${days === 1 ? "" : "s"}`;
+  const weeks = Math.round(days / 7);
+  return weeks < 9 ? `${weeks} weeks` : `${Math.round(days / 30)} months`;
+}
+
 const fmt = (date: string | null) =>
   date ? new Date(date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : null;
 
@@ -24,6 +34,7 @@ export function ApplyPanel({
   isAuthenticated,
   applicationStatus,
   opportunityData,
+  browse = { href: "/feed", label: "Browse open opportunities" },
 }: {
   item: BoardItem;
   isOpen: boolean;
@@ -31,6 +42,8 @@ export function ApplyPanel({
   isAuthenticated: boolean;
   applicationStatus: ApplicationStatus;
   opportunityData: Record<string, unknown>;
+  /** Where "find something else" leads when this one is closed. */
+  browse?: { href: string; label: string };
 }) {
   const action = ACTION[item.kind];
   const next = encodeURIComponent(`/feed/${item.id}`);
@@ -39,6 +52,7 @@ export function ApplyPanel({
   const facts = [
     item.closesAt && { icon: CalendarClock, label: "Deadline", value: fmt(item.closesAt) },
     item.startsAt && { icon: Clock, label: item.kind === "events" ? "Date" : "Starts", value: fmt(item.startsAt) },
+    item.endsAt && item.kind !== "events" && { icon: Clock, label: "Ends", value: `${fmt(item.endsAt)}${length(item) ? ` (${length(item)})` : ""}` },
     item.location && { icon: MapPin, label: "Location", value: item.location },
     item.workMode && { icon: Monitor, label: "Work mode", value: item.workMode[0].toUpperCase() + item.workMode.slice(1) },
     {
@@ -57,7 +71,7 @@ export function ApplyPanel({
         </p>
       ) : (
         <p className="text-sm font-semibold text-[#4A5670]">
-          {item.closesAt ? `Applications closed on ${fmt(item.closesAt)}` : closedReason ?? "This opportunity has ended"}
+          {item.closesAt ? `${item.kind === "programs" ? "Registration" : "Applications"} closed on ${fmt(item.closesAt)}` : closedReason ?? "This opportunity has ended"}
         </p>
       )}
 
@@ -89,10 +103,12 @@ export function ApplyPanel({
         ) : (
           <div className="grid gap-2">
             <p className="rounded-xl bg-[#F3F7FF] px-4 py-3 text-sm text-[#4A5670]">
-              You can&apos;t {action.toLowerCase()} any more. Companies post new opportunities regularly.
+              {item.kind === "programs"
+                ? "Registration for this program has closed. Companies open new cohorts through the year."
+                : `You can't ${action.toLowerCase()} any more. Companies post new opportunities regularly.`}
             </p>
-            <Link href="/feed" className={`${landingButton("secondary", "md")} w-full`}>
-              Browse open opportunities
+            <Link href={browse.href} className={`${landingButton("secondary", "md")} w-full`}>
+              {browse.label}
             </Link>
           </div>
         )}

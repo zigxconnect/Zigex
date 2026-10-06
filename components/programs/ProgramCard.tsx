@@ -94,7 +94,7 @@ export function ProgramCard({ program: p }: { program: ProgramView }) {
 
   return (
     <Link
-      href={`/feed/${p.id}`}
+      href={`/programs/${p.id}`}
       className="group flex h-full flex-col rounded-2xl bg-white p-4 ring-1 ring-[#DCE5F5] transition-shadow hover:shadow-[0_18px_40px_-20px_rgba(11,27,63,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC]"
     >
       {/* Top: who and what */}
