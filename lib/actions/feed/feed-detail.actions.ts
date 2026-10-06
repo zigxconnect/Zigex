@@ -2,341 +2,79 @@
 "use server";
 
 import { cache } from "react";
-import { createSupabaseServerClient, supabaseAdmin } from "@/lib/supabase/server";
-import { unstable_cache } from "next/cache";
-import { isUUID } from "@/lib/utils";
+import { findFeedItemBySlug, getFeedItem, listCompanyFeed, type FeedKind, type FeedRow } from "@/lib/api/services/feed";
+import { findApplicationFor } from "@/lib/api/services/applications";
 
 export type FeedType = "internships" | "programs" | "events" | "announcements";
 
-/**
- * Get a single feed item by ID
- * Searches across all feed types using cached admin query
- */
-// Helper to match slug in SQL
-const matchSlug = (table: string, slug: string) => {
-  // This is a bit of a hack since we don't have a slug column.
-  // We'll replace dashes with spaces and use ILIKE.
-  // It won't be perfect for titles with actual dashes but it's a good fallback.
-  return `title.ilike.${slug.replace(/-/g, ' ')}`;
-};
+type FeedItem = FeedRow & { _type: FeedType };
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const FEED_KINDS: FeedKind[] = ["internships", "programs", "events"];
 
 /**
- * Get a single feed item by ID or Slug
- * Searches across all feed types using cached admin query
+ * Get a single feed item by ID or title slug (GET /feed/{kind}/{id}).
+ * Announcements have no backend endpoint yet, so they are not found here.
  */
-const fetchFeedItemById = async (idOrSlug: string) => {
+export const getFeedItemById = cache(async (idOrSlug: string): Promise<{ data: FeedItem | null; error: string | null }> => {
   try {
-    const isIdUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
-
-    // Helper function to create a search pattern from slug
-    // Converts "seed-cohort-test-2026" to pattern that matches "Seed Cohort Test 2026"
-    const createSearchPattern = (slug: string) => {
-      // Replace dashes with wildcards for flexible matching
-      // Also handle numbers that might be at the end (like years)
-      return slug.replace(/-/g, ' ').trim();
-    };
-
-    const searchTerm = isIdUUID ? idOrSlug : createSearchPattern(idOrSlug);
-
-    // Try to find in internships
-    let internshipQuery = supabaseAdmin
-      .from("internships")
-      .select(`
-        *,
-        company_profiles (
-          id, company_name, logo_url, cover_image_url, location, website_url
-        )
-      `);
-
-    if (isIdUUID) {
-      internshipQuery = internshipQuery.eq("id", idOrSlug);
-    } else {
-      // Use case-insensitive search that matches the unslugified title
-      internshipQuery = internshipQuery.ilike("title", `%${searchTerm}%`);
-    }
-
-    const { data: internship, error: internshipError } = await internshipQuery.maybeSingle();
-
-    if (internship && !internshipError) {
-      return {
-        data: { ...internship, _type: "internships" as FeedType },
-        error: null,
-      };
-    }
-
-    // Try to find in programs
-    let programQuery = supabaseAdmin
-      .from("programs")
-      .select(`
-        *,
-        company_profiles (
-          id, company_name, logo_url, cover_image_url, location, website_url
-        )
-      `);
-
-    if (isIdUUID) {
-      programQuery = programQuery.eq("id", idOrSlug);
-    } else {
-      programQuery = programQuery.ilike("title", `%${searchTerm}%`);
-    }
-
-    const { data: program, error: programError } = await programQuery.maybeSingle();
-
-    if (program && !programError) {
-      return {
-        data: { ...program, _type: "programs" as FeedType },
-        error: null,
-      };
-    }
-
-    // Try to find in events
-    let eventQuery = supabaseAdmin
-      .from("event")
-      .select(`
-        *,
-        company_profiles (
-          id, company_name, logo_url, cover_image_url, location, website_url
-        )
-      `);
-
-    if (isIdUUID) {
-      eventQuery = eventQuery.eq("id", idOrSlug);
-    } else {
-      eventQuery = eventQuery.ilike("title", `%${searchTerm}%`);
-    }
-
-    const { data: event, error: eventError } = await eventQuery.maybeSingle();
-
-    if (event && !eventError) {
-      return {
-        data: { ...event, _type: "events" as FeedType },
-        error: null,
-      };
-    }
-
-    // Try to find in announcements
-    if (isIdUUID) {
-      const { data: announcement, error: announcementError } = await supabaseAdmin
-        .from("announcements")
-        .select(`
-          *,
-          company_profiles (
-            id, company_name, logo_url, cover_image_url, location, website_url
-          )
-        `)
-        .eq("id", idOrSlug)
-        .maybeSingle();
-
-      if (announcement && !announcementError) {
-        return {
-          data: { ...announcement, _type: "announcements" as FeedType },
-          error: null,
-        };
+    if (UUID_RE.test(idOrSlug)) {
+      // The id alone doesn't say which feed it belongs to — ask all three.
+      const items = await Promise.all(FEED_KINDS.map((kind) => getFeedItem(kind, idOrSlug)));
+      const index = items.findIndex(Boolean);
+      if (index !== -1) {
+        return { data: { ...items[index]!, _type: FEED_KINDS[index] as FeedType }, error: null };
       }
-    }
-
-    // If no match found with space replacement, try with the original slug pattern
-    // This handles cases where the title might contain actual dashes
-    if (!isIdUUID) {
-      console.log(`[FEED_LOOKUP] No match for "${searchTerm}", trying fallback patterns...`);
-
-      // Try internships with original slug pattern
-      const { data: internshipFallback } = await supabaseAdmin
-        .from("internships")
-        .select(`*, company_profiles (id, company_name, logo_url, cover_image_url, location, website_url)`)
-        .ilike("title", `%${idOrSlug.replace(/-/g, '%')}%`)
-        .maybeSingle();
-
-      if (internshipFallback) {
-        return { data: { ...internshipFallback, _type: "internships" as FeedType }, error: null };
-      }
-
-      // Try programs with original slug pattern
-      const { data: programFallback } = await supabaseAdmin
-        .from("programs")
-        .select(`*, company_profiles (id, company_name, logo_url, cover_image_url, location, website_url)`)
-        .ilike("title", `%${idOrSlug.replace(/-/g, '%')}%`)
-        .maybeSingle();
-
-      if (programFallback) {
-        return { data: { ...programFallback, _type: "programs" as FeedType }, error: null };
-      }
-
-      // Try events with original slug pattern  
-      const { data: eventFallback } = await supabaseAdmin
-        .from("event")
-        .select(`*, company_profiles (id, company_name, logo_url, cover_image_url, location, website_url)`)
-        .ilike("title", `%${idOrSlug.replace(/-/g, '%')}%`)
-        .maybeSingle();
-
-      if (eventFallback) {
-        return { data: { ...eventFallback, _type: "events" as FeedType }, error: null };
+    } else {
+      const match = await findFeedItemBySlug(idOrSlug);
+      if (match) {
+        // List rows can be trimmed; fetch the full detail object.
+        const item = (await getFeedItem(match.kind, match.item.id)) ?? match.item;
+        return { data: { ...item, _type: match.kind as FeedType }, error: null };
       }
     }
 
     console.log(`[FEED_LOOKUP] No item found for slug/id: "${idOrSlug}"`);
-    return {
-      data: null,
-      error: "Item not found",
-    };
+    return { data: null, error: "Item not found" };
   } catch (error) {
     console.error("Error fetching feed item:", error);
-    return {
-      data: null,
-      error: "Failed to fetch item",
-    };
+    return { data: null, error: "Failed to fetch item" };
   }
-};
+});
 
-
-export const getFeedItemById = unstable_cache(
-  fetchFeedItemById,
-  ["feed-item-details"],
-  {
-    revalidate: 300,
-    tags: ["feed-item"],
-  }
-);
-
-/**
- * Get related programs from the same company
- */
-export const getCompanyPrograms = cache(
-  async (companyId: string, excludeId?: string) => {
+const relatedFetcher = (kind: FeedKind) =>
+  cache(async (companyId: string, excludeId?: string) => {
     try {
-      const supabase = await createSupabaseServerClient();
-
-      let query = supabase
-        .from("programs")
-        .select("id, title, company_id, created_at, program_picture_url, start_date, end_date")
-        .eq("company_id", companyId)
-        .order("created_at", { ascending: false })
-        .limit(6);
-
-      if (excludeId) {
-        query = query.neq("id", excludeId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error("Error fetching company programs:", error);
-        return { data: [], error: error.message };
-      }
-
-      return { data: data || [], error: null };
+      return { data: await listCompanyFeed(kind, companyId, excludeId), error: null };
     } catch (error) {
-      console.error("Error in getCompanyPrograms:", error);
-      return { data: [], error: "Failed to fetch programs" };
+      console.error(`Error fetching company ${kind}:`, error);
+      return { data: [], error: `Failed to fetch ${kind}` };
     }
-  }
-);
+  });
 
-/**
- * Get related internships from the same company
- */
-export const getCompanyInternships = cache(
-  async (companyId: string, excludeId?: string) => {
-    try {
-      const supabase = await createSupabaseServerClient();
-
-      let query = supabase
-        .from("internships")
-        .select("id, title,company_id, created_at, type")
-        .eq("company_id", companyId)
-        .order("created_at", { ascending: false })
-        .limit(6);
-
-      if (excludeId) {
-        query = query.neq("id", excludeId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error("Error fetching company internships:", error);
-        return { data: [], error: error.message };
-      }
-
-      return { data: data || [], error: null };
-    } catch (error) {
-      console.error("Error in getCompanyInternships:", error);
-      return { data: [], error: "Failed to fetch internships" };
-    }
-  }
-);
-
-/**
- * Get related events from the same company
- */
-export const getCompanyEvents = cache(
-  async (companyId: string, excludeId?: string) => {
-    try {
-      const supabase = await createSupabaseServerClient();
-
-      let query = supabase
-        .from("event")
-        .select("id, title,company_id, created_at, event_picture_url, start_date, end_date")
-        .eq("company_id", companyId)
-        .order("start_date", { ascending: false })
-        .limit(6);
-
-      if (excludeId) {
-        query = query.neq("id", excludeId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error("Error fetching company events:", error);
-        return { data: [], error: error.message };
-      }
-
-      return { data: data || [], error: null };
-    } catch (error) {
-      console.error("Error in getCompanyEvents:", error);
-      return { data: [], error: "Failed to fetch events" };
-    }
-  }
-);
+/** Related programs / internships / events from the same company */
+export const getCompanyPrograms = relatedFetcher("programs");
+export const getCompanyInternships = relatedFetcher("internships");
+export const getCompanyEvents = relatedFetcher("events");
 
 /**
  * Get all related items from the same company
  */
 export const getCompanyRelatedItems = cache(
   async (companyId: string, currentType: FeedType, currentId: string) => {
-    try {
-      const [programs, internships, events] = await Promise.all([
-        currentType !== "programs"
-          ? getCompanyPrograms(companyId)
-          : getCompanyPrograms(companyId, currentId),
-        currentType !== "internships"
-          ? getCompanyInternships(companyId)
-          : getCompanyInternships(companyId, currentId),
-        currentType !== "events"
-          ? getCompanyEvents(companyId)
-          : getCompanyEvents(companyId, currentId),
-      ]);
-
-      return {
-        programs: programs.data,
-        internships: internships.data,
-        events: events.data,
-      };
-    } catch (error) {
-      console.error("Error fetching related items:", error);
-      return {
-        programs: [],
-        internships: [],
-        events: [],
-      };
-    }
+    const exclude = (type: FeedType) => (currentType === type ? currentId : undefined);
+    const [programs, internships, events] = await Promise.all([
+      getCompanyPrograms(companyId, exclude("programs")),
+      getCompanyInternships(companyId, exclude("internships")),
+      getCompanyEvents(companyId, exclude("events")),
+    ]);
+    return { programs: programs.data, internships: internships.data, events: events.data };
   }
 );
 
 /**
- * Get the current user's application status for an opportunity
- * Returns the application status if the user has applied, null otherwise
+ * The current student's application for an opportunity (GET /applications).
+ * Returns hasApplied: false when signed out.
  */
 export async function getApplicationStatus(
   opportunityId: string,
@@ -347,90 +85,20 @@ export async function getApplicationStatus(
   paymentCompleted?: boolean;
   applicationId?: string;
 }> {
+  // Announcements can't be applied to.
+  if (opportunityType === "announcements") return { hasApplied: false, status: null };
+
   try {
-    const supabase = await createSupabaseServerClient();
-
-    // Get current user
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return { hasApplied: false, status: null };
-    }
-
-    // Get student profile
-    const { data: studentProfile, error: profileError } = await supabase
-      .from("student_profiles")
-      .select("id")
-      .eq("user_id", user.id)
-      .single();
-
-    if (profileError || !studentProfile) {
-      return { hasApplied: false, status: null };
-    }
-
-    // Map feed type to application type
-    const applicationTypeMap: Record<FeedType, string> = {
-      internships: "internship",
-      programs: "program",
-      events: "event",
+    const application = await findApplicationFor(opportunityId);
+    if (!application) return { hasApplied: false, status: null };
+    return {
+      hasApplied: true,
+      status: application.status,
+      paymentCompleted: application.payment_completed || false,
+      applicationId: application.id,
     };
-
-    const applicationType = applicationTypeMap[opportunityType];
-
-    // Map feed type to the correct foreign key column
-    const foreignKeyMap: Record<FeedType, string> = {
-      internships: "internship_id",
-      programs: "program_id",
-      events: "event_id",
-    };
-
-    const foreignKey = foreignKeyMap[opportunityType];
-
-    // Check legacy Applications table
-    const { data: application, error: applicationError } = await supabase
-      .from("Applications")
-      .select("id, status, payment_completed")
-      .eq("student_id", studentProfile.id)
-      .eq("application_type", applicationType)
-      .eq(foreignKey, opportunityId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (application && !applicationError) {
-      return {
-        hasApplied: true,
-        status: application.status,
-        paymentCompleted: application.payment_completed || false,
-        applicationId: application.id,
-      };
-    }
-
-    // If it's an internship, also check the new internship_applications table
-    if (opportunityType === "internships") {
-      const { data: sApp, error: sAppError } = await supabase
-        .from("internship_applications")
-        .select("id, status, is_paid_acknowledgement")
-        .eq("internship_id", opportunityId)
-        .eq("student_id", user.id)
-        .maybeSingle();
-
-      if (sApp && !sAppError) {
-        return {
-          hasApplied: true,
-          status: sApp.status,
-          paymentCompleted: sApp.is_paid_acknowledgement, // conceptually similar for acknowledgment
-          applicationId: sApp.id,
-        };
-      }
-    }
-
-    return { hasApplied: false, status: null };
-
   } catch (error) {
+    // 401 = signed out; anything else is logged and treated as "not applied".
     console.error("Error checking application status:", error);
     return { hasApplied: false, status: null };
   }

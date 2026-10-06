@@ -61,7 +61,7 @@ export const sendWhatsAppMessage = async (phone: string, text: string) => {
  */
 export const sendWhatsAppWelcomeInvite = async (candidateName: string, phone: string) => {
     const firstName = candidateName.split(" ")[0];
-    const groupLink = "https://chat.whatsapp.com/K0RflJDzxyKDIM2yuvzTTQ?mode=gi_t";
+    const groupLink = "https://chat.whatsapp.com/CsA3nNZcT5eDEIG9iQJ0RI";
 
     const message = `🚀 *Welcome to ZIGEX, ${firstName}!* \n\n` +
         `Your profile is now complete! We're excited to help you find your next career opportunity.\n\n` +

@@ -1,5 +1,6 @@
 // app/api/students/aggregated-data/route.ts
 import { NextResponse } from 'next/server';
+import { listFeed, type FeedKind } from '@/lib/api/services/feed';
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -118,35 +119,14 @@ interface NormalizedProgram {
  * @returns Array of data or empty array on error
  */
 async function fetchDataSource<T>(
-  url: string,
+  kind: FeedKind,
   dataType: string
 ): Promise<{ data: T[]; error?: string }> {
   try {
-    // Construct the full URL
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url}`;
-
-    console.log(`[Aggregator] Fetching ${dataType} from: ${fullUrl}`);
-
-    const response = await fetch(fullUrl, {
-      cache: 'no-store',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      next: { revalidate: 0 },
-    });
-
-    if (!response.ok) {
-      const errorMsg = `HTTP ${response.status}: ${response.statusText}`;
-      console.error(`[Aggregator] Failed to fetch ${dataType}:`, errorMsg);
-      return { data: [], error: errorMsg };
-    }
-
-    const data = await response.json();
-    const resultArray = Array.isArray(data) ? data : [];
-
-    console.log(`[Aggregator] Successfully fetched ${resultArray.length} ${dataType}`);
-    return { data: resultArray };
+    // Straight from the backend feed (GET /feed/{kind}) with the caller's session.
+    const data = (await listFeed(kind)) as unknown as T[];
+    console.log(`[Aggregator] Successfully fetched ${data.length} ${dataType}`);
+    return { data };
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error';
     console.error(`[Aggregator] Error fetching ${dataType}:`, errorMsg);
@@ -275,9 +255,9 @@ export async function GET(request: Request) {
   try {
     // Fetch all data sources concurrently for optimal performance
     const [internshipsResult, eventsResult, programsResult] = await Promise.all([
-      fetchDataSource<Internship>('/api/students/internships', 'internships'),
-      fetchDataSource<Event>('/api/students/events', 'events'),
-      fetchDataSource<Program>('/api/students/programs', 'programs'),
+      fetchDataSource<Internship>('internships', 'internships'),
+      fetchDataSource<Event>('events', 'events'),
+      fetchDataSource<Program>('programs', 'programs'),
     ]);
 
     // Normalize the data

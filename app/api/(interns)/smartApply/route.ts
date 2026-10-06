@@ -7,7 +7,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 interface SmartApplyRequest {
   companyName: string;
-  userProfile: { name: string; university: string; skills: string[]; };
+  userProfile: { name: string; university: string | null; skills: string[] | null; };
 }
 
 const createCoverLetterPrompt = (companyName: string, userProfile: any) => {
@@ -16,8 +16,8 @@ const createCoverLetterPrompt = (companyName: string, userProfile: any) => {
 
     **Student Profile:**
     - Name: ${userProfile.name}
-    - University: ${userProfile.university}
-    - Key Skills: ${userProfile.skills.join(', ')}
+    - University: ${userProfile.university || "their university"}
+    - Key Skills: ${(userProfile.skills || []).join(', ') || "a strong, adaptable skill set"}
 
     **Instructions:**
     1.  **Structure:** Follow a standard cover letter format: Introduction (state purpose), Body Paragraphs (connect 2-3 key skills to the company's potential needs), and a Conclusion (reiterate interest and provide a call to action).
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
       return new NextResponse('Company name and user profile are required', { status: 400 });
     }
 
-    console.log(`[SmartApply] Generating application for ${userProfile.name} at ${companyName}`);
+    // console.log(`[SmartApply] Generating application for ${userProfile.name} at ${companyName}`);
 
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
     const prompt = createCoverLetterPrompt(companyName, userProfile);

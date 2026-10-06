@@ -14,6 +14,8 @@ import { useFetchDetails } from "@/hooks/useFetchDetails";
 import { hasExpired } from "@/components/uiComponent/ExpiredOverlay";
 import { InternshipDetailsLoadingSkeleton } from "@/components/SinglePageLoadingSkeleton";
 import { normalizeImageSrc } from "@/lib/utils";
+import { fetchCompanyPrograms } from "@/lib/api/feed-client";
+import { listMyApplications } from "@/lib/api/applications-client";
 
 const MOCK_LIVE_IDS = ["p1", "e1", "i1"];
 
@@ -88,8 +90,7 @@ function useOtherPrograms(program: ProgramWithCompany | null) {
 
     async function fetchPrograms() {
       try {
-        const response = await fetch(`/api/public/companies/${companyId}/programs`);
-        const data = await response.json();
+        const data = { programs: await fetchCompanyPrograms(companyId) };
         setPrograms((data.programs || []).filter((p: any) => p.id !== program?.id));
       } catch (error) {
         console.error('Error fetching other programs:', error);
@@ -116,19 +117,19 @@ function useEnrollmentStatus(programId: string) {
   useEffect(() => {
     async function checkEnrollment() {
       try {
-        const res = await fetch("/api/students/enrolled-programs");
-        if (res.ok) {
-          const programs = await res.json();
-          const thisProgram = programs.find((p: any) => p.programId === programId);
-          if (thisProgram) {
-            setEnrollmentStatus({
-              isEnrolled: true,
-              status: thisProgram.status,
-              paymentCompleted: thisProgram.paymentCompleted || false,
-              applicationId: thisProgram.applicationId,
-              studentId: thisProgram.studentId,
-            });
-          }
+        // Enrolled = an accepted program application (GET /applications).
+        const applications = await listMyApplications("program", { withPostings: false });
+        const thisProgram = applications.find(
+          (app) => app.program_id === programId && app.status === "accepted"
+        );
+        if (thisProgram) {
+          setEnrollmentStatus({
+            isEnrolled: true,
+            status: thisProgram.status,
+            paymentCompleted: thisProgram.payment_completed || false,
+            applicationId: thisProgram.id,
+            studentId: thisProgram.student_id,
+          });
         }
       } catch (error) {
         console.error("Error checking enrollment:", error);
@@ -154,7 +155,7 @@ export default function ProgramDetailsClient({ id }: { id: string }) {
     data: program,
     isLoading,
     error,
-  } = useFetchDetails<ProgramWithCompany>("/api/students/programs", id);
+  } = useFetchDetails<ProgramWithCompany>("/feed/programs", id);
 
   const otherPrograms = useOtherPrograms(program);
   const initialEnrollmentStatus = useEnrollmentStatus(id);

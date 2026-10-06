@@ -81,7 +81,7 @@ export default function PostMonthProject({ user }: Props) {
         thumbnails: thumbs.map((t) => t.name),
       };
 
-      console.log("PostMonthProject submit", payload);
+      // console.log("PostMonthProject submit", payload);
 
       // Simulate API call
       await new Promise((r) => setTimeout(r, 1500));

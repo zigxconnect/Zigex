@@ -1,6 +1,7 @@
-import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { getSession } from "@/lib/api/auth";
+import { applicationErrorResponse, createApplication } from "@/lib/api/services/applications";
 
 const internshipApplicationSchema = z.object({
   internship_id: z.string().uuid(),
@@ -20,64 +21,73 @@ const internshipApplicationSchema = z.object({
   comment: z.string().optional(),
 });
 
+/** "3-6 months" → 6; "Flexible" → undefined */
+function durationMonths(duration: string): number | undefined {
+  const numbers = duration.match(/\d+/g)?.map(Number);
+  return numbers?.length ? Math.max(...numbers) : undefined;
+}
+
+/**
+ * Paid-internship application form → POST /applications.
+ *
+ * The form's extra answers are sent as real fields (spec'd in
+ * docs/backend-missing-endpoints.md) and also as labelled lines in
+ * `comments`, so the company sees them even before the backend stores them.
+ */
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient();
-
-    // Auth Check
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    if (!(await getSession())) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-
-    // Validate
-    const validationResult = internshipApplicationSchema.safeParse(body);
+    const validationResult = internshipApplicationSchema.safeParse(await request.json());
     if (!validationResult.success) {
       return NextResponse.json(
         { error: "Validation Error", details: validationResult.error.flatten() },
         { status: 400 }
       );
     }
+    const form = validationResult.data;
 
-    const { internship_id } = validationResult.data;
+    const comments = [
+      `Full name: ${form.full_name}`,
+      `School: ${form.school} (${form.school_level})`,
+      `Date of birth: ${form.date_of_birth}`,
+      `Address: ${form.address}`,
+      `Domain: ${form.domain}`,
+      `Preferred duration: ${form.duration}`,
+      `Experience level: ${form.experience_level}`,
+      `Reason for applying: ${form.reason}`,
+      "Acknowledged this is a paid internship: yes",
+      form.comment ? `Comment: ${form.comment}` : null,
+    ]
+      .filter(Boolean)
+      .join("\n");
 
-    // Check for existing application
-    const { data: existingApp, error: checkError } = await supabase
-      .from("internship_applications")
-      .select("id")
-      .eq("internship_id", internship_id)
-      .eq("student_id", user.id)
-      .maybeSingle();
-
-    if (checkError) {
-      console.error("Error checking for existing application:", checkError);
+    try {
+      const application = await createApplication({
+        application_type: "internship",
+        internship_id: form.internship_id,
+        department: form.domain,
+        duration_months: durationMonths(form.duration),
+        expectations: form.expectations,
+        school: form.school,
+        school_level: form.school_level,
+        date_of_birth: form.date_of_birth,
+        address: form.address,
+        domain: form.domain,
+        duration: form.duration,
+        experience_level: form.experience_level,
+        reason: form.reason,
+        is_paid_acknowledgement: form.is_paid_acknowledgement,
+        comments,
+      });
+      return NextResponse.json(application, { status: 201 });
+    } catch (error) {
+      const { error: message, status } = applicationErrorResponse(error, "Failed to submit internship application.");
+      // Callers show this message as-is; the old route answered duplicates with 400.
+      return NextResponse.json({ error: message }, { status: status === 409 ? 400 : status });
     }
-
-    if (existingApp) {
-      return NextResponse.json(
-        { error: "You have already applied for this internship." },
-        { status: 400 }
-      );
-    }
-
-
-    const { data, error } = await supabase
-      .from("internship_applications")
-      .insert({
-        ...validationResult.data,
-        student_id: user.id
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Submission Error:", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json(data, { status: 201 });
   } catch (error: any) {
     console.error("Internal Error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

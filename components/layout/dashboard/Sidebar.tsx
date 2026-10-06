@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 
 import {
   Newspaper,
@@ -17,13 +19,20 @@ import {
   LogOut,
   MessageSquare,
   ShieldCheck,
+  LayoutDashboard,
+  Search,
+  ChevronRight,
+  Settings,
+  MoreVertical,
 } from "lucide-react";
 import { AiOutlineWechat } from "react-icons/ai";
 import { Button } from "@/components/ui/button";
 import AnimatedNavLink from "@/components/customButtons/AnimatedNavLink";
 import NameInitials from "@/components/NameInitials";
 import { slugifyUsername, cn } from "@/lib/utils";
-// import AnimatedNavLink from "@/components/sections/dashboard/AnimatedNavLink";
+import { Logo } from "@/components/layout/Logo";
+import { api } from "@/lib/api/browser-client";
+import { ADMIN_APP_URL } from "@/lib/app-urls";
 
 interface SidebarProps {
   user: any;
@@ -33,55 +42,6 @@ interface SidebarProps {
   showUploadLive?: boolean;
 }
 
-// // Notifications nav item
-// const notificationsItem = {
-//   href: "/notifications",
-//   icon: Bell,
-//   label: "Notifications",
-//   matchPaths: ["/notifications", "/notifications"],
-// };
-
-// Regular navigation items
-// const navItems = [
-//   { href: "/feed", icon: IceCreamCone, label: "Browse" },
-//   {
-//     href: "/dashboard/student",
-//     icon: Users,
-//     label: "zigx",
-//     matchPaths: ["/dashboard/student/"],
-//   },
-//    {
-//     href: "/dashboard/student/id",
-//     icon: PersonStandingIcon,
-//     label: "For Me",
-//     matchPaths: ["/dashboard/student/id"],
-//   },
-//   {
-//     href: "/dashboard/track-progress",
-//     icon: TrendingUp,
-//     label: "Track Progress",
-//   },
-//   {
-//     href: "/dashboard/blog",
-//     icon: NewspaperIcon,
-//     label: "News",
-//   },
-
-
-//   //  {
-//   //   href: "/dashboard/track-progress",
-//   //   icon: PersonStanding,
-//   //   label: "Me",
-//   // },
-// ];
-
-// Special navigation item for AI chat
-const aiChatItem = {
-  href: "/dashboard/zigagent-ai",
-  icon: AiOutlineWechat,
-  label: "Chat with Agent ZAi",
-};
-
 export const Sidebar: React.FC<SidebarProps> = ({
   isOpen = false,
   onClose,
@@ -90,87 +50,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   showUploadLive = false,
 }) => {
   const pathname = usePathname();
-  const [unreadCount, setUnreadCount] = useState<number>(0);
-  const categories = [
-    {
-      title: "Discover",
-      items: [
-        {
-          href: "/feed",
-          icon: Globe,
-          label: "Browse",
-          matchPaths: ["/feed", "/feed/", "/programs/"],
-          excludePaths: ["/feed/projects"]
-        },
-        {
-          href: "/dashboard/projects",
-          icon: Briefcase,
-          label: "Projects",
-          matchPaths: ["/dashboard/projects", "/dashboard/projects/", "/feed/projects/"],
-        },
-        {
-          href: "/dashboard/blog",
-          icon: Newspaper,
-          label: "News",
-          matchPaths: ["/dashboard/blog", "/dashboard/blog/"],
-        },
-      ]
-    },
-    {
-      title: "Collaboration",
-      items: [
-        {
-          href: "/dashboard/student",
-          icon: Users,
-          label: "ZigX",
-          matchPaths: ["/dashboard/student", "/dashboard/student/"],
-        },
-        {
-          href: "/dashboard/community",
-          icon: MessageSquare,
-          label: "Community",
-          matchPaths: ["/dashboard/community", "/dashboard/community/"],
-        },
-      ]
-    },
-    {
-      title: "Workspace",
-      items: [
-        ...(user?.permissions?.isIntern ? [{
-          href: "/intern/workspace",
-          icon: Briefcase,
-          label: "Intern Workspace",
-          matchPaths: ["/intern/workspace"],
-        }] : []),
-        ...(user?.permissions?.isSupervisor ? [{
-          href: "/supervisor",
-          icon: ShieldCheck,
-          label: "Supervisor Hub",
-          matchPaths: ["/supervisor"],
-        }] : []),
-      ]
-    },
-    {
-      title: "Account",
-      items: [
-        {
-          href: `/profile/${slugifyUsername(user?.profile?.username) || "username"}`,
-          icon: User,
-          label: "My Profile",
-          matchPaths: ["/profile/"],
-        },
-      ]
-    }
-  ];
-
-  if (showUploadLive) {
-    categories[0].items.push({
-      href: "/upload-live",
-      icon: Zap,
-      label: "Upload Live",
-      matchPaths: ["/upload-live", "/upload-live/"],
-    });
-  }
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   // Extract user data with fallbacks
   const userName = user?.name || user?.profile?.name || "Guest User";
@@ -178,27 +58,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const userAvatar =
     user?.avatar ||
     user?.profile?.avatar_url ||
-    user?.avatarUrl
-  const isOnline = user?.isOnline ?? true;
-  const applicationsCount =
-    user?.applicationsCount || user?.stats?.applications || 0;
-  const profileViews = user?.profileViews || user?.stats?.profileViews || 0;
+    user?.avatarUrl;
+
+  const username = user?.profile?.username || user?.username || "";
+  const profileLink = username ? `/profile/${slugifyUsername(username)}` : "/profile";
 
   const handleSignOut = async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
+      await api.post("/auth/logout").catch(() => {});
       window.location.href = "/";
     } catch (error) {
       console.error("Logout failed:", error);
-      alert("Logout failed. Please try again.");
     }
   };
 
-  const isRouteActive = (href: string, matchPaths?: string[], excludePaths?: string[]) => {
-    // Remove trailing slashes for comparison but preserve leading slash
+  const isRouteActive = (href: string, matchPaths?: string[]) => {
     const normalize = (p: string | undefined) => {
       if (!p) return "";
-      return p.replace(/\/+$/, ""); // Remove trailing slashes only
+      return p.replace(/\/+$/, "");
     };
 
     const path = normalize(pathname);
@@ -206,217 +83,231 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
     if (!target) return false;
 
-    // Check if path matches any exclude patterns (with prefix matching for all)
-    if (excludePaths && excludePaths.length > 0) {
-      const isExcluded = excludePaths.some((p: string) => {
-        const normalized = normalize(p);
-        // Always do prefix matching for excludePaths
-        return path === normalized || path.startsWith(normalized + "/");
-      });
-      if (isExcluded) return false;
-    }
-
-    // Check explicit matchPaths first
     if (matchPaths && matchPaths.length > 0) {
       return matchPaths.some((p: string) => {
-        // Check if original matchPath ends with "/" (prefix match)
-        if (p.endsWith("/")) {
-          const normalized = normalize(p);
-          // Prefix match: /feed matches /feed/123, /feed/projects/123, etc.
-          return path === normalized || path.startsWith(normalized + "/");
-        } else {
-          // Exact match
-          return path === normalize(p);
-        }
+        const normalized = normalize(p);
+        return path === normalized || path.startsWith(normalized + "/");
       });
     }
 
-    // Default: exact match only (no prefix matching)
-    return path === target;
+    return path === target || (target !== "" && path.startsWith(target + "/"));
   };
 
-  // Handle nav item click
   const handleNavClick = () => {
     if (window.innerWidth < 1024 && onClose) {
       onClose();
     }
   };
 
-  // Fetch unread notifications count and poll every 30s
-  // useEffect(() => {
-  //   let mounted = true;
-  //   const fetchCount = async () => {
-  //     try {
-  //       const res = await fetch('/api/students/notifications/unread-count');
-  //       const data = await res.json();
-  //       if (mounted) setUnreadCount(data.unreadCount || 0);
-  //     } catch (e) {
-  //       console.error('Failed to fetch unread count', e);
-  //     }
-  //   };
-  //   fetchCount();
-  //   const iv = setInterval(fetchCount, 30000);
-  //   return () => { mounted = false; clearInterval(iv); };
-  // }, []);
-
   return (
     <>
-      {/* Custom Scrollbar Styles */}
-
-
-      {/* Sidebar */}
+      {/* Sidebar Container */}
       <aside
-        className={`
-          fixed top-20 lg:top-16 left-0 h-[calc(100vh-5rem)] lg:h-[calc(100vh-4rem)] w-80 bg-sidebar border-r border-sidebar-border shadow-lg z-50
-          transform transition-transform duration-300 ease-in-out
-          ${isOpen ? "translate-x-0" : "-translate-x-full"}
-          lg:translate-x-0 flex flex-col
-        `}
+        className={cn(
+          "fixed top-0 left-0 h-screen w-72 bg-white dark:bg-slate-950 border-r border-slate-100 dark:border-slate-800/50 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] z-50 flex flex-col",
+          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+          "shadow-[20px_0_40px_-20px_rgba(0,0,0,0.05)] dark:shadow-none"
+        )}
       >
-        {/* Header with User Profile - Fixed at top */}
-        <div className="flex-shrink-0 p-4 lg:p-6 border-b border-sidebar-border bg-sidebar-accent/20">
-          <div className="flex items-center gap-4">
-            <div className="relative w-16 h-16 rounded-full overflow-hidden border-3 border-card shadow-lg flex-shrink-0">
-              <Image
-                src={userAvatar || "https://i.ibb.co/8n8d37H4/white-logo-4x.png"}
-                alt={`${userName}'s Avatar`}
-                width={64}
-                height={64}
-                className={cn(
-                  "w-full h-full object-cover",
-                  !userAvatar && "bg-gradient-to-br from-blue-600 to-indigo-700 p-3"
-                )}
-                priority
+        {/* Header/Logo Section */}
+        <div className="p-6 pb-2 flex items-center justify-between">
+          <Link href="/feed" className="flex items-center gap-2 group">
+            <div className="relative w-10 h-10 transition-transform duration-500 group-hover:rotate-12">
+              <Logo className="w-full h-full" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-lg font-black tracking-tighter text-slate-900 dark:text-white leading-none">
+                ZIGEX
+              </span>
+              <span className="text-[10px] font-bold text-[#155DFC] tracking-[0.2em] uppercase leading-none mt-1">
+                Platform
+              </span>
+            </div>
+          </Link>
+
+          <button
+            onClick={onClose}
+            className="lg:hidden p-2 rounded-full hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-400 transition-colors"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Search Bar - Sleek Version */}
+        <div className="px-6 py-4">
+          <div className="relative group">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#155DFC] transition-colors" size={16} />
+            <input
+              type="text"
+              placeholder="Search anything..."
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-transparent focus:border-[#155DFC]/20 rounded-2xl text-xs font-bold outline-none transition-all placeholder:text-slate-400"
+            />
+          </div>
+        </div>
+
+        {/* Navigation Area */}
+        <div className="flex-1 overflow-y-auto px-4 py-2 custom-scrollbar space-y-8">
+          {/* Main Group */}
+          <div className="space-y-2">
+            <h3 className="px-4 text-[10px] font-black tracking-[0.15em] text-slate-300 dark:text-slate-600 uppercase">
+              Discover
+            </h3>
+            <div className="space-y-1">
+              <AnimatedNavLink
+                href="/feed"
+                icon={Globe}
+                label="Explore"
+                isActive={isRouteActive("/feed")}
+                onClick={handleNavClick}
+              />
+              <AnimatedNavLink
+                href="/dashboard/programs"
+                icon={Briefcase}
+                label="Programs"
+                isActive={isRouteActive("/dashboard/programs")}
+                onClick={handleNavClick}
+              />
+              <AnimatedNavLink
+                href="/dashboard/blog"
+                icon={Newspaper}
+                label="Announcements"
+                isActive={isRouteActive("/dashboard/blog")}
+                onClick={handleNavClick}
               />
             </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-sidebar-foreground truncate text-base">
-                {userName}
-              </h3>
-              <p className="text-sm text-muted-foreground">{userRole}</p>
-              <div className="flex items-center gap-2 mt-1">
-                <div
-                  className={`w-2 h-2 rounded-full ${isOnline ? "bg-success" : "bg-muted"
-                    }`}
-                />
-                <span
-                  className={`text-xs font-medium ${isOnline ? "text-success" : "text-muted-foreground"
-                    }`}
-                >
-                  {isOnline ? "Online" : "Offline"}
-                </span>
-              </div>
-            </div>
-            {/* Mobile Close Button */}
-            <button
-              onClick={onClose}
-              className="lg:hidden p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors flex-shrink-0"
-            >
-              <X size={20} />
-            </button>
           </div>
-        </div>
 
-        {/* Main Navigation Area */}
-        <div className="flex-1 flex flex-col min-h-0 bg-sidebar">
-          {/* Regular Navigation Items */}
-          <div className="flex-1 px-4 py-4 overflow-y-auto custom-scrollbar">
-            <div className="space-y-6">
-              {categories.map((category) => (
-                <div key={category.title} className="mb-2">
-                  <h4 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-3 px-3">
-                    {category.title}
-                  </h4>
-                  <div className="space-y-1">
-                    {category.items.map((item) => (
-                      <AnimatedNavLink
-                        key={item.href}
-                        href={item.href}
-                        icon={item.icon}
-                        label={item.label}
-                        isActive={isRouteActive(item.href, item.matchPaths, item.excludePaths)}
-                        onClick={handleNavClick}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))}
+          {/* Network Group */}
+          <div className="space-y-2">
+            <h3 className="px-4 text-[10px] font-black tracking-[0.15em] text-slate-300 dark:text-slate-600 uppercase">
+              Network
+            </h3>
+            <div className="space-y-1">
+              <AnimatedNavLink
+                href="/dashboard/student"
+                icon={Users}
+                label="Network"
+                isActive={isRouteActive("/dashboard/student")}
+                onClick={handleNavClick}
+              />
+              <AnimatedNavLink
+                href="/dashboard/community"
+                icon={MessageSquare}
+                label="Communities"
+                isActive={isRouteActive("/dashboard/community")}
+                onClick={handleNavClick}
+              />
+            </div>
+          </div>
 
-              {/* AI Assistant Section - Always Visible */}
-              {/* AI Assistant Section */}
-              <div className="mb-4">
-                <h4 className="text-xs font-semibold text-primary uppercase tracking-wider mb-3 px-1">
-                  AI Assistant
-                </h4>
+          {/* Workspace Group */}
+          <div className="space-y-2">
+            <h3 className="px-4 text-[10px] font-black tracking-[0.15em] text-slate-300 dark:text-slate-600 uppercase">
+              Workspace
+            </h3>
+            <div className="space-y-1">
+              {user?.permissions?.isIntern && (
                 <AnimatedNavLink
-                  href={aiChatItem.href}
-                  icon={aiChatItem.icon}
-                  label={aiChatItem.label}
-                  isActive={isRouteActive(aiChatItem.href)}
+                  href="/student/workspace"
+                  icon={LayoutDashboard}
+                  label="My Workspace"
+                  isActive={isRouteActive("/student/workspace", ["/student/workspace", "/intern/workspace"])}
                   onClick={handleNavClick}
-                  isSpecial={true}
-                  badge="Beta"
                 />
-              </div>
-
-              {/* Quick Stats Card - Desktop Only */}
-              <div className="hidden lg:block mt-6 p-4 bg-sidebar-accent/10 rounded-xl border border-sidebar-border">
-                <h4 className="font-semibold text-primary mb-3 text-sm flex items-center gap-2">
-                  <TrendingUp size={16} />
-                  Quick Stats
-                </h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Applications</span>
-                    <span className="font-bold text-primary bg-primary/10 px-2 py-1 rounded-full text-xs">
-                      {applicationsCount}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Profile Views</span>
-                    <span className="font-bold text-primary bg-primary/10 px-2 py-1 rounded-full text-xs">
-                      {profileViews}
-                    </span>
-                  </div>
-                </div>
-              </div>
+              )}
+              {user?.permissions?.isSupervisor && (
+                <AnimatedNavLink
+                  href={`${ADMIN_APP_URL}/supervisor`}
+                  icon={ShieldCheck}
+                  label="Mentorship"
+                  isActive={isRouteActive("/supervisor")}
+                  onClick={handleNavClick}
+                />
+              )}
+              <AnimatedNavLink
+                href="/dashboard/zigagent-ai/docs"
+                icon={AiOutlineWechat}
+                label="Zila AI"
+                isActive={isRouteActive("/dashboard/zigagent-ai")}
+                isSpecial
+                onClick={handleNavClick}
+              />
             </div>
           </div>
 
-          {/* Sign Out Button - Always Visible at Bottom */}
-          <div className="flex-shrink-0 p-4 border-t border-sidebar-border bg-sidebar/50">
-            <Button
-              variant="outline"
-              className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10 hover:border-destructive/30 border-sidebar-border transition-all duration-200 py-3 font-medium"
-              onClick={handleSignOut}
-            >
-              <div className="p-1.5 rounded-lg bg-muted hover:bg-destructive/20 transition-colors flex-shrink-0">
-                <LogOut
-                  size={16}
-                  className="text-muted-foreground hover:text-destructive"
-                />
-              </div>
-              <span>Sign Out</span>
-            </Button>
-          </div>
+          {/* Become a Superstar Promo Card */}
+
         </div>
 
-        {/* Mobile Stats - Show on mobile only */}
-        <div className="lg:hidden flex-shrink-0 p-4 bg-sidebar-accent/20 border-t border-sidebar-border">
-          <div className="flex justify-around text-center">
-            <div>
-              <div className="font-bold text-primary text-lg">
-                {applicationsCount}
+        {/* Bottom User Profile Section */}
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800/50 bg-white dark:bg-slate-950">
+          <div className="relative">
+            <button
+              onClick={() => setIsProfileOpen(!isProfileOpen)}
+              className="w-full flex items-center gap-3 p-2 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-all duration-300 group"
+            >
+              <div className="relative shrink-0">
+                <div className="w-11 h-11 rounded-full overflow-hidden ring-2 ring-slate-100 dark:ring-slate-800 group-hover:ring-[#155DFC]/30 transition-all">
+                  {userAvatar ? (
+                    <Image src={userAvatar} alt={userName} fill className="object-cover" />
+                  ) : (
+                    <NameInitials name={userName} />
+                  )}
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-950 shadow-sm" />
               </div>
-              <div className="text-xs text-muted-foreground">Applications</div>
-            </div>
-            <div className="w-px bg-border"></div>
-            <div>
-              <div className="font-bold text-secondary text-lg">
-                {profileViews}
+
+              <div className="flex-1 text-left min-w-0">
+                <p className="text-xs font-black text-slate-900 dark:text-white truncate">
+                  {userName}
+                </p>
+                <p className="text-[10px] font-bold text-slate-400 truncate uppercase tracking-wider">
+                  {userRole}
+                </p>
               </div>
-              <div className="text-xs text-muted-foreground">Profile Views</div>
-            </div>
+
+              <MoreVertical size={16} className="text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" />
+            </button>
+
+            {/* Profile Menu Popup */}
+            <AnimatePresence>
+              {isProfileOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setIsProfileOpen(false)} />
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="absolute bottom-full left-0 w-full mb-2 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl shadow-2xl shadow-slate-200/50 dark:shadow-none p-2 z-50"
+                  >
+                    <Link
+                      href={profileLink}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group"
+                      onClick={() => setIsProfileOpen(false)}
+                    >
+                      <User size={16} className="text-slate-400 group-hover:text-[#155DFC]" />
+                      <span className="text-xs font-bold text-slate-600 dark:text-slate-300">View Profile</span>
+                    </Link>
+                    <Link
+                      href="/profile-settings"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group"
+                      onClick={() => setIsProfileOpen(false)}
+                    >
+                      <Settings size={16} className="text-slate-400 group-hover:text-[#155DFC]" />
+                      <span className="text-xs font-bold text-slate-600 dark:text-slate-300">Settings</span>
+                    </Link>
+                    <div className="h-px bg-slate-50 dark:bg-slate-800 my-1 mx-2" />
+                    <button
+                      onClick={handleSignOut}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 transition-colors group"
+                    >
+                      <LogOut size={16} />
+                      <span className="text-xs font-bold">Sign Out</span>
+                    </button>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </aside>

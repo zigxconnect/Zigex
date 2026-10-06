@@ -1,10 +1,11 @@
 // lib/actions/feed.action.ts
 "use server";
 
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
-import { cookies } from "next/headers";
 import { cache } from "react";
-import { getAnnouncementsForStudent } from "../announcement.actions";
+import { listFeed } from "@/lib/api/services/feed";
+import { listCompanies } from "@/lib/api/services/companies";
+import { serverApi } from "@/lib/api/server-client";
+import { whenAvailable } from "@/lib/api/errors";
 
 // Types
 export type Internship = {
@@ -59,192 +60,70 @@ export type Program = {
   isOpen: boolean;
 };
 
-/**
- * Create Supabase client - uses cookies()
- * This function is NOT cached
- */
-async function createClient() {
-  const cookieStore = await cookies();
-
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          try {
-            cookieStore.set({ name, value, ...options });
-          } catch (error) {
-            // Cookie errors handled silently in Server Actions
-          }
-        },
-        remove(name: string, options: CookieOptions) {
-          try {
-            cookieStore.set({ name, value: "", ...options });
-          } catch (error) {
-            // Cookie errors handled silently in Server Actions
-          }
-        },
-      },
-    }
-  );
-}
+const byNewest = (a: { created_at: string }, b: { created_at: string }) =>
+  new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
 
 /**
- * Get internships with React cache
- * Deduplicates requests in the same render pass
+ * Get visible internships (GET /feed/internships)
  */
 export const getInternships = cache(async (searchQuery?: string) => {
   try {
-    const supabase = await createClient();
-
-    let internships;
-    let error;
-
-    if (searchQuery) {
-      const { data, error: rpcError } = await supabase.rpc(
-        "search_internships",
-        {
-          search_term: searchQuery,
-        }
-      );
-      internships = data;
-      error = rpcError;
-    } else {
-      const { data, error: fetchError } = await supabase
-        .from("internships")
-        .select(
-          `
-          id,
-          title,
-          location,
-          type,
-          category,
-          description,
-          created_at,
-          cover_image_url,
-          company: company_profiles (
-            id,
-            company_name,
-            logo_url,
-            cover_image_url
-          )
-        `
-        )
-        .order("created_at", { ascending: false });
-      internships = data;
-      error = fetchError;
-    }
-
-    if (error) {
-      console.error("Error fetching internships:", error);
-      return { data: [], error: "Failed to fetch internships" };
-    }
-
-    return { data: internships || [], error: null };
-  } catch (error) {
+    const data = (await listFeed("internships", searchQuery)) as Internship[];
+    return { data: data.sort(byNewest), error: null };
+  } catch (error: any) {
     console.error("Internships fetch error:", error);
-    return { data: [], error: "Failed to fetch internships" };
+    return { data: [], error: error.message || "Failed to fetch internships" };
   }
 });
 
 /**
- * Get events with React cache
+ * Get visible events (GET /feed/events)
  */
 export const getEvents = cache(async (searchQuery?: string) => {
   try {
-    const supabase = await createClient();
-
-    let query = supabase
-      .from("event")
-      .select("*, company:company_profiles (id, company_name, logo_url)")
-      .order("created_at", { ascending: false });
-
-    if (searchQuery) {
-      query = query.or(
-        `title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`
-      );
-    }
-
-    const { data: events, error } = await query;
-
-    if (error) {
-      console.error("Error fetching events:", error);
-      return { data: [], error: "Failed to fetch events" };
-    }
-
-    return { data: events || [], error: null };
-  } catch (error) {
+    const data = (await listFeed("events", searchQuery)) as Event[];
+    return { data: data.sort(byNewest), error: null };
+  } catch (error: any) {
     console.error("Events fetch error:", error);
-    return { data: [], error: "Failed to fetch events" };
+    return { data: [], error: error.message || "Failed to fetch events" };
   }
 });
 
 /**
- * MODIFIED: Get programs with React cache, status checks, and custom sorting
+ * Get visible programs (GET /feed/programs)
+ * "Weekend of Code" is pinned first, then open programs, then closed ones.
  */
 export const getPrograms = cache(async (searchQuery?: string) => {
   try {
-    const supabase = await createClient();
-
-    let query = supabase
-      .from("programs")
-      .select("*, company:company_profiles (id, company_name, logo_url)");
-    // REMOVED: .order("created_at", { ascending: false });
-    // Sorting will be handled in the code now.
-
-    if (searchQuery) {
-      query = query.or(
-        `title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`
-      );
-    }
-
-    const { data: programs, error } = await query;
-
-    if (error) {
-      console.error("Error fetching programs:", error);
-      return { data: [], error: "Failed to fetch programs" };
-    }
-
     const now = new Date();
     const weekendOfCodeProgramTitle = "Weekend of Code";
 
-    // 1. Determine if each program is open or closed
-    const programsWithStatus = (programs || []).map((program) => ({
+    const programs = ((await listFeed("programs", searchQuery)) as Program[]).map((program) => ({
       ...program,
-      isOpen: program.end_date ? new Date(program.end_date) > now : true, // Assumes open if no end date
+      isOpen: program.end_date ? new Date(program.end_date) > now : true,
     }));
 
-    // 2. Separate the "Weekend of Code" program
-    let pinnedProgram: Program | null = null;
-    const otherPrograms: Program[] = [];
+    const pinnedProgram = programs.find((p) => p.title === weekendOfCodeProgramTitle);
+    const otherPrograms = programs
+      .filter((p) => p !== pinnedProgram)
+      .sort((a, b) => Number(b.isOpen) - Number(a.isOpen) || byNewest(a, b));
 
-    programsWithStatus.forEach((program) => {
-      if (program.title === weekendOfCodeProgramTitle) {
-        pinnedProgram = program as Program;
-      } else {
-        otherPrograms.push(program as Program);
-      }
-    });
-
-    // 3. Sort the remaining programs: open first, then closed
-    otherPrograms.sort((a, b) => {
-      if (a.isOpen && !b.isOpen) return -1; // a (open) comes before b (closed)
-      if (!a.isOpen && b.isOpen) return 1;  // b (open) comes before a (closed)
-      // Optional: if both are open or both are closed, sort by creation date
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-    });
-
-    // 4. Combine the lists: pinned program first, then the sorted programs
-    const sortedPrograms = pinnedProgram ? [pinnedProgram, ...otherPrograms] : otherPrograms;
-
-    return { data: sortedPrograms, error: null };
-  } catch (error) {
+    return { data: pinnedProgram ? [pinnedProgram, ...otherPrograms] : otherPrograms, error: null };
+  } catch (error: any) {
     console.error("Programs fetch error:", error);
-    return { data: [], error: "Failed to fetch programs" };
+    return { data: [], error: error.message || "Failed to fetch programs" };
+  }
+});
+
+/**
+ * Company directory for the feed sidebar (GET /companies; empty until deployed).
+ */
+export const getCompanyDirectory = cache(async () => {
+  try {
+    return (await listCompanies()) as { id: string; company_name: string; logo_url: string; email?: string; website_url?: string }[];
+  } catch (error) {
+    console.error("Company directory fetch error:", error);
+    return [];
   }
 });
 
@@ -253,39 +132,56 @@ export const getPrograms = cache(async (searchQuery?: string) => {
  * This is the main function to use in your components
  * Uses React cache to deduplicate requests
  */
-export const getAllFeedData = cache(async (searchQuery?: string, studentId?: string) => {
+export const getAllFeedData = cache(async (searchQuery?: string, _studentId?: string) => {
+  const [internshipsResult, eventsResult, programsResult, companies] = await Promise.all([
+    getInternships(searchQuery),
+    getEvents(searchQuery),
+    getPrograms(searchQuery),
+    getCompanyDirectory(),
+  ]);
+
+  const errors = [internshipsResult.error, eventsResult.error, programsResult.error].filter(Boolean);
+
+  return {
+    internships: internshipsResult.data,
+    events: eventsResult.data,
+    programs: programsResult.data,
+    // TODO(backend): announcements have no endpoint yet (see "Missing endpoints: Intern workspace").
+    announcements: [] as any[],
+    companies,
+    error: errors.length > 0 ? errors.join(", ") : null,
+  };
+});
+
+const FALLBACK_STATS = {
+  activePrograms: "12+",
+  students: "2.5K+",
+  satisfactionRate: "95%",
+  partnerCompanies: "50+",
+};
+
+/**
+ * Landing-page statistics (GET /stats/platform, public). Static fallback
+ * until the endpoint is deployed or if it fails.
+ */
+export const getPlatformStats = async () => {
   try {
-    // Fetch all data in parallel for better performance
-    const [internshipsResult, eventsResult, programsResult, announcements] =
-      await Promise.all([
-        getInternships(searchQuery),
-        getEvents(searchQuery),
-        getPrograms(searchQuery),
-        studentId ? getAnnouncementsForStudent(studentId) : Promise.resolve([])
-      ]);
-
-    // Collect any errors
-    const errors = [
-      internshipsResult.error,
-      eventsResult.error,
-      programsResult.error,
-    ].filter(Boolean);
-
+    const stats = await whenAvailable(
+      async () =>
+        (await serverApi.get<{ activeOpportunities: number; students: number; companies: number; satisfactionRate: number }>(
+          "/stats/platform"
+        )).data,
+      null
+    );
+    if (!stats) return FALLBACK_STATS;
     return {
-      internships: internshipsResult.data,
-      events: eventsResult.data,
-      programs: programsResult.data,
-      announcements: announcements || [],
-      error: errors.length > 0 ? errors.join(", ") : null,
+      activePrograms: `${stats.activeOpportunities}+`,
+      students: stats.students > 1000 ? `${(stats.students / 1000).toFixed(1)}K+` : `${stats.students}+`,
+      satisfactionRate: `${Math.round(stats.satisfactionRate)}%`,
+      partnerCompanies: `${stats.companies}+`,
     };
   } catch (error) {
-    console.error("Error in getAllFeedData:", error);
-    return {
-      internships: [],
-      events: [],
-      programs: [],
-      announcements: [],
-      error: "Failed to fetch feed data",
-    };
+    console.error("Error fetching platform stats:", error);
+    return FALLBACK_STATS;
   }
-});
+};

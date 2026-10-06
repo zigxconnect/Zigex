@@ -98,10 +98,7 @@ export function ApplicationForm({ type, id, title, fields, onSubmit }: Applicati
                 required={field.required}
                 placeholder={field.placeholder}
                 rows={4}
-                className="w-full rounded-xl border border-border bg-card shadow-sm 
-                  focus:border-primary focus:ring-2 focus:ring-primary/20 
-                  transition-all duration-200 resize-none px-4 py-3
-                  placeholder:text-muted-foreground/50 font-medium"
+                className="w-full rounded-xl border border-slate-200/70 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-[#155DFC] focus:ring-4 focus:ring-[#155DFC]/20 transition-all duration-300 resize-none px-4 py-3.5 placeholder:text-slate-400 font-bold text-slate-900 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] hover:shadow-[0_4px_12px_-3px_rgba(6,81,237,0.1)] focus:shadow-[0_4px_15px_-3px_rgba(6,81,237,0.15)] outline-none"
               />
             ) : field.type === "select" ? (
               <div className="relative">
@@ -109,10 +106,7 @@ export function ApplicationForm({ type, id, title, fields, onSubmit }: Applicati
                   id={field.name}
                   name={field.name}
                   required={field.required}
-                  className="w-full rounded-xl border border-border bg-card shadow-sm 
-                    focus:border-primary focus:ring-2 focus:ring-primary/20 
-                    transition-all duration-200 pl-4 pr-10 py-3 appearance-none
-                    cursor-pointer text-foreground font-medium"
+                  className="w-full rounded-xl border border-slate-200/70 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-[#155DFC] focus:ring-4 focus:ring-[#155DFC]/20 transition-all duration-300 pl-4 pr-10 py-3.5 appearance-none cursor-pointer text-slate-900 font-bold shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] hover:shadow-[0_4px_12px_-3px_rgba(6,81,237,0.1)] focus:shadow-[0_4px_15px_-3px_rgba(6,81,237,0.15)] outline-none"
                 >
                   <option value="">Select {field.label}</option>
                   {field.options?.map((option) => (

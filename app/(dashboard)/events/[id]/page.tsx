@@ -1,18 +1,11 @@
 import { Metadata } from 'next';
+import { getFeedItem } from '@/lib/api/services/feed';
 import EventDetailsClient from './EventDetailsClient.tsx';
 
 async function getEvent(id: string) {
-  // We'll fetch the event data on the server for SEO
-  // Use absolute URL for server-side fetching in Next.js if necessary, 
-  // but usually we can reuse the fetch logic.
   try {
-    const res = await fetch(`https://www.zigexconnect.com/api/students/events?id=${id}`, {
-      next: { revalidate: 3600 } // Cache for 1 hour
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.data || data; // Handle different API response structures
-  } catch (err) {
+    return await getFeedItem("events", id);
+  } catch {
     return null;
   }
 }

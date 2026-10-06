@@ -2,9 +2,9 @@
 "use client";
 
 import { useFeedStore } from "@/lib/zustand/store";
-import { Search } from "lucide-react";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 type TabId = "all" | "live" | "internships" | "programs" | "events" | "announcements";
 
@@ -21,180 +21,97 @@ interface FeedTabsProps {
 }
 
 const tabs = [
-  {
-    id: "live" as TabId,
-    label: "Live",
-  },
-  {
-    id: "all" as TabId,
-    label: "All",
-  },
-  {
-    id: "internships" as TabId,
-    label: "Internships",
-  },
-  {
-    id: "programs" as TabId,
-    label: "Programs",
-  },
-  {
-    id: "events" as TabId,
-    label: "Events",
-  },
-  {
-    id: "announcements" as TabId,
-    label: "Announcements",
-  },
+  { id: "all" as TabId, label: "All" },
+  { id: "programs" as TabId, label: "Programs" },
+  { id: "internships" as TabId, label: "Internships" },
+  { id: "events" as TabId, label: "Events" },
+  { id: "announcements" as TabId, label: "Posts" },
 ];
 
-  export function FeedTabs({ counts, isLoading = false }: FeedTabsProps) {
-  const { activeTab, setActiveTab, searchQuery, setSearchQuery } = useFeedStore();
-  const [hoveredTab, setHoveredTab] = useState<TabId | null>(null);
+export function FeedTabs({ counts, isLoading = false }: FeedTabsProps) {
+  const { activeTab, setActiveTab } = useFeedStore();
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  // Check if we're on a projects detail page
-  const isProjectDetailPage = pathname.includes("/feed/projects/") && pathname !== "/feed/projects";
-
-  // If on project detail page, don't render the tabs at all
-  if (isProjectDetailPage) {
-    return null;
-  }
 
   const isDetailPage = pathname.includes("/feed/") && pathname !== "/feed" && !pathname.includes("/feed/projects");
 
   const handleTabChange = (tabId: TabId) => {
     setActiveTab(tabId);
-    if (isDetailPage) {
-      router.push("/feed");
-    }
-  };
-
-  const handleSearch = (value: string) => {
-    setSearchQuery(value);
+    if (isDetailPage) router.push("/feed");
     
-    // Debounce URL update or update immediately? 
-    // Updating immediately for responsiveness, useTransition in parent might be better but let's keep it simple and consistent with previous behavior.
-    const params = new URLSearchParams(searchParams.toString());
-    if (value) {
-      params.set("q", value);
-    } else {
-      params.delete("q");
+    if (typeof window !== "undefined" && window.navigator.vibrate) {
+      window.navigator.vibrate(10);
     }
-    // Use replace to avoid filling history stack with every keystroke, or push if you want history.
-    // Given it's "realtime", replace is often better.
-    router.replace(`?${params.toString()}`, { scroll: false });
   };
 
   return (
-    <>
-      {/* Search & Filter Bar */}
-      <div className="w-full mb-8">
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-1.5 flex flex-col md:flex-row items-center gap-2">
-          
-          {/* Inline Search Input */}
-          <div className="w-full md:w-auto md:flex-1 flex items-center gap-3 px-4 py-2.5 rounded-md bg-gray-50 focus-within:bg-white focus-within:ring-2 focus-within:ring-primary/20 transition-all group border border-transparent focus-within:border-primary/50">
-            <Search
-              size={18}
-              className="text-gray-400 group-focus-within:text-primary transition-colors"
-            />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
-              placeholder="Search internships, programs, events..."
-              className="flex-1 bg-transparent border-none outline-none text-sm text-gray-900 placeholder:text-gray-500"
-            />
-            {searchQuery && (
+    <div className="relative group/tabs">
+      {/* Mobile Scroll Indicators - Left */}
+      <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-slate-50 dark:from-slate-950 to-transparent z-10 pointer-events-none opacity-0 group-hover/tabs:opacity-100 transition-opacity" />
+      
+      <div className="w-full overflow-x-auto hide-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 py-2 scroll-smooth">
+        <div className="flex items-center gap-2 p-2 bg-white/50 dark:bg-slate-900/40 backdrop-blur-2xl rounded-[2.5rem] w-max min-w-full sm:min-w-0 border border-slate-100 dark:border-slate-800 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05)]">
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.id;
+            const count = counts?.[tab.id] || 0;
+            
+            return (
               <button
-                onClick={() => handleSearch("")}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-                aria-label="Clear search"
+                key={tab.id}
+                onClick={() => handleTabChange(tab.id)}
+                className={cn(
+                  "relative flex items-center gap-3 px-6 sm:px-8 py-3.5 sm:py-4 rounded-[1.8rem] transition-all duration-500 outline-none group shrink-0",
+                  isActive 
+                    ? "text-white" 
+                    : "text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                )}
               >
-                <div className="bg-gray-200 rounded-full p-0.5">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                </div>
-              </button>
-            )}
-            <kbd className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium text-gray-400 border border-gray-200 rounded bg-white">
-              <span>⌘</span>K
-            </kbd>
-          </div>
-
-          {/* Divider (Desktop) */}
-          <div className="hidden md:block w-px h-8 bg-gray-200 mx-2" />
-
-          {/* Divider (Mobile) */}
-          <div className="md:hidden w-full h-px bg-gray-200 my-1" />
-
-          {/* Tabs */}
-          <div className="w-full md:w-auto overflow-x-auto scrollbar-hide">
-            <div className="flex items-center gap-1">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => handleTabChange(tab.id)}
-                  className={`
-                    flex items-center gap-2 px-4 py-2 rounded-md font-medium text-sm whitespace-nowrap transition-all duration-200
-                    ${
-                      activeTab === tab.id
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                    }
-                  `}
-                >
-                  <span>{tab.label}</span>
-                  
-                  {!isLoading && counts && counts[tab.id] > 0 && (
-                    <span
-                      className={`
-                        px-1.5 py-0.5 text-[10px] rounded-full font-bold
-                        ${
-                          activeTab === tab.id
-                            ? "bg-primary-foreground/20 text-primary-foreground"
-                            : "bg-muted-foreground/10 text-muted-foreground"
-                        }
-                      `}
+                {/* Premium Glow Indicator */}
+                {isActive && (
+                  <motion.div
+                    layoutId="activeFeedTab"
+                    className="absolute inset-0 bg-[#155DFC] rounded-[1.8rem] shadow-[0_10px_25px_-5px_rgba(21,93,252,0.5)] z-0"
+                    transition={{ type: "spring", bounce: 0.15, duration: 0.6 }}
+                  />
+                )}
+                
+                <span className={cn(
+                  "relative z-10 text-[10px] sm:text-[11px] font-black uppercase tracking-[0.25em] transition-all duration-500",
+                  isActive ? "scale-100" : "scale-95 group-hover:scale-100"
+                )}>
+                  {tab.label}
+                </span>
+                
+                <AnimatePresence mode="wait">
+                  {count > 0 && !isLoading && (
+                    <motion.span
+                      initial={{ scale: 0.5, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.5, opacity: 0 }}
+                      className={cn(
+                        "relative z-10 min-w-[22px] h-5.5 flex items-center justify-center rounded-xl text-[9px] font-black transition-all duration-500 border",
+                        isActive 
+                          ? "bg-white/10 text-white border-white/20" 
+                          : "bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 shadow-sm"
+                      )}
                     >
-                      {counts[tab.id]}
-                    </span>
+                      {count}
+                    </motion.span>
                   )}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+                </AnimatePresence>
 
-        {/* Active Search Indicator */}
-        {searchQuery && (
-          <div className="mt-4 flex items-center gap-3 px-4 py-3 bg-primary/5 border border-primary/10 rounded-lg">
-            <Search size={16} className="text-primary" />
-            <p className="text-sm text-muted-foreground flex-1">
-              Showing results for <span className="font-semibold text-foreground">"{searchQuery}"</span>
-            </p>
-            <button
-              onClick={() => setSearchQuery("")}
-              className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-            >
-              Clear
-            </button>
-          </div>
-        )}
+                {/* Interactive State */}
+                {!isActive && (
+                  <div className="absolute inset-0 bg-[#155DFC]/0 group-hover:bg-[#155DFC]/5 rounded-[1.8rem] transition-all duration-500" />
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      <style jsx global>{`
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
-    </>
+      {/* Mobile Scroll Indicators - Right */}
+      <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-slate-50 dark:from-slate-950 to-transparent z-10 pointer-events-none opacity-0 group-hover/tabs:opacity-100 transition-opacity" />
+    </div>
   );
 }

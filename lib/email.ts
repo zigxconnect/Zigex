@@ -8,6 +8,7 @@
 import nodemailer from 'nodemailer';
 import { render } from '@react-email/render';
 import AttendanceReminderEmail from '@/emails/AttendanceReminder';
+import { ADMIN_APP_URL } from "@/lib/app-urls";
 
 
 // Configuration - Strip ALL whitespace from app password
@@ -102,7 +103,7 @@ const generateEmailHTML = (params: {
               </div>
               ` : ''}
               
-              <div style="color: #475569; font-size: 15px; line-height: 1.7;">${message.replace(/\n/g, '<br/>')}</div>
+              <div style="color: #475569; font-size: 15px; line-height: 1.7;">${message.replace(/\\n/g, '<br/>').replace(/\n/g, '<br/>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>
             </td>
           </tr>
 
@@ -174,7 +175,7 @@ export const sendEmail = async (params: {
 };
 
 /**
- * Sends acceptance email to candidate
+ * Sends acceptance email to candidate with WhatsApp link and start date
  */
 export const sendAcceptanceEmail = async (params: {
   email: string;
@@ -183,14 +184,19 @@ export const sendAcceptanceEmail = async (params: {
   opportunityType: string;
   companyName: string;
   whatsappGroupLink?: string;
+  startDate?: string;
 }) => {
   const transporter = createTransporter();
   if (!transporter) return;
 
+  const whatsappMessage = params.whatsappGroupLink
+    ? `\\n\\nTo begin your onboarding, meet your fellow team members, and get started, please join our official community group via the button below.`
+    : `\\n\\nYou can view your application status and next steps on your dashboard.`;
+
   const html = generateEmailHTML({
     heading: `Congratulations, ${params.name}!`,
-    message: `We are thrilled to inform you that your application for "${params.opportunityTitle}" has been accepted! This is a significant milestone in your professional journey.\n\nTo begin your onboarding and meet your fellow cohort members, please join our official community group via the button below.`,
-    ctaText: "Join WhatsApp Community",
+    message: `We are absolutely thrilled to inform you that you have been accepted into "${params.opportunityTitle}"! 🎉\\n\\nYou stood out amongst many applicants, and we can't wait to see what you achieve with us. This is a significant milestone in your professional journey.${whatsappMessage}`,
+    ctaText: params.whatsappGroupLink ? "Join WhatsApp Community" : "Go to Dashboard",
     ctaLink: params.whatsappGroupLink || "https://zigexconnect.com/dashboard",
     statusBadge: "Selection Confirmed",
     statusColor: "#10b981",
@@ -203,6 +209,40 @@ export const sendAcceptanceEmail = async (params: {
     from: `"${params.companyName || "SEED INC"}" <${GMAIL_USER}>`,
     to: params.email,
     subject: `Welcome to the Program: ${params.opportunityTitle}!`,
+    html
+  });
+};
+
+/**
+ * Sends a notification email to the company when a student submits a new application
+ */
+export const sendNewApplicationNotification = async (params: {
+  companyEmail: string;
+  companyName: string;
+  studentName: string;
+  studentEmail: string;
+  opportunityTitle: string;
+  opportunityType: string;
+}) => {
+  const transporter = createTransporter();
+  if (!transporter) return;
+
+  const html = generateEmailHTML({
+    heading: `New Application Received`,
+    message: `A new applicant has applied to your opportunity.\\n\\n👤 **Applicant:** ${params.studentName}\\n📧 **Email:** ${params.studentEmail}\\n\\nPlease review their application on the admin dashboard.`,
+    ctaText: "Review Applications",
+    ctaLink: `${ADMIN_APP_URL}/admin/applicants`,
+    statusBadge: "New Application",
+    statusColor: "#3B82F6",
+    opportunityTitle: params.opportunityTitle,
+    opportunityType: params.opportunityType,
+    companyName: params.companyName
+  });
+
+  await transporter.sendMail({
+    from: `"Zigex Notifications" <${GMAIL_USER}>`,
+    to: params.companyEmail,
+    subject: `📩 New Application: ${params.studentName} applied to ${params.opportunityTitle}`,
     html
   });
 };
@@ -339,7 +379,7 @@ export const sendApplicationAlert = async (params: {
     heading: `Application Status Alert`,
     message: `Candidate **${params.studentName}** (${params.studentEmail}) has been moved to state: **${params.status.toUpperCase()}** for the opportunity "${params.opportunityTitle}".`,
     ctaText: "Review in Dashboard",
-    ctaLink: "https://zigexconnect.com/admin/applicants",
+    ctaLink: `${ADMIN_APP_URL}/admin/applicants`,
     statusBadge: `Status: ${params.status}`,
     opportunityTitle: params.opportunityTitle,
     opportunityType: params.opportunityType,
@@ -898,6 +938,10 @@ export const sendTaskAssignmentEmail = async (params: {
 
   try {
     const transporter = createTransporter();
+    if (!transporter) {
+      console.warn("[EMAIL] Task notification not sent — email not configured.");
+      return;
+    }
 
     const html = generateEmailHTML({
       heading: `New Task Assigned: ${taskTitle}`,
@@ -953,7 +997,7 @@ export const sendReportSubmissionEmail = async (params: {
     heading: "New Report Submitted",
     message: `Hi ${params.supervisorName}, <br/><br/>${params.studentName} has just submitted their daily report for ${params.reportDate}.<br/><br/>Report Preview:<br/>"${params.reportSummary.length > 150 ? params.reportSummary.substring(0, 150) + "..." : params.reportSummary}"<br/><br/>Please review and confirm this report in your dashboard.`,
     ctaText: "Review Report",
-    ctaLink: "https://zigexconnect.com/supervisor",
+    ctaLink: `${ADMIN_APP_URL}/supervisor`,
     statusBadge: "NEW SUBMISSION",
     statusColor: "#3B82F6",
     companyName: "SEED INC"

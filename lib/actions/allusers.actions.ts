@@ -1,6 +1,7 @@
 "use server";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { serverApi } from "@/lib/api/server-client";
+import { whenAvailable } from "@/lib/api/errors";
 
 export interface RawUserProfile {
   id: string;
@@ -19,34 +20,39 @@ export interface RawUserProfile {
   about?: string | null;
   cover_image?: string | null;
   created_at?: string | null;
+  role?: string | null;
+  email?: string | null;
+  /** Spec'd on GET /students rows: application and project counts. */
+  stats?: {
+    internships?: number;
+    programs?: number;
+    events?: number;
+    projects?: number;
+    current_program?: string | null;
+  };
 }
 
-export async function getAllUsers(limit = 100, offset = 0) {
+const PAGE_SIZE = 100;
+
+/**
+ * The student directory (GET /students, spec'd in
+ * docs/backend-missing-endpoints.md → Discovery and social). Empty until it
+ * ships. Never includes other students' contact details.
+ */
+export async function getAllUsers(limit = 100, offset = 0, search?: string): Promise<RawUserProfile[]> {
   try {
-    const supabase = await createSupabaseServerClient();
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      console.error("Unauthorized access attempt in getAllUsers");
-      return [] as RawUserProfile[];
+    const rows: RawUserProfile[] = [];
+    for (let page = Math.floor(offset / PAGE_SIZE) + 1; rows.length < limit; page++) {
+      const params = new URLSearchParams({ page: String(page), limit: String(PAGE_SIZE) });
+      if (search) params.set("search", search);
+      const res = await whenAvailable(() => serverApi.get<RawUserProfile[]>(`/students?${params}`), null);
+      if (!res) break;
+      rows.push(...(res.data ?? []));
+      if (!res.meta || page >= res.meta.totalPages) break;
     }
-
-    const { data, error } = await supabase
-      .from("student_profiles")
-      .select(
-        `id, user_id, username, full_name, first_name, last_name, avatar_url, cover_image, about, university, hard_skills, soft_skills, linkedin_url, github_url, portfolio_url, created_at`
-      )
-      .order("created_at", { ascending: false })
-      .range(offset, Math.max(offset, limit - 1 + offset));
-
-    if (error) {
-      console.error("getAllUsers supabase error:", error);
-      return [] as RawUserProfile[];
-    }
-
-    return (data || []) as RawUserProfile[];
+    return rows.slice(0, limit);
   } catch (err) {
     console.error("Unexpected error in getAllUsers:", err);
-    return [] as RawUserProfile[];
+    return [];
   }
 }

@@ -1,0 +1,191 @@
+/* ─── Rich Content Renderer Styles ──────────────────────────────────────────────
+   Self-contained prose styling for HTML content rendered from TipTap editor.
+   Provides beautiful typography without needing @tailwindcss/typography plugin.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+.rich-content-renderer {
+  color: #334155; /* slate-700 */
+  font-size: 0.9375rem;
+  line-height: 1.75;
+}
+
+/* ── Headings ─────────────────────────────────────────────────────────────── */
+.rich-content-renderer h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a; /* slate-900 */
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.3;
+}
+
+.rich-content-renderer h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-top: 1.25rem;
+  margin-bottom: 0.625rem;
+  line-height: 1.35;
+}
+
+.rich-content-renderer h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e293b; /* slate-800 */
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.rich-content-renderer h1:first-child,
+.rich-content-renderer h2:first-child,
+.rich-content-renderer h3:first-child {
+  margin-top: 0;
+}
+
+/* ── Paragraphs ───────────────────────────────────────────────────────────── */
+.rich-content-renderer p {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.rich-content-renderer p:first-child {
+  margin-top: 0;
+}
+
+/* ── Bold, Italic, Underline ──────────────────────────────────────────────── */
+.rich-content-renderer strong {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.rich-content-renderer em {
+  font-style: italic;
+}
+
+.rich-content-renderer u {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.rich-content-renderer s {
+  text-decoration: line-through;
+  color: #94a3b8; /* slate-400 */
+}
+
+/* ── Links ────────────────────────────────────────────────────────────────── */
+.rich-content-renderer a {
+  color: #2563eb; /* blue-600 */
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s ease;
+}
+
+.rich-content-renderer a:hover {
+  color: #1d4ed8; /* blue-700 */
+}
+
+/* ── Lists ────────────────────────────────────────────────────────────────── */
+.rich-content-renderer ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.rich-content-renderer ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.rich-content-renderer li {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+  padding-left: 0.25rem;
+}
+
+.rich-content-renderer li p {
+  margin: 0;
+}
+
+.rich-content-renderer li > ul,
+.rich-content-renderer li > ol {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+/* ── Blockquotes ──────────────────────────────────────────────────────────── */
+.rich-content-renderer blockquote {
+  border-left: 4px solid #bfdbfe; /* blue-200 */
+  background-color: rgba(239, 246, 255, 0.5); /* blue-50/50 */
+  padding: 0.75rem 1rem;
+  margin: 0.75rem 0;
+  border-radius: 0 0.5rem 0.5rem 0;
+  color: #475569; /* slate-600 */
+  font-style: italic;
+}
+
+.rich-content-renderer blockquote p {
+  margin: 0;
+}
+
+/* ── Code ─────────────────────────────────────────────────────────────────── */
+.rich-content-renderer code {
+  background-color: #f1f5f9; /* slate-100 */
+  color: #db2777; /* pink-600 */
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+.rich-content-renderer pre {
+  background-color: #0f172a; /* slate-900 */
+  color: #e2e8f0; /* slate-200 */
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  overflow-x: auto;
+  margin: 0.75rem 0;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+}
+
+.rich-content-renderer pre code {
+  background: none;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+  font-size: inherit;
+}
+
+/* ── Horizontal Rule ──────────────────────────────────────────────────────── */
+.rich-content-renderer hr {
+  border: none;
+  border-top: 1px solid #e2e8f0; /* slate-200 */
+  margin: 1.25rem 0;
+}
+
+/* ── Images ───────────────────────────────────────────────────────────────── */
+.rich-content-renderer img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  margin: 1rem 0;
+}
+
+/* ── TipTap Placeholder (for editor) ──────────────────────────────────────── */
+.tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #94a3b8; /* slate-400 */
+  pointer-events: none;
+  height: 0;
+}
+
+/* ── TipTap Editor Focus ──────────────────────────────────────────────────── */
+.tiptap:focus {
+  outline: none;
+}

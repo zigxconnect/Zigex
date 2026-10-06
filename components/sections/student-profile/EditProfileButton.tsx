@@ -6,6 +6,8 @@ import { EditProfileModal } from "@/components/sections/student-profile/EditProf
 import { Button } from "@/components/ui/button";
 import { ProfileFormData } from "@/app/types/profile";
 
+import { cn } from "@/lib/utils";
+
 interface EditProfileButtonProps {
   isOwner: boolean;
   userId: string; // This should be the auth user_id, not profile id
@@ -29,10 +31,13 @@ export const EditProfileButton = ({
     <>
       <Button
         onClick={() => setIsModalOpen(true)}
-        className={`relative z-20 px-6 py-2 rounded-full font-bold bg-blue-600 text-white hover:bg-blue-700 transition-all shadow-md flex items-center gap-2 ${className || ''}`}
+        className={cn(
+          "relative z-20 px-4 py-2 rounded-lg font-extrabold bg-[#155DFC] text-white hover:bg-blue-700 transition-all shadow-sm shadow-blue-500/10 hover:shadow-md flex items-center gap-1.5 text-[10px] tracking-wide uppercase",
+          className
+        )}
       >
-        <Edit2 size={16} />
-        <span>EDIT PROFILE</span>
+        <Edit2 size={11} />
+        <span>Edit Profile</span>
       </Button>
 
       <EditProfileModal

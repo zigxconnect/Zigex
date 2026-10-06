@@ -1,11 +1,19 @@
 import { SettingsForm } from "@/components/sections/profile-settings/SettingsForm";
+import { getSession } from "@/lib/api/auth";
+import { redirect } from "next/navigation";
 
 export const metadata = {
   title: "Profile Settings | Zigex",
   description: "Manage your profile settings and preferences.",
 };
 
-export default function ProfileSettingsPage() {
+export default async function ProfileSettingsPage() {
+  const session = await getSession();
+
+  if (!session) {
+    redirect("/sign-in");
+  }
+
   return (
     <div className="min-h-screen bg-gray-50/50 pb-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -16,7 +24,7 @@ export default function ProfileSettingsPage() {
           </p>
         </div>
 
-        <SettingsForm />
+        <SettingsForm initialUserId={session.userId} />
       </div>
     </div>
   );

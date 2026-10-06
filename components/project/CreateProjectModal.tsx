@@ -136,7 +136,7 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
 
     try {
       const { isValid, errors: validationErrors } = validateForm();
-      console.log('Form validation result:', { isValid, validationErrors, formData });
+      // console.log('Form validation result:', { isValid, validationErrors, formData });
 
       if (!isValid) {
         console.warn('Form validation failed:', validationErrors);

@@ -1,7 +1,8 @@
 "use server";
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getSession } from "@/lib/api/auth";
+import { getApplicantProfile } from "@/lib/api/services/applications";
 
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
@@ -53,28 +54,13 @@ interface SmartApplyResponse {
  */
 async function getUserProfile(): Promise<UserProfile | null> {
   try {
-    const supabase = await createSupabaseServerClient();
-
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user?.id) {
-      console.error("Error getting user:", authError);
+    // GET /students/me — the backend returns the student_profiles row.
+    const profile = await getApplicantProfile();
+    if (!profile) {
+      console.error("Error getting user: not signed in or no student profile");
       return null;
     }
-
-    const { data, error } = await supabase
-      .from("student_profiles")
-      .select("*")
-      .eq("user_id", user.id)
-      .single();
-
-    if (error) {
-      console.error("Error fetching user profile:", error);
-      return null;
-    }
-
-    return data as UserProfile;
+    return { ...profile, id: profile.id ?? profile.user_id } as UserProfile;
   } catch (error) {
     console.error("Error in getUserProfile:", error);
     return null;
@@ -323,26 +309,19 @@ export async function submitSmartApplication(
   opportunityTitle: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const supabase = await createSupabaseServerClient();
-
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user?.id) {
+    const session = await getSession();
+    if (!session) {
       return {
         success: false,
         error: "User not authenticated",
       };
     }
 
-    // Fetch user profile for email and name
-    const { data: userProfile, error: profileError } = await supabase
-      .from("student_profiles")
-      .select("email, full_name")
-      .eq("user_id", user.id)
-      .single();
+    // Fetch user profile for email and name (GET /students/me)
+    const profile = await getApplicantProfile();
+    const userProfile = { email: profile?.email || session.email, full_name: profile?.full_name };
 
-    if (profileError || !userProfile?.email) {
+    if (!userProfile.email) {
       return {
         success: false,
         error: "Failed to fetch user email",

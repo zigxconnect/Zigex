@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { getCurrentUser } from "@/lib/api/auth";
+import { buildStudentAiContext } from "@/lib/api/services/ai-context";
 
 /**
  * AI Chatbot Streaming Endpoint
@@ -10,31 +10,6 @@ import { cookies } from "next/headers";
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || "");
 
-async function createSupabaseServerClient() {
-    const cookieStore = await cookies();
-
-    return createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                get: async (name: string) => {
-                    return (await cookieStore).get(name)?.value;
-                },
-                set: async (name: string, value: string, options: CookieOptions) => {
-                    try {
-                        (await cookieStore).set({ name, value, ...options });
-                    } catch (error) { }
-                },
-                remove: async (name: string, options: CookieOptions) => {
-                    try {
-                        (await cookieStore).set({ name, value: "", ...options });
-                    } catch (error) { }
-                },
-            },
-        }
-    );
-}
 
 function buildSystemContext(): string {
     return `You are ZAi, the intelligent AI assistant for ZigEx, a comprehensive platform connecting African students with opportunities.
@@ -66,41 +41,11 @@ As ZAi, you can help users with:
 When users ask about opportunities, applications, or career advice, draw from this context to provide intelligent, personalized responses.`;
 }
 
-async function getUserContext(userId: string, supabase: any): Promise<string> {
-    try {
-        const { data: profile, error } = await supabase
-            .from("student_profiles")
-            .select("*")
-            .eq("user_id", userId)
-            .single();
-
-        if (error || !profile) {
-            return "User profile not found. Provide general guidance.";
-        }
-
-        let context = `\n## USER PROFILE\n`;
-        context += `- Name: ${profile.full_name || "Not specified"}\n`;
-        context += `- University: ${profile.university || "Not specified"}\n`;
-        context += `- Field of Study: ${profile.field_of_study || "Not specified"}\n`;
-
-        if (profile.hard_skills && profile.hard_skills.length > 0) {
-            context += `- Technical Skills: ${profile.hard_skills.join(", ")}\n`;
-        }
-
-        context += `\n**Use this information to personalize your responses.**\n`;
-        return context;
-    } catch (error) {
-        console.error("Error fetching user context:", error);
-        return "Unable to fetch user profile. Provide general guidance.";
-    }
-}
-
 export async function POST(request: NextRequest) {
     const encoder = new TextEncoder();
 
     try {
-        const supabase = await createSupabaseServerClient();
-        const { data: { user } } = await supabase.auth.getUser();
+        const user = await getCurrentUser();
 
         if (!user) {
             return new Response(
@@ -127,7 +72,7 @@ export async function POST(request: NextRequest) {
         }
 
         const systemContext = buildSystemContext();
-        const userContext = await getUserContext(user.id, supabase);
+        const userContext = await buildStudentAiContext({ withApplications: false });
 
         const stream = new ReadableStream({
             async start(controller) {

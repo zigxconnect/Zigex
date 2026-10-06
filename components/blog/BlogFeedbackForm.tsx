@@ -86,27 +86,27 @@ export default function BlogFeedbackForm({ postTitle, postSlug }: BlogFeedbackFo
   const selectedType = feedbackTypes.find(t => t.value === feedbackType)!;
 
   return (
-    <div className="mt-16 border-t border-slate-100 pt-12">
+    <div className="mt-16 border-t border-slate-100 dark:border-slate-800 pt-12">
       {/* Toggle Button */}
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-6 bg-gradient-to-r from-slate-50 to-blue-50/50 rounded-2xl border border-slate-100 hover:border-blue-200 transition-all group"
+        className="w-full flex items-center justify-between p-6 bg-gradient-to-r from-slate-50 to-blue-50/50 dark:from-slate-900 dark:to-slate-900/60 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-blue-200 dark:hover:border-slate-700 transition-all group"
         whileHover={{ scale: 1.005 }}
         whileTap={{ scale: 0.995 }}
       >
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-blue-600 shadow-sm group-hover:shadow-md transition-shadow">
+          <div className="w-12 h-12 bg-white dark:bg-slate-950 rounded-xl flex items-center justify-center text-blue-600 shadow-sm group-hover:shadow-md transition-shadow">
             <MessageCircle size={24} />
           </div>
           <div className="text-left">
-            <h3 className="text-lg font-bold text-slate-900">Share Your Thoughts</h3>
-            <p className="text-sm text-slate-500">Have feedback? We'd love to hear from you!</p>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Share Your Thoughts</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Have feedback? We'd love to hear from you!</p>
           </div>
         </div>
         <motion.div
           animate={{ rotate: isOpen ? 180 : 0 }}
           transition={{ duration: 0.2 }}
-          className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-400 shadow-sm"
+          className="w-10 h-10 bg-white dark:bg-slate-950 rounded-full flex items-center justify-center text-slate-400 shadow-sm"
         >
           <ChevronDown size={20} />
         </motion.div>
@@ -122,7 +122,7 @@ export default function BlogFeedbackForm({ postTitle, postSlug }: BlogFeedbackFo
             transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
-            <form onSubmit={handleSubmit} className="p-6 md:p-8 bg-white rounded-2xl border border-slate-100 mt-4 shadow-sm">
+            <form onSubmit={handleSubmit} className="p-6 md:p-8 bg-white dark:bg-[#161b22] rounded-2xl border border-slate-100 dark:border-slate-800/80 mt-4 shadow-sm">
               
               {/* Success State */}
               {submitStatus === 'success' && (
@@ -131,11 +131,11 @@ export default function BlogFeedbackForm({ postTitle, postSlug }: BlogFeedbackFo
                   animate={{ opacity: 1, scale: 1 }}
                   className="flex flex-col items-center justify-center py-12 text-center"
                 >
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-4">
-                    <Check size={32} strokeWidth={3} />
+                  <div className="w-16 h-16 bg-green-100 dark:bg-green-950/40 rounded-full flex items-center justify-center text-green-600 mb-4">
+                     <Check size={32} strokeWidth={3} />
                   </div>
-                  <h4 className="text-xl font-bold text-slate-900 mb-2">Thank You!</h4>
-                  <p className="text-slate-500">Your feedback has been sent successfully.</p>
+                  <h4 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Thank You!</h4>
+                  <p className="text-slate-500 dark:text-slate-400">Your feedback has been sent successfully.</p>
                 </motion.div>
               )}
 
@@ -158,7 +158,7 @@ export default function BlogFeedbackForm({ postTitle, postSlug }: BlogFeedbackFo
                             className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
                               isSelected
                                 ? `border-${type.color}-500 bg-${type.color}-50 text-${type.color}-600`
-                                : 'border-slate-100 bg-white text-slate-400 hover:border-slate-200'
+                                : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-400 dark:text-slate-500 hover:border-slate-200 dark:hover:border-slate-700'
                             }`}
                             style={{
                               borderColor: isSelected 
@@ -192,7 +192,7 @@ export default function BlogFeedbackForm({ postTitle, postSlug }: BlogFeedbackFo
                   {/* Name & Email */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
-                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                      <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
                         Your Name
                       </label>
                       <input
@@ -201,11 +201,11 @@ export default function BlogFeedbackForm({ postTitle, postSlug }: BlogFeedbackFo
                         onChange={(e) => setName(e.target.value)}
                         placeholder="John Doe"
                         required
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                      <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
                         Your Email
                       </label>
                       <input
@@ -214,14 +214,14 @@ export default function BlogFeedbackForm({ postTitle, postSlug }: BlogFeedbackFo
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="john@example.com"
                         required
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       />
                     </div>
                   </div>
 
                   {/* Message */}
                   <div className="mb-6">
-                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                    <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
                       Your Message
                     </label>
                     <textarea
@@ -231,7 +231,7 @@ export default function BlogFeedbackForm({ postTitle, postSlug }: BlogFeedbackFo
                       required
                       rows={5}
                       maxLength={2000}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
+                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
                     />
                     <p className="text-xs text-slate-400 mt-1 text-right">{message.length}/2000</p>
                   </div>
@@ -241,7 +241,7 @@ export default function BlogFeedbackForm({ postTitle, postSlug }: BlogFeedbackFo
                     <motion.div
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="flex items-center gap-3 p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 mb-4"
+                      className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-950/30 rounded-xl text-red-600 mb-4"
                     >
                       <X size={18} />
                       <span className="text-sm font-medium">{errorMessage}</span>
@@ -252,7 +252,7 @@ export default function BlogFeedbackForm({ postTitle, postSlug }: BlogFeedbackFo
                   <motion.button
                     type="submit"
                     disabled={isSubmitting || !name || !email || !message}
-                    className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-3 hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-slate-900/10"
+                    className="w-full py-4 bg-slate-900 dark:bg-slate-800 text-white rounded-xl font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-3 hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-slate-900/10"
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
                   >

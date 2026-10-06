@@ -19,6 +19,8 @@ import {
   Ticket,
   Download,
 } from "lucide-react";
+import { listMyApplications, withdrawMyApplication } from "@/lib/api/applications-client";
+import { ApiClientError } from "@/lib/api/errors";
 
 // TypeScript types for application data
 interface Company {
@@ -428,9 +430,9 @@ export default function MyApplicationsPage() {
   }>({ isOpen: false, application: null });
 
   const tabs = [
-    { id: "internships" as const, name: "Internships", icon: Briefcase, endpoint: "/api/students/applications/fetch/getInternship" },
-    { id: "programs" as const, name: "Programs", icon: Users, endpoint: "/api/students/applications/fetch/getPrograms" },
-    { id: "events" as const, name: "Events", icon: Ticket, endpoint: "/api/students/applications/fetch/getEvents" },
+    { id: "internships" as const, name: "Internships", icon: Briefcase, kind: "internship" as const },
+    { id: "programs" as const, name: "Programs", icon: Users, kind: "program" as const },
+    { id: "events" as const, name: "Events", icon: Ticket, kind: "event" as const },
   ];
 
   useEffect(() => {
@@ -448,22 +450,8 @@ export default function MyApplicationsPage() {
       const activeTabConfig = tabs.find(tab => tab.id === activeTab);
       if (!activeTabConfig) return;
 
-      const res = await fetch(activeTabConfig.endpoint);
-      if (!res.ok) {
-        throw new Error(`Failed to fetch ${activeTabConfig.name}: ${res.status}`);
-      }
-
-      const data = await res.json();
-
-      // Handle the API response structure
-      if (data.success && Array.isArray(data.applications)) {
-        setApplications(data.applications);
-      } else if (Array.isArray(data)) {
-        // Fallback if the response is directly an array
-        setApplications(data);
-      } else {
-        throw new Error("Invalid response format");
-      }
+      const applications = await listMyApplications(activeTabConfig.kind);
+      setApplications(applications as unknown as Application[]);
     } catch (err) {
       console.error("Fetch error:", err);
       setError(err instanceof Error ? err.message : "Unknown error occurred");
@@ -509,20 +497,20 @@ export default function MyApplicationsPage() {
 
   const handleEdit = (application: Application) => {
     // Implement edit functionality
-    console.log("Edit application:", application);
     alert("Edit functionality to be implemented");
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this application?")) {
+    // The backend has no delete; withdrawing (PATCH /applications/{id}/withdraw)
+    // is allowed while the application is pending or reviewed.
+    if (confirm("Are you sure you want to withdraw this application?")) {
       try {
-        // Implement delete functionality
-        console.log("Delete application:", id);
-        setApplications(applications.filter(app => app.id !== id));
-        alert("Application deleted successfully");
+        await withdrawMyApplication(id);
+        setApplications(applications.map(app => (app.id === id ? { ...app, status: "withdrawn" } : app)));
+        alert("Application withdrawn successfully");
       } catch (error) {
-        console.error("Failed to delete application:", error);
-        alert("Failed to delete application");
+        console.error("Failed to withdraw application:", error);
+        alert(error instanceof ApiClientError ? error.message : "Failed to withdraw application");
       }
     }
   };

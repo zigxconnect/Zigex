@@ -10,6 +10,8 @@ import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { useVideoModal } from "@/hooks/UseVideoModal";
 import { LiveVideoModal } from "./Video/LiveVideoModal";
 import { HappeningNowGrid } from "@/components/layout/dashboard/HappeningNow";
+import { api } from "@/lib/api/browser-client";
+import { normaliseFeedItem } from "@/lib/api/feed-shape";
 // import { LiveVideoModal } from "@/components/LiveVideoModal";
 // import { useVideoModal } from "@/hooks/useVideoModal";
 
@@ -66,21 +68,12 @@ export const InternshipListings = ({
   useEffect(() => {
     const fetchAllData = async () => {
       try {
-        const [internshipsRes, eventsRes, programsRes] = await Promise.all([
-          fetch("/api/students/internships"),
-          fetch("/api/students/events"),
-          fetch("/api/students/programs"),
-        ]);
-
-        if (!internshipsRes.ok || !eventsRes.ok || !programsRes.ok) {
-          throw new Error("Failed to fetch one or more data sources.");
-        }
-
-        const [internshipsData, eventsData, programsData] = await Promise.all([
-          internshipsRes.json(),
-          eventsRes.json(),
-          programsRes.json(),
-        ]);
+        const [internshipsData, eventsData, programsData] = await Promise.all(
+          (["internships", "events", "programs"] as const).map(async (kind) => {
+            const res = await api.get<Record<string, any>[]>(`/feed/${kind}?limit=100`);
+            return (res.data ?? []).map(normaliseFeedItem);
+          })
+        );
 
         const hasAny = (internshipsData?.length || 0) + (eventsData?.length || 0) + (programsData?.length || 0) > 0;
 

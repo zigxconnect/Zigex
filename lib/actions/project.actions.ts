@@ -1,7 +1,8 @@
 "use server";
 
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { serverApi } from '@/lib/api/server-client';
+import { ApiClientError, isEndpointMissing } from '@/lib/api/errors';
+import { getSession } from '@/lib/api/auth';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { serverProjectSchema } from '../validation/project.validation';
@@ -19,69 +20,15 @@ interface CreateProjectResult {
   };
 }
 
+/**
+ * Creates a portfolio project (POST /projects, multipart; spec'd in
+ * docs/backend-missing-endpoints.md → Projects). The backend enforces one
+ * active project at a time and computes the end date from the duration.
+ */
 export async function createProjectAction(formData: FormData): Promise<CreateProjectResult> {
   try {
-    // Step 1: Set up Supabase client
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value;
-          },
-          set(name: string, value: string, options: CookieOptions) {
-            try {
-              cookieStore.set({ name, value, ...options });
-            } catch (error) {
-              // The `set` method was called from a Server Component.
-              // This can be ignored if you have middleware refreshing
-              // user sessions.
-            }
-          },
-          remove(name: string, options: CookieOptions) {
-            try {
-              cookieStore.set({ name, value: '', ...options });
-            } catch (error) {
-              // The `delete` method was called from a Server Component.
-              // This can be ignored if you have middleware refreshing
-              // user sessions.
-            }
-          },
-        },
-      }
-    );
-
-    // Step 2: Authenticate user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return {
-        success: false,
-        error: 'You must be logged in to create a project.'
-      };
-    }
-
-    // Step 2.5: Check if user has an active project
-    const { data: activeProject } = await supabase
-      .from('projects')
-      .select('*')
-      .eq('user_id', user.id)
-      .gt('end_date', new Date().toISOString())
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
-
-    if (activeProject) {
-      const endDate = new Date(activeProject.end_date);
-      const remainingDays = Math.ceil((endDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-
-      return {
-        success: false,
-        error: `You have an active project that expires in ${remainingDays} days`,
-        activeProject
-      };
+    if (!(await getSession())) {
+      return { success: false, error: 'You must be logged in to create a project.' };
     }
 
     // Step 3: Extract and validate form data
@@ -182,178 +129,48 @@ export async function createProjectAction(formData: FormData): Promise<CreatePro
       }
     }
 
-    // Step 4: Get student profile
-    const { data: studentProfile, error: profileError } = await supabase
-      .from('student_profiles')
-      .select('id')
-      .eq('user_id', user.id)
-      .single();
 
-    if (profileError || !studentProfile) {
-      return {
-        success: false,
-        error: 'Student profile not found. Please complete your profile first.'
-      };
-    }
+    const upload = new FormData();
+    upload.set('projectTitle', title);
+    upload.set('description', description);
+    upload.set('githubRepository', githubLink || '');
+    upload.set('projectDuration', duration);
+    if (youtubeLink) upload.set('projectVideoUrl', youtubeLink);
+    if (coverImage && coverImage.size > 0) upload.set('coverImage', coverImage);
+    if (uploadedVideo && uploadedVideo.size > 0) upload.set('uploadedVideo', uploadedVideo);
 
-    const studentId = studentProfile.id;
-
-    // Step 5: Check project creation cooldown
-    const { data: canCreate, error: checkError } = await supabase.rpc(
-      'can_student_create_project',
-      { student_id_to_check: studentId }
-    );
-
-    if (checkError) {
-      console.error('Cooldown check error:', checkError);
-      return {
-        success: false,
-        error: 'Could not verify project creation eligibility.'
-      };
-    }
-
-    if (!canCreate) {
-      return {
-        success: false,
-        error: 'You cannot create a new project until your current one is due.'
-      };
-    }
-
-    // Step 6: Calculate end date
-    const { data: endDate, error: dateError } = await supabase.rpc(
-      'get_end_date_from_duration',
-      { duration }
-    );
-
-    if (dateError) {
-      console.error('Date calculation error:', dateError);
-      return {
-        success: false,
-        error: 'Invalid project duration format.'
-      };
-    }
-
-    // Step 7: Upload cover image
-    let coverImageUrl: string | null = null;
-    if (coverImage && coverImage.size > 0) {
-      const fileExt = coverImage.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}_cover.${fileExt}`;
-
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('project-assets')
-        .upload(fileName, coverImage, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (uploadError) {
-        console.error('Cover image upload error:', uploadError);
-        return {
-          success: false,
-          error: `Failed to upload cover image: ${uploadError.message}`
-        };
+    let project;
+    try {
+      project = (await serverApi.post('/projects', upload, { timeoutMs: 120_000 })).data;
+    } catch (error) {
+      if (isEndpointMissing(error)) {
+        return { success: false, error: 'Creating projects is coming soon.' };
       }
-
-      // Generate a signed URL that expires in 365 days (1 year)
-      const { data, error: signError } = await supabase.storage
-        .from('project-assets')
-        .createSignedUrl(uploadData.path, 365 * 24 * 60 * 60); // 365 days in seconds
-
-      if (signError || !data) {
-        console.error('Failed to create signed URL for cover image:', signError);
-        // Fallback to public URL if signed URL generation fails
-        const { data: { publicUrl } } = supabase.storage
-          .from('project-assets')
-          .getPublicUrl(uploadData.path);
-        coverImageUrl = publicUrl;
-      } else {
-        coverImageUrl = data.signedUrl;
+      if (error instanceof ApiClientError && error.status === 403) {
+        const body = error.body as { error?: { activeProject?: CreateProjectResult['activeProject'] } } | undefined;
+        return { success: false, error: error.message, activeProject: body?.error?.activeProject };
       }
-    }
-
-    // Step 8: Upload video
-    let uploadedVideoUrl: string | null = null;
-    if (uploadedVideo && uploadedVideo.size > 0) {
-      const fileExt = uploadedVideo.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}_video.${fileExt}`;
-
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('project-videos')
-        .upload(fileName, uploadedVideo, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (uploadError) {
-        console.error('Video upload error:', uploadError);
-        return {
-          success: false,
-          error: `Failed to upload video: ${uploadError.message}`
-        };
+      if (error instanceof ApiClientError) {
+        return { success: false, error: error.message };
       }
-
-      // Generate a signed URL that expires in 365 days (1 year)
-      const { data, error: signError } = await supabase.storage
-        .from('project-videos')
-        .createSignedUrl(uploadData.path, 365 * 24 * 60 * 60); // 365 days in seconds
-
-      if (signError || !data) {
-        console.error('Failed to create signed URL for video:', signError);
-        // Fallback to public URL if signed URL generation fails
-        const { data: { publicUrl } } = supabase.storage
-          .from('project-videos')
-          .getPublicUrl(uploadData.path);
-        uploadedVideoUrl = publicUrl;
-      } else {
-        uploadedVideoUrl = data.signedUrl;
-      }
-    }
-
-    // Step 9: Insert project into database
-    const projectInsertData: any = {
-      student_id: studentId,
-      project_title: title,
-      description,
-      github_repository: githubLink || null,
-      project_duration: duration,
-      end_date: endDate,
-      cover_image_url: coverImageUrl,
-      // Always include project_video_url, set to null if not valid
-      project_video_url: cleanedYoutubeLink,
-      uploaded_video_url: uploadedVideoUrl,
-      status: 'pending', // Default to 'pending', can be validated later
-    };
-
-    const { data: projectData, error: projectError } = await supabase
-      .from('projects')
-      .insert(projectInsertData)
-      .select()
-      .single();
-
-    if (projectError) {
-      console.error('Project creation error:', projectError);
-      return {
-        success: false,
-        error: `Failed to create project: ${projectError.message}`
-      };
+      throw error;
     }
 
     // Step 10: Revalidate relevant paths
     revalidatePath('/dashboard');
     revalidatePath('/dashboard/projects');
     revalidatePath('/projects');
-    revalidatePath(`/student/${studentId}`);
 
     return {
       success: true,
-      data: projectData
+      data: project
     };
 
   } catch (error: any) {
     console.error('Critical error in createProjectAction:', error);
     return {
       success: false,
-      error: `An unexpected error occurred. Please try again.: ${error}`
+      error: 'An unexpected error occurred. Please try again.'
     };
   }
 }

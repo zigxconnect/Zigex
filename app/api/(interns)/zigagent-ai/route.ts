@@ -4,7 +4,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { TavilySearchAPIRetriever } from "@langchain/community/retrievers/tavily_search_api";
-import { createServerActionClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
+import { getMyProfile } from "@/lib/api/services/profile";
 
 // --- CONFIGURATION ---
 // Initialize these lazily to avoid build-time errors if env vars are missing
@@ -20,8 +21,8 @@ const getGenAI = () => {
 // --- TYPE DEFINITIONS ---
 interface UserProfile {
   full_name: string;
-  university: string;
-  hard_skills: string[];
+  university: string | null;
+  hard_skills: string[] | null;
   // Add any other relevant fields from your student_profiles table
 }
 
@@ -45,17 +46,9 @@ interface AggregatedData {
 // Encapsulates fetching the user's profile for personalization.
 async function getUserProfile(): Promise<UserProfile | null> {
   try {
-    const supabase = await createServerActionClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
-
-    const { data: profile } = await supabase
-      .from("student_profiles")
-      .select("full_name, university, hard_skills")
-      .eq("user_id", user.id)
-      .single();
-
-    return profile as UserProfile | null;
+    const profile = await getMyProfile();
+    if (!profile) return null;
+    return { full_name: profile.full_name, university: profile.university, hard_skills: profile.hard_skills } as UserProfile;
   } catch (error) {
     console.error("[AGENT ERROR] Could not fetch user profile:", error);
     return null;
@@ -70,13 +63,23 @@ let cacheTimestamp: number = 0;
 const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
 
 async function getAggregatedData(): Promise<AggregatedData> {
+  // Skip at build time to prevent timeout errors
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    return { internships: [], events: [], programs: [], metadata: {} };
+  }
+
   const now = Date.now();
   if (cachedAggregatedData && (now - cacheTimestamp) < CACHE_DURATION_MS) {
     return cachedAggregatedData;
   }
   try {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const response = await fetch(`${baseUrl}/api/students/aggregated-data`, { cache: 'no-store' });
+    const response = await fetch(`${baseUrl}/api/students/aggregated-data`, {
+      cache: 'no-store',
+      // The feed needs the student's session; forward their cookies.
+      headers: { cookie: (await cookies()).toString() },
+      signal: AbortSignal.timeout(5000), // 5 second timeout to prevent hangs
+    });
     if (!response.ok) throw new Error(`Failed to fetch aggregated data. Status: ${response.status}`);
     const result = await response.json();
     cachedAggregatedData = result.data;
@@ -92,7 +95,7 @@ async function getAggregatedData(): Promise<AggregatedData> {
 // ━━━━━━ 🌐 TAVILY WEB SEARCH AGENT ━━━━━━
 // This is the core of the new online search capability.
 async function searchWithTavily(query: string, userProfile: UserProfile | null): Promise<SourceData[]> {
-  console.log('[AGENT TAVILY] Initiating external web search.');
+  // console.log('[AGENT TAVILY] Initiating external web search.');
 
   // 1. Construct a highly specific, profile-driven search query for better results.
   let enhancedQuery = `Find job or internship opportunities related to: "${query}"`;
@@ -100,8 +103,7 @@ async function searchWithTavily(query: string, userProfile: UserProfile | null):
     enhancedQuery += ` for a candidate with skills in ${userProfile.hard_skills.join(', ')}.`;
   }
   enhancedQuery += " The results should include the company name, location (including 'Remote'), and a direct URL to the application page.";
-
-  console.log(`[AGENT TAVILY] Enhanced Query: "${enhancedQuery}"`);
+  // console.log(`[AGENT TAVILY] Enhanced Query: "${enhancedQuery}"`);
 
   // 2. Initialize the Tavily retriever. `k: 4` fetches the top 4 most relevant results.
   const retriever = new TavilySearchAPIRetriever({ k: 4 });

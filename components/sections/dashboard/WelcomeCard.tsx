@@ -59,7 +59,7 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile, stats }: WelcomeC
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className="relative bg-white rounded-[2rem] md:rounded-[3rem] w-full mx-auto shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] border border-slate-100 overflow-hidden mb-6 md:mb-12 group/card"
+      className="relative bg-white rounded-[2rem] md:rounded-[3rem] w-full mx-auto shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] border border-slate-100 overflow-hidden group/card"
     >
       {/* 1. Immersive Cover Header */}
       <div className="relative h-32 sm:h-44 md:h-52 lg:h-60 w-full overflow-hidden">
@@ -138,7 +138,7 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile, stats }: WelcomeC
             <div>
               <div className="flex items-center gap-2 md:gap-3 mb-1">
                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 tracking-tighter">
-                  {greeting.text}, {user.name.split(' ')[0]}!
+                  {greeting.text}, {(user.name || "Student").split(' ')[0]}!
                 </h1>
                  <div className="p-1.5 md:p-2 bg-slate-50 rounded-lg md:rounded-xl">
                     <GreetingIcon size={18} className={cn("w-5 h-5 md:w-6 md:h-6", greeting.color)} fill="currentColor" />
@@ -151,7 +151,7 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile, stats }: WelcomeC
             </div>
 
             <p className="text-slate-500 text-sm md:text-lg font-medium leading-relaxed italic border-l-4 border-blue-600 pl-4 md:pl-6 py-1">
-               {user.profile.about ? `"${user.profile.about.slice(0, 100)}..."` : `"You're shaping the future of African technology. Your journey continues here."`}
+               {user.profile?.about ? `"${user.profile.about.slice(0, 100)}..."` : `"You're shaping the future of African technology. Your journey continues here."`}
             </p>
           </div>
 
@@ -184,7 +184,7 @@ export const WelcomeCard = ({ user, onProfileUpdated, profile, stats }: WelcomeC
                  <span className="text-[9px] md:text-[10px] font-black text-slate-900 uppercase tracking-widest">{skill}</span>
               </div>
            ))}
-           <Link href="/dashboard/projects" className="flex items-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-5 md:py-2.5 bg-amber-50 border border-amber-100 rounded-xl md:rounded-2xl shadow-sm hover:bg-amber-100 transition-all group/projects">
+           <Link href={`/dashboard/student/${slugifyUsername(username)}`} className="flex items-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-5 md:py-2.5 bg-amber-50 border border-amber-100 rounded-xl md:rounded-2xl shadow-sm hover:bg-amber-100 transition-all group/projects">
               <Award size={12} className="text-amber-600 group-hover/projects:rotate-12 transition-transform md:w-[14px] md:h-[14px]" />
               <span className="text-[9px] md:text-[10px] font-black text-amber-900 uppercase tracking-widest">My Projects</span>
            </Link>

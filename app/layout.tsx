@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
 import { Inter, Host_Grotesk } from "next/font/google";
+import PushNotificationManager from "@/components/providers/PushNotificationManager";
+import ThemeProvider from "@/components/providers/ThemeProvider";
 import "./globals.css";
+import "@/styles/rich-content.css";
 // import { Toaster } from "@/components/ui/sonner";
 import { Toaster } from "react-hot-toast";
+import Script from "next/script";
 
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
+import LoaderProvider from "@/components/providers/LoaderProvider";
 
 const inter = Inter({
 
@@ -127,9 +132,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+
+      </head>
       <body className={`${inter.variable} ${hostGrotesk.variable} antialiased`}>
-        {children}
+        <LoaderProvider />
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+          <PushNotificationManager />
+          {children}
+        </ThemeProvider>
 
         <Toaster position="top-center" reverseOrder={false} />
         <Analytics />

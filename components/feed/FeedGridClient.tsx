@@ -1,21 +1,15 @@
 // components/feed/FeedGridClient.tsx
 "use client";
 
-/**
- * Client-side wrapper for feed grid interactivity
- * Handles: Search, Tab switching, Load more, Video modal
- */
-
-import { useState, useMemo, useTransition, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { FeedTabs } from "@/components/feed/FeedTabs";
-import { FeedCardSSR } from "@/components/feed/FeedCardSSR";
+import { useState, useMemo, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { UnifiedFeedCard } from "@/components/feed/UnifiedFeedCard";
 import { calculateIsOpen } from "@/components/feed/FeedGrid";
 import { useVideoModal } from "@/hooks/UseVideoModal";
 import { LiveVideoModal } from "@/components/sections/dashboard/Video/LiveVideoModal";
-import { ChevronRight, Loader2, ArrowUp } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, X, Briefcase, GraduationCap, Code, Wrench, Trophy, CalendarDays } from "lucide-react";
 import type { FeedItem, Internship, Program, Event, Announcement } from "@/lib/types/feed";
-import { useFeedStore } from "@/lib/zustand/store";
+import { cn } from "@/lib/utils";
 
 interface FeedGridClientProps {
   initialData: {
@@ -23,58 +17,47 @@ interface FeedGridClientProps {
     events: Event[];
     programs: Program[];
     announcements: Announcement[];
+    companies?: any[];
   };
   error: string | null;
+  /** Whether the visitor is authenticated. Defaults true to keep existing behaviour. */
+  isAuthenticated?: boolean;
 }
 
-const ITEMS_PER_PAGE = 6;
+type CategoryId = "all" | "internships" | "programs" | "events" | "announcements";
 
-export function FeedGridClient({ initialData, error }: FeedGridClientProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const [isPending, startTransition] = useTransition();
-  const { activeTab, searchQuery, setSearchQuery } = useFeedStore();
+const categories = [
+  { id: "all" as CategoryId, label: "All Programs", icon: Briefcase },
+  { id: "internships" as CategoryId, label: "Internships", icon: GraduationCap },
+  { id: "programs" as CategoryId, label: "Bootcamps", icon: Code },
+  { id: "events" as CategoryId, label: "Events", icon: CalendarDays },
+  { id: "announcements" as CategoryId, label: "Workshops", icon: Wrench },
+];
 
-  const [itemsToShow, setItemsToShow] = useState(ITEMS_PER_PAGE);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [showScrollTop, setShowScrollTop] = useState(false);
+import { ProgramDetailsSlideOver } from "@/components/feed/ProgramDetailsSlideOver";
 
+export function FeedGridClient({ initialData, error, isAuthenticated = true }: FeedGridClientProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [activeCategory, setActiveCategory] = useState<CategoryId>("all");
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [selectedItem, setSelectedItem] = useState<FeedItem | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const { isOpen, modalData, openModal, closeModal } = useVideoModal();
 
-  // Scroll to top button visibility
-  useEffect(() => {
-    const handleScroll = () => {
-      setShowScrollTop(window.scrollY > 500);
-    };
+  // Transform data with type tags
+  const transformedData = useMemo(() => ({
+    internships: (initialData.internships || []).map((i) => ({ ...i, _type: "internships" as const })),
+    events: (initialData.events || []).map((e) => ({ ...e, _type: "events" as const })),
+    programs: (initialData.programs || []).map((p) => ({ ...p, _type: "programs" as const })),
+    announcements: (initialData.announcements || []).map((a) => ({ ...a, _type: "announcements" as const })),
+  }), [initialData]);
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  const handleItemClick = (item: FeedItem) => {
+    setSelectedItem(item);
+    setIsDetailsOpen(true);
+  };
 
-  // Transform data to include _type
-  const transformedData = useMemo(
-    () => ({
-      internships: initialData.internships.map((i) => ({
-        ...i,
-        _type: "internships" as const,
-      })),
-      events: initialData.events.map((e) => ({
-        ...e,
-        _type: "events" as const,
-      })),
-      programs: initialData.programs.map((p) => ({
-        ...p,
-        _type: "programs" as const,
-      })),
-      announcements: initialData.announcements.map((a) => ({
-        ...a,
-        _type: "announcements" as const,
-      })),
-    }),
-    [initialData]
-  );
-
-  // Sort all content by date
+  // All items sorted by date
   const allContentSorted = useMemo(() => {
     const combined: FeedItem[] = [
       ...transformedData.internships,
@@ -89,181 +72,156 @@ export function FeedGridClient({ initialData, error }: FeedGridClientProps) {
     });
   }, [transformedData]);
 
-  // Filter based on active tab and search
-  const filteredData = useMemo(() => {
-    let content: FeedItem[] = [];
+  // Filter by active category
+  const filteredItems = useMemo(() => {
+    if (activeCategory === "all") return allContentSorted;
+    return (transformedData[activeCategory] || []) as FeedItem[];
+  }, [activeCategory, allContentSorted, transformedData]);
 
-    if (activeTab === "all") {
-      content = allContentSorted;
-    } else if (activeTab === "live") {
-      content = []; // No live items for now
-    } else {
-      content = (transformedData[activeTab as keyof typeof transformedData] || []) as FeedItem[];
+  // Display max 9 in carousel
+  const displayedItems = filteredItems.slice(0, 9);
+  const totalSlides = Math.max(1, Math.ceil(displayedItems.length / 3));
+
+  const handleCategoryChange = (id: CategoryId) => {
+    setActiveCategory(id);
+    setActiveSlide(0);
+    // Reset scroll position
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({ left: 0, behavior: "smooth" });
     }
+  };
 
-    if (!content) content = [];
+  const scroll = (direction: "left" | "right") => {
+    if (!scrollRef.current) return;
+    const container = scrollRef.current;
+    const scrollAmount = container.offsetWidth;
+    
+    if (direction === "left") {
+      container.scrollBy({ left: -scrollAmount, behavior: "smooth" });
+      setActiveSlide((prev) => Math.max(0, prev - 1));
+    } else {
+      container.scrollBy({ left: scrollAmount, behavior: "smooth" });
+      setActiveSlide((prev) => Math.min(totalSlides - 1, prev + 1));
+    }
+  };
 
-    if (!searchQuery.trim()) return content;
-
-    const query = searchQuery.toLowerCase();
-    return content.filter((item) => {
-      const title = item.title?.toLowerCase() || "";
-      const description = item.description?.toLowerCase() || "";
-      const company = (
-        typeof item.company === "string"
-          ? item.company
-          : item.company?.company_name || ""
-      ).toLowerCase();
-      return (
-        title.includes(query) ||
-        description.includes(query) ||
-        company.includes(query)
-      );
-    });
-  }, [activeTab, searchQuery, transformedData, allContentSorted]);
-
-  // Paginated data
-  const displayedData = filteredData.slice(0, itemsToShow);
-  const hasMore = itemsToShow < filteredData.length;
-  const remainingCount = filteredData.length - itemsToShow;
-
-  // Calculate counts
-  const counts = useMemo(
-    () => ({
-      all: allContentSorted.length,
-      live: 0,
-      internships: transformedData.internships.length,
-      programs: transformedData.programs.length,
-      events: transformedData.events.length,
-      announcements: transformedData.announcements.length,
-    }),
-    [allContentSorted, transformedData]
+  if (error) return (
+    <div className="text-center py-12 bg-slate-50 dark:bg-slate-900/50 rounded-2xl">
+      <div className="w-12 h-12 bg-red-50 dark:bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-3">
+        <X className="text-red-500" size={20} />
+      </div>
+      <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1">Something went wrong</h3>
+      <p className="text-[12px] text-slate-400 font-medium">{error}</p>
+    </div>
   );
 
-  // Handle search with URL update
-  const handleSearchChange = (value: string) => {
-    setSearchQuery(value);
-    setItemsToShow(ITEMS_PER_PAGE);
-
-    startTransition(() => {
-      const params = new URLSearchParams(searchParams);
-      if (value) {
-        params.set("q", value);
-      } else {
-        params.delete("q");
-      }
-      router.push(`?${params.toString()}`, { scroll: false });
-    });
-  };
-
-  // Handle load more
-  const handleLoadMore = () => {
-    setIsLoadingMore(true);
-    
-    setTimeout(() => {
-      setItemsToShow(prev => Math.min(prev + ITEMS_PER_PAGE, filteredData.length));
-      setIsLoadingMore(false);
-    }, 300);
-  };
-
-  // Scroll to top
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  if (error) {
-    return (
-      <div className="text-center py-20">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-destructive/10 mb-4">
-          <svg className="w-8 h-8 text-destructive" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-        </div>
-        <h3 className="text-lg font-semibold text-foreground mb-2">Error Loading Feed</h3>
-        <p className="text-muted-foreground text-sm">{error}</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6 relative">
-      {/* Feed Tabs */}
-      <FeedTabs counts={counts} isLoading={isPending} />
-
-      {/* Content Grid */}
-      {displayedData.length === 0 ? (
-        <div className="text-center py-20 animate-fade-in">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-muted mb-4">
-            <svg className="w-10 h-10 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
-          <h3 className="text-xl font-bold text-foreground mb-2">No Opportunities Found</h3>
-          <p className="text-muted-foreground">
-            {searchQuery ? "Try adjusting your search" : "Check back later for new opportunities"}
-          </p>
-          {searchQuery && (
+    <div className="space-y-5">
+      {/* ── Category Tabs ── */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 hide-scrollbar">
+        {categories.map((cat) => {
+          const isActive = activeCategory === cat.id;
+          return (
             <button
-              onClick={() => handleSearchChange("")}
-              className="mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all transform hover:scale-105 shadow-md hover:shadow-lg"
+              key={cat.id}
+              onClick={() => handleCategoryChange(cat.id)}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-full text-[12px] font-semibold whitespace-nowrap transition-all duration-300 border shrink-0",
+                isActive
+                  ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white shadow-sm"
+                  : "bg-card text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-650 hover:text-slate-700 dark:hover:text-slate-200"
+              )}
             >
-              Clear Search
+              <cat.icon size={14} strokeWidth={2} />
+              {cat.label}
             </button>
-          )}
+          );
+        })}
+      </div>
+
+      {/* ── Cards Carousel ── */}
+      {displayedItems.length === 0 ? (
+        <div className="text-center py-16 bg-slate-50/50 dark:bg-slate-900/30 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
+          <div className="w-14 h-14 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md">
+            <Search size={28} strokeWidth={1.5} className="text-slate-300 dark:text-slate-600" />
+          </div>
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1">No opportunities found</h3>
+          <p className="text-[12px] text-slate-400 font-medium">Check back soon for new programs and internships</p>
         </div>
       ) : (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {displayedData.map((item, index) => (
-              <FeedCardSSR
-                key={item.id}
-                item={item}
-                index={index}
-                isOpen={calculateIsOpen(item)}
-              />
-            ))}
+        <div className="relative group/carousel">
+          {/* Scroll Buttons */}
+          <button
+            onClick={() => scroll("left")}
+            className="absolute -left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-full shadow-lg flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 transition-all hover:scale-110 hidden lg:flex"
+          >
+            <ChevronLeft size={16} className="text-slate-600 dark:text-slate-300" />
+          </button>
+          <button
+            onClick={() => scroll("right")}
+            className="absolute -right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-full shadow-lg flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 transition-all hover:scale-110 hidden lg:flex"
+          >
+            <ChevronRight size={16} className="text-slate-600 dark:text-slate-300" />
+          </button>
+
+          {/* Cards Row */}
+          <div
+            ref={scrollRef}
+            className="flex gap-4 overflow-x-auto snap-x snap-mandatory hide-scrollbar scroll-smooth pb-2"
+          >
+            <AnimatePresence mode="popLayout">
+              {displayedItems.map((item, index) => (
+                <motion.div
+                  key={item.id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.4, delay: index * 0.05 }}
+                  className="flex-none w-[80%] sm:w-[calc(50%-8px)] lg:w-[calc(33.333%-11px)] snap-start"
+                >
+                  <UnifiedFeedCard
+                    item={item}
+                    index={index}
+                    isOpen={calculateIsOpen(item)}
+                    onClick={handleItemClick}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
 
-          {/* Load More Button */}
-          {hasMore && (
-            <div className="flex flex-col items-center gap-3 pt-6">
-              <button
-                onClick={handleLoadMore}
-                disabled={isLoadingMore}
-                className="group px-8 py-3.5 bg-primary text-primary-foreground font-semibold rounded-xl hover:bg-primary/90 transition-all shadow-lg hover:shadow-xl flex items-center gap-2 transform hover:scale-105 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
-              >
-                {isLoadingMore ? (
-                  <>
-                    <Loader2 size={18} className="animate-spin" />
-                    <span>Loading...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Load {Math.min(ITEMS_PER_PAGE, remainingCount)} More</span>
-                    <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                  </>
-                )}
-              </button>
-              <p className="text-sm text-muted-foreground">
-                {remainingCount} more {remainingCount === 1 ? 'opportunity' : 'opportunities'} available
-              </p>
+          {/* Pagination Dots */}
+          {totalSlides > 1 && (
+            <div className="flex items-center justify-center gap-1.5 pt-4">
+              {Array.from({ length: totalSlides }).map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    if (!scrollRef.current) return;
+                    scrollRef.current.scrollTo({ left: scrollRef.current.offsetWidth * i, behavior: "smooth" });
+                    setActiveSlide(i);
+                  }}
+                  className={cn(
+                    "rounded-full transition-all duration-300",
+                    activeSlide === i
+                      ? "w-5 h-1.5 bg-[#155DFC]"
+                      : "w-1.5 h-1.5 bg-slate-300 dark:bg-slate-700 hover:bg-slate-400"
+                  )}
+                />
+              ))}
             </div>
           )}
-        </>
+        </div>
       )}
 
-      {/* Scroll to Top Button */}
-      {showScrollTop && (
-        <button
-          onClick={scrollToTop}
-          className="fixed bottom-8 right-8 p-3 bg-primary text-primary-foreground rounded-full shadow-2xl hover:shadow-3xl transition-all transform hover:scale-110 z-50 animate-bounce-in"
-          aria-label="Scroll to top"
-        >
-          <ArrowUp size={24} />
-        </button>
-      )}
+      <ProgramDetailsSlideOver
+        item={selectedItem}
+        isOpen={isDetailsOpen}
+        onClose={() => setIsDetailsOpen(false)}
+        isAuthenticated={isAuthenticated}
+      />
 
-      {/* Live Video Modal */}
       {modalData && (
         <LiveVideoModal
           isOpen={isOpen}
@@ -279,3 +237,4 @@ export function FeedGridClient({ initialData, error }: FeedGridClientProps) {
     </div>
   );
 }
+

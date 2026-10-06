@@ -20,7 +20,7 @@ COMMENT ON COLUMN public.company_profiles.user_id IS 'Links to the authenticated
 CREATE TABLE public.student_profiles (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id uuid UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  full_name text NOT NULL,
+  full_name text NOT NULL DEFAULT 'Student',
   university text,
   field_of_study text,
   graduation_year integer,
@@ -91,7 +91,8 @@ CREATE POLICY "Students can insert their own profile."
 
 CREATE POLICY "Students can update their own profile."
   ON public.student_profiles FOR UPDATE
-  USING (auth.uid() = user_id);
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
 
 -- --- Policies for internships ---
 CREATE POLICY "Anyone can view internships."

@@ -3,10 +3,12 @@
 import { DashboardHeader } from "@/components/layout/dashboard/DashboardHeader";
 import { Sidebar } from "@/components/layout/dashboard/Sidebar";
 import { MobileTabBar } from "@/components/layout/dashboard/MobileTabBar";
+import { ProfileCompletionBanner } from "@/components/sections/dashboard/ProfileCompletionBanner";
 import { useState, useEffect } from "react";
 import { UserProfile } from "@/app/types/type";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { PushNotificationManager } from "@/components/providers/PushNotificationManager";
 
 interface DashboardClientLayoutProps {
   children: React.ReactNode;
@@ -56,6 +58,7 @@ export function DashboardClientLayout({
 
   return (
     <>
+      <PushNotificationManager />
       {/* Header with user data and menu click handler */}
       <DashboardHeader
         user={user}
@@ -82,12 +85,12 @@ export function DashboardClientLayout({
 
         {/* Main Content */}
         <main className={cn(
-          "flex-1 min-h-[calc(100vh-4rem)] overflow-x-hidden transition-all duration-300 ease-in-out",
+          "flex-1 min-w-0 min-h-[calc(100vh-4rem)] transition-all duration-300 ease-in-out",
           !isMobile && isSidebarOpen ? 'lg:ml-80' : 'ml-0',
           "pb-20 lg:pb-0" // Mobile tab bar padding
         )}>
           {/* Content Container */}
-          <div className="w-full max-w-full overflow-x-hidden h-full">
+          <div className="w-full max-w-full h-full">
             {isChatPage ? (
               // Full width/height for Chat
               <div className="h-full w-full">
@@ -97,6 +100,7 @@ export function DashboardClientLayout({
               // Standard Dashboard Padding
               <div className="p-4 sm:p-6 lg:p-8">
                 <div className="max-w-7xl mx-auto">
+                  <ProfileCompletionBanner profileStatus={user?.profile?.profile_status} />
                   {children}
                 </div>
               </div>

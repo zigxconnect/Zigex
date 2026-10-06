@@ -1,6 +1,12 @@
 "use server";
 
-import { createServerActionClient, supabaseAdmin } from "@/lib/supabase/server";
+import { cache } from "react";
+import { serverApi } from "@/lib/api/server-client";
+import { ApiClientError } from "@/lib/api/errors";
+import { getSession } from "@/lib/api/auth";
+import { getMyProfile, updateMyProfile } from "@/lib/api/services/profile";
+import { sendWelcomeEmail } from "@/lib/emailjs";
+import { sendWhatsAppWelcomeInvite } from "@/lib/whatsapp";
 
 export interface UserProfile {
   id: string;
@@ -39,47 +45,26 @@ export interface FormattedUserData {
   };
 }
 
+/** The student's applications (GET /applications); empty on any failure. */
+const getMyApplications = cache(async (): Promise<{ status?: string }[]> => {
+  try {
+    const res = await serverApi.get<{ status?: string }[]>("/applications");
+    return res.data ?? [];
+  } catch (error) {
+    if (!(error instanceof ApiClientError && error.status === 401)) {
+      console.error("Error fetching applications for profile stats:", error);
+    }
+    return [];
+  }
+});
+
 /**
  * Server action to get the current user's complete, formatted profile information.
- * Throws an error if the user or profile is not found, as the middleware should
- * have already prevented unauthorized access.
- * @returns {Promise<FormattedUserData>}
+ * Wrapped in React cache to prevent redundant backend calls within the same request.
  */
-export async function getProfileInfo(): Promise<FormattedUserData> {
-  const supabase = await createServerActionClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    const { data: { session } } = await supabase.auth.getSession();
-    console.error("[ProfileActions] User not found in getProfileInfo. Session exists:", !!session);
-    throw new Error(
-      "Authentication error: User not found. Middleware should have prevented this."
-    );
-  }
-
-  const { data: profile, error } = await supabase
-    .from("student_profiles")
-    .select("*")
-    .eq("user_id", user.id)
-    .single();
-
-  if (error || !profile) {
-    throw new Error(
-      "Data fetching error: Profile not found for an authenticated user. Middleware should have prevented this."
-    );
-  }
-
-  const { count: applicationsCount, error: countError } = await supabase
-    .from("Applications")
-    .select("*", { count: "exact", head: true })
-    .eq("student_id", profile.id)
-    .neq("status", "rejected");
-
-  if (countError) {
-    console.error("Error fetching application count:", countError);
-  }
+export const getProfileInfo = cache(async (): Promise<FormattedUserData | null> => {
+  const [profile, applications] = await Promise.all([getMyProfile(), getMyApplications()]);
+  if (!profile) return null;
 
   const userData: FormattedUserData = {
     name: profile.full_name || "New User",
@@ -89,111 +74,90 @@ export async function getProfileInfo(): Promise<FormattedUserData> {
         }`.toUpperCase() || "NU",
     university: profile.university || "University not specified",
     skills: profile.hard_skills || [],
-    coverImageUrl: "/placeholder-cover.jpg",
-    profile: profile,
+    coverImageUrl: profile.cover_image_url || "/placeholder-cover.jpg",
+    profile: profile as UserProfile,
     stats: {
-      applications: applicationsCount || 0,
-      profileViews: 0, // Placeholder as this is not yet tracked
+      applications: applications.filter((a) => a.status !== "rejected").length,
+      profileViews: 0, // Placeholder
     },
     permissions: {
-      isSupervisor: false,
-      isIntern: false
-    }
+      // Spec'd flags on /students/me; derived from applications until the backend sends them.
+      isSupervisor: Boolean(profile.is_supervisor),
+      isIntern:
+        typeof profile.is_intern === "boolean"
+          ? profile.is_intern
+          : applications.some((a) => a.status === "accepted" || a.status === "rsvp_confirmed"),
+    },
   };
 
-  // Check for Supervisor status
-  const { data: supervisor } = await supabaseAdmin
-    .from("supervisor_profiles")
-    .select("id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (supervisor) userData.permissions!.isSupervisor = true;
-
-  // Check for Intern status (Accepted internship)
-  const { data: activeInternship } = await supabaseAdmin
-    .from("internship_applications")
-    .select("id")
-    .eq("student_id", user.id)
-    .eq("status", "accepted")
-    .limit(1)
-    .maybeSingle();
-
-  if (activeInternship) userData.permissions!.isIntern = true;
-
-  // Final fallback: check legacy Applications table if not found in modern one
-  if (!userData.permissions!.isIntern) {
-    const { data: legacyInternship } = await supabaseAdmin
-      .from("Applications")
-      .select("id")
-      .eq("student_id", profile.id)
-      .eq("status", "accepted")
-      .limit(1)
-      .maybeSingle();
-    if (legacyInternship) userData.permissions!.isIntern = true;
-  }
-
   return userData;
-}
+});
 
 /**
  * Server action to get just the raw user profile data.
- * Returns null if the user or profile is not found, allowing client
- * components to handle the UI state gracefully.
- * @returns {Promise<UserProfile | null>}
+ * Wrapped in React cache for efficiency.
  */
-export async function getRawProfileInfo(): Promise<UserProfile | null> {
+export const getRawProfileInfo = cache(async (): Promise<UserProfile | null> => {
   try {
-    const supabase = await createServerActionClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) return null;
-
-    const { data: profile, error } = await supabase
-      .from("student_profiles")
-      .select("*")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    if (error) {
-      console.error("Error fetching raw profile:", error);
-      return null;
-    }
-
-    return profile;
+    return (await getMyProfile()) as UserProfile | null;
   } catch (error) {
     console.error("Unexpected error in getRawProfileInfo:", error);
     return null;
   }
-}
+});
 
 /**
  * Server action to quickly check if a user has completed their profile.
- * This is primarily for reference, as the middleware now contains this logic.
- * @returns {Promise<boolean>} True if a profile exists, false otherwise.
+ * @returns {Promise<boolean>} True if the profile is marked complete, false otherwise.
  */
 export async function hasCompletedProfile(): Promise<boolean> {
   try {
-    const supabase = await createServerActionClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) return false;
-
-    const { data: profile, error } = await supabase
-      .from("student_profiles")
-      .select("id, profile_status")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    if (error) return false;
-
+    const profile = await getMyProfile();
     return profile?.profile_status === "complete";
   } catch (error) {
     console.error("Error checking profile completion:", error);
     return false;
+  }
+}
+
+/**
+ * Saves the signed-in student's profile (PATCH /students/me) from the
+ * profile forms' snake_case fields.
+ *
+ * `welcome: true` (onboarding only) also sends the welcome email and
+ * WhatsApp invite, which the old PUT /api/students/student/[id] route did.
+ */
+export async function saveMyProfile(
+  updates: Record<string, unknown>,
+  options: { welcome?: boolean } = {}
+): Promise<{ success: boolean; data?: UserProfile | null; unsupported?: string[]; error?: string }> {
+  const session = await getSession();
+  if (!session) return { success: false, error: "Not authenticated" };
+
+  try {
+    const { profile, unsupported } = await updateMyProfile(updates);
+
+    if (options.welcome && profile) {
+      // Fire-and-forget: a failed email/WhatsApp must not fail the save.
+      try {
+        const userName = profile.full_name || profile.first_name || "Candidate";
+        sendWelcomeEmail({
+          email: session.email,
+          name: userName,
+          communityLink: "https://chat.whatsapp.com/GzXpExampleLink",
+        });
+        if (profile.phone) sendWhatsAppWelcomeInvite(userName, profile.phone);
+      } catch (automationError) {
+        console.error("[AUTOMATION] Background job error:", automationError);
+      }
+    }
+
+    return { success: true, data: profile as UserProfile | null, unsupported };
+  } catch (error) {
+    console.error("Error saving profile:", error);
+    return {
+      success: false,
+      error: error instanceof ApiClientError ? error.message : "Failed to update profile",
+    };
   }
 }

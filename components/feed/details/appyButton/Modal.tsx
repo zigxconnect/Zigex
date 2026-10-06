@@ -69,7 +69,7 @@ const formContents: Record<
         placeholder: "Any questions or additional information? (Optional)",
       },
       {
-        label: "I understand this is a year-long program running every weekend",
+        label: "I accept the program rules and policies",
         name: "info",
         type: "checkbox",
         required: true,
@@ -151,14 +151,14 @@ const formContents: Record<
         name: "resume",
         type: "file",
         required: true,
-        helperText: "PDF, DOC, or DOCX • Max 10MB",
+        helperText: "PDF, DOC or DOCX • Max 10MB",
       },
       {
         label: "Cover Letter",
         name: "cover_letter",
         type: "file",
         required: true,
-        helperText: "PDF, DOC, or DOCX • Max 10MB",
+        helperText: "PDF • Max 10MB",
       },
     ],
   },
@@ -206,17 +206,15 @@ export default function ApplicationModal({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const validateFile = (file: File): string | null => {
+  // Mirrors what the backend accepts: CVs as PDF/DOC, cover letters as PDF only.
+  const validateFile = (file: File, name: string): string | null => {
     if (file.size > 10 * 1024 * 1024) {
       return `File "${file.name}" exceeds the 10MB limit.`;
     }
-    const allowedTypes = [
-      "application/pdf",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    ];
+    const isCoverLetter = name === "cover_letter";
+    const allowedTypes = isCoverLetter ? ["application/pdf"] : ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
     if (!allowedTypes.includes(file.type)) {
-      return `File "${file.name}" is not a valid document type (PDF, DOC, DOCX).`;
+      return `File "${file.name}" is not a valid document type (${isCoverLetter ? "PDF" : "PDF, DOC or DOCX"}).`;
     }
     return null;
   };
@@ -224,7 +222,7 @@ export default function ApplicationModal({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, name: string) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
-      const validationError = validateFile(selectedFile);
+      const validationError = validateFile(selectedFile, name);
       if (validationError) {
         setError(validationError);
         e.target.value = ""; // Clear input
@@ -253,7 +251,7 @@ export default function ApplicationModal({
     
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const droppedFile = e.dataTransfer.files[0];
-      const validationError = validateFile(droppedFile);
+      const validationError = validateFile(droppedFile, name);
       if (validationError) {
         setError(validationError);
         return;
@@ -546,7 +544,7 @@ export default function ApplicationModal({
                         <input
                           type="file"
                           id={field.name}
-                          accept=".pdf,.doc,.docx"
+                          accept={field.name === "cover_letter" ? ".pdf" : ".pdf,.doc,.docx"}
                           onChange={(e) => handleFileChange(e, field.name)}
                           className="hidden"
                         />
@@ -569,7 +567,7 @@ export default function ApplicationModal({
                                 Click to upload or drag and drop
                               </p>
                               <p className="text-xs text-gray-500 dark:text-gray-400">
-                                PDF, DOC, DOCX (Max 10MB)
+                                {field.name === "cover_letter" ? "PDF" : "PDF, DOC"} (Max 10MB)
                               </p>
                             </div>
                           </label>

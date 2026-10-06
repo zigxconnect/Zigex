@@ -74,7 +74,7 @@ export function ApplicationModal({
             name: "cv",
             type: "file" as const,
             required: true,
-            helperText: "PDF or DOC format, max 10MB",
+            helperText: "PDF, DOC or DOCX format, max 10MB",
           },
           {
             label: "I agree to the program terms and conditions",
@@ -155,7 +155,7 @@ export function ApplicationModal({
             name: "resume",
             type: "file" as const,
             required: true,
-            helperText: "PDF or DOC format, max 10MB",
+            helperText: "PDF, DOC or DOCX format, max 10MB",
           },
           {
             label: "I confirm all information provided is accurate",
