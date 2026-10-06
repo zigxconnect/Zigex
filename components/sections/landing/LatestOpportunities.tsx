@@ -21,17 +21,18 @@ const KIND_META: Record<FeedKind, { label: string; icon: typeof Briefcase }> = {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-function dateLine(kind: FeedKind, row: FeedRow): { text: string; urgent: boolean } | null {
+function dateLine(kind: FeedKind, row: FeedRow): { text: string; urgent: boolean; closed?: boolean } | null {
   const deadline = row.deadline ?? row.application_deadline;
   if (deadline) {
     const days = Math.ceil((new Date(deadline).getTime() - Date.now()) / DAY_MS);
-    if (days < 0) return null;
+    if (days < 0) return { text: "Closed", urgent: false, closed: true };
     return { text: days === 0 ? "Closes today" : `Closes in ${days} day${days === 1 ? "" : "s"}`, urgent: days <= 7 };
   }
   const start = row.start_date;
   if (start && kind !== "internships") {
     const date = new Date(start).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-    return { text: `Starts ${date}`, urgent: false };
+    const past = new Date(start).getTime() < Date.now() - DAY_MS;
+    return past ? { text: "Ended", urgent: false, closed: true } : { text: `Starts ${date}`, urgent: false };
   }
   return null;
 }
@@ -56,8 +57,8 @@ function SectionShell({ children }: { children: React.ReactNode }) {
       <div className={landingContainer}>
         <div className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 id="latest-title" className={landingSectionTitle}>Open right now</h2>
-            <p className={landingSectionLead}>The newest internships, programs and events on Zigex.</p>
+            <h2 id="latest-title" className={landingSectionTitle}>Latest opportunities</h2>
+            <p className={landingSectionLead}>The newest internships, programs and events posted on Zigex.</p>
           </div>
           <Link href="/feed" className={`${landingButton("secondary", "md")} self-start sm:self-auto`}>
             See all opportunities

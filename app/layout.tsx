@@ -136,7 +136,7 @@ export default function RootLayout({
       <head>
 
       </head>
-      <body className={`${inter.variable} ${hostGrotesk.variable} antialiased`}>
+      <body className={`${inter.variable} ${hostGrotesk.variable} font-sans antialiased`}>
         <LoaderProvider />
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
           <PushNotificationManager />

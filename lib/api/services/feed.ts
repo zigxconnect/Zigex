@@ -92,3 +92,22 @@ export async function latestFeed(kind: FeedKind, limit = 6): Promise<FeedRow[]> 
   const payload = await parseResponse<FeedRow[]>(res);
   return (payload.data ?? []).map(normalise);
 }
+
+/**
+ * Every visible item of one feed, for the /feed board. Public data, so it is
+ * fetched without the visitor's token and cached for 2 minutes (the first
+ * uncached load used to take a minute against the slow backend).
+ */
+export async function listPublicFeed(kind: FeedKind): Promise<FeedRow[]> {
+  const rows: FeedRow[] = [];
+  for (let page = 1; page <= MAX_PAGES; page++) {
+    const res = await fetch(`${BACKEND_URL}${API_PREFIX}/feed/${kind}?page=${page}&limit=${PAGE_LIMIT}`, {
+      next: { revalidate: 120 },
+      signal: AbortSignal.timeout(30_000),
+    });
+    const payload = await parseResponse<FeedRow[]>(res);
+    rows.push(...(payload.data ?? []).map(normalise));
+    if (!payload.meta || page >= payload.meta.totalPages) break;
+  }
+  return rows;
+}
