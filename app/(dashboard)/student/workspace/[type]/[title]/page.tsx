@@ -5,7 +5,7 @@ import {
 import { InternWorkspaceClient } from "@/components/sections/intern/InternWorkspaceClient";
 
 export const metadata = {
-  title: "Workspace | Zigex",
+  title: "Workspace",
   description: "Manage your internship, curriculum, and tasks in one place.",
 };
 

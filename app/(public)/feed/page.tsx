@@ -22,7 +22,7 @@ import { listPublicFeed, type FeedKind } from "@/lib/api/services/feed";
 import { getOptionalAuth } from "@/lib/utils/auth-context";
 
 export const metadata: Metadata = {
-  title: "Opportunities | Zigex",
+  title: "Opportunities",
   description: "Search open internships, training programs and events from verified companies in Bamenda and across Cameroon.",
 };
 

@@ -3,7 +3,7 @@ import { getSession } from "@/lib/api/auth";
 import { redirect } from "next/navigation";
 
 export const metadata = {
-  title: "Profile Settings | Zigex",
+  title: "Profile Settings",
   description: "Manage your profile settings and preferences.",
 };
 

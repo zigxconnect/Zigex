@@ -2,7 +2,7 @@ import Link from "next/link";
 import { BadgeCheck, Briefcase, GraduationCap } from "lucide-react";
 
 export const metadata = {
-  title: "Account | Zigex",
+  title: { template: "%s | Zigex", default: "Account | Zigex" },
   description: "Sign in or create your free Zigex student account.",
 };
 

@@ -3,7 +3,7 @@ import { getAcceptedInternships } from "@/lib/actions/intenship.actions";
 import { InternWorkspaceSelection } from "@/components/sections/intern/InternWorkspaceSelection";
 
 export const metadata = {
-  title: "Student Workspace Selection | Zigex",
+  title: "Student Workspace Selection",
   description: "Select your active placement to enter your workspace.",
 };
 

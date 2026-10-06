@@ -2,7 +2,7 @@ import { Footer } from "@/components/layout/Footer";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Zigex | Internships, programs and events for students in Cameroon",
+  title: { absolute: "Zigex | Internships, programs and events for students in Cameroon" },
   description:
     "Apply to internships, join training programs and attend events from verified companies in Bamenda and across Cameroon.",
 };
