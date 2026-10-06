@@ -8,7 +8,7 @@
 
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowRight, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { listPublicFeed } from "@/lib/api/services/feed";
 import { listApplications } from "@/lib/api/services/applications";
 import { applicationKind, targetId, toApplicationStatus } from "@/lib/api/applications-shape";
@@ -64,10 +64,7 @@ export default async function ProgramsPage() {
     <div className="pb-16">
       <header className="mb-8">
         <h1 className="font-heading text-[28px] font-bold leading-tight tracking-tight text-[#0B1B3F]">Programs</h1>
-        <p className="mt-1 max-w-2xl text-base text-[#4A5670]">
-          Bootcamps and training programs run by companies on Zigex. Register, learn with a group, and follow updates
-          from the organisers.
-        </p>
+        <p className="mt-1 text-base text-[#4A5670]">Bootcamps and training run by companies on Zigex.</p>
       </header>
 
       {mine.length > 0 && (
@@ -107,28 +104,19 @@ export default async function ProgramsPage() {
         <div className="flex items-baseline justify-between gap-3">
           <h2 id="open-title" className="font-heading text-xl font-semibold text-[#0B1B3F]">
             Open for registration
-            <span className="ml-2 text-base font-normal text-[#7B869C]">{open.length}</span>
+            {open.length > 0 && <span className="ml-2 text-base font-normal text-[#7B869C]">{open.length}</span>}
           </h2>
         </div>
 
         {failed ? (
-          <div className="mt-4 rounded-2xl bg-white px-6 py-10 text-center ring-1 ring-[#DCE5F5]">
-            <p className="font-heading text-lg font-semibold text-[#0B1B3F]">Programs couldn&apos;t load.</p>
-            <p className="mt-1 text-base text-[#4A5670]">The server is slow to respond. Refresh the page in a moment.</p>
-          </div>
+          <p className="mt-3 text-base text-[#4A5670]">Programs couldn&apos;t load. Refresh the page in a moment.</p>
         ) : open.length === 0 ? (
-          <div className="mt-4 rounded-2xl bg-white px-6 py-10 ring-1 ring-[#DCE5F5] sm:flex sm:items-center sm:justify-between sm:gap-6">
-            <div>
-              <p className="font-heading text-lg font-semibold text-[#0B1B3F]">No programs are taking registrations right now.</p>
-              <p className="mt-1 text-base text-[#4A5670]">
-                Companies open new cohorts through the year. Meanwhile, internships and events are on the opportunities page.
-              </p>
-            </div>
-            <Link href="/feed" className={`${landingButton("secondary", "md")} mt-4 shrink-0 sm:mt-0`}>
-              Browse opportunities
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          <p className="mt-3 text-base text-[#4A5670]">
+            None right now. Companies open new cohorts through the year.{" "}
+            <Link href="/feed" className="font-semibold text-[#155DFC] hover:underline">
+              See internships and events
             </Link>
-          </div>
+          </p>
         ) : (
           <ul className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {open.map((p) => (

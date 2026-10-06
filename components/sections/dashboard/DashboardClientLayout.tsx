@@ -96,8 +96,8 @@ export function DashboardClientLayout({
               // Standard Dashboard Padding
               <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
                 <div className="mx-auto max-w-6xl">
-                  {/* /feed shows profile strength in its own sidebar instead. */}
-                  {pathname !== "/feed" && <ProfileCompletionBanner profileStatus={user?.profile?.profile_status} />}
+                  {/* /feed shows profile strength in its own sidebar; Programs doesn't need it. */}
+                  {!["/feed", "/dashboard/programs"].includes(pathname ?? "") && <ProfileCompletionBanner profileStatus={user?.profile?.profile_status} />}
                   {children}
                 </div>
               </div>
