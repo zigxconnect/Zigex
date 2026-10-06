@@ -183,28 +183,48 @@ export function InternWorkspaceClient({ data }: InternWorkspaceClientProps) {
     setTasks(initialTasks || []);
   }, [initialTasks]);
 
-  // TODO(backend): Supabase realtime used to push application, announcement,
-  // log, task, payment, evaluation and notification changes. The backend has
-  // no push channel yet (SSE/WebSocket), so re-fetch the workspace while the
-  // tab is visible, and as soon as it becomes visible again.
+  // Supabase realtime used to push application, announcement, log, task,
+  // payment, evaluation and notification changes. Now: re-fetch while the tab
+  // is visible, plus an instant refresh on each event from the backend's
+  // GET /events/stream (spec'd; until it exists the stream fails and we just poll).
   useEffect(() => {
     const refresh = () => {
       if (document.visibilityState === "visible") router.refresh();
     };
     const interval = setInterval(refresh, WORKSPACE_REFRESH_MS);
     document.addEventListener("visibilitychange", refresh);
+
+    let stream: EventSource | null = null;
+    if (typeof EventSource !== "undefined") {
+      stream = new EventSource("/api/v1/events/stream");
+      stream.onmessage = refresh;
+      // A 404 (not deployed) or dropped connection: stop and rely on polling.
+      stream.onerror = () => {
+        stream?.close();
+        stream = null;
+      };
+    }
+
     return () => {
       clearInterval(interval);
       document.removeEventListener("visibilitychange", refresh);
+      stream?.close();
     };
   }, [router]);
 
-  // Reset unread count when switching to announcements tab
+  // Opening the announcements tab marks them read, here and on the backend.
   useEffect(() => {
-    if (activeTab === "announcements") {
-      setUnreadAnnouncements(0);
+    if (activeTab !== "announcements") return;
+    setUnreadAnnouncements(0);
+    const unreadIds = (data.announcements || [])
+      .filter((a: any) => a.is_read === false)
+      .map((a: any) => a.id);
+    if (unreadIds.length > 0) {
+      import("@/lib/actions/intenship.actions").then(({ markWorkspaceAnnouncementsRead }) =>
+        markWorkspaceAnnouncementsRead(unreadIds)
+      );
     }
-  }, [activeTab]);
+  }, [activeTab, data.announcements]);
 
   const handleOpenTask = async (task: any) => {
     setSelectedTask(task);

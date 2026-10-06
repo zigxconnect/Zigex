@@ -30,10 +30,9 @@ function durationMonths(duration: string): number | undefined {
 /**
  * Paid-internship application form → POST /applications.
  *
- * TODO(backend): POST /applications has no columns for this form's extra
- * fields (school, level, date of birth, address, domain, experience, reason,
- * paid acknowledgement). Until it does, they are sent as labelled lines in
- * `comments` so the company still sees them.
+ * The form's extra answers are sent as real fields (spec'd in
+ * docs/backend-missing-endpoints.md) and also as labelled lines in
+ * `comments`, so the company sees them even before the backend stores them.
  */
 export async function POST(request: Request) {
   try {
@@ -72,6 +71,15 @@ export async function POST(request: Request) {
         department: form.domain,
         duration_months: durationMonths(form.duration),
         expectations: form.expectations,
+        school: form.school,
+        school_level: form.school_level,
+        date_of_birth: form.date_of_birth,
+        address: form.address,
+        domain: form.domain,
+        duration: form.duration,
+        experience_level: form.experience_level,
+        reason: form.reason,
+        is_paid_acknowledgement: form.is_paid_acknowledgement,
         comments,
       });
       return NextResponse.json(application, { status: 201 });

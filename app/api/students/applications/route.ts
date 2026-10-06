@@ -11,7 +11,7 @@ import {
   createApplication,
   getApplicantProfile,
   uploadCoverLetter,
-  uploadCv,
+  uploadResume,
   type ApplicantProfile,
 } from "@/lib/api/services/applications";
 
@@ -78,7 +78,7 @@ const handleInternshipApplication = async (applicant: Applicant, formData: FormD
   const resume = formData.get("resume") as File | null;
   const coverLetter = formData.get("cover_letter") as File | null;
   const fileError =
-    validateFile(resume, "resume", CV_MIME_TYPES, "PDF or DOC") ??
+    validateFile(resume, "resume", CV_MIME_TYPES, "PDF, DOC or DOCX") ??
     validateFile(coverLetter, "cover letter", COVER_LETTER_MIME_TYPES, "PDF");
   if (fileError) return fail(fileError, 400);
 
@@ -103,7 +103,7 @@ const handleInternshipApplication = async (applicant: Applicant, formData: FormD
   // The application exists now; a failed upload is reported but does not undo it.
   const uploadWarnings: string[] = [];
   const [cvResult, coverResult] = await Promise.allSettled([
-    uploadCv(resume!),
+    uploadResume(application.id, resume!),
     uploadCoverLetter(application.id, coverLetter!),
   ]);
   if (cvResult.status === "rejected") {
@@ -148,7 +148,8 @@ const handleProgramApplication = async (applicant: Applicant, formData: FormData
       application_type: "program",
       program_id,
       expectations: text(formData, "expectations"),
-      // TODO(backend): no `level` field on POST /applications yet.
+      level: text(formData, "level"),
+      // Also in comments until the backend confirms it stores `level`.
       comments: joinComments(["Level", formData.get("level")], ["", formData.get("comments")]),
     });
   } catch (error) {
@@ -185,7 +186,7 @@ const handleEventRSVP = async (applicant: Applicant, formData: FormData) => {
       application_type: "event",
       event_id,
       expectations: text(formData, "expectations"),
-      // TODO(backend): no `rsvp_status` field on POST /applications; the RSVP itself is the application.
+      rsvp_status: text(formData, "rsvp_status") ?? "going",
       comments: text(formData, "comments"),
     });
   } catch (error) {

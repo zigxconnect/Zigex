@@ -1,5 +1,6 @@
 import "server-only";
 import { serverApi } from "../server-client";
+import { isEndpointMissing, whenAvailable } from "../errors";
 import { getFeedItem, type FeedKind } from "./feed";
 
 /**
@@ -74,3 +75,82 @@ export async function listPlacements(): Promise<Placement[]> {
     .sort((a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime());
   return Promise.all(active.map(withOpportunity));
 }
+
+/*
+ * Intern workspace extras (docs/backend-missing-endpoints.md → Intern
+ * workspace). Spec'd endpoints: reads are empty and writes report
+ * `pending` until the backend deploys them.
+ */
+
+const enc = encodeURIComponent;
+
+export async function getInternshipTasks(internshipId: string): Promise<Record<string, any>[]> {
+  return whenAvailable(async () => (await serverApi.get<Record<string, any>[]>(`/internships/${enc(internshipId)}/tasks`)).data ?? [], []);
+}
+
+export async function getInternshipCurriculum(internshipId: string): Promise<Record<string, any>[] | null> {
+  // null = endpoint not deployed (callers fall back to the curriculum embedded in the internship).
+  return whenAvailable(async () => (await serverApi.get<Record<string, any>[]>(`/internships/${enc(internshipId)}/curriculum`)).data ?? [], null);
+}
+
+export type WorkspaceAnnouncement = {
+  id: string;
+  title: string;
+  content: string;
+  created_at: string;
+  is_read?: boolean;
+  [column: string]: any;
+};
+
+export async function getAnnouncements(scope: { internshipId?: string; programId?: string }): Promise<WorkspaceAnnouncement[]> {
+  const params = new URLSearchParams();
+  if (scope.internshipId) params.set("internshipId", scope.internshipId);
+  if (scope.programId) params.set("programId", scope.programId);
+  const rows = await whenAvailable(
+    async () => (await serverApi.get<WorkspaceAnnouncement[]>(`/announcements?${params}`)).data ?? [],
+    [] as WorkspaceAnnouncement[]
+  );
+  return rows.map((a) => ({ ...a, author: a.author ?? { full_name: "Zigex Admin" } }));
+}
+
+type TeamMember = { full_name?: string; avatar_url?: string; username?: string; email?: string };
+
+/** Fellow interns and supervisor, in the shape the workspace UI already renders. */
+export async function getInternshipTeam(internshipId: string) {
+  const team = await whenAvailable(
+    async () =>
+      (await serverApi.get<{ supervisor?: TeamMember | null; supervisors?: TeamMember[]; interns?: TeamMember[] }>(
+        `/internships/${enc(internshipId)}/team`
+      )).data,
+    null
+  );
+  const fellowInterns = (team?.interns ?? []).map((intern) => ({
+    auth_user_id: intern.username ?? intern.full_name,
+    isSameProgram: true,
+    student_profiles: {
+      full_name: intern.full_name ?? "Member",
+      avatar_url: intern.avatar_url ?? "/default-avatar.svg",
+      username: intern.username ?? null,
+    },
+  }));
+  const fellowSupervisors = team?.supervisors ?? (team?.supervisor ? [team.supervisor] : []);
+  return { fellowInterns, fellowSupervisors };
+}
+
+async function write(call: () => Promise<unknown>): Promise<{ success: boolean; pending?: boolean }> {
+  try {
+    await call();
+    return { success: true };
+  } catch (error) {
+    if (isEndpointMissing(error)) return { success: false, pending: true };
+    throw error;
+  }
+}
+
+export const acknowledgePayment = (applicationId: string) =>
+  write(() => serverApi.post(`/applications/${enc(applicationId)}/payment-acknowledgement`));
+
+export const markTaskRead = (taskId: string) => write(() => serverApi.patch(`/tasks/${enc(taskId)}/read`));
+
+export const markAnnouncementsRead = (announcementIds: string[]) =>
+  write(() => serverApi.post("/announcements/read", { announcementIds }));
