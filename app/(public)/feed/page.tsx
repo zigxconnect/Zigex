@@ -8,12 +8,11 @@
  * fallback numbers, fake "featured/popular" badges and profile percentage,
  * the details slide-over (rows open the shareable detail page) and the pop-up.
  *
- * Signed-in students also get the stories strip and their workspaces.
+ * Signed-in students also get their application status and profile strength.
  */
 
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import FeedStories from "@/components/feed/FeedStories";
 import { OpportunityBoard } from "@/components/feed/board/OpportunityBoard";
 import { OpportunityCardSkeleton } from "@/components/feed/board/OpportunityCard";
 import { BoardRail } from "@/components/feed/board/BoardRail";
@@ -158,12 +157,6 @@ export default async function FeedPage() {
         </header>
       )}
 
-      {/* Stories are a community feature for members; signed-out visitors can't post. */}
-      {isAuthenticated && (
-        <section aria-label="Stories" className="mb-6">
-          <FeedStories currentUser={user} />
-        </section>
-      )}
 
       <div className="grid gap-8 lg:grid-cols-12">
         <section aria-label="Opportunities" className="min-w-0 lg:col-span-9">
