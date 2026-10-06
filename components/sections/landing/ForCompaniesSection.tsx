@@ -13,7 +13,7 @@ const POINTS = [
 
 export function ForCompaniesSection() {
   return (
-    <section id="companies" aria-labelledby="companies-title" className="bg-[#0B1B3F] py-20 sm:py-24 scroll-mt-20">
+    <section id="companies" aria-labelledby="companies-title" className="bg-[#0B1B3F] py-16 sm:py-20 scroll-mt-20">
       <div className={`${landingContainer} grid gap-10 lg:grid-cols-12 lg:items-center`}>
         <div className="lg:col-span-7">
           <h2 id="companies-title" className="font-heading text-3xl font-bold tracking-tight text-white sm:text-4xl">

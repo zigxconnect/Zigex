@@ -29,7 +29,7 @@ const FAQS = [
 
 export function FaqSection() {
   return (
-    <section id="faq" aria-labelledby="faq-title" className="bg-white py-20 sm:py-24 scroll-mt-20">
+    <section id="faq" aria-labelledby="faq-title" className="bg-white py-16 sm:py-20 scroll-mt-20">
       <div className={`${landingContainer} grid gap-10 lg:grid-cols-12`}>
         <h2 id="faq-title" className={`${landingSectionTitle} lg:col-span-4`}>Questions students ask</h2>
 

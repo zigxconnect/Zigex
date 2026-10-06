@@ -1,6 +1,7 @@
 import "server-only";
 import { serverApi } from "../server-client";
-import { ApiClientError } from "../errors";
+import { ApiClientError, parseResponse } from "../errors";
+import { API_PREFIX, BACKEND_URL } from "../config";
 import { normaliseFeedItem as normalise } from "../feed-shape";
 
 /** Feed reads from the backend (GET /feed/internships|programs|events). */
@@ -75,13 +76,19 @@ export async function listCompanyFeed(kind: FeedKind, companyId: string, exclude
   return rows.filter((row) => row.company_id === companyId && row.id !== excludeId).slice(0, limit);
 }
 
-/** The newest few items of one feed: a single page, for teasers like the landing page. */
+/**
+ * The newest few items of one feed, for teasers like the landing page.
+ *
+ * The feed is public, so this is fetched without the visitor's token and
+ * cached for 2 minutes: after one successful load, every visitor gets it
+ * instantly even when the backend is slow. Throws on failure so the caller
+ * can show an error state instead of silently rendering nothing.
+ */
 export async function latestFeed(kind: FeedKind, limit = 6): Promise<FeedRow[]> {
-  try {
-    const res = await serverApi.get<FeedRow[]>(`/feed/${kind}?page=1&limit=${limit}`);
-    return (res.data ?? []).map(normalise);
-  } catch (error) {
-    if (isUnauthorized(error)) return [];
-    throw error;
-  }
+  const res = await fetch(`${BACKEND_URL}${API_PREFIX}/feed/${kind}?page=1&limit=${limit}`, {
+    next: { revalidate: 120 },
+    signal: AbortSignal.timeout(30_000),
+  });
+  const payload = await parseResponse<FeedRow[]>(res);
+  return (payload.data ?? []).map(normalise);
 }

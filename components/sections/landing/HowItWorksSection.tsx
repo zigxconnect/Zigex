@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { landingButton, landingContainer, landingSectionLead, landingSectionTitle } from "./landing-ui";
+import { landingContainer, landingSectionLead, landingSectionTitle } from "./landing-ui";
 
 // A real sequence, so it is numbered: this is the path every student takes.
 const STEPS = [
@@ -19,12 +18,12 @@ const STEPS = [
 
 export function HowItWorksSection() {
   return (
-    <section id="how-it-works" aria-labelledby="how-title" className="bg-[#F3F7FF] py-20 sm:py-24 scroll-mt-20">
+    <section id="how-it-works" aria-labelledby="how-title" className="bg-[#F3F7FF] py-16 sm:py-20 scroll-mt-20">
       <div className={landingContainer}>
         <h2 id="how-title" className={landingSectionTitle}>How it works</h2>
         <p className={landingSectionLead}>From sign-up to your first day, in three steps.</p>
 
-        <ol className="mt-12 grid gap-8 md:grid-cols-3 md:gap-6">
+        <ol className="mt-10 grid gap-8 md:grid-cols-3 md:gap-6">
           {STEPS.map((step, index) => (
             <li key={step.title} className="relative rounded-2xl bg-white p-6 ring-1 ring-[#DCE5F5]">
               <span
@@ -39,11 +38,6 @@ export function HowItWorksSection() {
           ))}
         </ol>
 
-        <div className="mt-10">
-          <Link href="/sign-up" className={landingButton("primary", "lg")}>
-            Create your free account
-          </Link>
-        </div>
       </div>
     </section>
   );
