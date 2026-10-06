@@ -4,7 +4,16 @@ import React from 'react';
 import Image from 'next/image';
 import { Lightbulb, Target, Rocket, Heart, Zap, Globe, Shield } from 'lucide-react';
 
-const cards = [
+// UX: full class names, so Tailwind can see them at build time. The old
+// `bg-${color}-100` strings were never generated, leaving the icon tiles colorless.
+const COLOR_CLASSES = {
+    blue: "bg-blue-100 text-blue-600 group-hover:bg-blue-600",
+    indigo: "bg-indigo-100 text-indigo-600 group-hover:bg-indigo-600",
+    sky: "bg-sky-100 text-sky-600 group-hover:bg-sky-600",
+    purple: "bg-purple-100 text-purple-600 group-hover:bg-purple-600",
+} as const;
+
+const cards: { title: string; description: string; icon: typeof Rocket; color: keyof typeof COLOR_CLASSES }[] = [
     {
         title: "Innovation",
         description: "Leveraging technology to solve real problems in career development",
@@ -33,10 +42,10 @@ const cards = [
 
 export const VisionMissionSection: React.FC = () => {
   return (
-    <section id="mission" className="relative py-24 px-4 bg-slate-50 overflow-hidden">
+    <section id="mission" className="relative py-24 px-4 bg-slate-50 overflow-hidden scroll-mt-20">
       {/* Watermark Logo */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] opacity-[0.03] pointer-events-none z-0">
-         <img src="https://i.ibb.co/Cp502Yby/logo.png" alt="Zigex Watermark" className="w-full h-full object-contain" />
+         <img src="https://i.ibb.co/Cp502Yby/logo.png" alt="" aria-hidden="true" className="w-full h-full object-contain" />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto space-y-20">
@@ -51,7 +60,7 @@ export const VisionMissionSection: React.FC = () => {
                     <div className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center text-white mb-6 shadow-lg shadow-blue-600/20 group-hover:scale-110 transition-transform duration-300">
                         <Lightbulb className="w-7 h-7" />
                     </div>
-                    <h3 className="text-3xl font-bold text-gray-900 mb-4">Our Vision</h3>
+                    <h2 className="text-3xl font-bold text-gray-900 mb-4">Our Vision</h2>
                     <p className="text-lg text-gray-600 leading-relaxed">
                         To be the catalyst for a new era of professional excellence, where every aspiring talent in Bamenda and beyond has direct access to the opportunities that shape the future.
                     </p>
@@ -66,7 +75,7 @@ export const VisionMissionSection: React.FC = () => {
                     <div className="w-14 h-14 rounded-2xl bg-indigo-600 flex items-center justify-center text-white mb-6 shadow-lg shadow-indigo-600/20 group-hover:scale-110 transition-transform duration-300">
                         <Target className="w-7 h-7" />
                     </div>
-                    <h3 className="text-3xl font-bold text-gray-900 mb-4">Our Mission</h3>
+                    <h2 className="text-3xl font-bold text-gray-900 mb-4">Our Mission</h2>
                     <p className="text-lg text-gray-600 leading-relaxed">
                         To bridge the gap between education and industry through an intelligent, community-driven platform that empowers students to launch meaningful careers and helps companies discover exceptional local talent.
                     </p>
@@ -84,10 +93,10 @@ export const VisionMissionSection: React.FC = () => {
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {cards.map((card, idx) => (
                     <div key={idx} className="bg-white p-6 rounded-2xl border border-gray-100 hover:border-blue-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
-                        <div className={`w-12 h-12 rounded-xl bg-${card.color}-100 flex items-center justify-center text-${card.color}-600 mb-4 group-hover:bg-${card.color}-600 group-hover:text-white transition-colors duration-300`}>
+                        <div className={`w-12 h-12 rounded-xl ${COLOR_CLASSES[card.color]} flex items-center justify-center mb-4 group-hover:text-white transition-colors duration-300`}>
                              <card.icon className="w-6 h-6" />
                         </div>
-                        <h4 className="text-xl font-bold text-gray-900 mb-2">{card.title}</h4>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">{card.title}</h3>
                         <p className="text-gray-600 text-sm leading-relaxed">{card.description}</p>
                     </div>
                 ))}

@@ -6,7 +6,6 @@ import Image from "next/image";
 import {
   ArrowRight,
   Menu,
-  Play,
   X,
   Search,
   CheckCircle2,
@@ -19,16 +18,23 @@ import {
 import DeveloperAvatarOverlap from "../../ui/DeveloperAvatarOverlap";
 
 const BamendaHeroSection = () => {
-  const [isVisible, setIsVisible] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    setIsVisible(true);
     const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handleScroll);
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // UX: Escape closes the mobile menu, as users expect from any overlay.
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setMobileMenuOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [mobileMenuOpen]);
 
   return (
     <div className="relative min-h-screen bg-white overflow-hidden selection:bg-blue-100 selection:text-blue-900">
@@ -84,17 +90,23 @@ const BamendaHeroSection = () => {
               >
                 Sign In
               </Link>
-              <Link href="/feed">
-                <button className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-full shadow-lg hover:shadow-blue-500/30 transition-all hover:-translate-y-0.5 active:translate-y-0 cursor-pointer">
-                  Get Started
-                </button>
+              {/* UX: "Get Started" means create an account; browsing is the secondary path. */}
+              <Link
+                href="/sign-up"
+                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-full shadow-lg hover:shadow-blue-500/30 transition-all hover:-translate-y-0.5 active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+              >
+                Get Started
               </Link>
             </div>
 
             {/* Mobile Menu Button */}
             <button
-              className="md:hidden p-2 text-gray-600 cursor-pointer"
+              type="button"
+              className="md:hidden p-2.5 -mr-2 text-gray-600 cursor-pointer rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="landing-mobile-menu"
             >
               {mobileMenuOpen ? <X /> : <Menu />}
             </button>
@@ -103,7 +115,7 @@ const BamendaHeroSection = () => {
 
         {/* Mobile Menu Overlay */}
         {mobileMenuOpen && (
-          <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-gray-100 shadow-xl p-4 flex flex-col gap-4 animate-slide-down">
+          <div id="landing-mobile-menu" className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-gray-100 shadow-xl p-4 flex flex-col gap-4 animate-slide-down">
             {['Features', 'Mission', 'Services', 'Community'].map((item) => (
               <Link
                 key={item}
@@ -118,10 +130,12 @@ const BamendaHeroSection = () => {
             <Link href="/sign-in" className="text-base font-medium text-gray-600 py-2 hover:text-blue-600 cursor-pointer" onClick={() => setMobileMenuOpen(false)}>
               Sign In
             </Link>
-            <Link href="/feed" onClick={() => setMobileMenuOpen(false)}>
-              <button className="w-full px-6 py-3 bg-blue-600 text-white text-base font-semibold rounded-xl shadow-md cursor-pointer">
-                Get Started
-              </button>
+            <Link
+              href="/sign-up"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full px-6 py-3 bg-blue-600 text-white text-base font-semibold rounded-xl shadow-md text-center"
+            >
+              Get Started
             </Link>
           </div>
         )}
@@ -133,10 +147,12 @@ const BamendaHeroSection = () => {
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
 
             {/* Left Column: Text */}
-            <div className={`order-last lg:order-none space-y-8 max-w-2xl mx-auto lg:mx-0 text-center lg:text-left transition-all duration-1000 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+            {/* UX: visible without JavaScript (the old opacity-0-until-hydrated hid the
+                headline on slow connections); the entrance animation is CSS-only. */}
+            <div className="hero-enter space-y-8 max-w-2xl mx-auto lg:mx-0 text-center lg:text-left">
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 border border-blue-100 rounded-full text-blue-700 text-xs font-semibold uppercase tracking-wide">
                 <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                  <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
                 </span>
                 The Future of Work is Here
@@ -154,16 +170,21 @@ const BamendaHeroSection = () => {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                <Link href="/feed">
-                  <button className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold text-lg shadow-xl shadow-blue-500/20 hover:shadow-2xl hover:shadow-blue-500/30 transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2 cursor-pointer">
-                    Get Started
-                    <ArrowRight className="w-5 h-5" />
-                  </button>
+                <Link
+                  href="/sign-up"
+                  className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold text-lg shadow-xl shadow-blue-500/20 hover:shadow-2xl hover:shadow-blue-500/30 transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+                >
+                  Get Started
+                  <ArrowRight className="w-5 h-5" aria-hidden="true" />
                 </Link>
-                <button className="w-full sm:w-auto px-8 py-4 bg-white border-2 border-gray-100 hover:border-blue-100 text-gray-700 hover:text-blue-700 rounded-2xl font-bold text-lg shadow-sm hover:shadow-lg transition-all flex items-center justify-center gap-2 group cursor-pointer">
-                  <Play className="w-5 h-5 fill-current" />
-                  Watch Demo
-                </button>
+                {/* UX: replaces a "Watch Demo" button that did nothing (there is no demo video). */}
+                <Link
+                  href="/feed"
+                  className="w-full sm:w-auto px-8 py-4 bg-white border-2 border-gray-200 hover:border-blue-200 text-gray-700 hover:text-blue-700 rounded-2xl font-bold text-lg shadow-sm hover:shadow-lg transition-all flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+                >
+                  <Search className="w-5 h-5" aria-hidden="true" />
+                  Browse opportunities
+                </Link>
               </div>
 
               <div className="pt-6 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-8">
@@ -222,7 +243,7 @@ const BamendaHeroSection = () => {
             </div>
 
             {/* Right Column: Visuals (MacBook Inspiration / Floating Dashboard) */}
-            <div className={`order-first lg:order-none relative mt-0 lg:mt-0 perspective-1000 transition-all duration-500 ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-10 opacity-0'}`}>
+            <div className="hero-enter hero-enter-delay relative perspective-1000">
               {/* Main Dashboard Window */}
               <div className="relative rounded-[1.5rem] bg-white border border-gray-100 shadow-2xl transform rotate-[-2deg] hover:rotate-0 transition-transform duration-700 overflow-hidden max-w-lg mx-auto">
 
@@ -262,12 +283,12 @@ const BamendaHeroSection = () => {
 
                 {/* Watermark Logo */}
                 <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-[0.03] pointer-events-none">
-                  <img src="https://i.ibb.co/Cp502Yby/logo.png" width={200} height={200} alt="Watermark" />
+                  <img src="https://i.ibb.co/Cp502Yby/logo.png" width={200} height={200} alt="" aria-hidden="true" />
                 </div>
               </div>
 
               {/* Floating Elements */}
-              <div className="absolute -right-8 top-12 bg-white p-4 rounded-2xl shadow-xl animate-float-slow border border-gray-100">
+              <div aria-hidden="true" className="hidden md:block absolute -right-8 top-12 bg-white p-4 rounded-2xl shadow-xl float-slow border border-gray-100">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-green-100 rounded-full text-green-600">
                     <TrendingUp size={20} />
@@ -279,7 +300,7 @@ const BamendaHeroSection = () => {
                 </div>
               </div>
 
-              <div className="hidden md:flex absolute -left-8 bottom-24 bg-white p-4 rounded-2xl shadow-xl animate-float border border-gray-100" style={{ animationDelay: '1s' }}>
+              <div aria-hidden="true" className="hidden md:flex absolute -left-8 bottom-24 bg-white p-4 rounded-2xl shadow-xl float-slow border border-gray-100" style={{ animationDelay: '1s' }}>
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-blue-100 rounded-full text-blue-600">
                     <Users size={20} />
@@ -291,12 +312,6 @@ const BamendaHeroSection = () => {
                 </div>
               </div>
 
-              <Link href="/feed" className="absolute -bottom-6 right-12 animate-bounce-slow">
-                <button className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-full shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 transition-all hover:-translate-y-0.5 flex items-center gap-2 cursor-pointer border-2 border-white">
-                  Get Started
-                  <ArrowRight size={16} />
-                </button>
-              </Link>
 
               {/* Background Decorative Blur */}
               <div className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-blue-100/40 to-indigo-100/40 blur-3xl rounded-full" />
@@ -315,21 +330,22 @@ const BamendaHeroSection = () => {
           from { opacity: 0; transform: translateY(-10px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        @keyframes bounce-slow {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-5px); }
-        }
-        .animate-float-slow {
-          animation: float-slow 4s ease-in-out infinite;
+        @media (prefers-reduced-motion: no-preference) {
+          .float-slow { animation: float-slow 4s ease-in-out infinite; }
         }
         .animate-slide-down {
           animation: slide-down 0.3s ease-out forwards;
         }
-        .animate-bounce-slow {
-          animation: bounce-slow 3s ease-in-out infinite;
-        }
         .perspective-1000 {
           perspective: 1000px;
+        }
+        @keyframes hero-enter {
+          from { opacity: 0; transform: translateY(16px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @media (prefers-reduced-motion: no-preference) {
+          .hero-enter { animation: hero-enter 0.6s ease-out both; }
+          .hero-enter-delay { animation-delay: 0.15s; }
         }
       `}</style>
     </div>

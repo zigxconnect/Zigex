@@ -57,7 +57,7 @@ const ActivitiesSection: React.FC = () => {
   const activeContent = content[activeTab];
 
   return (
-    <section id="services" className="py-20 bg-white relative overflow-hidden">
+    <section id="services" className="py-20 bg-white relative overflow-hidden scroll-mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Header */}
@@ -71,21 +71,27 @@ const ActivitiesSection: React.FC = () => {
         </div>
 
         {/* Tab Navigation */}
+        {/* UX: tabs must fit a 375px screen; with px-8 the third tab was clipped off. */}
         <div className="flex justify-center mb-12">
-          <div className="inline-flex p-1.5 bg-gray-100 rounded-full border border-gray-200 shadow-inner">
+          <div role="tablist" aria-label="Services" className="grid grid-cols-3 sm:inline-flex w-full sm:w-auto max-w-md sm:max-w-none p-1.5 bg-gray-100 rounded-full border border-gray-200 shadow-inner">
             {(['internship', 'program', 'event'] as ActivityType[]).map((tab) => (
               <button
                 key={tab}
+                type="button"
+                role="tab"
+                id={`services-tab-${tab}`}
+                aria-selected={activeTab === tab}
+                aria-controls="services-panel"
                 onClick={() => setActiveTab(tab)}
-                className={`px-8 py-3 rounded-full text-sm hover:cursor-pointer font-bold transition-all duration-300 capitalize flex items-center gap-2 ${
+                className={`px-3 sm:px-8 py-3 min-h-11 rounded-full text-sm hover:cursor-pointer font-bold transition-all duration-300 capitalize flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 ${
                   activeTab === tab
                     ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
                     : 'text-gray-500 hover:text-gray-900 hover:bg-gray-200'
                 }`}
               > 
-                {tab === 'internship' && <Briefcase className="w-4 h-4" />}
-                {tab === 'program' && <GraduationCap className="w-4 h-4" />}
-                {tab === 'event' && <Users className="w-4 h-4" />}
+                {tab === 'internship' && <Briefcase className="hidden sm:block w-4 h-4" aria-hidden="true" />}
+                {tab === 'program' && <GraduationCap className="hidden sm:block w-4 h-4" aria-hidden="true" />}
+                {tab === 'event' && <Users className="hidden sm:block w-4 h-4" aria-hidden="true" />}
                 {tab}s
               </button>
             ))}
@@ -93,7 +99,7 @@ const ActivitiesSection: React.FC = () => {
         </div>
 
         {/* Content Display */}
-        <div className="bg-white rounded-3xl border border-gray-200 p-8 md:p-12 shadow-2xl shadow-gray-100/50 transition-all duration-500">
+        <div id="services-panel" role="tabpanel" aria-labelledby={`services-tab-${activeTab}`} className="bg-white rounded-3xl border border-gray-200 p-5 sm:p-8 md:p-12 shadow-2xl shadow-gray-100/50 transition-all duration-500">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             
             {/* Text Content */}
@@ -117,11 +123,12 @@ const ActivitiesSection: React.FC = () => {
               </div>
 
               <div className="pt-4">
-                <Link href={activeContent.ctaLink}>
-                  <button className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-xl shadow-blue-500/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2 cursor-pointer">
-                    {activeContent.ctaText}
-                    <ArrowRight className="w-5 h-5" />
-                  </button>
+                <Link
+                  href={activeContent.ctaLink}
+                  className="inline-flex px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-xl shadow-blue-500/20 transition-all hover:scale-105 active:scale-95 items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+                >
+                  {activeContent.ctaText}
+                  <ArrowRight className="w-5 h-5" aria-hidden="true" />
                 </Link>
               </div>
             </div>
@@ -131,7 +138,7 @@ const ActivitiesSection: React.FC = () => {
               <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl border-4 border-white bg-gray-100">
                  <img 
                     src={activeContent.image} 
-                    alt={activeContent.title} 
+                    alt={`${activeContent.title} at Zigex`} 
                     className="w-full h-full object-cover"
                  />
                  <div className="absolute inset-0 bg-gradient-to-t from-blue-900/40 to-transparent" />
@@ -141,7 +148,7 @@ const ActivitiesSection: React.FC = () => {
                     <div className="bg-white/95 backdrop-blur-sm p-4 rounded-xl border border-white/20 shadow-lg flex items-center justify-between">
                        <span className="font-bold text-gray-900">{activeContent.title}</span>
                        <div className="h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center p-1">
-                          <img src="https://i.ibb.co/Cp502Yby/logo.png" alt="Zigex" className="w-full h-full object-contain" />
+                          <img src="https://i.ibb.co/Cp502Yby/logo.png" alt="" aria-hidden="true" className="w-full h-full object-contain" />
                        </div>
                     </div>
                  </div>
