@@ -1,45 +1,37 @@
-import React from "react";
-import { getAllUsers, type RawUserProfile } from "@/lib/actions/allusers.actions";
-import StudentDirectoryClient from "@/components/sections/dashboard/StudentDirectoryClient";
-import { getProfileInfo } from "@/lib/actions/profile.actions";
-import { WelcomeCard } from "@/components/sections/dashboard/WelcomeCard";
-import { DashboardWidgets } from "@/components/feed/DashboardWidgets";
+/**
+ * Students — app/(dashboard)/dashboard/student/page.tsx
+ *
+ * Find other students on Zigex and open their profiles. Shows only what the
+ * backend actually returns (name, @username, photo, school); the old page's
+ * badges, online dots, "active now" count and profile score were invented.
+ */
 
-export default async function StudentDirectoryPage() {
-  const [profiles, userData, workspaces] = await Promise.all([
-    getAllUsers(1000, 0), // Fetch up to 1000 profiles to ensure we get all students
-    getProfileInfo(),
-    import('@/lib/actions/intenship.actions').then(m => m.getUserWorkspaces())
-  ]);
+import type { Metadata } from "next";
+import { serverApi } from "@/lib/api/server-client";
+import { whenAvailable } from "@/lib/api/errors";
+import { StudentDirectory, type StudentRow } from "@/components/students/StudentDirectory";
 
-  // Filter out current user from directory list, but keep track of ID for stats
-  const filteredProfiles = profiles.filter((p) => p.id !== userData?.profile?.id);
+export const metadata: Metadata = { title: "Students" };
 
-  // Per-student counts come with each GET /students row (spec'd `stats`).
-  const toStats = (stats: RawUserProfile["stats"]) => ({
-    internshipsApplied: stats?.internships ?? 0,
-    programsApplied: stats?.programs ?? 0,
-    eventsApplied: stats?.events ?? 0,
-    projectsCreated: stats?.projects ?? 0,
-    currentProgram: stats?.current_program ?? undefined,
-  });
+async function firstPage(): Promise<{ rows: StudentRow[]; total: number }> {
+  try {
+    const res = await whenAvailable(() => serverApi.get<StudentRow[]>("/students?page=1&limit=50"), null);
+    return { rows: res?.data ?? [], total: res?.meta?.total ?? res?.data?.length ?? 0 };
+  } catch (error) {
+    console.error("[students] list failed:", error);
+    return { rows: [], total: 0 };
+  }
+}
 
-  const profilesWithStats = filteredProfiles.map(profile => ({
-    ...profile,
-    stats: toStats(profile.stats)
-  }));
-
-
+export default async function StudentsPage() {
+  const { rows, total } = await firstPage();
   return (
-    <div className="flex flex-col xl:flex-row gap-6 pb-12">
-      {/* ═══ Main Content Column ═══ */}
-      <div className="flex-1 min-w-0 space-y-6">
-        {/* <WelcomeCard user={userData} stats={userStats} /> */}
-        <StudentDirectoryClient profiles={profilesWithStats} />
-      </div>
-
-      {/* ═══ Sidebar Column ═══ */}
-      <DashboardWidgets user={userData} workspaces={workspaces} />
+    <div className="pb-16">
+      <header className="mb-6">
+        <h1 className="font-heading text-[28px] font-bold leading-tight tracking-tight text-[#0B1B3F]">Students</h1>
+        <p className="mt-1 text-base text-[#4A5670]">Find classmates and other students on Zigex, and see their profiles.</p>
+      </header>
+      <StudentDirectory initial={rows} total={total} />
     </div>
   );
 }
