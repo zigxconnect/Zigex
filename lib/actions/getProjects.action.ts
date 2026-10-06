@@ -70,10 +70,14 @@ export async function fetchActiveProject(): Promise<ActiveProjectResult> {
   }
 }
 
-/** All projects of a student (by student profile id), newest first. */
+/** All projects of a student (GET /students/{id}/projects), newest first. */
 export async function fetchAllUserProjects(studentProfileId: string): Promise<{ success: boolean; data: any[]; error?: string }> {
   try {
-    const projects = await listProjects(`studentId=${encodeURIComponent(studentProfileId)}&limit=50`);
+    const rows = await whenAvailable(
+      async () => (await serverApi.get<ProjectRow[]>(`/students/${encodeURIComponent(studentProfileId)}/projects`)).data ?? [],
+      [] as ProjectRow[]
+    );
+    const projects = rows.map(toView);
     return { success: true, data: projects };
   } catch (error) {
     console.error('Error fetching projects:', error);

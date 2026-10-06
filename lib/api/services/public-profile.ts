@@ -7,10 +7,10 @@ import { getMyProfile } from "./profile";
 
 /**
  * A student's public profile page (docs/backend-missing-endpoints.md →
- * Discovery and social): GET /students/{username}, /connections, /projects.
- * The backend resolves `username` as a username, profile id or full-name
- * slug, and never returns phone or email. Until it ships, pages show
- * "Student not found".
+ * Discovery and social): GET /students/{id} (deployed; profile id only),
+ * /connections and /students/{id}/projects. Profile URLs that use a
+ * username or name slug need the backend to also resolve those (spec'd);
+ * until then they show "Student not found". Phone and email are never shown.
  */
 
 type PublicProfileRow = Record<string, any> & {

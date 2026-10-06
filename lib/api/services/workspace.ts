@@ -148,7 +148,7 @@ async function write(call: () => Promise<unknown>): Promise<{ success: boolean; 
 }
 
 export const acknowledgePayment = (applicationId: string) =>
-  write(() => serverApi.post(`/applications/${enc(applicationId)}/payment-acknowledgement`));
+  write(() => serverApi.post(`/applications/${enc(applicationId)}/paymentacknowledgement`));
 
 export const markTaskRead = (taskId: string) => write(() => serverApi.patch(`/tasks/${enc(taskId)}/read`));
 

@@ -48,7 +48,7 @@ export async function listNotifications({ page = 1, limit = 50, unreadOnly = fal
 
 export async function getUnreadCount(): Promise<number> {
   return whenAvailable(
-    async () => (await api.get<{ unreadCount: number }>("/notifications/unread-count")).data?.unreadCount ?? 0,
+    async () => (await api.get<{ unreadCount: number }>("/notifications/unreadcount")).data?.unreadCount ?? 0,
     0
   );
 }
