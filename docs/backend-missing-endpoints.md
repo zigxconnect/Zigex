@@ -98,7 +98,7 @@ Enrolled students cannot see course content, pay, or download a receipt; tables 
 | --- | --- | --- | --- | --- |
 | GET | `/programs/{programId}/content` | none | raw `program_content` rows, all columns (`title`, `description`, `content`, `week_number`, `display_order`, `resources`, `video_url`, `github_url`, `google_docs_url`, `content_url`, `resource_type`, `assignment_details`, `payment_required`, ...) | Ordered by `display_order`. For rows with `payment_required`, omit the content fields unless the student is accepted and paid. |
 | GET | `/programs/{programId}/members` | `?limit=50` | `[{ id, username, full_name, avatar_url }]` + `meta.total` | Accepted participants ("crew") shown on the program page. |
-| POST | `/payments/initiate` (P3) | `{ programId, provider, phoneNumber }` | `{ paymentId, status: "pending", instructions? }` | Mobile money. **Take the amount and currency from the program on the server**: today the client sends `amount`, so a student can pay any price. |
+| POST | `/payments/initiate` (P3) | `{ programId, provider, phoneNumber }` | `{ paymentId, status: "pending", instructions? }` | Mobile money. **Take the amount and currency from the program on the server**, never from the client (the old frontend route did, so a student could pay any price; it has been removed). |
 | GET | `/payments/{paymentId}` (P3) | none | `{ id, status, amount_xaf, currency, created_at }` | Polled after initiating. Plus a provider webhook to confirm payment. |
 | GET | `/programs/{programId}/receipt` | none | `{ student_name, program_title, company: { company_name, logo_url, address }, amount_paid_xaf, paid_at, reference }` | Only after payment. A PDF is fine too. |
 
