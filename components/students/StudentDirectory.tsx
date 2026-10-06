@@ -3,35 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { GraduationCap, Loader2, Search, X } from "lucide-react";
-import NameInitials from "@/components/NameInitials";
-import { slugifyUsername } from "@/lib/utils";
+import { StudentAvatar, UUID_LIKE, isListable, profileHref, tidySchool, type StudentRow } from "./student-ui";
 
-export type StudentRow = {
-  id: string;
-  username?: string | null;
-  full_name?: string | null;
-  avatar_url?: string | null;
-  university?: string | null;
-};
+export type { StudentRow };
 
-const UUID_LIKE = /^[0-9a-f-]{20,}$/i;
-
-/** Accounts that never finished sign-up have no name; they aren't shown as people. */
-export const isListable = (s: StudentRow) => Boolean(s.full_name && s.full_name.trim() && s.full_name !== "null");
-
-/** "university of bamenda" → "University of Bamenda" (keeps acronyms like "UBa"). */
-function tidySchool(raw?: string | null) {
-  const s = (raw ?? "").trim();
-  if (!s) return null;
-  if (s !== s.toLowerCase()) return s;
-  return s.replace(/\b(\w)(\w*)/g, (_, a: string, b: string) => (["of", "and", "the", "for"].includes(a + b) ? a + b : a.toUpperCase() + b)).replace(/^./, (c) => c.toUpperCase());
-}
-
-/** Same address the old cards used, so existing profile links keep working. */
-function profileHref(s: StudentRow) {
-  const nameSlug = s.full_name ? s.full_name.trim().replace(/\s+/g, "_").toLowerCase() : "";
-  return `/dashboard/student/${nameSlug || slugifyUsername(s.username) || s.id}`;
-}
 
 /**
  * Student directory: search everyone on Zigex by name (the backend searches
@@ -129,25 +104,22 @@ export function StudentDirectory({ initial, total }: { initial: StudentRow[]; to
               <li key={s.id} className="min-w-0">
                 <Link
                   href={profileHref(s)}
-                  className="flex items-center gap-3 rounded-2xl bg-white p-4 ring-1 ring-[#DCE5F5] transition-shadow hover:shadow-[0_12px_32px_-18px_rgba(11,27,63,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC]"
+                  className="group flex h-full items-center gap-4 rounded-2xl bg-white p-4 ring-1 ring-[#DCE5F5] transition-shadow hover:shadow-[0_12px_32px_-18px_rgba(11,27,63,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC]"
                 >
-                  <span className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-[#EEF3FF] text-base">
-                    {s.avatar_url ? (
-                      <img src={s.avatar_url} alt="" loading="lazy" className="h-full w-full object-cover" />
-                    ) : (
-                      <NameInitials name={s.full_name ?? ""} />
-                    )}
-                  </span>
+                  <StudentAvatar s={s} size="h-14 w-14 text-lg" />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate font-semibold text-[#0B1B3F]">{s.full_name}</span>
-                    {handle && <span className="block truncate text-sm text-[#7B869C]">@{handle}</span>}
-                    {school && (
+                    <span className="block truncate font-heading text-base font-semibold text-[#0B1B3F] group-hover:text-[#155DFC]">{s.full_name}</span>
+                    {school ? (
                       <span className="mt-0.5 flex items-center gap-1.5 text-sm text-[#4A5670]">
                         <GraduationCap className="h-4 w-4 shrink-0 text-[#7B869C]" aria-hidden="true" />
                         <span className="truncate">{school}</span>
                       </span>
+                    ) : (
+                      <span className="mt-0.5 block text-sm text-[#7B869C]">School not added</span>
                     )}
+                    {handle && <span className="mt-0.5 block truncate text-xs text-[#7B869C]">@{handle}</span>}
                   </span>
+                  <span className="hidden shrink-0 text-sm font-semibold text-[#155DFC] sm:group-hover:inline">View</span>
                 </Link>
               </li>
             );
