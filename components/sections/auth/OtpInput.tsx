@@ -15,6 +15,7 @@ type OtpInputProps = {
   describedBy?: string;
   /** id of the visible label for the group. */
   labelledBy?: string;
+  autoFocus?: boolean;
 };
 
 /**
@@ -22,7 +23,7 @@ type OtpInputProps = {
  * arrow keys move, and pasting the whole code (or the phone's one-time-code
  * autofill) fills every box.
  */
-export function OtpInput({ length, value, onChange, onComplete, disabled, invalid, describedBy, labelledBy }: OtpInputProps) {
+export function OtpInput({ length, value, onChange, onComplete, disabled, invalid, describedBy, labelledBy, autoFocus }: OtpInputProps) {
   const refs = useRef<(HTMLInputElement | null)[]>([]);
   const digits = Array.from({ length }, (_, i) => value[i] ?? "");
 
@@ -75,6 +76,7 @@ export function OtpInput({ length, value, onChange, onComplete, disabled, invali
           inputMode="numeric"
           pattern="[0-9]*"
           autoComplete={i === 0 ? "one-time-code" : "off"}
+          autoFocus={autoFocus && i === 0}
           maxLength={i === 0 ? length : 1}
           aria-label={`Digit ${i + 1} of ${length}`}
           aria-invalid={invalid}

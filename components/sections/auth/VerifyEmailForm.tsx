@@ -7,7 +7,7 @@ import { api } from "@/lib/api/browser-client";
 import { ApiClientError } from "@/lib/api/errors";
 import { getReturnUrl } from "@/lib/utils/redirect";
 import { OtpInput } from "./OtpInput";
-import { AuthFooter, AuthHeader, FormAlert, SubmitButton, authLink } from "./auth-ui";
+import { AuthFooter, AuthHeader, FormAlert, SubmitButton, authLink, useAuthNext } from "./auth-ui";
 
 const OTP_LENGTH = 6;
 const RESEND_COOLDOWN_SECONDS = 30;
@@ -20,6 +20,7 @@ const RESEND_COOLDOWN_SECONDS = 30;
 export const VerifyEmailForm = () => {
   const params = useSearchParams();
   const email = params.get("email");
+  const { href } = useAuthNext();
   const labelId = useId();
   const errorId = useId();
 
@@ -49,7 +50,7 @@ export const VerifyEmailForm = () => {
     try {
       const res = await api.post<{ user?: unknown }>("/auth/verify-email", { email, otp });
       // Older backend builds verify without issuing a token: sign in instead.
-      window.location.href = res.data?.user ? getReturnUrl("/feed") : "/sign-in?verified=1";
+      window.location.href = res.data?.user ? getReturnUrl("/feed") : href("/sign-in", { verified: "1", email });
     } catch (err) {
       setVerifying(false);
       setCode("");
@@ -89,7 +90,7 @@ export const VerifyEmailForm = () => {
           description="This link is missing your email address. Sign in, and we'll send you a fresh code if your email still needs verifying."
         />
         <Link
-          href="/sign-in"
+          href={href("/sign-in")}
           className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-[#155DFC] text-base font-semibold text-white hover:bg-[#0F3FB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] focus-visible:ring-offset-2"
         >
           Go to sign in
@@ -132,6 +133,7 @@ export const VerifyEmailForm = () => {
               if (error) setError(null);
             }}
             onComplete={verify}
+            autoFocus
             disabled={verifying}
             invalid={Boolean(error)}
             labelledBy={labelId}
@@ -161,7 +163,7 @@ export const VerifyEmailForm = () => {
       </AuthFooter>
       <p className="mt-3 text-[15px] text-[#4A5670]">
         Wrong email?{" "}
-        <Link href="/sign-up" className={authLink}>
+        <Link href={href("/sign-up")} className={authLink}>
           Sign up again
         </Link>
       </p>

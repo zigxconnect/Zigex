@@ -6,11 +6,24 @@ import { useSearchParams } from "next/navigation";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowLeft, Check } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { api } from "@/lib/api/browser-client";
 import { ApiClientError, isEndpointMissing } from "@/lib/api/errors";
 import { OtpInput } from "./OtpInput";
-import { AuthFooter, AuthHeader, Field, FormAlert, PasswordInput, SubmitButton, authLink, inputClass } from "./auth-ui";
+import {
+  AuthFooter,
+  AuthHeader,
+  Field,
+  FormAlert,
+  PasswordChecks,
+  PasswordInput,
+  SubmitButton,
+  authLink,
+  emailInputProps,
+  inputClass,
+  useAuthNext,
+} from "./auth-ui";
+import { getReturnUrl } from "@/lib/utils/redirect";
 
 const OTP_LENGTH = 6;
 const RESEND_COOLDOWN_SECONDS = 30;
@@ -22,30 +35,11 @@ const schema = z.object({
 });
 type FormData = z.infer<typeof schema>;
 
-/** Live checklist under the new password; only the length is required. */
-function PasswordChecks({ password }: { password: string }) {
-  const checks = [
-    { label: "8 or more characters", met: password.length >= 8 },
-    { label: "A number", met: /\d/.test(password) },
-    { label: "An uppercase letter", met: /[A-Z]/.test(password) },
-  ];
-  return (
-    <ul className="mt-2 grid gap-1 text-[13px]" aria-label="Password strength">
-      {checks.map((c) => (
-        <li key={c.label} className={`flex items-center gap-1.5 ${c.met ? "text-[#067647]" : "text-[#7B869C]"}`}>
-          <Check className={`h-3.5 w-3.5 ${c.met ? "opacity-100" : "opacity-30"}`} aria-hidden="true" />
-          {c.label}
-          <span className="sr-only">{c.met ? "(done)" : "(not yet)"}</span>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 /** Step 2 of the reset: POST /auth/reset-password with the emailed code. */
 export const ResetPasswordForm = () => {
   const params = useSearchParams();
   const emailFromLink = params.get("email") ?? "";
+  const { href } = useAuthNext();
   const codeLabelId = useId();
   const codeErrorId = useId();
   const [error, setError] = useState<string | null>(null);
@@ -71,6 +65,7 @@ export const ResetPasswordForm = () => {
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
+    mode: "onTouched",
     defaultValues: { email: emailFromLink, otp: "", password: "" },
   });
   const password = useWatch({ control, name: "password" }) ?? "";
@@ -81,7 +76,7 @@ export const ResetPasswordForm = () => {
     try {
       const res = await api.post<{ user?: unknown }>("/auth/reset-password", { email, otp, newPassword });
       // The passthrough stores the returned token, so the student is signed in.
-      window.location.href = res.data?.user ? "/feed" : "/sign-in?reset=1";
+      window.location.href = res.data?.user ? getReturnUrl("/feed") : href("/sign-in", { reset: "1", email });
     } catch (err) {
       setError(
         isEndpointMissing(err)
@@ -127,9 +122,8 @@ export const ResetPasswordForm = () => {
           {({ id, describedBy, invalid }) => (
             <input
               id={id}
-              type="email"
-              autoComplete="email"
-              inputMode="email"
+              {...emailInputProps}
+              autoFocus={!emailFromLink}
               aria-invalid={invalid}
               aria-describedby={describedBy}
               className={inputClass}
@@ -161,6 +155,7 @@ export const ResetPasswordForm = () => {
                 onChange={field.onChange}
                 disabled={isSubmitting}
                 invalid={Boolean(errors.otp)}
+                autoFocus={Boolean(emailFromLink)}
                 labelledBy={codeLabelId}
                 describedBy={errors.otp ? codeErrorId : undefined}
               />
@@ -179,6 +174,7 @@ export const ResetPasswordForm = () => {
               <PasswordInput
                 id={id}
                 autoComplete="new-password"
+                placeholder="At least 8 characters"
                 aria-invalid={invalid}
                 aria-describedby={describedBy}
                 {...register("password")}
@@ -194,7 +190,7 @@ export const ResetPasswordForm = () => {
       </form>
 
       <AuthFooter>
-        <Link href="/sign-in" className={`${authLink} inline-flex items-center gap-1.5`}>
+        <Link href={href("/sign-in", { email: emailFromLink || undefined })} className={`${authLink} inline-flex items-center gap-1.5`}>
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Back to sign in
         </Link>

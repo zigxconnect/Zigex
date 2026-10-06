@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { getReturnUrl } from "@/lib/utils/redirect";
@@ -13,16 +13,20 @@ import { GoogleSignInButton } from "./GoogleSignInButton";
 import {
   AuthFooter,
   AuthHeader,
+  EmailSuggestion,
   Field,
   FormAlert,
   OrDivider,
+  PasswordChecks,
   PasswordInput,
   SubmitButton,
   authLink,
+  emailInputProps,
   inputClass,
+  useAuthNext,
 } from "./auth-ui";
 
-const email = z.string().trim().email({ message: "Enter a valid email address, like name@example.com." });
+const email = z.string().trim().email({ message: "Enter a valid email address, like you@example.com." });
 
 const signInSchema = z.object({
   email,
@@ -64,6 +68,8 @@ export const AuthForm = ({ type }: { type: "signIn" | "signUp" }) =>
 function SignInForm() {
   const router = useRouter();
   const params = useSearchParams();
+  const { applying, href } = useAuthNext();
+  const prefilledEmail = params.get("email") ?? "";
   const [error, setError] = useState<string | null>(null);
   const [cooldown, setCooldown] = useCooldown();
 
@@ -82,8 +88,15 @@ function SignInForm() {
   const {
     register,
     handleSubmit,
+    control,
+    setValue,
     formState: { errors, isSubmitting },
-  } = useForm<SignInData>({ resolver: zodResolver(signInSchema) });
+  } = useForm<SignInData>({
+    resolver: zodResolver(signInSchema),
+    mode: "onTouched",
+    defaultValues: { email: prefilledEmail, password: "" },
+  });
+  const typedEmail = useWatch({ control, name: "email" }) ?? "";
 
   const onSubmit = async (data: SignInData) => {
     setError(null);
@@ -109,7 +122,7 @@ function SignInForm() {
       // Account exists but the email code was never entered: send a fresh one.
       if (err.status === 401 && /verify your email/i.test(err.message)) {
         await api.post("/auth/resend-otp", { email: data.email }).catch(() => {});
-        router.push(`/verify-email?email=${encodeURIComponent(data.email)}&sent=1`);
+        router.push(href("/verify-email", { email: data.email, sent: "1" }));
         return;
       }
       // Generic on purpose: never reveal whether the email has an account.
@@ -119,7 +132,14 @@ function SignInForm() {
 
   return (
     <>
-      <AuthHeader title="Sign in to Zigex" description="Pick up where you left off with your applications." />
+      <AuthHeader
+        title={applying ? "Sign in to apply" : "Sign in to Zigex"}
+        description={
+          applying
+            ? "You'll go straight back to the opportunity once you're signed in."
+            : "Pick up where you left off with your applications."
+        }
+      />
 
       {hasGoogle && (
         <>
@@ -135,17 +155,19 @@ function SignInForm() {
 
         <Field label="Email" error={errors.email?.message}>
           {({ id, describedBy, invalid }) => (
-            <input
-              id={id}
-              type="email"
-              autoComplete="email"
-              inputMode="email"
-              placeholder="name@example.com"
-              aria-invalid={invalid}
-              aria-describedby={describedBy}
-              className={inputClass}
-              {...register("email")}
-            />
+            <>
+              <input
+                id={id}
+                {...emailInputProps}
+                autoFocus={!prefilledEmail}
+                enterKeyHint="next"
+                aria-invalid={invalid}
+                aria-describedby={describedBy}
+                className={inputClass}
+                {...register("email")}
+              />
+              <EmailSuggestion value={typedEmail} onAccept={(v) => setValue("email", v, { shouldValidate: true })} />
+            </>
           )}
         </Field>
 
@@ -153,7 +175,8 @@ function SignInForm() {
           label="Password"
           error={errors.password?.message}
           aside={
-            <Link href="/forgot-password" className={`${authLink} text-sm`}>
+            // Carry the typed email over so they don't type it twice.
+            <Link href={href("/forgot-password", { email: typedEmail.trim() || undefined })} className={`${authLink} text-sm`}>
               Forgot password?
             </Link>
           }
@@ -162,6 +185,9 @@ function SignInForm() {
             <PasswordInput
               id={id}
               autoComplete="current-password"
+              placeholder="Enter your password"
+              autoFocus={Boolean(prefilledEmail)}
+              enterKeyHint="go"
               aria-invalid={invalid}
               aria-describedby={describedBy}
               {...register("password")}
@@ -176,7 +202,7 @@ function SignInForm() {
 
       <AuthFooter>
         New to Zigex?{" "}
-        <Link href="/sign-up" className={authLink}>
+        <Link href={href("/sign-up")} className={authLink}>
           Create a free account
         </Link>
       </AuthFooter>
@@ -186,22 +212,43 @@ function SignInForm() {
 
 function SignUpForm() {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
+  const { applying, href } = useAuthNext();
+  const [error, setError] = useState<ReactNode>(null);
 
   const {
     register,
     handleSubmit,
+    control,
+    setValue,
     formState: { errors, isSubmitting },
-  } = useForm<SignUpData>({ resolver: zodResolver(signUpSchema) });
+  } = useForm<SignUpData>({
+    resolver: zodResolver(signUpSchema),
+    mode: "onTouched",
+    defaultValues: { firstName: "", lastName: "", email: "", password: "" },
+  });
+  const typedEmail = useWatch({ control, name: "email" }) ?? "";
+  const password = useWatch({ control, name: "password" }) ?? "";
 
   const onSubmit = async (data: SignUpData) => {
     setError(null);
     try {
       await api.post("/auth/register/student", data);
-      router.push(`/verify-email?email=${encodeURIComponent(data.email)}&sent=1`);
+      router.push(href("/verify-email", { email: data.email, sent: "1" }));
     } catch (err) {
       if (err instanceof ApiClientError && err.status === 409) {
-        setError("An account with this email already exists. Sign in instead, or reset your password.");
+        setError(
+          <>
+            There&apos;s already an account for {data.email}.{" "}
+            <Link href={href("/sign-in", { email: data.email })} className="font-semibold underline underline-offset-2">
+              Sign in
+            </Link>{" "}
+            or{" "}
+            <Link href={href("/forgot-password", { email: data.email })} className="font-semibold underline underline-offset-2">
+              reset your password
+            </Link>
+            .
+          </>
+        );
         return;
       }
       setError(
@@ -217,8 +264,12 @@ function SignUpForm() {
   return (
     <>
       <AuthHeader
-        title="Create your student account"
-        description="Free for students. Apply to internships, programs and events with one profile."
+        title={applying ? "Create an account to apply" : "Create your student account"}
+        description={
+          applying
+            ? "It's free and takes about a minute. We'll bring you back to the opportunity afterwards."
+            : "Free for students. Apply to internships, programs and events with one profile."
+        }
       />
 
       {hasGoogle && (
@@ -237,6 +288,10 @@ function SignUpForm() {
               <input
                 id={id}
                 autoComplete="given-name"
+                autoCapitalize="words"
+                placeholder="Amina"
+                autoFocus
+                enterKeyHint="next"
                 aria-invalid={invalid}
                 aria-describedby={describedBy}
                 className={inputClass}
@@ -249,6 +304,9 @@ function SignUpForm() {
               <input
                 id={id}
                 autoComplete="family-name"
+                autoCapitalize="words"
+                placeholder="Fon"
+                enterKeyHint="next"
                 aria-invalid={invalid}
                 aria-describedby={describedBy}
                 className={inputClass}
@@ -258,31 +316,37 @@ function SignUpForm() {
           </Field>
         </div>
 
-        <Field label="Email" error={errors.email?.message} hint="We'll send a 6-digit code to confirm it.">
+        <Field label="Email" error={errors.email?.message} hint="We'll send a 6-digit code here to confirm it's yours.">
           {({ id, describedBy, invalid }) => (
-            <input
-              id={id}
-              type="email"
-              autoComplete="email"
-              inputMode="email"
-              placeholder="name@example.com"
-              aria-invalid={invalid}
-              aria-describedby={describedBy}
-              className={inputClass}
-              {...register("email")}
-            />
+            <>
+              <input
+                id={id}
+                {...emailInputProps}
+                enterKeyHint="next"
+                aria-invalid={invalid}
+                aria-describedby={describedBy}
+                className={inputClass}
+                {...register("email")}
+              />
+              <EmailSuggestion value={typedEmail} onAccept={(v) => setValue("email", v, { shouldValidate: true })} />
+            </>
           )}
         </Field>
 
-        <Field label="Password" error={errors.password?.message} hint="At least 8 characters.">
+        <Field label="Password" error={errors.password?.message}>
           {({ id, describedBy, invalid }) => (
-            <PasswordInput
-              id={id}
-              autoComplete="new-password"
-              aria-invalid={invalid}
-              aria-describedby={describedBy}
-              {...register("password")}
-            />
+            <>
+              <PasswordInput
+                id={id}
+                autoComplete="new-password"
+                placeholder="At least 8 characters"
+                enterKeyHint="done"
+                aria-invalid={invalid}
+                aria-describedby={describedBy}
+                {...register("password")}
+              />
+              {!invalid && <PasswordChecks password={password} />}
+            </>
           )}
         </Field>
 
@@ -301,7 +365,7 @@ function SignUpForm() {
 
       <AuthFooter>
         Already have an account?{" "}
-        <Link href="/sign-in" className={authLink}>
+        <Link href={href("/sign-in")} className={authLink}>
           Sign in
         </Link>
       </AuthFooter>
