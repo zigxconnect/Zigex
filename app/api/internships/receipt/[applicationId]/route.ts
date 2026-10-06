@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin, createClient } from "@/lib/supabase/server";
+import { loadPlacementDocument } from "@/lib/api/services/placement-documents";
 import { format } from "date-fns";
 
 /**
@@ -20,93 +20,18 @@ export async function GET(
     try {
         console.log(`[RECEIPT_API] Request for AppID: ${applicationId}, Month: ${month}`);
 
-        // 1. Verify Authentication
-        const supabase = await createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-
-        if (!user) {
-            console.error("[RECEIPT_API] Unauthorized access attempt");
-            return new NextResponse("Unauthorized", { status: 401 });
+        // The backend enforces who may read this application.
+        const doc = await loadPlacementDocument(applicationId, "receipt", req.nextUrl.search);
+        if ("pdf" in doc) {
+            return new NextResponse(doc.pdf.body, {
+                headers: { "Content-Type": "application/pdf", "Content-Disposition": doc.pdf.headers.get("content-disposition") ?? "inline" },
+            });
         }
-
-        // 2. Fetch Application Data - Simplified join to be super resilient
-        const { data: app, error: appError } = await supabaseAdmin
-            .from("internship_applications")
-            .select(`
-                *,
-                internships (
-                    *,
-                    company_profiles (*)
-                ),
-                supervisor_profiles (*)
-            `)
-            .eq("id", applicationId)
-            .single();
-
-        if (appError) {
-            console.error("[RECEIPT_API] Supabase Error:", appError);
-            // Fallback for some environments: maybe the table is 'Applications'?
-            const { data: legacyApp } = await supabaseAdmin
-                .from("Applications")
-                .select("*, internships(*, company_profiles(*))")
-                .eq("id", applicationId)
-                .maybeSingle();
-
-            if (!legacyApp) {
-                return new NextResponse("Application not found", { status: 404 });
-            }
-            // Use legacy app if found
-            Object.assign(app || {}, legacyApp);
+        if ("error" in doc) {
+            return new NextResponse(doc.message, { status: doc.error });
         }
+        const { app, studentProfile } = doc;
 
-        if (!app) {
-            return new NextResponse("Application not found", { status: 404 });
-        }
-
-        // 2.5 Fetch student profile separately to avoid join errors
-        const { data: studentProfile } = await supabaseAdmin
-            .from("student_profiles")
-            .select("*")
-            .eq("user_id", app.student_id)
-            .maybeSingle();
-
-        // 3. Security Authorization Check
-        // Allow: The student themselves, the assigned supervisor, or the company owner
-        const isStudent = user.id === app.student_id;
-        const isSupervisor = user.id === app.supervisor_id;
-
-        // Check for admin/company context if not already matched
-        let isAuthorized = isStudent || isSupervisor;
-
-        if (!isAuthorized) {
-            // Check if user is the company owner or an admin
-            const { data: profile } = await supabaseAdmin
-                .from("profiles")
-                .select("role")
-                .eq("id", user.id)
-                .single();
-
-            if (profile?.role === 'admin') {
-                isAuthorized = true;
-            } else {
-                // Check if user is company owner
-                const { data: company } = await supabaseAdmin
-                    .from("company_profiles")
-                    .select("id")
-                    .eq("user_id", user.id)
-                    .single();
-
-                if (company && company.id === app.internships?.company_id) {
-                    isAuthorized = true;
-                }
-            }
-        }
-
-        if (!isAuthorized) {
-            return new NextResponse("Forbidden: Access denied to this receipt", { status: 403 });
-        }
-
-        // 4. Extract Specific Payment Record
         const ledger = app.payment_ledger || [];
         const monthIdx = parseInt(month);
         const record = ledger.find((r: any) => r.month === monthIdx);

@@ -31,7 +31,7 @@ import AnimatedNavLink from "@/components/customButtons/AnimatedNavLink";
 import NameInitials from "@/components/NameInitials";
 import { slugifyUsername, cn } from "@/lib/utils";
 import { Logo } from "@/components/layout/Logo";
-import { createClient } from "@/lib/supabase/client";
+import { api } from "@/lib/api/browser-client";
 
 interface SidebarProps {
   user: any;
@@ -64,9 +64,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const handleSignOut = async () => {
     try {
-      const supabase = createClient();
-      await supabase.auth.signOut();
-      await fetch("/api/auth/logout", { method: "POST" });
+      await api.post("/auth/logout").catch(() => {});
       window.location.href = "/";
     } catch (error) {
       console.error("Logout failed:", error);

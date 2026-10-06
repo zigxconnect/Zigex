@@ -22,6 +22,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { listNotifications, markAllNotificationsRead, markNotificationsRead } from "@/lib/api/notifications-client";
 
 interface Notification {
   id: string;
@@ -68,21 +69,9 @@ export default function NotificationsPage() {
   }, []);
 
   const fetchNotifications = () => {
-    fetch("/api/students/notifications")
-      .then((res) => res.json())
-      .then((data) => {
-        const mapped = (data.notifications || []).map(
-          (n: any): Notification => ({
-            id: n.id,
-            title: n.title,
-            content: n.message,
-            referenceId: n.reference_id,
-            type: n.type || "program",
-            read: n.is_read,
-            timestamp: n.created_at,
-          })
-        );
-        setNotifications(mapped);
+    listNotifications()
+      .then((mapped) => {
+        setNotifications(mapped as Notification[]);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -93,11 +82,7 @@ export default function NotificationsPage() {
       prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
     );
     try {
-      await fetch("/api/students/notifications", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notificationIds: [notificationId] }),
-      });
+      await markNotificationsRead([notificationId]);
     } catch (error) {
       console.error("Failed to mark as read:", error);
       fetchNotifications();
@@ -107,11 +92,7 @@ export default function NotificationsPage() {
   const markAllAsRead = async () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     try {
-      await fetch("/api/students/notifications", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ markAll: true }),
-      });
+      await markAllNotificationsRead();
     } catch (error) {
       console.error("Failed to mark all as read:", error);
       fetchNotifications();

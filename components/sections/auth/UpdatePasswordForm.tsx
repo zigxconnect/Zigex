@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,7 +25,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Spinner } from "@/components/uiComponent/Spinner";
-import { createClient } from "@/lib/supabase/client";
+import { api } from "@/lib/api/browser-client";
+import { ApiClientError, isEndpointMissing } from "@/lib/api/errors";
+import { OtpInput } from "@/components/sections/auth/OtpInput";
 import { toast } from "react-hot-toast";
 import {
   Eye,
@@ -39,6 +41,7 @@ import { cn } from "@/lib/utils";
 
 const updatePasswordSchema = z
   .object({
+    otp: z.string().length(6, { message: "Enter the 6-digit code from your email." }),
     password: z
       .string()
       .min(8, { message: "Password must be at least 8 characters." })
@@ -109,17 +112,17 @@ export const UpdatePasswordForm = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [apiError, setApiError] = useState<string | null>(null);
-  const [isSessionReady, setIsSessionReady] = useState(false);
   const [hasVerificationFailed, setHasVerificationFailed] = useState(false);
   const [formState, setFormState] = useState<"idle" | "success">("idle");
   const [showPassword, setShowPassword] = useState(false);
-  const [supabase] = useState(() => createClient());
-
-  const verificationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Reset is code-based now: /forgot-password sends a 6-digit code and
+  // brings the student here with their email in the URL.
+  const email = searchParams.get("email");
 
   const form = useForm<FormData>({
     resolver: zodResolver(updatePasswordSchema),
     defaultValues: {
+      otp: "",
       password: "",
       confirmPassword: "",
     },
@@ -129,69 +132,39 @@ export const UpdatePasswordForm = () => {
   const passwordValue = useWatch({ control: form.control, name: "password" }) || "";
 
   useEffect(() => {
-    // Check for errors passed from the callback route
-    const errorParam = searchParams.get("error");
-    const errorDescription = searchParams.get("error_description");
-
-    if (errorParam) {
-      console.error("[UpdatePasswordForm] Auth Error:", errorParam, errorDescription);
-      setApiError(
-        errorDescription?.replace(/\+/g, " ") || "The reset link is invalid or has expired."
-      );
+    if (!email) {
+      setApiError("Start from the Forgot Password page to get a reset code.");
       setHasVerificationFailed(true);
-      return;
     }
-
-    // Safety timeout: If we don't have a session after 8 seconds, something is wrong
-    verificationTimeoutRef.current = setTimeout(() => {
-      if (!isSessionReady) {
-        setHasVerificationFailed(true);
-        setApiError(
-          "Authentication session could not be established. Please try requesting a new link."
-        );
-      }
-    }, 8000);
-
-    const checkSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) {
-        setIsSessionReady(true);
-        if (verificationTimeoutRef.current) clearTimeout(verificationTimeoutRef.current);
-      }
-    };
-
-    checkSession();
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (session) {
-          setIsSessionReady(true);
-          if (verificationTimeoutRef.current) clearTimeout(verificationTimeoutRef.current);
-        }
-      }
-    );
-
-    return () => {
-      authListener.subscription.unsubscribe();
-      if (verificationTimeoutRef.current) clearTimeout(verificationTimeoutRef.current);
-    };
-  }, [supabase, searchParams, isSessionReady]);
+  }, [email]);
 
   const onSubmit = async (data: FormData) => {
     setApiError(null);
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: data.password,
+      // On success the /api/v1 passthrough stores the returned token, so the
+      // student is signed in with the new password.
+      await api.post("/auth/reset-password", {
+        email,
+        otp: data.otp,
+        newPassword: data.password,
       });
-      if (error) throw error;
 
       setFormState("success");
       toast.success("Security updated successfully");
 
-      setTimeout(() => router.push("/dashboard"), 2500);
-    } catch (err: any) {
-      setApiError(err.message || "Failed to update password.");
-      toast.error(err.message);
+      setTimeout(() => {
+        window.location.href = "/feed";
+      }, 2500);
+    } catch (err) {
+      const message = isEndpointMissing(err)
+        ? "Password reset is not available yet. Please contact support."
+        : err instanceof ApiClientError && err.status === 400
+          ? "Invalid or expired code. Request a new one."
+          : err instanceof Error
+            ? err.message
+            : "Failed to update password.";
+      setApiError(message);
+      toast.error(message);
     }
   };
 
@@ -229,18 +202,6 @@ export const UpdatePasswordForm = () => {
               </CardFooter>
             </Card>
           </motion.div>
-        ) : !isSessionReady ? (
-          <motion.div
-            key="loading"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex flex-col items-center justify-center py-20"
-          >
-            <Spinner className="h-10 w-10 text-primary" />
-            <p className="mt-6 text-muted-foreground font-medium animate-pulse tracking-tight text-[15px]">
-              Establishing secure connection...
-            </p>
-          </motion.div>
         ) : formState === "success" ? (
           <motion.div
             key="success"
@@ -257,7 +218,7 @@ export const UpdatePasswordForm = () => {
                   Identity Secured
                 </CardTitle>
                 <CardDescription className="text-[15px] pt-2">
-                  Your password has been changed. <br /> Taking you to your dashboard now.
+                  Your password has been changed. <br /> Signing you in now.
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -285,6 +246,19 @@ export const UpdatePasswordForm = () => {
               <CardContent>
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+                    <FormField
+                      control={form.control}
+                      name="otp"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Reset code sent to {email}</FormLabel>
+                          <FormControl>
+                            <OtpInput length={6} onChange={field.onChange} disabled={form.formState.isSubmitting} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     <FormField
                       control={form.control}
                       name="password"

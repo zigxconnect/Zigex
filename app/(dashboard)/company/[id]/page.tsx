@@ -2,7 +2,7 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { getCompanyById } from "@/lib/actions/programs/companies.action";
-import { getAllCompanyPostings, getHeaderStats } from "@/lib/data/postings";
+import { getCompanyPostings } from "@/lib/api/services/companies";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/uiComponent/Badge";
@@ -16,15 +16,14 @@ export default async function CompanyProfilePage({ params }: Props) {
   const { id } = await params;
 
   // Fetch company and company-specific data in parallel
-  const [companyResult, postingsResult, headerStats] = await Promise.all([
+  const [companyResult, postingsResult] = await Promise.all([
     getCompanyById(id),
-    getAllCompanyPostings(id),
-    getHeaderStats(id),
+    getCompanyPostings(id),
   ]);
 
   const company = companyResult.success && companyResult.data ? companyResult.data[0] : null;
-  const postings = postingsResult.hasData ? postingsResult.postings : [];
-  const stats = headerStats || { total: 0, active: 0, applications: 0 };
+  const postings = postingsResult.postings;
+  const stats = postingsResult.stats;
 
   if (!company) {
     return (

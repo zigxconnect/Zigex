@@ -5,7 +5,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createClient } from "@/lib/supabase/client";
+import { api } from "@/lib/api/browser-client";
+import { saveMyProfile } from "@/lib/actions/profile.actions";
 import { profileSchema, ProfileFormData } from "@/app/types/profile";
 import { toast } from "react-hot-toast";
 import clsx from "clsx";
@@ -90,7 +91,6 @@ export const MultiStepForm = ({ initialUserId }: { initialUserId?: string }) => 
   const [userId, setUserId] = useState<string | null>(initialUserId || null);
   const [isNavigating, setIsNavigating] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
   const totalSteps = 6;
 
   const methods = useForm<ProfileFormData>({
@@ -141,11 +141,10 @@ export const MultiStepForm = ({ initialUserId }: { initialUserId?: string }) => 
 
     const syncUser = async () => {
       try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (user) {
-          setUserId(user.id);
+        const res = await api.get<{ user: { userId: string } }>("/auth/me");
+        const user = res.data?.user;
+        if (user?.userId) {
+          setUserId(user.userId);
         } else {
           // Only redirect if we've explicitly failed to get a user after a reasonable check
           console.warn("[MultiStepForm] No user found on client. Falling back to sign-in.");
@@ -160,7 +159,7 @@ export const MultiStepForm = ({ initialUserId }: { initialUserId?: string }) => 
       }
     };
     syncUser();
-  }, [supabase, router, userId]);
+  }, [router, userId]);
 
   const handleNext = async () => {
     const fieldsToValidate = stepsFields[currentStep - 1];
@@ -192,14 +191,10 @@ export const MultiStepForm = ({ initialUserId }: { initialUserId?: string }) => 
     }
     const toastId = toast.loading("Submitting your profile...");
     try {
-      const response = await fetch(`/api/students/student/${userId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      const responseData = await response.json();
-      if (!response.ok) {
-        throw new Error(responseData.error || "Failed to update profile.");
+      // Onboarding: also triggers the welcome email / WhatsApp invite.
+      const result = await saveMyProfile(data as Record<string, unknown>, { welcome: true });
+      if (!result.success) {
+        throw new Error(result.error || "Failed to update profile.");
       }
       toast.success("Profile updated successfully!", { id: toastId });
       // Redirect to the feed (dashboard) immediately after completion

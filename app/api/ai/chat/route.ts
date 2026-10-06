@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { getCurrentUser } from "@/lib/api/auth";
+import { buildStudentAiContext, logAiInteraction } from "@/lib/api/services/ai-context";
 
 /**
  * AI Chatbot Endpoint for ZigEx Platform
@@ -12,31 +12,6 @@ import { cookies } from "next/headers";
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || "");
 
-async function createSupabaseServerClient() {
-  const cookieStore = await cookies();
-
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get: async (name: string) => {
-          return (await cookieStore).get(name)?.value;
-        },
-        set: async (name: string, value: string, options: CookieOptions) => {
-          try {
-            (await cookieStore).set({ name, value, ...options });
-          } catch (error) { }
-        },
-        remove: async (name: string, options: CookieOptions) => {
-          try {
-            (await cookieStore).set({ name, value: "", ...options });
-          } catch (error) { }
-        },
-      },
-    }
-  );
-}
 
 /**
  * Build comprehensive system context about the ZigEx platform
@@ -143,84 +118,13 @@ When users ask about opportunities, applications, or career advice, draw from th
 }
 
 /**
- * Get user context from database
- * Provides personalized responses based on user profile
- */
-async function getUserContext(userId: string, supabase: any): Promise<string> {
-  try {
-    // Fetch student profile
-    const { data: profile, error } = await supabase
-      .from("student_profiles")
-      .select("*")
-      .eq("user_id", userId)
-      .single();
-
-    if (error || !profile) {
-      return "User profile not found. Provide general guidance.";
-    }
-
-    // Build user context
-    let context = `\n## USER PROFILE\n`;
-    context += `- Name: ${profile.full_name || "Not specified"}\n`;
-    context += `- University: ${profile.university || "Not specified"}\n`;
-    context += `- Field of Study: ${profile.field_of_study || "Not specified"}\n`;
-    context += `- GPA: ${profile.gpa || "Not specified"}\n`;
-    context += `- Graduation Year: ${profile.graduation_year || "Not specified"}\n`;
-    context += `- Location: ${profile.location || "Not specified"}\n`;
-
-    if (profile.hard_skills && profile.hard_skills.length > 0) {
-      context += `- Technical Skills: ${profile.hard_skills.join(", ")}\n`;
-    }
-
-    if (profile.soft_skills && profile.soft_skills.length > 0) {
-      context += `- Soft Skills: ${profile.soft_skills.join(", ")}\n`;
-    }
-
-    if (profile.preferred_industries && profile.preferred_industries.length > 0) {
-      context += `- Career Interests: ${profile.preferred_industries.join(", ")}\n`;
-    }
-
-    if (profile.interests && profile.interests.length > 0) {
-      context += `- Interests: ${profile.interests.join(", ")}\n`;
-    }
-
-    // Fetch recent applications
-    const { data: applications } = await supabase
-      .from("internship_applications")
-      .select("*, internships(title, company_profiles(company_name))")
-      .eq("student_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(3);
-
-    if (applications && applications.length > 0) {
-      context += `\n## RECENT APPLICATIONS\n`;
-      applications.forEach((app: any, index: number) => {
-        context += `${index + 1}. ${app.internships?.title || "Unknown"} at ${app.internships?.company_profiles?.company_name || "Unknown Company"
-          } - Status: ${app.status}\n`;
-      });
-    }
-
-    context += `\n**Use this information to personalize your responses and provide relevant advice.**\n`;
-
-    return context;
-  } catch (error) {
-    console.error("Error fetching user context:", error);
-    return "Unable to fetch user profile. Provide general guidance.";
-  }
-}
-
-/**
  * POST /api/ai/chat
  * Main chatbot endpoint
  */
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createSupabaseServerClient();
-
     // Get authenticated user
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
 
     if (!user) {
       return NextResponse.json(
@@ -252,7 +156,7 @@ export async function POST(request: NextRequest) {
 
     // Build context
     const systemContext = buildSystemContext();
-    const userContext = await getUserContext(user.id, supabase);
+    const userContext = await buildStudentAiContext();
 
     // Initialize Gemini model with optimal settings
     const model = genAI.getGenerativeModel({
@@ -313,19 +217,8 @@ export async function POST(request: NextRequest) {
     const response = result.response;
     const aiMessage = response.text();
 
-    // Log interaction for analytics (optional)
-    try {
-      await supabase.from("ai_interactions").insert({
-        user_id: user.id,
-        interaction_type: "chat",
-        context: { message },
-        response: { text: aiMessage },
-        created_at: new Date().toISOString(),
-      });
-    } catch (logError) {
-      // Don't fail the request if logging fails
-      console.error("Failed to log interaction:", logError);
-    }
+    // Log interaction for analytics (optional; never fails the request)
+    await logAiInteraction({ prompt: message, response: aiMessage, model: "gemini-2.5-flash", metadata: { interaction_type: "chat" } });
 
     // Return response
     return NextResponse.json({

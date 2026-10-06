@@ -9,8 +9,8 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { cn, slugifyUsername } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 
-import { createClient } from '@/lib/supabase/client';
-import { Database } from '@/app/types/supabase';
+import { api } from '@/lib/api/browser-client';
+import { ApiClientError, isEndpointMissing, whenAvailable } from '@/lib/api/errors';
 import { Trash2 } from 'lucide-react';
 import { UserProfile } from '@/app/types/type'; 
 import {
@@ -116,7 +116,6 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
   };
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const supabase = createClient();
 
   // New Creation Customization States
   const [selectedColor, setSelectedColor] = useState(STORY_COLORS[0]);
@@ -130,50 +129,18 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
     try {
       setLoading(true);
 
-      // 1. Fetch active user stories
-      const storiesPromise = supabase
-        .from('stories')
-        .select('*')
-        .gt('expires_at', new Date().toISOString())
-        .order('created_at', { ascending: false });
-
-      // 2. Fetch recent announcements (last 5, acting as stories)
-      const announcementsPromise = supabase
-        .from('announcements')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      const [storiesRes, announcementsRes] = await Promise.all([storiesPromise, announcementsPromise]);
-
-      if (storiesRes.error) throw storiesRes.error;
-      const storiesData = storiesRes.data || [];
-      const announcementsData = announcementsRes.data || [];
-
-      // 3. Prepare IDs for profile fetching
-      const userIds = Array.from(new Set(storiesData.map(s => s.user_id)));
-      const companyIds = Array.from(new Set(announcementsData.map(a => a.company_id).filter(Boolean))) as string[];
-
-      // 4. Fetch Profiles
-      const [profilesRes, companiesRes] = await Promise.all([
-        userIds.length > 0 
-          ? supabase.from('student_profiles').select('user_id, full_name, avatar_url, username').in('user_id', userIds) 
-          : { data: [] },
-        companyIds.length > 0 
-          ? supabase.from('company_profiles').select('id, company_name, logo_url').in('id', companyIds) 
-          : { data: [] }
+      // GET /stories (active ones, author embedded) and the latest
+      // announcements, shown in the same strip. Spec'd: empty until deployed.
+      const [storiesData, announcementsData] = await Promise.all([
+        whenAvailable(async () => (await api.get<any[]>('/stories')).data ?? [], [] as any[]),
+        whenAvailable(async () => (await api.get<any[]>('/announcements?limit=5')).data ?? [], [] as any[]),
       ]);
 
-      const profilesMap: Record<string, any> = {};
-      profilesRes.data?.forEach((p: any) => { profilesMap[p.user_id] = p; });
-
-      const companiesMap: Record<string, any> = {};
-      companiesRes.data?.forEach((c: any) => { companiesMap[c.id] = c; });
 
       // 5. Map User Stories
       const formattedUserStories: Story[] = storiesData.map((s: any) => {
         const isMe = s.user_id === currentUser?.profile?.user_id;
-        const profile = profilesMap[s.user_id];
+        const profile = s.author;
         
         return {
             id: s.id,
@@ -195,7 +162,7 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
 
       // 6. Map Announcements to Stories
       const formattedAnnouncementStories: Story[] = announcementsData.map((a: any) => {
-        const company = a.company_id ? companiesMap[a.company_id] : null;
+        const company = a.company ?? null;
         const companyName = company ? company.company_name : "Zigex Global";
         const companyLogo = company?.logo_url;
 
@@ -314,43 +281,27 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
       let content = newStoryImage || newStoryText;
       let finalType: StoryType = newStoryImage ? (newStoryText ? 'mixed' : 'image') : 'text';
 
-      // 1. Upload Image if selected
+      // POST /stories (multipart; the backend stores the image in R2).
+      const body = new FormData();
+      body.set('type', finalType);
       if (selectedFile && newStoryImage) {
-        const fileExt = selectedFile.name.split('.').pop();
-        const fileName = `${userId}/${Date.now()}.${fileExt}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('stories')
-          .upload(fileName, selectedFile);
-        
-        if (uploadError) throw uploadError;
-        
-        const { data: { publicUrl } } = supabase.storage
-          .from('stories')
-          .getPublicUrl(fileName);
-          
-        content = publicUrl;
+        body.set('file', selectedFile);
+        if (newStoryText) body.set('caption', newStoryText);
+      } else {
+        body.set('content', content);
+        body.set('color', selectedColor);
+        body.set('font_size', selectedFontSize);
       }
 
-      // 2. Insert Story
-      const { data, error } = await supabase
-        .from('stories')
-        .insert({
-          user_id: userId,
-          content: content,
-          type: finalType,
-          caption: newStoryImage ? newStoryText : null, // Use newStoryText as caption if image exists
-          color: !newStoryImage ? selectedColor : null,
-          font_size: !newStoryImage ? selectedFontSize : null,
-        })
-        .select()
-        .single();
-
-      if (error) {
-        if (error.code === '23505') { // Unique violation
+      let data: any;
+      try {
+        data = (await api.post<any>('/stories', body)).data;
+      } catch (error) {
+        if (isEndpointMissing(error)) {
+          showAlert("Coming soon", "Posting stories will be available shortly.");
+        } else if (error instanceof ApiClientError && error.status === 409) {
           showAlert("Limit Reached", "You can only post one story per day.");
         } else {
-          console.error("Supabase insert error:", error);
           throw error;
         }
         return;
@@ -394,8 +345,7 @@ export default function FeedStories({ currentUser }: FeedStoriesProps) {
     if (!storyToDelete) return;
 
     try {
-        const { error } = await supabase.from('stories').delete().eq('id', storyToDelete);
-        if (error) throw error;
+        await api.delete(`/stories/${encodeURIComponent(storyToDelete)}`);
         setStories(prev => prev.filter(s => s.id !== storyToDelete));
         if (selectedStory?.id === storyToDelete) setSelectedStory(null);
     } catch (err) {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin, createClient } from "@/lib/supabase/server";
+import { loadPlacementDocument } from "@/lib/api/services/placement-documents";
 import { format } from "date-fns";
 
 export async function GET(
@@ -11,100 +11,17 @@ export async function GET(
     try {
         console.log(`[LOGBOOK_API] Request for AppID: ${applicationId}`);
 
-        // 0. Verify Authentication
-        const supabase = await createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-
-        if (!user) {
-            console.error("[LOGBOOK_API] Unauthorized access attempt");
-            return new NextResponse("Unauthorized", { status: 401 });
+        // The backend enforces who may read this application.
+        const doc = await loadPlacementDocument(applicationId, "logbook");
+        if ("pdf" in doc) {
+            return new NextResponse(doc.pdf.body, {
+                headers: { "Content-Type": "application/pdf", "Content-Disposition": doc.pdf.headers.get("content-disposition") ?? "inline" },
+            });
         }
-
-        // 1. Fetch Application Details - Super resilient select
-        const { data: app, error: appError } = await supabaseAdmin
-            .from("internship_applications")
-            .select(`
-                *,
-                internships (
-                    *,
-                    company_profiles (*)
-                ),
-                supervisor_profiles (*)
-            `)
-            .eq("id", applicationId)
-            .single();
-
-        if (appError) {
-            console.error("[LOGBOOK_API] Supabase Error:", appError);
-            // Fallback for some environments
-            const { data: legacyApp } = await supabaseAdmin
-                .from("Applications")
-                .select("*, internships(*, company_profiles(*))")
-                .eq("id", applicationId)
-                .maybeSingle();
-
-            if (!legacyApp) {
-                return new NextResponse("Application not found", { status: 404 });
-            }
-            Object.assign(app || {}, legacyApp);
+        if ("error" in doc) {
+            return new NextResponse(doc.message, { status: doc.error });
         }
-
-        if (!app) {
-            return new NextResponse("Application not found", { status: 404 });
-        }
-
-        // 1.2 Fetch student profile separately
-        const { data: studentProfile } = await supabaseAdmin
-            .from("student_profiles")
-            .select("*")
-            .eq("user_id", app.student_id)
-            .maybeSingle();
-
-        // 1.5 Authorization Check
-        // Allow: The student themselves, the assigned supervisor, or the company owner/admin
-        const isStudent = user.id === app.student_id;
-        const isSupervisor = user.id === app.supervisor_id;
-
-        let isAuthorized = isStudent || isSupervisor;
-
-        if (!isAuthorized) {
-            // Check if user is an admin or company owner
-            const { data: profile } = await supabaseAdmin
-                .from("profiles")
-                .select("role")
-                .eq("id", user.id)
-                .single();
-
-            if (profile?.role === 'admin') {
-                isAuthorized = true;
-            } else {
-                const { data: company } = await supabaseAdmin
-                    .from("company_profiles")
-                    .select("id")
-                    .eq("user_id", user.id)
-                    .single();
-
-                if (company && company.id === app.internships?.company_id) {
-                    isAuthorized = true;
-                }
-            }
-        }
-
-        if (!isAuthorized) {
-            return new NextResponse("Access Forbidden", { status: 403 });
-        }
-
-        // 2. Fetch Logs
-        const { data: logs, error: logsError } = await supabaseAdmin
-            .from("intern_logs")
-            .select("*")
-            .eq("internship_id", app.internship_id)
-            .eq("student_id", app.student_id)
-            .order("log_date", { ascending: true });
-
-        if (logsError) {
-            return new NextResponse("Error fetching logs", { status: 500 });
-        }
+        const { app, studentProfile, logs } = doc;
 
         const studentName = studentProfile?.full_name || app.full_name || "Intern";
         const internshipTitle = app.internships?.title || "Professional Internship";

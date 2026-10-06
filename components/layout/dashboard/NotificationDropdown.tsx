@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { listNotifications, markAllNotificationsRead, markNotificationsRead } from "@/lib/api/notifications-client";
 
 interface Notification {
   id: string;
@@ -67,17 +68,7 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
 
   const fetchNotifications = async () => {
     try {
-      const res = await fetch("/api/students/notifications");
-      const data = await res.json();
-      const mapped = (data.notifications || []).map((n: any) => ({
-        id: n.id,
-        title: n.title,
-        content: n.message,
-        referenceId: n.reference_id,
-        type: n.type || 'program',
-        read: n.is_read,
-        timestamp: n.created_at,
-      }));
+      const mapped = (await listNotifications()) as Notification[];
       setNotifications(mapped);
       const unread = mapped.filter((n: Notification) => !n.read).length;
       setUnreadCount(unread);
@@ -117,11 +108,7 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
     }
 
     try {
-      await fetch("/api/students/notifications", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notificationIds: [notificationId] })
-      });
+      await markNotificationsRead([notificationId]);
     } catch (error) {
       console.error("Failed to mark as read:", error);
     }
@@ -145,11 +132,7 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
     setUnreadCount(0);
 
     try {
-      await fetch("/api/students/notifications", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ markAll: true })
-      });
+      await markAllNotificationsRead();
     } catch (error) {
       console.error("Failed to mark all as read:", error);
       fetchNotifications();

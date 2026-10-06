@@ -217,27 +217,4 @@ export const happeningNowService = {
     }
   },
 
-  /**
-   * Fetch current happening now content
-   */
-  fetchContent: async () => {
-    try {
-      const response = await fetch('/api/happening-now', {
-        method: 'GET',
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        return { success: false, error: result.error || 'Fetch failed' };
-      }
-
-      return { success: true, data: result.data };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred',
-      };
-    }
-  },
 };

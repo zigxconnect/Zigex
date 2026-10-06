@@ -69,19 +69,19 @@ export interface FeedConfig {
 export const FEED_CONFIGS: Record<FeedType, FeedConfig> = {
   internships: {
     type: "internships",
-    apiEndpoint: "/api/students/internships",
+    apiEndpoint: "/feed/internships",
     label: "Internships",
     color: "blue",
   },
   programs: {
     type: "programs",
-    apiEndpoint: "/api/students/programs",
+    apiEndpoint: "/feed/programs",
     label: "Programs",
     color: "purple",
   },
   events: {
     type: "events",
-    apiEndpoint: "/api/students/events",
+    apiEndpoint: "/feed/events",
     label: "Events",
     color: "green",
   },

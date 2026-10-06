@@ -4,6 +4,9 @@ import { useState, FormEvent, ChangeEvent, useEffect } from "react";
 import { X, User, Image as ImageIcon, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { toast } from "sonner";
+import { uploadAvatar, uploadCoverImage } from "@/lib/api/uploads";
+import { isEndpointMissing } from "@/lib/api/errors";
+import { saveMyProfile } from "@/lib/actions/profile.actions";
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -109,40 +112,36 @@ export const EditProfileModal = ({
     setIsLoading(true);
     setError(null);
 
-    const formData = new FormData();
-    if (avatarFile) {
-      formData.append("avatar", avatarFile);
-    }
-    if (coverImageFile) {
-      formData.append("cover_image", coverImageFile);
-    }
-
     if (!avatarFile && !coverImageFile) {
       setError("Please select at least one image to upload.");
       setIsLoading(false);
       return;
     }
 
-    if (!userId) {
-      setError("User ID is not defined.");
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      const response = await fetch(`/api/students/stud/${userId}`, {
-        method: "PUT",
-        body: formData,
-      });
+      if (avatarFile) {
+        const { url } = await uploadAvatar(avatarFile);
+        // Keep student_profiles.avatar_url in step with the uploaded file.
+        const saved = await saveMyProfile({ avatar_url: url });
+        if (!saved.success) throw new Error(saved.error || "Failed to update profile.");
+      }
 
-      const responseData = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          responseData.details ||
-          responseData.error ||
-          "Failed to update profile."
-        );
+      if (coverImageFile) {
+        try {
+          // The backend stores the URL on the profile (cover_image_url).
+          await uploadCoverImage(coverImageFile);
+        } catch (coverError) {
+          if (!isEndpointMissing(coverError)) throw coverError;
+          if (!avatarFile) {
+            setError("Cover image uploads are coming soon. You can still change your profile picture.");
+            setIsLoading(false);
+            return;
+          }
+          toast.warning("Cover image not saved", {
+            description: "Cover image uploads are coming soon.",
+            duration: 4000,
+          });
+        }
       }
 
       toast.success("Profile updated successfully!", {

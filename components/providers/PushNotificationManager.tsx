@@ -85,6 +85,8 @@ export function PushNotificationManager() {
             
             if (syncResult.success) {
                 toast.success("Notifications enabled successfully!", { id: "push-setup" });
+            } else if (syncResult.pending) {
+                toast("Push notifications are coming soon.", { id: "push-setup" });
             } else {
                 console.error("[PUSH_MANAGER] Sync failed:", syncResult.error);
                 toast.error("Failed to sync notifications with server.", { id: "push-setup" });

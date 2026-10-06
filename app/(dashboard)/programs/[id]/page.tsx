@@ -1,15 +1,11 @@
 import { Metadata } from 'next';
+import { getFeedItem } from '@/lib/api/services/feed';
 import ProgramDetailsClient from './ProgramDetailsClient.tsx';
 
 async function getProgram(id: string) {
   try {
-    const res = await fetch(`https://www.zigexconnect.com/api/students/programs?id=${id}`, {
-      next: { revalidate: 3600 }
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.data || data;
-  } catch (err) {
+    return await getFeedItem("programs", id);
+  } catch {
     return null;
   }
 }

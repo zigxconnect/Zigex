@@ -1,15 +1,11 @@
 import { Metadata } from 'next';
+import { getFeedItem } from '@/lib/api/services/feed';
 import InternshipDetailsClient from './InternshipDetailsClient';
 
 async function getInternship(id: string) {
   try {
-    const res = await fetch(`https://www.zigexconnect.com/api/students/internships?id=${id}`, {
-      next: { revalidate: 3600 }
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.data || data;
-  } catch (err) {
+    return await getFeedItem("internships", id);
+  } catch {
     return null;
   }
 }

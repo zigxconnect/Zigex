@@ -1,6 +1,6 @@
 import { sanityFetch } from '@/sanity/lib/client'
 import { getProfileInfo } from '@/lib/actions/profile.actions'
-import { getAnnouncements } from '@/lib/actions/announcement.actions'
+import { getAnnouncements as getStudentAnnouncements } from '@/lib/api/services/workspace'
 import BlogListing from '@/components/blog/BlogListing'
 
 const DATA_QUERY = `{
@@ -35,7 +35,7 @@ export default async function BlogPage() {
     userData
   ] = await Promise.all([
     sanityFetch({ query: DATA_QUERY }),
-    getAnnouncements(),
+    getStudentAnnouncements({}),
     getProfileInfo()
   ])
 
