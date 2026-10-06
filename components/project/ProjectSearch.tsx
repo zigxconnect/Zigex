@@ -4,6 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import { Search, X, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { api } from "@/lib/api/browser-client";
+import { whenAvailable } from "@/lib/api/errors";
+
+/** GET /projects/search (spec'd; empty until deployed). */
+const searchProjects = (q: string, limit = 20) =>
+  whenAvailable(
+    async () => (await api.get<any[]>(`/projects/search?q=${encodeURIComponent(q)}&limit=${limit}`)).data ?? [],
+    [] as any[]
+  );
 
 export default function ProjectSearch() {
   const [open, setOpen] = useState(false);
@@ -35,9 +44,7 @@ export default function ProjectSearch() {
     setLoading(true);
     const t = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/projects/search?q=${encodeURIComponent(query)}`);
-        const json = await res.json();
-        setResults(json.data || []);
+        setResults(await searchProjects(query));
       } catch (err) {
         console.error("Search error", err);
       } finally {
@@ -57,9 +64,7 @@ export default function ProjectSearch() {
     if (!q) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/projects/search?q=${encodeURIComponent(q)}&limit=1`);
-      const json = await res.json();
-      const first = json.data && json.data[0];
+      const [first] = await searchProjects(q, 1);
       if (first) {
         // navigate to the first matching project
         router.push(`/feed/projects/${first.id}`);

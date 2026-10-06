@@ -15,24 +15,34 @@ import {
   ChevronRight,
   TrendingUp
 } from "lucide-react";
-import { type HappeningNowItem } from "@/lib/actions/happening-now.actions";
-import { getRandomViewCount, formatSimpleViewCount } from "@/lib/utils/randomViews";
+import { fetchHappeningNow, recordHappeningNowView, type HappeningNowItem } from "@/lib/api/happening-now-client";
+import { formatSimpleViewCount } from "@/lib/utils/randomViews";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 export const HappeningNowGrid = ({ initialData = [] }: { initialData?: HappeningNowItem[] }) => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<HappeningNowItem | null>(null);
-  const data = initialData;
-  const [viewCounts, setViewCounts] = useState<Record<string, number>>({});
+  const [data, setData] = useState<HappeningNowItem[]>(initialData);
+  // Real view counts, per post (GET /happening-now/latest, POST .../view).
+  const [postViews, setPostViews] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    const newViewCounts: Record<string, number> = {};
-    data.forEach((item) => {
-      newViewCounts[item.id] = getRandomViewCount();
+    if (initialData.length > 0) return;
+    fetchHappeningNow().then(setData).catch(() => setData([]));
+  }, [initialData.length]);
+
+  const viewCounts: Record<string, number> = Object.fromEntries(
+    data.map((item) => [item.id, postViews[item.postId] ?? item.viewCount])
+  );
+
+  // Opening an item counts a view of its post.
+  useEffect(() => {
+    if (!selectedItem) return;
+    recordHappeningNowView(selectedItem.postId).then((total) => {
+      if (total !== null) setPostViews((prev) => ({ ...prev, [selectedItem.postId]: total }));
     });
-    setViewCounts(newViewCounts);
-  }, [data]);
+  }, [selectedItem]);
 
   if (data.length === 0) {
     return (

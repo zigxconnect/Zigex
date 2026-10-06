@@ -1,11 +1,9 @@
 import React from "react";
-import { supabaseAdmin, createServerActionClient } from "@/lib/supabase/server";
-import { unslugifyUsername, slugifyUsername } from "@/lib/utils";
-import { fetchAllUserProjects } from "@/lib/actions/getProjects.action";
+import { getPublicProfile, getPublicProfileRow } from "@/lib/api/services/public-profile";
+import { slugifyUsername } from "@/lib/utils";
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
 import StudentProfileClient from "@/components/sections/dashboard/StudentProfileClient";
-import { getProfileConnections, getEarnedBadges } from "@/lib/actions/gamification.action";
 
 interface Props {
   params: Promise<{ username: string }>;
@@ -14,30 +12,7 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = await params;
   const username = p.username;
-  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(username);
-  const supabase = supabaseAdmin;
-  let data;
-
-  if (isUuid) {
-    data = (await supabase.from("student_profiles").select("*").eq("id", username).maybeSingle()).data || 
-           (await supabase.from("student_profiles").select("*").eq("user_id", username).maybeSingle()).data;
-  } else {
-    // 1. Try exact match on 'username' column
-    const { data: byUsername } = await supabase.from("student_profiles").select("*").eq("username", username).maybeSingle();
-    
-    // 2. Try case-insensitive match on 'full_name' using unslugified string
-    const unslugified = unslugifyUsername(username);
-    const { data: byFullName } = !byUsername 
-      ? await supabase.from("student_profiles").select("*").ilike("full_name", unslugified).maybeSingle()
-      : { data: null };
-
-    // 3. Fallback: Try case-insensitive match on 'username'
-    const { data: byUsernameIlike } = (!byUsername && !byFullName)
-      ? await supabase.from("student_profiles").select("*").ilike("username", username).maybeSingle()
-      : { data: null };
-
-    data = byUsername || byFullName || byUsernameIlike;
-  }
+  const data = await getPublicProfileRow(username);
 
   if (!data) return { title: "Student Not Found" };
 
@@ -62,45 +37,9 @@ export default async function ProfilePage({ params }: Props) {
     redirect(`/profile/${slugifyUsername(username)}`);
   }
 
-  const supabase = await createServerActionClient();
-  let data;
+  const profile = await getPublicProfile(username);
 
-  if (isUuid) {
-    const { data: profileById } = await supabase.from("student_profiles").select("*").eq("id", username).maybeSingle();
-    data = profileById || (await supabase.from("student_profiles").select("*").eq("user_id", username).maybeSingle()).data;
-  } else {
-    // Normalize the search term
-    const unslugified = unslugifyUsername(username).trim().toLowerCase();
-    
-    // 1. Try exact match on 'username' column
-    const { data: byUsername } = await supabase.from("student_profiles").select("*").eq("username", username).maybeSingle();
-    
-    // 2. Try case-insensitive exact match on 'full_name'
-    const { data: byFullName } = !byUsername
-      ? await supabase.from("student_profiles").select("*").ilike("full_name", unslugified).maybeSingle()
-      : { data: null };
-
-    // 3. Fallback: Pattern-based search on 'full_name' (handles name order variations)
-    const nameParts = unslugified.split(' ').filter(p => p.length > 2);
-    let byFullNamePattern: typeof byFullName = null;
-    if (!byUsername && !byFullName && nameParts.length > 0) {
-      let query = supabase.from("student_profiles").select("*");
-      for (const part of nameParts) {
-        query = query.ilike("full_name", `%${part}%`);
-      }
-      const { data: patternResult } = await query.limit(1).maybeSingle();
-      byFullNamePattern = patternResult;
-    }
-
-    // 4. Fallback: Try case-insensitive match on 'username' column
-    const { data: byUsernameIlike } = (!byUsername && !byFullName && !byFullNamePattern)
-      ? await supabase.from("student_profiles").select("*").ilike("username", username).maybeSingle()
-      : { data: null };
-
-    data = byUsername || byFullName || byFullNamePattern || byUsernameIlike;
-  }
-
-  if (!data) {
+  if (!profile) {
     console.warn(`[StudentLookup] FAILED for username: ${username}`);
     return (
       <div className="min-h-screen p-6 flex flex-col items-center justify-center text-center">
@@ -111,169 +50,10 @@ export default async function ProfilePage({ params }: Props) {
     );
   }
 
-  // Fetch internship count from BOTH legacy Applications AND modern internship_applications tables
-  const [
-    internResLegacy,
-    internResModern,
-    progRes,
-    eventRes,
-    projectsResult,
-    storiesRes,
-    connectionStats,
-    badges
-  ] = await Promise.all([
-    supabaseAdmin.from("Applications").select("id", { count: "exact", head: true }).eq("student_id", data.id).eq("application_type", "internship").neq("status", "rejected"),
-    supabaseAdmin.from("internship_applications").select("id", { count: "exact", head: true }).or(`student_id.eq.${data.user_id},student_id.eq.${data.id}`).eq("status", "accepted"),
-    supabaseAdmin.from("Applications").select("id", { count: "exact", head: true }).eq("student_id", data.id).eq("application_type", "program").neq("status", "rejected"),
-    supabaseAdmin.from("Applications").select("id", { count: "exact", head: true }).eq("student_id", data.id).eq("application_type", "event").neq("status", "rejected"),
-    fetchAllUserProjects(data.id),
-    supabaseAdmin.from("stories").select("*").eq("user_id", data.user_id).gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false }),
-    getProfileConnections(data.id, data.user_id),
-    getEarnedBadges(data.id, data.user_id)
-  ]);
-
-  const stats = {
-    internshipsApplied: Math.max(internResLegacy?.count || 0, internResModern?.count || 0),
-    programsApplied: progRes?.count || 0,
-    eventsApplied: eventRes?.count || 0,
-  };
-  const projects = projectsResult.success ? projectsResult.data : [];
-  const activeStories = storiesRes?.data || [];
-
-  let myProfile: any = null;
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      myProfile = (await supabase.from("student_profiles").select("id, user_id").eq("user_id", user.id).maybeSingle()).data;
-    }
-  } catch (err) {}
-
-  const { data: candidatesData } = await supabase.from("student_profiles").select("id, username, full_name, avatar_url, university, linkedin_url, phone, email, hard_skills, soft_skills").neq("id", data.id).limit(300);
-  const candidates = (candidatesData || []) as Array<any>;
-  const similarlyScored = candidates.map((c) => {
-    const hard = (c.hard_skills || []).filter((s: string) => (data.hard_skills || []).includes(s)).length;
-    const soft = (c.soft_skills || []).filter((s: string) => (data.soft_skills || []).includes(s)).length;
-    return { ...c, score: hard + soft };
-  }).sort((a, b) => b.score - a.score).slice(0, 6);
-
-  /* Fetch detailed application status for the display list */
-  const { data: appsData } = await supabaseAdmin
-    .from("Applications")
-    .select("id, application_type, status, program_id, event_id, programs(title), events(title)")
-    .eq("student_id", data.id)
-    .eq("status", "accepted");
-
-  const applicationsList = appsData?.map((app: any) => ({
-    type: app.application_type,
-    status: app.status,
-    title: app.programs?.title || app.events?.title || "Unknown Activity",
-    id: app.program_id || app.event_id
-  })) || [];
-
-  // ========== ACTIVE INTERNSHIP DETECTION ==========
-  let activeInternshipInfo: {
-    internship: any;
-    company: any;
-    supervisor: any;
-    logs: any[];
-  } | null = null;
-
-  const studentIdFilters: string[] = [];
-  if (data.user_id) studentIdFilters.push(`student_id.eq.${data.user_id}`);
-  if (data.id) studentIdFilters.push(`student_id.eq.${data.id}`);
-
-  let activeApp = null;
-  if (studentIdFilters.length > 0) {
-    const { data: appData, error: appError } = await supabaseAdmin
-      .from("internship_applications")
-      .select(`
-        id,
-        internship_id,
-        student_id,
-        domain,
-        status,
-        internships (
-          id, title, type, location, description,
-          company_profiles (
-            id, company_name, logo_url, cover_image_url
-          )
-        )
-      `)
-      .or(studentIdFilters.join(','))
-      .eq("status", "accepted")
-      .maybeSingle();
-
-    activeApp = appData;
-    if (appError) console.error(`[VisitorProfile] Query error:`, appError);
-  }
-
-  if (activeApp?.internships) {
-    const { data: logsData } = await supabaseAdmin
-      .from("intern_logs")
-      .select("id, log_date")
-      .eq("student_id", data.user_id)
-      .eq("internship_id", activeApp.internship_id);
-
-    let supervisorInfo = null;
-    const { data: supervisorData } = await supabaseAdmin
-      .from("supervisor_profiles")
-      .select("id, full_name, avatar_url, role, email")
-      .eq("domain", (activeApp as any).domain)
-      .maybeSingle();
-    supervisorInfo = supervisorData;
-
-    activeInternshipInfo = {
-      internship: activeApp.internships,
-      company: (activeApp.internships as any)?.company_profiles || null,
-      supervisor: supervisorInfo,
-      logs: logsData || []
-    };
-  }
-  // ========== END ACTIVE INTERNSHIP DETECTION ==========
-
-  // Check if viewed user is a supervisor
-  let supervisorProfile = null;
-  let superviseesCount = 0;
-  if (data) {
-    const { data: supData } = await supabaseAdmin
-      .from("supervisor_profiles")
-      .select("*")
-      .or(`user_id.eq.${data.user_id},email.eq.${data.email}`)
-      .maybeSingle();
-      
-    if (supData) {
-      supervisorProfile = supData;
-      const [legacyApps, modernApps] = await Promise.all([
-        supabaseAdmin
-          .from("Applications")
-          .select("student_id", { count: "exact", head: true })
-          .eq("supervisor_id", supData.id)
-          .eq("status", "accepted"),
-        supabaseAdmin
-          .from("internship_applications")
-          .select("student_id", { count: "exact", head: true })
-          .eq("supervisor_id", supData.id)
-          .eq("status", "accepted")
-      ]);
-      superviseesCount = (legacyApps?.count || 0) + (modernApps?.count || 0);
-    }
-  }
-
   return (
     <StudentProfileClient
-      data={data}
-      stats={stats}
-      projects={projects}
-      activeStories={activeStories}
-      similarStudents={similarlyScored}
-      myProfile={myProfile}
+      {...profile}
       username={username}
-      applicationsList={applicationsList}
-      activeInternshipInfo={activeInternshipInfo}
-      supervisorProfile={supervisorProfile}
-      superviseesCount={superviseesCount}
-      connectionStats={connectionStats}
-      badges={badges}
     />
   );
 }
