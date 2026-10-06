@@ -11,6 +11,7 @@ import type { Metadata } from "next";
 import { ExternalLink } from "lucide-react";
 import { DiscordCard } from "@/components/community/DiscordCard";
 import { listApplications } from "@/lib/api/services/applications";
+import { listPublicFeed } from "@/lib/api/services/feed";
 import { applicationKind, targetId, toApplicationStatus } from "@/lib/api/applications-shape";
 
 export const metadata: Metadata = { title: "Communities" };
@@ -37,14 +38,31 @@ async function myProgramGroups(): Promise<ProgramGroup[]> {
   }
 }
 
+type UpcomingEvent = { id: string; title: string; startsAt: string; place: string | null };
+
+/** The next three events that haven't started yet. */
+async function upcomingEvents(): Promise<UpcomingEvent[]> {
+  try {
+    const now = Date.now();
+    return (await listPublicFeed("events"))
+      .filter((e) => e.start_date && new Date(e.start_date).getTime() > now)
+      .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
+      .slice(0, 3)
+      .map((e) => ({ id: e.id, title: e.title, startsAt: e.start_date, place: e.location ?? e.venue ?? null }));
+  } catch (error) {
+    console.error("[community] events failed:", error);
+    return [];
+  }
+}
+
 const STEPS = [
   { title: "Say hello in the Lounge", text: "Use the chat on this page. Tell people your name, school and what you're learning." },
   { title: "Sign in once", text: "The first time you post, a small Discord window asks you to sign in. You stay on Zigex." },
-  { title: "Study together", text: "For the Study Rooms, open the full server in Discord. Zigex stays open in its own tab." },
+  { title: "Study together", text: "Switch to a Study Room in the chat to work on assignments or projects with others." },
 ];
 
 export default async function CommunitiesPage() {
-  const groups = await myProgramGroups();
+  const [groups, events] = await Promise.all([myProgramGroups(), upcomingEvents()]);
 
   return (
     <div className="pb-16">
@@ -97,8 +115,42 @@ export default async function CommunitiesPage() {
           </section>
         </div>
 
-        <aside>
-          <section aria-labelledby="start-title" className="rounded-2xl bg-white p-5 ring-1 ring-[#DCE5F5] lg:sticky lg:top-24">
+        <aside className="space-y-6">
+          <section aria-labelledby="events-title" className="rounded-2xl bg-white p-5 ring-1 ring-[#DCE5F5]">
+            <h2 id="events-title" className="font-heading text-base font-semibold text-[#0B1B3F]">
+              Coming up
+            </h2>
+            {events.length === 0 ? (
+              <p className="mt-2 text-sm leading-relaxed text-[#4A5670]">
+                No events scheduled yet. When companies post meetups or workshops, the next ones show here.
+              </p>
+            ) : (
+              <ul className="mt-3 space-y-3">
+                {events.map((e) => {
+                  const d = new Date(e.startsAt);
+                  return (
+                    <li key={e.id}>
+                      <Link href={`/feed/${e.id}`} className="group flex gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC]">
+                        <span className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl bg-[#0B1B3F] text-white">
+                          <span className="font-heading text-lg font-bold leading-none">{d.getDate()}</span>
+                          <span className="text-xs">{d.toLocaleDateString("en-GB", { month: "short" })}</span>
+                        </span>
+                        <span className="min-w-0">
+                          <span className="line-clamp-2 text-sm font-semibold text-[#0B1B3F] group-hover:text-[#155DFC]">{e.title}</span>
+                          <span className="block truncate text-sm text-[#7B869C]">
+                            {d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+                            {e.place ? `, ${e.place}` : ""}
+                          </span>
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </section>
+
+          <section aria-labelledby="start-title" className="rounded-2xl bg-white p-5 ring-1 ring-[#DCE5F5]">
             <h2 id="start-title" className="font-heading text-base font-semibold text-[#0B1B3F]">
               New here?
             </h2>

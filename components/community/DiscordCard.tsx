@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { ExternalLink, Hash, MessagesSquare } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ExternalLink, Hash, Loader2, MessagesSquare } from "lucide-react";
 import { landingButton } from "@/components/sections/landing/landing-ui";
 
 const GUILD_ID = "1454830922653368585";
@@ -26,6 +26,20 @@ export function DiscordCard() {
   const [members, setMembers] = useState<number | null>(null);
   // The chat is the main way to take part, so it is open by default.
   const [showChat, setShowChat] = useState(true);
+  const [channelId, setChannelId] = useState(LOUNGE_CHANNEL_ID);
+  // "loading" until the embed reports in; "slow" if it takes too long (WidgetBot down, or Discord blocked on this network).
+  const [chatState, setChatState] = useState<"loading" | "ready" | "slow">("loading");
+  const slowTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [reload, setReload] = useState(0);
+
+  useEffect(() => {
+    if (!showChat) return;
+    setChatState("loading");
+    slowTimer.current = setTimeout(() => setChatState((s) => (s === "loading" ? "slow" : s)), 15000);
+    return () => {
+      if (slowTimer.current) clearTimeout(slowTimer.current);
+    };
+  }, [showChat, channelId, reload]);
 
   useEffect(() => {
     let cancelled = false;
@@ -71,24 +85,14 @@ export function DiscordCard() {
         </div>
 
         <p className="mt-4 max-w-xl text-base leading-relaxed text-[#2B3A55]">
-          Ask questions, share what you&apos;re building and find people to study with. Read and post in the Lounge right here;
-          the first time you send a message, sign in with Discord in the small window that opens.
+          Ask questions, share what you&apos;re building and find people to study with. Read and post right here; the first time
+          you send a message, sign in with Discord in the small window that opens.
         </p>
 
-        {channels.length > 0 && (
-          <ul className="mt-4 flex flex-wrap gap-2" aria-label="Channels">
-            {channels.map((c) => (
-              <li key={c.id} className="inline-flex items-center gap-1 rounded-full bg-[#F3F7FF] px-3 py-1 text-sm text-[#0B1B3F] ring-1 ring-[#E3E9F5]">
-                <Hash className="h-3.5 w-3.5 text-[#7B869C]" aria-hidden="true" />
-                {c.name}
-              </li>
-            ))}
-          </ul>
-        )}
 
         <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2">
           <button type="button" onClick={() => setShowChat((v) => !v)} aria-expanded={showChat} className={landingButton(showChat ? "secondary" : "primary", "md")}>
-            {showChat ? "Hide the chat" : "Chat in the Lounge"}
+            {showChat ? "Hide the chat" : "Open the chat"}
           </button>
           {/* Joining the full server (Study Rooms, other channels) happens on Discord itself. */}
           <a href={INVITE} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#4A5670] hover:text-[#155DFC]">
@@ -101,13 +105,64 @@ export function DiscordCard() {
 
       {showChat && (
         <div className="border-t border-[#EEF2FA]">
-          <iframe
-            src={`https://e.widgetbot.io/channels/${GUILD_ID}/${LOUNGE_CHANNEL_ID}?color=155DFC&theme=light`}
-            title="Zigex Lounge chat"
-            className="block h-[520px] w-full sm:h-[600px]"
-            loading="lazy"
-            allow="clipboard-write; fullscreen"
-          />
+          {channels.length > 1 && (
+            <div role="tablist" aria-label="Channels" className="flex gap-1 overflow-x-auto bg-[#F8FAFF] px-4 py-2 sm:px-6">
+              {channels.map((c) => {
+                const active = c.id === channelId;
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setChannelId(c.id)}
+                    className={`inline-flex h-9 shrink-0 items-center gap-1 rounded-lg px-3 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] ${
+                      active ? "bg-white text-[#0B1B3F] shadow-sm ring-1 ring-[#DCE5F5]" : "text-[#4A5670] hover:text-[#0B1B3F]"
+                    }`}
+                  >
+                    <Hash className="h-3.5 w-3.5 text-[#7B869C]" aria-hidden="true" />
+                    {c.name}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          <div className="relative">
+            <iframe
+              key={`${channelId}-${reload}`}
+              src={`https://e.widgetbot.io/channels/${GUILD_ID}/${channelId}?color=155DFC&theme=light`}
+              title={`Zigex ${channels.find((c) => c.id === channelId)?.name ?? "Lounge"} chat`}
+              className="block h-[520px] w-full sm:h-[600px]"
+              loading="lazy"
+              allow="clipboard-write; fullscreen"
+              onLoad={() => setChatState("ready")}
+            />
+            {chatState !== "ready" && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white px-6 text-center" role="status">
+                {chatState === "loading" ? (
+                  <>
+                    <Loader2 className="h-6 w-6 animate-spin text-[#155DFC]" aria-hidden="true" />
+                    <p className="text-sm text-[#4A5670]">Loading the chat…</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-heading text-base font-semibold text-[#0B1B3F]">The chat is taking too long to load.</p>
+                    <p className="max-w-sm text-sm text-[#4A5670]">
+                      Some school and office networks block Discord. Try again, or open the chat in Discord instead.
+                    </p>
+                    <div className="flex flex-wrap justify-center gap-2">
+                      <button type="button" onClick={() => setReload((r) => r + 1)} className={landingButton("secondary", "md")}>
+                        Try again
+                      </button>
+                      <a href={INVITE} target="_blank" rel="noopener noreferrer" className={landingButton("primary", "md")}>
+                        Open in Discord
+                      </a>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </section>
