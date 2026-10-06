@@ -21,6 +21,7 @@ import {
   authLink,
   emailInputProps,
   inputClass,
+  passwordStrength,
   useAuthNext,
 } from "./auth-ui";
 import { getReturnUrl } from "@/lib/utils/redirect";
@@ -31,7 +32,10 @@ const RESEND_COOLDOWN_SECONDS = 30;
 const schema = z.object({
   email: z.string().trim().email({ message: "Enter the email you asked for the code with." }),
   otp: z.string().length(OTP_LENGTH, { message: `Enter all ${OTP_LENGTH} digits from the email.` }),
-  password: z.string().min(8, { message: "Use at least 8 characters." }),
+  password: z
+    .string()
+    .min(8, { message: "Use at least 8 characters." })
+    .refine((p) => passwordStrength(p).level >= 2, { message: "Too weak. Mix in numbers or capital letters." }),
 });
 type FormData = z.infer<typeof schema>;
 

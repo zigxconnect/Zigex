@@ -23,6 +23,7 @@ import {
   authLink,
   emailInputProps,
   inputClass,
+  passwordStrength,
   useAuthNext,
 } from "./auth-ui";
 
@@ -38,7 +39,10 @@ const signUpSchema = z.object({
   firstName: z.string().trim().min(2, { message: "Enter your first name (2 letters or more)." }),
   lastName: z.string().trim().min(2, { message: "Enter your last name (2 letters or more)." }),
   email,
-  password: z.string().min(8, { message: "Use at least 8 characters." }),
+  password: z
+    .string()
+    .min(8, { message: "Use at least 8 characters." })
+    .refine((p) => passwordStrength(p).level >= 2, { message: "Too weak. Mix in numbers or capital letters." }),
 });
 
 type SignInData = z.infer<typeof signInSchema>;
@@ -272,13 +276,6 @@ function SignUpForm() {
         }
       />
 
-      {hasGoogle && (
-        <>
-          <GoogleSignInButton text="signup_with" />
-          <OrDivider />
-        </>
-      )}
-
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
         {error && <FormAlert tone="error">{error}</FormAlert>}
 
@@ -362,6 +359,14 @@ function SignUpForm() {
           .
         </p>
       </form>
+
+      {/* Below the form on sign-up, so the page fits a laptop screen without scrolling. */}
+      {hasGoogle && (
+        <>
+          <OrDivider />
+          <GoogleSignInButton text="signup_with" />
+        </>
+      )}
 
       <AuthFooter>
         Already have an account?{" "}
