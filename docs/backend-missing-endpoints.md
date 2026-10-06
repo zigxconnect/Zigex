@@ -2,7 +2,7 @@
 
 Oct 5, 2026 · Abdul Fadiga
 
-The student frontend now authenticates against `api.zigexconnect.com` and is ready to move every student feature off Supabase, but three blockers and 49 missing endpoints stand in the way.
+The student frontend now authenticates against `api.zigexconnect.com` and is ready to move every student feature off Supabase, but three blockers and 50 missing endpoints stand in the way. Every endpoint below is already called by the frontend; each feature lights up as soon as its endpoint is deployed.
 
 Live version (with comments): https://claude.ai/code/artifact/9425f2d8-9780-4947-b394-a7f340ecace5
 
@@ -39,13 +39,13 @@ These three must be fixed before the student app can go live on the backend.
 
 ## Missing endpoints
 
-The student app needs 49 new endpoints plus field changes to 4 existing ones before it can drop Supabase; everything else already runs on the backend. All paths are under `/api/v1`, use the student JWT unless marked public, and return `{ success, data, meta? }` with database column names, as the existing endpoints do. List endpoints take `page` and `limit`.
+The student app needs 50 new endpoints plus field changes to 4 existing ones before it can drop Supabase; everything else already runs on the backend. All paths are under `/api/v1`, use the student JWT unless marked public, and return `{ success, data, meta? }` with database column names, as the existing endpoints do. List endpoints take `page` and `limit`.
 
 | Area | Priority | New endpoints | What students lose until it ships |
 | --- | --- | --- | --- |
 | Account and auth | P1 | 5 | Password reset; 8 profile fields; cover image |
 | Notifications and push | P1 | 7 | Bell icon, unread count, notifications page, push |
-| Programs I joined | P1 | 4 | Course content, payment, receipt |
+| Programs I joined | P1 | 5 | Course content, classmates, receipt |
 | Intern workspace | P1 | 13 | Tasks, curriculum, announcements, team, logbook PDF, daily reports, live updates |
 | Applications and uploads | P1 | 1 | Form answers saved as text; DOCX rejected |
 | Projects | P2 | 7 | Portfolio projects |
@@ -66,7 +66,7 @@ Students cannot reset a forgotten password today, and profile edits silently dro
 | POST | `/auth/reset-password` | `{ email, otp, newPassword }` | `{ token, user }` (same as login) | Replaces the Supabase email-link callback and `updateUser`. |
 | PATCH | `/auth/password` | `{ currentPassword, newPassword }` | none | Signed-in password change (P2). |
 | POST | `/auth/google` | `{ idToken }` | `{ token, user }` (same as login) | Verify the Google ID token server-side; create the student on first sign-in (P3). |
-| POST | `/uploads/cover-image` | base64 image, like `/uploads/avatar` | `{ url }` | Profile cover image (P2). |
+| POST | `/uploads/cover-image` | base64 image, like `/uploads/avatar` | `{ url }` | Profile cover image (P2). Also saves `cover_image_url` on the profile. |
 
 **`GET /students/me` must also return:** `username`, `profile_status`, `cover_image_url`, `is_intern` (has an accepted internship), `is_supervisor`.
 
@@ -96,12 +96,15 @@ Enrolled students cannot see course content, pay, or download a receipt; tables 
 
 | Method | Path | Request | Response `data` | Notes |
 | --- | --- | --- | --- | --- |
-| GET | `/programs/{programId}/content` | none | `[{ id, title, description, content, moduleNumber, weekNumber, durationWeeks, topics[], resources[], provider }]` | Sorted by module, then week. `403` unless the student has an accepted application to the program. Replaces both the `content` and `curriculum` routes. |
-| POST | `/payments/initiate` | `{ programId, provider, phoneNumber }` | `{ paymentId, status: "pending", instructions? }` | Mobile money. **Take the amount and currency from the program on the server**: today the client sends `amount`, so a student can pay any price. |
-| GET | `/payments/{paymentId}` | none | `{ id, status, amount_xaf, currency, created_at }` | Polled after initiating. Plus a provider webhook to confirm payment. |
+| GET | `/programs/{programId}/content` | none | raw `program_content` rows, all columns (`title`, `description`, `content`, `week_number`, `display_order`, `resources`, `video_url`, `github_url`, `google_docs_url`, `content_url`, `resource_type`, `assignment_details`, `payment_required`, ...) | Ordered by `display_order`. For rows with `payment_required`, omit the content fields unless the student is accepted and paid. |
+| GET | `/programs/{programId}/members` | `?limit=50` | `[{ id, username, full_name, avatar_url }]` + `meta.total` | Accepted participants ("crew") shown on the program page. |
+| POST | `/payments/initiate` (P3) | `{ programId, provider, phoneNumber }` | `{ paymentId, status: "pending", instructions? }` | Mobile money. **Take the amount and currency from the program on the server**: today the client sends `amount`, so a student can pay any price. |
+| GET | `/payments/{paymentId}` (P3) | none | `{ id, status, amount_xaf, currency, created_at }` | Polled after initiating. Plus a provider webhook to confirm payment. |
 | GET | `/programs/{programId}/receipt` | none | `{ student_name, program_title, company: { company_name, logo_url, address }, amount_paid_xaf, paid_at, reference }` | Only after payment. A PDF is fine too. |
 
-**`GET /applications` rows for programs must include payment status:** `payment_completed` plus `payment: { is_paid, amount_paid_xaf }` from `program_student_payment`, so the program updates page can lock or unlock content.
+**`GET /applications` rows for programs must include payment status:** `payment_completed` plus `payment: { is_paid, amount_paid_xaf, payment_ref, payment_date }` from `program_student_payment`, so the program page can lock or unlock content and print a receipt.
+
+The student app has no in-app payment screen today (companies mark programs as paid), so the two `/payments` endpoints are only needed once one is built.
 
 ### Intern workspace (P1)
 
@@ -112,13 +115,13 @@ An accepted intern's workspace shows empty tasks, curriculum, announcements and 
 | GET | `/internships/{internshipId}/tasks` | none | `internship_tasks` rows (all columns, as today) | Newest first. |
 | PATCH | `/tasks/{taskId}/read` | none | none | Sets `is_read = true`. |
 | GET | `/internships/{internshipId}/curriculum` | none | `internship_curriculum` rows | |
-| GET | `/announcements` | `?internshipId=` or `?programId=` | `[{ id, company_id, content, image_url, created_at, is_read, author: { full_name, avatar_url }, company: { company_name, logo_url } }]` | Also used by the student blog page. `is_read` from `announcement_reads`. |
+| GET | `/announcements` | `?internshipId=`, `?programId=`, `?limit=`, or none for all visible to the student | `[{ id, company_id, content, image_url, created_at, is_read, author: { full_name, avatar_url }, company: { company_name, logo_url } }]` | Also used by the student blog page. `is_read` from `announcement_reads`. |
 | POST | `/announcements/read` | `{ announcementIds: string[] }` | none | Inserts `announcement_reads`. |
 | GET | `/internships/{internshipId}/team` | none | `{ supervisor: { full_name, email, avatar_url }, interns: [{ full_name, avatar_url, username }] }` | From `supervisor_profiles` and fellow accepted applications. |
 | POST | `/applications/{id}/payment-acknowledgement` | none | none | Sets `internship_applications.is_paid_acknowledgement = true`. |
 | GET | `/internships/{internshipId}/payment-ledger` | none | `payment_ledger` rows for this intern | |
-| GET | `/applications/{id}/logbook` | none | PDF, or `{ student, internship, company, logs[] }` for us to render | Today built from `intern_logs`, `student_profiles`, `internships`, `company_profiles`. |
-| GET | `/applications/{id}/receipt` | none | PDF or JSON, as above | Internship completion receipt. |
+| GET | `/applications/{id}/logbook` | none | PDF, or `{ application, student, internship, company, supervisor, logs[] }` for us to render | Today built from `intern_logs`, `student_profiles`, `internships`, `company_profiles`. |
+| GET | `/applications/{id}/receipt` | `?month=N` | PDF, or the JSON above plus `payment_ledger` | Monthly internship payment receipt. |
 | POST | `/reports` | `{ programId, date, content, skills[] }` | the created report | Daily report (`daily_reports`). Student from the JWT; points set by the server (20). |
 | POST | `/reports/{reportId}/feedback` | `{ content, pointsEffect }` | the updated report | Supervisor or mentor role only. |
 | GET | `/events/stream` | none | server-sent events `{ type, id }` | See *Live updates* below (P2). |
@@ -169,12 +172,12 @@ Public profiles, the student directory and company pages still read Supabase dir
 
 | Method | Path | Request | Response `data` | Notes |
 | --- | --- | --- | --- | --- |
-| GET | `/students/{username}` | none | `{ id, username, full_name, avatar_url, cover_image_url, university, about, hard_skills, soft_skills, linkedin_url, github_url, portfolio_url, badges[], points, stats: { internships, programs, events, projects } }` | Public profile. **No `phone` or `email`** (see the note below). |
+| GET | `/students/{username}` | none | `{ id, username, full_name, avatar_url, cover_image_url, university, about, hard_skills, soft_skills, linkedin_url, github_url, portfolio_url, badges[], points, stats: { internships, programs, events, projects }, active_stories[], accepted_applications: [{ type, status, title, id }], active_internship: { internship, company, supervisor, log_dates[] } \| null, supervisor_profile \| null, supervisees_count, similar_students[] }` | Public profile. `{username}` may also be a profile id or a full-name slug (`ada-lovelace`). **No `phone` or `email`** for anyone, including in `similar_students` (see the note below). |
 | GET | `/students/{username}/connections` | none | `{ count, peers: [{ username, full_name, avatar_url }], supervisors: [{ full_name, avatar_url }] }` | People who share an internship or program with this student, as computed today from `Applications` and `internship_applications`. |
-| GET | `/students` | `?search=&page=&limit=` | `[{ id, username, full_name, avatar_url, university, hard_skills }]` + `meta` | Student directory and "people you may know". |
+| GET | `/students` | `?search=&page=&limit=` | `[{ id, username, full_name, avatar_url, university, hard_skills, stats: { internships, programs, events, projects, current_program } }]` + `meta` | Student directory and "people you may know". |
 | GET | `/companies` | `?page=&limit=` | `[{ id, company_name, logo_url, website_url }]` | Feed sidebar directory. No contact emails. |
 | GET | `/companies/{id}` | none | public `company_profiles` fields (`company_name`, `logo_url`, `cover_image_url`, `location`, `website_url`, `about`) | Company page. |
-| GET | `/stats/platform` | none | `{ activeOpportunities, students, companies, satisfactionRate }` | Landing page. Public and cacheable. `satisfactionRate` today = average `intern_logs.experience_rating` / 5. |
+| GET | `/stats/platform` | none | `{ activeOpportunities, students, companies, satisfactionRate }` | Landing page. Public and cacheable. `satisfactionRate` is a percentage (0–100); today = average `intern_logs.experience_rating` / 5 × 100. |
 
 **Changes to existing endpoints.**
 
@@ -191,9 +194,9 @@ Students post stories on the feed; companies post "Happening Now" live updates t
 | Method | Path | Request | Response `data` | Notes |
 | --- | --- | --- | --- | --- |
 | GET | `/stories` | none | `[{ id, user_id, type, content, caption, color, font_size, created_at, author: { full_name, avatar_url, username } }]` | Feed stories strip, newest first. Announcements are shown in the same strip (see `/announcements`). |
-| POST | `/stories` | multipart: `type`, `content` or `file`, `caption?`, `color?`, `font_size?` | the story | Signed-in student. Media to R2. |
+| POST | `/stories` | multipart: `type`, `content` or `file`, `caption?`, `color?`, `font_size?` | the story | Signed-in student. Media to R2. `409` when the one-story-per-day limit is reached. |
 | DELETE | `/stories/{id}` | none | none | Owner only. |
-| GET | `/happening-now/latest` | none | `{ id, company, images[], video, captions, is_live, view_count, created_at, updated_at }` | Public. Latest live post. |
+| GET | `/happening-now/latest` | none | `{ id, company, images[], video, captions[], is_live, view_count, created_at, updated_at }` | Public. Latest live post. `captions[i]` belongs to `images[i]`; one more for the video. |
 | POST | `/happening-now/{id}/view` | none | `{ view_count }` | Increment once per viewer; today any signed-in user can add any `increment`. |
 
 Creating and deleting Happening Now posts is a company action: see the last section.
