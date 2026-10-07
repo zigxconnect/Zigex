@@ -24,7 +24,9 @@ const SCRIPT_WAIT_MS = 8000;
  *
  * The visible button is ours, so it matches the other 48px buttons. Google's
  * own button is rendered invisibly on top of it and receives the click (GIS
- * only hands out ID tokens through its own button). Without
+ * only hands out ID tokens through its own button). Google's button is at
+ * most 400px wide and 40-44px tall, so it is scaled to cover ours exactly;
+ * otherwise the edges of our button would look clickable and do nothing. Without
  * NEXT_PUBLIC_GOOGLE_CLIENT_ID the button still shows and explains that
  * Google sign-in isn't switched on yet.
  */
@@ -62,6 +64,27 @@ export function GoogleSignInButton({ text }: { text: "signin_with" | "signup_wit
       }
     };
 
+    let observer: ResizeObserver | null = null;
+    let renderedWidth = 0;
+
+    // Stretch Google's button over the whole of ours (it renders smaller).
+    const fit = () => {
+      const overlay = overlayRef.current;
+      const inner = overlay?.firstElementChild as HTMLElement | null;
+      if (!overlay || !inner || !inner.offsetWidth || !inner.offsetHeight) return;
+      inner.style.transform = `scale(${overlay.offsetWidth / inner.offsetWidth}, ${overlay.offsetHeight / inner.offsetHeight})`;
+    };
+
+    const render = (google: GoogleIdentity, overlay: HTMLDivElement) => {
+      const width = Math.max(200, Math.min(overlay.offsetWidth || 400, 400));
+      if (width === renderedWidth) return fit();
+      renderedWidth = width;
+      overlay.replaceChildren();
+      google.accounts.id.renderButton(overlay, { theme: "outline", size: "large", text, width });
+      // The iframe sizes itself shortly after it's inserted.
+      [50, 300, 1000].forEach((ms) => setTimeout(fit, ms));
+    };
+
     // The GSI script loads async from app/layout.tsx; wait for it briefly.
     const started = Date.now();
     const timer = setInterval(() => {
@@ -70,26 +93,27 @@ export function GoogleSignInButton({ text }: { text: "signin_with" | "signup_wit
       if (google?.accounts?.id && overlay) {
         clearInterval(timer);
         google.accounts.id.initialize({ client_id: clientId, callback: handleCredential, use_fedcm_for_prompt: true });
-        google.accounts.id.renderButton(overlay, {
-          theme: "outline",
-          size: "large",
-          text,
-          width: Math.min(overlay.offsetWidth || 400, 400),
-        });
+        render(google, overlay);
+        observer = new ResizeObserver(() => render(google, overlay));
+        observer.observe(overlay);
         setReady(true);
       } else if (Date.now() - started > SCRIPT_WAIT_MS) {
         clearInterval(timer);
       }
     }, 100);
 
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      observer?.disconnect();
+    };
   }, [clientId, text]);
 
   const label = text === "signup_with" ? "Sign up with Google" : "Continue with Google";
 
   return (
     <div>
-      <div className="relative">
+      {/* "group": hovering or focusing Google's invisible button styles ours. */}
+      <div className="group relative">
         <button
           type="button"
           // Only reached when Google's overlay isn't there (no client ID, or the script didn't load).
@@ -101,7 +125,7 @@ export function GoogleSignInButton({ text }: { text: "signin_with" | "signup_wit
             )
           }
           disabled={busy}
-          className="inline-flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-[#DCE5F5] bg-white px-5 text-[15px] font-semibold text-[#0B1B3F] transition-colors hover:border-[#B9C8E6] hover:bg-[#F8FAFF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] focus-visible:ring-offset-2 disabled:opacity-60"
+          className="inline-flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-[#DCE5F5] bg-white px-5 text-[15px] font-semibold text-[#0B1B3F] transition-colors hover:border-[#B9C8E6] hover:bg-[#F8FAFF] group-hover:border-[#B9C8E6] group-hover:bg-[#F8FAFF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] focus-visible:ring-offset-2 group-focus-within:ring-2 group-focus-within:ring-[#155DFC] group-focus-within:ring-offset-2 disabled:opacity-60"
         >
           <GoogleLogo />
           {busy ? "Signing in with Google…" : label}
@@ -111,9 +135,9 @@ export function GoogleSignInButton({ text }: { text: "signin_with" | "signup_wit
           <div
             ref={overlayRef}
             aria-hidden={!ready}
-            className={`absolute inset-0 flex items-center justify-center overflow-hidden rounded-xl opacity-[0.01] ${
+            className={`absolute inset-0 flex cursor-pointer items-center justify-center overflow-hidden rounded-xl opacity-[0.01] ${
               ready && !busy ? "" : "pointer-events-none"
-            } [&_iframe]:!h-12 [&>div]:w-full`}
+            }`}
           />
         )}
       </div>
