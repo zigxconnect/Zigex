@@ -97,9 +97,21 @@ export async function createApplication(input: CreateApplicationInput): Promise<
 
     const legacy = { ...input };
     for (const key of SPEC_APPLICATION_FIELDS) delete legacy[key];
-    console.warn("[applications] backend rejected spec'd fields; retrying without them");
-    const res = await serverApi.post<ApplicationRow>("/applications", legacy);
-    return res.data;
+    console.warn(`[applications] backend rejected spec'd fields (${(error as ApiClientError).message}); retrying without them`);
+    try {
+      const res = await serverApi.post<ApplicationRow>("/applications", legacy);
+      return res.data;
+    } catch (retryError) {
+      if (retryError instanceof ApiClientError) {
+        console.error(
+          `[applications] backend rejected the application: ${retryError.status} ${retryError.message}`,
+          JSON.stringify(retryError.body ?? {}).slice(0, 500),
+          "sent:",
+          JSON.stringify(legacy)
+        );
+      }
+      throw retryError;
+    }
   }
 }
 

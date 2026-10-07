@@ -429,15 +429,19 @@ export function ApplyDialog({
                   </div>
                 )}
 
-                {error && (
-                  <p role="alert" className="flex items-start gap-2 rounded-xl bg-[#FEF3F2] px-4 py-3 text-sm text-[#B42318]">
-                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-                    {error}
-                  </p>
-                )}
               </div>
 
               <div className="border-t border-[#EEF2FA] px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+                {/* Shown next to the button, so it's seen right after pressing it. */}
+                {error && (
+                  <p role="alert" className="mb-3 flex items-start gap-2 rounded-xl bg-[#FEF3F2] px-4 py-3 text-sm text-[#B42318]">
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                    <span>
+                      <span className="font-semibold">Not sent. </span>
+                      {error}
+                    </span>
+                  </p>
+                )}
                 {kind !== "event" && (
                   <p className="mb-2 flex items-center justify-between text-xs text-[#7B869C]" aria-live="polite">
                     <span>{saved ? "Draft saved on this device" : "Your answers are saved as you type"}</span>
