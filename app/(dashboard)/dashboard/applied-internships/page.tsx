@@ -15,6 +15,7 @@ import { listMyApplications, withdrawMyApplication } from "@/lib/api/application
 import { ApiClientError } from "@/lib/api/errors";
 import { applicationKind, targetId, type ApplicationRow } from "@/lib/api/applications-shape";
 import { landingButton } from "@/components/sections/landing/landing-ui";
+import { RowBone } from "@/components/skeletons/Skeleton";
 
 type Kind = "internship" | "program" | "event";
 type StatusKey = "review" | "accepted" | "rejected" | "withdrawn";
@@ -160,7 +161,7 @@ export default function MyApplicationsPage() {
       {items === null ? (
         <div className="space-y-3" aria-busy="true" aria-label="Loading applications">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="h-24 rounded-2xl bg-white ring-1 ring-[#DCE5F5] motion-safe:animate-pulse" />
+            <RowBone key={i} />
           ))}
         </div>
       ) : error ? (
