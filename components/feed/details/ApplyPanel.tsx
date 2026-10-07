@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { CalendarClock, CircleDollarSign, Clock, MapPin, Monitor, Users } from "lucide-react";
 import { landingButton } from "@/components/sections/landing/landing-ui";
-import { ApplyButton } from "./appyButton/ApplyButton";
+import { ApplyActions } from "@/components/apply/ApplyActions";
+import type { ApplyPrefill } from "@/components/apply/ApplyDialog";
 import type { BoardItem } from "@/components/feed/board/board-types";
 
 type ApplicationStatus = { hasApplied: boolean; status: string | null; paymentCompleted?: boolean; applicationId?: string };
@@ -34,6 +35,7 @@ export function ApplyPanel({
   isAuthenticated,
   applicationStatus,
   opportunityData,
+  prefill = {},
   browse = { href: "/feed", label: "Browse open opportunities" },
 }: {
   item: BoardItem;
@@ -42,6 +44,8 @@ export function ApplyPanel({
   isAuthenticated: boolean;
   applicationStatus: ApplicationStatus;
   opportunityData: Record<string, unknown>;
+  /** Profile answers that prefill the application form. */
+  prefill?: ApplyPrefill;
   /** Where "find something else" leads when this one is closed. */
   browse?: { href: string; label: string };
 }) {
@@ -78,17 +82,17 @@ export function ApplyPanel({
       {/* Action */}
       <div id="getStarted" className="mt-4 scroll-mt-28">
         {isAuthenticated && (isOpen || applicationStatus.hasApplied) ? (
-          <ApplyButton
-            isOpen={isOpen}
-            reason={closedReason}
-            type={item.kind.slice(0, -1) as "internship" | "program" | "event"}
+          <ApplyActions
+            kind={item.kind.slice(0, -1) as "internship" | "program" | "event"}
             id={item.id}
             title={item.title}
-            fullWidth
-            isAuthenticated
-            buttonText={action}
-            opportunityData={opportunityData}
-            applicationStatus={applicationStatus}
+            company={item.companyName}
+            hasFee={item.hasFee}
+            priceXaf={item.priceXaf}
+            prefill={prefill}
+            initialStatus={applicationStatus}
+            isOpen={isOpen}
+            mobileBar
           />
         ) : isOpen ? (
           <div className="grid gap-2">
