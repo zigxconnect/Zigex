@@ -1,23 +1,8 @@
 "use client";
 
 import { useEffect, useCallback } from "react";
-import { subscribeToPushNotifications } from "@/lib/actions/push.actions";
-
-function urlBase64ToUint8Array(base64String: string) {
-    const padding = '='.repeat((4 - base64String.length % 4) % 4);
-    const base64 = (base64String + padding)
-        .replace(/\-/g, '+')
-        .replace(/_/g, '/');
-
-    const rawData = window.atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
-
-    for (let i = 0; i < rawData.length; ++i) {
-        outputArray[i] = rawData.charCodeAt(i);
-    }
-    return outputArray;
-}
-
+import { subscribeToPushNotifications, unsubscribeFromPushNotifications } from "@/lib/actions/push.actions";
+import { subscriptionMatchesKey, urlBase64ToUint8Array } from "@/lib/push-keys";
 
 export function PushNotificationManager() {
     const registerServiceWorkerAndSubscribe = useCallback(async () => {
@@ -39,7 +24,18 @@ export function PushNotificationManager() {
             console.log('[PUSH_MANAGER] SW ready at scope:', registration.scope);
 
             // Check existing subscription
-            const existingSubscription = await registration.pushManager.getSubscription();
+            let existingSubscription = await registration.pushManager.getSubscription();
+            const key = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+            // The backend changed its key pair: replace the old subscription quietly
+            // (permission was already given, so the browser doesn't ask again).
+            if (existingSubscription && key && !subscriptionMatchesKey(existingSubscription, key)) {
+                console.log("[PUSH_MANAGER] Subscription uses an old key; renewing it.");
+                await unsubscribeFromPushNotifications(existingSubscription.endpoint).catch(() => {});
+                await existingSubscription.unsubscribe().catch(() => {});
+                existingSubscription = Notification.permission === "granted"
+                    ? await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(key) })
+                    : null;
+            }
             if (existingSubscription) {
                 console.log("[PUSH_MANAGER] Found existing subscription.");
                 const serialized = existingSubscription.toJSON();

@@ -14,6 +14,8 @@ type NotificationRow = {
   is_read: boolean;
   reference_id: string;
   created_at: string;
+  /** Where the notification leads (added by the backend on 7 Oct 2026). */
+  url?: string | null;
 };
 
 export type UiNotification = {
@@ -24,6 +26,7 @@ export type UiNotification = {
   type: string;
   read: boolean;
   timestamp: string;
+  url?: string | null;
 };
 
 const toUi = (n: NotificationRow): UiNotification => ({
@@ -34,6 +37,7 @@ const toUi = (n: NotificationRow): UiNotification => ({
   type: n.type || "program",
   read: n.is_read,
   timestamp: n.created_at,
+  url: n.url ?? null,
 });
 
 export async function listNotifications({ page = 1, limit = 50, unreadOnly = false } = {}) {

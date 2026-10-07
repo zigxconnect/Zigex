@@ -50,6 +50,10 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(`${ADMIN_APP_URL}${pathname}${request.nextUrl.search}`);
   }
 
+  // Friendly aliases (the backend's notification links use these).
+  const alias: Record<string, string> = { "/dashboard/applications": "/dashboard/applied-internships" };
+  if (alias[pathname]) return redirectTo(request, alias[pathname] + request.nextUrl.search);
+
   // Old notification links (/notifications/<opportunity id>) showed placeholder
   // data; the opportunity page resolves any internship, program or event id.
   const oldNotification = pathname.match(/^\/notifications\/([^/]+)$/);

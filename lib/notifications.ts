@@ -16,8 +16,15 @@ export function notificationKind(type: string): NotificationKind {
   return "other";
 }
 
-/** Where tapping a notification goes. Programs open inside the app (sidebar on Programs). */
-export function notificationHref(n: Pick<UiNotification, "type" | "referenceId">): string {
+/** A path on this site only: "/x", never "//host" or "/\\host" or "https:". */
+const isLocalPath = (url: unknown): url is string => typeof url === "string" && /^\/(?![/\\])/.test(url) && !/[\u0000-\u001f]/.test(url);
+
+/**
+ * Where tapping a notification goes: the backend's `url` when it sends one,
+ * otherwise worked out from the type. Programs open inside the app (sidebar on Programs).
+ */
+export function notificationHref(n: Pick<UiNotification, "type" | "referenceId" | "url">): string {
+  if (isLocalPath(n.url)) return n.url;
   const id = n.referenceId ? encodeURIComponent(n.referenceId) : "";
   switch (notificationKind(n.type)) {
     case "program":

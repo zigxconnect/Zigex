@@ -7,6 +7,7 @@ import { AlertCircle, CheckCircle2, ExternalLink, Loader2, LogOut } from "lucide
 import { api } from "@/lib/api/browser-client";
 import { ApiClientError } from "@/lib/api/errors";
 import { subscribeToPushNotifications, unsubscribeFromPushNotifications } from "@/lib/actions/push.actions";
+import { subscriptionMatchesKey, urlBase64ToUint8Array } from "@/lib/push-keys";
 import { PasswordInput, PasswordStrength, passwordStrength } from "@/components/sections/auth/auth-ui";
 import { DeleteAccount } from "./DeleteAccount";
 
@@ -183,11 +184,6 @@ function ChangePassword() {
   );
 }
 
-function urlBase64ToUint8Array(base64: string) {
-  const padding = "=".repeat((4 - (base64.length % 4)) % 4);
-  const raw = window.atob((base64 + padding).replace(/-/g, "+").replace(/_/g, "/"));
-  return Uint8Array.from(raw, (c) => c.charCodeAt(0));
-}
 
 /** Push notifications on this device: asked for only when the student turns them on. */
 function DeviceNotifications() {
@@ -204,7 +200,8 @@ function DeviceNotifications() {
       if (Notification.permission === "denied") return setState("blocked");
       const reg = await navigator.serviceWorker.getRegistration();
       const sub = await reg?.pushManager.getSubscription();
-      setState(sub ? "on" : "off");
+      // A subscription made with an old key no longer receives anything.
+      setState(sub && subscriptionMatchesKey(sub, key) ? "on" : "off");
     })().catch(() => setState("unsupported"));
   }, [key]);
 
@@ -219,6 +216,12 @@ function DeviceNotifications() {
       }
       const reg = await navigator.serviceWorker.register(process.env.NODE_ENV === "production" ? "/sw.js" : "/push-sw.js");
       await navigator.serviceWorker.ready;
+      // Subscribing with a new key fails while an old-key subscription exists.
+      const stale = await reg.pushManager.getSubscription();
+      if (stale && !subscriptionMatchesKey(stale, key!)) {
+        await unsubscribeFromPushNotifications(stale.endpoint).catch(() => {});
+        await stale.unsubscribe();
+      }
       const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(key!) });
       const res = await subscribeToPushNotifications(sub.toJSON(), window.location.origin);
       if (!res.success) {
