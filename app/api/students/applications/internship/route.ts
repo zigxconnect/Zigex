@@ -79,6 +79,9 @@ export async function POST(request: Request) {
     }
   } catch (error) {
     console.error("[apply/internship] failed:", error);
-    return NextResponse.json({ error: "The application couldn't be sent. Try again in a moment." }, { status: 500 });
+    return NextResponse.json(
+      { error: "Zigex couldn't reach its server just now. Nothing was sent; your answers are kept. Try again in a moment." },
+      { status: 503 }
+    );
   }
 }

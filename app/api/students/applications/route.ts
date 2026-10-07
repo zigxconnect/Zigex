@@ -1,3 +1,4 @@
+import { ApiClientError } from "@/lib/api/errors";
 import { NextResponse } from "next/server";
 import { validate as isUUID } from "uuid";
 import { sendApplicationConfirmation, sendApplicationAlert, sendEventRSVPConfirmation, sendNewApplicationNotification } from "@/lib/email";
@@ -116,14 +117,14 @@ const handleInternshipApplication = async (applicant: Applicant, formData: FormD
   }
 
   const company = posting.company;
-  await notifyApplication(applicant, {
+  await safely(notifyApplication(applicant, {
     title: posting.title,
     type: "Internship",
     status: "pending",
     companyName: company?.company_name,
     companyEmail: company?.email,
     whatsApp: `✅ *Application Received!*\n\nHi ${firstName(applicant)}, your application for the *${posting.title}* internship at ${company?.company_name} has been received and is under review. Good luck! 🚀`,
-  });
+  }));
 
   return NextResponse.json(
     {
@@ -158,14 +159,14 @@ const handleProgramApplication = async (applicant: Applicant, formData: FormData
   }
 
   const company = posting.company;
-  await notifyApplication(applicant, {
+  await safely(notifyApplication(applicant, {
     title: posting.title,
     type: "Program",
     status: "pending",
     companyName: company?.company_name,
     companyEmail: company?.email,
     whatsApp: `🚀 *Program Application Received!*\n\nHi ${firstName(applicant)}, you've successfully applied for the *${posting.title}* program. We'll notify you once your application is reviewed. Stay tuned! ✨`,
-  });
+  }));
 
   return NextResponse.json(
     { message: "Program application submitted successfully!", applicationId: application.id },
@@ -197,42 +198,46 @@ const handleEventRSVP = async (applicant: Applicant, formData: FormData) => {
   const company = posting.company;
   const companyName = company?.company_name || "ZIGEX Partner";
 
+  await safely(
+    (async () => {
   await sendApplicationAlert({
-    adminEmail: ZIGEX_ADMIN_EMAILS,
-    studentName: applicant.fullName,
-    studentEmail: applicant.email,
-    opportunityTitle: posting.title,
-    opportunityType: "Event",
-    status: "accepted",
-    companyName,
-  });
-  if (company?.email) {
-    await sendNewApplicationNotification({
-      companyEmail: company.email,
-      companyName,
-      studentName: applicant.fullName,
-      studentEmail: applicant.email,
-      opportunityTitle: posting.title,
-      opportunityType: "Event",
-    });
-  }
-  const emailResult = await sendEventRSVPConfirmation({
-    email: applicant.email,
-    name: applicant.fullName,
-    eventName: posting.title,
-    companyName,
-    eventDate: posting.start_date ? new Date(posting.start_date).toDateString() : "TBA",
-    eventLocation: posting.location || "TBA",
-    eventRequirements: posting.description,
-  });
-  console.log(`[RSVP Email] Sent to ${applicant.email}. Success: ${emailResult.success}. Error: ${emailResult.error || "None"}`);
-
-  if (applicant.phone) {
-    await sendWhatsAppMessage(
-      applicant.phone,
-      `🎟️ *RSVP Confirmed!*\n\nHi ${firstName(applicant)}, your spot for *${posting.title}* is confirmed! We've sent the details to your email. See you there! 🙌`
-    );
-  }
+        adminEmail: ZIGEX_ADMIN_EMAILS,
+        studentName: applicant.fullName,
+        studentEmail: applicant.email,
+        opportunityTitle: posting.title,
+        opportunityType: "Event",
+        status: "accepted",
+        companyName,
+      });
+      if (company?.email) {
+        await sendNewApplicationNotification({
+          companyEmail: company.email,
+          companyName,
+          studentName: applicant.fullName,
+          studentEmail: applicant.email,
+          opportunityTitle: posting.title,
+          opportunityType: "Event",
+        });
+      }
+      const emailResult = await sendEventRSVPConfirmation({
+        email: applicant.email,
+        name: applicant.fullName,
+        eventName: posting.title,
+        companyName,
+        eventDate: posting.start_date ? new Date(posting.start_date).toDateString() : "TBA",
+        eventLocation: posting.location || "TBA",
+        eventRequirements: posting.description,
+      });
+      console.log(`[RSVP Email] Sent to ${applicant.email}. Success: ${emailResult.success}. Error: ${emailResult.error || "None"}`);
+    
+      if (applicant.phone) {
+        await sendWhatsAppMessage(
+          applicant.phone,
+          `🎟️ *RSVP Confirmed!*\n\nHi ${firstName(applicant)}, your spot for *${posting.title}* is confirmed! We've sent the details to your email. See you there! 🙌`
+        );
+      }
+    })()
+  );
 
   return NextResponse.json(
     { message: "RSVP submitted successfully!", applicationId: application.id },
@@ -241,6 +246,32 @@ const handleEventRSVP = async (applicant: Applicant, formData: FormData) => {
 };
 
 // --- Notifications (email + WhatsApp) ---
+
+/**
+ * Notifications are best effort: the application is already saved, so a
+ * slow email or WhatsApp provider must not turn the student's success into
+ * an error (or tempt them to apply twice).
+ */
+async function safely(task: Promise<unknown>) {
+  try {
+    await Promise.race([task, new Promise((resolve) => setTimeout(resolve, 8000))]);
+  } catch (error) {
+    console.error("[applications] notification failed (application was saved):", error);
+  }
+}
+
+/** The backend or network didn't answer in time. */
+function isTimeout(error: unknown) {
+  const e = error as { name?: string; code?: string; cause?: { code?: string }; message?: string } | null;
+  return Boolean(
+    e &&
+      (e.name === "TimeoutError" ||
+        e.name === "AbortError" ||
+        e.code === "UND_ERR_CONNECT_TIMEOUT" ||
+        e.cause?.code === "UND_ERR_CONNECT_TIMEOUT" ||
+        /fetch failed|timeout/i.test(e.message ?? ""))
+  );
+}
 
 const firstName = (applicant: Applicant) => applicant.fullName.split(" ")[0];
 
@@ -319,7 +350,10 @@ export async function POST(request: Request) {
 
     return fail("Invalid application type. Missing 'internship_id', 'program_id', or 'event_id'.", 400);
   } catch (error: any) {
-    console.error("Critical error in application submission API:", error);
-    return fail("An unexpected server error occurred.", 500);
+    console.error("[applications] submission failed:", error);
+    if (isTimeout(error) || (error instanceof ApiClientError && error.status >= 502)) {
+      return fail("Zigex couldn't reach its server just now. Nothing was sent; your answers are kept. Try again in a moment.", 503);
+    }
+    return fail("Something went wrong on our side. Nothing was sent; your answers are kept. Try again in a moment.", 500);
   }
 }
