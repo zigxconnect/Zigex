@@ -67,7 +67,7 @@ export const getProfileInfo = cache(async (): Promise<FormattedUserData | null> 
   if (!profile) return null;
 
   const userData: FormattedUserData = {
-    name: profile.full_name || "New User",
+    name: profile.full_name || "Student",
     avatarUrl: profile.avatar_url,
     initials:
       `${profile.first_name?.[0] || ""}${profile.last_name?.[0] || ""

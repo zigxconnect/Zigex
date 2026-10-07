@@ -11,11 +11,26 @@ import { toProfilePatch, withoutSpecFields } from "../profile-shape";
  */
 export type StudentProfileRow = { id: string; user_id: string; [column: string]: any };
 
+/**
+ * The student's name from first and last name. The backend's full_name keeps
+ * the value from sign-up (e.g. "Student") and isn't updated when the names are
+ * edited, so it's only a fallback.
+ */
+export function displayName(row: Record<string, any>): string {
+  const tidy = (v: unknown) => (typeof v === "string" ? v.replace(/\s+/g, " ").trim() : "");
+  const fromParts = [tidy(row.first_name), tidy(row.last_name)].filter(Boolean).join(" ");
+  const full = tidy(row.full_name);
+  return fromParts || (full && !/^(student|new user|null)$/i.test(full) ? full : "");
+}
+
 /** Null when signed out (401) or when the student has no profile row (404). */
 export const getMyProfile = cache(async (): Promise<StudentProfileRow | null> => {
   try {
-    const res = await serverApi.get<StudentProfileRow>("/students/me");
-    return res.data ?? null;
+    const res = await serverApi.get<StudentProfileRow | { profile: StudentProfileRow }>("/students/me");
+    // The backend wraps the row as { profile: {...} }; callers expect the row itself.
+    const data = res.data as Record<string, any> | null;
+    const row = (data && "profile" in data && data.profile ? data.profile : data) as StudentProfileRow | null;
+    return row ? { ...row, full_name: displayName(row) } : null;
   } catch (error) {
     if (error instanceof ApiClientError && (error.status === 401 || error.status === 404)) return null;
     throw error;
