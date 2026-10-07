@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/api/config";
 import { readSession } from "@/lib/api/jwt";
+import { sanitizeRedirectUrl } from "@/lib/utils/redirect";
 
 const SECURITY_HEADERS: Record<string, string> = {
   "X-Frame-Options": "SAMEORIGIN",
@@ -49,6 +50,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(`${ADMIN_APP_URL}${pathname}${request.nextUrl.search}`);
   }
 
+  // Old notification links (/notifications/<opportunity id>) showed placeholder
+  // data; the opportunity page resolves any internship, program or event id.
+  const oldNotification = pathname.match(/^\/notifications\/([^/]+)$/);
+  if (oldNotification) return redirectTo(request, `/feed/${oldNotification[1]}`);
+
   const session = readSession(request.cookies.get(ACCESS_TOKEN_COOKIE)?.value);
   const isApi = pathname.startsWith("/api/");
 
@@ -77,8 +83,10 @@ export async function proxy(request: NextRequest) {
     return redirectTo(request, "/feed");
   }
 
+  // Already signed in: honour where they were heading (e.g. an old sign-in tab
+  // or a shared /sign-in?next=/programs/... link) instead of dropping them on the feed.
   if (AUTH_PAGES.includes(pathname)) {
-    return redirectTo(request, "/feed");
+    return redirectTo(request, sanitizeRedirectUrl(request.nextUrl.searchParams.get("next")));
   }
 
   return withSecurityHeaders(NextResponse.next());

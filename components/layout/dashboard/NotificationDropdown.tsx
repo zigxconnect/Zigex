@@ -1,151 +1,133 @@
-// components/NotificationDropdown.tsx
 "use client";
 
-import { Bell, Briefcase, Calendar, CheckCheck, GraduationCap, Inbox, X } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { Bell, Briefcase, Calendar, CheckCheck, FileCheck2, GraduationCap, Inbox, Megaphone, X } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { listNotifications, markAllNotificationsRead, markNotificationsRead } from "@/lib/api/notifications-client";
+import {
+  getUnreadCount,
+  listNotifications,
+  markAllNotificationsRead,
+  markNotificationsRead,
+  type UiNotification,
+} from "@/lib/api/notifications-client";
+import {
+  dedupeNotifications,
+  describeNotification,
+  notificationHref,
+  notificationKind,
+  shortTime,
+  type GroupedNotification,
+  type NotificationKind,
+} from "@/lib/notifications";
 
-interface Notification {
-  id: string;
-  title: string;
-  content: string;
-  referenceId: string;
-  type: 'program' | 'event' | 'internship';
-  read: boolean;
-  timestamp: string;
-}
-
-interface NotificationDropdownProps {
-  initialNotifications?: Notification[];
-}
-
-const getTypeIcon = (type: string) => {
-  switch (type) {
-    case "internship":
-      return <Briefcase className="w-5 h-5" strokeWidth={2.5} />;
-    case "event":
-      return <Calendar className="w-5 h-5" strokeWidth={2.5} />;
-    case "program":
-    default:
-      return <GraduationCap className="w-5 h-5" strokeWidth={2.5} />;
-  }
+const ICONS: Record<NotificationKind, typeof Bell> = {
+  internship: Briefcase,
+  program: GraduationCap,
+  event: Calendar,
+  application: FileCheck2,
+  announcement: Megaphone,
+  update: Megaphone,
+  other: Bell,
 };
 
-const getTypeAccent = (type: string) => {
-  switch (type) {
-    case "internship":
-      return "bg-emerald-500 shadow-[0_10px_30px_-5px_rgba(16,185,129,0.3)]";
-    case "event":
-      return "bg-violet-500 shadow-[0_10px_30px_-5px_rgba(139,92,246,0.3)]";
-    case "program":
-    default:
-      return "bg-[#155DFC] shadow-[0_10px_30px_-5px_rgba(21,93,252,0.3)]";
-  }
-};
+const POLL_MS = 60_000;
 
-export const NotificationDropdown = ({ initialNotifications = [] }: NotificationDropdownProps) => {
+/**
+ * The bell: the true unread count from the server, the latest few items, and
+ * every row is a link to what it's about (programs open under Programs,
+ * internships and events on their opportunity page, application news on My
+ * applications). Checks again when the tab regains focus instead of hammering.
+ */
+export const NotificationDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
+  const [rows, setRows] = useState<UiNotification[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
+  const ref = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
 
-  const fetchNotifications = async () => {
+  const refreshCount = useCallback(async () => {
     try {
-      const mapped = (await listNotifications()) as Notification[];
-      setNotifications(mapped);
-      const unread = mapped.filter((n: Notification) => !n.read).length;
-      setUnreadCount(unread);
-    } catch (e) {
-      console.error("Error fetching notifications:", e);
-      setNotifications([]);
-      setUnreadCount(0);
+      setUnreadCount(await getUnreadCount());
+    } catch {
+      // Keep the last count.
     }
-  };
-
-  useEffect(() => {
-    fetchNotifications();
-    const interval = setInterval(() => {
-      fetchNotifications();
-    }, 30000);
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      clearInterval(interval);
-    };
   }, []);
 
-  const handleNotificationClick = async (notificationId: string, referenceId: string, type: string) => {
-    const notification = notifications.find(n => n.id === notificationId);
-    const wasUnread = notification && !notification.read;
-
-    setNotifications(prev => prev.map(n => (n.id === notificationId ? { ...n, read: true } : n)));
-    if (wasUnread) {
-      setUnreadCount((prev) => Math.max(0, prev - 1));
-    }
-
+  const refreshList = useCallback(async () => {
     try {
-      await markNotificationsRead([notificationId]);
-    } catch (error) {
-      console.error("Failed to mark as read:", error);
+      setRows(await listNotifications({ limit: 12 }));
+    } catch {
+      // Keep what we have.
+    } finally {
+      setLoaded(true);
     }
+  }, []);
 
+  useEffect(() => {
+    refreshCount();
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") refreshCount();
+    }, POLL_MS);
+    const onVisible = () => document.visibilityState === "visible" && refreshCount();
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [refreshCount]);
+
+  // Load once up front so the bell opens instantly, then refresh quietly on each open.
+  useEffect(() => {
+    refreshList();
+  }, [refreshList]);
+  useEffect(() => {
+    if (isOpen) refreshList();
+  }, [isOpen, refreshList]);
+
+  // Close on outside click, Escape, and navigation.
+  useEffect(() => {
+    if (!isOpen) return;
+    const onDown = (e: MouseEvent) => ref.current && !ref.current.contains(e.target as Node) && setIsOpen(false);
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setIsOpen(false);
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [isOpen]);
+  useEffect(() => setIsOpen(false), [pathname]);
+
+  const items = dedupeNotifications(rows).slice(0, 6);
+
+  const open = (n: GroupedNotification) => {
     setIsOpen(false);
-    router.push(`/feed/${referenceId}`);
-    
-    if (window.navigator.vibrate) window.navigator.vibrate(10);
-  };
-
-  const toggleDropdown = () => {
-    setIsOpen(prev => !prev);
-    if (!isOpen && window.navigator.vibrate) window.navigator.vibrate(5);
+    if (n.read) return;
+    const ids = new Set(n.ids);
+    setRows((prev) => prev.map((r) => (ids.has(r.id) ? { ...r, read: true } : r)));
+    setUnreadCount((c) => Math.max(0, c - n.ids.length));
+    markNotificationsRead(n.ids).catch(() => {});
   };
 
   const markAllAsRead = async () => {
-    const unreadNotifications = notifications.filter(n => !n.read);
-    if (unreadNotifications.length === 0) return;
-
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setRows((prev) => prev.map((r) => ({ ...r, read: true })));
     setUnreadCount(0);
-
     try {
       await markAllNotificationsRead();
-    } catch (error) {
-      console.error("Failed to mark all as read:", error);
-      fetchNotifications();
+    } catch {
+      refreshCount();
+      refreshList();
     }
   };
 
-  const formatTime = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-
-    if (diffInMinutes < 1) return "Now";
-    if (diffInMinutes < 60) return `${diffInMinutes}m`;
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) return `${diffInHours}h`;
-    const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays === 1) return "1d";
-    if (diffInDays < 7) return `${diffInDays}d`;
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
-
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative" ref={ref}>
       <button
         type="button"
-        onClick={toggleDropdown}
+        onClick={() => setIsOpen((o) => !o)}
         aria-haspopup="dialog"
         aria-expanded={isOpen}
         aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"}
@@ -196,40 +178,65 @@ export const NotificationDropdown = ({ initialNotifications = [] }: Notification
           </div>
 
           <div className="max-h-[min(440px,65vh)] overflow-y-auto">
-            {notifications.length === 0 ? (
+            {!loaded ? (
+              <ul aria-busy="true" aria-label="Loading notifications" className="divide-y divide-[#EEF2FA]">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <li key={i} className="flex gap-3 px-4 py-3">
+                    <span className="h-9 w-9 animate-pulse rounded-lg bg-[#EEF2FA]" />
+                    <span className="flex-1 space-y-2 pt-1">
+                      <span className="block h-3 w-20 animate-pulse rounded bg-[#EEF2FA]" />
+                      <span className="block h-3.5 w-3/4 animate-pulse rounded bg-[#EEF2FA]" />
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : items.length === 0 ? (
               <div className="px-6 py-12 text-center">
                 <Inbox className="mx-auto h-8 w-8 text-[#B9C8E6]" aria-hidden="true" />
                 <p className="mt-3 text-sm font-semibold text-[#0B1B3F]">No notifications yet</p>
-                <p className="mt-1 text-sm text-[#4A5670]">Updates about your applications will show up here.</p>
+                <p className="mt-1 text-sm text-[#4A5670]">New opportunities and application updates will show up here.</p>
               </div>
             ) : (
               <ul className="divide-y divide-[#EEF2FA]">
-                {notifications.slice(0, 6).map((notification) => (
-                  <li key={notification.id}>
-                    <button
-                      type="button"
-                      onClick={() => handleNotificationClick(notification.id, notification.referenceId, notification.type)}
-                      className={cn(
-                        "flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-[#F8FAFF] focus-visible:bg-[#F8FAFF] focus-visible:outline-none",
-                        !notification.read && "bg-[#F5F8FF]"
-                      )}
-                    >
-                      <span
-                        className={cn("mt-1.5 h-2 w-2 shrink-0 rounded-full", notification.read ? "bg-transparent" : "bg-[#155DFC]")}
-                        aria-hidden="true"
-                      />
-                      <span className="min-w-0 flex-1">
-                        <span className={cn("block truncate text-sm", notification.read ? "text-[#4A5670]" : "font-semibold text-[#0B1B3F]")}>
-                          {notification.title}
-                        </span>
-                        {notification.content && (
-                          <span className="mt-0.5 line-clamp-2 block text-sm text-[#4A5670]">{notification.content}</span>
+                {items.map((n) => {
+                  const { label, headline } = describeNotification(n);
+                  const Icon = ICONS[notificationKind(n.type)];
+                  return (
+                    <li key={n.id}>
+                      <Link
+                        href={notificationHref(n)}
+                        onClick={() => open(n)}
+                        className={cn(
+                          "flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-[#F8FAFF] focus-visible:bg-[#F8FAFF] focus-visible:outline-none",
+                          !n.read && "bg-[#F5F8FF]"
                         )}
-                      </span>
-                      <span className="shrink-0 text-xs text-[#7B869C]">{formatTime(notification.timestamp)}</span>
-                    </button>
-                  </li>
-                ))}
+                      >
+                        <span
+                          className={cn(
+                            "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
+                            n.read ? "bg-[#F3F7FF] text-[#7B869C]" : "bg-[#E6EEFF] text-[#155DFC]"
+                          )}
+                        >
+                          <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-xs text-[#4A5670]">{label}</span>
+                          <span className={cn("mt-0.5 line-clamp-2 block text-sm text-[#0B1B3F]", !n.read && "font-semibold")}>
+                            {headline}
+                          </span>
+                        </span>
+                        <span className="flex shrink-0 flex-col items-end gap-1.5">
+                          <span className="text-xs text-[#7B869C]">{shortTime(n.timestamp)}</span>
+                          {!n.read && (
+                            <span className="h-2 w-2 rounded-full bg-[#155DFC]">
+                              <span className="sr-only">Unread</span>
+                            </span>
+                          )}
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>

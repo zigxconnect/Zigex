@@ -19,6 +19,8 @@ const ALLOWED_NEXT_PREFIXES = [
   "/reset-password",
   "/update-password",
   "/notifications",
+  "/profile-settings",
+  "/company",
 ];
 
 /**
@@ -48,6 +50,9 @@ export function sanitizeRedirectUrl(
 
   // Must start with a single slash — never allow protocol-relative (`//`) or absolute URLs
   if (!trimmed.startsWith("/") || trimmed.startsWith("//")) return fallback;
+
+  // Browsers read "/\evil.com" as "//evil.com"; no legitimate path has a backslash or control character
+  if (/[\\\u0000-\u001f]/.test(trimmed)) return fallback;
 
   // Reject anything that smells like a protocol (e.g. `javascript:`, `data:`, `https:`)
   if (/[a-zA-Z][a-zA-Z0-9+\-.]*:/.test(trimmed)) return fallback;

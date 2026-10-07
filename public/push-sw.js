@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 
-const SW_VERSION = '1.0.2';
+const SW_VERSION = '1.0.3';
 console.log(`[PUSH_SW] Service Worker Version ${SW_VERSION} loaded.`);
 self.addEventListener('push', function (event) {
   if (event.data) {
@@ -14,7 +14,7 @@ self.addEventListener('push', function (event) {
       data: {
         dateOfArrival: Date.now(),
         primaryKey: '2',
-        url: data.url || '/'
+        url: data.url || '/notifications'
       }
     };
     event.waitUntil(self.registration.showNotification(data.title, options));
@@ -23,22 +23,30 @@ self.addEventListener('push', function (event) {
 
 self.addEventListener('notificationclick', function (event) {
   event.notification.close();
+
+  // Only follow paths on this site; anything else opens the notifications page.
+  const raw = (event.notification.data && event.notification.data.url) || '/notifications';
+  let target;
+  try {
+    target = new URL(raw, self.location.origin);
+    if (target.origin !== self.location.origin) target = new URL('/notifications', self.location.origin);
+  } catch (e) {
+    target = new URL('/notifications', self.location.origin);
+  }
+
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (clientList) {
-      const url = event.notification.data.url;
-      
-      // If we have any matching window, navigate it and focus
-      for (const client of clientList) {
-          if ('navigate' in client && url) {
-              client.focus();
-              return client.navigate(url);
-          }
+      // Reuse a Zigex tab: the one already on that page, else any Zigex tab.
+      const same = clientList.filter(function (c) { return c.url.indexOf(self.location.origin) === 0; });
+      const exact = same.find(function (c) { return c.url === target.href; });
+      if (exact) return exact.focus();
+      const tab = same[0];
+      if (tab && 'navigate' in tab) {
+        return tab.focus().then(function (c) { return (c || tab).navigate(target.href); }).catch(function () {
+          return clients.openWindow(target.href);
+        });
       }
-
-      // If no open windows or navigate fails, open new one
-      if (clients.openWindow && url) {
-          return clients.openWindow(url);
-      }
+      return clients.openWindow(target.href);
     })
   );
 });

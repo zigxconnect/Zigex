@@ -46,9 +46,22 @@ export async function listNotifications({ page = 1, limit = 50, unreadOnly = fal
   return rows.map(toUi);
 }
 
+/** One page plus how many pages exist, for "Load more". */
+export async function listNotificationsPage({ page = 1, limit = 30, unreadOnly = false } = {}) {
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  if (unreadOnly) params.set("unreadOnly", "true");
+  return whenAvailable(
+    async () => {
+      const res = await api.get<NotificationRow[]>(`/notifications?${params}`);
+      return { items: (res.data ?? []).map(toUi), totalPages: res.meta?.totalPages ?? 1, total: res.meta?.total ?? 0 };
+    },
+    { items: [] as UiNotification[], totalPages: 0, total: 0 }
+  );
+}
+
 export async function getUnreadCount(): Promise<number> {
   return whenAvailable(
-    async () => (await api.get<{ unreadCount: number }>("/notifications/unreadcount")).data?.unreadCount ?? 0,
+    async () => (await api.get<{ unreadCount: number }>("/notifications/unread-count")).data?.unreadCount ?? 0,
     0
   );
 }
