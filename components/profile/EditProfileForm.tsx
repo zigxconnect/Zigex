@@ -43,14 +43,6 @@ const INDUSTRIES = ["Technology & software", "Startups", "Education & EdTech", "
 const INTERESTS = ["Technology", "Music", "Sports", "Art", "Volunteering", "Travel", "Reading", "Games"];
 const WORK_MODES = ["Remote", "On-site", "Hybrid"];
 
-const SECTIONS = [
-  { id: "basics", label: "Basics" },
-  { id: "school", label: "School" },
-  { id: "skills", label: "Skills" },
-  { id: "experience", label: "Experience" },
-  { id: "links", label: "Links and interests" },
-  { id: "private", label: "Private details" },
-] as const;
 
 const input =
   "w-full rounded-xl border border-[#DCE5F5] bg-white px-4 text-base text-[#0B1B3F] placeholder:text-[#7B869C] transition-[border-color,box-shadow] hover:border-[#B9C8E6] focus:border-[#155DFC] focus:outline-none focus:ring-4 focus:ring-[#155DFC]/15 aria-[invalid=true]:border-[#D92D20]";
@@ -94,7 +86,6 @@ export function EditProfileForm({ initial, email, profileHref }: { initial: Prof
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{ tone: "ok" | "error" | "warn"; text: string } | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [active, setActive] = useState<string>("basics");
 
   const set = <K extends keyof ProfileValues>(k: K, value: ProfileValues[K]) => {
     setV((p) => ({ ...p, [k]: value }));
@@ -122,21 +113,6 @@ export function EditProfileForm({ initial, email, profileHref }: { initial: Prof
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
 
-  // Highlight the section in view in the side navigation.
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
-        if (visible) setActive(visible.target.id);
-      },
-      { rootMargin: "-30% 0px -60% 0px" }
-    );
-    SECTIONS.forEach((s) => {
-      const el = document.getElementById(s.id);
-      if (el) observer.observe(el);
-    });
-    return () => observer.disconnect();
-  }, []);
 
   const save = async () => {
     const problems = changed.filter((k) => errors[k]);
@@ -198,74 +174,66 @@ export function EditProfileForm({ initial, email, profileHref }: { initial: Prof
 
   return (
     <div className="pb-28">
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="font-heading text-[28px] font-bold leading-tight tracking-tight text-[#0B1B3F]">Edit profile</h1>
-          <p className="mt-1 text-base text-[#4A5670]">Companies read this when you apply. Changes show on your profile as soon as you save.</p>
-        </div>
-        {profileHref && (
-          <Link href={profileHref} className="text-sm font-semibold text-[#155DFC] hover:underline">
-            View your profile
-          </Link>
-        )}
-      </header>
-
-      <div className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
-        {/* Left: preview, strength, sections */}
-        <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
-          <div className="rounded-2xl bg-white p-5 ring-1 ring-[#DCE5F5]">
-            <div className="flex items-center gap-3">
+      {/* Live header: looks like the profile companies see, and updates as you type */}
+      <header className="overflow-hidden rounded-2xl bg-white ring-1 ring-[#DCE5F5]">
+        <div className="h-24 bg-[linear-gradient(120deg,#0B1B3F_0%,#123A9C_55%,#155DFC_100%)] sm:h-28" />
+        <div className="grid gap-6 px-5 pb-6 sm:px-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+          <div className="min-w-0">
+            <div className="-mt-12 w-fit rounded-full ring-4 ring-white">
               <PhotoPicker url={v.avatar_url} name={name} busy={uploading} onPick={changePhoto} />
-              <div className="min-w-0">
-                <p className="truncate font-heading text-base font-semibold text-[#0B1B3F]">{name}</p>
-                <p className="truncate text-sm text-[#4A5670]">
-                  {[v.field_of_study, v.university].filter(Boolean).join(", ") || "Add your school"}
-                </p>
-              </div>
             </div>
-            <div className="mt-5 flex items-baseline justify-between">
-              <p className="text-sm font-medium text-[#0B1B3F]">Profile strength</p>
-              <p className="text-sm font-semibold tabular-nums text-[#155DFC]">{percent}%</p>
-            </div>
-            <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#E3E9F5]" role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100} aria-label="Profile strength">
-              <div className="h-full rounded-full bg-[#155DFC] transition-[width] duration-500" style={{ width: `${percent}%` }} />
-            </div>
-            <ul className="mt-3 space-y-1.5">
-              {steps.map((s) => (
-                <li key={s.label}>
-                  <a href={`#${s.section}`} className={`flex items-center gap-2 text-sm ${s.done ? "text-[#7B869C]" : "text-[#0B1B3F] hover:text-[#155DFC]"}`}>
-                    <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${s.done ? "bg-[#155DFC] text-white" : "ring-1 ring-[#B9C8E6]"}`} aria-hidden="true">
-                      {s.done && <Check className="h-3 w-3" strokeWidth={3} />}
-                    </span>
-                    {s.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
+            <h1 className="mt-3 truncate font-heading text-[28px] font-bold leading-tight tracking-tight text-[#0B1B3F]">{name}</h1>
+            <p className="mt-1 text-base text-[#4A5670]">
+              {v.field_of_study || v.university
+                ? [v.field_of_study ? `${v.field_of_study[0].toUpperCase()}${v.field_of_study.slice(1)} student` : "Student", v.university && `at ${v.university}`].filter(Boolean).join(" ")
+                : "Add your school and course below"}
+            </p>
+            <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-[#7B869C]">
+              {v.username && <span>@{v.username}</span>}
+              {v.location && <span>{v.location}</span>}
+              {profileHref && (
+                <Link href={profileHref} className="font-semibold text-[#155DFC] hover:underline">
+                  View public profile
+                </Link>
+              )}
+            </p>
           </div>
 
-          <nav aria-label="Sections" className="hidden rounded-2xl bg-white p-2 ring-1 ring-[#DCE5F5] lg:block">
-            {SECTIONS.map((s) => (
-              <a
-                key={s.id}
-                href={`#${s.id}`}
-                aria-current={active === s.id ? "true" : undefined}
-                className={`block rounded-lg px-3 py-2 text-sm font-medium ${active === s.id ? "bg-[#EEF3FF] text-[#155DFC]" : "text-[#4A5670] hover:bg-[#F3F7FF] hover:text-[#0B1B3F]"}`}
-              >
-                {s.label}
-              </a>
-            ))}
-          </nav>
-        </aside>
+          {/* Strength ring and the next things to add */}
+          <div className="rounded-xl bg-[#F8FAFF] p-4 ring-1 ring-[#EEF2FA] lg:mt-5">
+            <div className="flex items-center gap-3">
+              <Ring percent={percent} />
+              <div>
+                <p className="text-sm font-semibold text-[#0B1B3F]">{percent === 100 ? "Your profile is complete" : "Profile strength"}</p>
+                <p className="text-sm text-[#4A5670]">{percent === 100 ? "Companies see everything they need." : "Companies read this when you apply."}</p>
+              </div>
+            </div>
+            {percent < 100 && (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {steps
+                  .filter((x) => !x.done)
+                  .slice(0, 3)
+                  .map((x) => (
+                    <a key={x.label} href={`#${x.section}`} className="inline-flex h-8 items-center gap-1 rounded-full bg-white px-3 text-sm font-medium text-[#155DFC] ring-1 ring-[#DCE5F5] hover:ring-[#155DFC]/40">
+                      <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                      {x.label.replace(/^A /, "")}
+                    </a>
+                  ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
 
-        {/* Right: the form */}
+
+        {/* Settings rows on one surface: what each section is for on the left, fields on the right */}
         <form
           noValidate
           onSubmit={(e) => {
             e.preventDefault();
             save();
           }}
-          className="min-w-0 space-y-6"
+          className="mt-6 divide-y divide-[#EEF2FA] rounded-2xl bg-white ring-1 ring-[#DCE5F5]"
         >
           <Section id="basics" title="Basics" note="Your name and contact details.">
             <div className="grid gap-5 sm:grid-cols-2">
@@ -345,7 +313,6 @@ export function EditProfileForm({ initial, email, profileHref }: { initial: Prof
             <TextArea k="accommodations" label="Support you need (optional)" v={v} set={set} touch={touch} max={400} hint="For example a laptop, transport or accessibility needs." />
           </Section>
         </form>
-      </div>
 
       {/* Save bar: appears once something changed, or to report the result */}
       {(dirty || status) && (
@@ -391,13 +358,41 @@ export function EditProfileForm({ initial, email, profileHref }: { initial: Prof
 
 function Section({ id, title, note, children }: { id: string; title: string; note: string; children: React.ReactNode }) {
   return (
-    <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-24 rounded-2xl bg-white p-5 ring-1 ring-[#DCE5F5] sm:p-6">
-      <h2 id={`${id}-title`} className="font-heading text-lg font-semibold text-[#0B1B3F]">
-        {title}
-      </h2>
-      <p className="mt-0.5 text-sm text-[#4A5670]">{note}</p>
-      <div className="mt-5 space-y-5">{children}</div>
+    <section id={id} aria-labelledby={`${id}-title`} className="grid scroll-mt-24 gap-5 p-5 sm:p-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10 lg:p-8">
+      <div>
+        <h2 id={`${id}-title`} className="font-heading text-base font-semibold text-[#0B1B3F]">
+          {title}
+        </h2>
+        <p className="mt-1 text-sm leading-relaxed text-[#4A5670]">{note}</p>
+      </div>
+      <div className="min-w-0 space-y-5">{children}</div>
     </section>
+  );
+}
+
+/** Profile strength as a ring: reads at a glance, unlike a thin bar. */
+function Ring({ percent }: { percent: number }) {
+  const r = 22;
+  const c = 2 * Math.PI * r;
+  return (
+    <div className="relative h-14 w-14 shrink-0" role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100} aria-label="Profile strength">
+      <svg viewBox="0 0 56 56" className="h-14 w-14 -rotate-90">
+        <circle cx="28" cy="28" r={r} fill="none" stroke="#E3E9F5" strokeWidth="6" />
+        <circle
+          cx="28"
+          cy="28"
+          r={r}
+          fill="none"
+          stroke={percent === 100 ? "#12B76A" : "#155DFC"}
+          strokeWidth="6"
+          strokeLinecap="round"
+          strokeDasharray={c}
+          strokeDashoffset={c - (c * percent) / 100}
+          className="transition-[stroke-dashoffset] duration-500"
+        />
+      </svg>
+      <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold tabular-nums text-[#0B1B3F]">{percent}%</span>
+    </div>
   );
 }
 
@@ -556,11 +551,14 @@ function PhotoPicker({ url, name, busy, onPick }: { url: string; name: string; b
         onClick={() => ref.current?.click()}
         disabled={busy}
         aria-label={url ? "Change profile photo" : "Add a profile photo"}
-        className="group relative h-16 w-16 shrink-0 overflow-hidden rounded-full bg-[#155DFC] text-xl font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] focus-visible:ring-offset-2"
+        className="group relative h-24 w-24 shrink-0 overflow-hidden rounded-full bg-[#155DFC] text-2xl font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] focus-visible:ring-offset-2"
       >
         {url ? <img src={url} alt="" className="h-full w-full object-cover" /> : <span>{initials || "?"}</span>}
         <span className="absolute inset-0 flex items-center justify-center bg-[#0B1B3F]/55 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-          {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <Camera className="h-5 w-5" />}
+          {busy ? <Loader2 className="h-6 w-6 animate-spin" /> : <Camera className="h-6 w-6" />}
+        </span>
+        <span className="absolute bottom-1 right-1 flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#155DFC] shadow ring-1 ring-[#DCE5F5]" aria-hidden="true">
+          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
         </span>
       </button>
       <input
