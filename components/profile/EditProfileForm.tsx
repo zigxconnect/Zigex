@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Camera, Check, CheckCircle2, ChevronDown, Loader2, Plus, X } from "lucide-react";
 import { saveMyProfile } from "@/lib/actions/profile.actions";
 import { uploadAvatar } from "@/lib/api/uploads";
+
+const SavedContext = createContext<Set<string>>(new Set());
 
 export type ProfileValues = {
   avatar_url: string;
@@ -42,6 +44,24 @@ const ACHIEVEMENTS = ["Scholarship recipient", "Dean's list", "Hackathon winner"
 const INDUSTRIES = ["Technology & software", "Startups", "Education & EdTech", "Finance & FinTech", "Healthcare", "E-commerce", "Media & entertainment", "Non-profit / NGO", "Government"];
 const INTERESTS = ["Technology", "Music", "Sports", "Art", "Volunteering", "Travel", "Reading", "Games"];
 const WORK_MODES = ["Remote", "On-site", "Hybrid"];
+const SCHOOLS = ["University of Bamenda", "University of Buea", "University of Yaoundé I", "University of Douala", "University of Dschang", "Catholic University of Bamenda", "NAHPI", "COLTECH", "HIBMAT", "HITBAM", "ICT University", "Landmark Metropolitan University"];
+const COURSES = ["Computer engineering", "Software engineering", "Computer science", "Electrical engineering", "Telecommunications", "Networking and security", "Accounting", "Business management", "Marketing", "Graphic design"];
+const TOWNS = ["Bamenda", "Bambili", "Buea", "Limbe", "Douala", "Yaoundé", "Bafoussam", "Dschang", "Kumba", "Garoua"];
+
+/** "linkedin.com/in/x" → "https://linkedin.com/in/x"; phone → "+237 6XX XX XX XX". */
+function tidyOnBlur(k: keyof ProfileValues, value: string): string {
+  const v = value.trim();
+  if (!v) return v;
+  if (["linkedin_url", "github_url", "portfolio_url"].includes(k) && !/^https?:\/\//i.test(v)) return `https://${v.replace(/^\/+/, "")}`;
+  if (k === "phone") {
+    let d = v.replace(/[^\d+]/g, "");
+    if (/^6\d{8}$/.test(d)) d = `+237${d}`;
+    if (/^237\d{9}$/.test(d)) d = `+${d}`;
+    const m = d.match(/^\+237(\d)(\d{2})(\d{2})(\d{2})(\d{2})$/);
+    return m ? `+237 ${m[1]}${m[2]} ${m[3]} ${m[4]} ${m[5]}` : v;
+  }
+  return v.replace(/\s+/g, " ");
+}
 
 
 const input =
@@ -68,7 +88,7 @@ function validate(v: ProfileValues): Partial<Record<keyof ProfileValues, string>
   if (v.graduation_year && !/^(19|20)\d{2}$/.test(v.graduation_year)) e.graduation_year = "Enter a year like 2027.";
   if (v.gpa && !(Number(v.gpa) >= 0 && Number(v.gpa) <= 5)) e.gpa = "Enter a number between 0 and 5.";
   for (const k of ["linkedin_url", "github_url", "portfolio_url"] as const) {
-    if (v[k] && !/^https?:\/\/[^\s.]+\.[^\s]+$/i.test(v[k])) e[k] = "Paste the full link, starting with https://";
+    if (v[k] && !/^https?:\/\/[^\s.]+\.[^\s]+$/i.test(v[k])) e[k] = "That doesn\u2019t look like a web link. Paste the address from your browser.";
   }
   return e;
 }
@@ -88,6 +108,8 @@ export function EditProfileForm({ initial, email, profileHref }: { initial: Prof
   const [note, setNote] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [more, setMore] = useState(false);
+  // Fields saved in the last few seconds get a small check next to their label.
+  const [justSaved, setJustSaved] = useState<Set<string>>(new Set());
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const errors = useMemo(() => validate(v), [v]);
@@ -111,6 +133,8 @@ export function EditProfileForm({ initial, email, profileHref }: { initial: Prof
       const result = await saveMyProfile(Object.fromEntries(changed.map((k) => [k, current[k]])));
       if (!result.success) throw new Error(result.error);
       savedRef.current = { ...savedRef.current, ...Object.fromEntries(changed.map((k) => [k, current[k]])) };
+      setJustSaved(new Set(changed));
+      setTimeout(() => setJustSaved(new Set()), 2500);
       const notSaved = (result.unsupported ?? []).filter((k) => k in current);
       setNote(notSaved.length ? "A few fields will save after a Zigex update." : null);
       setState("saved");
@@ -133,7 +157,14 @@ export function EditProfileForm({ initial, email, profileHref }: { initial: Prof
     // Text saves after a pause in typing; tags and choices save almost at once.
     timer.current = setTimeout(() => flush(latest.current), Array.isArray(value) || k === "work_mode" ? 400 : 1200);
   };
-  const touch = (k: keyof ProfileValues) => setTouched((t) => ({ ...t, [k]: true }));
+  const touch = (k: keyof ProfileValues) => {
+    setTouched((t) => ({ ...t, [k]: true }));
+    const value = latest.current[k];
+    if (typeof value === "string") {
+      const tidy = tidyOnBlur(k, value);
+      if (tidy !== value) set(k, tidy as ProfileValues[typeof k]);
+    }
+  };
 
   // Don't lose a change that's still waiting to be sent.
   useEffect(() => {
@@ -235,6 +266,7 @@ export function EditProfileForm({ initial, email, profileHref }: { initial: Prof
         </div>
       </header>
 
+      <SavedContext.Provider value={justSaved}>
       <form noValidate onSubmit={(e) => e.preventDefault()} className="mt-6 divide-y divide-[#EEF2FA] rounded-2xl bg-white ring-1 ring-[#DCE5F5]">
         <Section id="basics" title="About you" note="Who you are and where you study.">
           <div className="grid gap-5 sm:grid-cols-2">
@@ -242,12 +274,12 @@ export function EditProfileForm({ initial, email, profileHref }: { initial: Prof
             <TextField k="last_name" label="Last name" v={v} set={set} touch={touch} error={err("last_name")} autoComplete="family-name" />
           </div>
           <div id="school" className="grid scroll-mt-24 gap-5 sm:grid-cols-2">
-            <TextField k="university" label="School" v={v} set={set} touch={touch} placeholder="University of Bamenda" />
-            <TextField k="field_of_study" label="Course" v={v} set={set} touch={touch} placeholder="Computer engineering" />
+            <TextField k="university" label="School" v={v} set={set} touch={touch} placeholder="University of Bamenda" options={SCHOOLS} />
+            <TextField k="field_of_study" label="Course" v={v} set={set} touch={touch} placeholder="Computer engineering" options={COURSES} />
           </div>
           <div className="grid gap-5 sm:grid-cols-2">
-            <TextField k="graduation_year" label="Graduation year" v={v} set={(k, val) => set(k, String(val).replace(/\D/g, "").slice(0, 4))} touch={touch} error={err("graduation_year")} inputMode="numeric" placeholder="2027" />
-            <TextField k="location" label="Town" v={v} set={set} touch={touch} placeholder="Bamenda" autoComplete="address-level2" />
+            <YearPicker value={v.graduation_year} onChange={(y) => set("graduation_year", y)} />
+            <TextField k="location" label="Town" v={v} set={set} touch={touch} placeholder="Bamenda" autoComplete="address-level2" options={TOWNS} />
           </div>
           <TextArea k="about" label="Short intro" v={v} set={set} touch={touch} max={600} hint="Two or three sentences: what you study, what you build, what you're looking for." />
         </Section>
@@ -289,7 +321,7 @@ export function EditProfileForm({ initial, email, profileHref }: { initial: Prof
                   set={(k, val) => set(k, String(val).replace(/\s+/g, ""))}
                   touch={touch}
                   error={err("username")}
-                  hint="Your profile link: zigexconnect.com/profile/username."
+                  hint={`Your profile link: zigexconnect.com/profile/${v.username || "username"}`}
                   prefix="@"
                 />
                 <TextField k="phone" label="Phone (WhatsApp)" v={v} set={set} touch={touch} error={err("phone")} type="tel" autoComplete="tel" placeholder="+237 6XX XX XX XX" hint="Only shared with companies you apply to." />
@@ -331,6 +363,7 @@ export function EditProfileForm({ initial, email, profileHref }: { initial: Prof
           )}
         </div>
       </form>
+      </SavedContext.Provider>
     </div>
   );
 }
@@ -428,6 +461,16 @@ function Message({ id, error, hint }: { id: string; error?: string; hint?: strin
   ) : null;
 }
 
+function SavedTick({ k }: { k: string }) {
+  const saved = useContext(SavedContext);
+  return saved.has(k) ? (
+    <span className="inline-flex items-center gap-1 text-xs font-medium text-[#067647]" role="status">
+      <Check className="h-3.5 w-3.5" aria-hidden="true" />
+      Saved
+    </span>
+  ) : null;
+}
+
 function TextField({
   k,
   label,
@@ -437,13 +480,17 @@ function TextField({
   error,
   hint,
   prefix,
+  options,
   ...rest
-}: FieldProps & { prefix?: string } & Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "onChange">) {
+}: FieldProps & { prefix?: string; options?: string[] } & Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "onChange">) {
   return (
     <div>
-      <label htmlFor={`f-${k}`} className="mb-1.5 block text-sm font-medium text-[#0B1B3F]">
-        {label}
-      </label>
+      <div className="mb-1.5 flex items-baseline justify-between gap-2">
+        <label htmlFor={`f-${k}`} className="text-sm font-medium text-[#0B1B3F]">
+          {label}
+        </label>
+        <SavedTick k={k} />
+      </div>
       <div className="relative">
         {prefix && <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-base text-[#7B869C]">{prefix}</span>}
         <input
@@ -454,8 +501,16 @@ function TextField({
           aria-invalid={Boolean(error)}
           aria-describedby={`f-${k}-msg`}
           className={`${input} h-12 ${prefix ? "pl-9" : ""}`}
+          list={options ? `f-${k}-options` : undefined}
           {...rest}
         />
+        {options && (
+          <datalist id={`f-${k}-options`}>
+            {options.map((o) => (
+              <option key={o} value={o} />
+            ))}
+          </datalist>
+        )}
       </div>
       <Message id={`f-${k}-msg`} error={error} hint={hint} />
     </div>
@@ -470,8 +525,11 @@ function TextArea({ k, label, v, set, touch, hint, max }: FieldProps & { max: nu
         <label htmlFor={`f-${k}`} className="text-sm font-medium text-[#0B1B3F]">
           {label}
         </label>
-        <span className="text-xs tabular-nums text-[#7B869C]">
-          {value.length}/{max}
+        <span className="flex items-center gap-3">
+          <SavedTick k={k} />
+          <span className="text-xs tabular-nums text-[#7B869C]">
+            {value.length}/{max}
+          </span>
         </span>
       </div>
       <textarea
@@ -580,5 +638,51 @@ function PhotoPicker({ url, name, busy, onPick }: { url: string; name: string; b
         }}
       />
     </>
+  );
+}
+
+/** Graduation year as quick choices (this year and the next five), plus "Other" for anything else. */
+function YearPicker({ value, onChange }: { value: string; onChange: (y: string) => void }) {
+  const now = new Date().getFullYear();
+  const years = Array.from({ length: 6 }, (_, i) => String(now + i));
+  const [other, setOther] = useState(Boolean(value) && !years.includes(value));
+  return (
+    <fieldset>
+      <legend className="mb-1.5 flex w-full items-baseline justify-between text-sm font-medium text-[#0B1B3F]">
+        Graduation year
+        <SavedTick k="graduation_year" />
+      </legend>
+      <div className="flex flex-wrap gap-1.5">
+        {years.map((y) => (
+          <button
+            key={y}
+            type="button"
+            aria-pressed={value === y}
+            onClick={() => {
+              setOther(false);
+              onChange(value === y ? "" : y);
+            }}
+            className={`h-10 rounded-full px-3.5 text-sm font-medium tabular-nums ${value === y ? "bg-[#0B1B3F] text-white" : "bg-white text-[#0B1B3F] ring-1 ring-[#DCE5F5] hover:ring-[#B9C8E6]"}`}
+          >
+            {y}
+          </button>
+        ))}
+        {other ? (
+          <input
+            autoFocus
+            inputMode="numeric"
+            aria-label="Graduation year"
+            value={value}
+            onChange={(e) => onChange(e.target.value.replace(/\D/g, "").slice(0, 4))}
+            placeholder="Year"
+            className="h-10 w-24 rounded-full border border-[#DCE5F5] px-3.5 text-sm tabular-nums focus:border-[#155DFC] focus:outline-none focus:ring-4 focus:ring-[#155DFC]/15"
+          />
+        ) : (
+          <button type="button" onClick={() => setOther(true)} className="h-10 rounded-full px-3.5 text-sm font-medium text-[#4A5670] ring-1 ring-[#DCE5F5] hover:ring-[#B9C8E6]">
+            Other
+          </button>
+        )}
+      </div>
+    </fieldset>
   );
 }
