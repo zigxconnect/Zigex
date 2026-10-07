@@ -1,4 +1,5 @@
 "use server";
+import { unstable_rethrow } from "next/navigation";
 
 import { cache } from "react";
 import { serverApi } from "@/lib/api/server-client";
@@ -51,6 +52,8 @@ const getMyApplications = cache(async (): Promise<{ status?: string }[]> => {
     const res = await serverApi.get<{ status?: string }[]>("/applications");
     return res.data ?? [];
   } catch (error) {
+    // Let Next.js's own signals (e.g. "this page reads cookies, render it per request") through.
+    unstable_rethrow(error);
     if (!(error instanceof ApiClientError && error.status === 401)) {
       console.error("Error fetching applications for profile stats:", error);
     }

@@ -1,3 +1,4 @@
+import { unstable_rethrow } from "next/navigation";
 /**
  * Communities — app/(dashboard)/dashboard/community/page.tsx
  *
@@ -33,6 +34,8 @@ async function myProgramGroups(): Promise<ProgramGroup[]> {
       }))
       .filter((g) => /^https:\/\/(chat\.whatsapp\.com|wa\.me)\//.test(g.link));
   } catch (error) {
+    // Let Next.js's own signals (e.g. "this page reads cookies, render it per request") through.
+    unstable_rethrow(error);
     console.error("[community] program groups failed:", error);
     return [];
   }

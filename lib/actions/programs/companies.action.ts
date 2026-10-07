@@ -1,5 +1,6 @@
 // lib/actions/company.ts
 "use server";
+import { unstable_rethrow } from "next/navigation";
 
 import { baseCompanySchema } from "@/lib/validation/company";
 import { z } from "zod";
@@ -21,6 +22,8 @@ export async function getAllCompanies(): Promise<CompanyActionResult> {
     const companies = (await listCompanies()) as unknown as Company[];
     return { success: true, data: companies, count: companies.length };
   } catch (error) {
+    // Let Next.js's own signals (e.g. "this page reads cookies, render it per request") through.
+    unstable_rethrow(error);
     console.error("Error fetching companies:", error);
     return { success: false, error: "Failed to load companies." };
   }

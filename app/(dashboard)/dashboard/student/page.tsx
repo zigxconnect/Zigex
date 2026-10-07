@@ -1,3 +1,4 @@
+import { unstable_rethrow } from "next/navigation";
 /**
  * Students — app/(dashboard)/dashboard/student/page.tsx
  *
@@ -23,6 +24,8 @@ async function firstPage(): Promise<{ rows: StudentRow[]; total: number }> {
     const res = await whenAvailable(() => serverApi.get<StudentRow[]>("/students?page=1&limit=50"), null);
     return { rows: res?.data ?? [], total: res?.meta?.total ?? res?.data?.length ?? 0 };
   } catch (error) {
+    // Let Next.js's own signals (e.g. "this page reads cookies, render it per request") through.
+    unstable_rethrow(error);
     console.error("[students] list failed:", error);
     return { rows: [], total: 0 };
   }

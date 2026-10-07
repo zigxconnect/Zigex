@@ -1,3 +1,4 @@
+import { unstable_rethrow } from "next/navigation";
 /**
  * Programs — app/(dashboard)/dashboard/programs/page.tsx
  *
@@ -48,6 +49,8 @@ async function loadMyPrograms(): Promise<MyProgram[]> {
         status: toApplicationStatus(r.status) as MyProgram["status"],
       }));
   } catch (error) {
+    // Let Next.js's own signals (e.g. "this page reads cookies, render it per request") through.
+    unstable_rethrow(error);
     console.error("[programs] my programs failed:", error);
     return [];
   }
