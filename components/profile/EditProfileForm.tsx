@@ -77,7 +77,7 @@ export function strengthSteps(v: ProfileValues) {
     { label: "About you", done: Boolean(v.about.trim()), section: "basics" },
     { label: "Skills", done: v.hard_skills.length > 0, section: "skills" },
     { label: "Location", done: Boolean(v.location.trim()), section: "basics" },
-    { label: "A LinkedIn, GitHub or portfolio link", done: Boolean(v.linkedin_url || v.github_url || v.portfolio_url), section: "links" },
+    { label: "A portfolio or LinkedIn link", done: Boolean(v.linkedin_url || v.github_url || v.portfolio_url), section: "links" },
   ];
 }
 
@@ -264,9 +264,9 @@ export function EditProfileForm({ initial, email, profileHref }: { initial: Prof
                         <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => e.target.files?.[0] && changePhoto(e.target.files[0])} />
                       </label>
                     ) : (
-                      <button key={x.label} type="button" onClick={() => openSection(x.section)} className="inline-flex h-8 items-center gap-1 rounded-full bg-white px-3 text-sm font-medium text-[#155DFC] ring-1 ring-[#DCE5F5] hover:ring-[#155DFC]/40">
-                        <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-                        {x.label.replace(/^A /, "")}
+                      <button key={x.label} type="button" onClick={() => openSection(x.section)} className="inline-flex min-h-8 items-center gap-1 rounded-full bg-white px-3 py-1 text-left text-sm font-medium text-[#155DFC] ring-1 ring-[#DCE5F5] hover:ring-[#155DFC]/40">
+                        <Plus className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                        {x.label.replace(/^An? (\w)/, (_, c: string) => c.toUpperCase())}
                       </button>
                     )
                   )}
@@ -403,17 +403,17 @@ export function EditProfileForm({ initial, email, profileHref }: { initial: Prof
 
 /** The one save indicator: no Save button to forget. */
 function SaveStatus({ state, onRetry }: { state: "idle" | "pending" | "saving" | "saved" | "error"; onRetry: () => void }) {
-  if (state === "idle") return <span className="pb-1 text-sm text-[#7B869C]">Changes save automatically</span>;
+  if (state === "idle") return <span className="whitespace-nowrap pb-1 text-sm text-[#7B869C]">Saves automatically</span>;
   if (state === "pending" || state === "saving")
     return (
-      <span className="inline-flex items-center gap-1.5 pb-1 text-sm text-[#4A5670]" role="status">
+      <span className="inline-flex items-center gap-1.5 pb-1 text-sm text-[#4A5670] whitespace-nowrap" role="status">
         <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
         Saving…
       </span>
     );
   if (state === "saved")
     return (
-      <span className="inline-flex items-center gap-1.5 pb-1 text-sm text-[#067647]" role="status">
+      <span className="inline-flex items-center gap-1.5 pb-1 text-sm text-[#067647] whitespace-nowrap" role="status">
         <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
         All changes saved
       </span>
