@@ -34,7 +34,7 @@ interface SidebarProps {
   showUploadLive?: boolean;
 }
 
-type NavItem = { href: string; label: string; icon: LucideIcon; match?: string[]; external?: boolean };
+type NavItem = { href: string; label: string; icon: LucideIcon; match?: string[]; external?: boolean; tag?: string };
 
 /**
  * App sidebar for signed-in students: 256px, white, grouped by what the
@@ -78,7 +78,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose, user 
     },
     {
       label: "Tools",
-      items: [{ href: "/dashboard/zigagent-ai/docs", label: "Zila AI assistant", icon: Bot, match: ["/dashboard/zigagent-ai"] }],
+      items: [{ href: "/dashboard/zigagent-ai/docs", label: "Zila AI", icon: Bot, match: ["/dashboard/zigagent-ai"], tag: "Soon" }],
     },
   ];
 
@@ -136,6 +136,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose, user 
                       >
                         <item.icon className={cn("h-[18px] w-[18px] shrink-0", active ? "text-[#155DFC]" : "text-[#7B869C]")} aria-hidden="true" />
                         {item.label}
+                        {item.tag && (
+                          <span className="ml-auto rounded-full bg-[#FFF7E6] px-2 py-0.5 text-xs font-medium text-[#B54708]">{item.tag}</span>
+                        )}
                       </Link>
                     </li>
                   );

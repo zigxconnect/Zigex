@@ -22,7 +22,7 @@ interface DashboardClientLayoutProps {
  */
 function hideProfileBanner(pathname: string | null) {
   const path = pathname ?? "";
-  return path === "/feed" || path === "/dashboard/programs" || path === "/dashboard/blog" || path.startsWith("/dashboard/student") || path === "/dashboard/community" || path === "/dashboard/edit-profile" || path === "/profile-settings" || path.startsWith("/profile/") || path.startsWith("/dashboard/blog/") || path.startsWith("/feed/") || /^\/programs\/[^/]+$/.test(path);
+  return path === "/feed" || path === "/dashboard/programs" || path === "/dashboard/blog" || path.startsWith("/dashboard/student") || path === "/dashboard/community" || path === "/dashboard/edit-profile" || path === "/profile-settings" || path.startsWith("/dashboard/zigagent-ai") || path.startsWith("/profile/") || path.startsWith("/dashboard/blog/") || path.startsWith("/feed/") || /^\/programs\/[^/]+$/.test(path);
 }
 
 export function DashboardClientLayout({
@@ -33,7 +33,8 @@ export function DashboardClientLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const pathname = usePathname();
-  const isChatPage = pathname?.includes('/zigagent-ai');
+  // Only the chat screen itself is full-bleed; the Zila page uses normal padding.
+  const isChatPage = pathname === '/dashboard/zigagent-ai';
 
   // Handle window resize and detect mobile
   useEffect(() => {
