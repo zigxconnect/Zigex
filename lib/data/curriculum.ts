@@ -207,7 +207,6 @@ export const PROGRAM_CURRICULA: ProgramCurriculum[] = [
         levels: [
             {
                 level: "Beginner",
-                image: "/curriculum/web-beginner.png",
                 modules: [
                     {
                         id: "web-beg-m1",
@@ -225,7 +224,6 @@ export const PROGRAM_CURRICULA: ProgramCurriculum[] = [
             },
             {
                 level: "Intermediate",
-                image: "/curriculum/web-intermediate.png",
                 modules: [
                     {
                         id: "web-int-m1",

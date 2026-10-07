@@ -77,7 +77,7 @@ export const getProfileInfo = cache(async (): Promise<FormattedUserData | null> 
         }`.toUpperCase() || "NU",
     university: profile.university || "University not specified",
     skills: profile.hard_skills || [],
-    coverImageUrl: profile.cover_image_url || "/placeholder-cover.jpg",
+    coverImageUrl: profile.cover_image_url || "",
     profile: profile as UserProfile,
     stats: {
       applications: applications.filter((a) => a.status !== "rejected").length,
