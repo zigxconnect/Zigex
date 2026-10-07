@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { AlertCircle, Camera, Check, CheckCircle2, ChevronDown, Loader2, Plus, X } from "lucide-react";
 import { saveMyProfile } from "@/lib/actions/profile.actions";
 import { uploadAvatar } from "@/lib/api/uploads";
+import { ApiClientError } from "@/lib/api/errors";
 import { usableImageUrl } from "@/lib/images";
 
 const SavedContext = createContext<Set<string>>(new Set());
@@ -179,6 +180,10 @@ export function EditProfileForm({ initial, email, profileHref }: { initial: Prof
     return () => window.removeEventListener("beforeunload", warn);
   }, [state]);
 
+  // The backend saves every avatar at the same address; a new version number makes the browser fetch the new photo.
+  const [photoVersion, setPhotoVersion] = useState(0);
+  const photoUrl = v.avatar_url && photoVersion ? `${v.avatar_url}${v.avatar_url.includes("?") ? "&" : "?"}v=${photoVersion}` : v.avatar_url;
+
   const changePhoto = async (file: File) => {
     setUploading(true);
     try {
@@ -190,6 +195,7 @@ export function EditProfileForm({ initial, email, profileHref }: { initial: Prof
       latest.current = { ...latest.current, avatar_url: url };
       setV(latest.current);
       savedRef.current = { ...savedRef.current, avatar_url: url };
+      setPhotoVersion(Date.now());
       setNote(null);
       setState("saved");
       router.refresh();
@@ -197,9 +203,13 @@ export function EditProfileForm({ initial, email, profileHref }: { initial: Prof
       setNote(
         error instanceof Error && error.message === "PHOTO_HOST"
           ? "Profile photos can't be saved right now because of a problem on Zigex's side. We're fixing it; your initials show meanwhile."
-          : error instanceof Error && /MB|type|format/i.test(error.message)
-            ? error.message
-            : "The photo couldn't be uploaded. Use a JPG or PNG under 5 MB."
+          : error instanceof ApiClientError && [408, 502, 503, 504].includes(error.status)
+            ? "The upload took too long. Check your connection and try again."
+            : typeof navigator !== "undefined" && navigator.onLine === false
+              ? "You're offline. Connect and try the photo again."
+              : error instanceof Error && /MB|must be one of/i.test(error.message)
+                ? error.message
+                : "The photo couldn't be uploaded. Try a JPG or PNG photo."
       );
       setState("error");
     } finally {
@@ -221,7 +231,7 @@ export function EditProfileForm({ initial, email, profileHref }: { initial: Prof
           <div className="min-w-0">
             <div className="-mt-12 flex items-end justify-between gap-3">
               <div className="w-fit rounded-full ring-4 ring-white">
-                <PhotoPicker url={v.avatar_url} name={name} busy={uploading} onPick={changePhoto} />
+                <PhotoPicker url={photoUrl} name={name} busy={uploading} onPick={changePhoto} />
               </div>
               <SaveStatus state={state} onRetry={() => flush(latest.current)} />
             </div>

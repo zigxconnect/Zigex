@@ -80,3 +80,15 @@ Please connect `files.zigexconnect.com` to the R2 bucket. In Cloudflare: R2, the
 - Nothing needs to change on the frontend once this is fixed. Photos will appear as soon as the URLs are correct.
 
 **Please reply** when the fix is deployed so we can retest.
+
+---
+
+## Follow-up (7 October 2026): uploads work, three things left
+
+Thanks: uploads now return working addresses. Testing a real phone photo showed three remaining issues.
+
+1. **Every avatar is saved at the same address** (`students/avatars/<id>/avatar.png`). Browsers and CDNs keep the old picture cached, so a new photo doesn't appear. Please save each upload under a new name, e.g. `avatar-<timestamp>.jpg`, and delete the previous file.
+2. **The file extension and `Content-Type` ignore the real format.** A JPEG phone photo was stored as `avatar.png` and served as `image/png`. Please use the uploaded `mimetype` for both.
+3. **`pub-….r2.dev` is Cloudflare's development address.** It is rate-limited and slow (a 2.7 MB photo hadn't finished loading after 30 seconds), and Cloudflare doesn't recommend it for production. Please connect a custom domain to the bucket (e.g. `files.zigexconnect.com`; steps above) and switch `CLOUDFLARE_R2_PUBLIC_URL` to it.
+
+The app now resizes photos before upload (avatars to 640px, covers to 1600px, re-encoded as JPEG, usually under 150 KB), so new uploads are fast. Photos uploaded before this change keep their full size until the student uploads again.

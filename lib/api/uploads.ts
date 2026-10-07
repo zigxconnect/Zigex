@@ -24,15 +24,51 @@ function fileToBase64(file: File): Promise<string> {
   });
 }
 
-function assertFile(file: File, allowed: string[], label: string) {
+/**
+ * Phone photos are often 3–12 MB and 4000px wide: slow to send on mobile data,
+ * slow to show everywhere afterwards. Resize to what the app actually displays
+ * (keeping the photo upright) and re-encode as JPEG. Falls back to the
+ * original file if the browser can't decode it. GIFs are left alone.
+ */
+async function shrinkImage(file: File, maxSide: number): Promise<File> {
+  if (file.type === "image/gif" || typeof createImageBitmap === "undefined") return file;
+  try {
+    const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+    const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+    if (scale === 1 && file.size < 400 * 1024) {
+      bitmap.close();
+      return file;
+    }
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return file;
+    ctx.fillStyle = "#fff"; // transparent PNGs get a white background instead of black
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.85));
+    if (!blob || blob.size >= file.size) return file;
+    return new File([blob], file.name.replace(/\.\w+$/, "") + ".jpg", { type: "image/jpeg" });
+  } catch {
+    return file;
+  }
+}
+
+/** `typeOnly`: check the format before resizing; the size limit applies to what is actually sent. */
+function assertFile(file: File, allowed: string[], label: string, typeOnly = false) {
   if (!allowed.includes(file.type)) {
     throw new Error(`${label} must be one of: ${allowed.map((t) => t.split("/")[1]).join(", ")}.`);
   }
+  if (typeOnly) return;
   if (file.size > MAX_BYTES) throw new Error(`${label} must be 5 MB or smaller.`);
 }
 
 /** Uploads or replaces the student's avatar. Returns its public URL. */
-export async function uploadAvatar(file: File) {
+export async function uploadAvatar(original: File) {
+  assertFile(original, AVATAR_TYPES, "Profile picture", true);
+  const file = await shrinkImage(original, 640);
   assertFile(file, AVATAR_TYPES, "Profile picture");
   const res = await api.post<{ key: string; url: string }>("/uploads/avatar", {
     base64: await fileToBase64(file),
@@ -46,7 +82,9 @@ export async function uploadAvatar(file: File) {
  * spec'd in docs/backend-missing-endpoints.md). Throws an error that
  * isEndpointMissing() recognises until the backend deploys it.
  */
-export async function uploadCoverImage(file: File) {
+export async function uploadCoverImage(original: File) {
+  assertFile(original, AVATAR_TYPES, "Cover image", true);
+  const file = await shrinkImage(original, 1600);
   assertFile(file, AVATAR_TYPES, "Cover image");
   const res = await api.post<{ url: string }>("/uploads/cover-image", {
     base64: await fileToBase64(file),
