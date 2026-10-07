@@ -39,8 +39,6 @@ const nextConfig = {
     // Removed forceSwcTransforms - not supported by Turbopack
   },
 
-  serverExternalPackages: ['@supabase/supabase-js'],
-
   output: 'standalone',
   outputFileTracingRoot: process.cwd(),
 

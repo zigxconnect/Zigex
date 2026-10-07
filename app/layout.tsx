@@ -10,7 +10,6 @@ import Script from "next/script";
 
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
-import LoaderProvider from "@/components/providers/LoaderProvider";
 
 const inter = Inter({
 
@@ -137,7 +136,6 @@ export default function RootLayout({
 
       </head>
       <body className={`${inter.variable} ${hostGrotesk.variable} font-sans antialiased`}>
-        <LoaderProvider />
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
           <PushNotificationManager />
           {children}

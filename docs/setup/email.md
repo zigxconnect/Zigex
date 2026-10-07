@@ -1,6 +1,6 @@
 # Email setup
 
-The student app sends email in two ways. Both are configured with environment variables in `.env.local` (never committed).
+The student app sends email in three ways, all configured with environment variables in `.env.local` (never committed).
 
 ## 1. Gmail (server): application and workspace emails
 
@@ -35,15 +35,25 @@ These run in the browser, so they use the public key only.
 
 | Variable | Used by | Template receives |
 | --- | --- | --- |
-| `NEXT_PUBLIC_EMAILJS_SERVICE_ID` | Both waitlists | |
-| `NEXT_PUBLIC_EMAILJS_PUBLIC_KEY` | Both waitlists | |
+| `NEXT_PUBLIC_EMAILJS_SERVICE_ID` | Waitlists | |
+| `NEXT_PUBLIC_EMAILJS_PUBLIC_KEY` | Waitlists | |
 | `NEXT_PUBLIC_EMAILJS_AI_WAITLIST_TEMPLATE_ID` | Zila AI "Notify me" (`components/zila/ZilaPage.tsx`) | `to_email`, `user_email`, `feature_name`, `year` |
-| `NEXT_PUBLIC_EMAILJS_WAITLIST_TEMPLATE_ID` | Smart Apply waitlist (`app/api/waitlist/smart-apply/route.ts`) | `to_email`, `user_email`, `opportunity_title`, `year` |
+| `NEXT_PUBLIC_EMAILJS_WAITLIST_TEMPLATE_ID` | Smart Apply waitlist (`app/api/waitlist/smart-apply/route.ts`). No page calls it today, so it can stay unset. | `to_email`, `user_email`, `opportunity_title`, `year` |
 
 EmailJS only sends the email; it stores nothing. To know who joined a waitlist, CC a team address in the template, or move the waitlist to a backend endpoint.
+
+## 3. Resend: contact page
+
+`lib/actions/contact.actions.ts` sends the contact form through Resend.
+
+| Variable | Value |
+| --- | --- |
+| `RESEND_API_KEY` | Resend API key. Without it the form says the email service isn't configured. |
+| `EMAIL_FROM` | Sender address on a domain verified in Resend (default `onboarding@resend.dev`, for testing only) |
 
 ## Checking it works
 
 - **Gmail:** apply to an opportunity with a test account and check both inboxes (student and `ADMIN_EMAIL`).
 - **Welcome:** finish profile setup with a new account.
+- **Contact form:** send a message from the Contact page.
 - **Waitlists:** press "Notify me when it's ready" on Zila AI.
