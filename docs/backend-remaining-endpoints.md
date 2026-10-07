@@ -53,6 +53,20 @@ Of the 17, these 15 still need building (the other 2 are settled by the note und
 
 Two more are covered by decisions below rather than new endpoints: `PUT /projects/{id}` (you built `PATCH`, which is fine) and `GET /happening-now/latest` (we will use your `GET /happeningnow` once its response shape is documented).
 
+## Urgent bugs (found 2026-10-07)
+
+1. **Students can't register for programs or RSVP to events.** `POST /applications` answers every program and event application with `400 BAD_REQUEST "internship_id is required"`, even when the body matches your Swagger spec exactly. Reproduce (fake id, so nothing is created):
+
+   ```http
+   POST /api/v1/applications
+   { "application_type": "program", "program_id": "00000000-0000-4000-8000-000000000000" }
+   → 400 {"success":false,"error":{"code":"BAD_REQUEST","message":"internship_id is required"}}
+   ```
+
+   The same happens with `{ "application_type": "event", "event_id": "…" }`. Expected: `201` for a real open program or event, `404` for an unknown id. The internship id check should only apply when `application_type` is `"internship"`. Until this is fixed, the frontend tells students that registration and RSVPs aren't working right now.
+2. **Unknown internship id returns 500.** `{ "application_type": "internship", "internship_id": "<id that doesn't exist>" }` returns `500 "An unexpected error occurred"`. It should be `404 Not found`.
+3. **Connection timeouts.** On 2026-10-07 the frontend server got `Connect Timeout (api.zigexconnect.com:443, 10 s)` on `/applications` and `/notifications` during normal use, then responses came back in about 1.5 s. Please check for restarts or an overloaded instance at that time.
+
 ## Decisions needed
 
 Please answer these four; each one blocks a screen the frontend can't finish alone.

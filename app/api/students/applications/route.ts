@@ -64,6 +64,21 @@ function validateFile(file: File | null, label: string, allowed: string[], allow
 
 const fail = (error: string, status: number) => NextResponse.json({ error }, { status });
 
+/**
+ * Backend bug (Oct 2026): POST /applications answers every program and event
+ * application with 400 "internship_id is required". Reported in
+ * docs/backend-remaining-endpoints.md. Until it's fixed, tell the student
+ * plainly instead of showing the backend's internal message.
+ */
+function friendlyMessage(message: string, kind: "program" | "event") {
+  if (/internship_id is required/i.test(message)) {
+    return kind === "event"
+      ? "RSVPs for events aren't working on Zigex right now. Our team is fixing it; your answers are saved, so try again later."
+      : "Registration for programs isn't working on Zigex right now. Our team is fixing it; your answers are saved, so try again later.";
+  }
+  return message;
+}
+
 // --- Application Handlers ---
 
 const handleInternshipApplication = async (applicant: Applicant, formData: FormData) => {
@@ -155,7 +170,7 @@ const handleProgramApplication = async (applicant: Applicant, formData: FormData
     });
   } catch (error) {
     const { error: message, status } = applicationErrorResponse(error, "Failed to submit program application.");
-    return fail(message, status);
+    return fail(friendlyMessage(message, "program"), status);
   }
 
   const company = posting.company;
@@ -192,7 +207,7 @@ const handleEventRSVP = async (applicant: Applicant, formData: FormData) => {
     });
   } catch (error) {
     const { error: message, status } = applicationErrorResponse(error, "Failed to submit RSVP.");
-    return fail(message, status);
+    return fail(friendlyMessage(message, "event"), status);
   }
 
   const company = posting.company;
