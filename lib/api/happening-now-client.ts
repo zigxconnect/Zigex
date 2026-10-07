@@ -37,7 +37,9 @@ const captionAt = (captions: LatestPost["captions"], i: number) =>
 
 /** The latest post, one grid item per image plus one for its video. */
 export async function fetchHappeningNow(): Promise<HappeningNowItem[]> {
-  const post = await whenAvailable(async () => (await api.get<LatestPost | null>("/happening-now/latest")).data, null);
+  // GET /happeningnow lists posts; show the newest one.
+  const posts = await whenAvailable(async () => (await api.get<LatestPost[]>("/happeningnow")).data ?? [], [] as LatestPost[]);
+  const post = [...posts].sort((a, b) => String(b.created_at ?? "").localeCompare(String(a.created_at ?? "")))[0];
   if (!post) return [];
 
   const base = {
@@ -63,7 +65,7 @@ export async function fetchHappeningNow(): Promise<HappeningNowItem[]> {
 /** Counts one view of a post; resolves to the new total, or null if unavailable. */
 export async function recordHappeningNowView(postId: string): Promise<number | null> {
   return whenAvailable(
-    async () => (await api.post<{ view_count: number }>(`/happening-now/${encodeURIComponent(postId)}/view`)).data?.view_count ?? null,
+    async () => (await api.post<{ view_count: number }>(`/happeningnow/${encodeURIComponent(postId)}/view`)).data?.view_count ?? null,
     null
   ).catch(() => null);
 }

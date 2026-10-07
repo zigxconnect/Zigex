@@ -30,7 +30,8 @@ export function DeleteAccount({ email }: { email: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [unavailable, setUnavailable] = useState(false);
-  const ready = password.length > 0 && confirmText.trim().toUpperCase() === "DELETE";
+  // Google sign-ups have no password; the backend then relies on "DELETE" typed out.
+  const ready = confirmText.trim().toUpperCase() === "DELETE";
 
   const reset = () => {
     setPassword("");
@@ -43,7 +44,7 @@ export function DeleteAccount({ email }: { email: string }) {
     setBusy(true);
     setError(null);
     try {
-      await api.delete(DELETE_PATH, { body: { password } });
+      await api.delete(DELETE_PATH, { body: { ...(password && { password }), confirm: "DELETE" } });
       // The account is gone: end the session here too, then leave.
       await api.post("/auth/logout").catch(() => {});
       window.location.href = "/?account=deleted";
@@ -55,7 +56,9 @@ export function DeleteAccount({ email }: { email: string }) {
       const status = err instanceof ApiClientError ? err.status : 0;
       setError(
         status === 401 || status === 400
-          ? "That password isn't right. Your account was not deleted."
+          ? password
+            ? "That password isn't right. Your account was not deleted."
+            : "Enter your password to confirm. Your account was not deleted."
           : status === 429
             ? "Too many tries. Wait a few minutes, then try again."
             : "Your account wasn't deleted. Check your connection and try again."
@@ -139,7 +142,8 @@ export function DeleteAccount({ email }: { email: string }) {
                   <label htmlFor="del-password" className="mb-1.5 block text-sm font-medium text-[#0B1B3F]">
                     Your password
                   </label>
-                  <PasswordInput id="del-password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+                  <p id="del-password-hint" className="-mt-0.5 mb-1.5 text-sm text-[#7B869C]">Leave empty if you sign in with Google.</p>
+                  <PasswordInput id="del-password" aria-describedby="del-password-hint" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
                 </div>
                 <div>
                   <label htmlFor="del-confirm" className="mb-1.5 block text-sm font-medium text-[#0B1B3F]">

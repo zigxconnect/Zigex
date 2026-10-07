@@ -176,7 +176,7 @@ export async function submitInternshipLog(formData: {
 
 /**
  * Server Action to acknowledge payment terms for a paid internship
- * (POST /applications/{id}/paymentacknowledgement).
+ * (POST /applications/{id}/payment-acknowledgement).
  */
 export async function acknowledgePaidInternship(applicationId: string) {
   try {

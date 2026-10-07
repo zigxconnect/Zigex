@@ -284,7 +284,16 @@ function ApplicationRowView({ item, onWithdrawn }: { item: Item; onWithdrawn: ()
       onWithdrawn();
       setConfirming(false);
     } catch (err) {
-      setError(err instanceof ApiClientError ? err.message : "It couldn't be withdrawn. Try again in a moment.");
+      const status = err instanceof ApiClientError ? err.status : 0;
+      setError(
+        status === 400
+          ? "It can't be withdrawn anymore: the company has already made a decision."
+          : status === 404
+            ? "This application no longer exists. Refresh the page."
+            : status === 403
+              ? "This application isn't on your account."
+              : "It couldn't be withdrawn. Check your connection and try again."
+      );
     } finally {
       setBusy(false);
     }
