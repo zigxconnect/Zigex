@@ -1,63 +1,73 @@
-This is  the documentation for ZIGEX and how it endpoints works.
+# Zigex: student app
 
-## Getting Started
+The student side of [Zigex](https://www.zigexconnect.com): students in Cameroon find internships, programs and events, apply with their profile, and follow their applications. Interns get a workspace once accepted.
 
-First, run the development server:
+Companies and supervisors use a separate admin app.
+
+## Stack
+
+- **Next.js 16** (App Router) and **React 19**, **Tailwind CSS v4**, Radix UI, lucide icons
+- **Backend:** the Zigex student API at `https://api.zigexconnect.com` ([Swagger](https://api.zigexconnect.com/api-docs)). This app keeps no database of its own.
+- **Blog:** Sanity (studio at `/studio`)
+- **Email:** Gmail (Nodemailer) and EmailJS. See [docs/setup/email.md](./docs/setup/email.md).
+- **Push notifications:** Web Push with a VAPID key; the backend sends the pushes.
+
+## How it talks to the backend
+
+The browser never calls the API directly. Requests go to this app's own `/api/v1/*` route (`app/api/v1/[...path]`), which adds the student's token from an httpOnly cookie and forwards to `BACKEND_URL`. Server components use `lib/api/server-client.ts`; client components use `lib/api/browser-client.ts`.
+
+`proxy.ts` protects signed-in pages, sends signed-in students away from the auth pages, and honours `?next=` after sign-in (checked by `lib/utils/redirect.ts`).
+
+## Getting started
+
+Requires Node.js 20+.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local   # then fill in the values
+npm run dev                  # http://localhost:3000
 ```
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## Student Endpoints
+The backend only accepts browser requests from `localhost:3000`, so keep that port in development.
 
-These endpoints are for authenticated students.
+### Environment variables
 
-### 1. Task Management (by Student)
+| Variable | Needed for |
+| --- | --- |
+| `BACKEND_URL` | The student API (e.g. `https://api.zigexconnect.com`). Required. |
+| `JWT_SECRET` | Signing and checking attendance QR codes |
+| `NEXT_PUBLIC_SITE_URL` | Links in emails, metadata and the sitemap |
+| `NEXT_PUBLIC_ADMIN_APP_URL` | Where company and supervisor links go |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | "Continue with Google" |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Push notifications (must match the backend's key pair) |
+| `GMAIL_USER`, `GMAIL_APP_PASSWORD`, `ADMIN_EMAIL`, `EMAILJS_*`, `NEXT_PUBLIC_EMAILJS_*` | Email: see [docs/setup/email.md](./docs/setup/email.md) |
+| `SANITY_WEBHOOK_SECRET` | Revalidating the blog when Sanity publishes |
 
-#### `GET /api/student/tasks`
+Secrets go in `.env.local`, which git ignores. Never give a secret a `NEXT_PUBLIC_` name: those are sent to every browser.
 
--   **Description:** Retrieves all tasks assigned to the currently logged-in student.
--   **Auth:** Student.
--   **Success Response (200):** An array of task objects, joined with mentor details.
+## Scripts
 
-#### `PUT /api/student/tasks/[taskId]`
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | Development server |
+| `npm run build` / `npm start` | Production build and server |
+| `npm run lint` | Lint |
+| `npm run check:backend` | Checks which endpoints the app calls exist on the backend (`BACKEND_TOKEN=<student token> npm run check:backend`) |
 
--   **Description:** Updates the status of a specific task. Students can typically only update the `status` field.
--   **Auth:** Student.
--   **Params:** `taskId` - The ID of the task to update.
--   **Request Body:**
-    ```json
-    {
-      "status": "in_progress" // or "completed"
-    }
-    ```
--   **Success Response (200):** The updated task object.
+## Project layout
 
-#### `POST /api/student/tasks/[taskId]/progress`
+```
+app/
+  (public)/       feed and opportunity pages (open without signing in)
+  (auth)/         sign in, sign up, password reset
+  (dashboard)/    signed-in pages: programs, applications, students, settings…
+  api/v1/         passthrough to the backend
+components/       UI by feature (apply, feed, profile, settings, notifications…)
+lib/api/          API clients and per-feature services
+lib/              helpers (images, notifications, redirects, email)
+docs/             living docs: see docs/README.md
+```
 
--   **Description:** Submits a new progress log for a specific task.
--   **Auth:** Student.
--   **Params:** `taskId` - The ID of the task being updated.
--   **Request Body:**
-    ```json
-    {
-      "log_content": "I have successfully cloned the repo and installed all dependencies. The project is running on my local machine. I encountered a small issue with Node versions but resolved it by using NVM."
-    }
-    ```
--   **Success Response (201):** The newly created progress log object.
+## Docs
 
-### 2. Student Directory
-
-#### `GET /api/students/student`
-
--   **Description:** Retrieves a list of all other registered students on the platform for networking.
--   **Auth:** Student.
--   **Success Response (200):** An array of public student profiles (name, university, skills, avatar_url).
-
+[docs/README.md](./docs/README.md) lists what's there: open backend requests, the notifications spec, product write-ups and setup guides.

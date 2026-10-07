@@ -2,7 +2,7 @@ import { api } from "./browser-client";
 import { whenAvailable } from "./errors";
 
 /**
- * Happening Now (docs/backend-missing-endpoints.md → Stories and Happening
+ * Happening Now (the Oct 2026 backend endpoint request → Stories and Happening
  * Now): the latest live company post and its view counter. Spec'd: empty
  * until deployed.
  */

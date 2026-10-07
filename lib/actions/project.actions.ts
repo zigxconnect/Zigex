@@ -22,7 +22,7 @@ interface CreateProjectResult {
 
 /**
  * Creates a portfolio project (POST /projects, multipart; spec'd in
- * docs/backend-missing-endpoints.md → Projects). The backend enforces one
+ * the Oct 2026 backend endpoint request → Projects). The backend enforces one
  * active project at a time and computes the end date from the duration.
  */
 export async function createProjectAction(formData: FormData): Promise<CreateProjectResult> {

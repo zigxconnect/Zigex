@@ -4,7 +4,7 @@ import { ApiClientError, whenAvailable } from "../errors";
 import { listFeed, type FeedKind } from "./feed";
 
 /**
- * Public company pages (docs/backend-missing-endpoints.md → Discovery and
+ * Public company pages (the Oct 2026 backend endpoint request → Discovery and
  * social): GET /companies, GET /companies/{id}, and the feed's companyId
  * filter for their listings. Empty until deployed.
  */

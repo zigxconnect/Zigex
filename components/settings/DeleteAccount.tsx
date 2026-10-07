@@ -8,7 +8,7 @@ import { ApiClientError, isEndpointMissing } from "@/lib/api/errors";
 import { PasswordInput } from "@/components/sections/auth/auth-ui";
 
 const SUPPORT_EMAIL = "zigexconnect.com@gmail.com";
-/** Agreed in docs/backend-request-push-and-delete-account.md; change here if the backend picks another path. */
+/** DELETE /students/me (Swagger); change here if the backend keeps /auth/account instead. */
 const DELETE_PATH = "/students/me";
 
 const WHAT_GOES = [

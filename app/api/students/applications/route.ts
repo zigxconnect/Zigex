@@ -67,7 +67,7 @@ const fail = (error: string, status: number) => NextResponse.json({ error }, { s
 /**
  * Backend bug (Oct 2026): POST /applications answers every program and event
  * application with 400 "internship_id is required". Reported in
- * docs/backend-remaining-endpoints.md. Until it's fixed, tell the student
+ * docs/backend/open-requests.md. Until it's fixed, tell the student
  * plainly instead of showing the backend's internal message.
  */
 function friendlyMessage(message: string, kind: "program" | "event") {

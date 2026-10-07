@@ -7,7 +7,7 @@ import { fetchAllUserProjects } from "@/lib/actions/getProjects.action";
 import { displayName, getMyProfile } from "./profile";
 
 /**
- * A student's public profile page (docs/backend-missing-endpoints.md →
+ * A student's public profile page (the Oct 2026 backend endpoint request →
  * Discovery and social): GET /students/{id} (deployed; profile id only),
  * /connections and /students/{id}/projects. Profile URLs that use a
  * username or name slug need the backend to also resolve those (spec'd);

@@ -2,7 +2,7 @@
  * Maps the profile forms' snake_case fields (the old student_profiles
  * columns) to the camelCase body PATCH /students/me accepts.
  *
- * SPEC_FIELDS are in docs/backend-missing-endpoints.md (Account and auth)
+ * SPEC_FIELDS are in the Oct 2026 backend endpoint request (Account and auth)
  * but may not be deployed yet; updateMyProfile retries without them if the
  * backend rejects the request. Unknown keys are returned in `unsupported`.
  */

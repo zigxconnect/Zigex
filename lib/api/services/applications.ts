@@ -26,7 +26,7 @@ export type CreateApplicationInput = {
 } & SpecApplicationFields;
 
 /**
- * Fields requested in docs/backend-missing-endpoints.md (Applications and
+ * Fields requested in the Oct 2026 backend endpoint request (Applications and
  * uploads) but maybe not deployed yet. createApplication sends them and
  * retries without them if the backend rejects the request; callers also put
  * the same answers in `comments` so nothing is lost meanwhile.
@@ -128,7 +128,7 @@ async function toUploadBody(file: File) {
 export const CV_MIME_TYPES = [
   "application/pdf",
   "application/msword",
-  // Requested in docs/backend-missing-endpoints.md; the backend's error is shown if it still refuses.
+  // Requested in the Oct 2026 backend endpoint request; the backend's error is shown if it still refuses.
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
 /** Accepted by POST /uploads/cover-letter/{applicationId}. */

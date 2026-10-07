@@ -12,7 +12,7 @@ import {
 import { v4 as uuidv4 } from "uuid";
 
 // NOTE: This component is a scaffold. You must provide NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY
-// in your environment for RoomProvider to connect. See docs/LiveReports.md for setup.
+// in your environment for RoomProvider to connect.
 
 type MentorFeedback = {
   id: string;

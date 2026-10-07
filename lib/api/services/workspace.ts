@@ -77,7 +77,7 @@ export async function listPlacements(): Promise<Placement[]> {
 }
 
 /*
- * Intern workspace extras (docs/backend-missing-endpoints.md → Intern
+ * Intern workspace extras (the Oct 2026 backend endpoint request → Intern
  * workspace). Spec'd endpoints: reads are empty and writes report
  * `pending` until the backend deploys them.
  */

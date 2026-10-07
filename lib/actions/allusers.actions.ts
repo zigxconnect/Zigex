@@ -36,7 +36,7 @@ const PAGE_SIZE = 100;
 
 /**
  * The student directory (GET /students, spec'd in
- * docs/backend-missing-endpoints.md → Discovery and social). Empty until it
+ * the Oct 2026 backend endpoint request → Discovery and social). Empty until it
  * ships. Never includes other students' contact details.
  */
 export async function getAllUsers(limit = 100, offset = 0, search?: string): Promise<RawUserProfile[]> {

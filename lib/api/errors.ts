@@ -42,7 +42,7 @@ export async function parseResponse<T>(res: Response): Promise<ApiResponse<T>> {
  * True when the backend has not deployed this route yet (Express's default
  * 404: "Cannot GET /api/v1/..."), as opposed to a real "resource not found".
  *
- * Features built against docs/backend-missing-endpoints.md use this to show
+ * Features built against the Oct 2026 backend endpoint request use this to show
  * a "coming soon" / empty state until the endpoint ships, then start working
  * with no frontend change.
  */

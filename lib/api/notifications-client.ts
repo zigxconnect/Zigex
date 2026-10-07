@@ -2,7 +2,7 @@ import { api } from "./browser-client";
 import { whenAvailable } from "./errors";
 
 /**
- * Student notifications (docs/backend-missing-endpoints.md → Notifications).
+ * Student notifications (the Oct 2026 backend endpoint request → Notifications).
  * Until the backend deploys these routes, reads return empty and writes are no-ops.
  */
 

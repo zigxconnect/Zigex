@@ -9,7 +9,7 @@ type SerializedSubscription = { endpoint?: string; keys?: Record<string, string>
 /**
  * Saves this browser's push subscription for the signed-in student
  * (POST /push/subscriptions). `pending` = the backend has not deployed the
- * endpoint yet (see docs/backend-missing-endpoints.md → Notifications and push).
+ * endpoint yet (see the Oct 2026 backend endpoint request → Notifications and push).
  */
 export async function subscribeToPushNotifications(
     subscription: SerializedSubscription,

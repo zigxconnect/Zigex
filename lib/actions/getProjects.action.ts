@@ -5,7 +5,7 @@ import { whenAvailable } from '@/lib/api/errors';
 
 /**
  * Portfolio projects from the backend (GET /projects, spec'd in
- * docs/backend-missing-endpoints.md → Projects). Empty until deployed.
+ * the Oct 2026 backend endpoint request → Projects). Empty until deployed.
  */
 
 type ProjectView = {

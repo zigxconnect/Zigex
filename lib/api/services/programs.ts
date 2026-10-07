@@ -6,7 +6,7 @@ import { listApplications } from "./applications";
 import { getMyProfile } from "./profile";
 
 /**
- * "Programs I joined" (docs/backend-missing-endpoints.md → Programs I joined).
+ * "Programs I joined" (the Oct 2026 backend endpoint request → Programs I joined).
  * Content and members are spec'd endpoints: empty until deployed.
  */
 

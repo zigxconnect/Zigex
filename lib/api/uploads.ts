@@ -10,7 +10,7 @@ const AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const CV_TYPES = [
   "application/pdf",
   "application/msword",
-  // Requested in docs/backend-missing-endpoints.md; the backend's own error is shown if it still refuses.
+  // Requested in the Oct 2026 backend endpoint request; the backend's own error is shown if it still refuses.
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
 
@@ -93,7 +93,7 @@ export async function uploadAvatar(original: File) {
 
 /**
  * Uploads or replaces the student's profile cover image (POST /uploads/cover-image,
- * spec'd in docs/backend-missing-endpoints.md). Throws an error that
+ * spec'd in the Oct 2026 backend endpoint request). Throws an error that
  * isEndpointMissing() recognises until the backend deploys it.
  */
 export async function uploadCoverImage(original: File) {

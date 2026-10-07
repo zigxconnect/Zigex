@@ -1,4 +1,8 @@
-# Endpoint status: what the student app uses (7 October 2026)
+# Open backend requests
+
+What the student app still needs from the backend. Update this file as items are fixed; delete an item once it ships (git history keeps the record).
+
+## Endpoint status (7 October 2026)
 
 **From:** the Zigex frontend team
 **Checked against:** `https://api.zigexconnect.com/api-docs.json` (92 operations) and live calls on 7 October 2026
@@ -48,13 +52,25 @@ Swagger has both `DELETE /students/me` and `DELETE /auth/account`, with the same
 
 ### 2.4 `POST /push/trigger` security
 
-It currently answers `401 Invalid or expired token` without a token, so it needs some token. Please confirm a **student or company** token is rejected too, and that only the admin backend can call it (shared secret header or service token). Otherwise anyone signed in can send notifications to any student. Details: [notifications-how-it-works.md](./notifications-how-it-works.md), section 4.
+It currently answers `401 Invalid or expired token` without a token, so it needs some token. Please confirm a **student or company** token is rejected too, and that only the admin backend can call it (shared secret header or service token). Otherwise anyone signed in can send notifications to any student. Details: [notifications.md](./notifications.md), section 4.
 
-### 2.5 From earlier docs, still to do
+### 2.5 Uploads
 
-- **Uploads** ([backend-bug-uploads.md](./backend-bug-uploads.md), follow-up): a new file name for each upload (avatars now save as `avatar.jpg`, but every upload reuses that name), and a custom domain instead of `r2.dev`.
-- **Notifications** ([notifications-how-it-works.md](./notifications-how-it-works.md)): add `url`, use specific `type` values, per-student read state for global notifications, and no duplicates.
-- **Response shapes:** most responses have no schema in Swagger. Adding them would let us remove guesswork in the frontend.
+Uploads now return working addresses. Three things remain:
+
+1. **Every avatar is saved at the same address** (`students/avatars/<id>/avatar.jpg`). Browsers and CDNs keep the old picture cached, so a new photo doesn't appear. Please save each upload under a new name (e.g. `avatar-<timestamp>.jpg`) and delete the previous file.
+2. **The stored type must match the file.** A JPEG was once stored as `avatar.png` and served as `image/png`. Use the uploaded `mimetype` for the extension and `Content-Type`.
+3. **Move off `pub-….r2.dev`.** It's Cloudflare's development address: rate-limited, slow (a 2.7 MB photo hadn't loaded after 30 seconds) and not meant for production. In Cloudflare: R2, the bucket, Settings, Custom Domains, add `files.zigexconnect.com` (Cloudflare creates the DNS record when the zone is on Cloudflare). Then set `CLOUDFLARE_R2_PUBLIC_URL` to it and check an uploaded URL opens in a browser.
+
+The app resizes photos before upload (avatars 1080px, covers 2400px, JPEG), so new uploads are 150–400 KB.
+
+### 2.6 Notifications
+
+See [notifications.md](./notifications.md): add `url`, use specific `type` values, per-student read state for global notifications, and no duplicates.
+
+### 2.7 Response shapes
+
+Most responses have no schema in Swagger. Adding them would let us remove guesswork in the frontend.
 
 ---
 
