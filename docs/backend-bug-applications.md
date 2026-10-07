@@ -98,6 +98,30 @@ This affected `POST /applications` and `GET /notifications`. A few minutes later
 
 Reported separately in `backend-bug-uploads.md` (uploads return `pub-REPLACE.r2.dev` URLs).
 
+## Retest on 7 October 2026 (after your fix)
+
+Thanks: items 1 and 2 are fixed. Unknown program, event and internship ids now return `404 "... not found"`.
+
+**New: applying to a real, open internship crashes with 500.**
+
+```bash
+curl -X POST https://api.zigexconnect.com/api/v1/applications \
+  -H "Authorization: Bearer <student token>" \
+  -H "Content-Type: application/json" \
+  -d '{"application_type":"internship","internship_id":"85b73156-aa87-4a2d-a7a2-07c1aa2e5621"}'
+```
+
+```json
+500 {"success":false,"error":{"code":"INTERNAL_SERVER_ERROR","message":"An unexpected error occurred"}}
+```
+
+- Internship: *SEED Summer Internship Program 2026* (`85b73156-aa87-4a2d-a7a2-07c1aa2e5621`), visible, deadline 15 Oct 2026, `is_paid: true`.
+- Same 500 with the documented optional fields (`expectations`, `comments`, `work_mode`, `duration_months`) and with only the two required fields.
+- The student has no applications, so it isn't a duplicate. Nothing gets saved.
+- Since unknown ids return 404, the crash happens after the internship is found: likely while inserting the application (a missing column or constraint) or in a step after it (notification, email). Please check the server logs for this request.
+
+We haven't retested programs and events with a real id yet (that would create a real registration). Please confirm they save correctly too.
+
 ## What the frontend does meanwhile
 
 - Students who try to register or RSVP see: *"Registration for programs isn't working on Zigex right now. Our team is fixing it; your answers are saved, so try again later."*

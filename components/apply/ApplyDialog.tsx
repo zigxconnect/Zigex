@@ -39,7 +39,8 @@ function describeError(status: number | null, raw: string, verb: string): SendEr
   if (status === 429 || /too many/.test(m)) {
     return { kind: "tooMany", title: "Too many tries", message: "Wait a minute, then send it again. Your answers are saved." };
   }
-  if (status >= 500 || status === 408 || /reach|timeout|slow/.test(m)) {
+  // Only real timeouts and gateway errors mean "slow"; a plain 500 is a server fault, handled as "unknown" below.
+  if (status === 502 || status === 503 || status === 504 || status === 408 || /reach|timeout|slow/.test(m)) {
     return { kind: "slow", title: "Zigex didn't respond in time", message: "Nothing was sent. Your answers are saved, so you can try again in a moment." };
   }
   if (/isn't working|not working/.test(m)) {
