@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import * as Dialog from "@radix-ui/react-dialog";
-import { AlertCircle, Check, CheckCircle2, ChevronDown, Loader2, X } from "lucide-react";
+import { AlertCircle, Check, CheckCircle2, ChevronDown, Clock, Loader2, LogIn, WifiOff, X } from "lucide-react";
 
 export type ApplyKind = "internship" | "program" | "event";
 /** Who is applying, from their profile (the company sees the full profile). */
@@ -16,6 +16,43 @@ export type ApplyPrefill = {
 };
 
 const draftKey = (id: string) => `zigex_apply_draft_${id}`;
+
+/** A failed send, described for the student: what happened and what to do. */
+type SendError = {
+  kind: "offline" | "slow" | "signedOut" | "closed" | "tooMany" | "check" | "unknown";
+  title: string;
+  message: string;
+};
+
+/** Turn a failed request into words a student understands; never shows codes or field names. */
+function describeError(status: number | null, raw: string, verb: string): SendError {
+  const m = raw.toLowerCase();
+  if (status === null) {
+    return { kind: "offline", title: "You seem to be offline", message: "Check your internet connection, then try again. Your answers are saved." };
+  }
+  if (status === 401 || /sign in|log in|unauthori/.test(m)) {
+    return { kind: "signedOut", title: "You've been signed out", message: "Sign in again to send it. Your answers are saved on this device." };
+  }
+  if (/deadline|closed|no longer|has passed|ended/.test(m)) {
+    return { kind: "closed", title: "This has closed", message: `The deadline passed before your ${verb} was sent. Other opportunities are still open.` };
+  }
+  if (status === 429 || /too many/.test(m)) {
+    return { kind: "tooMany", title: "Too many tries", message: "Wait a minute, then send it again. Your answers are saved." };
+  }
+  if (status >= 500 || status === 408 || /reach|timeout|slow/.test(m)) {
+    return { kind: "slow", title: "Zigex didn't respond in time", message: "Nothing was sent. Your answers are saved, so you can try again in a moment." };
+  }
+  if (/isn't working|not working/.test(m)) {
+    // A known outage on the backend; the server already explains it in plain words.
+    return { kind: "slow", title: "Not available right now", message: raw };
+  }
+  if (status === 400 || status === 422) {
+    // A readable reason from our own routes ("Tell the company a little more…"); hide raw field names.
+    const readable = raw && !/_id\b|required$|validation|bad_request/i.test(raw);
+    return { kind: "check", title: "Check your answers", message: readable ? raw : "Something in the form wasn't accepted. Check your answers and try again." };
+  }
+  return { kind: "unknown", title: "It wasn't sent", message: "Something went wrong on our side. Your answers are saved; try again in a moment." };
+}
 type Draft = { why: string; area: string; duration: string; experience: string; level: string; note: string };
 
 const TIPS: Record<"internship" | "program", string[]> = {
@@ -108,7 +145,7 @@ export function ApplyDialog({
   const [feeOk, setFeeOk] = useState(false);
   const [tried, setTried] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<SendError | null>(null);
   const [done, setDone] = useState(false);
   const [saved, setSaved] = useState(false);
   const [showTips, setShowTips] = useState(false);
@@ -178,6 +215,11 @@ export function ApplyDialog({
       });
       return;
     }
+    const verb = kind === "event" ? "RSVP" : kind === "program" ? "registration" : "application";
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      setError(describeError(null, "", verb));
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -207,13 +249,14 @@ export function ApplyDialog({
       }
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const message = typeof body.error === "string" ? body.error : "The application couldn't be sent.";
-        if (/already|duplicate/i.test(message)) {
+        const message = typeof body.error === "string" ? body.error : "";
+        if (res.status === 409 || /already|duplicate/i.test(message)) {
           setAlready(true);
           onSubmitted();
           return;
         }
-        throw new Error(message);
+        setError(describeError(res.status, message, verb));
+        return;
       }
       try {
         localStorage.removeItem(draftKey(id));
@@ -222,8 +265,9 @@ export function ApplyDialog({
       }
       setDone(true);
       onSubmitted();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "The application couldn't be sent. Check your connection and try again.");
+    } catch {
+      // fetch itself failed: no connection, or the request was cut off.
+      setError(describeError(navigator.onLine === false ? null : 503, "", kind === "event" ? "RSVP" : kind === "program" ? "registration" : "application"));
     } finally {
       setBusy(false);
     }
@@ -433,15 +477,7 @@ export function ApplyDialog({
 
               <div className="border-t border-[#EEF2FA] px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
                 {/* Shown next to the button, so it's seen right after pressing it. */}
-                {error && (
-                  <p role="alert" className="mb-3 flex items-start gap-2 rounded-xl bg-[#FEF3F2] px-4 py-3 text-sm text-[#B42318]">
-                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-                    <span>
-                      <span className="font-semibold">Not sent. </span>
-                      {error}
-                    </span>
-                  </p>
-                )}
+                {error && <ErrorNotice error={error} onRetry={submit} busy={busy} />}
                 {kind !== "event" && (
                   <p className="mb-2 flex items-center justify-between text-xs text-[#7B869C]" aria-live="polite">
                     <span>{saved ? "Draft saved on this device" : "Your answers are saved as you type"}</span>
@@ -496,5 +532,44 @@ function Tips({ items }: { items: string[] }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+const ERROR_ICON = { offline: WifiOff, slow: Clock, signedOut: LogIn, closed: AlertCircle, tooMany: Clock, check: AlertCircle, unknown: AlertCircle };
+
+/**
+ * The failed-send notice above the button: icon, short title, what to do,
+ * and the one action that helps. Amber for "try again", red for "fix it".
+ */
+function ErrorNotice({ error, onRetry, busy }: { error: SendError; onRetry: () => void; busy: boolean }) {
+  const Icon = ERROR_ICON[error.kind];
+  const fixable = error.kind === "check";
+  const tone = fixable || error.kind === "closed" ? "bg-[#FEF3F2] text-[#912018] ring-[#FECDCA]" : "bg-[#FFFAEB] text-[#7A2E0E] ring-[#FEDF89]";
+  const here = typeof window !== "undefined" ? window.location.pathname : "/feed";
+  return (
+    <div role="alert" className={`mb-3 rounded-xl px-4 py-3 ring-1 ${tone}`}>
+      <div className="flex items-start gap-3">
+        <Icon className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold">{error.title}</p>
+          <p className="mt-0.5 text-sm leading-relaxed">{error.message}</p>
+          <div className="mt-2">
+            {error.kind === "signedOut" ? (
+              <Link href={`/sign-in?next=${encodeURIComponent(here)}`} className="text-sm font-semibold underline underline-offset-2">
+                Sign in again
+              </Link>
+            ) : error.kind === "closed" ? (
+              <Link href="/feed" className="text-sm font-semibold underline underline-offset-2">
+                See open opportunities
+              </Link>
+            ) : !fixable ? (
+              <button type="button" onClick={onRetry} disabled={busy} className="text-sm font-semibold underline underline-offset-2 disabled:opacity-60">
+                {busy ? "Trying again…" : "Try again"}
+              </button>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

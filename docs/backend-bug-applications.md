@@ -55,7 +55,7 @@ A real request from the app that failed the same way:
 ### Expected
 
 | Request | Expected response |
-|---|---|
+| --- | --- |
 | `application_type: "program"` + an open `program_id` | `201` with the created application |
 | `application_type: "event"` + an open `event_id` | `201` with the created application |
 | Unknown `program_id` / `event_id` | `404 Not found` |
