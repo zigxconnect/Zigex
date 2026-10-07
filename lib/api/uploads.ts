@@ -33,22 +33,36 @@ function fileToBase64(file: File): Promise<string> {
 async function shrinkImage(file: File, maxSide: number): Promise<File> {
   if (file.type === "image/gif" || typeof createImageBitmap === "undefined") return file;
   try {
-    const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
-    const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
-    if (scale === 1 && file.size < 400 * 1024) {
-      bitmap.close();
+    // Read the size first, then let the browser do a high-quality resize while decoding
+    // (a single canvas drawImage from 4000px down blurs fine detail).
+    const probe = await createImageBitmap(file, { imageOrientation: "from-image" });
+    const scale = Math.min(1, maxSide / Math.max(probe.width, probe.height));
+    if (scale === 1 && file.size < 600 * 1024) {
+      probe.close();
       return file;
     }
+    const width = Math.round(probe.width * scale);
+    const height = Math.round(probe.height * scale);
+    // Browsers without resize options (older Safari) fall back to the canvas resize below.
+    const bitmap = await createImageBitmap(file, { imageOrientation: "from-image", resizeWidth: width, resizeHeight: height, resizeQuality: "high" }).then(
+      (resized) => {
+        probe.close();
+        return resized;
+      },
+      () => probe
+    );
     const canvas = document.createElement("canvas");
-    canvas.width = Math.round(bitmap.width * scale);
-    canvas.height = Math.round(bitmap.height * scale);
+    canvas.width = width;
+    canvas.height = height;
     const ctx = canvas.getContext("2d");
     if (!ctx) return file;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
     ctx.fillStyle = "#fff"; // transparent PNGs get a white background instead of black
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
     bitmap.close();
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.85));
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
     if (!blob || blob.size >= file.size) return file;
     return new File([blob], file.name.replace(/\.\w+$/, "") + ".jpg", { type: "image/jpeg" });
   } catch {
@@ -68,7 +82,7 @@ function assertFile(file: File, allowed: string[], label: string, typeOnly = fal
 /** Uploads or replaces the student's avatar. Returns its public URL. */
 export async function uploadAvatar(original: File) {
   assertFile(original, AVATAR_TYPES, "Profile picture", true);
-  const file = await shrinkImage(original, 640);
+  const file = await shrinkImage(original, 1080);
   assertFile(file, AVATAR_TYPES, "Profile picture");
   const res = await api.post<{ key: string; url: string }>("/uploads/avatar", {
     base64: await fileToBase64(file),
@@ -84,7 +98,7 @@ export async function uploadAvatar(original: File) {
  */
 export async function uploadCoverImage(original: File) {
   assertFile(original, AVATAR_TYPES, "Cover image", true);
-  const file = await shrinkImage(original, 1600);
+  const file = await shrinkImage(original, 2400);
   assertFile(file, AVATAR_TYPES, "Cover image");
   const res = await api.post<{ url: string }>("/uploads/cover-image", {
     base64: await fileToBase64(file),
