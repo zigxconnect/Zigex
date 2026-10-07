@@ -129,8 +129,8 @@ export function OpportunityBoard({ items, searchInHeader = false }: { items: Boa
   return (
     <div>
       {/* Filters: every control has a visible label, the same height and the same focus ring. */}
-      <div className="rounded-2xl bg-[#F8FAFF] p-4 ring-1 ring-[#DCE5F5] sm:p-5">
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-[1fr_11rem] sm:items-end md:grid-cols-[1fr_11rem_11rem]">
+      <div className="rounded-2xl bg-[#F8FAFF] p-3.5 ring-1 ring-[#DCE5F5] sm:p-5">
+        <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-x-3 gap-y-4 sm:gap-4 sm:grid-cols-[1fr_11rem] sm:items-end md:grid-cols-[1fr_11rem_11rem]">
           <form
             className={`order-1 col-span-2 sm:order-none sm:col-span-1 ${searchInHeader ? "md:hidden" : "md:col-span-3"}`}
             role="search"
@@ -185,10 +185,12 @@ export function OpportunityBoard({ items, searchInHeader = false }: { items: Boa
             >
               <SelectPrimitive.Trigger
                 aria-labelledby={`${uid}-sort`}
-                className={`${control} inline-flex w-full items-center justify-between gap-3 px-4 font-medium data-[state=open]:border-[#155DFC] data-[state=open]:ring-4 data-[state=open]:ring-[#155DFC]/15`}
+                className={`${control} inline-flex w-full items-center justify-between gap-1.5 whitespace-nowrap px-3 font-medium sm:gap-3 sm:px-4 data-[state=open]:border-[#155DFC] data-[state=open]:ring-4 data-[state=open]:ring-[#155DFC]/15`}
               >
-                <SelectPrimitive.Value />
-                <SelectPrimitive.Icon>
+                <span className="min-w-0 truncate">
+                  <SelectPrimitive.Value />
+                </span>
+                <SelectPrimitive.Icon className="shrink-0">
                   <ChevronDown
                     className="h-4 w-4 text-[#4A5670]"
                     aria-hidden="true"
@@ -225,14 +227,14 @@ export function OpportunityBoard({ items, searchInHeader = false }: { items: Boa
             </SelectPrimitive.Root>
           </div>
 
-          <div className="order-2 col-span-2 sm:order-none sm:col-span-1 md:order-1">
+          <div className="order-2 col-span-2 min-w-0 sm:order-none sm:col-span-1 md:order-1">
             <span id={`${uid}-type`} className={fieldLabel}>
               Type
             </span>
             <div
               role="tablist"
               aria-labelledby={`${uid}-type`}
-              className="grid h-12 grid-cols-4 gap-1 rounded-xl border border-[#DCE5F5] bg-white p-1"
+              className="flex h-12 gap-1 rounded-xl border border-[#DCE5F5] bg-white p-1"
             >
               {TABS.map((t) => {
                 const active = tab === t.id;
@@ -245,7 +247,7 @@ export function OpportunityBoard({ items, searchInHeader = false }: { items: Boa
                     onClick={() =>
                       setParam("type", t.id === "all" ? null : t.id)
                     }
-                    className={`flex items-center justify-center gap-1.5 rounded-lg px-1 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] ${
+                    className={`flex flex-auto items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] ${
                       active
                         ? "bg-[#0B1B3F] text-white"
                         : "text-[#4A5670] hover:bg-[#F3F7FF] hover:text-[#0B1B3F]"
