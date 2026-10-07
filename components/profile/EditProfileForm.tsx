@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AlertCircle, Camera, Check, CheckCircle2, Loader2, Plus, X } from "lucide-react";
+import { AlertCircle, Camera, Check, CheckCircle2, ChevronDown, Loader2, Plus, X } from "lucide-react";
 import { saveMyProfile } from "@/lib/actions/profile.actions";
 import { uploadAvatar } from "@/lib/api/uploads";
 
@@ -74,113 +74,115 @@ function validate(v: ProfileValues): Partial<Record<keyof ProfileValues, string>
 }
 
 /**
- * Edit profile: one page in sections (editing isn't a sequence), loaded with
- * what's saved, saving only what changed. A preview and strength meter sit
- * beside the form so students see what companies will see.
+ * Edit profile, kept simple: a live header that looks like your profile, the
+ * three groups companies care about, and everything else folded away.
+ * Changes save on their own a moment after you stop typing; only changed,
+ * valid fields are sent, so nothing already saved can be blanked.
  */
 export function EditProfileForm({ initial, email, profileHref }: { initial: ProfileValues; email: string; profileHref: string | null }) {
   const router = useRouter();
-  const [saved, setSaved] = useState<ProfileValues>(initial);
   const [v, setV] = useState<ProfileValues>(initial);
+  const savedRef = useRef<ProfileValues>(initial);
   const [touched, setTouched] = useState<Partial<Record<keyof ProfileValues, boolean>>>({});
-  const [saving, setSaving] = useState(false);
-  const [status, setStatus] = useState<{ tone: "ok" | "error" | "warn"; text: string } | null>(null);
+  const [state, setState] = useState<"idle" | "pending" | "saving" | "saved" | "error">("idle");
+  const [note, setNote] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [more, setMore] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const errors = useMemo(() => validate(v), [v]);
+  const steps = strengthSteps(v);
+  const percent = Math.round((steps.filter((x) => x.done).length / steps.length) * 100);
+  const name = `${v.first_name} ${v.last_name}`.trim() || "Your name";
+  const err = (k: keyof ProfileValues) => (touched[k] ? errors[k] : undefined);
+
+  /** Send changed, valid fields; invalid ones wait until they're fixed. */
+  const flush = async (current: ProfileValues) => {
+    const e = validate(current);
+    const changed = (Object.keys(current) as (keyof ProfileValues)[]).filter(
+      (k) => k !== "avatar_url" && !e[k] && JSON.stringify(current[k]) !== JSON.stringify(savedRef.current[k])
+    );
+    if (!changed.length) {
+      setState(Object.keys(e).length ? "idle" : "saved");
+      return;
+    }
+    setState("saving");
+    try {
+      const result = await saveMyProfile(Object.fromEntries(changed.map((k) => [k, current[k]])));
+      if (!result.success) throw new Error(result.error);
+      savedRef.current = { ...savedRef.current, ...Object.fromEntries(changed.map((k) => [k, current[k]])) };
+      const notSaved = (result.unsupported ?? []).filter((k) => k in current);
+      setNote(notSaved.length ? "A few fields will save after a Zigex update." : null);
+      setState("saved");
+      router.refresh();
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "";
+      setNote(/username/i.test(msg) ? "That username is taken. Try another one." : null);
+      if (/username/i.test(msg)) setTouched((t) => ({ ...t, username: true }));
+      setState("error");
+    }
+  };
+
+  const latest = useRef<ProfileValues>(initial);
   const set = <K extends keyof ProfileValues>(k: K, value: ProfileValues[K]) => {
-    setV((p) => ({ ...p, [k]: value }));
-    setStatus(null);
+    const next = { ...latest.current, [k]: value };
+    latest.current = next;
+    setV(next);
+    if (timer.current) clearTimeout(timer.current);
+    setState("pending");
+    // Text saves after a pause in typing; tags and choices save almost at once.
+    timer.current = setTimeout(() => flush(latest.current), Array.isArray(value) || k === "work_mode" ? 400 : 1200);
   };
   const touch = (k: keyof ProfileValues) => setTouched((t) => ({ ...t, [k]: true }));
 
-  const errors = useMemo(() => validate(v), [v]);
-  const changed = useMemo(
-    () => (Object.keys(v) as (keyof ProfileValues)[]).filter((k) => JSON.stringify(v[k]) !== JSON.stringify(saved[k])),
-    [v, saved]
-  );
-  const dirty = changed.length > 0;
-  const steps = strengthSteps(v);
-  const percent = Math.round((steps.filter((s) => s.done).length / steps.length) * 100);
-
-  // Warn before leaving with unsaved changes.
+  // Don't lose a change that's still waiting to be sent.
   useEffect(() => {
-    if (!dirty) return;
+    if (state !== "pending" && state !== "saving") return;
     const warn = (e: BeforeUnloadEvent) => {
       e.preventDefault();
       e.returnValue = "";
     };
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
-  }, [dirty]);
-
-
-  const save = async () => {
-    const problems = changed.filter((k) => errors[k]);
-    if (problems.length) {
-      setTouched((t) => ({ ...t, ...Object.fromEntries(problems.map((k) => [k, true])) }));
-      document.getElementById(`f-${problems[0]}`)?.focus();
-      setStatus({ tone: "error", text: "Fix the highlighted fields, then save." });
-      return;
-    }
-    setSaving(true);
-    setStatus(null);
-    try {
-      // Only what changed is sent, so untouched fields can never be blanked by accident.
-      const updates = Object.fromEntries(changed.map((k) => [k, v[k]]));
-      const result = await saveMyProfile(updates);
-      if (!result.success) throw new Error(result.error);
-      const notSaved = (result.unsupported ?? []).filter((k) => k in v);
-      setSaved(v);
-      setStatus(
-        notSaved.length
-          ? { tone: "warn", text: "Most changes are saved. A few fields can't be saved yet and will work after a Zigex update." }
-          : { tone: "ok", text: "Profile saved. Companies see these changes straight away." }
-      );
-      router.refresh();
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "";
-      setStatus({
-        tone: "error",
-        text: /username/i.test(msg)
-          ? "That username is taken. Try another one."
-          : "Your changes weren't saved. Check your connection and try again.",
-      });
-    } finally {
-      setSaving(false);
-    }
-  };
+  }, [state]);
 
   const changePhoto = async (file: File) => {
     setUploading(true);
-    setStatus(null);
     try {
       const { url } = await uploadAvatar(file);
-      // The photo saves immediately; it's its own action, not part of the form.
       const result = await saveMyProfile({ avatar_url: url });
       if (!result.success) throw new Error(result.error);
-      setV((p) => ({ ...p, avatar_url: url }));
-      setSaved((p) => ({ ...p, avatar_url: url }));
-      setStatus({ tone: "ok", text: "Photo updated." });
+      latest.current = { ...latest.current, avatar_url: url };
+      setV(latest.current);
+      savedRef.current = { ...savedRef.current, avatar_url: url };
+      setNote(null);
+      setState("saved");
       router.refresh();
-    } catch (err) {
-      setStatus({ tone: "error", text: err instanceof Error && /MB|type|format/i.test(err.message) ? err.message : "The photo couldn't be uploaded. Use a JPG or PNG under 5 MB." });
+    } catch (error) {
+      setNote(error instanceof Error && /MB|type|format/i.test(error.message) ? error.message : "The photo couldn't be uploaded. Use a JPG or PNG under 5 MB.");
+      setState("error");
     } finally {
       setUploading(false);
     }
   };
 
-  const err = (k: keyof ProfileValues) => (touched[k] ? errors[k] : undefined);
-  const name = `${v.first_name} ${v.last_name}`.trim() || "Your name";
+  const openSection = (section: string) => {
+    if (["experience", "private", "more"].includes(section)) setMore(true);
+    requestAnimationFrame(() => document.getElementById(section)?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  };
 
   return (
-    <div className="pb-28">
-      {/* Live header: looks like the profile companies see, and updates as you type */}
+    <div className="pb-16">
+      {/* Live header: looks like your profile and updates as you type */}
       <header className="overflow-hidden rounded-2xl bg-white ring-1 ring-[#DCE5F5]">
         <div className="h-24 bg-[linear-gradient(120deg,#0B1B3F_0%,#123A9C_55%,#155DFC_100%)] sm:h-28" />
         <div className="grid gap-6 px-5 pb-6 sm:px-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
           <div className="min-w-0">
-            <div className="-mt-12 w-fit rounded-full ring-4 ring-white">
-              <PhotoPicker url={v.avatar_url} name={name} busy={uploading} onPick={changePhoto} />
+            <div className="-mt-12 flex items-end justify-between gap-3">
+              <div className="w-fit rounded-full ring-4 ring-white">
+                <PhotoPicker url={v.avatar_url} name={name} busy={uploading} onPick={changePhoto} />
+              </div>
+              <SaveStatus state={state} onRetry={() => flush(latest.current)} />
             </div>
             <h1 className="mt-3 truncate font-heading text-[28px] font-bold leading-tight tracking-tight text-[#0B1B3F]">{name}</h1>
             <p className="mt-1 text-base text-[#4A5670]">
@@ -197,9 +199,9 @@ export function EditProfileForm({ initial, email, profileHref }: { initial: Prof
                 </Link>
               )}
             </p>
+            {note && <p className="mt-2 text-sm text-[#B54708]">{note}</p>}
           </div>
 
-          {/* Strength ring and the next things to add */}
           <div className="rounded-xl bg-[#F8FAFF] p-4 ring-1 ring-[#EEF2FA] lg:mt-5">
             <div className="flex items-center gap-3">
               <Ring percent={percent} />
@@ -213,146 +215,151 @@ export function EditProfileForm({ initial, email, profileHref }: { initial: Prof
                 {steps
                   .filter((x) => !x.done)
                   .slice(0, 3)
-                  .map((x) => (
-                    <a key={x.label} href={`#${x.section}`} className="inline-flex h-8 items-center gap-1 rounded-full bg-white px-3 text-sm font-medium text-[#155DFC] ring-1 ring-[#DCE5F5] hover:ring-[#155DFC]/40">
-                      <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-                      {x.label.replace(/^A /, "")}
-                    </a>
-                  ))}
+                  .map((x) =>
+                    x.label === "Profile photo" ? (
+                      <label key={x.label} className="inline-flex h-8 cursor-pointer items-center gap-1 rounded-full bg-white px-3 text-sm font-medium text-[#155DFC] ring-1 ring-[#DCE5F5] hover:ring-[#155DFC]/40">
+                        <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                        Profile photo
+                        <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => e.target.files?.[0] && changePhoto(e.target.files[0])} />
+                      </label>
+                    ) : (
+                      <button key={x.label} type="button" onClick={() => openSection(x.section)} className="inline-flex h-8 items-center gap-1 rounded-full bg-white px-3 text-sm font-medium text-[#155DFC] ring-1 ring-[#DCE5F5] hover:ring-[#155DFC]/40">
+                        <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                        {x.label.replace(/^A /, "")}
+                      </button>
+                    )
+                  )}
               </div>
             )}
           </div>
         </div>
       </header>
 
+      <form noValidate onSubmit={(e) => e.preventDefault()} className="mt-6 divide-y divide-[#EEF2FA] rounded-2xl bg-white ring-1 ring-[#DCE5F5]">
+        <Section id="basics" title="About you" note="Who you are and where you study.">
+          <div className="grid gap-5 sm:grid-cols-2">
+            <TextField k="first_name" label="First name" v={v} set={set} touch={touch} error={err("first_name")} autoComplete="given-name" />
+            <TextField k="last_name" label="Last name" v={v} set={set} touch={touch} error={err("last_name")} autoComplete="family-name" />
+          </div>
+          <div id="school" className="grid scroll-mt-24 gap-5 sm:grid-cols-2">
+            <TextField k="university" label="School" v={v} set={set} touch={touch} placeholder="University of Bamenda" />
+            <TextField k="field_of_study" label="Course" v={v} set={set} touch={touch} placeholder="Computer engineering" />
+          </div>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <TextField k="graduation_year" label="Graduation year" v={v} set={(k, val) => set(k, String(val).replace(/\D/g, "").slice(0, 4))} touch={touch} error={err("graduation_year")} inputMode="numeric" placeholder="2027" />
+            <TextField k="location" label="Town" v={v} set={set} touch={touch} placeholder="Bamenda" autoComplete="address-level2" />
+          </div>
+          <TextArea k="about" label="Short intro" v={v} set={set} touch={touch} max={600} hint="Two or three sentences: what you study, what you build, what you're looking for." />
+        </Section>
 
-        {/* Settings rows on one surface: what each section is for on the left, fields on the right */}
-        <form
-          noValidate
-          onSubmit={(e) => {
-            e.preventDefault();
-            save();
-          }}
-          className="mt-6 divide-y divide-[#EEF2FA] rounded-2xl bg-white ring-1 ring-[#DCE5F5]"
-        >
-          <Section id="basics" title="Basics" note="Your name and contact details.">
-            <div className="grid gap-5 sm:grid-cols-2">
-              <TextField k="first_name" label="First name" v={v} set={set} touch={touch} error={err("first_name")} autoComplete="given-name" />
-              <TextField k="last_name" label="Last name" v={v} set={set} touch={touch} error={err("last_name")} autoComplete="family-name" />
-            </div>
-            <TextField
-              k="username"
-              label="Username"
-              v={v}
-              set={(k, val) => set(k, String(val).replace(/\s+/g, ""))}
-              touch={touch}
-              error={err("username")}
-              hint="Your profile link: zigexconnect.com/profile/username. Letters, numbers, dots, dashes, underscores."
-              prefix="@"
-            />
-            <div className="grid gap-5 sm:grid-cols-2">
-              <TextField k="phone" label="Phone (WhatsApp)" v={v} set={set} touch={touch} error={err("phone")} type="tel" autoComplete="tel" placeholder="+237 6XX XX XX XX" hint="Only shared with companies you apply to." />
-              <TextField k="location" label="Town" v={v} set={set} touch={touch} placeholder="Bamenda" autoComplete="address-level2" />
-            </div>
-            <p className="text-sm text-[#7B869C]">
-              Sign-in email: <span className="text-[#0B1B3F]">{email}</span>
-            </p>
-            <TextArea k="about" label="About you" v={v} set={set} touch={touch} max={600} hint="Two or three sentences: what you study, what you build, what you're looking for." />
-          </Section>
+        <Section id="skills" title="Skills" note="Tap to add. Companies look for these first.">
+          <Tags label="Skills" value={v.hard_skills} onChange={(x) => set("hard_skills", x)} suggestions={SKILLS} placeholder="Add a skill, like Figma" />
+          <Tags label="Languages" value={v.languages} onChange={(x) => set("languages", x)} suggestions={LANGUAGES} placeholder="Add a language" />
+        </Section>
 
-          <Section id="school" title="School" note="Where you study and when you finish.">
-            <TextField k="university" label="School or university" v={v} set={set} touch={touch} placeholder="University of Bamenda" />
-            <div className="grid gap-5 sm:grid-cols-2">
-              <TextField k="field_of_study" label="Course" v={v} set={set} touch={touch} placeholder="Computer engineering" />
-              <TextField k="degree" label="Degree" v={v} set={set} touch={touch} placeholder="Bachelor of Technology" />
-            </div>
-            <div className="sm:max-w-[12rem]">
-              <TextField k="graduation_year" label="Graduation year" v={v} set={(k, val) => set(k, String(val).replace(/\D/g, "").slice(0, 4))} touch={touch} error={err("graduation_year")} inputMode="numeric" placeholder="2027" />
-            </div>
-          </Section>
-
-          <Section id="skills" title="Skills" note="What you can do. Companies search and filter by these.">
-            <Tags label="Skills" value={v.hard_skills} onChange={(x) => set("hard_skills", x)} suggestions={SKILLS} placeholder="Add a skill, like Figma" />
-            <Tags label="Strengths" value={v.soft_skills} onChange={(x) => set("soft_skills", x)} suggestions={STRENGTHS} placeholder="Add a strength" />
-            <Tags label="Languages" value={v.languages} onChange={(x) => set("languages", x)} suggestions={LANGUAGES} placeholder="Add a language" />
-          </Section>
-
-          <Section id="experience" title="Experience" note="Roles you've had (a class project or club counts) and what you'd like next.">
-            <Tags label="Roles" value={v.previous_roles} onChange={(x) => set("previous_roles", x)} suggestions={ROLES} placeholder="Add a role" />
-            <Tags label="Achievements" value={v.achievements} onChange={(x) => set("achievements", x)} suggestions={ACHIEVEMENTS} placeholder="Add an achievement" />
-            <Tags label="Industries you'd like to work in" value={v.preferred_industries} onChange={(x) => set("preferred_industries", x)} suggestions={INDUSTRIES} placeholder="Add an industry" />
-            <fieldset>
-              <legend className="mb-2 text-sm font-medium text-[#0B1B3F]">How you prefer to work</legend>
-              <div className="flex flex-wrap gap-2">
-                {WORK_MODES.map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    aria-pressed={v.work_mode === m}
-                    onClick={() => set("work_mode", v.work_mode === m ? "" : m)}
-                    className={`h-10 rounded-full px-4 text-sm font-medium transition-colors ${v.work_mode === m ? "bg-[#0B1B3F] text-white" : "bg-white text-[#0B1B3F] ring-1 ring-[#DCE5F5] hover:ring-[#B9C8E6]"}`}
-                  >
-                    {m}
-                  </button>
-                ))}
-              </div>
-            </fieldset>
-          </Section>
-
-          <Section id="links" title="Links and interests" note="Show your work. Links open from your profile.">
-            <TextField k="linkedin_url" label="LinkedIn" v={v} set={set} touch={touch} error={err("linkedin_url")} type="url" placeholder="https://linkedin.com/in/your-name" />
+        <Section id="links" title="Links" note="Where companies can see your work.">
+          <TextField k="linkedin_url" label="LinkedIn" v={v} set={set} touch={touch} error={err("linkedin_url")} type="url" placeholder="https://linkedin.com/in/your-name" />
+          <div className="grid gap-5 sm:grid-cols-2">
             <TextField k="github_url" label="GitHub" v={v} set={set} touch={touch} error={err("github_url")} type="url" placeholder="https://github.com/your-name" />
             <TextField k="portfolio_url" label="Portfolio or website" v={v} set={set} touch={touch} error={err("portfolio_url")} type="url" placeholder="https://" />
-            <Tags label="Interests" value={v.interests} onChange={(x) => set("interests", x)} suggestions={INTERESTS} placeholder="Add an interest" />
-          </Section>
-
-          <Section id="private" title="Private details" note="Not shown on your profile page. Helps programs support you.">
-            <div className="sm:max-w-[12rem]">
-              <TextField k="gpa" label="GPA (optional)" v={v} set={set} touch={touch} error={err("gpa")} inputMode="decimal" placeholder="3.2" />
-            </div>
-            <TextArea k="accommodations" label="Support you need (optional)" v={v} set={set} touch={touch} max={400} hint="For example a laptop, transport or accessibility needs." />
-          </Section>
-        </form>
-
-      {/* Save bar: appears once something changed, or to report the result */}
-      {(dirty || status) && (
-        <div className="fixed inset-x-0 bottom-16 z-30 border-t border-[#DCE5F5] bg-white/95 backdrop-blur lg:bottom-0 lg:left-64">
-          <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
-            <p className={`flex min-w-0 flex-1 items-center gap-2 text-sm ${status?.tone === "error" ? "text-[#B42318]" : status?.tone === "warn" ? "text-[#B54708]" : status ? "text-[#067647]" : "text-[#0B1B3F]"}`} role="status" aria-live="polite">
-              {status?.tone === "ok" ? <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" /> : status ? <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" /> : null}
-              <span className="truncate">
-                {status?.text ?? `${changed.length} unsaved change${changed.length === 1 ? "" : "s"}`}
-              </span>
-            </p>
-            {dirty && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setV(saved);
-                    setTouched({});
-                    setStatus(null);
-                  }}
-                  disabled={saving}
-                  className="h-11 rounded-xl px-4 text-[15px] font-semibold text-[#4A5670] hover:bg-[#F3F7FF]"
-                >
-                  Discard
-                </button>
-                <button
-                  type="button"
-                  onClick={save}
-                  disabled={saving}
-                  className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#155DFC] px-5 text-[15px] font-semibold text-white hover:bg-[#0F3FB8] disabled:opacity-60"
-                >
-                  {saving && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-                  {saving ? "Saving…" : "Save changes"}
-                </button>
-              </>
-            )}
           </div>
+        </Section>
+
+        {/* Everything else, folded away */}
+        <div id="more" className="scroll-mt-24">
+          <button
+            type="button"
+            onClick={() => setMore((m) => !m)}
+            aria-expanded={more}
+            className="flex w-full items-center justify-between gap-3 px-5 py-5 text-left sm:px-6 lg:px-8"
+          >
+            <span>
+              <span className="block font-heading text-base font-semibold text-[#0B1B3F]">More details</span>
+              <span className="mt-0.5 block text-sm text-[#4A5670]">Optional. Username, phone, experience, interests and private details.</span>
+            </span>
+            <ChevronDown className={`h-5 w-5 shrink-0 text-[#4A5670] transition-transform ${more ? "rotate-180" : ""}`} aria-hidden="true" />
+          </button>
+          {more && (
+            <div className="divide-y divide-[#EEF2FA] border-t border-[#EEF2FA]">
+              <Section id="contact" title="Contact and username" note="Your profile link and how companies reach you.">
+                <TextField
+                  k="username"
+                  label="Username"
+                  v={v}
+                  set={(k, val) => set(k, String(val).replace(/\s+/g, ""))}
+                  touch={touch}
+                  error={err("username")}
+                  hint="Your profile link: zigexconnect.com/profile/username."
+                  prefix="@"
+                />
+                <TextField k="phone" label="Phone (WhatsApp)" v={v} set={set} touch={touch} error={err("phone")} type="tel" autoComplete="tel" placeholder="+237 6XX XX XX XX" hint="Only shared with companies you apply to." />
+                <p className="text-sm text-[#7B869C]">
+                  Sign-in email: <span className="text-[#0B1B3F]">{email}</span>
+                </p>
+              </Section>
+              <Section id="experience" title="Experience" note="Roles you've had (a class project or club counts) and what you'd like next.">
+                <TextField k="degree" label="Degree" v={v} set={set} touch={touch} placeholder="Bachelor of Technology" />
+                <Tags label="Roles" value={v.previous_roles} onChange={(x) => set("previous_roles", x)} suggestions={ROLES} placeholder="Add a role" />
+                <Tags label="Strengths" value={v.soft_skills} onChange={(x) => set("soft_skills", x)} suggestions={STRENGTHS} placeholder="Add a strength" />
+                <Tags label="Achievements" value={v.achievements} onChange={(x) => set("achievements", x)} suggestions={ACHIEVEMENTS} placeholder="Add an achievement" />
+                <Tags label="Industries you'd like to work in" value={v.preferred_industries} onChange={(x) => set("preferred_industries", x)} suggestions={INDUSTRIES} placeholder="Add an industry" />
+                <fieldset>
+                  <legend className="mb-2 text-sm font-medium text-[#0B1B3F]">How you prefer to work</legend>
+                  <div className="flex flex-wrap gap-2">
+                    {WORK_MODES.map((m) => (
+                      <button
+                        key={m}
+                        type="button"
+                        aria-pressed={v.work_mode === m}
+                        onClick={() => set("work_mode", v.work_mode === m ? "" : m)}
+                        className={`h-10 rounded-full px-4 text-sm font-medium transition-colors ${v.work_mode === m ? "bg-[#0B1B3F] text-white" : "bg-white text-[#0B1B3F] ring-1 ring-[#DCE5F5] hover:ring-[#B9C8E6]"}`}
+                      >
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
+                <Tags label="Interests" value={v.interests} onChange={(x) => set("interests", x)} suggestions={INTERESTS} placeholder="Add an interest" />
+              </Section>
+              <Section id="private" title="Private details" note="Not shown on your profile page. Helps programs support you.">
+                <div className="sm:max-w-[12rem]">
+                  <TextField k="gpa" label="GPA" v={v} set={set} touch={touch} error={err("gpa")} inputMode="decimal" placeholder="3.2" />
+                </div>
+                <TextArea k="accommodations" label="Support you need" v={v} set={set} touch={touch} max={400} hint="For example a laptop, transport or accessibility needs." />
+              </Section>
+            </div>
+          )}
         </div>
-      )}
+      </form>
     </div>
+  );
+}
+
+/** The one save indicator: no Save button to forget. */
+function SaveStatus({ state, onRetry }: { state: "idle" | "pending" | "saving" | "saved" | "error"; onRetry: () => void }) {
+  if (state === "idle") return <span className="pb-1 text-sm text-[#7B869C]">Changes save automatically</span>;
+  if (state === "pending" || state === "saving")
+    return (
+      <span className="inline-flex items-center gap-1.5 pb-1 text-sm text-[#4A5670]" role="status">
+        <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+        Saving…
+      </span>
+    );
+  if (state === "saved")
+    return (
+      <span className="inline-flex items-center gap-1.5 pb-1 text-sm text-[#067647]" role="status">
+        <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+        All changes saved
+      </span>
+    );
+  return (
+    <span className="inline-flex items-center gap-2 pb-1 text-sm text-[#B42318]" role="alert">
+      <AlertCircle className="h-4 w-4" aria-hidden="true" />
+      Not saved.
+      <button type="button" onClick={onRetry} className="font-semibold underline underline-offset-2">
+        Try again
+      </button>
+    </span>
   );
 }
 
