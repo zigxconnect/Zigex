@@ -62,7 +62,7 @@ function BoardSkeleton() {
     <div aria-busy="true" aria-label="Loading opportunities">
       <div className="h-[196px] rounded-2xl bg-[#F8FAFF] ring-1 ring-[#DCE5F5] motion-safe:animate-pulse" />
       <div className="mt-6 h-4 w-40 rounded bg-[#EEF2FA]" />
-      <div className="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="mt-3 grid gap-5 sm:grid-cols-2">
         {Array.from({ length: 6 }, (_, i) => (
           <OpportunityCardSkeleton key={i} />
         ))}

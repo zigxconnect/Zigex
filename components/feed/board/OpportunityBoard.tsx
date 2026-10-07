@@ -323,7 +323,7 @@ export function OpportunityBoard({ items, searchInHeader = false }: { items: Boa
           </div>
         )
       ) : (
-        <ul className="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <ul className="mt-3 grid gap-5 sm:grid-cols-2">
           {results.slice(0, visible).map((item) => (
             <li key={`${item.kind}-${item.id}`}>
               <OpportunityCard item={item} />
@@ -364,7 +364,7 @@ export function OpportunityBoard({ items, searchInHeader = false }: { items: Boa
           </button>
           {/* Expanded by default when nothing is open, so the page is never empty. */}
           {(showClosed || open.length === 0) && (
-            <ul className="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <ul className="mt-3 grid gap-5 sm:grid-cols-2">
               {closed.map((item) => (
                 <li key={`closed-${item.kind}-${item.id}`}>
                   <OpportunityCard item={item} />
