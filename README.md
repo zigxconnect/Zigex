@@ -52,7 +52,6 @@ Secrets go in `.env.local`, which git ignores. Never give a secret a `NEXT_PUBLI
 | `npm run dev` | Development server |
 | `npm run build` / `npm start` | Production build and server |
 | `npm run lint` | Lint |
-| `npm run check:backend` | Checks which endpoints the app calls exist on the backend (`BACKEND_TOKEN=<student token> npm run check:backend`) |
 
 ## Project layout
 
