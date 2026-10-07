@@ -1,7 +1,8 @@
 import "server-only";
 import { serverApi } from "../server-client";
 import { isEndpointMissing, whenAvailable } from "../errors";
-import { getFeedItem, type FeedKind } from "./feed";
+import { getFeedItemFast, type FeedKind } from "./feed";
+import { fetchMyApplicationRows } from "./applications";
 
 /**
  * A student's active placements (accepted / RSVP-confirmed applications),
@@ -57,7 +58,7 @@ async function withOpportunity(app: Placement): Promise<Placement> {
 
   let opportunity = embedded;
   if (!opportunity && targetId) {
-    opportunity = await getFeedItem(feed, targetId).catch(() => null);
+    opportunity = await getFeedItemFast(feed, targetId).catch(() => null);
   }
   if (opportunity) {
     const company = opportunity.company_profiles ?? opportunity.company ?? null;
@@ -68,8 +69,8 @@ async function withOpportunity(app: Placement): Promise<Placement> {
 
 /** Accepted / RSVP-confirmed applications, newest first, with their opportunity attached. */
 export async function listPlacements(): Promise<Placement[]> {
-  const res = await serverApi.get<Placement[]>("/applications");
-  const active = (res.data ?? [])
+  const rows = (await fetchMyApplicationRows()) as unknown as Placement[];
+  const active = rows
     .filter((app) => ACTIVE_STATUSES.has(String(app.status).toLowerCase()))
     .map((app) => ({ ...app, application_type: placementType(app) }))
     .sort((a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime());

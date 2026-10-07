@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { BadgeCheck, Briefcase, CalendarClock, CalendarDays, GraduationCap } from "lucide-react";
 import { isClosed, type BoardItem } from "./board-types";
+import { CoverImage } from "@/components/CoverImage";
 
 const KIND = {
   internships: { label: "Internship", noun: "internship", verb: "Apply", icon: Briefcase },
@@ -77,7 +78,7 @@ export function OpportunityCard({ item, headingLevel = 3 }: { item: BoardItem; h
       <Heading className="mt-2 line-clamp-2 min-h-[2.75rem] font-heading text-lg font-semibold leading-snug text-[#0B1B3F]">{item.title}</Heading>
 
       {/* Middle: the image as uploaded, top-anchored so a flyer's headline stays visible */}
-      <div className="mt-3 aspect-[4/3] overflow-hidden rounded-xl bg-[#F3F7FF] ring-1 ring-[#EEF2FA]">
+      <div className="relative mt-3 aspect-[4/3] overflow-hidden rounded-xl bg-[#F3F7FF] ring-1 ring-[#EEF2FA]">
         <CardImage src={item.image} closed={closed} Icon={kind.icon} />
       </div>
 
@@ -132,12 +133,11 @@ function CardImage({ src, closed, Icon }: { src: string | null; closed: boolean;
     );
   }
   return (
-    <img
+    <CoverImage
       src={src}
-      alt=""
-      loading="lazy"
-      onError={() => setFailed(true)}
-      className={`h-full w-full object-cover object-top ${closed ? "saturate-[0.6]" : ""}`}
+      sizes="(min-width: 1280px) 360px, (min-width: 640px) 45vw, 100vw"
+      onFail={() => setFailed(true)}
+      className={`object-cover object-top ${closed ? "saturate-[0.6]" : ""}`}
     />
   );
 }

@@ -101,6 +101,9 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      // Uploads (Cloudflare R2): development address and the custom domain.
+      { protocol: 'https', hostname: '*.r2.dev', pathname: '/**' },
+      { protocol: 'https', hostname: 'files.zigexconnect.com', pathname: '/**' },
     ],
   },
 

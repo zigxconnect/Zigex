@@ -37,11 +37,24 @@ export function PushNotificationManager() {
                     : null;
             }
             if (existingSubscription) {
-                console.log("[PUSH_MANAGER] Found existing subscription.");
-                const serialized = existingSubscription.toJSON();
-                const result = await subscribeToPushNotifications(serialized, window.location.origin);
+                // Re-send it at most once a day (or when it changes), not on every page:
+                // each sync is a backend round trip of up to a few seconds.
+                const syncKey = "zigex_push_synced";
+                let last: { endpoint?: string; at?: number } = {};
+                try {
+                    last = JSON.parse(localStorage.getItem(syncKey) ?? "{}");
+                } catch {
+                    // Storage blocked: sync anyway.
+                }
+                const fresh = last.endpoint === existingSubscription.endpoint && Date.now() - (last.at ?? 0) < 24 * 60 * 60 * 1000;
+                if (fresh) return;
+                const result = await subscribeToPushNotifications(existingSubscription.toJSON(), window.location.origin);
                 if (result.success) {
-                    console.log("[PUSH_MANAGER] Subscription synced with server.");
+                    try {
+                        localStorage.setItem(syncKey, JSON.stringify({ endpoint: existingSubscription.endpoint, at: Date.now() }));
+                    } catch {
+                        // ignore
+                    }
                 }
                 return;
             }

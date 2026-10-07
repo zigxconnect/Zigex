@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Inter, Host_Grotesk } from "next/font/google";
-import PushNotificationManager from "@/components/providers/PushNotificationManager";
 import ThemeProvider from "@/components/providers/ThemeProvider";
 import "./globals.css";
 import "@/styles/rich-content.css";
@@ -137,7 +136,6 @@ export default function RootLayout({
       </head>
       <body className={`${inter.variable} ${hostGrotesk.variable} font-sans antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
-          <PushNotificationManager />
           {children}
         </ThemeProvider>
 

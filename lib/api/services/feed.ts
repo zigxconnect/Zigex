@@ -54,6 +54,25 @@ const slugify = (value: string) =>
   value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
 /**
+ * One item's public details, without the visitor's token and cached for 2
+ * minutes like the board lists. 404 (not in this feed) → null.
+ */
+export async function getPublicFeedItem(kind: FeedKind, id: string): Promise<FeedRow | null> {
+  const res = await fetch(`${BACKEND_URL}${API_PREFIX}/feed/${kind}/${encodeURIComponent(id)}`, {
+    next: { revalidate: 120 },
+    signal: AbortSignal.timeout(30_000),
+  });
+  if (res.status === 404) return null;
+  const payload = await parseResponse<FeedRow>(res);
+  return payload.data ? normalise(payload.data) : null;
+}
+
+/** Cached public details first; the signed-in call only if that fails. */
+export function getFeedItemFast(kind: FeedKind, id: string): Promise<FeedRow | null> {
+  return getPublicFeedItem(kind, id).catch(() => getFeedItem(kind, id));
+}
+
+/**
  * Detail pages are linked by UUID or by a slug of the title. The backend only
  * looks up by id, so a slug is resolved by searching each feed for the title.
  */
@@ -72,7 +91,8 @@ export async function findFeedItemBySlug(slug: string): Promise<{ kind: FeedKind
 
 /** Other listings from the same company (GET /feed/{kind}?companyId=, filtered here too). */
 export async function listCompanyFeed(kind: FeedKind, companyId: string, excludeId?: string, limit = 6) {
-  const rows = await listFeed(kind, undefined, companyId);
+  // The public board lists are cached for 2 minutes, so this usually costs no backend call.
+  const rows = await listPublicFeed(kind);
   return rows.filter((row) => row.company_id === companyId && row.id !== excludeId).slice(0, limit);
 }
 

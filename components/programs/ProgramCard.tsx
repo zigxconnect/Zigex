@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BadgeCheck, CalendarClock } from "lucide-react";
 import type { FeedRow } from "@/lib/api/services/feed";
+import { CoverImage } from "@/components/CoverImage";
 
 const DAY = 86_400_000;
 
@@ -114,13 +115,12 @@ export function ProgramCard({ program: p }: { program: ProgramView }) {
       </h3>
 
       {/* Middle: the flyer, top-anchored so its own headline stays visible */}
-      <div className="mt-3 aspect-[4/3] overflow-hidden rounded-xl bg-[#F3F7FF] ring-1 ring-[#EEF2FA]">
+      <div className="relative mt-3 aspect-[4/3] overflow-hidden rounded-xl bg-[#F3F7FF] ring-1 ring-[#EEF2FA]">
         {p.image && (
-          <img
+          <CoverImage
             src={p.image}
-            alt=""
-            loading="lazy"
-            className={`h-full w-full object-cover object-top ${p.open ? "" : "saturate-[0.6]"}`}
+            sizes="(min-width: 1280px) 360px, (min-width: 640px) 45vw, 100vw"
+            className={`object-cover object-top ${p.open ? "" : "saturate-[0.6]"}`}
           />
         )}
       </div>

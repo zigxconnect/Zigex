@@ -2,7 +2,7 @@
 import { unstable_rethrow } from "next/navigation";
 
 import { cache } from "react";
-import { serverApi } from "@/lib/api/server-client";
+import { fetchMyApplicationRows } from "@/lib/api/services/applications";
 import { ApiClientError } from "@/lib/api/errors";
 import { getSession } from "@/lib/api/auth";
 import { getMyProfile, updateMyProfile } from "@/lib/api/services/profile";
@@ -49,8 +49,7 @@ export interface FormattedUserData {
 /** The student's applications (GET /applications); empty on any failure. */
 const getMyApplications = cache(async (): Promise<{ status?: string }[]> => {
   try {
-    const res = await serverApi.get<{ status?: string }[]>("/applications");
-    return res.data ?? [];
+    return await fetchMyApplicationRows();
   } catch (error) {
     // Let Next.js's own signals (e.g. "this page reads cookies, render it per request") through.
     unstable_rethrow(error);

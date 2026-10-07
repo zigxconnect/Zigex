@@ -1,7 +1,8 @@
 import "server-only";
+import { cache } from "react";
 import { serverApi } from "../server-client";
 import { ApiClientError, isEndpointMissing } from "../errors";
-import { getFeedItem } from "./feed";
+import { getFeedItemFast } from "./feed";
 import {
   hydrateApplications,
   normaliseApplication,
@@ -63,13 +64,22 @@ const SPEC_APPLICATION_FIELDS: (keyof SpecApplicationFields)[] = [
  * The signed-in student's applications, newest first. With `withPostings`
  * (default) each row gets its internship / program / event attached.
  */
+/**
+ * GET /applications, once per request: the layout, Explore, the workspace
+ * check and the apply panel all need it, and the backend takes 0.5–1.5 s.
+ */
+export const fetchMyApplicationRows = cache(async (): Promise<ApplicationRow[]> => {
+  const res = await serverApi.get<ApplicationRow[]>("/applications");
+  return res.data ?? [];
+});
+
 export async function listApplications({ withPostings = true }: { withPostings?: boolean } = {}): Promise<
   ApplicationRow[]
 > {
-  const res = await serverApi.get<ApplicationRow[]>("/applications");
+  const data = await fetchMyApplicationRows();
   const rows = withPostings
-    ? await hydrateApplications(res.data ?? [], (path, id) => getFeedItem(path, id))
-    : (res.data ?? []).map(normaliseApplication);
+    ? await hydrateApplications(data, (path, id) => getFeedItemFast(path, id))
+    : data.map(normaliseApplication);
   return rows.sort((a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime());
 }
 

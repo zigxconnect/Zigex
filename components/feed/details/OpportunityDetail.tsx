@@ -81,7 +81,8 @@ export async function OpportunityDetail({ id, back }: { id: string; back: BackLi
   const companyId: string | undefined = company?.id || raw.company_id;
 
   // Signed-in students get the application form prefilled from their profile.
-  const prefill: ApplyPrefill = await (async () => {
+  // Prefill and the application status don't depend on each other: fetch both at once.
+  const prefillPromise: Promise<ApplyPrefill> = (async () => {
     if (!isAuthenticated) return {};
     const row = await getMyProfile().catch(() => null);
     const p = (row?.profile ?? row) as Record<string, any> | null;
@@ -93,7 +94,8 @@ export async function OpportunityDetail({ id, back }: { id: string; back: BackLi
     return { fullName: tidy(p.full_name), school: tidy(p.university), avatar: tidy(p.avatar_url) ?? tidy(p.profile_picture) ?? null, gaps };
   })();
 
-  const [status, applicationStatus] = await Promise.all([
+  const [prefill, status, applicationStatus] = await Promise.all([
+    prefillPromise,
     isOpportunityOpen(raw, raw._type),
     getApplicationStatus(raw.id, raw._type),
   ]);

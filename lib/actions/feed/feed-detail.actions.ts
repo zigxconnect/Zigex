@@ -2,7 +2,7 @@
 "use server";
 
 import { cache } from "react";
-import { findFeedItemBySlug, getFeedItem, listCompanyFeed, type FeedKind, type FeedRow } from "@/lib/api/services/feed";
+import { findFeedItemBySlug, getFeedItem, getPublicFeedItem, listCompanyFeed, type FeedKind, type FeedRow } from "@/lib/api/services/feed";
 import { findApplicationFor } from "@/lib/api/services/applications";
 
 export type FeedType = "internships" | "programs" | "events" | "announcements";
@@ -20,7 +20,10 @@ export const getFeedItemById = cache(async (idOrSlug: string): Promise<{ data: F
   try {
     if (UUID_RE.test(idOrSlug)) {
       // The id alone doesn't say which feed it belongs to — ask all three.
-      const items = await Promise.all(FEED_KINDS.map((kind) => getFeedItem(kind, idOrSlug)));
+      // Public and cached for 2 minutes; the signed-in call is only a fallback.
+      const items = await Promise.all(
+        FEED_KINDS.map((kind) => getPublicFeedItem(kind, idOrSlug).catch(() => getFeedItem(kind, idOrSlug)))
+      );
       const index = items.findIndex(Boolean);
       if (index !== -1) {
         return { data: { ...items[index]!, _type: FEED_KINDS[index] as FeedType }, error: null };
