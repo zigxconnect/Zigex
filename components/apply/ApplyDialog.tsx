@@ -1,13 +1,31 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import * as Dialog from "@radix-ui/react-dialog";
-import { AlertCircle, CheckCircle2, Loader2, X } from "lucide-react";
+import { AlertCircle, Check, CheckCircle2, ChevronDown, Loader2, X } from "lucide-react";
 
 export type ApplyKind = "internship" | "program" | "event";
 /** Who is applying, from their profile (the company sees the full profile). */
-export type ApplyPrefill = { fullName?: string; school?: string; avatar?: string | null };
+export type ApplyPrefill = {
+  fullName?: string;
+  school?: string;
+  avatar?: string | null;
+  /** What's missing from the profile companies will read, e.g. ["your school", "skills"]. */
+  gaps?: string[];
+};
+
+const draftKey = (id: string) => `zigex_apply_draft_${id}`;
+type Draft = { why: string; area: string; duration: string; experience: string; level: string; note: string };
+
+const TIPS: Record<"internship" | "program", string[]> = {
+  internship: [
+    "What you've learned or built so far (a class project counts).",
+    "What you want to do or learn in this internship.",
+    "When you're available and how you'll get there.",
+  ],
+  program: ["Why this program, and why now.", "What you already know about the subject.", "What you want to be able to do by the end."],
+};
 
 const AREAS = ["Web development", "Mobile apps", "Backend", "UI/UX design", "Data / AI", "Cybersecurity", "IoT / embedded", "Project management", "Other"];
 const DURATIONS = ["1 month", "2 months", "3 months", "4+ months"];
@@ -92,6 +110,46 @@ export function ApplyDialog({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [showTips, setShowTips] = useState(false);
+  const [already, setAlready] = useState(false);
+  const whyRef = useRef<HTMLTextAreaElement>(null);
+  const loaded = useRef(false);
+
+  // Restore an unsent draft for this opportunity, then keep it saved as the student types.
+  useEffect(() => {
+    try {
+      const d = JSON.parse(localStorage.getItem(draftKey(id)) ?? "null") as Draft | null;
+      if (d) {
+        setWhy(d.why ?? "");
+        setArea(d.area ?? "");
+        setDuration(d.duration ?? "");
+        setExperience(d.experience ?? "");
+        setLevel(d.level ?? "");
+        setNote(d.note ?? "");
+        if (d.note) setShowNote(true);
+      }
+    } catch {
+      // Storage blocked: the form still works, just without drafts.
+    }
+    loaded.current = true;
+  }, [id]);
+
+  useEffect(() => {
+    if (!loaded.current || done) return;
+    const draft: Draft = { why, area, duration, experience, level, note };
+    const empty = !why && !area && !duration && !experience && !level && !note;
+    const t = setTimeout(() => {
+      try {
+        if (empty) localStorage.removeItem(draftKey(id));
+        else localStorage.setItem(draftKey(id), JSON.stringify(draft));
+        setSaved(!empty);
+      } catch {
+        // ignore
+      }
+    }, 500);
+    return () => clearTimeout(t);
+  }, [why, area, duration, experience, level, note, id, done]);
 
   useEffect(() => {
     if (open) {
@@ -112,7 +170,14 @@ export function ApplyDialog({
 
   const submit = async () => {
     setTried(true);
-    if (!valid) return;
+    if (!valid) {
+      // Take the student to the first thing to fix.
+      requestAnimationFrame(() => {
+        if (problems.why) whyRef.current?.focus();
+        else document.querySelector<HTMLElement>(`[data-problem="true"]`)?.scrollIntoView({ block: "center", behavior: "smooth" });
+      });
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -141,7 +206,20 @@ export function ApplyDialog({
         res = await fetch("/api/students/applications", { method: "POST", body: data });
       }
       const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(typeof body.error === "string" ? body.error : "The application couldn't be sent.");
+      if (!res.ok) {
+        const message = typeof body.error === "string" ? body.error : "The application couldn't be sent.";
+        if (/already|duplicate/i.test(message)) {
+          setAlready(true);
+          onSubmitted();
+          return;
+        }
+        throw new Error(message);
+      }
+      try {
+        localStorage.removeItem(draftKey(id));
+      } catch {
+        // ignore
+      }
       setDone(true);
       onSubmitted();
     } catch (err) {
@@ -162,6 +240,12 @@ export function ApplyDialog({
         <Dialog.Overlay className="fixed inset-0 z-[100] bg-[#0B1B3F]/40 data-[state=open]:animate-in data-[state=open]:fade-in-0" />
         <Dialog.Content
           aria-describedby={undefined}
+          onOpenAutoFocus={(e) => {
+            if (whyRef.current) {
+              e.preventDefault();
+              whyRef.current.focus();
+            }
+          }}
           className="fixed inset-y-0 right-0 z-[101] flex w-full flex-col bg-white shadow-[-24px_0_64px_-24px_rgba(11,27,63,0.35)] focus:outline-none data-[state=open]:animate-in data-[state=open]:slide-in-from-right motion-reduce:animate-none sm:max-w-[480px]"
         >
           {/* What you're applying to stays visible at the top */}
@@ -185,7 +269,15 @@ export function ApplyDialog({
             </Dialog.Close>
           </div>
 
-          {done ? (
+          {already ? (
+            <div className="flex flex-1 flex-col px-5 py-8">
+              <h2 className="font-heading text-xl font-semibold text-[#0B1B3F]">You&apos;ve already applied</h2>
+              <p className="mt-2 text-base text-[#4A5670]">Your earlier application is with {company || "the company"}. You can follow it in My applications.</p>
+              <Link href="/dashboard/applied-internships" className="mt-6 inline-flex h-12 items-center justify-center rounded-xl bg-[#155DFC] text-base font-semibold text-white hover:bg-[#0F3FB8]">
+                View my applications
+              </Link>
+            </div>
+          ) : done ? (
             <div className="flex flex-1 flex-col overflow-y-auto px-5 py-8">
               <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#ECFDF3]">
                 <CheckCircle2 className="h-7 w-7 text-[#067647]" aria-hidden="true" />
@@ -213,6 +305,12 @@ export function ApplyDialog({
                 e.preventDefault();
                 submit();
               }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                  e.preventDefault();
+                  submit();
+                }
+              }}
               className="flex min-h-0 flex-1 flex-col"
             >
               <div className="flex-1 space-y-6 overflow-y-auto px-5 py-5">
@@ -229,14 +327,24 @@ export function ApplyDialog({
                     Edit profile
                   </Link>
                 </div>
+                {prefill.gaps && prefill.gaps.length > 0 && kind !== "event" && (
+                  <p className="-mt-3 text-sm text-[#7A2E0E]">
+                    Your profile has no {prefill.gaps.length > 1 ? `${prefill.gaps.slice(0, -1).join(", ")} or ${prefill.gaps.at(-1)}` : prefill.gaps[0]} yet. Companies read it with your answer, so adding them helps. You can still apply now.
+                  </p>
+                )}
 
                 {kind === "internship" && (
                   <>
                     <div>
-                      <label htmlFor={`${uid}-why`} className="mb-1.5 block text-sm font-medium text-[#0B1B3F]">
-                        Why are you a good fit?
-                      </label>
+                      <div className="mb-1.5 flex items-baseline justify-between gap-3">
+                        <label htmlFor={`${uid}-why`} className="text-sm font-medium text-[#0B1B3F]">
+                          Why are you a good fit?
+                        </label>
+                        <TipsToggle open={showTips} onToggle={() => setShowTips((v) => !v)} />
+                      </div>
+                      {showTips && <Tips items={TIPS.internship} />}
                       <textarea
+                        ref={whyRef}
                         id={`${uid}-why`}
                         rows={5}
                         value={why}
@@ -247,7 +355,7 @@ export function ApplyDialog({
                         className={textarea}
                       />
                       <p id={`${uid}-why-msg`} className={`mt-1.5 text-sm ${tried && problems.why ? "text-[#B42318]" : "text-[#7B869C]"}`}>
-                        {tried && problems.why ? problems.why : `${why.trim().length} characters, 30 minimum`}
+                        {tried && problems.why ? problems.why : <Counter n={why.trim().length} min={30} />}
                       </p>
                     </div>
                     <Chips label="Area you want to work in" options={AREAS} value={area} onChange={setArea} optional />
@@ -259,12 +367,21 @@ export function ApplyDialog({
                 {kind === "program" && (
                   <>
                     <Chips label="Your level in this subject" options={EXPERIENCE} value={level} onChange={setLevel} />
-                    {tried && problems.level && <p className="-mt-4 text-sm text-[#B42318]">{problems.level}</p>}
+                    {tried && problems.level && (
+                      <p data-problem="true" className="-mt-4 text-sm text-[#B42318]">
+                        {problems.level}
+                      </p>
+                    )}
                     <div>
-                      <label htmlFor={`${uid}-why`} className="mb-1.5 block text-sm font-medium text-[#0B1B3F]">
-                        What do you hope to get from it?
-                      </label>
+                      <div className="mb-1.5 flex items-baseline justify-between gap-3">
+                        <label htmlFor={`${uid}-why`} className="text-sm font-medium text-[#0B1B3F]">
+                          What do you hope to get from it?
+                        </label>
+                        <TipsToggle open={showTips} onToggle={() => setShowTips((v) => !v)} />
+                      </div>
+                      {showTips && <Tips items={TIPS.program} />}
                       <textarea
+                        ref={whyRef}
                         id={`${uid}-why`}
                         rows={4}
                         value={why}
@@ -274,7 +391,7 @@ export function ApplyDialog({
                         className={textarea}
                       />
                       <p id={`${uid}-why-msg`} className={`mt-1.5 text-sm ${tried && problems.why ? "text-[#B42318]" : "text-[#7B869C]"}`}>
-                        {tried && problems.why ? problems.why : `${why.trim().length} characters, 20 minimum`}
+                        {tried && problems.why ? problems.why : <Counter n={why.trim().length} min={20} />}
                       </p>
                     </div>
                   </>
@@ -304,7 +421,11 @@ export function ApplyDialog({
                         This {kind} has {fee}. I understand the company will explain how to pay if I&apos;m accepted.
                       </span>
                     </label>
-                    {tried && problems.fee && <p className="mt-1.5 text-sm text-[#B42318]">{problems.fee}</p>}
+                    {tried && problems.fee && (
+                      <p data-problem="true" className="mt-1.5 text-sm text-[#B42318]">
+                        {problems.fee}
+                      </p>
+                    )}
                   </div>
                 )}
 
@@ -317,6 +438,12 @@ export function ApplyDialog({
               </div>
 
               <div className="border-t border-[#EEF2FA] px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+                {kind !== "event" && (
+                  <p className="mb-2 flex items-center justify-between text-xs text-[#7B869C]" aria-live="polite">
+                    <span>{saved ? "Draft saved on this device" : "Your answers are saved as you type"}</span>
+                    <span className="hidden sm:inline">Ctrl + Enter to send</span>
+                  </p>
+                )}
                 <button
                   type="submit"
                   disabled={busy}
@@ -331,5 +458,39 @@ export function ApplyDialog({
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
+  );
+}
+
+/** Grey until the answer is long enough, then a green check. */
+function Counter({ n, min }: { n: number; min: number }) {
+  return n >= min ? (
+    <span className="inline-flex items-center gap-1 text-[#067647]">
+      <Check className="h-4 w-4" aria-hidden="true" />
+      Good length
+    </span>
+  ) : (
+    <span>{min - n} more characters needed</span>
+  );
+}
+
+function TipsToggle({ open, onToggle }: { open: boolean; onToggle: () => void }) {
+  return (
+    <button type="button" onClick={onToggle} aria-expanded={open} className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-[#155DFC] hover:underline">
+      What should I write?
+      <ChevronDown className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden="true" />
+    </button>
+  );
+}
+
+function Tips({ items }: { items: string[] }) {
+  return (
+    <ul className="mb-2 space-y-1 rounded-xl bg-[#F3F7FF] px-4 py-3 text-sm text-[#0B1B3F]">
+      {items.map((t) => (
+        <li key={t} className="flex gap-2">
+          <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#155DFC]" aria-hidden="true" />
+          {t}
+        </li>
+      ))}
+    </ul>
   );
 }

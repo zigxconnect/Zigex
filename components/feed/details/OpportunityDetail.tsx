@@ -87,7 +87,10 @@ export async function OpportunityDetail({ id, back }: { id: string; back: BackLi
     const p = (row?.profile ?? row) as Record<string, any> | null;
     if (!p) return {};
     const tidy = (v: unknown) => (typeof v === "string" ? v.replace(/\s+/g, " ").trim() : undefined);
-    return { fullName: tidy(p.full_name), school: tidy(p.university), avatar: tidy(p.avatar_url) ?? tidy(p.profile_picture) ?? null };
+    const has = (v: unknown) => (Array.isArray(v) ? v.length > 0 : Boolean(tidy(v)));
+    // What companies notice first when they open an applicant's profile.
+    const gaps = [!has(p.university) && "school", !has(p.hard_skills) && "skills", !has(p.about) && "short intro"].filter(Boolean) as string[];
+    return { fullName: tidy(p.full_name), school: tidy(p.university), avatar: tidy(p.avatar_url) ?? tidy(p.profile_picture) ?? null, gaps };
   })();
 
   const [status, applicationStatus] = await Promise.all([
