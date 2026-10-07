@@ -4,7 +4,7 @@ import { usableImageUrl } from "@/lib/images";
 import { serverApi } from "../server-client";
 import { ApiClientError, whenAvailable } from "../errors";
 import { fetchAllUserProjects } from "@/lib/actions/getProjects.action";
-import { getMyProfile } from "./profile";
+import { displayName, getMyProfile } from "./profile";
 
 /**
  * A student's public profile page (docs/backend-missing-endpoints.md →
@@ -37,7 +37,7 @@ export const getPublicProfileRow = cache(async (username: string): Promise<Publi
     return await whenAvailable(
       async () => {
         const row = (await serverApi.get<PublicProfileRow>(`/students/${encodeURIComponent(username)}`)).data ?? null;
-        return row ? { ...row, avatar_url: usableImageUrl(row.avatar_url), cover_image_url: usableImageUrl(row.cover_image_url), cover_image: usableImageUrl(row.cover_image) } : null;
+        return row ? { ...row, full_name: displayName(row) || row.full_name, avatar_url: usableImageUrl(row.avatar_url), cover_image_url: usableImageUrl(row.cover_image_url), cover_image: usableImageUrl(row.cover_image) } : null;
       },
       null
     );

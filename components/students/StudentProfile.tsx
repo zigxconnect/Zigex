@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, CalendarDays, ExternalLink, GraduationCap, MapPin, Monitor } from "lucide-react";
 import { StudentAvatar, tidySchool } from "./student-ui";
+import { ShareProfile } from "./ShareProfile";
 import { landingButton } from "@/components/sections/landing/landing-ui";
 
 /**
@@ -102,19 +103,33 @@ export function StudentProfile({
         !data.avatar_url && "a photo",
         !about && "a short intro",
         skills.length === 0 && "your skills",
-        links.length === 0 && "a LinkedIn, GitHub or portfolio link",
+        links.length === 0 && "a link to your work (LinkedIn, GitHub or a portfolio)",
       ].filter(Boolean)
     : [];
 
   return (
     <div className="pb-16">
-      <Link
-        href={back.href}
-        className="mb-6 inline-flex h-10 items-center gap-2 rounded-lg pr-2 text-sm font-semibold text-[#4A5670] hover:text-[#0B1B3F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC]"
-      >
-        <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-        {back.label}
-      </Link>
+      {isMe ? (
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white px-4 py-3 ring-1 ring-[#DCE5F5]">
+          <p className="text-sm text-[#0B1B3F]">
+            <span className="font-semibold">This is your public profile.</span> It&apos;s what companies and other students see.
+          </p>
+          <div className="flex items-center gap-2">
+            <ShareProfile username={handle || data.id} />
+            <Link href="/dashboard/edit-profile" className={`${landingButton("primary", "md")} h-10 px-4 text-sm`}>
+              Edit profile
+            </Link>
+          </div>
+        </div>
+      ) : (
+        <Link
+          href={back.href}
+          className="mb-6 inline-flex h-10 items-center gap-2 rounded-lg pr-2 text-sm font-semibold text-[#4A5670] hover:text-[#0B1B3F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC]"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          {back.label}
+        </Link>
+      )}
 
       {/* Identity */}
       <header className="overflow-hidden rounded-2xl bg-white ring-1 ring-[#DCE5F5]">
@@ -127,11 +142,7 @@ export function StudentProfile({
               <StudentAvatar s={{ id: data.id, full_name: name, avatar_url: data.avatar_url }} size="h-24 w-24 text-3xl" />
             </div>
             <div className="flex flex-wrap gap-2">
-              {isMe ? (
-                <Link href="/dashboard/edit-profile" className={landingButton("primary", "md")}>
-                  Edit profile
-                </Link>
-              ) : (
+              {(
                 links.map((l) => (
                   <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer" className={landingButton("secondary", "md")}>
                     {l.label}
@@ -171,7 +182,7 @@ export function StudentProfile({
 
       {isMe && missing.length > 0 && (
         <p className="mt-4 rounded-xl bg-[#EEF3FF] px-4 py-3 text-sm text-[#0B1B3F]">
-          Companies read this page when you apply. Add {missing.join(", ").replace(/, ([^,]*)$/, " and $1")} to make it stronger.
+          Companies read this page when you apply. To make it stronger, add {missing.length > 1 ? `${missing.slice(0, -1).join(", ")} and ${missing.at(-1)}` : missing[0]}.
         </p>
       )}
 
@@ -295,7 +306,7 @@ export function StudentProfile({
           )}
 
           {(industries.length > 0 || languages.length > 0 || interests.length > 0) && (
-            <Section title="More about them">
+            <Section title={isMe ? "More about you" : "More about them"}>
               <div className="space-y-4">
                 {industries.length > 0 && (
                   <div>
