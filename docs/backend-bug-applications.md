@@ -94,19 +94,9 @@ This affected `POST /applications` and `GET /notifications`. A few minutes later
 
 ---
 
-## 4. Uploaded files get an unusable address (`pub-REPLACE.r2.dev`)
+## 4. Photo uploads
 
-`POST /uploads/avatar` (and the other public uploads) store the file, but the URL returned is on a placeholder host:
-
-```json
-{ "success": true, "data": {
-  "key": "students/avatars/c2ecc73a-4118-495f-82ab-7c8f052a7126/avatar.png",
-  "url": "https://pub-REPLACE.r2.dev/students/avatars/c2ecc73a-4118-495f-82ab-7c8f052a7126/avatar.png" } }
-```
-
-`pub-REPLACE.r2.dev` doesn't exist, so the photo can't load anywhere. It looks like the R2 public bucket URL setting (environment variable) still has its placeholder value. Please set it to the bucket's real public URL (`https://pub-<id>.r2.dev` or a custom domain like `https://files.zigexconnect.com`).
-
-Profiles that already saved such a URL (for example the student above) need it rewritten to the real host, or set to `null`. The frontend treats these URLs as "no photo" and shows initials until then.
+Reported separately in `backend-bug-uploads.md` (uploads return `pub-REPLACE.r2.dev` URLs).
 
 ## What the frontend does meanwhile
 

@@ -3,7 +3,7 @@
  * upload URLs on an unconfigured host ("https://pub-REPLACE.r2.dev/…"), and
  * those were saved on some profiles. Treat them as "no image" so people see
  * their initials instead of a broken picture. Reported in
- * docs/backend-bug-applications.md.
+ * docs/backend-bug-uploads.md.
  */
 export function usableImageUrl(url: unknown): string | null {
   if (typeof url !== "string") return null;
