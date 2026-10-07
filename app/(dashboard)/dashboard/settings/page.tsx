@@ -1,11 +1,6 @@
-import React from 'react'
+import { redirect } from "next/navigation";
 
-const page = () => {
-  return (
-    <div>
-      settings
-    </div>
-  )
+/** Old address of Settings. */
+export default function LegacySettingsPage() {
+  redirect("/profile-settings");
 }
-
-export default page

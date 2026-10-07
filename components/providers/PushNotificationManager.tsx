@@ -18,7 +18,6 @@ function urlBase64ToUint8Array(base64String: string) {
     return outputArray;
 }
 
-import { toast } from "react-hot-toast";
 
 export function PushNotificationManager() {
     const registerServiceWorkerAndSubscribe = useCallback(async () => {
@@ -51,47 +50,9 @@ export function PushNotificationManager() {
                 return;
             }
 
-            // If no subscription, ask for permission
-            console.log("[PUSH_MANAGER] No subscription found. Checking permission...");
-            if (Notification.permission === 'denied') {
-                console.warn("[PUSH_MANAGER] Permission already denied.");
-                return;
-            }
-
-            if (Notification.permission !== 'granted') {
-                const permission = await Notification.requestPermission();
-                if (permission !== 'granted') {
-                    toast.error("Please allow notifications to stay updated.");
-                    return;
-                }
-            }
-
-            const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-            if (!publicVapidKey) {
-                console.warn("[PUSH_MANAGER] Public VAPID key missing from env — push notifications disabled.");
-                return;
-            }
-
-            toast.loading("Setting up notifications...", { id: "push-setup" });
-
-            // Create new push subscription
-            const subscription = await registration.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
-            });
-
-            const serialized = subscription.toJSON();
-            const syncResult = await subscribeToPushNotifications(serialized, window.location.origin);
-            
-            if (syncResult.success) {
-                toast.success("Notifications enabled successfully!", { id: "push-setup" });
-            } else if (syncResult.pending) {
-                toast("Push notifications are coming soon.", { id: "push-setup" });
-            } else {
-                console.error("[PUSH_MANAGER] Sync failed:", syncResult.error);
-                toast.error("Failed to sync notifications with server.", { id: "push-setup" });
-            }
-            
+            // No subscription yet: don't ask for permission on page load. Students
+            // turn notifications on in Settings, where they understand why.
+            return;
         } catch (err) {
             console.error("[PUSH_MANAGER] Setup failed:", err);
             // toast.error("Notification setup failed.");

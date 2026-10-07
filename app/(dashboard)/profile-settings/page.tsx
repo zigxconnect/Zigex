@@ -1,31 +1,15 @@
-import { SettingsForm } from "@/components/sections/profile-settings/SettingsForm";
-import { getSession } from "@/lib/api/auth";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { getMyProfile } from "@/lib/api/services/profile";
+import { SettingsView } from "@/components/settings/SettingsView";
 
-export const metadata = {
-  title: "Profile Settings",
-  description: "Manage your profile settings and preferences.",
-};
+export const metadata: Metadata = { title: "Settings" };
 
-export default async function ProfileSettingsPage() {
-  const session = await getSession();
-
-  if (!session) {
-    redirect("/sign-in");
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-50/50 pb-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Profile Settings</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Manage your personal information, privacy, and account preferences.
-          </p>
-        </div>
-
-        <SettingsForm initialUserId={session.userId} />
-      </div>
-    </div>
-  );
+/** Account settings. Profile details are edited at /dashboard/edit-profile. */
+export default async function SettingsPage() {
+  const p = (await getMyProfile().catch(() => null)) as Record<string, any> | null;
+  if (!p) redirect("/sign-in?next=/profile-settings");
+  const username = typeof p.username === "string" ? p.username.replace(/^@+/, "").trim() : "";
+  const profileHref = username && /^[A-Za-z0-9._-]+$/.test(username) ? `/profile/${username}` : `/profile/${p.id}`;
+  return <SettingsView email={String(p.email ?? "")} profileHref={profileHref} />;
 }
