@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronDown, ClipboardList, LogOut, Settings, User } from "lucide-react";
 import { cn, slugifyUsername } from "@/lib/utils";
 import NameInitials from "@/components/NameInitials";
+import { usableImageUrl } from "@/lib/images";
 import { api } from "@/lib/api/browser-client";
 
 /** Avatar button in the top bar with the account menu. */
@@ -52,8 +53,9 @@ export const ProfileDropdown = ({ user }: { user: any }) => {
         aria-label="Account menu"
         className="flex h-10 items-center gap-1.5 rounded-full pl-0.5 pr-2 hover:bg-[#F3F7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC]"
       >
-        <span className="h-9 w-9 overflow-hidden rounded-full bg-[#EEF3FF] text-sm ring-1 ring-[#DCE5F5]">
-          {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : <NameInitials name={name} />}
+        <span className="relative h-9 w-9 overflow-hidden rounded-full bg-[#EEF3FF] text-sm ring-1 ring-[#DCE5F5]">
+          <NameInitials name={name} />
+          {usableImageUrl(avatar) && <img src={usableImageUrl(avatar)!} alt="" className="absolute inset-0 h-full w-full object-cover" />}
         </span>
         <ChevronDown className={cn("h-4 w-4 text-[#7B869C] transition-transform", open && "rotate-180")} aria-hidden="true" />
       </button>

@@ -1,4 +1,5 @@
 import "server-only";
+import { usableImageUrl } from "@/lib/images";
 import { cache } from "react";
 import { serverApi } from "../server-client";
 import { ApiClientError } from "../errors";
@@ -30,7 +31,7 @@ export const getMyProfile = cache(async (): Promise<StudentProfileRow | null> =>
     // The backend wraps the row as { profile: {...} }; callers expect the row itself.
     const data = res.data as Record<string, any> | null;
     const row = (data && "profile" in data && data.profile ? data.profile : data) as StudentProfileRow | null;
-    return row ? { ...row, full_name: displayName(row) } : null;
+    return row ? { ...row, full_name: displayName(row), avatar_url: usableImageUrl(row.avatar_url), profile_picture: usableImageUrl(row.profile_picture) } : null;
   } catch (error) {
     if (error instanceof ApiClientError && (error.status === 401 || error.status === 404)) return null;
     throw error;

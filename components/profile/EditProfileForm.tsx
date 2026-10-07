@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { AlertCircle, Camera, Check, CheckCircle2, ChevronDown, Loader2, Plus, X } from "lucide-react";
 import { saveMyProfile } from "@/lib/actions/profile.actions";
 import { uploadAvatar } from "@/lib/api/uploads";
+import { usableImageUrl } from "@/lib/images";
 
 const SavedContext = createContext<Set<string>>(new Set());
 
@@ -181,6 +182,8 @@ export function EditProfileForm({ initial, email, profileHref }: { initial: Prof
     setUploading(true);
     try {
       const { url } = await uploadAvatar(file);
+      // The backend can return an address on an unconfigured host; saving it would show a broken photo everywhere.
+      if (!usableImageUrl(url)) throw new Error("PHOTO_HOST");
       const result = await saveMyProfile({ avatar_url: url });
       if (!result.success) throw new Error(result.error);
       latest.current = { ...latest.current, avatar_url: url };
@@ -190,7 +193,13 @@ export function EditProfileForm({ initial, email, profileHref }: { initial: Prof
       setState("saved");
       router.refresh();
     } catch (error) {
-      setNote(error instanceof Error && /MB|type|format/i.test(error.message) ? error.message : "The photo couldn't be uploaded. Use a JPG or PNG under 5 MB.");
+      setNote(
+        error instanceof Error && error.message === "PHOTO_HOST"
+          ? "Profile photos can't be saved right now because of a problem on Zigex's side. We're fixing it; your initials show meanwhile."
+          : error instanceof Error && /MB|type|format/i.test(error.message)
+            ? error.message
+            : "The photo couldn't be uploaded. Use a JPG or PNG under 5 MB."
+      );
       setState("error");
     } finally {
       setUploading(false);
@@ -618,7 +627,8 @@ function PhotoPicker({ url, name, busy, onPick }: { url: string; name: string; b
         aria-label={url ? "Change profile photo" : "Add a profile photo"}
         className="group relative h-24 w-24 shrink-0 overflow-hidden rounded-full bg-[#155DFC] text-2xl font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] focus-visible:ring-offset-2"
       >
-        {url ? <img src={url} alt="" className="h-full w-full object-cover" /> : <span>{initials || "?"}</span>}
+        <span>{initials || "?"}</span>
+        {usableImageUrl(url) && <img src={usableImageUrl(url)!} alt="" className="absolute inset-0 h-full w-full object-cover" />}
         <span className="absolute inset-0 flex items-center justify-center bg-[#0B1B3F]/55 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
           {busy ? <Loader2 className="h-6 w-6 animate-spin" /> : <Camera className="h-6 w-6" />}
         </span>

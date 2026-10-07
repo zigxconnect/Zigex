@@ -1,3 +1,5 @@
+import { usableImageUrl } from "@/lib/images";
+
 /** Student directory helpers shared by the server page and the client list (no hooks). */
 
 export type StudentRow = {
@@ -44,8 +46,10 @@ export function StudentAvatar({ s, size }: { s: StudentRow; size: string }) {
   const name = s.full_name ?? "";
   const initials = name.split(/\s+/).filter(Boolean).map((p) => p[0]).slice(0, 2).join("").toUpperCase();
   return (
-    <span className={`${size} flex shrink-0 items-center justify-center overflow-hidden rounded-full font-semibold text-white`} style={{ background: avatarColour(s.id) }}>
-      {s.avatar_url ? <img src={s.avatar_url} alt="" loading="lazy" className="h-full w-full object-cover" /> : <span aria-hidden="true">{initials}</span>}
+    // Initials sit under the photo: if the photo can't load (alt=""), the browser draws nothing and the initials show.
+    <span className={`${size} relative flex shrink-0 items-center justify-center overflow-hidden rounded-full font-semibold text-white`} style={{ background: avatarColour(s.id) }}>
+      <span aria-hidden="true">{initials}</span>
+      {usableImageUrl(s.avatar_url) && <img src={usableImageUrl(s.avatar_url)!} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />}
     </span>
   );
 }

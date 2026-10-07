@@ -1,5 +1,6 @@
 import "server-only";
 import { cache } from "react";
+import { usableImageUrl } from "@/lib/images";
 import { serverApi } from "../server-client";
 import { ApiClientError, whenAvailable } from "../errors";
 import { fetchAllUserProjects } from "@/lib/actions/getProjects.action";
@@ -34,7 +35,10 @@ const EMPTY_CONNECTIONS = { count: 0, peers: [], supervisors: [] };
 export const getPublicProfileRow = cache(async (username: string): Promise<PublicProfileRow | null> => {
   try {
     return await whenAvailable(
-      async () => (await serverApi.get<PublicProfileRow>(`/students/${encodeURIComponent(username)}`)).data ?? null,
+      async () => {
+        const row = (await serverApi.get<PublicProfileRow>(`/students/${encodeURIComponent(username)}`)).data ?? null;
+        return row ? { ...row, avatar_url: usableImageUrl(row.avatar_url), cover_image_url: usableImageUrl(row.cover_image_url), cover_image: usableImageUrl(row.cover_image) } : null;
+      },
       null
     );
   } catch (error) {

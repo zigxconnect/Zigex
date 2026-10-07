@@ -21,6 +21,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import NameInitials from "@/components/NameInitials";
+import { usableImageUrl } from "@/lib/images";
 import { slugifyUsername, cn } from "@/lib/utils";
 import { api } from "@/lib/api/browser-client";
 import { ADMIN_APP_URL } from "@/lib/app-urls";
@@ -206,7 +207,8 @@ function AccountMenu({
         className="flex w-full items-center gap-3 rounded-lg p-2 text-left hover:bg-[#F3F7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC]"
       >
         <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full bg-[#EEF3FF] text-sm">
-          {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : <NameInitials name={name} />}
+          <NameInitials name={name} />
+          {usableImageUrl(avatar) && <img src={usableImageUrl(avatar)!} alt="" className="absolute inset-0 h-full w-full object-cover" />}
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-semibold text-[#0B1B3F]">{name}</span>
