@@ -5,6 +5,7 @@ import { useFormContext } from "react-hook-form";
 import { ProfileFormData } from "@/app/types/profile";
 import { FormField } from "@/components/uiComponent/FormField";
 import { uploadAvatar } from "@/lib/api/uploads";
+import { PhotoCropDialog } from "@/components/profile/PhotoCropDialog";
 import { toast } from "react-hot-toast";
 import { Camera, Image as ImageIcon, X, UploadCloud } from "lucide-react";
 import Image from "next/image";
@@ -22,15 +23,21 @@ export const Step1Uploads = () => {
   const avatarUrl = watch("avatar_url");
   const coverImageUrl = watch("cover_image");
 
-  const onAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Picking a photo opens the crop step; the framed square is what gets uploaded.
+  const [cropFile, setCropFile] = useState<File | null>(null);
+  const onAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    e.target.value = "";
+    if (file) setCropFile(file);
+  };
+
+  const uploadCropped = async (file: File) => {
+    setCropFile(null);
     try {
       setIsUploadingAvatar(true);
-      // Validates type (JPEG/PNG/WEBP/GIF) and the backend's 5 MB limit.
       const { url } = await uploadAvatar(file);
       setValue("avatar_url", url, { shouldValidate: true });
-      toast.success("Image uploaded successfully!");
+      toast.success("Photo saved");
     } catch (error: any) {
       console.error("Upload error:", error);
       toast.error(`Upload failed: ${error.message}`);
@@ -52,6 +59,7 @@ export const Step1Uploads = () => {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <PhotoCropDialog file={cropFile} onCancel={() => setCropFile(null)} onDone={uploadCropped} />
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold text-gray-900">
           Profile & Cover Image

@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { AlertCircle, Camera, Check, CheckCircle2, ChevronDown, Loader2, Plus, X } from "lucide-react";
 import { saveMyProfile } from "@/lib/actions/profile.actions";
 import { uploadAvatar } from "@/lib/api/uploads";
+import { PhotoCropDialog } from "@/components/profile/PhotoCropDialog";
 import { ApiClientError } from "@/lib/api/errors";
 import { usableImageUrl } from "@/lib/images";
 
@@ -184,6 +185,17 @@ export function EditProfileForm({ initial, email, profileHref }: { initial: Prof
   const [photoVersion, setPhotoVersion] = useState(0);
   const photoUrl = v.avatar_url && photoVersion ? `${v.avatar_url}${v.avatar_url.includes("?") ? "&" : "?"}v=${photoVersion}` : v.avatar_url;
 
+  // Picking a photo opens the crop step first; the framed square is what gets uploaded.
+  const [cropFile, setCropFile] = useState<File | null>(null);
+  const pickPhoto = (file: File) => {
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
+      setNote("Use a JPG, PNG or WebP photo.");
+      return;
+    }
+    setNote(null);
+    setCropFile(file);
+  };
+
   const changePhoto = async (file: File) => {
     setUploading(true);
     try {
@@ -231,7 +243,7 @@ export function EditProfileForm({ initial, email, profileHref }: { initial: Prof
           <div className="min-w-0">
             <div className="-mt-12 flex items-end justify-between gap-3">
               <div className="w-fit rounded-full ring-4 ring-white">
-                <PhotoPicker url={photoUrl} name={name} busy={uploading} onPick={changePhoto} />
+                <PhotoPicker url={photoUrl} name={name} busy={uploading} onPick={pickPhoto} />
               </div>
               <SaveStatus state={state} onRetry={() => flush(latest.current)} />
             </div>
@@ -271,7 +283,7 @@ export function EditProfileForm({ initial, email, profileHref }: { initial: Prof
                       <label key={x.label} className="inline-flex h-8 cursor-pointer items-center gap-1 rounded-full bg-white px-3 text-sm font-medium text-[#155DFC] ring-1 ring-[#DCE5F5] hover:ring-[#155DFC]/40">
                         <Plus className="h-3.5 w-3.5" aria-hidden="true" />
                         Profile photo
-                        <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => e.target.files?.[0] && changePhoto(e.target.files[0])} />
+                        <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => e.target.files?.[0] && pickPhoto(e.target.files[0])} />
                       </label>
                     ) : (
                       <button key={x.label} type="button" onClick={() => openSection(x.section)} className="inline-flex min-h-8 items-center gap-1 rounded-full bg-white px-3 py-1 text-left text-sm font-medium text-[#155DFC] ring-1 ring-[#DCE5F5] hover:ring-[#155DFC]/40">
@@ -285,6 +297,15 @@ export function EditProfileForm({ initial, email, profileHref }: { initial: Prof
           </div>
         </div>
       </header>
+
+      <PhotoCropDialog
+        file={cropFile}
+        onCancel={() => setCropFile(null)}
+        onDone={(cropped) => {
+          setCropFile(null);
+          changePhoto(cropped);
+        }}
+      />
 
       <SavedContext.Provider value={justSaved}>
       <form noValidate onSubmit={(e) => e.preventDefault()} className="mt-6 divide-y divide-[#EEF2FA] rounded-2xl bg-white ring-1 ring-[#DCE5F5]">
