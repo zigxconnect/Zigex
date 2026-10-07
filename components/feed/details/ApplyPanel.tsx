@@ -87,6 +87,8 @@ export function ApplyPanel({
             id={item.id}
             title={item.title}
             company={item.companyName}
+            image={item.image}
+            closesAt={item.closesAt}
             hasFee={item.hasFee}
             priceXaf={item.priceXaf}
             prefill={prefill}

@@ -20,6 +20,8 @@ export function ApplyActions({
   id,
   title,
   company,
+  image = null,
+  closesAt = null,
   hasFee,
   priceXaf,
   prefill,
@@ -31,6 +33,8 @@ export function ApplyActions({
   id: string;
   title: string;
   company: string;
+  image?: string | null;
+  closesAt?: string | null;
   hasFee: boolean;
   priceXaf: number | null;
   prefill: ApplyPrefill;
@@ -100,6 +104,8 @@ export function ApplyActions({
       id={id}
       title={title}
       company={company}
+      image={image}
+      closesAt={closesAt}
       hasFee={hasFee}
       priceXaf={priceXaf}
       prefill={prefill}
@@ -116,7 +122,7 @@ export function ApplyActions({
         {VERB[kind]}
       </button>
       <p className="mt-2 text-center text-sm text-[#7B869C]">
-        {kind === "internship" ? "Takes about 3 minutes. Your profile fills most of it." : "Takes about a minute."}
+        {kind === "event" ? "One tap. The organiser confirms your place." : "Takes about a minute. Your profile goes with it."}
       </p>
 
       {/* Phones: keep the action in reach while reading the description. */}

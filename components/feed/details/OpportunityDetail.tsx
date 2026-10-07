@@ -20,6 +20,7 @@ import {
   type FeedType,
 } from "@/lib/actions/feed/feed-detail.actions";
 import { ApplyPanel } from "@/components/feed/details/ApplyPanel";
+import { HeroImage } from "@/components/feed/details/HeroImage";
 import { LocationMap } from "@/components/feed/details/LocationMap";
 import { RichContentRenderer } from "@/components/ui/RichContentRenderer";
 import { OpportunityCard, OpportunityCardSkeleton } from "@/components/feed/board/OpportunityCard";
@@ -86,7 +87,7 @@ export async function OpportunityDetail({ id, back }: { id: string; back: BackLi
     const p = (row?.profile ?? row) as Record<string, any> | null;
     if (!p) return {};
     const tidy = (v: unknown) => (typeof v === "string" ? v.replace(/\s+/g, " ").trim() : undefined);
-    return { fullName: tidy(p.full_name), school: tidy(p.university), dateOfBirth: tidy(p.date_of_birth), address: tidy(p.location) };
+    return { fullName: tidy(p.full_name), school: tidy(p.university), avatar: tidy(p.avatar_url) ?? tidy(p.profile_picture) ?? null };
   })();
 
   const [status, applicationStatus] = await Promise.all([
@@ -117,13 +118,7 @@ export async function OpportunityDetail({ id, back }: { id: string; back: BackLi
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-10">
         {/* Header: photo, type, title, company */}
         <header className="min-w-0">
-          {item.image && (
-            // Organisers upload flyers with their own text: show the whole flyer on a soft blur of itself instead of cropping it.
-            <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-[#0B1B3F] ring-1 ring-[#DCE5F5] sm:aspect-[16/10]">
-              <img src={item.image} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl" />
-              <img src={item.image} alt={`${item.title} flyer`} className="relative h-full w-full object-contain" />
-            </div>
-          )}
+          {item.image && <HeroImage src={item.image} alt={item.title} />}
           <p className="mt-6 inline-flex items-center gap-1.5 rounded-full bg-[#F3F7FF] px-3 py-1 text-[13px] font-semibold text-[#0B1B3F] ring-1 ring-[#DCE5F5]">
             <meta.icon className="h-4 w-4 text-[#155DFC]" aria-hidden="true" />
             {meta.label}
