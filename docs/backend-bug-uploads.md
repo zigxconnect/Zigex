@@ -53,6 +53,17 @@ The R2 public bucket URL setting (environment variable, e.g. `R2_PUBLIC_URL`) st
    Do the same for `cover_image_url` and any other column that stores upload URLs (company logos and covers, program and event pictures uploaded through these endpoints).
 3. **Optional, recommended:** have upload endpoints fail with a clear error if the public URL isn't configured, rather than returning an address that can't load.
 
+## Update (7 October 2026, later the same day)
+
+Saved URLs now use `https://files.zigexconnect.com/...` (thank you), but that domain has **no DNS record yet**, so the images still don't load:
+
+```text
+$ getent hosts files.zigexconnect.com
+(no result)
+```
+
+Please connect `files.zigexconnect.com` to the R2 bucket. In Cloudflare: R2, then the bucket, then Settings, then Custom Domains, then add `files.zigexconnect.com`. Cloudflare creates the DNS record when the domain's zone is on Cloudflare. Then check that the URL from an upload opens in a browser.
+
 ## How to check it's fixed
 
 - The `url` from `POST /uploads/avatar` opens the image when pasted into a browser.

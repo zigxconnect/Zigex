@@ -1,5 +1,6 @@
 "use client";
 
+import { SafeImg } from "@/components/SafeImg";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, ClipboardList, LogOut, Settings, User } from "lucide-react";
@@ -55,7 +56,7 @@ export const ProfileDropdown = ({ user }: { user: any }) => {
       >
         <span className="relative h-9 w-9 overflow-hidden rounded-full bg-[#EEF3FF] text-sm ring-1 ring-[#DCE5F5]">
           <NameInitials name={name} />
-          {usableImageUrl(avatar) && <img src={usableImageUrl(avatar)!} alt="" className="absolute inset-0 h-full w-full object-cover" />}
+          {usableImageUrl(avatar) && <SafeImg src={usableImageUrl(avatar)!} alt="" className="absolute inset-0 h-full w-full object-cover" />}
         </span>
         <ChevronDown className={cn("h-4 w-4 text-[#7B869C] transition-transform", open && "rotate-180")} aria-hidden="true" />
       </button>

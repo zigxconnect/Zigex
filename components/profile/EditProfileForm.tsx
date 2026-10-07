@@ -1,5 +1,6 @@
 "use client";
 
+import { SafeImg } from "@/components/SafeImg";
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -291,6 +292,29 @@ export function EditProfileForm({ initial, email, profileHref }: { initial: Prof
             <TextField k="location" label="Town" v={v} set={set} touch={touch} placeholder="Bamenda" autoComplete="address-level2" options={TOWNS} />
           </div>
           <TextArea k="about" label="Short intro" v={v} set={set} touch={touch} max={600} hint="Two or three sentences: what you study, what you build, what you're looking for." />
+          {!v.about.trim() && (
+            <button
+              type="button"
+              onClick={() => {
+                const course = v.field_of_study.trim() || "[your course]";
+                const school = v.university.trim() || "[your school]";
+                set(
+                  "about",
+                  `I study ${course.toLowerCase()} at ${school}. I've built [a project you're proud of]. I'm looking for [an internship or program] where I can [what you want to learn or do].`
+                );
+                requestAnimationFrame(() => {
+                  const el = document.getElementById("f-about") as HTMLTextAreaElement | null;
+                  if (!el) return;
+                  el.focus();
+                  const i = el.value.indexOf("[");
+                  if (i >= 0) el.setSelectionRange(i, el.value.indexOf("]", i) + 1);
+                });
+              }}
+              className="-mt-3 text-sm font-semibold text-[#155DFC] hover:underline"
+            >
+              Start from an example
+            </button>
+          )}
         </Section>
 
         <Section id="skills" title="Skills" note="Tap to add. Companies look for these first.">
@@ -628,7 +652,7 @@ function PhotoPicker({ url, name, busy, onPick }: { url: string; name: string; b
         className="group relative h-24 w-24 shrink-0 overflow-hidden rounded-full bg-[#155DFC] text-2xl font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] focus-visible:ring-offset-2"
       >
         <span>{initials || "?"}</span>
-        {usableImageUrl(url) && <img src={usableImageUrl(url)!} alt="" className="absolute inset-0 h-full w-full object-cover" />}
+        {usableImageUrl(url) && <SafeImg src={usableImageUrl(url)!} alt="" className="absolute inset-0 h-full w-full object-cover" />}
         <span className="absolute inset-0 flex items-center justify-center bg-[#0B1B3F]/55 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
           {busy ? <Loader2 className="h-6 w-6 animate-spin" /> : <Camera className="h-6 w-6" />}
         </span>

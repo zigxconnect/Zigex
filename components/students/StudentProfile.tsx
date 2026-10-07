@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, CalendarDays, ExternalLink, GraduationCap, MapPin, Monitor } from "lucide-react";
+import { ArrowLeft, BadgeCheck, ExternalLink, GraduationCap, MapPin, Monitor } from "lucide-react";
 import { StudentAvatar, tidySchool } from "./student-ui";
 import { ShareProfile } from "./ShareProfile";
 import { landingButton } from "@/components/sections/landing/landing-ui";
@@ -131,129 +131,166 @@ export function StudentProfile({
         </Link>
       )}
 
-      {/* Identity */}
+      {/* Identity: no generic banner; a cover only when the student uploaded one */}
       <header className="overflow-hidden rounded-2xl bg-white ring-1 ring-[#DCE5F5]">
-        <div className="h-28 bg-gradient-to-r from-[#0B1B3F] to-[#155DFC] sm:h-36">
-          {cover && <img src={cover} alt="" className="h-full w-full object-cover" />}
-        </div>
-        <div className="px-5 pb-5 sm:px-6 sm:pb-6">
-          <div className="-mt-12 flex flex-wrap items-end justify-between gap-4">
-            <div className="rounded-full ring-4 ring-white">
-              <StudentAvatar s={{ id: data.id, full_name: name, avatar_url: data.avatar_url }} size="h-24 w-24 text-3xl" />
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {(
-                links.map((l) => (
-                  <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer" className={landingButton("secondary", "md")}>
-                    {l.label}
-                    <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                    <span className="sr-only">(opens in a new tab)</span>
-                  </a>
-                ))
-              )}
-            </div>
+        {cover && <img src={cover} alt="" className="h-32 w-full object-cover sm:h-40" />}
+        <div className={`flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:p-6 ${cover ? "-mt-14 sm:-mt-12" : ""}`}>
+          <div className="w-fit rounded-full ring-4 ring-white">
+            <StudentAvatar s={{ id: data.id, full_name: name, avatar_url: data.avatar_url }} size="h-24 w-24 text-3xl" />
           </div>
-
-          <h1 className="mt-4 font-heading text-[28px] font-bold leading-tight tracking-tight text-[#0B1B3F]">{name}</h1>
-          <p className="mt-1 text-base text-[#4A5670]">{headline}</p>
-          <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-[#4A5670]">
-            {handle && <li>@{handle}</li>}
-            {location && (
-              <li className="inline-flex items-center gap-1.5">
-                <MapPin className="h-4 w-4 text-[#7B869C]" aria-hidden="true" />
-                {capFirst(location)}
-              </li>
-            )}
-            {gradYear && (
-              <li className="inline-flex items-center gap-1.5">
-                <GraduationCap className="h-4 w-4 text-[#7B869C]" aria-hidden="true" />
-                Class of {gradYear}
-              </li>
-            )}
-            {workMode && (
-              <li className="inline-flex items-center gap-1.5">
-                <Monitor className="h-4 w-4 text-[#7B869C]" aria-hidden="true" />
-                Prefers {workMode.toLowerCase()} work
-              </li>
-            )}
-          </ul>
+          <div className="min-w-0 flex-1">
+            <h1 className="font-heading text-[28px] font-bold leading-tight tracking-tight text-[#0B1B3F]">{name}</h1>
+            <p className="mt-1 text-base text-[#4A5670]">{headline}</p>
+            <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-[#4A5670]">
+              {handle && <li>@{handle}</li>}
+              {location && (
+                <li className="inline-flex items-center gap-1.5">
+                  <MapPin className="h-4 w-4 text-[#7B869C]" aria-hidden="true" />
+                  {capFirst(location)}
+                </li>
+              )}
+              {gradYear && (
+                <li className="inline-flex items-center gap-1.5">
+                  <GraduationCap className="h-4 w-4 text-[#7B869C]" aria-hidden="true" />
+                  Class of {gradYear}
+                </li>
+              )}
+              {workMode && (
+                <li className="inline-flex items-center gap-1.5">
+                  <Monitor className="h-4 w-4 text-[#7B869C]" aria-hidden="true" />
+                  Prefers {workMode.toLowerCase()} work
+                </li>
+              )}
+            </ul>
+          </div>
+          {links.length > 0 && (
+            <div className="flex flex-wrap gap-2 sm:justify-end">
+              {links.map((l) => (
+                <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer" className={`${landingButton("secondary", "md")} h-10 px-4 text-sm`}>
+                  {l.label}
+                  <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                  <span className="sr-only">(opens in a new tab)</span>
+                </a>
+              ))}
+            </div>
+          )}
         </div>
+
+        {/* Verified by Zigex: what this student actually did through the platform */}
+        {accepted.length > 0 && (
+          <div className="border-t border-[#EEF2FA] bg-[#F8FAFF] px-5 py-4 sm:px-6">
+            <p className="mb-2.5 flex items-center gap-1.5 text-sm font-semibold text-[#0B1B3F]">
+              <BadgeCheck className="h-4 w-4 text-[#155DFC]" aria-hidden="true" />
+              Verified on Zigex
+            </p>
+            <ul className="flex flex-wrap gap-2">
+              {accepted.map((a) => (
+                <li key={a.id}>
+                  <Link
+                    href={a.type === "program" ? `/programs/${a.id}` : `/feed/${a.id}`}
+                    className="inline-flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm ring-1 ring-[#DCE5F5] hover:ring-[#155DFC]/40"
+                  >
+                    <span className="font-medium text-[#0B1B3F]">{a.title}</span>
+                    <span className="text-[#7B869C]">{capFirst(a.type === "program" ? "program" : a.type)}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </header>
 
       {isMe && missing.length > 0 && (
         <p className="mt-4 rounded-xl bg-[#EEF3FF] px-4 py-3 text-sm text-[#0B1B3F]">
-          Companies read this page when you apply. To make it stronger, add {missing.length > 1 ? `${missing.slice(0, -1).join(", ")} and ${missing.at(-1)}` : missing[0]}.
+          Companies read this page when you apply. To make it stronger, add {missing.length > 1 ? `${missing.slice(0, -1).join(", ")} and ${missing.at(-1)}` : missing[0]}.{" "}
+          <Link href="/dashboard/edit-profile" className="font-semibold text-[#155DFC] hover:underline">
+            Edit profile
+          </Link>
         </p>
       )}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-6">
-          {about && (
-            <Section title="About">
-              <p className="whitespace-pre-line text-base leading-relaxed text-[#2B3A55]">{capFirst(about)}</p>
-            </Section>
-          )}
-
-          {(skills.length > 0 || strengths.length > 0) && (
-            <Section title="Skills">
-              {skills.length > 0 && <Chips items={skills} tone="blue" />}
-              {strengths.length > 0 && (
-                <div className={skills.length ? "mt-4" : ""}>
-                  <p className="mb-2 text-sm text-[#7B869C]">Strengths</p>
-                  <Chips items={strengths} />
-                </div>
+          {/* Work first: proof of what they can do */}
+          {(shownProjects.length > 0 || isMe) && (
+            <Section title="Work">
+              {shownProjects.length > 0 ? (
+                <ul className="grid gap-4 sm:grid-cols-2">
+                  {shownProjects.map((p) => (
+                    <li key={p.id}>
+                      <Link href={`/projects/${p.id}`} className="group block overflow-hidden rounded-xl ring-1 ring-[#EEF2FA] hover:ring-[#B9C8E6]">
+                        <div className="aspect-[16/9] bg-[#F3F7FF]">
+                          {p.cover_image_url && <img src={p.cover_image_url} alt="" loading="lazy" className="h-full w-full object-cover" />}
+                        </div>
+                        <div className="p-4">
+                          <p className="font-semibold text-[#0B1B3F] group-hover:text-[#155DFC]">{p.project_title}</p>
+                          {p.description && <p className="mt-1 line-clamp-2 text-sm text-[#4A5670]">{p.description}</p>}
+                        </div>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-base leading-relaxed text-[#4A5670]">
+                  Projects you build during Zigex programs and internships appear here, so companies can see your work.
+                </p>
               )}
             </Section>
           )}
 
-          {shownProjects.length > 0 && (
-            <Section title="Projects">
-              <ul className="grid gap-4 sm:grid-cols-2">
-                {shownProjects.map((p) => (
-                  <li key={p.id} className="overflow-hidden rounded-xl ring-1 ring-[#EEF2FA]">
-                    {p.cover_image_url && <img src={p.cover_image_url} alt="" loading="lazy" className="aspect-[16/9] w-full object-cover" />}
-                    <div className="p-4">
-                      <p className="font-semibold text-[#0B1B3F]">{p.project_title}</p>
-                      {p.description && <p className="mt-1 line-clamp-3 text-sm text-[#4A5670]">{p.description}</p>}
-                      {safeUrl(p.github_repository) && (
-                        <a href={safeUrl(p.github_repository)!} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-sm font-semibold text-[#155DFC] hover:underline">
-                          View code
-                        </a>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
+          {(about || strengths.length > 0) && (
+            <Section title="About">
+              {about && <p className="whitespace-pre-line text-base leading-relaxed text-[#2B3A55]">{capFirst(about)}</p>}
+              {strengths.length > 0 && (
+                <p className={`text-sm text-[#4A5670] ${about ? "mt-3" : ""}`}>
+                  <span className="font-medium text-[#0B1B3F]">Strengths: </span>
+                  {strengths.join(", ")}
+                </p>
+              )}
+            </Section>
+          )}
+
+          {skills.length > 0 && (
+            <Section title="Skills">
+              <Chips items={skills.slice(0, 8)} tone="blue" />
+              {skills.length > 8 && (
+                <details className="mt-3 group">
+                  <summary className="cursor-pointer list-none text-sm font-semibold text-[#155DFC] hover:underline [&::-webkit-details-marker]:hidden">
+                    <span className="group-open:hidden">Show all {skills.length} skills</span>
+                    <span className="hidden group-open:inline">Show fewer</span>
+                  </summary>
+                  <div className="mt-3">
+                    <Chips items={skills.slice(8)} tone="blue" />
+                  </div>
+                </details>
+              )}
             </Section>
           )}
 
           {(roles.length > 0 || achievements.length > 0) && (
             <Section title="Experience">
               {roles.length > 0 && (
-                <>
-                  <p className="mb-2 text-sm text-[#7B869C]">Roles</p>
-                  <Chips items={roles} />
-                </>
+                <p className="text-base text-[#2B3A55]">
+                  <span className="font-medium text-[#0B1B3F]">Roles: </span>
+                  {roles.join(", ")}
+                </p>
               )}
               {achievements.length > 0 && (
-                <div className={roles.length ? "mt-4" : ""}>
-                  <p className="mb-2 text-sm text-[#7B869C]">Achievements</p>
-                  <ul className="space-y-1.5 text-base text-[#2B3A55]">
-                    {achievements.map((a) => (
-                      <li key={a} className="flex gap-2">
-                        <span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#155DFC]" aria-hidden="true" />
-                        {capFirst(a)}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                <ul className={`space-y-1.5 text-base text-[#2B3A55] ${roles.length ? "mt-3" : ""}`}>
+                  {achievements.map((a) => (
+                    <li key={a} className="flex gap-2">
+                      <span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#155DFC]" aria-hidden="true" />
+                      {capFirst(a)}
+                    </li>
+                  ))}
+                </ul>
               )}
             </Section>
           )}
 
-          {!about && skills.length === 0 && shownProjects.length === 0 && roles.length === 0 && (
+          {!about && skills.length === 0 && shownProjects.length === 0 && roles.length === 0 && !isMe && (
             <p className="rounded-2xl bg-white px-6 py-8 text-center text-base text-[#4A5670] ring-1 ring-[#DCE5F5]">
-              {isMe ? "Your profile is still empty. Add an intro and your skills so companies know you." : `${name.split(" ")[0]} hasn't added more to their profile yet.`}
+              {name.split(" ")[0]} hasn&apos;t added more to their profile yet.
             </p>
           )}
         </div>
@@ -289,58 +326,28 @@ export function StudentProfile({
             </dl>
           </Section>
 
-          {accepted.length > 0 && (
-            <Section title="On Zigex">
-              <ul className="space-y-2 text-sm">
-                {accepted.map((a) => (
-                  <li key={a.id} className="flex items-start gap-2">
-                    <CalendarDays className="mt-0.5 h-4 w-4 shrink-0 text-[#155DFC]" aria-hidden="true" />
-                    <span className="text-[#0B1B3F]">
-                      {a.title}
-                      <span className="block text-[#7B869C]">{capFirst(a.type)}</span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </Section>
-          )}
-
           {(industries.length > 0 || languages.length > 0 || interests.length > 0) && (
             <Section title={isMe ? "More about you" : "More about them"}>
-              <div className="space-y-4">
+              <dl className="space-y-3 text-sm">
                 {industries.length > 0 && (
                   <div>
-                    <p className="mb-2 text-sm text-[#7B869C]">Industries of interest</p>
-                    <Chips items={industries} />
+                    <dt className="text-[#7B869C]">Wants to work in</dt>
+                    <dd className="mt-0.5 text-[#0B1B3F]">{industries.join(", ")}</dd>
                   </div>
                 )}
                 {languages.length > 0 && (
                   <div>
-                    <p className="mb-2 text-sm text-[#7B869C]">Languages</p>
-                    <Chips items={languages} />
+                    <dt className="text-[#7B869C]">Speaks</dt>
+                    <dd className="mt-0.5 text-[#0B1B3F]">{languages.join(", ")}</dd>
                   </div>
                 )}
                 {interests.length > 0 && (
                   <div>
-                    <p className="mb-2 text-sm text-[#7B869C]">Interests</p>
-                    <Chips items={interests} />
+                    <dt className="text-[#7B869C]">Interests</dt>
+                    <dd className="mt-0.5 text-[#0B1B3F]">{interests.join(", ")}</dd>
                   </div>
                 )}
-              </div>
-            </Section>
-          )}
-
-          {isMe && links.length > 0 && (
-            <Section title="Links">
-              <ul className="space-y-2 text-sm">
-                {links.map((l) => (
-                  <li key={l.label}>
-                    <a href={l.href} target="_blank" rel="noopener noreferrer" className="font-semibold text-[#155DFC] hover:underline">
-                      {l.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+              </dl>
             </Section>
           )}
         </aside>

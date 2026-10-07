@@ -1,5 +1,6 @@
 "use client";
 
+import { SafeImg } from "@/components/SafeImg";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -208,7 +209,7 @@ function AccountMenu({
       >
         <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full bg-[#EEF3FF] text-sm">
           <NameInitials name={name} />
-          {usableImageUrl(avatar) && <img src={usableImageUrl(avatar)!} alt="" className="absolute inset-0 h-full w-full object-cover" />}
+          {usableImageUrl(avatar) && <SafeImg src={usableImageUrl(avatar)!} alt="" className="absolute inset-0 h-full w-full object-cover" />}
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-semibold text-[#0B1B3F]">{name}</span>
