@@ -8,8 +8,7 @@ import { api } from "@/lib/api/browser-client";
 import { ApiClientError } from "@/lib/api/errors";
 import { subscribeToPushNotifications, unsubscribeFromPushNotifications } from "@/lib/actions/push.actions";
 import { PasswordInput, PasswordStrength, passwordStrength } from "@/components/sections/auth/auth-ui";
-
-const SUPPORT_EMAIL = "zigexconnect.com@gmail.com";
+import { DeleteAccount } from "./DeleteAccount";
 
 function Row({ id, title, note, children }: { id: string; title: string; note: string; children: React.ReactNode }) {
   return (
@@ -97,18 +96,12 @@ export function SettingsView({ email, profileHref }: { email: string; profileHre
           </ul>
         </Row>
 
-        <Row id="session" title="Sign out and account" note="Sign out on this device, or ask us to delete your account.">
+        <Row id="session" title="Sign out and account" note="Sign out on this device, or delete your account.">
           <SignOut />
-          <p className="mt-5 text-sm text-[#4A5670]">
-            Want to delete your account and data? Email{" "}
-            <a
-              href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Delete my Zigex account")}&body=${encodeURIComponent(`Please delete the Zigex account for ${email}.`)}`}
-              className="font-semibold text-[#155DFC] hover:underline"
-            >
-              {SUPPORT_EMAIL}
-            </a>{" "}
-            from your sign-in email. We&apos;ll confirm before deleting anything.
-          </p>
+          <div className="mt-6 border-t border-[#EEF2FA] pt-5">
+            <p className="text-sm text-[#4A5670]">Deleting your account removes your profile, applications and documents for good.</p>
+            <DeleteAccount email={email} />
+          </div>
         </Row>
       </div>
     </div>

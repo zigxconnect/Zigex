@@ -7,6 +7,7 @@ import { ForCompaniesSection } from "@/components/sections/landing/ForCompaniesS
 import { VisionMissionSection } from "@/components/sections/landing/VisionMissionSection";
 import { FaqSection } from "@/components/sections/landing/FaqSection";
 import CommunitySection from "@/components/sections/landing/CommunitySection";
+import { AccountDeletedNotice } from "@/components/sections/landing/AccountDeletedNotice";
 
 /**
  * Landing page, for signed-out visitors (signed-in students are sent to /feed
@@ -30,6 +31,7 @@ export default function LandingPage() {
       <VisionMissionSection />
       <FaqSection />
       <CommunitySection />
+      <AccountDeletedNotice />
     </div>
   );
 }
