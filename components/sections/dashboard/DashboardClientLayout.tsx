@@ -22,7 +22,7 @@ interface DashboardClientLayoutProps {
  */
 function hideProfileBanner(pathname: string | null) {
   const path = pathname ?? "";
-  return path === "/feed" || path === "/dashboard/programs" || path === "/dashboard/blog" || path.startsWith("/dashboard/student") || path === "/dashboard/community" || path.startsWith("/profile/") || path.startsWith("/dashboard/blog/") || path.startsWith("/feed/") || /^\/programs\/[^/]+$/.test(path);
+  return path === "/feed" || path === "/dashboard/programs" || path === "/dashboard/blog" || path.startsWith("/dashboard/student") || path === "/dashboard/community" || path === "/dashboard/edit-profile" || path.startsWith("/profile/") || path.startsWith("/dashboard/blog/") || path.startsWith("/feed/") || /^\/programs\/[^/]+$/.test(path);
 }
 
 export function DashboardClientLayout({
