@@ -3,7 +3,8 @@
 import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import * as Dialog from "@radix-ui/react-dialog";
-import { AlertCircle, Check, CheckCircle2, ChevronDown, Clock, Loader2, LogIn, WifiOff, X } from "lucide-react";
+import { AlertCircle, Check, CheckCircle2, ChevronDown, Clock, FileText, Loader2, LogIn, Paperclip, WifiOff, X } from "lucide-react";
+import { RESUME_TYPES, uploadApplicationResume } from "@/lib/api/uploads";
 
 export type ApplyKind = "internship" | "program" | "event";
 /** Who is applying, from their profile (the company sees the full profile). */
@@ -148,6 +149,11 @@ export function ApplyDialog({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<SendError | null>(null);
   const [done, setDone] = useState(false);
+  // Optional CV (internships). It can only be attached once the application exists.
+  const [cv, setCv] = useState<File | null>(null);
+  const [cvProblem, setCvProblem] = useState<string | null>(null);
+  const [cvState, setCvState] = useState<"none" | "uploading" | "done" | "failed">("none");
+  const [applicationId, setApplicationId] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [showTips, setShowTips] = useState(false);
   const [already, setAlready] = useState(false);
@@ -266,12 +272,43 @@ export function ApplyDialog({
       }
       setDone(true);
       onSubmitted();
+      const newId = typeof body?.id === "string" ? body.id : typeof body?.application?.id === "string" ? body.application.id : null;
+      setApplicationId(newId);
+      if (cv) attachCv(newId, cv);
     } catch {
       // fetch itself failed: no connection, or the request was cut off.
       setError(describeError(navigator.onLine === false ? null : 503, "", kind === "event" ? "RSVP" : kind === "program" ? "registration" : "application"));
     } finally {
       setBusy(false);
     }
+  };
+
+  const attachCv = async (appId: string | null, file: File) => {
+    if (!appId) {
+      setCvState("failed");
+      return;
+    }
+    setCvState("uploading");
+    try {
+      await uploadApplicationResume(appId, file);
+      setCvState("done");
+    } catch {
+      setCvState("failed");
+    }
+  };
+
+  const pickCv = (file: File | undefined) => {
+    if (!file) return;
+    if (!RESUME_TYPES.includes(file.type)) {
+      setCvProblem("Use a PDF (or a .doc file).");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setCvProblem("That file is over 5 MB. Export a smaller PDF.");
+      return;
+    }
+    setCvProblem(null);
+    setCv(file);
   };
 
   const fee = priceXaf ? `${priceXaf.toLocaleString("en-US")} XAF` : "a fee";
@@ -336,6 +373,31 @@ export function ApplyDialog({
                   : `${company || "The company"} will review it and let you know.`}{" "}
                 You&apos;ll get an email and a notification on Zigex.
               </p>
+              {cv && cvState !== "none" && (
+                <div
+                  role="status"
+                  className={`mt-5 flex items-start gap-3 rounded-xl px-4 py-3 text-sm ring-1 ${cvState === "failed" ? "bg-[#FFFAEB] text-[#7A2E0E] ring-[#FEDF89]" : "bg-[#F8FAFF] text-[#0B1B3F] ring-[#EEF2FA]"}`}
+                >
+                  {cvState === "uploading" ? (
+                    <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin" aria-hidden="true" />
+                  ) : cvState === "done" ? (
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#067647]" aria-hidden="true" />
+                  ) : (
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">
+                      {cvState === "uploading" ? "Attaching your CV…" : cvState === "done" ? "CV attached" : "Your application was sent, but the CV didn't attach"}
+                    </p>
+                    <p className="truncate text-[#4A5670]">{cv.name}</p>
+                    {cvState === "failed" && applicationId && (
+                      <button type="button" onClick={() => attachCv(applicationId, cv)} className="mt-1 font-semibold underline underline-offset-2">
+                        Try again
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
               <div className="mt-auto flex flex-col gap-2 pt-8">
                 <Link href="/dashboard/applied-internships" className="inline-flex h-12 items-center justify-center rounded-xl bg-[#155DFC] text-base font-semibold text-white hover:bg-[#0F3FB8]">
                   View my applications
@@ -406,6 +468,41 @@ export function ApplyDialog({
                     <Chips label="Area you want to work in" options={AREAS} value={area} onChange={setArea} optional />
                     <Chips label="How long you can intern" options={DURATIONS} value={duration} onChange={setDuration} optional />
                     <Chips label="Your experience" options={EXPERIENCE} value={experience} onChange={setExperience} optional />
+                    <div>
+                      <p className="mb-1.5 text-sm font-medium text-[#0B1B3F]">
+                        CV <span className="font-normal text-[#7B869C]">(optional)</span>
+                      </p>
+                      {cv ? (
+                        <div className="flex items-center gap-3 rounded-xl bg-[#F8FAFF] px-3 py-2.5 ring-1 ring-[#DCE5F5]">
+                          <FileText className="h-5 w-5 shrink-0 text-[#155DFC]" aria-hidden="true" />
+                          <div className="min-w-0 flex-1 text-sm">
+                            <p className="truncate font-medium text-[#0B1B3F]">{cv.name}</p>
+                            <p className="text-[#7B869C]">{cv.size < 1024 * 1024 ? `${Math.max(1, Math.round(cv.size / 1024))} KB` : `${(cv.size / 1024 / 1024).toFixed(1)} MB`}</p>
+                          </div>
+                          <button type="button" onClick={() => setCv(null)} aria-label={`Remove ${cv.name}`} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#4A5670] hover:bg-white">
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-[#B9C8E6] px-3 py-3 text-sm hover:border-[#155DFC] hover:bg-[#F8FAFF] focus-within:ring-2 focus-within:ring-[#155DFC]">
+                          <Paperclip className="h-5 w-5 shrink-0 text-[#155DFC]" aria-hidden="true" />
+                          <span className="flex-1">
+                            <span className="font-semibold text-[#155DFC]">Attach your CV</span>
+                            <span className="block text-[#7B869C]">PDF, up to 5 MB. Only this company sees it.</span>
+                          </span>
+                          <input
+                            type="file"
+                            accept=".pdf,.doc,application/pdf,application/msword"
+                            className="sr-only"
+                            onChange={(e) => {
+                              pickCv(e.target.files?.[0]);
+                              e.target.value = "";
+                            }}
+                          />
+                        </label>
+                      )}
+                      {cvProblem && <p className="mt-1.5 text-sm text-[#B42318]">{cvProblem}</p>}
+                    </div>
                   </>
                 )}
 

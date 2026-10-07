@@ -25,6 +25,8 @@ const FIELD_MAP: Record<string, string> = {
   github_url: "githubUrl",
   linkedin_url: "linkedinUrl",
   avatar_url: "avatarUrl",
+  cover_image_url: "coverImage",
+  cover_image: "coverImage",
   // Spec'd additions (see SPEC_FIELDS).
   username: "username",
   languages: "languages",

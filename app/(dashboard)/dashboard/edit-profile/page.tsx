@@ -22,6 +22,7 @@ export default async function EditProfilePage() {
 
   const initial: ProfileValues = {
     avatar_url: str(p.avatar_url ?? p.profile_picture),
+    cover_image_url: str(p.cover_image_url ?? p.cover_image),
     first_name: str(p.first_name),
     last_name: str(p.last_name),
     username: str(p.username).replace(/^@+/, ""),

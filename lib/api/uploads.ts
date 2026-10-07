@@ -134,3 +134,16 @@ export async function getSignedUrl(key: string) {
   );
   return res.data.signedUrl;
 }
+
+/** What POST /uploads/resume/{applicationId} accepts (Swagger: PDF or .doc). */
+export const RESUME_TYPES = ["application/pdf", "application/msword"];
+
+/** Attaches a CV to one application, after the application has been created. */
+export async function uploadApplicationResume(applicationId: string, file: File) {
+  assertFile(file, RESUME_TYPES, "CV");
+  const res = await api.post<{ key?: string; url?: string }>(`/uploads/resume/${encodeURIComponent(applicationId)}`, {
+    base64: await fileToBase64(file),
+    mimetype: file.type,
+  });
+  return res.data;
+}

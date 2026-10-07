@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Camera, Check, CheckCircle2, ChevronDown, Loader2, Plus, X } from "lucide-react";
 import { saveMyProfile } from "@/lib/actions/profile.actions";
-import { uploadAvatar } from "@/lib/api/uploads";
+import { uploadAvatar, uploadCoverImage } from "@/lib/api/uploads";
 import { PhotoCropDialog } from "@/components/profile/PhotoCropDialog";
 import { ApiClientError } from "@/lib/api/errors";
 import { usableImageUrl } from "@/lib/images";
@@ -15,6 +15,7 @@ const SavedContext = createContext<Set<string>>(new Set());
 
 export type ProfileValues = {
   avatar_url: string;
+  cover_image_url: string;
   first_name: string;
   last_name: string;
   username: string;
@@ -196,6 +197,56 @@ export function EditProfileForm({ initial, email, profileHref }: { initial: Prof
     setCropFile(file);
   };
 
+  // Cover image: same address-reuse problem as the photo, so it gets a version too.
+  const [coverBusy, setCoverBusy] = useState(false);
+  const [coverVersion, setCoverVersion] = useState(0);
+  const coverUrl = usableImageUrl(v.cover_image_url)
+    ? coverVersion
+      ? `${v.cover_image_url}${v.cover_image_url.includes("?") ? "&" : "?"}v=${coverVersion}`
+      : v.cover_image_url
+    : null;
+  const setCover = async (url: string) => {
+    const result = await saveMyProfile({ cover_image_url: url || null });
+    if (!result.success || result.unsupported?.length) throw new Error(result.error);
+    latest.current = { ...latest.current, cover_image_url: url };
+    setV(latest.current);
+    savedRef.current = { ...savedRef.current, cover_image_url: url };
+    setCoverVersion(Date.now());
+    setState("saved");
+    router.refresh();
+  };
+  const changeCover = async (file: File) => {
+    setCoverBusy(true);
+    setNote(null);
+    try {
+      const { url } = await uploadCoverImage(file);
+      if (!usableImageUrl(url)) throw new Error("PHOTO_HOST");
+      await setCover(url);
+    } catch (error) {
+      setNote(
+        error instanceof ApiClientError && [408, 502, 503, 504].includes(error.status)
+          ? "The cover took too long to upload. Check your connection and try again."
+          : error instanceof Error && /MB|must be one of/i.test(error.message)
+            ? error.message
+            : "The cover couldn't be saved. Try a JPG or PNG image."
+      );
+      setState("error");
+    } finally {
+      setCoverBusy(false);
+    }
+  };
+  const removeCover = async () => {
+    setCoverBusy(true);
+    try {
+      await setCover("");
+    } catch {
+      setNote("The cover couldn't be removed. Try again.");
+      setState("error");
+    } finally {
+      setCoverBusy(false);
+    }
+  };
+
   const changePhoto = async (file: File) => {
     setUploading(true);
     try {
@@ -238,7 +289,36 @@ export function EditProfileForm({ initial, email, profileHref }: { initial: Prof
     <div className="pb-16">
       {/* Live header: looks like your profile and updates as you type */}
       <header className="overflow-hidden rounded-2xl bg-white ring-1 ring-[#DCE5F5]">
-        <div className="h-24 bg-[linear-gradient(120deg,#0B1B3F_0%,#123A9C_55%,#155DFC_100%)] sm:h-28" />
+        {/* Cover: the student's image if they added one, otherwise the brand band */}
+        <div className="relative h-28 bg-[linear-gradient(120deg,#0B1B3F_0%,#123A9C_55%,#155DFC_100%)] sm:h-36">
+          {coverUrl && <SafeImg src={coverUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />}
+          <div className="absolute right-3 top-3 flex gap-2">
+            {coverUrl && !coverBusy && (
+              <button
+                type="button"
+                onClick={removeCover}
+                className="inline-flex h-9 items-center rounded-lg bg-[#0B1B3F]/60 px-3 text-sm font-semibold text-white backdrop-blur hover:bg-[#0B1B3F]/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              >
+                Remove
+              </button>
+            )}
+            <label className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg bg-white/90 px-3 text-sm font-semibold text-[#0B1B3F] backdrop-blur hover:bg-white focus-within:ring-2 focus-within:ring-white">
+              {coverBusy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Camera className="h-4 w-4" aria-hidden="true" />}
+              {coverBusy ? "Saving…" : coverUrl ? "Change cover" : "Add cover"}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="sr-only"
+                disabled={coverBusy}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = "";
+                  if (f) changeCover(f);
+                }}
+              />
+            </label>
+          </div>
+        </div>
         <div className="grid gap-6 px-5 pb-6 sm:px-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
           <div className="min-w-0">
             <div className="-mt-12 flex items-end justify-between gap-3">
