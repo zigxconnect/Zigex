@@ -11,10 +11,10 @@ export const projectId = assertValue(
   "Missing environment variable: NEXT_PUBLIC_SANITY_PROJECT_ID"
 );
 
-function assertValue<T>(v: T | undefined, errorMessage: string): T {
-  if (v === undefined) {
-    throw new Error(errorMessage);
+// Empty counts as missing: CI passes unset GitHub variables as "".
+function assertValue(v: string | undefined, errorMessage: string): string {
+  if (!v || !v.trim()) {
+    throw new Error(`${errorMessage}. Set it in .env.local, or as a GitHub Actions variable for CI and deploys (docs/setup/deploy.md).`);
   }
-
-  return v;
+  return v.trim();
 }

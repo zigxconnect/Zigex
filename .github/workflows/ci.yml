@@ -43,6 +43,31 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
 
+      # Fail early, with a clear message, when required GitHub variables aren't set.
+      - name: Check configuration
+        run: |
+          missing=0
+          for name in NEXT_PUBLIC_SANITY_PROJECT_ID; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Variable $name is not set. Add it under Settings → Secrets and variables → Actions → Variables (see docs/setup/deploy.md)."
+              missing=1
+            fi
+          done
+          for name in NEXT_PUBLIC_SITE_URL NEXT_PUBLIC_GOOGLE_CLIENT_ID NEXT_PUBLIC_VAPID_PUBLIC_KEY; do
+            [ -z "${!name}" ] && echo "::warning::Variable $name is not set; the feature that needs it will be off in this build."
+          done
+          exit $missing
+
+      # Reuse Next.js's build cache between runs (much faster rebuilds).
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ hashFiles('app/**', 'components/**', 'lib/**', 'sanity/**', 'next.config.mjs') }}
+          restore-keys: |
+            nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
+            nextjs-${{ runner.os }}-
+
       - name: Install
         run: npm ci --no-audit --no-fund
 
