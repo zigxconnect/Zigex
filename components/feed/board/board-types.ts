@@ -1,3 +1,4 @@
+import { usableImageUrl } from "@/lib/images";
 import type { FeedKind, FeedRow } from "@/lib/api/services/feed";
 
 /** One opportunity, flattened for the /feed board (no per-type branching in the UI). */
@@ -39,7 +40,7 @@ export function toBoardItem(kind: FeedKind, row: FeedRow): BoardItem {
     kind,
     title: row.title,
     companyName: company?.company_name ?? "Zigex partner",
-    companyLogo: company?.logo_url ?? null,
+    companyLogo: usableImageUrl(company?.logo_url),
     companyVerified: Boolean(company?.is_verified),
     image: typeof row[IMAGE_COLUMN[kind]] === "string" && row[IMAGE_COLUMN[kind]] ? row[IMAGE_COLUMN[kind]] : null,
     location: row.location ?? row.venue ?? null,
