@@ -83,7 +83,7 @@ export const Footer: React.FC = () => {
             <ul className="space-y-5 text-sm text-[#C9D6F2]">
               <li className="flex items-start gap-3">
                 <MapPin size={18} className="text-[#7FA6FF] shrink-0" />
-                <span>Commercial Avenue, Bamenda, NW Region, Cameroon</span>
+                <span>Mawa, Mile 6 Nkwen, Bamenda, North West Region, Cameroon</span>
               </li>
               <li className="flex items-center gap-3">
                 <Mail size={18} className="text-[#7FA6FF] shrink-0" />

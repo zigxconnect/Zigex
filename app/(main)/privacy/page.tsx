@@ -19,7 +19,7 @@ const sections: LegalSection[] = [
     body: (
       <>
         <p>
-          Zigex is run by <strong>SEED Inc</strong>, Mile 6 Nkwen, Bamenda, Cameroon (&ldquo;SEED&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;). SEED is responsible for the personal information described in this policy.
+          Zigex is run by <strong>SEED Inc</strong>, Mawa, Mile 6 Nkwen, Bamenda, Cameroon (&ldquo;SEED&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;). SEED is responsible for the personal information described in this policy.
         </p>
         <p>
           This policy covers the Zigex website and app at zigexconnect.com, including the version you install on your phone. Companies that publish opportunities on Zigex decide for themselves what they do with the applications they receive; their own privacy policies apply to that.
@@ -199,7 +199,7 @@ const sections: LegalSection[] = [
     title: "Contact",
     body: (
       <p>
-        SEED Inc, Mile 6 Nkwen, Bamenda, Cameroon. Email: <Mail />.
+        SEED Inc, Mawa, Mile 6 Nkwen, Bamenda, Cameroon. Email: <Mail />.
       </p>
     ),
   },

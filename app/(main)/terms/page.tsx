@@ -19,7 +19,7 @@ const sections: LegalSection[] = [
     body: (
       <>
         <p>
-          Zigex is run by <strong>SEED Inc</strong>, Mile 6 Nkwen, Bamenda, Cameroon (&ldquo;SEED&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;). These terms apply when you use zigexconnect.com or the Zigex app, as a student, a company or a visitor.
+          Zigex is run by <strong>SEED Inc</strong>, Mawa, Mile 6 Nkwen, Bamenda, Cameroon (&ldquo;SEED&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;). These terms apply when you use zigexconnect.com or the Zigex app, as a student, a company or a visitor.
         </p>
         <p>
           By creating an account or using Zigex, you agree to these terms and to our <Link href="/privacy">Privacy Policy</Link>. If you don&apos;t agree, please don&apos;t use Zigex.
@@ -178,7 +178,7 @@ const sections: LegalSection[] = [
     title: "Contact",
     body: (
       <p>
-        SEED Inc, Mile 6 Nkwen, Bamenda, Cameroon. Email: <Mail />.
+        SEED Inc, Mawa, Mile 6 Nkwen, Bamenda, Cameroon. Email: <Mail />.
       </p>
     ),
   },
