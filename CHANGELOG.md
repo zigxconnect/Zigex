@@ -6,7 +6,7 @@ When releasing, rename **Unreleased** to the new version and date, then run `npm
 
 ## Unreleased
 
-- Release pipeline: CI on every pull request; a development site (`dev.zigexconnect.com`) updated on every push to `student-backend`; production deployed from version tags; automatic rollback and a `/api/health` check.
+- Release pipeline: CI on every pull request; a development site (`dev.zigexconnect.com`) updated on every push to `zigex`; production deployed from version tags; automatic rollback and a `/api/health` check.
 - The development site is hidden from search engines.
 - Production only deploys a commit that already passed CI and ran on the development site, and every deploy opens the main pages after switching (rolling back if they're broken).
 

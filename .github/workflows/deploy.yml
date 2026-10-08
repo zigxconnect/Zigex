@@ -1,14 +1,14 @@
 name: Deploy
 
 # Two sites on the same VPS:
-#   development  dev.zigexconnect.com  ← every push to student-backend
+#   development  dev.zigexconnect.com  ← every push to zigex
 #   production   zigexconnect.com      ← a version tag (git push origin v1.0.1)
 # "Run workflow" deploys any tag or branch to either site by hand.
 # Each GitHub environment (Settings → Environments) holds its own variables:
 # NEXT_PUBLIC_SITE_URL, VPS_APP_DIR, APP_NAME, APP_PORT, BACKEND_URL…
 on:
   push:
-    branches: [student-backend]
+    branches: [zigex]
     tags: ["v*.*.*"]
   workflow_dispatch:
     inputs:
@@ -18,7 +18,7 @@ on:
         options: [development, production]
         default: development
       ref:
-        description: "Tag or branch to deploy (e.g. v1.0.1 or student-backend)"
+        description: "Tag or branch to deploy (e.g. v1.0.1 or zigex)"
         required: true
       skip_dev_check:
         description: "Emergency only: deploy to production without CI and the development site having passed on this commit"
@@ -124,13 +124,13 @@ jobs:
               exit 0
             fi
             case "$ci" in failure|cancelled|timed_out|action_required)
-              echo "::error::CI didn't pass on $sha. Fix it on student-backend, then release a new version."; exit 1;; esac
+              echo "::error::CI didn't pass on $sha. Fix it on zigex, then release a new version."; exit 1;; esac
             if [ "$dev" = failure ]; then
               echo "::error::Deploying $sha to the development site failed. Fix it there first."; exit 1
             fi
             if [ $SECONDS -ge $deadline ]; then
               echo "::error::Gave up waiting: this commit wasn't built by CI and deployed to development within 25 minutes."
-              echo "::error::Push it to student-backend (or Run workflow → development with this ref), test it, then deploy again."
+              echo "::error::Push it to zigex (or Run workflow → development with this ref), test it, then deploy again."
               exit 1
             fi
             sleep 30

@@ -5,7 +5,7 @@ Two sites run on the same VPS, built from the same code:
 | | Development | Production |
 | --- | --- | --- |
 | Address | `https://dev.zigexconnect.com` | `https://zigexconnect.com` |
-| Deploys when | anything is pushed to `student-backend` | a version tag is pushed (`v1.0.1`) |
+| Deploys when | anything is pushed to `zigex` (the main branch) | a version tag is pushed (`v1.0.1`) |
 | Version shown at `/api/health` | `1.0.1-dev.3f2a9c1` (version + commit) | `1.0.1` |
 | On the VPS | `/var/www/zigex-dev`, PM2 `zigex-dev`, port 3100 | `/var/www/zigex`, PM2 `zigex`, port 3000 |
 | Secrets | `/var/www/zigex-dev/shared/.env` | `/var/www/zigex/shared/.env` |
@@ -15,7 +15,7 @@ Both use the same backend (`api.zigexconnect.com`) unless you set a different `B
 
 ```text
 feature branch ──PR──► CI (type check, build, audit)
-merge to student-backend ──► Deploy → development (dev.zigexconnect.com)
+merge to zigex ──► Deploy → development (dev.zigexconnect.com)
 test on dev, then:  npm version patch && git push --follow-tags
 tag v1.0.1 ──► Deploy → production (zigexconnect.com)
 each deploy: build on GitHub → upload → switch → health check → automatic rollback if unhealthy
@@ -143,11 +143,11 @@ ssh-keyscan -p 22 YOUR_VPS        # output → VPS_KNOWN_HOSTS secret
 
 Server-only secrets (`JWT_SECRET`, `GMAIL_*`, `EMAILJS_PRIVATE_KEY`, `RESEND_API_KEY`, `SANITY_WEBHOOK_SECRET`…) live **only** in each site's `shared/.env` on the VPS. `JWT_SECRET` must match the admin app's on the same environment (attendance QR codes).
 
-**Branches:** protect `zigex` and `student-backend` (pull request required, CI must pass).
+**Branches:** `zigex` is the main and deployment branch. Protect it (Settings → Branches): pull request required, CI must pass. Do work on short-lived branches (`feat/…`, `fix/…`) and merge them into `zigex` through pull requests.
 
 ## 4. Day to day
 
-- **Merge to `student-backend`** → development updates by itself in a few minutes. Check `https://dev.zigexconnect.com/api/health` shows the new commit.
+- **Merge to `zigex`** → development updates by itself in a few minutes. Check `https://dev.zigexconnect.com/api/health` shows the new commit.
 - **Test on dev** with test accounts (phone sign-in, Explore, apply, My applications, notifications, Edit profile).
 
 ## 5. Releasing to production
@@ -161,7 +161,7 @@ Server-only secrets (`JWT_SECRET`, `GMAIL_*`, `EMAILJS_PRIVATE_KEY`, `RESEND_API
    npm version patch      # fixes:        1.0.0 → 1.0.1
    npm version minor      # new features: 1.0.1 → 1.1.0
    npm version major      # breaking changes (rare)
-   git push origin student-backend --follow-tags
+   git push origin zigex --follow-tags
    ```
 
    The push deploys to development again; the tag deploys to production (after your approval if you set reviewers). Production refuses anything that isn't a version tag matching `package.json`.
