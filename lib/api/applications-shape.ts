@@ -70,7 +70,14 @@ export function normaliseApplication(row: ApplicationRow): ApplicationRow {
   };
 }
 
-/** Fill in missing postings with one feed lookup per distinct posting. */
+/**
+ * The backend sometimes embeds only a stub of the posting ({ id, title }):
+ * no image, dates or description. Treat that like a missing posting.
+ */
+const isStub = (posting: Record<string, any> | null | undefined) =>
+  !posting || Object.keys(posting).filter((k) => posting[k] != null).every((k) => k === "id" || k === "title");
+
+/** Fill in missing (or stub) postings with one feed lookup per distinct posting. */
 export async function hydrateApplications(
   rows: ApplicationRow[],
   fetchPosting: (path: FeedPath, id: string) => Promise<Record<string, any> | null>
@@ -81,7 +88,7 @@ export async function hydrateApplications(
   for (const row of normalised) {
     const kind = applicationKind(row);
     const id = targetId(row);
-    if (kind && id && !row[kind] && !missing.has(`${kind}:${id}`)) {
+    if (kind && id && isStub(row[kind]) && !missing.has(`${kind}:${id}`)) {
       missing.set(`${kind}:${id}`, fetchPosting(FEED_PATH[kind], id).catch(() => null));
     }
   }
@@ -93,7 +100,7 @@ export async function hydrateApplications(
   return normalised.map((row) => {
     const kind = applicationKind(row);
     const posting = kind ? postings.get(`${kind}:${targetId(row)}`) : null;
-    return kind && posting && !row[kind] ? { ...row, [kind]: normaliseFeedItem(posting) } : row;
+    return kind && posting && isStub(row[kind]) ? { ...row, [kind]: normaliseFeedItem(posting) } : row;
   });
 }
 

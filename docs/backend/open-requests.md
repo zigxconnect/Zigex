@@ -39,11 +39,17 @@ GET /api/v1/programs/dcfe2bae-f27a-4b6f-83f0-ba7e89540883/members?limit=3
 → 500 { "success": false, "error": { "code": "INTERNAL_SERVER_ERROR", "message": "An unexpected error occurred" } }
 ```
 
-### 3. Notification links
+### 3. `GET /applications` lost a program registration
+
+On 7 October the test student had two applications: the internship *SEED Summer Internship Program 2026* and a registration for the program *SEED WEEKEND OF CODE 2026*. On 8 October `GET /applications` returns only the internship (1 row). Probably related to the `student_id` / `student_profiles.id` remapping: please check program and event rows are still returned for their student.
+
+Also: embedded postings are stubs (`internships: { id, title }`), without image, dates or description. The app now fetches the full posting when it gets a stub, but returning the full object (or `cover_image_url` / `program_picture_url` / `event_picture_url` at least) would save a call per application.
+
+### 4. Notification links
 
 The app now follows each notification's `url` when it's a path on our site. The report's example uses `/dashboard/applications`; the app redirects that to My applications (`/dashboard/applied-internships`), so either works. Please use the links from [notifications.md](./notifications.md), section 2.
 
-### 4. Response shapes (noted for later)
+### 5. Response shapes (noted for later)
 
 Most responses have no schema in Swagger. Adding them would let us remove guesswork in the frontend.
 
@@ -63,4 +69,4 @@ Most responses have no schema in Swagger. Adding them would let us remove guessw
 
 ---
 
-**Please reply with:** item 1 fixed (`nslookup files.zigexconnect.com` returns an address, or links rolled back) and item 2 returning 200 on the live API.
+**Please reply with:** item 1 fixed (`nslookup files.zigexconnect.com` returns an address, or links rolled back) item 2 returning 200 on the live API, and item 3 (the missing program registration).
