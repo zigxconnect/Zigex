@@ -1,0 +1,406 @@
+# Zigex student app: deployment guide
+
+A step-by-step runbook to put the Zigex student app online on a VPS, with two sites:
+
+| | Development | Production |
+| --- | --- | --- |
+| Address | `https://dev.zigexconnect.com` | `https://zigexconnect.com` |
+| Updates when | anything is pushed to `zigex` | a version tag (`v1.0.1`) is pushed |
+| On the server | `/var/www/zigex-dev`, PM2 app `zigex-dev`, port 3100 | `/var/www/zigex`, PM2 app `zigex`, port 3000 |
+
+Do the steps in order. Each ends with a **Check**: don't move on until it passes. Allow about 2–3 hours the first time.
+
+**Repository:** `git@github.com:zigxconnect/Zigex.git`, branch `zigex`.
+**Reference** (how it works, troubleshooting): [deploy.md](./deploy.md), [../architecture.md](../architecture.md).
+
+---
+
+## What you need before starting
+
+- [ ] **A VPS** running Ubuntu 22.04 or 24.04, with at least 2 GB RAM and 20 GB disk, a public IP, and SSH access as a user with `sudo`.
+- [ ] **Access to the DNS** for `zigexconnect.com`. It's currently managed at **Hostinger** (nameservers `ns1/ns2.dns-parking.com`).
+- [ ] **Admin access** to the GitHub repository (Settings tab).
+- [ ] **The environment values** (secrets and keys) from the project owner. The full list is in Step 4.
+- [ ] **Access to the Google Cloud Console** project that owns the "Continue with Google" client (Step 9).
+
+You'll run commands in two places: **on the VPS** (over SSH) and **on your own computer**. Each block says which.
+
+---
+
+## Step 1: Point the domains at the VPS
+
+In Hostinger: **Domains → zigexconnect.com → DNS / Nameservers → DNS records**. Add or update:
+
+| Type | Name | Points to | TTL |
+| --- | --- | --- | --- |
+| A | `@` | your VPS IP | 3600 |
+| A | `dev` | your VPS IP | 3600 |
+| CNAME | `www` | `zigexconnect.com` | 3600 |
+
+Don't change the MX or TXT records (email).
+
+**Check** (on your computer; can take up to an hour):
+
+```bash
+nslookup zigexconnect.com
+nslookup dev.zigexconnect.com
+```
+
+Both must return your VPS IP.
+
+---
+
+## Step 2: Prepare the server
+
+**On the VPS:**
+
+```bash
+# Updates and basic tools
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y curl git nginx ufw
+
+# Node.js 22 (the version in .nvmrc)
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# PM2 keeps the app running and restarts it after crashes and reboots
+sudo npm install -g pm2
+
+# Firewall: only SSH and the web
+sudo ufw allow OpenSSH
+sudo ufw allow 'Nginx Full'
+sudo ufw --force enable
+```
+
+**Check:**
+
+```bash
+node -v        # v22.x
+pm2 -v         # a version number
+sudo ufw status   # OpenSSH and Nginx Full: ALLOW
+```
+
+---
+
+## Step 3: Create the deploy user and folders
+
+The app runs as a dedicated user, `deploy`, never as root.
+
+**On the VPS:**
+
+```bash
+sudo adduser --disabled-password --gecos "" deploy
+
+for site in zigex zigex-dev; do
+  sudo mkdir -p /var/www/$site/releases /var/www/$site/shared/logs /var/www/$site/incoming
+done
+sudo chown -R deploy:deploy /var/www/zigex /var/www/zigex-dev
+
+# PM2 starts the apps again after a reboot
+sudo env PATH=$PATH pm2 startup systemd -u deploy --hp /home/deploy
+```
+
+**Check:**
+
+```bash
+ls -la /var/www/zigex /var/www/zigex-dev   # releases, shared, incoming, owned by deploy
+```
+
+---
+
+## Step 4: Create the environment files
+
+Each site has one `.env` file with its secrets, outside the code. It's never committed to Git and never put in GitHub.
+
+**On the VPS**, create the production file:
+
+```bash
+sudo -u deploy nano /var/www/zigex/shared/.env
+```
+
+Paste this, then fill in the values from the project owner:
+
+```dotenv
+# Required
+BACKEND_URL=https://api.zigexconnect.com
+JWT_SECRET=                      # must be the SAME value as the admin app's JWT_SECRET
+
+# Email: Gmail (application emails)
+GMAIL_USER=
+GMAIL_APP_PASSWORD=              # a Google "app password", not the normal password
+ADMIN_EMAIL=
+
+# Email: EmailJS (welcome email)
+EMAILJS_SERVICE_ID=
+EMAILJS_TEMPLATE_ID=zigex_dynamic
+EMAILJS_PUBLIC_KEY=
+EMAILJS_PRIVATE_KEY=
+
+# Email: Resend (contact form)
+RESEND_API_KEY=
+EMAIL_FROM=
+
+# Blog updates from Sanity
+SANITY_WEBHOOK_SECRET=
+
+# Optional: WhatsApp welcome message
+WHATSAPP_API_URL=
+WHATSAPP_API_KEY=
+WHATSAPP_INSTANCE=
+```
+
+Then the development file. Start from a copy and change what differs (usually nothing at first, since both sites use the same backend):
+
+```bash
+sudo -u deploy cp /var/www/zigex/shared/.env /var/www/zigex-dev/shared/.env
+sudo chmod 600 /var/www/zigex/shared/.env /var/www/zigex-dev/shared/.env
+```
+
+> **Never** add `NEXT_PUBLIC_…` values here; those go to GitHub (Step 7). **Never** put a secret behind a `NEXT_PUBLIC_` name: those are sent to every visitor's browser.
+
+**Check:**
+
+```bash
+sudo -u deploy grep -c '=' /var/www/zigex/shared/.env      # roughly 18
+ls -l /var/www/zigex/shared/.env                           # -rw------- deploy deploy
+```
+
+---
+
+## Step 5: Set up Nginx and HTTPS
+
+Nginx receives visitors on ports 80/443 and forwards them to the apps on 3000 and 3100, which only listen on the server itself.
+
+**On the VPS** (the config files are in the repository under `deploy/nginx/`):
+
+```bash
+cd /tmp && git clone --depth 1 -b zigex https://github.com/zigxconnect/Zigex.git zigex-src
+#   (private repo? use: git clone git@github.com:zigxconnect/Zigex.git, or copy the two files over with scp)
+
+sudo cp /tmp/zigex-src/deploy/nginx/zigex.conf     /etc/nginx/sites-available/zigex
+sudo cp /tmp/zigex-src/deploy/nginx/zigex-dev.conf /etc/nginx/sites-available/zigex-dev
+sudo ln -sf /etc/nginx/sites-available/zigex     /etc/nginx/sites-enabled/zigex
+sudo ln -sf /etc/nginx/sites-available/zigex-dev /etc/nginx/sites-enabled/zigex-dev
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+HTTPS certificates (free, renewed automatically):
+
+```bash
+sudo apt install -y certbot python3-certbot-nginx
+sudo certbot --nginx -d zigexconnect.com -d www.zigexconnect.com
+sudo certbot --nginx -d dev.zigexconnect.com
+```
+
+**Optional:** keep the development site private with a password. Run the following, then uncomment the two `auth_basic` lines in `/etc/nginx/sites-available/zigex-dev` and reload Nginx:
+
+```bash
+sudo apt install -y apache2-utils
+sudo htpasswd -c /etc/nginx/zigex-dev.htpasswd tester
+```
+
+**Check:**
+
+```bash
+sudo nginx -t                                  # syntax is ok
+curl -sI https://zigexconnect.com | head -1    # HTTP/2 502 is expected now (no app yet); a certificate error is not
+sudo certbot renew --dry-run                   # renewal works
+```
+
+---
+
+## Step 6: Create the deploy key for GitHub Actions
+
+GitHub builds the app and needs to copy it to the server. Give it its own SSH key, used only for this.
+
+**On your computer:**
+
+```bash
+ssh-keygen -t ed25519 -f zigex_deploy -C "github-actions-deploy" -N ""
+```
+
+Put the public half on the server, for the `deploy` user. **On the VPS:**
+
+```bash
+sudo -u deploy mkdir -p /home/deploy/.ssh
+sudo -u deploy nano /home/deploy/.ssh/authorized_keys     # paste the contents of zigex_deploy.pub
+sudo chmod 700 /home/deploy/.ssh && sudo chmod 600 /home/deploy/.ssh/authorized_keys
+```
+
+Record the server's identity, so GitHub can verify it's really your server. **On your computer:**
+
+```bash
+ssh-keyscan -p 22 YOUR_VPS_IP > known_hosts.txt     # change 22 if SSH uses another port
+```
+
+**Check** (on your computer):
+
+```bash
+ssh -i zigex_deploy deploy@YOUR_VPS_IP "pm2 -v"    # prints a version, no password asked
+```
+
+Keep `zigex_deploy` (the private key) safe. It goes into GitHub in the next step, then you can delete your local copy.
+
+---
+
+## Step 7: Configure GitHub
+
+In the repository: **Settings**.
+
+### 7a. Environments
+
+**Settings → Environments → New environment.** Create two:
+
+- `development`
+- `production`: tick **Required reviewers** and add the project owner. Every production release then waits for their approval.
+
+### 7b. Secrets (private)
+
+**Settings → Secrets and variables → Actions → Secrets → New repository secret:**
+
+| Name | Value |
+| --- | --- |
+| `VPS_HOST` | the VPS IP (or hostname) |
+| `VPS_USER` | `deploy` |
+| `VPS_PORT` | `22` (or your SSH port) |
+| `VPS_SSH_KEY` | the full contents of the `zigex_deploy` file (private key, including the BEGIN/END lines) |
+| `VPS_KNOWN_HOSTS` | the full contents of `known_hosts.txt` |
+
+### 7c. Variables (public build settings)
+
+**Settings → Secrets and variables → Actions → Variables.**
+
+**Repository variables** (same for both sites):
+
+| Name | Value |
+| --- | --- |
+| `BACKEND_URL` | `https://api.zigexconnect.com` |
+| `NEXT_PUBLIC_SANITY_PROJECT_ID` | `mbdfxoux` |
+| `NEXT_PUBLIC_SANITY_DATASET` | `production` |
+| `NEXT_PUBLIC_ADMIN_APP_URL` | `https://admin.zigexconnect.com` |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | the Google OAuth web client ID |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | the VAPID **public** key (same pair as the backend) |
+| `NEXT_PUBLIC_EMAILJS_SERVICE_ID` | EmailJS service ID |
+| `NEXT_PUBLIC_EMAILJS_PUBLIC_KEY` | EmailJS public key |
+| `NEXT_PUBLIC_EMAILJS_AI_WAITLIST_TEMPLATE_ID` | EmailJS template for the Zila waitlist |
+
+**Environment variables**: open each environment (7a) and add:
+
+| Name | development | production |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SITE_URL` | `https://dev.zigexconnect.com` | `https://zigexconnect.com` |
+| `FRONTEND_URL` | `https://dev.zigexconnect.com` | `https://zigexconnect.com` |
+
+(Folders, PM2 names and ports default correctly; set `VPS_APP_DIR`, `APP_NAME` or `APP_PORT` only if you changed them.)
+
+### 7d. Protect the main branch
+
+**Settings → Branches → Add branch protection rule** for `zigex`: require a pull request before merging, and require the status check **"Type check, build, audit"** to pass.
+
+**Check:** CI runs on every push and pull request. Open **Actions → CI**, pick the latest run and click **Re-run all jobs** (or push any commit to `zigex`). It must be green; if "Check configuration" fails, it names the variable that's missing.
+
+---
+
+## Step 8: First deploy to development
+
+The development site deploys on every push to `zigex`. For the first one, run it by hand.
+
+**Actions → Deploy → Run workflow:**
+- Environment: `development`
+- Ref: `zigex`
+
+Watch the run. In order it: picks the environment, checks the configuration, builds, packages, uploads, switches the release on the server, checks `/api/health`, runs the smoke test (sign-in, Explore, an opportunity page, styles) and checks the live domain.
+
+**Check:**
+- The run is green.
+- `https://dev.zigexconnect.com/api/health` shows `{"status":"ok","version":"1.0.0-dev.<commit>"}`.
+- On the VPS, as `deploy`: `pm2 status` shows `zigex-dev` **online**.
+- On a phone: open `https://dev.zigexconnect.com`, sign in with a test account, open Explore and an opportunity.
+
+If it fails, the run log says where; see Troubleshooting below. A failed deploy never leaves a broken site: the script puts the previous release back automatically.
+
+---
+
+## Step 9: Allow Google sign-in on the new addresses
+
+**Google Cloud Console → APIs & Services → Credentials →** the OAuth 2.0 web client used for Zigex → **Authorized JavaScript origins**. Add, if not already there:
+
+- `https://zigexconnect.com`
+- `https://www.zigexconnect.com`
+- `https://dev.zigexconnect.com`
+
+**Check:** on the dev site, "Continue with Google" opens the Google window and signs you in.
+
+---
+
+## Step 10: First production release
+
+Production only accepts a **version tag**, and only for a commit that already passed CI **and** deployed to development (Step 8).
+
+**On your computer**, in the repository:
+
+```bash
+git checkout zigex && git pull
+npm version patch          # 1.0.0 → 1.0.1: updates package.json and creates the tag v1.0.1
+git push origin zigex --follow-tags
+```
+
+The push redeploys development; the tag starts the production deploy. It waits until development has finished with the same commit, then waits for the reviewer's approval (Step 7a). Approve it in **Actions → the run → Review deployments**.
+
+**Check:**
+- `https://zigexconnect.com/api/health` shows `"version":"1.0.1"`.
+- `pm2 status` shows `zigex` **online**.
+- The repository's **Releases** (Code tab, right-hand side) has a `v1.0.1` release with notes from `CHANGELOG.md`.
+- On a phone: the home page, sign-in, Explore, an opportunity page, applying (with a test account), Edit profile and Notifications all work.
+- Paste an opportunity link into WhatsApp: the preview shows the opportunity's title, company and image.
+
+---
+
+## Step 11: Hand-over checklist
+
+- [ ] Both sites answer over HTTPS; `http://` redirects to `https://`.
+- [ ] `pm2 status` shows `zigex` and `zigex-dev` online; `sudo reboot`, then both come back by themselves.
+- [ ] `sudo certbot renew --dry-run` passes.
+- [ ] The server firewall only allows SSH, 80 and 443 (`sudo ufw status`).
+- [ ] Your local copy of `zigex_deploy` is deleted (it's stored in GitHub).
+- [ ] The project owner is a required reviewer on `production`.
+- [ ] `zigex` is protected (pull request + CI required).
+
+---
+
+## Everyday use (for the team)
+
+| Task | How |
+| --- | --- |
+| Update the development site | Merge a pull request into `zigex`. It deploys by itself. |
+| Release to production | Update `CHANGELOG.md`, then `npm version patch` (or `minor`), then `git push origin zigex --follow-tags`, then approve the run. |
+| Redeploy without changes (e.g. after editing `.env`) | `pm2 restart zigex` (or `zigex-dev`) on the VPS. To rebuild, use Actions → Deploy → Run workflow with the tag. |
+| See what's running | `https://zigexconnect.com/api/health` |
+| Read the app's logs | `ssh deploy@VPS` then `pm2 logs zigex` |
+| Check the main pages | `deploy/smoke.sh https://zigexconnect.com` from the repository |
+| Roll back production | `ssh deploy@VPS` then `/var/www/zigex/current/deploy/rollback.sh` (previous release), or add a version, e.g. `… rollback.sh 1.0.0` |
+| Roll back development | `APP_DIR=/var/www/zigex-dev APP_NAME=zigex-dev APP_PORT=3100 /var/www/zigex-dev/current/deploy/rollback.sh` |
+
+---
+
+## Troubleshooting
+
+| Problem | What to do |
+| --- | --- |
+| **"Check configuration" fails** | It names the missing GitHub variable: add it (Step 7c) and re-run. |
+| **"Production deploys need a version tag"** | Production was started on a branch. Use a tag like `v1.0.1`. |
+| **"Tag doesn't match package.json"** | Create tags with `npm version …`, not by hand. |
+| **"Gave up waiting … development"** | The tagged commit never deployed to development. Push it to `zigex` (or run Deploy → development with that ref), then run the production deploy again. |
+| **Host key error at "Upload and switch"** | `VPS_KNOWN_HOSTS` doesn't match the server. Run `ssh-keyscan` again (Step 6) and update the secret. |
+| **Permission denied (publickey)** | `VPS_SSH_KEY` must be the private key, and its `.pub` must be in `/home/deploy/.ssh/authorized_keys`. |
+| **"Missing …/shared/.env"** | Create that site's `.env` (Step 4). |
+| **Health or smoke test failed, release rolled back** | `pm2 logs zigex --lines 100` on the VPS. Usually a missing or wrong value in `shared/.env`. |
+| **Smoke test warns "backend is down"** | The API at `api.zigexconnect.com` isn't answering; the release was kept. Tell the backend team. |
+| **"doesn't report the version" at "Check the live site"** | The app runs but the domain doesn't reach it: check DNS (Step 1), the Nginx site (Step 5) and `sudo nginx -t`. |
+| **502 Bad Gateway** | The app isn't running: `pm2 status`, then `pm2 logs`. |
+| **Google sign-in fails on one site only** | Add that address to the Google client (Step 9). |
+| **Photos fail to upload (413)** | Raise `client_max_body_size` in the Nginx site (currently 15 MB). |
+| **Students see an old version after a release** | The installed app caches pages: reload once, or close and reopen the app. `/api/health` shows the live version. |
+
+Something not covered here: [deploy.md](./deploy.md) (how the pipeline works) and [../developer-guide.md](../developer-guide.md).
