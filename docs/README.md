@@ -32,6 +32,7 @@ The API itself is documented in Swagger: <https://api.zigexconnect.com/api-docs>
 
 | Doc | What it's for |
 | --- | --- |
+| [setup/deployment-guide.md](./setup/deployment-guide.md) | **Step-by-step:** put both sites online on a new VPS (DNS, server, Nginx/HTTPS, GitHub, first deploys, hand-over). |
 | [setup/deploy.md](./setup/deploy.md) | CI, releasing a version, deploying to the VPS, rollback, one-time VPS setup. |
 | [setup/email.md](./setup/email.md) | Gmail and EmailJS: environment variables, templates and their fields. |
 

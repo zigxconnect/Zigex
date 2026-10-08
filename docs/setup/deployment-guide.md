@@ -307,12 +307,14 @@ In the repository: **Settings**.
 The development site deploys on every push to `zigex`. For the first one, run it by hand.
 
 **Actions → Deploy → Run workflow:**
+
 - Environment: `development`
 - Ref: `zigex`
 
 Watch the run. In order it: picks the environment, checks the configuration, builds, packages, uploads, switches the release on the server, checks `/api/health`, runs the smoke test (sign-in, Explore, an opportunity page, styles) and checks the live domain.
 
 **Check:**
+
 - The run is green.
 - `https://dev.zigexconnect.com/api/health` shows `{"status":"ok","version":"1.0.0-dev.<commit>"}`.
 - On the VPS, as `deploy`: `pm2 status` shows `zigex-dev` **online**.
@@ -349,6 +351,7 @@ git push origin zigex --follow-tags
 The push redeploys development; the tag starts the production deploy. It waits until development has finished with the same commit, then waits for the reviewer's approval (Step 7a). Approve it in **Actions → the run → Review deployments**.
 
 **Check:**
+
 - `https://zigexconnect.com/api/health` shows `"version":"1.0.1"`.
 - `pm2 status` shows `zigex` **online**.
 - The repository's **Releases** (Code tab, right-hand side) has a `v1.0.1` release with notes from `CHANGELOG.md`.
