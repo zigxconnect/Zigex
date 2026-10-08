@@ -2,6 +2,13 @@
 
 Only living documents are kept here. Old change reports and Supabase-era guides were removed on 7 October 2026; `git log --diff-filter=D -- docs/` lists them if you need one back.
 
+## Start here
+
+| Doc | What it's for |
+| --- | --- |
+| [architecture.md](./architecture.md) | How the system fits together: parts, request flow, sign-in, caching, uploads, notifications, environments, security. |
+| [developer-guide.md](./developer-guide.md) | Working on the app: setup, folder map, conventions, recipes, git workflow, releasing, debugging. |
+
 ## Backend (send these to the backend team)
 
 | Doc | What it's for |

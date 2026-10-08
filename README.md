@@ -71,6 +71,11 @@ docs/             living docs: see docs/README.md
 
 The app runs on a VPS as two sites: **development** (`dev.zigexconnect.com`, updated on every push to `zigex`, the main branch) and **production** (`zigexconnect.com`, updated when a version tag is pushed). CI checks every pull request; every deploy rolls back automatically if the new release is unhealthy. How to release, roll back and set up the VPS: [docs/setup/deploy.md](./docs/setup/deploy.md). What changed in each version: [CHANGELOG.md](./CHANGELOG.md).
 
+## Documentation
+
+- [docs/architecture.md](./docs/architecture.md): how the system fits together
+- [docs/developer-guide.md](./docs/developer-guide.md): setup, conventions and recipes for developers
+
 ## Docs
 
 [docs/README.md](./docs/README.md) lists what's there: open backend requests, the notifications spec, product write-ups and setup guides.
