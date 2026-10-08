@@ -40,6 +40,11 @@ const nextConfig = {
   },
 
   output: 'standalone',
+  // Share images (lib/og.tsx) read fonts and brand marks from assets/ at runtime;
+  // make sure the standalone build ships them.
+  outputFileTracingIncludes: {
+    '/**/*': ['./assets/fonts/**/*', './assets/brand/**/*'],
+  },
   outputFileTracingRoot: process.cwd(),
 
   // Images configuration

@@ -1,14 +1,15 @@
 /// <reference lib="webworker" />
 
-const SW_VERSION = '1.0.3';
+const SW_VERSION = '1.1.0';
 console.log(`[PUSH_SW] Service Worker Version ${SW_VERSION} loaded.`);
 self.addEventListener('push', function (event) {
   if (event.data) {
     const data = event.data.json();
     const options = {
       body: data.body,
-      icon: data.icon || '/icons/icon-192x192.png',
-      badge: data.badge || '/icons/icon-192x192.png',
+      icon: data.icon || '/icons/icon-192.png',
+      // Android shows the badge as a monochrome silhouette in the status bar.
+      badge: data.badge || '/icons/badge-96.png',
       tag: data.tag || 'zigex-notification',
       vibrate: [100, 50, 100],
       data: {

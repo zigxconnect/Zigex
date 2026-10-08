@@ -1,11 +1,9 @@
 import { Footer } from "@/components/layout/Footer";
 import type { Metadata } from "next";
+import { pageMetadata, SITE_DESCRIPTION } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: { absolute: "Zigex | Internships, programs and events for students in Cameroon" },
-  description:
-    "Apply to internships, join training programs and attend events from verified companies in Bamenda and across Cameroon.",
-};
+const home = pageMetadata({ title: "Zigex: internships, programs and events in Cameroon", description: SITE_DESCRIPTION, path: "/" });
+export const metadata: Metadata = { ...home, title: { absolute: "Zigex: internships, programs and events in Cameroon" } };
 
 /**
  * Layout for the landing and privacy pages: page content plus the footer

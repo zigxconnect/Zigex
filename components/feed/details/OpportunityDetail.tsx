@@ -29,6 +29,7 @@ import type { FeedKind } from "@/lib/api/services/feed";
 import { getOptionalAuth } from "@/lib/utils/auth-context";
 import { getMyProfile } from "@/lib/api/services/profile";
 import type { ApplyPrefill } from "@/components/apply/ApplyDialog";
+import { jsonLdScript, opportunityLd, pageMetadata, plainText as seoText } from "@/lib/seo";
 
 export type BackLink = { href: string; label: string };
 
@@ -42,12 +43,17 @@ const plainText = (html?: string) => (html ?? "").replace(/<[^>]+>/g, " ").repla
 
 export async function opportunityMetadata(id: string) {
   const { data: item } = await getFeedItemById(id);
-  if (!item) return { title: "Opportunity not found" };
-  return {
-    // The "| Zigex" suffix comes from the root title template.
-    title: item.title,
-    description: plainText((item as { description?: string }).description).slice(0, 160) || `Apply for ${item.title} on Zigex.`,
-  };
+  if (!item || item._type === "announcements") return { title: "Opportunity not found", robots: { index: false } };
+  const board = toBoardItem(item._type as FeedKind, item);
+  // Lead with the facts people decide on (who, when, where), then the description.
+  const when = board.closesAt ? `Apply by ${new Date(board.closesAt).toLocaleDateString("en-GB", { day: "numeric", month: "long" })}.` : "";
+  const where = board.workMode === "remote" ? "Remote." : board.location ? `${board.location}.` : "";
+  const lead = [board.companyName && `${KIND_META[item._type as FeedKind].label} at ${board.companyName}.`, when, where].filter(Boolean).join(" ");
+  // Company texts often open by repeating the title; drop that so the description adds information.
+  const body = seoText((item as { description?: string }).description, 400).replace(new RegExp(`^${item.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*`, "i"), "");
+  const description = seoText(`${lead} ${body}`) || `Apply for ${item.title} on Zigex.`;
+  // /programs/<id> shows the same page inside the app; the public /feed/<id> address is the one to index and share.
+  return pageMetadata({ title: item.title, description, path: `/feed/${encodeURIComponent(item.id)}`, type: "article" });
 }
 
 /** The company's description often opens with its own <h1> repeating the title; the page already has one. */
@@ -100,6 +106,9 @@ export async function OpportunityDetail({ id, back }: { id: string; back: BackLi
     getApplicationStatus(raw.id, raw._type),
   ]);
 
+  // JobPosting / Event / Course for search engines (null when key facts are missing).
+  const structuredData = opportunityLd(item, String((raw as { description?: string }).description ?? ""), `/feed/${raw.id}`);
+
   const opportunityData = {
     title: raw.title,
     description: raw.description,
@@ -112,6 +121,7 @@ export async function OpportunityDetail({ id, back }: { id: string; back: BackLi
 
   return (
     <div className="mx-auto w-full max-w-6xl pb-32 lg:pb-16">
+      {structuredData && <script type="application/ld+json" dangerouslySetInnerHTML={jsonLdScript(structuredData)} />}
       <Link
         href={back.href}
         className="mb-6 inline-flex h-10 items-center gap-2 rounded-lg pr-2 text-sm font-semibold text-[#4A5670] hover:text-[#0B1B3F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC]"

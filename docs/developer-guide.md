@@ -100,6 +100,16 @@ public/                   Static files (icons, images, service workers)
 - Opportunity and cover images: `CoverImage` (resized by Next.js). A new image host must be added to both `images.remotePatterns` in `next.config.mjs` and `OPTIMISED_HOSTS` in `components/CoverImage.tsx`.
 - Uploads: use the helpers in `lib/api/uploads.ts` (they resize first). Profile photos go through `PhotoCropDialog`.
 
+### SEO, share images and the installed app
+
+- **Page metadata:** public pages use `pageMetadata({ title, description, path })` from `lib/seo.ts`. It sets the title, description, canonical address and Open Graph / X tags together, so a page never shows another page's share text. Signed-in pages only need a `title`.
+- **Share images** (WhatsApp, X, LinkedIn previews) are drawn by `lib/og.tsx`: the site card (`app/opengraph-image.tsx`) and one per opportunity (`app/(public)/feed/[id]/opengraph-image.tsx`). They use the app's fonts from `assets/fonts/` and the marks from `assets/brand/`. Preview one by opening the URL from the page's `og:image` tag.
+- **Structured data:** opportunity pages emit JobPosting (internships), Event or Course JSON-LD via `opportunityLd()`; the root layout emits Organization and WebSite. Check a page with Google's Rich Results Test after changing it.
+- **Sitemap and robots:** `app/sitemap.ts` lists home, Explore, privacy, every open opportunity and company page; `app/robots.ts` blocks signed-in areas. Both use `NEXT_PUBLIC_SITE_URL`.
+- **App icons:** never edit the PNGs by hand. Replace `assets/brand/logo.png` (square, 640px+) and run `node scripts/generate-brand-assets.mjs`; it rebuilds every icon, the maskable and Apple icons, the notification badge, the shortcut icons and `app/favicon.ico`.
+- **Manifest:** `public/manifest.json` (start page, colours, shortcuts, screenshots in `public/screenshots/`). Retake the screenshots signed out when the design changes.
+- **Public pages:** anything a signed-out visitor or crawler must reach needs to be in `PUBLIC_PAGES` (or a prefix check) in `proxy.ts`. Static files and share images are already excluded from the sign-in redirect.
+
 ### Code style
 
 - TypeScript everywhere; no new `any` without a reason in a comment.

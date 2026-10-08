@@ -10,6 +10,7 @@ import { subscribeToPushNotifications, unsubscribeFromPushNotifications } from "
 import { subscriptionMatchesKey, urlBase64ToUint8Array } from "@/lib/push-keys";
 import { PasswordInput, PasswordStrength, passwordStrength } from "@/components/sections/auth/auth-ui";
 import { DeleteAccount } from "./DeleteAccount";
+import { InstallApp } from "@/components/settings/InstallApp";
 
 function Row({ id, title, note, children }: { id: string; title: string; note: string; children: React.ReactNode }) {
   return (
@@ -78,6 +79,10 @@ export function SettingsView({ email, profileHref }: { email: string; profileHre
         <Row id="notifications" title="Notifications" note="Get told when a company replies or an opportunity you follow changes.">
           <DeviceNotifications />
           <p className="mt-4 text-sm text-[#4A5670]">Zigex also emails you about your applications. Those emails can&apos;t be turned off yet.</p>
+        </Row>
+
+        <Row id="app" title="App on your phone" note="Open Zigex from your home screen, without the browser around it.">
+          <InstallApp />
         </Row>
 
         <Row id="privacy" title="Privacy" note="What other people see when they open your profile.">

@@ -1,3 +1,4 @@
+import { pageMetadata, plainText } from "@/lib/seo";
 /**
  * Company profile — app/(public)/company/[id]/page.tsx
  *
@@ -42,12 +43,12 @@ export async function generateMetadata({ params }: Props) {
   const { id } = await params;
   const company = await getCompany(id).catch(() => null);
   if (!company) return { title: "Company not found" };
-  return {
+  return pageMetadata({
     title: company.company_name,
-    description: (
-      company.description ?? `${company.company_name} on Zigex`
-    ).slice(0, 160),
-  };
+    description: plainText(company.description) || `Internships, programs and events from ${company.company_name} on Zigex.`,
+    path: `/company/${encodeURIComponent(id)}`,
+    type: "profile",
+  });
 }
 
 export default async function CompanyPage({ params }: Props) {

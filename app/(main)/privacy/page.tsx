@@ -1,10 +1,10 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft, Shield, Lock, Eye, FileText, Bell } from 'lucide-react';
+import { pageMetadata } from '@/lib/seo';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy | Zigex',
-  description: 'Our commitment to protecting your personal information and privacy at Zigex.',
+  ...pageMetadata({ title: 'Privacy policy', description: 'How Zigex collects, uses and protects your personal information.', path: '/privacy' }),
 };
 
 export default function PrivacyPolicy() {

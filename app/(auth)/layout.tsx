@@ -6,7 +6,7 @@ export const metadata = {
   description: "Sign in or create your free Zigex student account.",
 };
 
-const STUDENT_PHOTO = "https://i.ibb.co/1YqtdCtK/Chat-GPT-Image-Apr-23-2026-03-29-43-PM.png";
+const STUDENT_PHOTO = "/images/students-hero.webp";
 
 const FACTS = [
   { icon: Briefcase, text: "Internships, training programs and events in one place" },
@@ -46,7 +46,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           className="inline-flex w-fit items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC]"
           aria-label="Zigex home"
         >
-          <img src="https://i.ibb.co/Cp502Yby/logo.png" alt="" width={32} height={32} className="h-8 w-8 object-contain" />
+          <img src="/brand/logo.png" alt="" width={32} height={32} className="h-8 w-8 object-contain" />
           <span className="font-heading text-xl font-bold tracking-tight text-[#0B1B3F]">Zigex</span>
         </Link>
 

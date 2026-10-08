@@ -1,47 +1,55 @@
 {
-  "name": "Zigex Connect",
-  "short_name": "Zigex Connect",
-  "description": "Zone for Internship, Growth and Experience",
   "id": "/",
-  "start_url": "/",
+  "name": "Zigex",
+  "short_name": "Zigex",
+  "description": "Internships, training programs and events in Cameroon. Apply with one profile and follow every application.",
+  "lang": "en",
+  "dir": "ltr",
+  "start_url": "/feed?source=app",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#2563EB",
+  "background_color": "#0B1B3F",
+  "theme_color": "#FFFFFF",
   "categories": ["education", "business", "productivity"],
+  "prefer_related_applications": false,
   "icons": [
+    { "src": "/icons/icon-48.png", "sizes": "48x48", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-96.png", "sizes": "96x96", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
     {
-      "src": "/icons/icon-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
+      "name": "Explore opportunities",
+      "short_name": "Explore",
+      "url": "/feed?source=shortcut",
+      "icons": [{ "src": "/icons/shortcut-explore.png", "sizes": "96x96", "type": "image/png" }]
     },
     {
-      "src": "/icons/icon-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
+      "name": "My applications",
+      "short_name": "Applications",
+      "url": "/dashboard/applied-internships?source=shortcut",
+      "icons": [{ "src": "/icons/shortcut-applications.png", "sizes": "96x96", "type": "image/png" }]
     },
     {
-      "src": "/icons/icon-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
+      "name": "Programs",
+      "short_name": "Programs",
+      "url": "/dashboard/programs?source=shortcut",
+      "icons": [{ "src": "/icons/shortcut-programs.png", "sizes": "96x96", "type": "image/png" }]
+    },
+    {
+      "name": "Notifications",
+      "short_name": "Notifications",
+      "url": "/notifications?source=shortcut",
+      "icons": [{ "src": "/icons/shortcut-notifications.png", "sizes": "96x96", "type": "image/png" }]
     }
   ],
   "screenshots": [
-    {
-      "src": "/home.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "ZIGEX Home"
-    },
-    {
-      "src": "/projects.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "ZIGEX Projects"
-    }
+    { "src": "/screenshots/home.webp", "sizes": "780x1688", "type": "image/webp", "form_factor": "narrow", "label": "Get real work experience before you graduate" },
+    { "src": "/screenshots/explore.webp", "sizes": "780x1688", "type": "image/webp", "form_factor": "narrow", "label": "Search internships, programs and events" },
+    { "src": "/screenshots/opportunity.webp", "sizes": "780x1688", "type": "image/webp", "form_factor": "narrow", "label": "See the details and apply with your profile" },
+    { "src": "/screenshots/explore-wide.webp", "sizes": "1440x900", "type": "image/webp", "form_factor": "wide", "label": "Opportunities from companies across Cameroon" }
   ]
 }

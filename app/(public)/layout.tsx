@@ -12,12 +12,8 @@ import { PublicShell } from "@/components/layout/public/PublicShell";
 import { getOptionalAuth } from "@/lib/utils/auth-context";
 
 export const metadata: Metadata = {
-  title: {
-    template: "%s | Zigex",
-    default: "Explore | Zigex",
-  },
-  description:
-    "Discover internships, programs, events and opportunities on Zigex — the platform built for the next generation of African professionals.",
+  title: { template: "%s | Zigex", default: "Opportunities" },
+  description: "Find internships, training programs and events from companies in Bamenda and across Cameroon.",
 };
 
 export default async function PublicLayout({

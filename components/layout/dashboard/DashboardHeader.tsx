@@ -51,7 +51,7 @@ export const DashboardHeader = ({ user, onMenuClick }: DashboardHeaderProps) => 
           <Menu className="h-5 w-5" />
         </button>
         <Link href="/feed" className="flex items-center gap-2 lg:hidden" aria-label="Zigex home">
-          <img src="https://i.ibb.co/Cp502Yby/logo.png" alt="" width={28} height={28} className="h-7 w-7 object-contain" />
+          <img src="/brand/logo.png" alt="" width={28} height={28} className="h-7 w-7 object-contain" />
           <span className="font-heading text-lg font-bold tracking-tight text-[#0B1B3F]">Zigex</span>
         </Link>
 

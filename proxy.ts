@@ -13,7 +13,8 @@ const SECURITY_HEADERS: Record<string, string> = {
 
 // Pages anyone can open. Signed-in students are bounced off the auth pages.
 const AUTH_PAGES = ["/sign-in", "/sign-up", "/verify-email", "/forgot-password"];
-const PUBLIC_PAGES = ["/", "/demo", "/feed", "/reset-password", "/update-password", ...AUTH_PAGES];
+// /offline is precached by the installed app and must never redirect; /privacy is linked from the public footer.
+const PUBLIC_PAGES = ["/", "/demo", "/feed", "/privacy", "/offline", "/reset-password", "/update-password", ...AUTH_PAGES];
 
 // API routes that must work without a session: the passthrough to the
 // backend (which enforces its own auth) and the deploy health check.
@@ -71,7 +72,10 @@ export async function proxy(request: NextRequest) {
     );
   }
 
-  const isPublic = PUBLIC_PAGES.includes(pathname) || pathname.startsWith("/feed/") || pathname.startsWith("/company/");
+  // Share images must load for link-preview bots (WhatsApp, X…), which are never signed in.
+  const isShareImage = /\/(opengraph|twitter)-image(-[\w]+)?$/.test(pathname);
+  const isPublic =
+    isShareImage || PUBLIC_PAGES.includes(pathname) || pathname.startsWith("/feed/") || pathname.startsWith("/company/");
 
   if (!session) {
     return isPublic ? withSecurityHeaders(NextResponse.next()) : signInRedirect(request);

@@ -7,7 +7,7 @@ import { MapPin, Clock, CheckCircle2 } from "lucide-react";
 import { landingButton, landingContainer } from "./landing-ui";
 
 // Real Zigex students, the strongest proof the page has; it leads the visual.
-const HERO_PHOTO = "https://i.ibb.co/1YqtdCtK/Chat-GPT-Image-Apr-23-2026-03-29-43-PM.png";
+const HERO_PHOTO = "/images/students-hero.webp";
 
 const BamendaHeroSection = () => {
   return (

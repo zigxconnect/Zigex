@@ -40,7 +40,7 @@ export function SiteHeader() {
           href="/"
           className="flex items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC]"
         >
-          <img src="https://i.ibb.co/Cp502Yby/logo.png" alt="" width={32} height={32} className="h-8 w-8 object-contain" />
+          <img src="/brand/logo.png" alt="" width={32} height={32} className="h-8 w-8 object-contain" />
           <span className="font-heading text-xl font-bold tracking-tight text-[#0B1B3F]">Zigex</span>
         </Link>
 

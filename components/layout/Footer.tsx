@@ -32,7 +32,7 @@ export const Footer: React.FC = () => {
             <Link href="/" aria-label="Zigex home" className="inline-block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
               {/* The logo has its own blue tile; the old invert filter turned it into a white square. */}
               <span className="flex items-center gap-2.5">
-                <img src="https://i.ibb.co/Cp502Yby/logo.png" alt="" className="h-10 w-10 object-contain" />
+                <img src="/brand/logo.png" alt="" className="h-10 w-10 object-contain" />
                 <span className="font-heading text-2xl font-bold tracking-tight">Zigex</span>
               </span>
             </Link>

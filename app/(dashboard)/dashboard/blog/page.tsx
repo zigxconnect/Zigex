@@ -40,7 +40,7 @@ export default async function AnnouncementsPage() {
       createdAt: a.created_at,
       pinned: Boolean(a.is_pinned),
       from: a.company?.company_name ?? (a.author?.full_name && a.author.full_name !== "Zigex Admin" ? a.author.full_name : "Zigex"),
-      fromLogo: a.company?.logo_url ?? a.author?.avatar_url ?? (a.company ? null : "https://i.ibb.co/Cp502Yby/logo.png"),
+      fromLogo: a.company?.logo_url ?? a.author?.avatar_url ?? (a.company ? null : "/brand/logo.png"),
     }))
     .sort((x, y) => Number(y.pinned) - Number(x.pinned) || new Date(y.createdAt).getTime() - new Date(x.createdAt).getTime());
 
