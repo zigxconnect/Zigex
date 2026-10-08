@@ -12,7 +12,8 @@ When releasing, rename **Unreleased** to the new version and date, then run `npm
 - **Search:** internships can appear in Google's job search; events and programs carry their dates; a sitemap lists every open opportunity.
 - **App:** new icons that fit Android and iPhone home screens, a navy splash screen, shortcuts (Explore, My applications, Programs, Notifications), screenshots in the install dialog, an "Install the app" option in Settings, and a new offline page.
 - **Privacy Policy and Terms of Use:** rewritten in plain language (short version first, numbered sections), covering what Zigex actually collects, who sees it, how long it's kept and how to delete it; new Terms of Use page; sign-up confirms you're 18+ and agree to both.
-- **Fixes:** the privacy page and the offline page no longer require signing in; pinch-zoom works again; the landing photo and logo are served from Zigex itself (faster, and they work offline).
+- **Landing page:** the opportunity on the hero photo is now a real open one (closing soonest) instead of an example; "Latest opportunities" shows open ones only (recently closed ones only to fill the row); 500+ students; accurate FAQ answers (fees, 18+, verified badge, installing); footer links for internships, programs and events.
+- **Fixes:** visitors opening a program are taken to its public page instead of sign-in; the footer no longer links to a sign-in-only blog; the privacy page and the offline page no longer require signing in; pinch-zoom works again; the landing photo and logo are served from Zigex itself (faster, and they work offline).
 - Production only deploys a commit that already passed CI and ran on the development site, and every deploy opens the main pages after switching (rolling back if they're broken).
 
 ## 1.0.0 (2026-10-07)

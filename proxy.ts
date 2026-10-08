@@ -78,6 +78,9 @@ export async function proxy(request: NextRequest) {
     isShareImage || PUBLIC_PAGES.includes(pathname) || pathname.startsWith("/feed/") || pathname.startsWith("/company/");
 
   if (!session) {
+    // /programs/<id> is the in-app view of a public opportunity page; visitors get the public one.
+    const program = pathname.match(/^\/programs\/([^/]+)$/);
+    if (program) return redirectTo(request, `/feed/${program[1]}${request.nextUrl.search}`);
     return isPublic ? withSecurityHeaders(NextResponse.next()) : signInRedirect(request);
   }
 

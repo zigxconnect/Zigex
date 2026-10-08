@@ -8,10 +8,11 @@ import { ADMIN_APP_URL } from "@/lib/app-urls";
 
 // UX: every footer link goes somewhere real (they all pointed at /feed or "#").
 const PLATFORM_LINKS = [
-  { label: "Browse Opportunities", href: "/feed" },
-  { label: "Upcoming Events", href: "/feed" },
-  { label: "Blog", href: "/dashboard/blog" },
-  { label: "For Companies", href: `${ADMIN_APP_URL}/company/sign-up` },
+  { label: "Opportunities", href: "/feed" },
+  { label: "Internships", href: "/feed?type=internships" },
+  { label: "Programs", href: "/feed?type=programs" },
+  { label: "Events", href: "/feed?type=events" },
+  { label: "For companies", href: `${ADMIN_APP_URL}/company/sign-up` },
 ];
 
 // TODO(content): add the real profile URLs; until then these icons are not shown as links.
@@ -37,8 +38,7 @@ export const Footer: React.FC = () => {
               </span>
             </Link>
             <p className="text-[#C9D6F2] text-sm leading-relaxed max-w-sm">
-              Connecting talented individuals with world-class internship opportunities.
-              Bridging the gap between education and industry in Bamenda and beyond.
+              Internships, training programs and events for students in Bamenda and across Cameroon. One profile for every application.
             </p>
             <div className="flex space-x-3">
               {/* UX: icon-only links need an accessible name; "#" links are not rendered. */}
@@ -102,9 +102,7 @@ export const Footer: React.FC = () => {
         <div className="pt-10 border-t border-white/10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-[#AFC0E6]">
             <div className="flex items-center gap-2">
-              <span>© {new Date().getFullYear()} Zigex Platform.</span>
-              <span className="hidden md:inline text-white/10">|</span>
-              <span>Built for the next generation of African talent.</span>
+              <span>© {new Date().getFullYear()} SEED Inc. Zigex is a product of SEED Inc, Bamenda.</span>
             </div>
             <nav aria-label="Legal" className="flex gap-8">
               <Link href="/terms" className="hover:text-white transition-colors underline-offset-4 hover:underline">

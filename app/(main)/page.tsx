@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { SiteHeader } from "@/components/layout/public/SiteHeader";
 import BamendaHeroSection from "@/components/sections/landing/HeroSection";
+import { HeroOpportunity } from "@/components/sections/landing/HeroOpportunity";
 import { LatestOpportunities, LatestOpportunitiesSkeleton } from "@/components/sections/landing/LatestOpportunities";
 import { HowItWorksSection } from "@/components/sections/landing/HowItWorksSection";
 import { ForCompaniesSection } from "@/components/sections/landing/ForCompaniesSection";
@@ -18,7 +19,13 @@ export default function LandingPage() {
   return (
     <div className="flex flex-col bg-white">
       <SiteHeader />
-      <BamendaHeroSection />
+      <BamendaHeroSection
+        card={
+          <Suspense fallback={null}>
+            <HeroOpportunity />
+          </Suspense>
+        }
+      />
 
       {/* Streams in separately so a slow backend never delays the hero; the
           skeleton keeps the section visible (and the page still) meanwhile. */}

@@ -7,15 +7,15 @@ import { landingContainer, landingSectionTitle } from "./landing-ui";
 const FAQS = [
   {
     q: "Is Zigex free for students?",
-    a: "Yes. Creating an account and applying to internships and events is free. Some training programs charge a fee; it is shown on the program before you apply.",
+    a: "Yes. Creating an account and applying is free. Some programs and internships charge a fee; when they do, it's shown clearly before you apply, and you pay the company directly, never Zigex.",
   },
   {
     q: "Who can apply?",
-    a: "Any student or recent graduate. Most opportunities are in Bamenda and across Cameroon, and some are remote.",
+    a: "Any student or recent graduate aged 18 or over. Most opportunities are in Bamenda and across Cameroon, and some are remote.",
   },
   {
     q: "How do I know a company is real?",
-    a: "Companies are verified by the Zigex team before their postings go live.",
+    a: "Companies with a blue verified badge have been checked by the Zigex team. If anything about an opportunity looks wrong, or someone asks you to pay outside the company's official instructions, tell us at zigexconnect.com@gmail.com.",
   },
   {
     q: "Do I get a certificate?",
@@ -23,7 +23,7 @@ const FAQS = [
   },
   {
     q: "Can I use Zigex on my phone?",
-    a: "Yes. Zigex works in any mobile browser, and you can install it on your home screen like an app.",
+    a: "Yes. Zigex works in any phone browser. To get it on your home screen like an app, use \"Install the app\" in Settings, or on iPhone tap Share, then Add to Home Screen.",
   },
 ];
 

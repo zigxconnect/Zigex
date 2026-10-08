@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { latestFeed, type FeedKind } from "@/lib/api/services/feed";
-import { toBoardItem, type BoardItem } from "@/components/feed/board/board-types";
+import { isClosed, toBoardItem, type BoardItem } from "@/components/feed/board/board-types";
 import { OpportunityCard, OpportunityCardSkeleton } from "@/components/feed/board/OpportunityCard";
 import { landingButton, landingContainer, landingSectionLead, landingSectionTitle } from "./landing-ui";
 
@@ -17,10 +17,15 @@ import { landingButton, landingContainer, landingSectionLead, landingSectionTitl
 async function loadLatest(): Promise<{ items: BoardItem[]; failed: boolean }> {
   const kinds: FeedKind[] = ["internships", "programs", "events"];
   const results = await Promise.allSettled(kinds.map((kind) => latestFeed(kind, 6)));
-  const items = results
-    .flatMap((result, i) => (result.status === "fulfilled" ? result.value.map((row) => toBoardItem(kinds[i], row)) : []))
-    .sort((a, b) => new Date(b.postedAt ?? 0).getTime() - new Date(a.postedAt ?? 0).getTime())
-    .slice(0, 6);
+  const newestFirst = (a: BoardItem, b: BoardItem) => new Date(b.postedAt ?? 0).getTime() - new Date(a.postedAt ?? 0).getTime();
+  const all = results.flatMap((result, i) => (result.status === "fulfilled" ? result.value.map((row) => toBoardItem(kinds[i], row)) : []));
+  // A homepage full of "Closed on…" looks abandoned: open ones first, and only
+  // recently closed ones (last 60 days) to fill the row when few are open.
+  const open = all.filter((item) => !isClosed(item)).sort(newestFirst);
+  const recentlyClosed = all
+    .filter((item) => isClosed(item) && item.closesAt && Date.now() - new Date(item.closesAt).getTime() < 60 * 86_400_000)
+    .sort(newestFirst);
+  const items = [...open, ...(open.length < 3 ? recentlyClosed.slice(0, 3 - open.length) : [])].slice(0, 6);
   results.forEach((result, i) => {
     if (result.status === "rejected") console.error(`[landing] latest ${kinds[i]} failed:`, result.reason);
   });
@@ -35,7 +40,7 @@ function SectionShell({ children }: { children: React.ReactNode }) {
         <div className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 id="latest-title" className={landingSectionTitle}>Latest opportunities</h2>
-            <p className={landingSectionLead}>The newest internships, programs and events posted on Zigex.</p>
+            <p className={landingSectionLead}>Internships, programs and events you can apply to now.</p>
           </div>
           <Link href="/feed" className={`${landingButton("secondary", "md")} self-start sm:self-auto`}>
             See all opportunities
