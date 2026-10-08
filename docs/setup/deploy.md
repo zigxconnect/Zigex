@@ -13,7 +13,7 @@ Two sites run on the same VPS, built from the same code:
 
 Both use the same backend (`api.zigexconnect.com`) unless you set a different `BACKEND_URL` for development. **Actions on the development site are real**: an application sent there reaches the company. Use test accounts.
 
-```
+```text
 feature branch ──PR──► CI (type check, build, audit)
 merge to student-backend ──► Deploy → development (dev.zigexconnect.com)
 test on dev, then:  npm version patch && git push --follow-tags
@@ -92,6 +92,7 @@ ssh-keyscan -p 22 YOUR_VPS        # output → VPS_KNOWN_HOSTS secret
 ```
 
 **Other services that need the dev address:**
+
 - **Google sign-in:** Google Cloud Console → Credentials → the OAuth web client → add `https://dev.zigexconnect.com` to Authorized JavaScript origins.
 - **Backend:** browser calls go through the app's own `/api/v1`, so no CORS change is needed.
 
@@ -173,7 +174,7 @@ The last 3 releases of each site are kept in `releases/<version>_<timestamp>`. T
 | Host key error at "Upload and switch" | `VPS_KNOWN_HOSTS` is out of date: run `ssh-keyscan` again |
 | "Missing …/shared/.env" | Create that site's `.env` (step 2) |
 | Health check fails, release rolled back | `pm2 logs zigex` / `pm2 logs zigex-dev`; usually a missing variable in `shared/.env` |
-| "doesn't report <version>" at "Check the live site" | The deploy worked on the VPS but the domain doesn't reach it: DNS (step 1) or the Nginx site |
+| "doesn't report `version`" at "Check the live site" | The deploy worked on the VPS but the domain doesn't reach it: DNS (step 1) or the Nginx site |
 | Google sign-in fails only on dev | Add the dev origin in Google Cloud Console (step 2) |
 | Old version after a deploy | The PWA service worker: reload once or reopen the installed app; check `/api/health` |
 | 502 Bad Gateway | The app isn't running: `pm2 status` |
