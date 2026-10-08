@@ -67,6 +67,10 @@ lib/              helpers (images, notifications, redirects, email)
 docs/             living docs: see docs/README.md
 ```
 
+## Releases and deploys
+
+The app runs on a VPS. CI checks every pull request; pushing a version tag deploys it, with automatic rollback if the new release is unhealthy. How to release, roll back and set up the VPS: [docs/setup/deploy.md](./docs/setup/deploy.md). What changed in each version: [CHANGELOG.md](./CHANGELOG.md).
+
 ## Docs
 
 [docs/README.md](./docs/README.md) lists what's there: open backend requests, the notifications spec, product write-ups and setup guides.

@@ -16,8 +16,8 @@ const AUTH_PAGES = ["/sign-in", "/sign-up", "/verify-email", "/forgot-password"]
 const PUBLIC_PAGES = ["/", "/demo", "/feed", "/reset-password", "/update-password", ...AUTH_PAGES];
 
 // API routes that must work without a session: the passthrough to the
-// backend, which enforces its own auth.
-const PUBLIC_API_PREFIXES = ["/api/v1/"];
+// backend (which enforces its own auth) and the deploy health check.
+const PUBLIC_API_PREFIXES = ["/api/v1/", "/api/health"];
 
 // Company and supervisor pages live in the admin app now.
 // Not "/company": /company/[id] is the student-facing company page.
@@ -98,7 +98,8 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Protect all routes except static/image/favicon/pwa-assets
-    "/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|push-sw.js|icons/|images/).*)",
+    // Everything except build assets and static files: public/ images, the PWA
+    // files, robots.txt and sitemap.xml must load for signed-out visitors and crawlers.
+    "/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|push-sw.js|icons/|images/|.*\\.(?:png|jpe?g|gif|svg|webp|avif|ico|txt|xml|webmanifest|js|css|map|woff2?|ttf|pdf|mp4)$).*)",
   ],
 };

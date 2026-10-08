@@ -1,0 +1,75 @@
+name: CI
+
+# Every pull request, and every push to the long-lived branches, must build.
+on:
+  pull_request:
+  push:
+    branches: [zigex, student-backend, feature-add]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Type check, build, audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Public build-time values (NEXT_PUBLIC_* are baked into the browser bundle).
+    # Set them under Settings → Secrets and variables → Actions → Variables.
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      BACKEND_URL: ${{ vars.BACKEND_URL || 'https://api.zigexconnect.com' }}
+      NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+      NEXT_PUBLIC_ADMIN_APP_URL: ${{ vars.NEXT_PUBLIC_ADMIN_APP_URL }}
+      NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${{ vars.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
+      NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${{ vars.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}
+      NEXT_PUBLIC_SANITY_PROJECT_ID: ${{ vars.NEXT_PUBLIC_SANITY_PROJECT_ID }}
+      NEXT_PUBLIC_SANITY_DATASET: ${{ vars.NEXT_PUBLIC_SANITY_DATASET || 'production' }}
+      NEXT_PUBLIC_EMAILJS_SERVICE_ID: ${{ vars.NEXT_PUBLIC_EMAILJS_SERVICE_ID }}
+      NEXT_PUBLIC_EMAILJS_PUBLIC_KEY: ${{ vars.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY }}
+      NEXT_PUBLIC_EMAILJS_AI_WAITLIST_TEMPLATE_ID: ${{ vars.NEXT_PUBLIC_EMAILJS_AI_WAITLIST_TEMPLATE_ID }}
+      FRONTEND_URL: ${{ vars.FRONTEND_URL }}
+      NEXT_PUBLIC_APP_VERSION: ci-${{ github.sha }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install
+        run: npm ci --no-audit --no-fund
+
+      # Report-only until the existing errors (old pages, AI routes) are fixed.
+      # Then remove continue-on-error and set ignoreBuildErrors: false in next.config.mjs.
+      - name: Type check
+        id: types
+        continue-on-error: true
+        run: |
+          npx tsc --noEmit -p . 2>&1 | tee tsc.log
+          exit "${PIPESTATUS[0]}"
+
+      - name: Type check summary
+        if: always()
+        run: |
+          count=$(grep -c "error TS" tsc.log || true)
+          echo "### Type check: ${count} error(s)" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$count" -gt 0 ]; then
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            grep "error TS" tsc.log | head -50 >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Build
+        run: npm run build
+
+      # Advisory: shows high/critical advisories in production dependencies.
+      - name: Security audit
+        continue-on-error: true
+        run: npm audit --omit=dev --audit-level=high

@@ -47,3 +47,7 @@ public/sw.js.map
 public/workbox-*.js
 public/workbox-*.js.map
 public/fallback-*.js
+
+# Release packaging (deploy workflow)
+.release/
+zigex-*.tar.gz

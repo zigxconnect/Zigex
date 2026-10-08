@@ -1,0 +1,147 @@
+name: Deploy
+
+# Push a version tag (git push origin v1.0.1) to build and ship that version
+# to the VPS. "Run workflow" redeploys any tag or branch by hand.
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Tag or branch to deploy (e.g. v1.0.1)"
+        required: true
+
+# One deploy at a time; a second one waits instead of interrupting.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: write # to create the GitHub Release
+
+jobs:
+  deploy:
+    name: Build and deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Add required reviewers to this environment to approve each production deploy.
+    environment:
+      name: production
+      url: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      BACKEND_URL: ${{ vars.BACKEND_URL || 'https://api.zigexconnect.com' }}
+      NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+      NEXT_PUBLIC_ADMIN_APP_URL: ${{ vars.NEXT_PUBLIC_ADMIN_APP_URL }}
+      NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${{ vars.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
+      NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${{ vars.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}
+      NEXT_PUBLIC_SANITY_PROJECT_ID: ${{ vars.NEXT_PUBLIC_SANITY_PROJECT_ID }}
+      NEXT_PUBLIC_SANITY_DATASET: ${{ vars.NEXT_PUBLIC_SANITY_DATASET || 'production' }}
+      NEXT_PUBLIC_EMAILJS_SERVICE_ID: ${{ vars.NEXT_PUBLIC_EMAILJS_SERVICE_ID }}
+      NEXT_PUBLIC_EMAILJS_PUBLIC_KEY: ${{ vars.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY }}
+      NEXT_PUBLIC_EMAILJS_AI_WAITLIST_TEMPLATE_ID: ${{ vars.NEXT_PUBLIC_EMAILJS_AI_WAITLIST_TEMPLATE_ID }}
+      FRONTEND_URL: ${{ vars.FRONTEND_URL }}
+      APP_DIR: ${{ vars.VPS_APP_DIR || '/var/www/zigex' }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Work out the version
+        id: version
+        run: |
+          pkg="$(node -p "require('./package.json').version")"
+          ref="${{ inputs.ref || github.ref_name }}"
+          # A tag must match package.json, so the app reports the version it was released as.
+          if [[ "$ref" =~ ^v[0-9] ]] && [[ "${ref#v}" != "$pkg" ]]; then
+            echo "::error::Tag $ref doesn't match package.json version $pkg. Use: npm version patch|minor|major"
+            exit 1
+          fi
+          echo "version=$pkg" >> "$GITHUB_OUTPUT"
+          echo "NEXT_PUBLIC_APP_VERSION=$pkg" >> "$GITHUB_ENV"
+
+      - name: Install
+        run: npm ci --no-audit --no-fund
+
+      - name: Build
+        run: npm run build
+
+      # The standalone server needs the static files and public/ copied in,
+      # plus the deploy scripts so the VPS can switch and roll back.
+      - name: Package
+        run: |
+          set -euo pipefail
+          out=.release
+          rm -rf "$out" && mkdir -p "$out"
+          cp -R .next/standalone/. "$out/"
+          mkdir -p "$out/.next"
+          cp -R .next/static "$out/.next/static"
+          cp -R public "$out/public"
+          cp -R deploy "$out/deploy"
+          tar -czf "zigex-${{ steps.version.outputs.version }}.tar.gz" -C "$out" .
+          ls -lh "zigex-${{ steps.version.outputs.version }}.tar.gz"
+
+      - name: Set up SSH
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # Pinned host key (ssh-keyscan output saved as a secret): no trust-on-first-use.
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Upload and switch
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
+        run: |
+          set -euo pipefail
+          v="${{ steps.version.outputs.version }}"
+          ssh_opts=(-i ~/.ssh/deploy_key -p "$VPS_PORT" -o StrictHostKeyChecking=yes)
+          ssh "${ssh_opts[@]}" "$VPS_USER@$VPS_HOST" "mkdir -p '$APP_DIR/incoming'"
+          scp -i ~/.ssh/deploy_key -P "$VPS_PORT" -o StrictHostKeyChecking=yes \
+            "zigex-$v.tar.gz" "$VPS_USER@$VPS_HOST:$APP_DIR/incoming/"
+          # Unpack the deploy script from the tarball itself, so the VPS always runs this release's version.
+          ssh "${ssh_opts[@]}" "$VPS_USER@$VPS_HOST" \
+            "set -e; cd '$APP_DIR/incoming'; tar -xzf 'zigex-$v.tar.gz' ./deploy/remote-deploy.sh; \
+             APP_DIR='$APP_DIR' bash ./deploy/remote-deploy.sh '$v' '$APP_DIR/incoming/zigex-$v.tar.gz'; \
+             rm -rf ./deploy"
+
+      - name: Check the live site
+        if: vars.NEXT_PUBLIC_SITE_URL != ''
+        run: |
+          for i in $(seq 1 10); do
+            if curl -fsS --max-time 10 "${{ vars.NEXT_PUBLIC_SITE_URL }}/api/health"; then echo; exit 0; fi
+            sleep 6
+          done
+          echo "::error::${{ vars.NEXT_PUBLIC_SITE_URL }}/api/health didn't answer after the deploy"
+          exit 1
+
+      - name: GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          v="${{ steps.version.outputs.version }}"
+          # Notes = this version's section of CHANGELOG.md, else GitHub's generated notes.
+          awk -v v="$v" '$0 ~ "^## \\[?"v"\\]?" {on=1; next} on && /^## / {exit} on {print}' CHANGELOG.md > notes.md || true
+          if [ -s notes.md ]; then
+            gh release create "v$v" --title "v$v" --notes-file notes.md --verify-tag || true
+          else
+            gh release create "v$v" --title "v$v" --generate-notes --verify-tag || true
+          fi
+
+      - name: Clean up the SSH key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
