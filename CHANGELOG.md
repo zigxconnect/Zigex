@@ -11,6 +11,7 @@ When releasing, rename **Unreleased** to the new version and date, then run `npm
 - **Sharing:** links to opportunities now show their own title, company, deadline, place and flyer in WhatsApp and other apps, instead of the home page's.
 - **Search:** internships can appear in Google's job search; events and programs carry their dates; a sitemap lists every open opportunity.
 - **App:** new icons that fit Android and iPhone home screens, a navy splash screen, shortcuts (Explore, My applications, Programs, Notifications), screenshots in the install dialog, an "Install the app" option in Settings, and a new offline page.
+- **Privacy Policy and Terms of Use:** rewritten in plain language (short version first, numbered sections), covering what Zigex actually collects, who sees it, how long it's kept and how to delete it; new Terms of Use page; sign-up confirms you're 18+ and agree to both.
 - **Fixes:** the privacy page and the offline page no longer require signing in; pinch-zoom works again; the landing photo and logo are served from Zigex itself (faster, and they work offline).
 - Production only deploys a commit that already passed CI and ran on the development site, and every deploy opens the main pages after switching (rolling back if they're broken).
 

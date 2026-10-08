@@ -45,11 +45,24 @@ On 7 October the test student had two applications: the internship *SEED Summer 
 
 Also: embedded postings are stubs (`internships: { id, title }`), without image, dates or description. The app now fetches the full posting when it gets a stub, but returning the full object (or `cover_image_url` / `program_picture_url` / `event_picture_url` at least) would save a call per application.
 
-### 4. Notification links
+### 4. Data retention promised in the Privacy Policy
+
+The new Privacy Policy (`/privacy`, section 6) commits to these periods. They need scheduled jobs on the backend:
+
+| Data | Delete when |
+| --- | --- |
+| Applications and their documents (R2) | 2 years after the opportunity closes |
+| Internship records (check-ins, reports) | 2 years after the internship ends |
+| Inactive accounts | No sign-in for 3 years: email a warning, delete after 30 more days without a reply (same cascade as `DELETE /students/me`) |
+| Technical logs | After 90 days |
+
+Please confirm when these run, or tell us different periods so we can update the policy. Requests for a copy of a student's data are answered by email for now; an export endpoint would help later.
+
+### 5. Notification links
 
 The app now follows each notification's `url` when it's a path on our site. The report's example uses `/dashboard/applications`; the app redirects that to My applications (`/dashboard/applied-internships`), so either works. Please use the links from [notifications.md](./notifications.md), section 2.
 
-### 5. Response shapes (noted for later)
+### 6. Response shapes (noted for later)
 
 Most responses have no schema in Swagger. Adding them would let us remove guesswork in the frontend.
 
