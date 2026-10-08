@@ -106,12 +106,17 @@ export const Footer: React.FC = () => {
               <span className="hidden md:inline text-white/10">|</span>
               <span>Built for the next generation of African talent.</span>
             </div>
-            <div className="flex gap-8">
-              {/* TODO(content): add Terms of Service and Cookie Policy pages, then link them here. */}
+            <nav aria-label="Legal" className="flex gap-8">
+              <Link href="/terms" className="hover:text-white transition-colors underline-offset-4 hover:underline">
+                Terms of Use
+              </Link>
               <Link href="/privacy" className="hover:text-white transition-colors underline-offset-4 hover:underline">
                 Privacy Policy
               </Link>
-            </div>
+              <Link href="/privacy#cookies" className="hover:text-white transition-colors underline-offset-4 hover:underline">
+                Cookies
+              </Link>
+            </nav>
           </div>
         </div>
       </div>

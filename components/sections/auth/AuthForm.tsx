@@ -349,7 +349,11 @@ function SignUpForm() {
         </SubmitButton>
 
         <p className="-mt-1 text-[13px] leading-relaxed text-[#7B869C]">
-          By creating an account you agree to our{" "}
+          By creating an account you confirm you&apos;re 18 or over and agree to our{" "}
+          <Link href="/terms" className="text-[#4A5670] underline underline-offset-2 hover:text-[#0B1B3F]">
+            Terms of Use
+          </Link>{" "}
+          and{" "}
           <Link href="/privacy" className="text-[#4A5670] underline underline-offset-2 hover:text-[#0B1B3F]">
             Privacy Policy
           </Link>

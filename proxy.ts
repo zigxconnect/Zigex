@@ -14,7 +14,7 @@ const SECURITY_HEADERS: Record<string, string> = {
 // Pages anyone can open. Signed-in students are bounced off the auth pages.
 const AUTH_PAGES = ["/sign-in", "/sign-up", "/verify-email", "/forgot-password"];
 // /offline is precached by the installed app and must never redirect; /privacy is linked from the public footer.
-const PUBLIC_PAGES = ["/", "/demo", "/feed", "/privacy", "/offline", "/reset-password", "/update-password", ...AUTH_PAGES];
+const PUBLIC_PAGES = ["/", "/demo", "/feed", "/privacy", "/terms", "/offline", "/reset-password", "/update-password", ...AUTH_PAGES];
 
 // API routes that must work without a session: the passthrough to the
 // backend (which enforces its own auth) and the deploy health check.

@@ -55,7 +55,11 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         </div>
 
         <p className="text-center text-[13px] text-[#7B869C]">
-          © {new Date().getFullYear()} Zigex ·{" "}
+          © {new Date().getFullYear()} SEED Inc ·{" "}
+          <Link href="/terms" className="hover:text-[#0B1B3F] hover:underline">
+            Terms
+          </Link>{" "}
+          ·{" "}
           <Link href="/privacy" className="hover:text-[#0B1B3F] hover:underline">
             Privacy
           </Link>
