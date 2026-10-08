@@ -11,9 +11,12 @@ set -euo pipefail
 
 VERSION="${1:?usage: remote-deploy.sh <version> <tarball>}"
 TARBALL="${2:?usage: remote-deploy.sh <version> <tarball>}"
-APP_DIR="${APP_DIR:-/var/www/zigex}"
+APP_DIR="${APP_DIR:-/var/www/zigex}"   # /var/www/zigex-dev for the development site
+APP_NAME="${APP_NAME:-zigex}"           # PM2 process name (zigex-dev for development)
+APP_PORT="${APP_PORT:-3000}"            # 3100 for development
 KEEP="${KEEP:-3}"
-HEALTH_URL="${HEALTH_URL:-http://127.0.0.1:3000/api/health}"
+HEALTH_URL="${HEALTH_URL:-http://127.0.0.1:$APP_PORT/api/health}"
+export APP_DIR APP_NAME APP_PORT
 HEALTH_TRIES="${HEALTH_TRIES:-30}" # 2 s apart
 
 RELEASES="$APP_DIR/releases"
@@ -52,11 +55,11 @@ switch_to() {
 
 restart_app() {
   cp "$(readlink -f "$CURRENT")/deploy/ecosystem.config.cjs" "$APP_DIR/shared/ecosystem.config.cjs"
-  if pm2 describe zigex >/dev/null 2>&1; then
+  if pm2 describe "$APP_NAME" >/dev/null 2>&1; then
     # Delete + start so PM2 re-reads the config and the new `current` path.
-    pm2 delete zigex >/dev/null
+    pm2 delete "$APP_NAME" >/dev/null
   fi
-  APP_DIR="$APP_DIR" pm2 start "$APP_DIR/shared/ecosystem.config.cjs" >/dev/null
+  pm2 start "$APP_DIR/shared/ecosystem.config.cjs" >/dev/null
   pm2 save >/dev/null
 }
 
@@ -80,7 +83,7 @@ if healthy "$VERSION"; then
   log "Healthy: $(curl -fsS --max-time 3 "$HEALTH_URL")"
 else
   log "Health check failed for $VERSION"
-  pm2 logs zigex --lines 40 --nostream || true
+  pm2 logs "$APP_NAME" --lines 40 --nostream || true
   if [[ -n "$PREVIOUS" && -d "$PREVIOUS" ]]; then
     log "Rolling back to $(basename "$PREVIOUS")"
     switch_to "$PREVIOUS"

@@ -1,34 +1,66 @@
 name: Deploy
 
-# Push a version tag (git push origin v1.0.1) to build and ship that version
-# to the VPS. "Run workflow" redeploys any tag or branch by hand.
+# Two sites on the same VPS:
+#   development  dev.zigexconnect.com  ← every push to student-backend
+#   production   zigexconnect.com      ← a version tag (git push origin v1.0.1)
+# "Run workflow" deploys any tag or branch to either site by hand.
+# Each GitHub environment (Settings → Environments) holds its own variables:
+# NEXT_PUBLIC_SITE_URL, VPS_APP_DIR, APP_NAME, APP_PORT, BACKEND_URL…
 on:
   push:
+    branches: [student-backend]
     tags: ["v*.*.*"]
   workflow_dispatch:
     inputs:
+      environment:
+        description: "Where to deploy"
+        type: choice
+        options: [development, production]
+        default: development
       ref:
-        description: "Tag or branch to deploy (e.g. v1.0.1)"
+        description: "Tag or branch to deploy (e.g. v1.0.1 or student-backend)"
         required: true
-
-# One deploy at a time; a second one waits instead of interrupting.
-concurrency:
-  group: deploy-production
-  cancel-in-progress: false
 
 permissions:
   contents: write # to create the GitHub Release
 
 jobs:
+  target:
+    name: Pick the environment
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.pick.outputs.environment }}
+      ref: ${{ steps.pick.outputs.ref }}
+    steps:
+      - id: pick
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "environment=${{ inputs.environment }}" >> "$GITHUB_OUTPUT"
+            echo "ref=${{ inputs.ref }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.ref_type }}" = "tag" ]; then
+            echo "environment=production" >> "$GITHUB_OUTPUT"
+            echo "ref=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "environment=development" >> "$GITHUB_OUTPUT"
+            echo "ref=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          fi
+
   deploy:
-    name: Build and deploy
+    name: Deploy to ${{ needs.target.outputs.environment }}
+    needs: target
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # Add required reviewers to this environment to approve each production deploy.
+    # One deploy per site at a time; a second one waits instead of interrupting.
+    concurrency:
+      group: deploy-${{ needs.target.outputs.environment }}
+      cancel-in-progress: false
+    # Add required reviewers to the production environment to approve each release.
     environment:
-      name: production
+      name: ${{ needs.target.outputs.environment }}
       url: ${{ vars.NEXT_PUBLIC_SITE_URL }}
     env:
+      APP_ENV: ${{ needs.target.outputs.environment }}
+      NEXT_PUBLIC_APP_ENV: ${{ needs.target.outputs.environment }}
       NEXT_TELEMETRY_DISABLED: "1"
       BACKEND_URL: ${{ vars.BACKEND_URL || 'https://api.zigexconnect.com' }}
       NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
@@ -41,12 +73,14 @@ jobs:
       NEXT_PUBLIC_EMAILJS_PUBLIC_KEY: ${{ vars.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY }}
       NEXT_PUBLIC_EMAILJS_AI_WAITLIST_TEMPLATE_ID: ${{ vars.NEXT_PUBLIC_EMAILJS_AI_WAITLIST_TEMPLATE_ID }}
       FRONTEND_URL: ${{ vars.FRONTEND_URL }}
-      APP_DIR: ${{ vars.VPS_APP_DIR || '/var/www/zigex' }}
+      APP_DIR: ${{ vars.VPS_APP_DIR || (needs.target.outputs.environment == 'production' && '/var/www/zigex' || '/var/www/zigex-dev') }}
+      APP_NAME: ${{ vars.APP_NAME || (needs.target.outputs.environment == 'production' && 'zigex' || 'zigex-dev') }}
+      APP_PORT: ${{ vars.APP_PORT || (needs.target.outputs.environment == 'production' && '3000' || '3100') }}
 
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.ref || github.ref }}
+          ref: ${{ needs.target.outputs.ref }}
 
       - uses: actions/setup-node@v4
         with:
@@ -57,14 +91,24 @@ jobs:
         id: version
         run: |
           pkg="$(node -p "require('./package.json').version")"
-          ref="${{ inputs.ref || github.ref_name }}"
-          # A tag must match package.json, so the app reports the version it was released as.
-          if [[ "$ref" =~ ^v[0-9] ]] && [[ "${ref#v}" != "$pkg" ]]; then
-            echo "::error::Tag $ref doesn't match package.json version $pkg. Use: npm version patch|minor|major"
-            exit 1
+          ref="${{ needs.target.outputs.ref }}"
+          if [ "$APP_ENV" = "production" ]; then
+            # Production ships tagged versions only, and the tag must match package.json.
+            if ! [[ "$ref" =~ ^v[0-9] ]]; then
+              echo "::error::Production deploys need a version tag (v1.2.3), not '$ref'."
+              exit 1
+            fi
+            if [[ "${ref#v}" != "$pkg" ]]; then
+              echo "::error::Tag $ref doesn't match package.json version $pkg. Use: npm version patch|minor|major"
+              exit 1
+            fi
+            version="$pkg"
+          else
+            # Development builds: 1.0.1-dev.<short commit>, so /api/health shows exactly what's running.
+            version="$pkg-dev.$(git rev-parse --short HEAD)"
           fi
-          echo "version=$pkg" >> "$GITHUB_OUTPUT"
-          echo "NEXT_PUBLIC_APP_VERSION=$pkg" >> "$GITHUB_ENV"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "NEXT_PUBLIC_APP_VERSION=$version" >> "$GITHUB_ENV"
 
       - name: Install
         run: npm ci --no-audit --no-fund
@@ -110,26 +154,29 @@ jobs:
           v="${{ steps.version.outputs.version }}"
           ssh_opts=(-i ~/.ssh/deploy_key -p "$VPS_PORT" -o StrictHostKeyChecking=yes)
           ssh "${ssh_opts[@]}" "$VPS_USER@$VPS_HOST" "mkdir -p '$APP_DIR/incoming'"
+          echo "Deploying $v to $APP_ENV ($APP_DIR, $APP_NAME on port $APP_PORT)"
           scp -i ~/.ssh/deploy_key -P "$VPS_PORT" -o StrictHostKeyChecking=yes \
             "zigex-$v.tar.gz" "$VPS_USER@$VPS_HOST:$APP_DIR/incoming/"
           # Unpack the deploy script from the tarball itself, so the VPS always runs this release's version.
           ssh "${ssh_opts[@]}" "$VPS_USER@$VPS_HOST" \
             "set -e; cd '$APP_DIR/incoming'; tar -xzf 'zigex-$v.tar.gz' ./deploy/remote-deploy.sh; \
-             APP_DIR='$APP_DIR' bash ./deploy/remote-deploy.sh '$v' '$APP_DIR/incoming/zigex-$v.tar.gz'; \
+             APP_DIR='$APP_DIR' APP_NAME='$APP_NAME' APP_PORT='$APP_PORT' bash ./deploy/remote-deploy.sh '$v' '$APP_DIR/incoming/zigex-$v.tar.gz'; \
              rm -rf ./deploy"
 
       - name: Check the live site
         if: vars.NEXT_PUBLIC_SITE_URL != ''
         run: |
+          want="${{ steps.version.outputs.version }}"
           for i in $(seq 1 10); do
-            if curl -fsS --max-time 10 "${{ vars.NEXT_PUBLIC_SITE_URL }}/api/health"; then echo; exit 0; fi
+            body="$(curl -fsS --max-time 10 "${{ vars.NEXT_PUBLIC_SITE_URL }}/api/health" || true)"
+            if [[ "$body" == *"\"version\":\"$want\""* ]]; then echo "$body"; exit 0; fi
             sleep 6
           done
-          echo "::error::${{ vars.NEXT_PUBLIC_SITE_URL }}/api/health didn't answer after the deploy"
+          echo "::error::${{ vars.NEXT_PUBLIC_SITE_URL }}/api/health doesn't report $want (got: ${body:-no answer}). Check Nginx and the domain."
           exit 1
 
       - name: GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: needs.target.outputs.environment == 'production' && startsWith(github.ref, 'refs/tags/v')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

@@ -6,7 +6,8 @@ When releasing, rename **Unreleased** to the new version and date, then run `npm
 
 ## Unreleased
 
-- Release pipeline: CI on every pull request, deploy to the VPS on a version tag with automatic rollback, and a `/api/health` check.
+- Release pipeline: CI on every pull request; a development site (`dev.zigexconnect.com`) updated on every push to `student-backend`; production deployed from version tags; automatic rollback and a `/api/health` check.
+- The development site is hidden from search engines.
 
 ## 1.0.0 (2026-10-07)
 

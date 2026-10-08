@@ -69,7 +69,7 @@ docs/             living docs: see docs/README.md
 
 ## Releases and deploys
 
-The app runs on a VPS. CI checks every pull request; pushing a version tag deploys it, with automatic rollback if the new release is unhealthy. How to release, roll back and set up the VPS: [docs/setup/deploy.md](./docs/setup/deploy.md). What changed in each version: [CHANGELOG.md](./CHANGELOG.md).
+The app runs on a VPS as two sites: **development** (`dev.zigexconnect.com`, updated on every push to `student-backend`) and **production** (`zigexconnect.com`, updated when a version tag is pushed). CI checks every pull request; every deploy rolls back automatically if the new release is unhealthy. How to release, roll back and set up the VPS: [docs/setup/deploy.md](./docs/setup/deploy.md). What changed in each version: [CHANGELOG.md](./CHANGELOG.md).
 
 ## Docs
 

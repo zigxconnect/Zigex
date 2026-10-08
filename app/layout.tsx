@@ -9,6 +9,7 @@ import Script from "next/script";
 
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
+import { IS_PRODUCTION } from "@/lib/app-env";
 
 const inter = Inter({
 
@@ -111,7 +112,8 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://zigexconnect.com",
   },
-  robots: {
+  // Indexed in production only; the development site stays out of search engines.
+  robots: !IS_PRODUCTION ? { index: false, follow: false } : {
     index: true,
     follow: true,
     googleBot: {
