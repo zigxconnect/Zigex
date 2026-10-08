@@ -20,9 +20,15 @@ on:
       ref:
         description: "Tag or branch to deploy (e.g. v1.0.1 or student-backend)"
         required: true
+      skip_dev_check:
+        description: "Emergency only: deploy to production without CI and the development site having passed on this commit"
+        type: boolean
+        default: false
 
 permissions:
   contents: write # to create the GitHub Release
+  checks: read # to see CI's result on the commit
+  deployments: read # to see the development deploy's result on the commit
 
 jobs:
   target:
@@ -86,6 +92,49 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
+
+      # Production only ships a commit that already passed CI and ran on the
+      # development site. Pushing a version starts both at the same time as this,
+      # so wait for them (up to 25 minutes) instead of failing straight away.
+      - name: Require CI and the development site to have passed on this commit
+        if: env.APP_ENV == 'production' && inputs.skip_dev_check != true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          sha="$(git rev-parse HEAD)"
+          echo "Commit: $sha"
+          deadline=$((SECONDS + 1500))
+          while :; do
+            # CI = the "Type check, build, audit" job of ci.yml.
+            ci="$(gh api "repos/$REPO/commits/$sha/check-runs?check_name=Type%20check%2C%20build%2C%20audit" \
+                    --jq '[.check_runs[] | (.conclusion // .status)] | first // "missing"')"
+            # Development = a successful deploy of this commit to the development environment
+            # (an older deploy shows "inactive" once a newer one replaced it; its success still counts).
+            dev="missing"
+            for id in $(gh api "repos/$REPO/deployments?sha=$sha&environment=development&per_page=5" --jq '.[].id'); do
+              state="$(gh api "repos/$REPO/deployments/$id/statuses?per_page=100" \
+                         --jq 'map(.state) | if index("success") then "success" elif (.[0] // "") == "failure" or (.[0] // "") == "error" then "failure" else "pending" end')"
+              dev="$state"; [ "$dev" = success ] && break
+            done
+            echo "CI: $ci   development site: $dev"
+            if [ "$ci" = success ] && [ "$dev" = success ]; then
+              echo "CI and the development site passed on this commit."
+              exit 0
+            fi
+            case "$ci" in failure|cancelled|timed_out|action_required)
+              echo "::error::CI didn't pass on $sha. Fix it on student-backend, then release a new version."; exit 1;; esac
+            if [ "$dev" = failure ]; then
+              echo "::error::Deploying $sha to the development site failed. Fix it there first."; exit 1
+            fi
+            if [ $SECONDS -ge $deadline ]; then
+              echo "::error::Gave up waiting: this commit wasn't built by CI and deployed to development within 25 minutes."
+              echo "::error::Push it to student-backend (or Run workflow → development with this ref), test it, then deploy again."
+              exit 1
+            fi
+            sleep 30
+          done
 
       - name: Work out the version
         id: version

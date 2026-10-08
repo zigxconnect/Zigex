@@ -21,11 +21,30 @@ tag v1.0.1 ──► Deploy → production (zigexconnect.com)
 each deploy: build on GitHub → upload → switch → health check → automatic rollback if unhealthy
 ```
 
+## What has to pass before production changes
+
+| # | Check | If it fails |
+| --- | --- | --- |
+| 1 | You approve the run (if `production` has a required reviewer) | Nothing happens |
+| 2 | It's a version tag matching `package.json` | Stops; live site untouched |
+| 3 | **The same commit passed CI and deployed successfully to the development site** (waits up to 25 minutes, because pushing a version starts both) | Stops; live site untouched |
+| 4 | The build succeeds | Stops; live site untouched |
+| 5 | After switching: `/api/health` reports the new version | The previous release comes back automatically |
+| 6 | **Smoke test:** sign-in, Explore, a real opportunity page and the stylesheet open without the error screen (`deploy/smoke.sh`) | The previous release comes back automatically. If the backend itself is down, it keeps the release and warns instead: rolling back wouldn't fix the backend |
+| 7 | `https://zigexconnect.com/api/health` shows the new version through the real domain | The run is marked failed (DNS or Nginx problem) |
+
+Still not covered: anything that passes these checks but behaves wrong (a button that does the wrong thing). That's what testing on the development site is for.
+
+**Emergency fix without the development check:** Actions → Deploy → Run workflow → production, the tag, and tick *Emergency only*. Use rarely: it skips check 3.
+
+Run the smoke test by hand any time: `deploy/smoke.sh https://zigexconnect.com` (or the dev address).
+
 | File | What it does |
 | --- | --- |
 | `.github/workflows/ci.yml` | Every pull request and push: install, type check (report only for now), build, audit |
 | `.github/workflows/deploy.yml` | Picks the environment, builds, packages, uploads, switches, checks the live site, creates the GitHub Release (production) |
 | `deploy/remote-deploy.sh` | On the VPS: unpack, switch `current`, restart PM2, require `/api/health` to report the new version, roll back if not, keep 3 releases |
+| `deploy/smoke.sh` | Opens the main pages and checks they work; exit 1 = release broken, 2 = backend down |
 | `deploy/rollback.sh` | On the VPS: switch back by hand |
 | `deploy/ecosystem.config.cjs` | PM2 config for either site (`APP_NAME`, `APP_PORT`, `APP_DIR`) |
 | `deploy/nginx/zigex.conf`, `deploy/nginx/zigex-dev.conf` | Nginx sites |

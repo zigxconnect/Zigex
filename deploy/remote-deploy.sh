@@ -5,8 +5,9 @@
 #
 # Unpacks the release into $APP_DIR/releases/<version>_<timestamp> (so a
 # redeploy never touches the live folder), switches `current` to
-# it, restarts PM2, and checks /api/health. If the check fails it switches
-# back to the previous release automatically. Keeps the last $KEEP releases.
+# it, restarts PM2, checks /api/health, then runs deploy/smoke.sh (sign-in,
+# Explore, an opportunity page, styles). If either fails it switches back to
+# the previous release automatically. Keeps the last $KEEP releases.
 set -euo pipefail
 
 VERSION="${1:?usage: remote-deploy.sh <version> <tarball>}"
@@ -75,14 +76,8 @@ healthy() {
   return 1
 }
 
-log "Switching current → $VERSION"
-switch_to "$RELEASE"
-restart_app
-
-if healthy "$VERSION"; then
-  log "Healthy: $(curl -fsS --max-time 3 "$HEALTH_URL")"
-else
-  log "Health check failed for $VERSION"
+roll_back() {
+  log "$1"
   pm2 logs "$APP_NAME" --lines 40 --nostream || true
   if [[ -n "$PREVIOUS" && -d "$PREVIOUS" ]]; then
     log "Rolling back to $(basename "$PREVIOUS")"
@@ -94,6 +89,28 @@ else
     rm -rf -- "${RELEASE:?}"
   fi
   fail "Deploy of $VERSION failed"
+}
+
+log "Switching current → $VERSION"
+switch_to "$RELEASE"
+restart_app
+
+healthy "$VERSION" || roll_back "Health check failed for $VERSION"
+log "Healthy: $(curl -fsS --max-time 3 "$HEALTH_URL")"
+
+# Smoke test: the pages students use must really work, not just the server answer.
+if [[ "${SKIP_SMOKE:-0}" != "1" ]]; then
+  # No BACKEND_URL line in .env is fine (default below); don't let grep's "no match" end the script.
+  backend="$( { grep -E '^BACKEND_URL=' "$APP_DIR/shared/.env" || true; } | tail -n 1 | cut -d= -f2- | tr -d '"'"'"' ')"
+  set +e
+  bash "$RELEASE/deploy/smoke.sh" "http://127.0.0.1:$APP_PORT" "${backend:-https://api.zigexconnect.com}"
+  smoke=$?
+  set -e
+  case "$smoke" in
+    0) log "Smoke test passed" ;;
+    2) log "WARNING: pages fail because the backend is down; keeping $VERSION (rolling back wouldn't help)." ;;
+    *) roll_back "Smoke test failed for $VERSION" ;;
+  esac
 fi
 
 # Keep the newest $KEEP releases (never the live one).
