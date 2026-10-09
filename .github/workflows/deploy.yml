@@ -198,9 +198,13 @@ jobs:
           out=.release
           rm -rf "$out" && mkdir -p "$out"
           cp -R .next/standalone/. "$out/"
-          mkdir -p "$out/.next"
-          cp -R .next/static "$out/.next/static"
-          cp -R public "$out/public"
+          # Copy the contents (/.) into the folders: the standalone output can already
+          # contain .next/static (CSS), and `cp -R src dest` into an existing folder
+          # would nest it as .next/static/static and lose every script.
+          mkdir -p "$out/.next/static" "$out/public"
+          cp -R .next/static/. "$out/.next/static/"
+          cp -R public/. "$out/public/"
+          ls "$out/.next/static/chunks" >/dev/null || { echo "::error::No .next/static/chunks in the package"; exit 1; }
           cp -R deploy "$out/deploy"
           tar -czf "zigex-${{ steps.version.outputs.version }}.tar.gz" -C "$out" .
           ls -lh "zigex-${{ steps.version.outputs.version }}.tar.gz"

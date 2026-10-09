@@ -39,6 +39,7 @@ check() {
   fi
   # Remember one stylesheet to check the build's static files are served.
   [[ -z "${CSS:-}" ]] && CSS="$(grep -o '/_next/static/[^"]*\.css' "$body" | head -n 1)"
+  [[ -z "${JS:-}" ]] && JS="$(grep -o '/_next/static/chunks/[^"]*\.js' "$body" | head -n 1)"
   rm -f "$body"
 }
 
@@ -60,6 +61,14 @@ if [[ -n "${CSS:-}" ]]; then
   [[ "$code" == "200" ]] && pass "Styles ($CSS)" || miss "Styles ($CSS) → HTTP $code"
 else
   miss "Styles → no stylesheet link found on the pages"
+fi
+
+# Without its scripts a page renders but nothing on it works (forms stay on their placeholders).
+if [[ -n "${JS:-}" ]]; then
+  code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$BASE$JS")" || true
+  [[ "$code" == "200" ]] && pass "Scripts ($JS)" || miss "Scripts ($JS) → HTTP $code"
+else
+  miss "Scripts → no script link found on the pages"
 fi
 
 if [[ ${#failures[@]} -eq 0 ]]; then
