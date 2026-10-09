@@ -4,6 +4,7 @@ import { ApiClientError, isEndpointMissing } from "../errors";
 import { getFeedItem } from "./feed";
 import { getMyProfile } from "./profile";
 import { listLogs } from "./attendance";
+import { isStub } from "../applications-shape";
 
 /**
  * Data for the internship logbook and monthly receipt documents.
@@ -56,7 +57,8 @@ async function fromExistingEndpoints(applicationId: string, withLogs: boolean): 
 
   const internshipId = app.internship_id ?? app.internship?.id;
   const [internship, studentProfile, logs] = await Promise.all([
-    app.internship ?? app.internships ?? (internshipId ? getFeedItem("internships", internshipId) : null),
+    // A stub ({ id, title }) isn't enough for the documents: load the full posting.
+    [app.internship, app.internships].find((o) => o && !isStub(o)) ?? (internshipId ? getFeedItem("internships", internshipId) : null),
     getMyProfile(),
     withLogs && internshipId ? listLogs(internshipId).catch(() => []) : [],
   ]);
@@ -64,7 +66,7 @@ async function fromExistingEndpoints(applicationId: string, withLogs: boolean): 
   return {
     app: {
       ...app,
-      internships: internship ? { ...internship, company_profiles: internship.company_profiles ?? internship.company } : null,
+      internships: internship ? { ...internship, company_profiles: internship.company_profiles ?? internship.company ?? app.company_profiles ?? null } : null,
       supervisor_profiles: app.supervisor_profiles ?? app.supervisor ?? null,
     },
     studentProfile,

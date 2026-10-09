@@ -1,34 +1,37 @@
-import React from "react";
-import { XCircle, ArrowLeft } from "lucide-react";
-import { StandaloneQRScanner } from "@/components/sections/intern/StandaloneQRScanner";
+import type { Metadata } from "next";
 import Link from "next/link";
+import { StandaloneQRScanner } from "@/components/sections/intern/StandaloneQRScanner";
 
-export default async function AttendanceScanPage(props: {
-    searchParams: Promise<{ token?: string }>;
-}) {
-    const searchParams = await props.searchParams;
-    const token = searchParams.token;
+export const metadata: Metadata = { title: "Check in", robots: { index: false, follow: false } };
 
-    if (!token) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-6">
-                <div className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 text-center shadow-xl">
-                    <XCircle size={64} className="mx-auto text-red-500 mb-6" />
-                    <h1 className="text-2xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">Invalid QR Code</h1>
-                    <p className="text-sm text-slate-500 mb-8 font-medium">No attendance token was found in the URL.</p>
-                    <Link href="/intern/workspace" className="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl px-6 h-12 transition-all">
-                        <ArrowLeft size={16} className="mr-2" /> Return to Workspace
-                    </Link>
-                </div>
-            </div>
-        );
-    }
+export default async function AttendanceScanPage(props: { searchParams: Promise<{ token?: string }> }) {
+  const { token } = await props.searchParams;
 
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-6">
-            <div className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-xl">
-                <StandaloneQRScanner token={token} />
-            </div>
-        </div>
-    );
+  return (
+    <main className="flex min-h-dvh flex-col items-center justify-center bg-[#F8FAFF] px-4 py-10">
+      <Link href="/student/workspace" className="mb-6 flex items-center gap-2">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/brand/logo.png" alt="" width={32} height={32} className="h-8 w-8 object-contain" />
+        <span className="font-heading text-xl font-bold tracking-tight text-[#0B1B3F]">Zigex</span>
+      </Link>
+      <div className="w-full max-w-md rounded-2xl bg-white p-6 ring-1 ring-[#DCE5F5] sm:p-8">
+        {token ? (
+          <StandaloneQRScanner token={token} />
+        ) : (
+          <div role="alert" className="text-center">
+            <h1 className="font-heading text-xl font-semibold text-[#0B1B3F]">This link is missing its code</h1>
+            <p className="mt-2 text-[15px] leading-relaxed text-[#4A5670]">
+              Scan the QR poster at your workplace again, or check in from your workspace.
+            </p>
+            <Link
+              href="/student/workspace"
+              className="mt-6 inline-flex h-11 items-center justify-center rounded-xl bg-[#155DFC] px-5 text-[15px] font-semibold text-white hover:bg-[#0F3FB8]"
+            >
+              Open my workspace
+            </Link>
+          </div>
+        )}
+      </div>
+    </main>
+  );
 }

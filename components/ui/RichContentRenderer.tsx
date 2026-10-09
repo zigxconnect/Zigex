@@ -1,8 +1,10 @@
 "use client";
 
+import { safeHtml } from "@/lib/safe-html";
+
 /**
  * RichContentRenderer
- * Safely renders HTML content from the TipTap rich text editor.
+ * Renders HTML from the TipTap rich text editor, cleaned by safeHtml first.
  * Applies beautiful typography styling via inline Tailwind prose classes.
  * Falls back gracefully for plain-text descriptions (wraps in <p> tags).
  */
@@ -31,7 +33,7 @@ export function RichContentRenderer({
   return (
     <div
       className={`rich-content-renderer ${className ?? ""}`}
-      dangerouslySetInnerHTML={{ __html: htmlContent }}
+      dangerouslySetInnerHTML={{ __html: safeHtml(htmlContent) }}
     />
   );
 }

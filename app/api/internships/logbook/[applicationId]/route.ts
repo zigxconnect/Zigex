@@ -1,345 +1,114 @@
 import { NextRequest, NextResponse } from "next/server";
 import { loadPlacementDocument } from "@/lib/api/services/placement-documents";
-import { format } from "date-fns";
+import { CONTACT_EMAIL, companyMark, documentPage, esc, fmtDate, fmtTime } from "@/lib/documents/document-html";
 
-export async function GET(
-    req: NextRequest,
-    { params }: { params: Promise<{ applicationId: string }> }
-) {
-    const { applicationId } = await params;
+const dayOf = (log: Record<string, any>) => String(log.log_date ?? log.created_at ?? "").slice(0, 10);
 
-    try {
-        console.log(`[LOGBOOK_API] Request for AppID: ${applicationId}`);
+function statusChip(status: unknown) {
+  const s = String(status ?? "").toLowerCase();
+  if (s === "approved" || s === "confirmed") return `<span class="chip ok">Approved</span>`;
+  if (s === "rejected") return `<span class="chip bad">Needs changes</span>`;
+  return `<span class="chip warn">Waiting</span>`;
+}
 
-        // The backend enforces who may read this application.
-        const doc = await loadPlacementDocument(applicationId, "logbook");
-        if ("pdf" in doc) {
-            return new NextResponse(doc.pdf.body, {
-                headers: { "Content-Type": "application/pdf", "Content-Disposition": doc.pdf.headers.get("content-disposition") ?? "inline" },
-            });
-        }
-        if ("error" in doc) {
-            return new NextResponse(doc.message, { status: doc.error });
-        }
-        const { app, studentProfile, logs } = doc;
+/** The intern's logbook: every day's report, ready to print and sign. */
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ applicationId: string }> }) {
+  const { applicationId } = await params;
 
-        const studentName = studentProfile?.full_name || app.full_name || "Intern";
-        const internshipTitle = app.internships?.title || "Professional Internship";
-        const companyName = app.internships?.company_profiles?.company_name || "Zigex Partner";
-        const companyLogo = app.internships?.company_profiles?.logo_url || "https://zigexconnect.com/seedLogo.png";
-
-        // Calculate Stats
-        const totalLogs = logs.length;
-        const avgRating = totalLogs > 0
-            ? (logs.reduce((sum, l) => sum + (l.experience_rating || 0), 0) / totalLogs).toFixed(1)
-            : "N/A";
-
-        const html = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logbook - ${studentName}</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            color: #1e293b;
-            line-height: 1.5;
-            margin: 0;
-            padding: 0;
-            background-color: #f8fafc;
-        }
-
-        .page {
-            width: 210mm;
-            min-height: 297mm;
-            padding: 20mm;
-            margin: 10mm auto;
-            background: white;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            box-sizing: border-box;
-        }
-
-        @media print {
-            body { background: none; }
-            .page { margin: 0; box-shadow: none; width: 100%; }
-            .no-print { display: none !important; }
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            border-bottom: 2px solid #1e293b;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-        }
-
-        .company-info .logo {
-            height: 50px;
-            margin-bottom: 10px;
-        }
-
-        .document-title {
-            text-align: right;
-        }
-
-        .document-title h1 {
-            margin: 0;
-            font-size: 24px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        .document-title p {
-            margin: 5px 0 0;
-            color: #64748b;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 40px;
-        }
-
-        .info-box {
-            background: #f1f5f9;
-            padding: 20px;
-            border-radius: 12px;
-        }
-
-        .info-label {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #64748b;
-            font-weight: 800;
-            margin-bottom: 5px;
-        }
-
-        .info-value {
-            font-size: 14px;
-            font-weight: 700;
-            color: #0f172a;
-        }
-
-        .stats-row {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 40px;
-        }
-
-        .stat-card {
-            flex: 1;
-            border: 1px solid #e2e8f0;
-            padding: 15px;
-            border-radius: 12px;
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 20px;
-            font-weight: 800;
-            color: #2563eb;
-        }
-
-        .stat-label {
-            font-size: 10px;
-            color: #64748b;
-            text-transform: uppercase;
-            font-weight: 700;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 40px;
-        }
-
-        th {
-            background: #f8fafc;
-            text-align: left;
-            padding: 12px;
-            font-size: 10px;
-            text-transform: uppercase;
-            color: #64748b;
-            border-bottom: 2px solid #e2e8f0;
-        }
-
-        td {
-            padding: 15px 12px;
-            font-size: 12px;
-            border-bottom: 1px solid #f1f5f9;
-            vertical-align: top;
-        }
-
-        .log-date { font-weight: 700; width: 100px; }
-        .log-content { color: #334155; }
-        .log-tasks { font-size: 11px; margin-top: 5px; color: #64748b; }
-        .log-rating { text-align: center; width: 60px; }
-
-        .signatures {
-            margin-top: 60px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 60px;
-        }
-
-        .sig-box {
-            border-top: 1px solid #000;
-            padding-top: 10px;
-            text-align: center;
-        }
-
-        .sig-label {
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-
-        .footer {
-            margin-top: 50px;
-            text-align: center;
-            font-size: 10px;
-            color: #94a3b8;
-            border-top: 1px solid #f1f5f9;
-            padding-top: 20px;
-        }
-
-        .btn-print {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: #2563eb;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 50px;
-            font-weight: 700;
-            cursor: pointer;
-            box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.4);
-            transition: all 0.2s;
-        }
-
-        .btn-print:hover { transform: translateY(-2px); }
-    </style>
-</head>
-<body>
-    <button class="no-print btn-print" onclick="window.print()">Print Logbook</button>
-
-    <div class="page">
-        <div class="header">
-            <div class="company-info">
-                <img src="${companyLogo}" alt="Logo" class="logo">
-                <div style="font-size: 14px; font-weight: 800;">${companyName}</div>
-            </div>
-            <div class="document-title">
-                <h1>Internship Logbook</h1>
-                <p>Digital Progress Record</p>
-                <p>Generated on ${format(new Date(), "PPpp")}</p>
-            </div>
-        </div>
-
-        <div class="info-grid">
-            <div class="info-box">
-                <div class="info-label">Intern Name</div>
-                <div class="info-value">${studentName}</div>
-                <div style="margin-top: 15px;" class="info-label">Email Address</div>
-                <div class="info-value">${studentProfile?.email || app.email || "N/A"}</div>
-            </div>
-            <div class="info-box">
-                <div class="info-label">Internship Title</div>
-                <div class="info-value">${internshipTitle}</div>
-                <div style="margin-top: 15px;" class="info-label">Assigned Supervisor</div>
-                <div class="info-value">${app.supervisor_profiles?.full_name || "Unassigned"}</div>
-            </div>
-        </div>
-
-        <div class="stats-row">
-            <div class="stat-card">
-                <div class="stat-value">${totalLogs}</div>
-                <div class="stat-label">Days Logged</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">${avgRating}</div>
-                <div class="stat-label">Avg Experience</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">${app.duration || "N/A"}</div>
-                <div class="stat-label">Target Duration</div>
-            </div>
-        </div>
-
-        <table>
-            <thead>
-                <tr>
-                    <th class="log-date">Date</th>
-                    <th>Submissions & Learning Logs</th>
-                    <th class="log-rating">Rating</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${logs.map(log => `
-                    <tr>
-                        <td class="log-date">${format(new Date(log.log_date), "dd MMM yyyy")}</td>
-                        <td>
-                            <div class="log-content">${log.learning_log}</div>
-                            ${log.tasks_completed && log.tasks_completed.length > 0 ? `
-                                <div class="log-tasks">
-                                    <strong>Tasks:</strong> ${log.tasks_completed.join(", ")}
-                                </div>
-                            ` : ''}
-                        </td>
-                        <td class="log-rating">${log.experience_rating}/5</td>
-                    </tr>
-                `).join('')}
-                ${logs.length === 0 ? '<tr><td colspan="3" style="text-align: center; padding: 40px; color: #94a3b8;">No daily reports submitted yet.</td></tr>' : ''}
-            </tbody>
-        </table>
-
-        <div class="signatures">
-            <div class="sig-box">
-                <div class="sig-label">Supervisor Signature</div>
-                <div style="font-size: 10px; color: #64748b; margin-top: 5px;">${app.supervisor_profiles?.full_name || 'Supervisor Name'}</div>
-            </div>
-            <div class="sig-box">
-                <div class="sig-label">Institution Stamp / Admin Signature</div>
-                <div style="font-size: 10px; color: #64748b; margin-top: 5px;">Academic Director / Seed Inc. HR</div>
-            </div>
-        </div>
-
-        <div class="footer">
-            <p>ZIGEX PROFESSIONAL INTERNSHIP TRACKING SYSTEM</p>
-            <p>This is a digitally generated document. For verification, contact support@zigexconnect.com</p>
-        </div>
-    </div>
-
-    <script>
-        window.onload = () => {
-            // Optional: auto-trigger print on load if requested via query param
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('print') === 'true') {
-                setTimeout(() => window.print(), 500);
-            }
-        };
-    </script>
-</body>
-</html>
-        `;
-
-        return new NextResponse(html, {
-            headers: { "Content-Type": "text/html" },
-        });
-
-    } catch (error) {
-        console.error("Logbook API Error:", error);
-        return new NextResponse("Internal Server Error", { status: 500 });
+  try {
+    // The backend decides who may read this application.
+    const doc = await loadPlacementDocument(applicationId, "logbook");
+    if ("pdf" in doc) {
+      return new NextResponse(doc.pdf.body, {
+        headers: { "Content-Type": "application/pdf", "Content-Disposition": doc.pdf.headers.get("content-disposition") ?? "inline" },
+      });
     }
+    if ("error" in doc) return new NextResponse(doc.message, { status: doc.error });
+
+    const { app, studentProfile } = doc;
+    const logs = [...doc.logs].filter((l) => dayOf(l)).sort((a, b) => dayOf(a).localeCompare(dayOf(b)));
+
+    const internship = app.internships ?? {};
+    const company = internship.company_profiles ?? app.company_profiles ?? {};
+    const companyName = company.company_name || "The host company";
+    const studentName = studentProfile?.full_name || app.full_name || "Intern";
+    const supervisor = app.supervisor_profiles?.full_name || "";
+    const period =
+      internship.start_date && internship.end_date
+        ? `${fmtDate(internship.start_date)} to ${fmtDate(internship.end_date)}`
+        : app.duration_months
+          ? `${app.duration_months} ${Number(app.duration_months) === 1 ? "month" : "months"}`
+          : "";
+
+    const reported = logs.filter((l) => String(l.learning_log ?? "").trim()).length;
+    const approved = logs.filter((l) => ["approved", "confirmed"].includes(String(l.status ?? "").toLowerCase())).length;
+    const ratings = logs.map((l) => Number(l.experience_rating)).filter((n) => n > 0);
+    const avg = ratings.length ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1) : "–";
+
+    const rows = logs
+      .map((log) => {
+        const tasks: string[] = Array.isArray(log.tasks_completed) ? log.tasks_completed.filter(Boolean) : [];
+        const times = [log.check_in_time && `In ${fmtTime(log.check_in_time)}`, log.check_out_time && `out ${fmtTime(log.check_out_time)}`].filter(Boolean).join(", ");
+        const summary = String(log.learning_log ?? "").trim();
+        return `<tr>
+  <td class="c-date"><b>${esc(fmtDate(dayOf(log), { day: "numeric", month: "short" }))}</b><span>${esc(fmtDate(dayOf(log), { weekday: "long" }))}</span></td>
+  <td>
+    <div class="report">${summary ? esc(summary) : `<span style="color:var(--muted)">Checked in, no report</span>`}</div>
+    ${tasks.length ? `<div class="sub"><b>Tasks:</b> ${esc(tasks.join(", "))}</div>` : ""}
+    ${times || log.experience_rating ? `<div class="sub">${esc([times, log.experience_rating ? `day rated ${log.experience_rating} of 5` : ""].filter(Boolean).join(". "))}</div>` : ""}
+    ${log.supervisor_comment ? `<div class="comment"><b>Supervisor:</b> ${esc(log.supervisor_comment)}</div>` : ""}
+  </td>
+  <td class="c-status">${summary ? statusChip(log.status) : ""}</td>
+</tr>`;
+      })
+      .join("");
+
+    const body = `
+<header class="top">
+  <div class="issuer">
+    ${companyMark(companyName, company.logo_url)}
+    <div><div class="issuer-name">${esc(companyName)}</div><div class="issuer-sub">Internship through Zigex</div></div>
+  </div>
+  <div class="doc-title"><h1>Internship logbook</h1><p>Printed ${esc(fmtDate(new Date().toISOString()))}</p></div>
+</header>
+
+<dl class="facts">
+  <div><dt>Intern</dt><dd>${esc(studentName)}</dd></div>
+  <div><dt>Internship</dt><dd>${esc(internship.title || "Internship")}</dd></div>
+  <div><dt>School</dt><dd>${esc(studentProfile?.university || studentProfile?.school || "Not given")}</dd></div>
+  <div><dt>Period</dt><dd>${esc(period || "Not given")}</dd></div>
+  <div><dt>Email</dt><dd>${esc(studentProfile?.email || app.email || "Not given")}</dd></div>
+  <div><dt>Supervisor</dt><dd>${esc(supervisor || "Not assigned")}</dd></div>
+</dl>
+
+<div class="stats keep">
+  <div><div class="num">${logs.length}</div><div class="lbl">Days present</div></div>
+  <div><div class="num">${reported}</div><div class="lbl">Reports sent</div></div>
+  <div><div class="num">${approved}</div><div class="lbl">Approved by supervisor</div></div>
+  <div><div class="num">${esc(avg)}</div><div class="lbl">Average day rating (of 5)</div></div>
+</div>
+
+<h2>Daily reports</h2>
+<table>
+  <thead><tr><th class="c-date">Day</th><th>What the intern did and learned</th><th class="c-status">Status</th></tr></thead>
+  <tbody>${rows || `<tr><td colspan="3" class="empty">No days recorded yet.</td></tr>`}</tbody>
+</table>
+
+<section class="signatures keep">
+  <div class="sig"><b>Supervisor</b><span>${esc(supervisor || "Name")}, signature and date</span></div>
+  <div class="sig"><b>${esc(companyName)}</b><span>Stamp, signature and date</span></div>
+</section>
+
+<footer class="foot">
+  <span>Generated by Zigex from the intern's daily check-ins and reports.</span>
+  <span>Questions: ${esc(CONTACT_EMAIL)}</span>
+</footer>`;
+
+    return new NextResponse(documentPage({ title: `Logbook, ${studentName}`, body }), {
+      headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "private, no-store", "X-Robots-Tag": "noindex" },
+    });
+  } catch (error) {
+    console.error("[logbook] failed:", error);
+    return new NextResponse("The logbook couldn't be created. Try again in a moment.", { status: 500 });
+  }
 }

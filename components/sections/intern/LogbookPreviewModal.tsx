@@ -1,9 +1,8 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
-import { X, Download, Printer, FileText, Loader2, Maximize2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { ExternalLink, Loader2, Printer } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 
 interface LogbookPreviewModalProps {
   isOpen: boolean;
@@ -12,130 +11,63 @@ interface LogbookPreviewModalProps {
   studentName: string;
 }
 
-export function LogbookPreviewModal({
-  isOpen,
-  onClose,
-  applicationId,
-  studentName,
-}: LogbookPreviewModalProps) {
-  const [isLoading, setIsLoading] = useState(true);
-  const previewUrl = `/api/internships/logbook/${applicationId}`;
+/**
+ * The logbook as it prints: every day's report, for the supervisor and the
+ * school to sign. "Print" also saves it as a PDF from the print dialog.
+ */
+export function LogbookPreviewModal({ isOpen, onClose, applicationId }: LogbookPreviewModalProps) {
+  const [loading, setLoading] = useState(true);
+  const frame = useRef<HTMLIFrameElement>(null);
+  const url = `/api/internships/logbook/${encodeURIComponent(applicationId)}`;
 
-  const handlePrint = () => {
-    const iframe = document.getElementById("logbook-preview-iframe") as HTMLIFrameElement;
-    if (iframe?.contentWindow) {
-      iframe.contentWindow.print();
-    }
-  };
+  const button =
+    "inline-flex h-10 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] focus-visible:ring-offset-2";
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 sm:p-6">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="absolute inset-0 bg-slate-900/80 backdrop-blur-md"
-          />
-          
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="relative w-full max-w-5xl h-[90vh] bg-white dark:bg-slate-950 rounded-[2rem] shadow-2xl overflow-hidden flex flex-col border border-white/20"
-          >
-            {/* Modal Header */}
-            <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-950 shrink-0">
-              <div className="flex items-center gap-6">
-                <div className="w-14 h-14 rounded-[1.25rem] bg-blue-600/10 flex items-center justify-center shadow-inner">
-                  <FileText className="text-blue-600" size={28} strokeWidth={2.5} />
-                </div>
-                <div>
-                  <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight uppercase">Mission Logbook</h3>
-                  <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">{studentName}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  size="default"
-                  onClick={handlePrint}
-                  className="hidden sm:flex rounded-2xl border-slate-100 dark:border-slate-800 font-black text-[10px] uppercase tracking-widest h-12 px-6 hover:bg-slate-50"
-                >
-                  <Printer size={16} className="mr-2" strokeWidth={3} />
-                  Print
-                </Button>
-                <Button
-                  asChild
-                  variant="primary"
-                  size="default"
-                  className="hidden sm:flex rounded-2xl bg-blue-600 hover:bg-blue-700 font-black text-[10px] uppercase tracking-widest h-12 px-8 shadow-xl shadow-blue-500/20"
-                >
-                  <a href={previewUrl} download={`Logbook_${studentName.replace(/\s+/g, '_')}.html`}>
-                    <Download size={16} className="mr-2" strokeWidth={3} />
-                    Download
-                  </a>
-                </Button>
-                <div className="w-px h-10 bg-slate-100 dark:bg-slate-800 mx-2 hidden sm:block" />
-                <button
-                  onClick={onClose}
-                  className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all text-slate-400 active:scale-90"
-                >
-                  <X size={24} strokeWidth={2.5} />
-                </button>
-              </div>
-            </div>
-
-            {/* Iframe Content */}
-            <div className="flex-1 bg-slate-50/50 dark:bg-slate-900/50 relative">
-              {isLoading && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 z-10 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl">
-                  <div className="relative">
-                    <Loader2 className="animate-spin text-blue-600" size={40} strokeWidth={3} />
-                    <div className="absolute inset-0 bg-blue-600/20 blur-xl rounded-full" />
-                  </div>
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Decrypting Data...</p>
-                </div>
-              )}
-              <iframe
-                id="logbook-preview-iframe"
-                src={previewUrl}
-                className="w-full h-full border-0"
-                onLoad={() => setIsLoading(false)}
-              />
-            </div>
-
-            {/* Mobile Footer Actions */}
-            <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 flex sm:hidden gap-4 shrink-0">
-                <Button
-                  variant="outline"
-                  size="default"
-                  onClick={handlePrint}
-                  className="flex-1 rounded-2xl border-slate-100 dark:border-slate-800 font-black text-[10px] uppercase tracking-widest h-14"
-                >
-                  <Printer size={16} className="mr-2" strokeWidth={3} />
-                  Print
-                </Button>
-                <Button
-                  asChild
-                  variant="primary"
-                  size="default"
-                  className="flex-1 rounded-2xl bg-blue-600 hover:bg-blue-700 font-black text-[10px] uppercase tracking-widest h-14 shadow-lg shadow-blue-500/20"
-                >
-                  <a href={previewUrl} download={`Logbook_${studentName.replace(/\s+/g, '_')}.html`}>
-                    <Download size={16} className="mr-2" strokeWidth={3} />
-                    Download
-                  </a>
-                </Button>
-            </div>
-
-
-          </motion.div>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) {
+          onClose();
+          setLoading(true);
+        }
+      }}
+    >
+      <DialogContent className="flex h-[92dvh] w-[calc(100%-1rem)] max-w-5xl flex-col gap-0 overflow-hidden rounded-2xl border-0 bg-white p-0">
+        <div className="flex flex-col gap-3 border-b border-[#EEF2FA] px-5 py-4 pr-14 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <div>
+            <DialogTitle className="font-heading text-lg font-semibold text-[#0B1B3F]">Logbook</DialogTitle>
+            <DialogDescription className="text-sm text-[#4A5670]">
+              Your daily reports, ready to print and sign. To get a PDF, choose Print, then Save as PDF.
+            </DialogDescription>
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => frame.current?.contentWindow?.print()}
+              disabled={loading}
+              className={`${button} bg-[#155DFC] text-white hover:bg-[#0F3FB8] disabled:opacity-60`}
+            >
+              <Printer className="h-4 w-4" aria-hidden="true" />
+              Print
+            </button>
+            <a href={url} target="_blank" rel="noopener noreferrer" className={`${button} bg-white text-[#0B1B3F] ring-1 ring-[#DCE5F5] hover:bg-[#F8FAFF]`}>
+              <ExternalLink className="h-4 w-4" aria-hidden="true" />
+              Open in a new tab
+            </a>
+          </div>
         </div>
-      )}
-    </AnimatePresence>
+
+        <div className="relative flex-1 bg-[#EEF2FA]">
+          {loading && (
+            <div role="status" className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#EEF2FA]">
+              <Loader2 className="h-7 w-7 animate-spin text-[#155DFC] motion-reduce:animate-none" aria-hidden="true" />
+              <p className="text-sm text-[#4A5670]">Putting your logbook together…</p>
+            </div>
+          )}
+          {isOpen && <iframe ref={frame} title="Logbook" src={url} className="h-full w-full border-0" onLoad={() => setLoading(false)} />}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

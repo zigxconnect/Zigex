@@ -1,90 +1,54 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { scanAttendanceQR } from "@/lib/actions/attendance.actions";
-import { CheckCircle, XCircle, ShieldCheck, ArrowLeft, ShieldAlert, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Loader2 } from "lucide-react";
+import { scanAttendanceQR } from "@/lib/actions/attendance.actions";
+import { CheckInResult, currentPosition, toOutcome, type CheckInOutcome } from "@/components/workspace/CheckInResult";
 
-export const StandaloneQRScanner = ({ token }: { token: string }) => {
-    const [result, setResult] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
+/**
+ * Opened when a phone's own camera app scans the workplace poster
+ * (/attendance/scan?token=…): checks in straight away and says what happened.
+ */
+export function StandaloneQRScanner({ token }: { token: string }) {
+  const [step, setStep] = useState<"location" | "saving">("location");
+  const [outcome, setOutcome] = useState<CheckInOutcome | null>(null);
 
-    useEffect(() => {
-        const performScan = async (lat?: number, lng?: number) => {
-            const res = await scanAttendanceQR(token, lat, lng);
-            setResult(res);
-            setLoading(false);
-        };
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { lat, lng } = await currentPosition();
+      if (cancelled) return;
+      setStep("saving");
+      const res = await scanAttendanceQR(token, lat, lng).catch(() => ({ success: false, error: undefined }));
+      if (!cancelled) setOutcome(toOutcome(res));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
 
-        if ("geolocation" in navigator) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    performScan(position.coords.latitude, position.coords.longitude);
-                },
-                (error) => {
-                    console.warn("Geolocation error:", error);
-                    // Still attempt the scan without coordinates
-                    performScan();
-                },
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-            );
-        } else {
-            // Geolocation not supported, attempt without it
-            performScan();
-        }
-    }, [token]);
-
-    if (loading) {
-        return (
-            <div className="text-center">
-                <Loader2 size={48} className="mx-auto text-[#155DFC] animate-spin mb-6" />
-                <h1 className="text-2xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">Verifying Attendance...</h1>
-                <p className="text-sm text-slate-500 mb-8 font-medium">Acquiring location securely...</p>
-            </div>
-        );
-    }
-
+  if (!outcome) {
     return (
-        <div className="text-center">
-            {result.success ? (
-                result.alreadyLogged ? (
-                    <>
-                        <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <ShieldCheck size={40} className="text-[#155DFC]" />
-                        </div>
-                        <h1 className="text-2xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">Already Logged</h1>
-                        <p className="text-sm text-slate-500 mb-8 font-medium">You have already marked your attendance for today. Have a great workday!</p>
-                    </>
-                ) : (
-                    <>
-                        <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <CheckCircle size={40} className="text-emerald-500" />
-                        </div>
-                        <h1 className="text-2xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">Attendance Verified!</h1>
-                        <p className="text-sm text-slate-500 mb-8 font-medium">Your attendance for today has been logged securely.</p>
-                    </>
-                )
-            ) : result.code === "not_accepted" ? (
-                <>
-                    <div className="w-20 h-20 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <ShieldAlert size={40} className="text-orange-500" />
-                    </div>
-                    <h1 className="text-2xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">Access Denied</h1>
-                    <p className="text-sm text-slate-500 mb-8 font-medium">{result.error}</p>
-                </>
-            ) : (
-                <>
-                    <div className="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <XCircle size={40} className="text-red-500" />
-                    </div>
-                    <h1 className="text-2xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">Scan Failed</h1>
-                    <p className="text-sm text-slate-500 mb-8 font-medium">{result.error || "An unknown error occurred while verifying the QR code."}</p>
-                </>
-            )}
-
-            <Link href="/intern/workspace" className="inline-flex items-center justify-center bg-[#155DFC] hover:bg-[#1A3CB9] text-white font-bold rounded-xl px-8 h-12 transition-all shadow-lg shadow-blue-500/20 w-full sm:w-auto mt-4">
-                Go to My Workspace
-            </Link>
-        </div>
+      <div role="status" className="py-6 text-center">
+        <Loader2 className="mx-auto h-8 w-8 animate-spin text-[#155DFC] motion-reduce:animate-none" aria-hidden="true" />
+        <p className="mt-4 font-heading text-lg font-semibold text-[#0B1B3F]">{step === "location" ? "Confirming you're at work…" : "Checking you in…"}</p>
+        {step === "location" && <p className="mt-1 text-sm text-[#4A5670]">If your browser asks, allow location.</p>}
+      </div>
     );
-};
+  }
+
+  return (
+    <CheckInResult
+      outcome={outcome}
+      action={
+        <Link
+          href="/student/workspace"
+          className="inline-flex h-11 items-center justify-center rounded-xl bg-[#155DFC] px-5 text-[15px] font-semibold text-white hover:bg-[#0F3FB8]"
+        >
+          Open my workspace
+        </Link>
+      }
+    />
+  );
+}

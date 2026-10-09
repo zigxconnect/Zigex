@@ -1,5 +1,6 @@
 "use client";
 
+import { safeHtml } from "@/lib/safe-html";
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
@@ -830,7 +831,7 @@ export default function ProgramUpdatesClient({
                               <div className={`prose prose-sm prose-blue max-w-none mb-6 ${!isPaid ? "blur-sm select-none" : ""}`}>
                                 <div
                                   className="whitespace-pre-wrap leading-relaxed"
-                                  dangerouslySetInnerHTML={{ __html: item.content }}
+                                  dangerouslySetInnerHTML={{ __html: safeHtml(item.content) }}
                                 />
                               </div>
                             ) : !isPaid ? (

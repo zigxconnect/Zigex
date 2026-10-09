@@ -14,7 +14,7 @@ export function AttendanceScannerModal({ children }: AttendanceScannerModalProps
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="w-[calc(100%-2rem)] sm:w-full sm:max-w-md p-0 overflow-hidden bg-transparent border-0 shadow-none rounded-3xl">
+      <DialogContent className="w-[calc(100%-2rem)] gap-0 overflow-hidden rounded-2xl border-0 bg-white p-0 sm:max-w-md">
         <AttendanceQRScanner />
       </DialogContent>
     </Dialog>

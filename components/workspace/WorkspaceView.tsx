@@ -299,7 +299,7 @@ export function WorkspaceView({ data }: { data: WorkspaceData }) {
         )}
       </div>
 
-      {reportOpen && <DailyReportModal isOpen={reportOpen} onClose={() => setReportOpen(false)} internshipId={reportTargetId} />}
+      {reportOpen && <DailyReportModal isOpen={reportOpen} onClose={() => setReportOpen(false)} internshipId={reportTargetId} taskSuggestions={sortedTasks.map((t) => t.title).filter(Boolean)} />}
       <TaskDialog task={openTask} onClose={() => setOpenTask(null)} />
       <TeamDialog open={teamOpen} onClose={() => setTeamOpen(false)} mentor={mentor} supervisors={fellowSupervisors} interns={fellowInterns} />
       <LogbookPreviewModal
