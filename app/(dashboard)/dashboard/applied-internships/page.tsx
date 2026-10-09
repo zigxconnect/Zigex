@@ -271,7 +271,7 @@ function ApplicationRowView({ item, onWithdrawn }: { item: Item; onWithdrawn: ()
 
   const next =
     st.key === "accepted" && item.kind === "internship"
-      ? { href: "/student/workspace", label: "Open workspace" }
+      ? { href: `/student/workspace?appId=${encodeURIComponent(item.id)}`, label: "Open workspace" }
       : st.key === "accepted" && item.kind === "program" && item.postingId
         ? { href: `/programs/${item.postingId}/updates`, label: "Program updates" }
         : null;

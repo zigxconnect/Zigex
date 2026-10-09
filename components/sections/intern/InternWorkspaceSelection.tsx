@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { CalendarDays, ChevronRight, MapPin, Search } from "lucide-react";
+import { phaseOf, workspaceHref } from "@/lib/workspace/routing";
+import type { PlacementPhase } from "@/components/workspace/workspace-model";
 
 type Placement = Record<string, any>;
 
@@ -14,11 +16,11 @@ const typeOf = (app: Placement) => {
 };
 const opportunityOf = (app: Placement) => (typeOf(app) === "program" ? app.programs : typeOf(app) === "event" ? app.event : app.internships) ?? {};
 const companyOf = (app: Placement) => opportunityOf(app).company_profiles ?? opportunityOf(app).company ?? app.company_profiles ?? {};
-const slugOf = (title?: string) =>
-  (title || "workspace")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
+const GROUPS: { phase: PlacementPhase; title: string }[] = [
+  { phase: "current", title: "Current" },
+  { phase: "upcoming", title: "Starting soon" },
+  { phase: "finished", title: "Finished" },
+];
 
 const shortDate = (v?: string) => (v ? new Date(v).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "");
 
@@ -54,7 +56,9 @@ export function InternWorkspaceSelection({ internships }: { internships: Placeme
       <header>
         <h1 className="font-heading text-[28px] font-bold leading-tight tracking-tight text-[#0B1B3F]">Your workspaces</h1>
         <p className="mt-1 text-base text-[#4A5670]">
-          You have {internships.length} active placements. Open one to check in, see tasks and send reports.
+          {internships.filter((a) => phaseOf(a) === "current").length > 1
+            ? "You have more than one placement running. Open the one you're working on today."
+            : "Open a placement to check in, see tasks and send reports, or to get the logbook of one you've finished."}
         </p>
       </header>
 
@@ -73,48 +77,61 @@ export function InternWorkspaceSelection({ internships }: { internships: Placeme
       )}
 
       {shown.length ? (
-        <ul className="mt-6 divide-y divide-[#EEF2FA] overflow-hidden rounded-2xl bg-white ring-1 ring-[#DCE5F5]">
-          {shown.map((app) => {
-            const opportunity = opportunityOf(app);
-            const company = companyOf(app);
-            const type = typeOf(app);
-            const dates = opportunity.start_date ? `${shortDate(opportunity.start_date)}${opportunity.end_date ? ` to ${shortDate(opportunity.end_date)}` : ""}` : "";
+        <div className="mt-6 space-y-8">
+          {GROUPS.map(({ phase, title }) => {
+            const group = shown.filter((app) => phaseOf(app) === phase);
+            if (!group.length) return null;
             return (
-              <li key={app.id}>
-                <Link
-                  href={`/student/workspace/${type}/${slugOf(opportunity.title)}?appId=${encodeURIComponent(app.id)}`}
-                  className="group flex items-center gap-4 px-5 py-4 hover:bg-[#F8FAFF] focus-visible:bg-[#F8FAFF] focus-visible:outline-none sm:px-6"
-                >
-                  <Mark name={company.company_name} logo={company.logo_url} />
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-sm text-[#4A5670]">
-                      {TYPE_LABEL[type]}
-                      {company.company_name ? ` at ${company.company_name}` : ""}
-                    </span>
-                    <span className="block truncate font-heading text-[17px] font-semibold text-[#0B1B3F] group-hover:text-[#155DFC]">
-                      {opportunity.title || "Placement"}
-                    </span>
-                    <span className="mt-0.5 flex flex-wrap gap-x-4 gap-y-0.5 text-sm text-[#4A5670]">
-                      {opportunity.location && (
-                        <span className="inline-flex items-center gap-1">
-                          <MapPin className="h-3.5 w-3.5 text-[#7B869C]" aria-hidden="true" />
-                          {opportunity.location}
-                        </span>
-                      )}
-                      {dates && (
-                        <span className="inline-flex items-center gap-1">
-                          <CalendarDays className="h-3.5 w-3.5 text-[#7B869C]" aria-hidden="true" />
-                          {dates}
-                        </span>
-                      )}
-                    </span>
-                  </span>
-                  <ChevronRight className="h-5 w-5 shrink-0 text-[#9AA6BD] group-hover:text-[#155DFC]" aria-hidden="true" />
-                </Link>
-              </li>
+              <section key={phase} aria-labelledby={`group-${phase}`}>
+                <h2 id={`group-${phase}`} className="mb-3 font-heading text-base font-semibold text-[#0B1B3F]">
+                  {title} <span className="font-normal text-[#7B869C]">{group.length}</span>
+                </h2>
+                <ul className="divide-y divide-[#EEF2FA] overflow-hidden rounded-2xl bg-white ring-1 ring-[#DCE5F5]">
+          {group.map((app) => {
+                    const opportunity = opportunityOf(app);
+                    const company = companyOf(app);
+                    const type = typeOf(app);
+                    const dates = opportunity.start_date ? `${shortDate(opportunity.start_date)}${opportunity.end_date ? ` to ${shortDate(opportunity.end_date)}` : ""}` : "";
+                    return (
+                      <li key={app.id}>
+                        <Link
+                          href={workspaceHref(app)}
+                          className="group flex items-center gap-4 px-5 py-4 hover:bg-[#F8FAFF] focus-visible:bg-[#F8FAFF] focus-visible:outline-none sm:px-6"
+                        >
+                          <Mark name={company.company_name} logo={company.logo_url} />
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-sm text-[#4A5670]">
+                              {TYPE_LABEL[type]}
+                              {company.company_name ? ` at ${company.company_name}` : ""}
+                            </span>
+                            <span className="block truncate font-heading text-[17px] font-semibold text-[#0B1B3F] group-hover:text-[#155DFC]">
+                              {opportunity.title || "Placement"}
+                            </span>
+                            <span className="mt-0.5 flex flex-wrap gap-x-4 gap-y-0.5 text-sm text-[#4A5670]">
+                              {opportunity.location && (
+                                <span className="inline-flex items-center gap-1">
+                                  <MapPin className="h-3.5 w-3.5 text-[#7B869C]" aria-hidden="true" />
+                                  {opportunity.location}
+                                </span>
+                              )}
+                              {dates && (
+                                <span className="inline-flex items-center gap-1">
+                                  <CalendarDays className="h-3.5 w-3.5 text-[#7B869C]" aria-hidden="true" />
+                                  {dates}
+                                </span>
+                              )}
+                            </span>
+                          </span>
+                          <ChevronRight className="h-5 w-5 shrink-0 text-[#9AA6BD] group-hover:text-[#155DFC]" aria-hidden="true" />
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
             );
           })}
-        </ul>
+        </div>
       ) : (
         <div className="mt-6 rounded-2xl bg-white px-6 py-8 text-center ring-1 ring-[#DCE5F5]">
           <p className="font-medium text-[#0B1B3F]">No placements match &ldquo;{query}&rdquo;</p>

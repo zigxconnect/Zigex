@@ -18,6 +18,7 @@ import { EmptyNote, ListFilters, Panel, ReportRow, TaskDialog, TaskRow, TextLink
 import {
   attendanceCalendar,
   formatDay,
+  placementPhase,
   priorityOf,
   reportStatus,
   sortTasks,
@@ -116,6 +117,8 @@ export function WorkspaceView({ data }: { data: WorkspaceData }) {
   };
 
   const today = todayState(logs);
+  const phase = placementPhase({ start_date: opportunity.start_date, end_date: opportunity.end_date });
+  const otherPlacements = (data.userWorkspaces ?? []).length > 1;
   const calendar = useMemo(
     () =>
       attendanceCalendar(logs, {
@@ -183,6 +186,11 @@ export function WorkspaceView({ data }: { data: WorkspaceData }) {
                 </li>
               )}
             </ul>
+            {otherPlacements && (
+              <Link href="/student/workspace?all=1" className="mt-2 inline-block text-sm font-semibold text-[#155DFC] hover:underline">
+                Switch placement
+              </Link>
+            )}
           </div>
         </div>
         <button
@@ -209,7 +217,17 @@ export function WorkspaceView({ data }: { data: WorkspaceData }) {
       )}
 
       <div className="mt-5 sm:mt-6">
+        {phase === "finished" ? (
+          <FinishedPanel
+            endedOn={opportunity.end_date}
+            present={calendar.daysPresent}
+            reported={calendar.daysReported}
+            approved={logs.filter((l) => reportStatus(l) === "approved").length}
+            onOpenLogbook={() => setLogbookOpen(true)}
+          />
+        ) : (
         <TodayPanel today={today} startsOn={calendar.hasDates && calendar.workdaysSoFar === 0 ? calendar.start : null} openTasks={newTasks} locked={locked} onOpenTasks={() => go("tasks")} onWriteReport={() => setReportOpen(true)} />
+        )}
       </div>
 
       {/* Tabs. Phones: every section visible at once as icon + short label, no
@@ -313,7 +331,7 @@ export function WorkspaceView({ data }: { data: WorkspaceData }) {
         )}
 
         {tab === "tasks" && <TasksTab tasks={sortedTasks} onOpen={openTaskDetails} />}
-        {tab === "reports" && <ReportsTab logs={reports} onWrite={() => setReportOpen(true)} canWrite={!today.reported && !locked} />}
+        {tab === "reports" && <ReportsTab logs={reports} onWrite={() => setReportOpen(true)} canWrite={!today.reported && !locked && phase === "current"} />}
         {tab === "updates" && <UpdatesTab announcements={announcements} />}
         {tab === "learning" && <LearningTab domain={application?.domain || opportunity.category || opportunity.title || ""} level={application?.experience_level ?? application?.level} />}
         {tab === "payments" && hasPayments && (
@@ -331,6 +349,50 @@ export function WorkspaceView({ data }: { data: WorkspaceData }) {
         studentName={application.student_profiles?.full_name || application.full_name || "Intern"}
       />
     </div>
+  );
+}
+
+/* ---------- finished placement ---------- */
+
+function FinishedPanel({ endedOn, present, reported, approved, onOpenLogbook }: { endedOn?: string; present: number; reported: number; approved: number; onOpenLogbook: () => void }) {
+  return (
+    <section aria-labelledby="finished-title" className="rounded-2xl bg-[#0B1B3F] p-5 text-white sm:p-7">
+      <h2 id="finished-title" className="font-heading text-xl font-semibold tracking-tight">
+        This internship has ended
+      </h2>
+      <p className="mt-1 text-sm text-[#AFC0E3]">
+        {endedOn ? `It finished on ${formatDay(endedOn, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}. ` : ""}
+        Your reports and attendance stay here, and your logbook is ready to print and sign.
+      </p>
+      <dl className="mt-5 grid grid-cols-3 gap-3 sm:max-w-md">
+        {[
+          { label: "Days present", value: present },
+          { label: "Reports sent", value: reported },
+          { label: "Approved", value: approved },
+        ].map((s) => (
+          <div key={s.label} className="rounded-xl bg-white/[0.07] px-3 py-3">
+            <dt className="text-xs text-[#AFC0E3]">{s.label}</dt>
+            <dd className="mt-0.5 font-heading text-2xl font-semibold tabular-nums">{s.value}</dd>
+          </div>
+        ))}
+      </dl>
+      <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+        <button
+          type="button"
+          onClick={onOpenLogbook}
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-white px-5 text-[15px] font-semibold text-[#0B1B3F] hover:bg-[#E8EFFF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B1B3F]"
+        >
+          <FileText className="h-4 w-4" aria-hidden="true" />
+          Open logbook
+        </button>
+        <Link
+          href="/feed"
+          className="inline-flex h-11 items-center justify-center rounded-xl px-5 text-[15px] font-semibold text-white ring-1 ring-white/25 hover:bg-white/10"
+        >
+          Find your next opportunity
+        </Link>
+      </div>
+    </section>
   );
 }
 

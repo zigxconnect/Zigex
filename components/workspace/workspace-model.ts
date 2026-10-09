@@ -191,3 +191,15 @@ export const formatTime = (value?: string | null) => {
 };
 
 export const stripHtml = (html?: string | null) => (html ?? "").replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+
+export type PlacementPhase = "upcoming" | "current" | "finished";
+
+/** Where a placement is in time, from its posting's start and end dates (no dates: current). */
+export function placementPhase(opportunity: { start_date?: string | null; end_date?: string | null } | null | undefined, now = new Date()): PlacementPhase {
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const start = parseDay(opportunity?.start_date);
+  const end = parseDay(opportunity?.end_date);
+  if (start && today < start) return "upcoming";
+  if (end && today > end) return "finished";
+  return "current";
+}
