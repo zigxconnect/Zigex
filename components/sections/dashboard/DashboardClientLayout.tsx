@@ -3,7 +3,6 @@
 import { DashboardHeader } from "@/components/layout/dashboard/DashboardHeader";
 import { Sidebar } from "@/components/layout/dashboard/Sidebar";
 import { MobileTabBar } from "@/components/layout/dashboard/MobileTabBar";
-import { ProfileCompletionBanner } from "@/components/sections/dashboard/ProfileCompletionBanner";
 import { useState, useEffect } from "react";
 import { UserProfile } from "@/app/types/type";
 import { usePathname } from "next/navigation";
@@ -16,14 +15,6 @@ interface DashboardClientLayoutProps {
   showUploadLive?: boolean;
 }
 
-/**
- * /feed shows profile strength in its own sidebar; Programs and the
- * opportunity/program pages have their own job, so the banner stays off them.
- */
-function hideProfileBanner(pathname: string | null) {
-  const path = pathname ?? "";
-  return path === "/feed" || path === "/dashboard/programs" || path === "/dashboard/blog" || path.startsWith("/dashboard/student") || path === "/dashboard/community" || path === "/dashboard/edit-profile" || path === "/profile-settings" || path === "/notifications" || path.startsWith("/dashboard/zigagent-ai") || path.startsWith("/profile/") || path.startsWith("/dashboard/blog/") || path.startsWith("/feed/") || /^\/programs\/[^/]+$/.test(path);
-}
 
 export function DashboardClientLayout({
   children,
@@ -106,8 +97,6 @@ export function DashboardClientLayout({
               // Standard Dashboard Padding
               <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
                 <div className="mx-auto max-w-6xl">
-                  {/* /feed shows profile strength in its own sidebar; Programs doesn't need it. */}
-                  {!hideProfileBanner(pathname) && <ProfileCompletionBanner profileStatus={user?.profile?.profile_status} />}
                   {children}
                 </div>
               </div>

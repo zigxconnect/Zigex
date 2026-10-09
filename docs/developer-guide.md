@@ -91,7 +91,7 @@ public/                   Static files (icons, images, service workers)
 ### Pages
 
 - Every data page gets a **`loading.tsx` skeleton** shaped like the page, built from `components/skeletons/Skeleton.tsx`. No top progress bar.
-- **Profile banner:** pages where the "complete your profile" banner shouldn't show are listed in `hideProfileBanner()` in `components/sections/dashboard/DashboardClientLayout.tsx`.
+- **Profile completeness** is prompted where it matters, not with a site-wide banner: the strength card on Explore, the gaps note in the apply form, and the ring on Edit profile.
 - **Navigation:** sidebar groups live in `components/layout/dashboard/Sidebar.tsx`; the phone tab bar in `MobileTabBar.tsx`.
 
 ### Images
@@ -122,9 +122,8 @@ public/                   Static files (icons, images, service workers)
 
 1. Create `app/(dashboard)/<path>/page.tsx` (a Server Component). Fetch through a service.
 2. Add `loading.tsx` next to it with a page-shaped skeleton.
-3. If the profile banner shouldn't show, add the path to `hideProfileBanner()`.
-4. Link it from the sidebar / tab bar if it's a main destination.
-5. Check at 360px and 1280px, signed in and signed out (it should redirect to sign-in).
+3. Link it from the sidebar / tab bar if it's a main destination.
+4. Check at 360px and 1280px, signed in and signed out (it should redirect to sign-in).
 
 ### Call a new backend endpoint
 
