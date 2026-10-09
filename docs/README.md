@@ -28,6 +28,12 @@ The API itself is documented in Swagger: <https://api.zigexconnect.com/api-docs>
 | [product/intern-ledger.md](./product/intern-ledger.md) | Intern payments ledger: design and roadmap. Written before the backend move; data now lives behind the API. |
 | [product/workspace-backlog.md](./product/workspace-backlog.md) | Intern workspace feature backlog. Written before the backend move. |
 
+## Legal
+
+| Doc | What it's for |
+| --- | --- |
+| [legal/terms-and-policies.md](./legal/terms-and-policies.md) | Terms of Use and Privacy Policy in one file (same text as `/terms` and `/privacy`), for review and records. |
+
 ## Setup
 
 | Doc | What it's for |
