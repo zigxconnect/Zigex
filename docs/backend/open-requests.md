@@ -58,6 +58,14 @@ The new Privacy Policy (`/privacy`, section 6) commits to these periods. They ne
 
 Please confirm when these run, or tell us different periods so we can update the policy. Requests for a copy of a student's data are answered by email for now; an export endpoint would help later.
 
+### 4a. New accounts receive every old global notification
+
+`GET /notifications` and `GET /notifications/unread-count` give a student every global notification (`user_id: null`, `is_global: true`) ever created, including the months before they signed up. A test account created on 6 October 2026 has 221 notifications going back to 1 April; 46 of the newest 50 predate the account. A brand-new student therefore opens the app to hundreds of unread notifications about old internships.
+
+**Please:** return a global notification to a student only if it was created after the student's account (`notifications.created_at >= users.created_at`), in both the list and the unread count. Optionally also skip globals older than about 30 days. Personal notifications are unaffected.
+
+The app hides these on its side for now (it compares each global's date with the account's `created_at` from `/students/me`), but the unread count and pagination are only exact once the backend filters.
+
 ### 4b. `GET /internships/{id}/team` returns 500
 
 The intern workspace asks for the people on a placement (supervisors and other interns) with `GET /internships/{id}/team`. For internship `e4694c21-2c9a-45e6-9dd9-569df0f5cd84` (IT Infrastructure Intern), signed in as an accepted intern, it returns `500` with "An unexpected error occurred". The workspace hides the list when this fails, so interns currently can't see their supervisor or each other.
