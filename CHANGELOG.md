@@ -2,19 +2,30 @@
 
 What changed for students in each release. Newest first. Versions follow [semantic versioning](https://semver.org): patch for fixes, minor for new features, major for breaking changes.
 
-When releasing, rename **Unreleased** to the new version and date, then run `npm version <patch|minor|major>` (see [docs/setup/deploy.md](./docs/setup/deploy.md)).
+New changes go under the top section marked **not released yet**. When releasing, replace that with the date and tag the version (see [docs/setup/deploy.md](./docs/setup/deploy.md); for 1.1.0, [docs/setup/server.md](./docs/setup/server.md)).
 
-## Unreleased
+## 1.1.0 (not released yet)
 
-- Release pipeline: CI on every pull request; a development site (`dev.zigexconnect.com`) updated on every push to `zigex`; production deployed from version tags; automatic rollback and a `/api/health` check.
-- The development site is hidden from search engines.
-- **Sharing:** links to opportunities now show their own title, company, deadline, place and flyer in WhatsApp and other apps, instead of the home page's.
+The first version to reach `zigexconnect.com` (1.0.0 was tagged but never deployed). On the development site since 9 October 2026.
+
+- **Intern workspace, redesigned around the working day:**
+  - A **Today** panel with the day's three steps, check in, tasks and daily report, each with its state ("Checked in at 08:12") and its button. Before the first day it shows the start date and a **Test your camera** button; after the last day it shows *This internship has ended* with your totals and the logbook.
+  - **Attendance** as a calendar of working days ("Week 2 of 5"): report sent, checked in, missed.
+  - Tasks with due dates ("Due tomorrow", "2 days late"), links and files; reports you can open to see tasks, times and your supervisor's comment; updates; a learning path; payments only when there's a fee.
+  - On phones: one column ordered by daily use, tabs that all fit on screen, full-width buttons.
+- **Check-in scanner:** opens the camera with a viewfinder and says exactly what happened and what to do: camera blocked or missing, confirming your location, checked in, already checked in, wrong placement, or too far from the workplace. Scanning the poster with your phone's own camera works too.
+- **Daily report:** plain questions with an example, your supervisor's tasks to add with one tap, "How was today?", and a draft kept on your phone until you send it.
+- **Logbook and receipts:** a clean A4 logbook with every day's report, your totals and signature lines, readable on a phone and ready to print or save as PDF; payment receipts with a stable number.
+- **Several or finished placements:** "Open workspace" opens the placement you clicked; "My workspace" opens the one running now; a list (Current, Starting soon, Finished) only when several run at once; "Switch placement" in the workspace.
+- **Notifications:** new accounts no longer receive every old announcement ever sent.
+- **Sharing:** links to opportunities show their own title, company, deadline, place and flyer in WhatsApp and other apps, instead of the home page's.
 - **Search:** internships can appear in Google's job search; events and programs carry their dates; a sitemap lists every open opportunity.
-- **App:** new icons that fit Android and iPhone home screens, a navy splash screen, shortcuts (Explore, My applications, Programs, Notifications), screenshots in the install dialog, an "Install the app" option in Settings, and a new offline page.
-- **Privacy Policy and Terms of Use:** rewritten in plain language (short version first, numbered sections), covering what Zigex actually collects, who sees it, how long it's kept and how to delete it; new Terms of Use page; sign-up confirms you're 18+ and agree to both.
-- **Landing page:** the opportunity on the hero photo is now a real open one (closing soonest) instead of an example; "Latest opportunities" shows open ones only (recently closed ones only to fill the row); 500+ students; accurate FAQ answers (fees, 18+, verified badge, installing); footer links for internships, programs and events.
-- **Fixes:** visitors opening a program are taken to its public page instead of sign-in; the footer no longer links to a sign-in-only blog; the privacy page and the offline page no longer require signing in; pinch-zoom works again; the landing photo and logo are served from Zigex itself (faster, and they work offline).
-- Production only deploys a commit that already passed CI and ran on the development site, and every deploy opens the main pages after switching (rolling back if they're broken).
+- **App:** new icons for Android and iPhone home screens, a navy splash screen, shortcuts, screenshots in the install dialog, "Install the app" in Settings, and a new offline page.
+- **Privacy Policy and Terms of Use:** rewritten in plain language, with sign-up confirming you're 18+ and agree to both.
+- **Landing page:** a real open opportunity on the hero photo, open listings only, 500+ students, accurate FAQ answers, footer links and the right address (Mawa, Mile 6 Nkwen, Bamenda).
+- **Fixes:** the camera was blocked on the whole site, so in-app check-in could never start; the workspace showed no company, description or dates for some placements; "My workspace" was missing from the menu for some accepted interns; the "Finish setting up your profile" banner is gone; programs open their public page for visitors; pinch-zoom works again.
+- **Security:** text written by companies and admins is cleaned before it's shown, and the logbook and receipts can no longer be broken or abused by what's typed into a report.
+- **Behind the scenes:** a development site at `dev.zigexconnect.com` updated on every push; production only deploys a version that passed CI and ran on dev; every deploy is checked page by page (including that its scripts load) and rolls back by itself if broken.
 
 ## 1.0.0 (2026-10-07)
 

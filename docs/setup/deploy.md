@@ -1,5 +1,7 @@
 # Deploying the student app (VPS)
 
+> **Our server:** folders, ports, users and the production switch for the real VPS are in [server.md](./server.md). The paths below are the pipeline's defaults.
+
 Two sites run on the same VPS, built from the same code:
 
 | | Development | Production |
@@ -7,8 +9,8 @@ Two sites run on the same VPS, built from the same code:
 | Address | `https://dev.zigexconnect.com` | `https://zigexconnect.com` |
 | Deploys when | anything is pushed to `zigex` (the main branch) | a version tag is pushed (`v1.0.1`) |
 | Version shown at `/api/health` | `1.0.1-dev.3f2a9c1` (version + commit) | `1.0.1` |
-| On the VPS | `/var/www/zigex-dev`, PM2 `zigex-dev`, port 3100 | `/var/www/zigex`, PM2 `zigex`, port 3000 |
-| Secrets | `/var/www/zigex-dev/shared/.env` | `/var/www/zigex/shared/.env` |
+| On the VPS | `/home/zigex/apps/zigex-dev`, PM2 `zigex-dev`, port 3002 (our server) | `/home/zigex/apps/zigex`, PM2 `zigex`, port 3200 |
+| Secrets | `/home/zigex/apps/zigex-dev/shared/.env` | `/home/zigex/apps/zigex/shared/.env` |
 | Search engines | blocked (noindex + disallow-all robots.txt) | indexed |
 
 Both use the same backend (`api.zigexconnect.com`) unless you set a different `BACKEND_URL` for development. **Actions on the development site are real**: an application sent there reaches the company. Use test accounts.
@@ -166,7 +168,7 @@ Server-only secrets (`JWT_SECRET`, `GMAIL_*`, `EMAILJS_PRIVATE_KEY`, `RESEND_API
 
    The push deploys to development again; the tag deploys to production (after your approval if you set reviewers). Production refuses anything that isn't a version tag matching `package.json`.
 5. When the run is green, `https://zigexconnect.com/api/health` shows the version. Open the site on a phone.
-6. For the next hour: `ssh deploy@YOUR_VPS pm2 logs zigex`.
+6. For the next hour: `ssh zigex@169.58.25.57`, then `pm2 logs zigex`.
 
 **Redeploy by hand** (e.g. after changing a site's `shared/.env`): Actions → Deploy → Run workflow → pick the environment and the ref (`v1.0.1` for production). For an `.env` change alone, `pm2 restart zigex` (or `zigex-dev`) on the VPS is enough.
 
@@ -175,11 +177,11 @@ Server-only secrets (`JWT_SECRET`, `GMAIL_*`, `EMAILJS_PRIVATE_KEY`, `RESEND_API
 Deploys roll back by themselves when the new release fails its health check. By hand (a bug the health check can't see):
 
 ```bash
-ssh deploy@YOUR_VPS
-/var/www/zigex/current/deploy/rollback.sh                 # production: previous release
-/var/www/zigex/current/deploy/rollback.sh 1.0.0           # production: a specific version
-APP_DIR=/var/www/zigex-dev APP_NAME=zigex-dev APP_PORT=3100 \
-  /var/www/zigex-dev/current/deploy/rollback.sh           # development
+ssh zigex@169.58.25.57
+APP_DIR=~/apps/zigex APP_PORT=3200 ~/apps/zigex/current/deploy/rollback.sh          # production: previous release
+APP_DIR=~/apps/zigex APP_PORT=3200 ~/apps/zigex/current/deploy/rollback.sh 1.1.0    # production: a specific version
+APP_DIR=~/apps/zigex-dev APP_NAME=zigex-dev APP_PORT=3002 \
+  ~/apps/zigex-dev/current/deploy/rollback.sh                                        # development
 ```
 
 The last 3 releases of each site are kept in `releases/<version>_<timestamp>`. Then fix forward with a new patch version.

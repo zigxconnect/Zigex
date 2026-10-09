@@ -46,6 +46,9 @@ components/
   profile/                Edit profile, photo crop
   students/               Student directory and public profile
   settings/               Settings, delete account
+  workspace/              Intern workspace: WorkspaceView, TodayPanel, AttendanceCard, lists,
+                          CheckInResult, and workspace-model.ts (pure rules: today, calendar, phase)
+  sections/intern/        Check-in scanner, daily report form, logbook preview, placement list
   layout/dashboard/       Sidebar, header, mobile tab bar, bell, profile menu
   skeletons/Skeleton.tsx  Bone, PageTitle, Surface, CardBone, RowBone, Loading
   errors/ErrorScreen.tsx  Friendly error screen
@@ -57,6 +60,9 @@ lib/
   actions/                Server Actions used by forms
   images.ts               usableImageUrl()
   notifications.ts        notificationHref(), wording, de-duplication
+  workspace/routing.ts    Which workspace to open; workspace links
+  documents/              Printable logbook and receipt template (esc(), A4 + phone layout)
+  safe-html.ts            safeHtml(): clean company/admin HTML before showing it
   utils/redirect.ts       Safe ?next= handling
   app-env.ts              production / development flag
 proxy.ts                  Route protection, redirects, security headers
@@ -109,6 +115,11 @@ public/                   Static files (icons, images, service workers)
 - **App icons:** never edit the PNGs by hand. Replace `assets/brand/logo.png` (square, 640px+) and run `node scripts/generate-brand-assets.mjs`; it rebuilds every icon, the maskable and Apple icons, the notification badge, the shortcut icons and `app/favicon.ico`.
 - **Manifest:** `public/manifest.json` (start page, colours, shortcuts, screenshots in `public/screenshots/`). Retake the screenshots signed out when the design changes.
 - **Public pages:** anything a signed-out visitor or crawler must reach needs to be in `PUBLIC_PAGES` (or a prefix check) in `proxy.ts`. Static files and share images are already excluded from the sign-in redirect.
+
+### Stored HTML and documents
+
+- Show HTML that comes from the backend (descriptions, announcements, updates) with `RichContentRenderer`, which cleans it with `safeHtml()`. Don't use `dangerouslySetInnerHTML` on backend data.
+- In the logbook and receipt templates, pass every backend value through `esc()` (and image URLs through `safeUrl()`).
 
 ### Code style
 

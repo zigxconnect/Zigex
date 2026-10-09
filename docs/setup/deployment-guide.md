@@ -8,6 +8,8 @@ A step-by-step runbook to put the Zigex student app online on a VPS, with two si
 | Updates when | anything is pushed to `zigex` | a version tag (`v1.0.1`) is pushed |
 | On the server | `/var/www/zigex-dev`, PM2 app `zigex-dev`, port 3100 | `/var/www/zigex`, PM2 app `zigex`, port 3000 |
 
+> **Already done for our server** (shared VPS, user `zigex`, Node 22 through nvm, admin-managed Nginx, ports 3002/3200): see [server.md](./server.md). Use this guide for a new server.
+
 Do the steps in order. Each ends with a **Check**: don't move on until it passes. Allow about 2–3 hours the first time.
 
 **Repository:** `git@github.com:zigxconnect/Zigex.git`, branch `zigex`.

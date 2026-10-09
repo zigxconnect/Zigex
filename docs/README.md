@@ -26,7 +26,7 @@ The API itself is documented in Swagger: <https://api.zigexconnect.com/api-docs>
 | [product/attendance-geolocation-qr.md](./product/attendance-geolocation-qr.md) | How geolocation and QR attendance work (short version). |
 | [product/attendance-geolocation-qr-deepdive.md](./product/attendance-geolocation-qr-deepdive.md) | The full technical write-up (also as a PDF). |
 | [product/intern-ledger.md](./product/intern-ledger.md) | Intern payments ledger: design and roadmap. Written before the backend move; data now lives behind the API. |
-| [product/workspace-backlog.md](./product/workspace-backlog.md) | Intern workspace feature backlog. Written before the backend move. |
+| [product/admin-side-handoff.md](./product/admin-side-handoff.md) | **Next phase.** What the admin app must provide for the student side (placements, QR posters, tasks, report review, updates, fees) and the design system to reuse. |
 
 ## Legal
 
@@ -38,6 +38,7 @@ The API itself is documented in Swagger: <https://api.zigexconnect.com/api-docs>
 
 | Doc | What it's for |
 | --- | --- |
+| [setup/server.md](./setup/server.md) | **Our VPS as it is set up:** user, Node through nvm, folders, ports, GitHub settings, what is left, and how to release 1.1.0 and switch `zigexconnect.com`. |
 | [setup/deployment-guide.md](./setup/deployment-guide.md) | **Step-by-step:** put both sites online on a new VPS (DNS, server, Nginx/HTTPS, GitHub, first deploys, hand-over). |
 | [setup/deploy.md](./setup/deploy.md) | CI, releasing a version, deploying to the VPS, rollback, one-time VPS setup. |
 | [setup/email.md](./setup/email.md) | Gmail and EmailJS: environment variables, templates and their fields. |

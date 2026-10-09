@@ -93,6 +93,21 @@ Server Components / Server Actions            app/api/v1/[...path]  (passthrough
 
 Legacy pages still in the tree, not linked from the main navigation: `/dashboard/job-stores`, `/dashboard/viewpage`, `/dashboard/track-progress`, `/dashboard/company`, `/dashboard/projects`, `/demo`, `/internships`, `/events`. Candidates for removal.
 
+### The intern workspace
+
+Students with an accepted placement get a workspace (`/student/workspace`; `/intern/workspace` is the same). It's the most-used page during an internship, so it's built around the working day.
+
+| Piece | Where | What it does |
+| --- | --- | --- |
+| Entry and routing | `app/(dashboard)/student/workspace/page.tsx`, `lib/workspace/routing.ts` | Opens the right placement: the one asked for (`?appId=`), else the one running now, else the one starting soon; a list grouped Current / Starting soon / Finished only when several run at once (`?all=1` forces the list). |
+| Data | `getInternshipWorkspaceData` in `lib/actions/intenship.actions.ts`, `lib/api/services/workspace.ts`, `attendance.ts` | Placement (full posting loaded when the backend embeds a stub), daily logs, tasks, announcements, team, curriculum. |
+| Rules | `components/workspace/workspace-model.ts` | Pure functions: today's state, the attendance calendar, placement phase (upcoming, current, finished), task sorting and due labels. No React, easy to test. |
+| Page | `components/workspace/WorkspaceView.tsx` and siblings | Header, Today panel (or "has ended"), tabs (Overview, Tasks, Reports, Updates, Learning, Payments), dialogs. |
+| Check-in | `components/sections/intern/AttendanceQRScanner.tsx`, `StandaloneQRScanner.tsx`, `components/workspace/CheckInResult.tsx`, `app/attendance/scan` | Camera scan in the app, or the poster opened by the phone's own camera. A test mode before day one records nothing. |
+| Documents | `app/api/internships/logbook/…`, `receipt/…`, `lib/documents/document-html.ts` | Printable logbook and receipts. Uses the backend's PDF if it sends one, else renders HTML from JSON. Every value is escaped. |
+
+A working day is one log row on the backend: check-in opens it, the daily report (check-out) closes it. The supervisor's tools (tasks, report approval, QR posters, payments) live in the admin app; see [product/admin-side-handoff.md](./product/admin-side-handoff.md).
+
 ## 3. Sign-in and sessions
 
 ```mermaid
@@ -162,6 +177,7 @@ sequenceDiagram
 
 - Students turn push on in **Settings** (never prompted on page load). The app subscribes with `NEXT_PUBLIC_VAPID_PUBLIC_KEY` and sends the subscription to `POST /push/subscriptions`. An old-key subscription is replaced automatically (`lib/push-keys.ts`).
 - The bell and `/notifications` use `notificationHref()` (`lib/notifications.ts`): the backend's `url` when it's a local path, otherwise a link worked out from the type. Duplicates are merged.
+- Global notifications (sent to everyone) created before the student's account are hidden in the app, in the list and in the unread count, until the backend filters them itself.
 - Event list, wording and links: [backend/notifications.md](./backend/notifications.md).
 
 ## 7. Errors
@@ -181,7 +197,7 @@ Catch blocks that log errors call `unstable_rethrow(error)` first so Next.js's o
 | --- | --- | --- |
 | URL | `dev.zigexconnect.com` | `zigexconnect.com` |
 | Deployed from | every push to `zigex` | version tags `vX.Y.Z` |
-| On the VPS | `/var/www/zigex-dev`, PM2 `zigex-dev`, :3100 | `/var/www/zigex`, PM2 `zigex`, :3000 |
+| On the VPS | `/home/zigex/apps/zigex-dev`, PM2 `zigex-dev`, :3002 | `/home/zigex/apps/zigex`, PM2 `zigex`, :3200 (not switched yet) |
 | Indexing | blocked (`NEXT_PUBLIC_APP_ENV=development`) | allowed |
 | Backend | same API (real data) | same API |
 
@@ -199,6 +215,8 @@ flowchart LR
   health -- pass --> live["live + GitHub Release"]
 ```
 
+The VPS is shared with other apps; its exact setup (user, Node through nvm, admin-managed Nginx, ports) is in [setup/server.md](./setup/server.md).
+
 Build output is Next.js **standalone** (`server.js` + traced `node_modules`); releases are folders `releases/<version>_<timestamp>` with a `current` symlink, so rollback is a symlink switch. Details: [setup/deploy.md](./setup/deploy.md).
 
 ## 9. Configuration and secrets
@@ -210,7 +228,9 @@ Build output is Next.js **standalone** (`server.js` + traced `node_modules`); re
 
 ## 10. Security notes
 
-- **Headers** (`proxy.ts`): `X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy`. No CSP yet (candidate).
+- **Headers** (`proxy.ts`): `X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy` (`camera=(self)` for the check-in scanner, `geolocation=(self)` for check-in location; everything else off). No CSP yet (candidate).
+- **Stored HTML** (company descriptions, announcements, program updates) goes through `safeHtml()` (`lib/safe-html.ts`, sanitize-html) inside `RichContentRenderer`. Never render backend HTML with `dangerouslySetInnerHTML` directly.
+- **Documents** (logbook, receipts) are HTML built from backend data: every value goes through `esc()` in `lib/documents/document-html.ts`.
 - **Open redirects:** `?next=` and notification links only accept local paths.
 - **Push:** the service worker only opens same-origin URLs. The push trigger is backend-to-backend with a shared key.
 - **Files:** CVs are private (signed URLs); uploads are size- and type-checked in the browser and by the backend.
@@ -220,7 +240,7 @@ Build output is Next.js **standalone** (`server.js` + traced `node_modules`); re
 
 - 51 TypeScript errors in older pages; type check is report-only in CI and `ignoreBuildErrors` is on.
 - No automated tests yet (the smoke test checks pages after each deploy).
-- Temporary workarounds: the `files.zigexconnect.com` rewrite (`lib/images.ts`) and stub-posting hydration (`lib/api/applications-shape.ts`).
+- Temporary workarounds: the `files.zigexconnect.com` rewrite (`lib/images.ts`); stub-posting hydration (`lib/api/applications-shape.ts`, also used by the workspace and documents); hiding global notifications older than the account (`lib/api/notifications-client.ts`); counting an accepted application as "intern" when `is_intern` is false (`lib/actions/profile.actions.ts`). Each has an item in [backend/open-requests.md](./backend/open-requests.md).
 - Security updates pending: `html2pdf.js` (critical), `nodemailer` (high).
 - Development and production share one backend, so testing on dev uses real data.
 - Open backend requests: [backend/open-requests.md](./backend/open-requests.md).
