@@ -2,10 +2,10 @@ import { redirect } from "next/navigation";
 import { 
   getInternshipWorkspaceData 
 } from "@/lib/actions/intenship.actions";
-import { InternWorkspaceClient } from "@/components/sections/intern/InternWorkspaceClient";
+import { WorkspaceView } from "@/components/workspace/WorkspaceView";
 
 export const metadata = {
-  title: "Intern Workspace",
+  title: "Workspace",
   description: "Manage your internship, curriculum, and tasks in one place.",
 };
 
@@ -28,5 +28,5 @@ export default async function InternWorkspacePage(props: {
     redirect("/intern/workspace");
   }
 
-  return <InternWorkspaceClient data={data} />;
+  return <WorkspaceView data={data} />;
 }

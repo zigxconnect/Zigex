@@ -74,7 +74,7 @@ export function normaliseApplication(row: ApplicationRow): ApplicationRow {
  * The backend sometimes embeds only a stub of the posting ({ id, title }):
  * no image, dates or description. Treat that like a missing posting.
  */
-const isStub = (posting: Record<string, any> | null | undefined) =>
+export const isStub = (posting: Record<string, any> | null | undefined) =>
   !posting || Object.keys(posting).filter((k) => posting[k] != null).every((k) => k === "id" || k === "title");
 
 /** Fill in missing (or stub) postings with one feed lookup per distinct posting. */

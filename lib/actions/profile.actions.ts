@@ -83,12 +83,12 @@ export const getProfileInfo = cache(async (): Promise<FormattedUserData | null> 
       profileViews: 0, // Placeholder
     },
     permissions: {
-      // Spec'd flags on /students/me; derived from applications until the backend sends them.
+      // Spec'd flags on /students/me. The backend can send is_intern: false for a
+      // student with an accepted placement, so an accepted application also counts.
       isSupervisor: Boolean(profile.is_supervisor),
       isIntern:
-        typeof profile.is_intern === "boolean"
-          ? profile.is_intern
-          : applications.some((a) => a.status === "accepted" || a.status === "rsvp_confirmed"),
+        profile.is_intern === true ||
+        applications.some((a) => a.status === "accepted" || a.status === "rsvp_confirmed"),
     },
   };
 

@@ -3,6 +3,7 @@ import { serverApi } from "../server-client";
 import { isEndpointMissing, whenAvailable } from "../errors";
 import { getFeedItemFast, type FeedKind } from "./feed";
 import { fetchMyApplicationRows } from "./applications";
+import { isStub } from "../applications-shape";
 
 /**
  * A student's active placements (accepted / RSVP-confirmed applications),
@@ -53,15 +54,17 @@ export const placementOpportunity = (app: Placement) => app[TARGET[app.applicati
 
 async function withOpportunity(app: Placement): Promise<Placement> {
   const { joinKey, feed } = TARGET[app.application_type];
-  const embedded = app[joinKey] ?? app.internship ?? app.program ?? app.opportunity;
+  // The backend can embed a stub ({ id, title }): skip it and load the full posting.
+  const embedded = [app[joinKey], app.internship, app.program, app.opportunity].find((o) => o && !isStub(o));
   const targetId = placementTargetId(app);
 
-  let opportunity = embedded;
+  let opportunity = embedded ?? null;
   if (!opportunity && targetId) {
     opportunity = await getFeedItemFast(feed, targetId).catch(() => null);
   }
+  opportunity ??= app[joinKey] ?? null;
   if (opportunity) {
-    const company = opportunity.company_profiles ?? opportunity.company ?? null;
+    const company = opportunity.company_profiles ?? opportunity.company ?? app.company_profiles ?? null;
     opportunity = { ...opportunity, company_profiles: company, company };
   }
   return { ...app, [joinKey]: opportunity };
