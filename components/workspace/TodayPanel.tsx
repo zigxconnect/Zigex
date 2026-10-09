@@ -57,7 +57,7 @@ export function TodayPanel({
     },
     {
       title: "Tasks",
-      done: openTasks === 0,
+      done: !startsOn && openTasks === 0,
       detail:
         openTasks === 0
           ? "Nothing new from your supervisor."

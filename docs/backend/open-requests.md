@@ -58,6 +58,12 @@ The new Privacy Policy (`/privacy`, section 6) commits to these periods. They ne
 
 Please confirm when these run, or tell us different periods so we can update the policy. Requests for a copy of a student's data are answered by email for now; an export endpoint would help later.
 
+### 4b. `GET /internships/{id}/team` returns 500
+
+The intern workspace asks for the people on a placement (supervisors and other interns) with `GET /internships/{id}/team`. For internship `e4694c21-2c9a-45e6-9dd9-569df0f5cd84` (IT Infrastructure Intern), signed in as an accepted intern, it returns `500` with "An unexpected error occurred". The workspace hides the list when this fails, so interns currently can't see their supervisor or each other.
+
+Also: `GET /students/me` returns `is_intern: false` for this student although their application is `accepted`. The app now treats an accepted application as enough, but the flag should match.
+
 ### 5. Notification links
 
 The app now follows each notification's `url` when it's a path on our site. The report's example uses `/dashboard/applications`; the app redirects that to My applications (`/dashboard/applied-internships`), so either works. Please use the links from [notifications.md](./notifications.md), section 2.

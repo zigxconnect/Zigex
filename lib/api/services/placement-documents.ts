@@ -2,7 +2,7 @@ import "server-only";
 import { serverApi, serverApiRaw } from "../server-client";
 import { ApiClientError, isEndpointMissing } from "../errors";
 import { getFeedItem } from "./feed";
-import { getMyProfile } from "./profile";
+import { displayName, getMyProfile } from "./profile";
 import { listLogs } from "./attendance";
 import { isStub } from "../applications-shape";
 
@@ -39,7 +39,8 @@ function fromDocumentJson(data: Record<string, any>): DocumentData {
       duration: data.application?.duration ?? data.internship?.duration,
       payment_ledger: data.payment_ledger ?? data.application?.payment_ledger ?? [],
     },
-    studentProfile: data.student ?? null,
+    // The backend's full_name can be the sign-up placeholder ("Student"): prefer first + last name.
+    studentProfile: data.student ? { ...data.student, full_name: displayName(data.student) || data.student.full_name } : null,
     logs: data.logs ?? [],
   };
 }

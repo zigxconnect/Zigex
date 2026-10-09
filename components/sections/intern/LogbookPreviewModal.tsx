@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ExternalLink, Loader2, Printer } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 
@@ -20,6 +20,18 @@ export function LogbookPreviewModal({ isOpen, onClose, applicationId }: LogbookP
   const frame = useRef<HTMLIFrameElement>(null);
   const url = `/api/internships/logbook/${encodeURIComponent(applicationId)}`;
 
+  // The frame can finish loading before React listens for it: check, then keep listening.
+  useEffect(() => {
+    if (!isOpen) return;
+    const timer = setInterval(() => {
+      if (frame.current?.contentDocument?.readyState === "complete" && frame.current.contentDocument.body?.childElementCount) {
+        setLoading(false);
+        clearInterval(timer);
+      }
+    }, 300);
+    return () => clearInterval(timer);
+  }, [isOpen]);
+
   const button =
     "inline-flex h-10 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] focus-visible:ring-offset-2";
 
@@ -38,22 +50,23 @@ export function LogbookPreviewModal({ isOpen, onClose, applicationId }: LogbookP
           <div>
             <DialogTitle className="font-heading text-lg font-semibold text-[#0B1B3F]">Logbook</DialogTitle>
             <DialogDescription className="text-sm text-[#4A5670]">
-              Your daily reports, ready to print and sign. To get a PDF, choose Print, then Save as PDF.
+              Ready to print and sign. For a PDF, choose Print, then Save as PDF.
             </DialogDescription>
           </div>
-          <div className="flex gap-2">
+          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:shrink-0">
             <button
               type="button"
               onClick={() => frame.current?.contentWindow?.print()}
               disabled={loading}
-              className={`${button} bg-[#155DFC] text-white hover:bg-[#0F3FB8] disabled:opacity-60`}
+              className={`${button} flex-1 bg-[#155DFC] text-white hover:bg-[#0F3FB8] disabled:opacity-60 sm:flex-none`}
             >
               <Printer className="h-4 w-4" aria-hidden="true" />
               Print
             </button>
-            <a href={url} target="_blank" rel="noopener noreferrer" className={`${button} bg-white text-[#0B1B3F] ring-1 ring-[#DCE5F5] hover:bg-[#F8FAFF]`}>
+            <a href={url} target="_blank" rel="noopener noreferrer" className={`${button} flex-1 whitespace-nowrap bg-white text-[#0B1B3F] ring-1 ring-[#DCE5F5] hover:bg-[#F8FAFF] sm:flex-none`}>
               <ExternalLink className="h-4 w-4" aria-hidden="true" />
-              Open in a new tab
+              <span className="sm:hidden">Open full page</span>
+              <span className="hidden sm:inline">Open in a new tab</span>
             </a>
           </div>
         </div>

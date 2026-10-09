@@ -67,7 +67,7 @@ export function documentPage({ title, body }: { title: string; body: string }): 
   body { margin:0; background:#EEF2FA; color:var(--navy); font:13px/1.55 Inter, system-ui, sans-serif; }
   h1, h2, h3, .num { font-family: "Host Grotesk", Inter, sans-serif; }
   .page { width:210mm; min-height:297mm; margin:12mm auto; padding:18mm 18mm 16mm; background:#fff; box-shadow:0 1px 3px rgba(11,27,63,.08), 0 8px 24px rgba(11,27,63,.06); display:flex; flex-direction:column; }
-  @media (max-width: 840px) { .page { width:auto; min-height:0; margin:0; padding:24px 18px; box-shadow:none; } }
+  @media screen and (max-width: 840px) { .page { width:auto; min-height:0; margin:0; padding:24px 18px; box-shadow:none; } }
   @page { size:A4; margin:14mm; }
   @media print { body { background:#fff; } .page { width:auto; min-height:0; margin:0; padding:0; box-shadow:none; } .no-print { display:none !important; } tr, .keep { break-inside:avoid; } }
 
@@ -87,8 +87,8 @@ export function documentPage({ title, body }: { title: string; body: string }): 
   .facts dd { margin:2px 0 0; font-weight:600; overflow-wrap:anywhere; }
 
   .stats { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); margin:24px 0 0; border:1px solid var(--line); border-radius:12px; overflow:hidden; }
-  .stats div { padding:12px 14px; border-left:1px solid var(--line); }
-  .stats div:first-child { border-left:0; }
+  .stats > div { padding:12px 14px; border-left:1px solid var(--line); }
+  .stats > div:first-child { border-left:0; }
   .stats .num { font-size:20px; font-weight:700; font-variant-numeric:tabular-nums; }
   .stats .lbl { color:var(--ink); font-size:11.5px; }
 
@@ -115,6 +115,24 @@ export function documentPage({ title, body }: { title: string; body: string }): 
 
   .print { position:fixed; right:24px; bottom:24px; border:0; border-radius:12px; padding:12px 18px; background:var(--blue); color:#fff; font:600 14px Inter, sans-serif; cursor:pointer; box-shadow:0 6px 20px rgba(21,93,252,.3); }
   .print:focus-visible { outline:2px solid var(--navy); outline-offset:2px; }
+  /* Phones: one column for the details, two for the numbers, each day as a stacked row. Print keeps the A4 layout. */
+  @media screen and (max-width: 600px) {
+    body { background:#fff; padding-bottom:84px; }
+    .top { flex-direction:column-reverse; gap:14px; }
+    .doc-title { text-align:left; } .doc-title h1 { font-size:21px; }
+    .facts { grid-template-columns:1fr; gap:10px; }
+    .stats { grid-template-columns:repeat(2, minmax(0,1fr)); }
+    .stats > div:nth-child(3) { border-left:0; } .stats > div:nth-child(n+3) { border-top:1px solid var(--line); }
+    thead { display:none; }
+    tbody tr { display:grid; grid-template-columns:64px minmax(0,1fr); border-bottom:1px solid #EEF2FA; padding:10px 0; }
+    tbody td { border:0; padding:0 6px; }
+    td.c-status { grid-column:2; padding-top:8px; } td.c-status:empty { display:none; }
+    td.empty, td[colspan] { grid-column:1 / -1; }
+    .c-date { width:auto; white-space:normal; }
+    .signatures { grid-template-columns:1fr; gap:36px; padding-top:40px; }
+    tbody tr.total { grid-template-columns:1fr auto; }
+    .print { left:16px; right:16px; bottom:16px; }
+  }
 </style>
 </head>
 <body>

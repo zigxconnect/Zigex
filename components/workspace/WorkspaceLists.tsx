@@ -35,8 +35,8 @@ export function Panel({
 }) {
   return (
     <section aria-labelledby={`${id}-title`} className={cn("rounded-2xl bg-white ring-1 ring-[#DCE5F5]", className)}>
-      <div className="flex items-start justify-between gap-3 px-5 pt-5 sm:px-6">
-        <div className="min-w-0">
+      <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-3 px-5 pt-5 sm:px-6">
+        <div className="min-w-0 flex-1 basis-56">
           <h2 id={`${id}-title`} className="font-heading text-base font-semibold text-[#0B1B3F]">
             {title}
           </h2>
@@ -63,7 +63,7 @@ export function TextLink({ onClick, children }: { onClick: () => void; children:
 
 export function EmptyNote({ title, children }: { title: string; children?: React.ReactNode }) {
   return (
-    <div className="px-5 py-6 sm:px-6">
+    <div className="px-5 pb-4 pt-1 sm:px-6">
       <p className="font-medium text-[#0B1B3F]">{title}</p>
       {children && <div className="mt-1 text-sm leading-relaxed text-[#4A5670]">{children}</div>}
     </div>

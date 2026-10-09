@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BookOpen, Building2, CalendarDays, Download, ExternalLink, FileText, Mail, MapPin, MessageCircle, Play } from "lucide-react";
@@ -73,6 +73,21 @@ export function WorkspaceView({ data }: { data: WorkspaceData }) {
     const fromHash = window.location.hash.slice(1) as TabId;
     if (["overview", "tasks", "reports", "updates", "learning", "payments"].includes(fromHash)) setTab(fromHash);
   }, []);
+  const tabList = useRef<HTMLDivElement>(null);
+  const [tabFade, setTabFade] = useState(false);
+  const updateTabFade = () => {
+    const el = tabList.current;
+    setTabFade(Boolean(el && el.scrollLeft + el.clientWidth < el.scrollWidth - 4));
+  };
+  useEffect(() => {
+    updateTabFade();
+    window.addEventListener("resize", updateTabFade);
+    return () => window.removeEventListener("resize", updateTabFade);
+  }, []);
+  useEffect(() => {
+    tabList.current?.querySelector<HTMLElement>(`#tab-${tab}`)?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [tab]);
+
   const go = (next: TabId) => {
     setTab(next);
     window.history.replaceState(null, "", next === "overview" ? window.location.pathname + window.location.search : `#${next}`);
@@ -155,12 +170,12 @@ export function WorkspaceView({ data }: { data: WorkspaceData }) {
   return (
     <div className="mx-auto w-full max-w-6xl pb-28 lg:pb-16">
       {/* Header: what this placement is, and the logbook (the official record). */}
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex min-w-0 items-start gap-4">
+      <header className="flex items-start justify-between gap-3 sm:items-end">
+        <div className="flex min-w-0 items-start gap-3 sm:gap-4">
           <CompanyLogo src={company?.logo_url} name={company?.company_name} />
           <div className="min-w-0">
             <p className={cn("text-sm", body)}>{type === "program" ? "Program" : type === "event" ? "Event" : "Internship"}</p>
-            <h1 className={cn("font-heading text-2xl font-bold leading-tight tracking-tight sm:text-[28px]", ink)}>
+            <h1 className={cn("font-heading text-[22px] font-bold leading-tight tracking-tight sm:text-[28px]", ink)}>
               {opportunity.title || "Your placement"}
             </h1>
             <ul className={cn("mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-sm", body)}>
@@ -188,10 +203,11 @@ export function WorkspaceView({ data }: { data: WorkspaceData }) {
         <button
           type="button"
           onClick={() => setLogbookOpen(true)}
-          className="inline-flex h-10 shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-white px-4 text-sm font-semibold text-[#0B1B3F] ring-1 ring-[#DCE5F5] hover:bg-[#F8FAFF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] sm:self-auto"
+          aria-label="Logbook"
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-white text-sm font-semibold text-[#0B1B3F] ring-1 ring-[#DCE5F5] hover:bg-[#F8FAFF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] sm:w-auto sm:px-4"
         >
           <FileText className="h-4 w-4 text-[#155DFC]" aria-hidden="true" />
-          Logbook
+          <span className="hidden sm:inline">Logbook</span>
         </button>
       </header>
 
@@ -207,13 +223,13 @@ export function WorkspaceView({ data }: { data: WorkspaceData }) {
         </div>
       )}
 
-      <div className="mt-6">
+      <div className="mt-5 sm:mt-6">
         <TodayPanel today={today} startsOn={calendar.hasDates && calendar.workdaysSoFar === 0 ? calendar.start : null} openTasks={newTasks} locked={locked} onOpenTasks={() => go("tasks")} onWriteReport={() => setReportOpen(true)} />
       </div>
 
       {/* Tabs */}
-      <nav aria-label="Workspace" className="sticky top-[64px] z-30 -mx-4 mt-6 border-b border-[#DCE5F5] bg-[#F8FAFF]/95 px-4 backdrop-blur sm:mx-0 sm:px-0">
-        <div role="tablist" className="flex gap-1 overflow-x-auto [scrollbar-width:none]">
+      <nav aria-label="Workspace" className="sticky top-[64px] z-30 -mx-4 mt-5 border-b border-[#DCE5F5] bg-[#F8FAFF]/95 px-4 backdrop-blur sm:mx-0 sm:px-0">
+        <div role="tablist" ref={tabList} onScroll={updateTabFade} className={cn("hide-scrollbar flex overflow-x-auto sm:gap-1", tabFade && "[mask-image:linear-gradient(to_right,black_85%,transparent)]")}>
           {tabs.map((t) => (
             <button
               key={t.id}
@@ -224,7 +240,7 @@ export function WorkspaceView({ data }: { data: WorkspaceData }) {
               aria-controls={`panel-${t.id}`}
               onClick={() => go(t.id)}
               className={cn(
-                "relative flex h-12 shrink-0 items-center gap-2 px-3 text-[15px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#155DFC]",
+                "relative flex h-12 shrink-0 items-center gap-1.5 px-2.5 text-[15px] font-medium sm:gap-2 sm:px-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#155DFC]",
                 tab === t.id ? "text-[#0B1B3F]" : "text-[#4A5670] hover:text-[#0B1B3F]"
               )}
             >
@@ -235,17 +251,19 @@ export function WorkspaceView({ data }: { data: WorkspaceData }) {
                   <span className="sr-only"> new</span>
                 </span>
               )}
-              {tab === t.id && <span aria-hidden="true" className="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-[#155DFC]" />}
+              {tab === t.id && <span aria-hidden="true" className="absolute inset-x-2.5 -bottom-px h-0.5 rounded-full bg-[#155DFC] sm:inset-x-3" />}
             </button>
           ))}
         </div>
       </nav>
 
-      <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`} className="mt-6">
+      <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`} className="mt-5 sm:mt-6">
         {tab === "overview" && (
-          <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-            <div className="min-w-0 space-y-6">
+          <div className="flex flex-col gap-5 sm:gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+            {/* On phones both columns dissolve into one list, ordered by what's used daily. */}
+            <div className="contents min-w-0 lg:block lg:space-y-6">
               <Panel
+                className="order-1"
                 id="up-next"
                 title="Tasks"
                 note={tasks.length ? `${newTasks} new, ${tasks.length} in total` : undefined}
@@ -263,6 +281,7 @@ export function WorkspaceView({ data }: { data: WorkspaceData }) {
               </Panel>
 
               <Panel
+                className="order-2"
                 id="recent-reports"
                 title="Recent reports"
                 action={reports.length > 3 ? <TextLink onClick={() => go("reports")}>All reports</TextLink> : undefined}
@@ -280,12 +299,18 @@ export function WorkspaceView({ data }: { data: WorkspaceData }) {
                 )}
               </Panel>
 
-              <AboutPanel opportunity={opportunity} />
+              <div className="order-5 empty:hidden">
+                <AboutPanel opportunity={opportunity} />
+              </div>
             </div>
 
-            <aside className="space-y-6" aria-label="Attendance and people">
-              <AttendanceCard calendar={calendar} />
-              <PeoplePanel mentor={mentor} interns={fellowInterns} onOpenTeam={() => setTeamOpen(true)} />
+            <aside className="contents lg:block lg:space-y-6" aria-label="Attendance and people">
+              <div className="order-3">
+                <AttendanceCard calendar={calendar} />
+              </div>
+              <div className="order-4">
+                <PeoplePanel mentor={mentor} interns={fellowInterns} onOpenTeam={() => setTeamOpen(true)} />
+              </div>
             </aside>
           </div>
         )}
@@ -318,7 +343,7 @@ function CompanyLogo({ src, name }: { src?: string | null; name?: string | null 
   const [failed, setFailed] = useState(false);
   const initial = (name ?? "?").trim().charAt(0).toUpperCase();
   return (
-    <span className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white font-heading text-xl font-bold text-[#155DFC] ring-1 ring-[#DCE5F5]">
+    <span className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl sm:h-14 sm:w-14 sm:rounded-2xl bg-white font-heading text-xl font-bold text-[#155DFC] ring-1 ring-[#DCE5F5]">
       {src && !failed ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={src} alt="" className="h-full w-full object-contain p-1.5" onError={() => setFailed(true)} />
@@ -583,7 +608,7 @@ function ReportsTab({ logs, onWrite, canWrite }: { logs: LogLike[]; onWrite: () 
     <Panel
       id="reports"
       title="Daily reports"
-      note={`${logs.length} ${logs.length === 1 ? "day" : "days"} recorded. Open one to see the details.`}
+      note={logs.length ? `${logs.length} ${logs.length === 1 ? "day" : "days"} recorded. Open one to see the details.` : undefined}
       action={
         canWrite ? (
           <button type="button" onClick={onWrite} className="h-10 shrink-0 rounded-xl bg-[#155DFC] px-4 text-sm font-semibold text-white hover:bg-[#0F3FB8]">
