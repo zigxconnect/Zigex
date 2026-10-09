@@ -12,7 +12,7 @@ type Step = {
 };
 
 const actionClass =
-  "inline-flex h-10 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B1B3F] disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl px-4 text-[15px] font-semibold sm:h-10 sm:w-auto sm:text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B1B3F] disabled:cursor-not-allowed disabled:opacity-50";
 
 /**
  * The day's routine as a real sequence: arrive and check in, work on the
@@ -49,7 +49,7 @@ export function TodayPanel({
       action: startsOn ? (
         // Before day one: make sure the camera works now, not on the first morning.
         <AttendanceScannerModal mode="test" startsOn={startsOn}>
-          <button type="button" className={`${actionClass} bg-white/10 text-white ring-1 ring-white/25 hover:bg-white/15`}>
+          <button type="button" className={`${actionClass} bg-white text-[#0B1B3F] hover:bg-[#E8EFFF]`}>
             <ScanLine className="h-4 w-4" aria-hidden="true" />
             Test your camera
           </button>
@@ -146,7 +146,7 @@ export function TodayPanel({
                 {step.done && <span className="sr-only"> (done)</span>}
               </h3>
               <p className="mt-1 text-sm leading-relaxed text-[#AFC0E3]">{step.detail}</p>
-              {step.action && <div className="mt-3">{step.action}</div>}
+              {step.action && <div className="relative z-10 -ml-12 mt-3 sm:ml-0">{step.action}</div>}
             </div>
           </li>
         ))}
