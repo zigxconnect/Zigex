@@ -10,6 +10,15 @@
 # the previous release automatically. Keeps the last $KEEP releases.
 set -euo pipefail
 
+# Node 22 and PM2 may come from nvm for this user (a shared server can keep an
+# older system Node for its other apps). SSH from CI doesn't load ~/.bashrc, so
+# load nvm here when node/pm2 aren't already on the PATH.
+if ! command -v pm2 >/dev/null 2>&1 || ! node -v 2>/dev/null | grep -q '^v2[2-9]'; then
+  export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+  # shellcheck disable=SC1091
+  [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && nvm use --silent 22 >/dev/null 2>&1 || true
+fi
+
 VERSION="${1:?usage: remote-deploy.sh <version> <tarball>}"
 TARBALL="${2:?usage: remote-deploy.sh <version> <tarball>}"
 APP_DIR="${APP_DIR:-/var/www/zigex}"   # /var/www/zigex-dev for the development site

@@ -79,9 +79,9 @@ jobs:
       NEXT_PUBLIC_EMAILJS_PUBLIC_KEY: ${{ vars.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY }}
       NEXT_PUBLIC_EMAILJS_AI_WAITLIST_TEMPLATE_ID: ${{ vars.NEXT_PUBLIC_EMAILJS_AI_WAITLIST_TEMPLATE_ID }}
       FRONTEND_URL: ${{ vars.FRONTEND_URL }}
-      APP_DIR: ${{ vars.VPS_APP_DIR || (needs.target.outputs.environment == 'production' && '/var/www/zigex' || '/var/www/zigex-dev') }}
+      APP_DIR: ${{ vars.VPS_APP_DIR || (needs.target.outputs.environment == 'production' && '/home/zigex/apps/zigex' || '/home/zigex/apps/zigex-dev') }}
       APP_NAME: ${{ vars.APP_NAME || (needs.target.outputs.environment == 'production' && 'zigex' || 'zigex-dev') }}
-      APP_PORT: ${{ vars.APP_PORT || (needs.target.outputs.environment == 'production' && '3000' || '3100') }}
+      APP_PORT: ${{ vars.APP_PORT || (needs.target.outputs.environment == 'production' && '3200' || '3100') }}
 
     steps:
       - uses: actions/checkout@v4

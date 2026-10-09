@@ -5,6 +5,15 @@
 #   rollback.sh 1.0.0      # switch to the newest deploy of version 1.0.0
 set -euo pipefail
 
+# Node 22 and PM2 may come from nvm for this user (a shared server can keep an
+# older system Node for its other apps). SSH from CI doesn't load ~/.bashrc, so
+# load nvm here when node/pm2 aren't already on the PATH.
+if ! command -v pm2 >/dev/null 2>&1 || ! node -v 2>/dev/null | grep -q '^v2[2-9]'; then
+  export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+  # shellcheck disable=SC1091
+  [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && nvm use --silent 22 >/dev/null 2>&1 || true
+fi
+
 # Development site: APP_DIR=/var/www/zigex-dev APP_NAME=zigex-dev APP_PORT=3100 rollback.sh
 APP_DIR="${APP_DIR:-/var/www/zigex}"
 APP_NAME="${APP_NAME:-zigex}"
