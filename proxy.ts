@@ -8,7 +8,8 @@ const SECURITY_HEADERS: Record<string, string> = {
   "X-Content-Type-Options": "nosniff",
   "X-XSS-Protection": "1; mode=block",
   "Referrer-Policy": "strict-origin-when-cross-origin",
-  "Permissions-Policy": "camera=(), microphone=(), geolocation=(self), payment=()",
+  // camera: the workspace check-in scanner; geolocation: check-in location.
+  "Permissions-Policy": "camera=(self), microphone=(), geolocation=(self), payment=()",
 };
 
 // Pages anyone can open. Signed-in students are bounced off the auth pages.

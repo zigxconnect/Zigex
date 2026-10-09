@@ -23,7 +23,7 @@ const button =
  * (the student just tapped "Scan QR code"); every way it can go wrong says
  * what to do next.
  */
-export function AttendanceQRScanner() {
+export function AttendanceQRScanner({ mode = "check-in", startsOn }: { mode?: "check-in" | "test"; startsOn?: Date | null } = {}) {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>({ name: "camera" });
   const [attempt, setAttempt] = useState(0);
@@ -33,6 +33,10 @@ export function AttendanceQRScanner() {
     async (text: string) => {
       if (busy.current) return;
       busy.current = true;
+      if (mode === "test") {
+        setPhase({ name: "done", outcome: { kind: "camera-ok", startsOn } });
+        return;
+      }
       setPhase({ name: "checking", step: "location" });
       const { lat, lng } = await currentPosition();
       setPhase({ name: "checking", step: "saving" });
@@ -41,7 +45,7 @@ export function AttendanceQRScanner() {
       setPhase({ name: "done", outcome });
       if (outcome.kind === "checked-in" || outcome.kind === "already") router.refresh();
     },
-    [router]
+    [router, mode, startsOn]
   );
 
   const onBlocked = useCallback((reason: "denied" | "missing" | "other") => setPhase({ name: "blocked", reason }), []);
@@ -55,9 +59,11 @@ export function AttendanceQRScanner() {
   return (
     <div className="bg-white">
       <div className="px-6 pb-4 pt-6 pr-14">
-        <DialogTitle className="font-heading text-xl font-semibold tracking-tight text-[#0B1B3F]">Check in</DialogTitle>
+        <DialogTitle className="font-heading text-xl font-semibold tracking-tight text-[#0B1B3F]">{mode === "test" ? "Test your camera" : "Check in"}</DialogTitle>
         <DialogDescription className="mt-1 text-[15px] text-[#4A5670]">
-          Point your camera at the Zigex QR code at your workplace.
+          {mode === "test"
+            ? "Point it at any QR code, like one on a product or poster. Nothing is recorded."
+            : "Point your camera at the Zigex QR code at your workplace."}
         </DialogDescription>
       </div>
 
@@ -96,7 +102,7 @@ export function AttendanceQRScanner() {
             <CheckInResult
               outcome={phase.outcome}
               action={
-                phase.outcome.kind === "checked-in" || phase.outcome.kind === "already" ? (
+                phase.outcome.kind === "checked-in" || phase.outcome.kind === "already" || phase.outcome.kind === "camera-ok" ? (
                   <DialogClose className={`${button} bg-[#155DFC] text-white hover:bg-[#0F3FB8]`}>Done</DialogClose>
                 ) : (
                   <>

@@ -5,7 +5,9 @@ export type CheckInOutcome =
   | { kind: "checked-in"; at: Date }
   | { kind: "already" }
   | { kind: "not-accepted"; message?: string }
-  | { kind: "error"; message?: string };
+  | { kind: "error"; message?: string }
+  /** Camera test before the placement starts: a QR code was read, nothing was recorded. */
+  | { kind: "camera-ok"; startsOn?: Date | null };
 
 const isLocationProblem = (message?: string) => /locat|radius|distance|geofenc|far from/i.test(message ?? "");
 
@@ -29,6 +31,17 @@ export function CheckInResult({ outcome, action }: { outcome: CheckInOutcome; ac
           tone: "info",
           title: "You're already checked in today",
           body: "Nothing else to do here. Your daily report is the next step.",
+        };
+      case "camera-ok":
+        return {
+          icon: CheckCircle2,
+          tone: "ok",
+          title: "Your camera is ready",
+          body: `It read a QR code, so check-in will work. Nothing was recorded. ${
+            outcome.startsOn
+              ? `On ${outcome.startsOn.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}, scan`
+              : "On your first day, scan"
+          } the poster at your workplace when you arrive.`,
         };
       case "not-accepted":
         return {

@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BookOpen, Building2, CalendarDays, Download, ExternalLink, FileText, Mail, MapPin, MessageCircle, Play } from "lucide-react";
+import { BookOpen, Building2, CalendarDays, Download, ExternalLink, FileText, LayoutGrid, ListChecks, Mail, MapPin, Megaphone, MessageCircle, NotebookPen, Play, Receipt } from "lucide-react";
 import { toast } from "sonner";
 import { cn, slugifyUsername } from "@/lib/utils";
 import { StudentAvatar } from "@/components/students/student-ui";
@@ -73,21 +73,6 @@ export function WorkspaceView({ data }: { data: WorkspaceData }) {
     const fromHash = window.location.hash.slice(1) as TabId;
     if (["overview", "tasks", "reports", "updates", "learning", "payments"].includes(fromHash)) setTab(fromHash);
   }, []);
-  const tabList = useRef<HTMLDivElement>(null);
-  const [tabFade, setTabFade] = useState(false);
-  const updateTabFade = () => {
-    const el = tabList.current;
-    setTabFade(Boolean(el && el.scrollLeft + el.clientWidth < el.scrollWidth - 4));
-  };
-  useEffect(() => {
-    updateTabFade();
-    window.addEventListener("resize", updateTabFade);
-    return () => window.removeEventListener("resize", updateTabFade);
-  }, []);
-  useEffect(() => {
-    tabList.current?.querySelector<HTMLElement>(`#tab-${tab}`)?.scrollIntoView({ block: "nearest", inline: "nearest" });
-  }, [tab]);
-
   const go = (next: TabId) => {
     setTab(next);
     window.history.replaceState(null, "", next === "overview" ? window.location.pathname + window.location.search : `#${next}`);
@@ -150,13 +135,13 @@ export function WorkspaceView({ data }: { data: WorkspaceData }) {
   const hasPayments = monthlyRate > 0 || ledger.length > 0;
   const locked = monthlyRate > 0 && !application?.is_paid_acknowledgement;
 
-  const tabs: { id: TabId; label: string; count?: number }[] = [
-    { id: "overview", label: "Overview" },
-    { id: "tasks", label: "Tasks", count: newTasks || undefined },
-    { id: "reports", label: "Reports" },
-    { id: "updates", label: "Updates", count: unread || undefined },
-    { id: "learning", label: "Learning" },
-    ...(hasPayments ? [{ id: "payments" as TabId, label: "Payments" }] : []),
+  const tabs: { id: TabId; label: string; short: string; icon: typeof LayoutGrid; count?: number }[] = [
+    { id: "overview", label: "Overview", short: "Overview", icon: LayoutGrid },
+    { id: "tasks", label: "Tasks", short: "Tasks", icon: ListChecks, count: newTasks || undefined },
+    { id: "reports", label: "Reports", short: "Reports", icon: NotebookPen },
+    { id: "updates", label: "Updates", short: "Updates", icon: Megaphone, count: unread || undefined },
+    { id: "learning", label: "Learning", short: "Learn", icon: BookOpen },
+    ...(hasPayments ? [{ id: "payments" as TabId, label: "Payments", short: "Fees", icon: Receipt }] : []),
   ];
 
   const reportTargetId = opportunity.id ?? application?.internship_id ?? application?.program_id ?? application?.event_id;
@@ -227,33 +212,45 @@ export function WorkspaceView({ data }: { data: WorkspaceData }) {
         <TodayPanel today={today} startsOn={calendar.hasDates && calendar.workdaysSoFar === 0 ? calendar.start : null} openTasks={newTasks} locked={locked} onOpenTasks={() => go("tasks")} onWriteReport={() => setReportOpen(true)} />
       </div>
 
-      {/* Tabs */}
-      <nav aria-label="Workspace" className="sticky top-[64px] z-30 -mx-4 mt-5 border-b border-[#DCE5F5] bg-[#F8FAFF]/95 px-4 backdrop-blur sm:mx-0 sm:px-0">
-        <div role="tablist" ref={tabList} onScroll={updateTabFade} className={cn("hide-scrollbar flex overflow-x-auto sm:gap-1", tabFade && "[mask-image:linear-gradient(to_right,black_85%,transparent)]")}>
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              role="tab"
-              id={`tab-${t.id}`}
-              aria-selected={tab === t.id}
-              aria-controls={`panel-${t.id}`}
-              onClick={() => go(t.id)}
-              className={cn(
-                "relative flex h-12 shrink-0 items-center gap-1.5 px-2.5 text-[15px] font-medium sm:gap-2 sm:px-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#155DFC]",
-                tab === t.id ? "text-[#0B1B3F]" : "text-[#4A5670] hover:text-[#0B1B3F]"
-              )}
-            >
-              {t.label}
-              {t.count !== undefined && (
-                <span className="rounded-full bg-[#155DFC] px-1.5 py-0.5 text-[11px] font-semibold leading-none text-white">
-                  {t.count}
-                  <span className="sr-only"> new</span>
+      {/* Tabs. Phones: every section visible at once as icon + short label, no
+          sideways scrolling. Wider screens: a row of text tabs. */}
+      <nav aria-label="Workspace" className="sticky top-[64px] z-30 -mx-4 mt-5 border-b border-[#DCE5F5] bg-[#F8FAFF]/95 px-2 backdrop-blur sm:mx-0 sm:px-0">
+        <div role="tablist" className="grid sm:flex sm:gap-1" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
+          {tabs.map((t) => {
+            const Icon = t.icon;
+            const active = tab === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                role="tab"
+                id={`tab-${t.id}`}
+                aria-selected={active}
+                aria-controls={`panel-${t.id}`}
+                onClick={() => go(t.id)}
+                className={cn(
+                  "relative flex min-w-0 flex-col items-center justify-center gap-1 pb-2 pt-2.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#155DFC] sm:h-12 sm:flex-row sm:gap-2 sm:px-3 sm:py-0",
+                  active ? "text-[#155DFC] sm:text-[#0B1B3F]" : "text-[#4A5670] hover:text-[#0B1B3F]"
+                )}
+              >
+                <span className="relative sm:hidden">
+                  <Icon className="h-5 w-5" aria-hidden="true" />
+                  {t.count !== undefined && (
+                    <span aria-hidden="true" className="absolute -right-2 -top-1.5 min-w-[18px] rounded-full bg-[#155DFC] px-1 text-center text-[10px] font-semibold leading-[18px] text-white ring-2 ring-[#F8FAFF]">
+                      {t.count}
+                    </span>
+                  )}
                 </span>
-              )}
-              {tab === t.id && <span aria-hidden="true" className="absolute inset-x-2.5 -bottom-px h-0.5 rounded-full bg-[#155DFC] sm:inset-x-3" />}
-            </button>
-          ))}
+                <span className="max-w-full truncate text-xs font-medium sm:hidden">{t.short}</span>
+                <span className="hidden text-[15px] font-medium sm:inline">{t.label}</span>
+                {t.count !== undefined && (
+                  <span className="hidden rounded-full bg-[#155DFC] px-1.5 py-0.5 text-[11px] font-semibold leading-none text-white sm:inline">{t.count}</span>
+                )}
+                {t.count !== undefined && <span className="sr-only">, {t.count} new</span>}
+                {active && <span aria-hidden="true" className="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-[#155DFC]" />}
+              </button>
+            );
+          })}
         </div>
       </nav>
 

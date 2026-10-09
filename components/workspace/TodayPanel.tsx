@@ -46,13 +46,23 @@ export function TodayPanel({
           ? `Checked in at ${formatTime(today.checkedInAt)}`
           : "Checked in with your report"
         : "Scan the QR code at your workplace when you arrive.",
-      action: !checkedIn && !startsOn && (
-        <AttendanceScannerModal>
-          <button type="button" disabled={locked} className={`${actionClass} bg-white text-[#0B1B3F] hover:bg-[#E8EFFF]`}>
+      action: startsOn ? (
+        // Before day one: make sure the camera works now, not on the first morning.
+        <AttendanceScannerModal mode="test" startsOn={startsOn}>
+          <button type="button" className={`${actionClass} bg-white/10 text-white ring-1 ring-white/25 hover:bg-white/15`}>
             <ScanLine className="h-4 w-4" aria-hidden="true" />
-            Scan QR code
+            Test your camera
           </button>
         </AttendanceScannerModal>
+      ) : (
+        !checkedIn && (
+          <AttendanceScannerModal>
+            <button type="button" disabled={locked} className={`${actionClass} bg-white text-[#0B1B3F] hover:bg-[#E8EFFF]`}>
+              <ScanLine className="h-4 w-4" aria-hidden="true" />
+              Scan QR code
+            </button>
+          </AttendanceScannerModal>
+        )
       ),
     },
     {
