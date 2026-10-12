@@ -4,9 +4,9 @@ What changed for students in each release. Newest first. Versions follow [semant
 
 New changes go under the top section marked **not released yet**. When releasing, replace that with the date and tag the version (see [docs/setup/deploy.md](./docs/setup/deploy.md); for 1.1.0, [docs/setup/server.md](./docs/setup/server.md)).
 
-## 1.1.0 (not released yet)
+## 1.1.0 (2026-10-12)
 
-The first version to reach `zigexconnect.com` (1.0.0 was tagged but never deployed). On the development site since 9 October 2026.
+The first version to reach `zigexconnect.com` (1.0.0 was tagged but never deployed). On the development site since 9 October 2026; tested with the QA plan in `docs/qa/2026-10-12-student-app-qa.md`.
 
 - **Intern workspace, redesigned around the working day:**
   - A **Today** panel with the day's three steps, check in, tasks and daily report, each with its state ("Checked in at 08:12") and its button. Before the first day it shows the start date and a **Test your camera** button; after the last day it shows *This internship has ended* with your totals and the logbook.
