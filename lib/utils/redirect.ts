@@ -21,6 +21,8 @@ const ALLOWED_NEXT_PREFIXES = [
   "/notifications",
   "/profile-settings",
   "/company",
+  // A QR poster scanned with the phone camera while signed out: check in after signing in.
+  "/attendance",
 ];
 
 /**

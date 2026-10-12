@@ -3,7 +3,7 @@ import { Inter, Host_Grotesk } from "next/font/google";
 import ThemeProvider from "@/components/providers/ThemeProvider";
 import "./globals.css";
 import "@/styles/rich-content.css";
-// import { Toaster } from "@/components/ui/sonner";
+import { Toaster as SonnerToaster } from "sonner";
 import { Toaster } from "react-hot-toast";
 import Script from "next/script";
 
@@ -100,7 +100,8 @@ export default function RootLayout({
         <Toaster position="top-center" reverseOrder={false} />
         <Analytics />
         <SpeedInsights />
-        {/* <Toaster /> */}
+        {/* Some screens report with sonner (daily report, fee, program progress, contact); both kinds of message show. */}
+        <SonnerToaster position="top-center" richColors closeButton />
         <script src="https://accounts.google.com/gsi/client" async defer></script>
       </body>
 

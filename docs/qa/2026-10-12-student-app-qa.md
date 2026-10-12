@@ -187,7 +187,7 @@ Use **TEST** postings only. The team lead publishes a TEST internship, a TEST pr
 | APPS-05 | Statuses | Team lead shortlists, accepts, declines your TEST applications | Badges "Reviewed", "Accepted", "Not selected" with matching notes. Accepted shows "Open workspace" (internship) or "Program updates" (program) | |
 | APPS-06 | Withdraw | On an "In review" application → "Withdraw application" → "Withdraw" | Confirmation "Withdraw this application?…", then status "Withdrawn" | |
 | APPS-07 | Withdraw after a decision | Try to withdraw an accepted application | Not offered (or "It can't be withdrawn anymore: the company has already made a decision.") | |
-| APPS-08 | Re-apply after withdrawing | Open the posting you withdrew from | **Check:** the Apply button shows again; try applying. Report what happens | |
+| APPS-08 | Re-apply after withdrawing | Open the posting you withdrew from | "You withdrew your application. You can send a new one while it's open." and "Apply again". Applying again either works, or shows "You can't apply again here" with the reason (fix D) | |
 
 ---
 
@@ -207,9 +207,9 @@ The team lead accepts you for the TEST internship. Ask them for a **TEST attenda
 | WORK-08 | Check in by QR | "Scan QR code", scan the TEST code | "Confirming you're at work…", then "Checked in at HH:MM". The panel shows "Checked in at HH:MM". **Known:** check-in may fail with a server error until the backend fix lands; report what you see | |
 | WORK-09 | Scan twice | Scan again the same day | "You're already checked in today" | |
 | WORK-10 | Wrong code | Scan a QR code from another placement or a random code | "This code is for another placement" or "This is not an attendance QR code." | |
-| WORK-11 | Phone camera app | Scan the QR poster with the phone's own camera (not inside Zigex) | Opens Zigex and checks you in, then "Open my workspace". **Check also signed out:** after signing in, are you checked in? (Suspected bug: the code is lost.) | |
+| WORK-11 | Phone camera app | Scan the QR poster with the phone's own camera (not inside Zigex) | Opens Zigex and checks you in, then "Open my workspace". **Also signed out:** after signing in, you land on the check-in screen and are checked in (fix B) | |
 | WORK-12 | Daily report | "Write report" | "Today's report"; "What did you do and learn today?" needs 8+ words ("Write a little more: at least 8 words."); optional tasks and a 1–5 rating | |
-| WORK-13 | Send report | Send a report | "Sent. Your supervisor will review it." in the panel. **Check:** does a message "Report sent. Your supervisor has been told." appear? (Suspected bug: it doesn't) | |
+| WORK-13 | Send report | Send a report | "Sent. Your supervisor will review it." in the panel, and the message "Report sent. Your supervisor has been told." at the top (fix A) | |
 | WORK-14 | Report without check-in | On a new day, send a report without scanning | It checks you in and out with the report | |
 | WORK-15 | Report twice | Try a second report the same day | "You have already submitted a log for today." / no "Write today's report" button | |
 | WORK-16 | Supervisor feedback | Team lead answers your report | Reports tab: status "Approved" or "Needs changes", "Supervisor: <comment>" | |
@@ -232,8 +232,8 @@ The team lead accepts you for the TEST internship. Ask them for a **TEST attenda
 | PROG-01 | Updates page | Accepted on the TEST program → "Program updates" | "Program Updates", weekly updates and resources | |
 | PROG-02 | Not accepted | Open `/programs/<id>/updates` for a program you're not in | "Access Restricted" | |
 | PROG-03 | Payment view | Program with a fee, not yet paid | Payment guide (MTN / Orange Money) and "I've Made The Transfer" (opens WhatsApp). **Known:** price is fixed at 10,000 FCFA and some locked text is placeholder; report if shown to students | |
-| PROG-04 | Back link | "Back to Program Details" | **Check:** does it open the program, or "page not found"? (Suspected bug) | |
-| PROG-05 | Progress | Tick a module | Progress % updates. **Check:** does "Progress updated!" appear? | |
+| PROG-04 | Back link | "Back to Program Details" | Opens the program's page (fix C) | |
+| PROG-05 | Progress | Tick a module | Progress % updates and "Progress updated!" appears (fix A) | |
 
 ---
 
@@ -304,7 +304,7 @@ The team lead accepts you for the TEST internship. Ask them for a **TEST attenda
 | ALL-04 | Offline | Turn off data, open a new page | "You're offline… the page reloads by itself when you're back online." | |
 | ALL-05 | Back button | Use the browser/phone Back button through a flow | Returns to the previous screen sensibly; no loops | |
 | ALL-06 | Keyboard (computer) | Use Tab and Enter only to sign in and apply | Every control reachable; a visible focus outline | |
-| ALL-07 | Messages | Watch for pop-up messages after actions (report sent, link copied…) | **Check:** they appear. (Suspected: some never show; list which) | |
+| ALL-07 | Messages | Watch for pop-up messages after actions (report sent, link copied, fee accepted…) | They appear at the top and go away by themselves (fix A); list any that don't | |
 | ALL-08 | Text | Read every screen | Clear English, no typos, nothing in all caps, no placeholder text like "Lorem" | |
 | ALL-09 | Dark mode | Phone set to dark mode | The app stays readable | |
 
@@ -326,16 +326,16 @@ These are already known. Test them only where a test above asks you to **check**
 | 8 | Zila AI and push notifications may show "coming soon" or fail until configured. |
 | 9 | A finished program's workspace says "This internship has ended". |
 
-## Suspected bugs to confirm
+## Fixed just before testing: please check they work
 
-Tell us what you see for each (tests above):
+These four were found while preparing this plan and fixed on 12 October. Check each one; report it if it still happens.
 
-| # | What to check | Test |
-| --- | --- | --- |
-| A | Some pop-up messages never appear ("Report sent…", fee accepted, "Progress updated!") | WORK-13, PROG-05, ALL-07 |
-| B | Scanning the QR poster with the phone's camera **while signed out**: after signing in, the check-in is lost | WORK-11 |
-| C | "Back to Program Details" leads to "page not found" | PROG-04 |
-| D | After withdrawing, the Apply button comes back; does applying again work? | APPS-08 |
+| # | What was fixed | How to check | Test |
+| --- | --- | --- | --- |
+| A | Some pop-up messages never appeared | After sending a daily report, "Report sent. Your supervisor has been told." appears at the top; same for accepting a fee and ticking a program module ("Progress updated!") | WORK-13, PROG-05, ALL-07 |
+| B | Scanning the QR poster with the phone's camera while signed out lost the check-in | Signed out, scan the poster with the camera app → sign in → you land on the check-in screen and are checked in | WORK-11 |
+| C | "Back to Program Details" led to "page not found" | It opens the program's page | PROG-04 |
+| D | After withdrawing, the panel didn't say so, and applying again said "You've already applied" | The panel says "You withdrew your application…" and offers "Apply again". If Zigex refuses a second application, you see "You can't apply again here" with the reason | APPS-08 |
 
 ---
 

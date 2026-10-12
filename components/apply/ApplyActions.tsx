@@ -10,6 +10,7 @@ import { landingButton } from "@/components/sections/landing/landing-ui";
 type Status = { hasApplied: boolean; status: string | null };
 
 const VERB: Record<ApplyKind, string> = { internship: "Apply now", program: "Register", event: "Reserve my spot" };
+const AGAIN: Record<ApplyKind, string> = { internship: "Apply again", program: "Register again", event: "Reserve my spot again" };
 
 /**
  * The signed-in action area of the Apply panel: apply (opens ApplyDialog),
@@ -94,7 +95,14 @@ export function ApplyActions({
     );
   }
 
-  if (!isOpen) return null;
+  // Withdrawn: say so; while it's open, they can try again (the dialog explains if the company's side refuses).
+  const withdrawn = s === "withdrawn";
+  const withdrawnNote = withdrawn && (
+    <p className="mb-3 rounded-xl bg-[#F2F4F7] px-4 py-3 text-sm text-[#4A5670]">
+      You withdrew your {kind === "event" ? "request" : "application"}.{isOpen ? " You can send a new one while it's open." : ""}
+    </p>
+  );
+  if (!isOpen) return withdrawn ? withdrawnNote : null;
 
   const dialog = (
     <ApplyDialog
@@ -109,6 +117,7 @@ export function ApplyActions({
       hasFee={hasFee}
       priceXaf={priceXaf}
       prefill={prefill}
+      withdrawn={withdrawn}
       onSubmitted={() => {
         setStatus({ hasApplied: true, status: "pending" });
         router.refresh();
@@ -118,8 +127,9 @@ export function ApplyActions({
 
   return (
     <>
+      {withdrawnNote}
       <button type="button" onClick={() => setOpen(true)} className={`${landingButton("primary", "lg")} w-full`}>
-        {VERB[kind]}
+        {withdrawn ? AGAIN[kind] : VERB[kind]}
       </button>
       <p className="mt-2 text-center text-sm text-[#7B869C]">
         {kind === "event" ? "One tap. The organiser confirms your place." : "Takes about a minute. Your profile goes with it."}
@@ -129,7 +139,7 @@ export function ApplyActions({
       {mobileBar && (
         <div className="fixed inset-x-0 bottom-16 z-30 border-t border-[#DCE5F5] bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
           <button type="button" onClick={() => setOpen(true)} className={`${landingButton("primary", "lg")} w-full`}>
-            {VERB[kind]}
+            {withdrawn ? AGAIN[kind] : VERB[kind]}
           </button>
         </div>
       )}

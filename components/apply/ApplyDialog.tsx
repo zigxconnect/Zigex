@@ -122,6 +122,7 @@ export function ApplyDialog({
   priceXaf,
   prefill,
   onSubmitted,
+  withdrawn = false,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -135,6 +136,8 @@ export function ApplyDialog({
   priceXaf: number | null;
   prefill: ApplyPrefill;
   onSubmitted: () => void;
+  /** The student withdrew an earlier application to this opportunity. */
+  withdrawn?: boolean;
 }) {
   const uid = useId();
   const [why, setWhy] = useState("");
@@ -353,8 +356,19 @@ export function ApplyDialog({
 
           {already ? (
             <div className="flex flex-1 flex-col px-5 py-8">
-              <h2 className="font-heading text-xl font-semibold text-[#0B1B3F]">You&apos;ve already applied</h2>
-              <p className="mt-2 text-base text-[#4A5670]">Your earlier application is with {company || "the company"}. You can follow it in My applications.</p>
+              {withdrawn ? (
+                <>
+                  <h2 className="font-heading text-xl font-semibold text-[#0B1B3F]">You can&apos;t apply again here</h2>
+                  <p className="mt-2 text-base text-[#4A5670]">
+                    You withdrew your earlier application, and Zigex keeps one application per opportunity. If you&apos;d like to be considered again, contact {company || "the company"} directly.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h2 className="font-heading text-xl font-semibold text-[#0B1B3F]">You&apos;ve already applied</h2>
+                  <p className="mt-2 text-base text-[#4A5670]">Your earlier application is with {company || "the company"}. You can follow it in My applications.</p>
+                </>
+              )}
               <Link href="/dashboard/applied-internships" className="mt-6 inline-flex h-12 items-center justify-center rounded-xl bg-[#155DFC] text-base font-semibold text-white hover:bg-[#0F3FB8]">
                 View my applications
               </Link>

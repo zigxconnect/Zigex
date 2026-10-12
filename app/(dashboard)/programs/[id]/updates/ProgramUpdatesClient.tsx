@@ -626,7 +626,7 @@ export default function ProgramUpdatesClient({
         {/* Navigation */}
         <div className="mb-6">
           <Link
-            href={`/feed/${enrollment.programTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`}
+            href={`/programs/${encodeURIComponent(enrollment.programId)}`}
             className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-blue-600 transition-colors cursor-pointer group"
           >
             <div className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center group-hover:border-blue-200 group-hover:bg-blue-50 transition-colors">
