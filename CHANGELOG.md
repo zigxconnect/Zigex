@@ -2,7 +2,7 @@
 
 What changed for students in each release. Newest first. Versions follow [semantic versioning](https://semver.org): patch for fixes, minor for new features, major for breaking changes.
 
-New changes go under the top section marked **not released yet**. When releasing, replace that with the date and tag the version (see [docs/setup/deploy.md](./docs/setup/deploy.md); for 1.1.0, [docs/setup/server.md](./docs/setup/server.md)).
+New changes go under a top section `## Unreleased`. Releasing (GitHub Actions → Release) turns it into the version and date; see [docs/setup/deploy.md](./docs/setup/deploy.md).
 
 ## 1.1.0 (2026-10-12)
 

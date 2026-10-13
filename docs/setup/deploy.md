@@ -18,8 +18,8 @@ Both use the same backend (`api.zigexconnect.com`) unless you set a different `B
 ```text
 feature branch ──PR──► CI (type check, build, audit)
 merge to zigex ──► Deploy → development (dev.zigexconnect.com)
-test on dev, then:  npm version patch && git push --follow-tags
-tag v1.0.1 ──► Deploy → production (zigexconnect.com)
+test on dev, then:  Actions → Release → Run workflow (patch / minor / major)
+Release: version + changelog date → tag v1.0.1 ──► Deploy → production (zigexconnect.com)
 each deploy: build on GitHub → upload → switch → health check → automatic rollback if unhealthy
 ```
 
@@ -154,19 +154,17 @@ Server-only secrets (`JWT_SECRET`, `GMAIL_*`, `EMAILJS_PRIVATE_KEY`, `RESEND_API
 
 ## 5. Releasing to production
 
-1. Development is green and tested.
-2. `CHANGELOG.md`: rename **Unreleased** to the new version and today's date, in plain words for students. Commit it.
-3. Confirm the backend items this release depends on are live (check the live API, not messages).
-4. Bump and tag:
+1. Development is green and tested. Write the changes for students under the top section of `CHANGELOG.md` (`## Unreleased`, or the version marked *not released yet*) as you go.
+2. Confirm the backend items this release depends on are live (check the live API, not messages).
+3. **Actions → Release → Run workflow**, and choose the version: `keep` for 1.1.0 (`package.json` is already 1.1.0), then `patch` (fixes), `minor` (new features) or `major` (breaking, rare). Release:
+   - checks that `zigex`'s latest commit passed CI and is on the development site (stops otherwise),
+   - sets the version in `package.json`, dates its section of `CHANGELOG.md`,
+   - commits that to `zigex`, tags `v1.2.3`, and starts **Deploy** for production.
 
-   ```bash
-   npm version patch      # fixes:        1.0.0 → 1.0.1
-   npm version minor      # new features: 1.0.1 → 1.1.0
-   npm version major      # breaking changes (rare)
-   git push origin zigex --follow-tags
-   ```
+   Watch the Deploy run (after your approval if you set reviewers). It also creates the GitHub Release from the changelog.
 
-   The push deploys to development again; the tag deploys to production (after your approval if you set reviewers). Production refuses anything that isn't a version tag matching `package.json`.
+   From a terminal instead: date the changelog, `npm version patch|minor|major` (for 1.1.0: `git tag v1.1.0`), `git push origin zigex --follow-tags`.
+4. **First time only (1.1.0), before step 3:** `zigexconnect.com` still runs the old app; switch it over as described in [server.md](./server.md), or the deploy's final check of `zigexconnect.com/api/health` fails.
 5. When the run is green, `https://zigexconnect.com/api/health` shows the version. Open the site on a phone.
 6. For the next hour: `ssh zigex@169.58.25.57`, then `pm2 logs zigex`.
 

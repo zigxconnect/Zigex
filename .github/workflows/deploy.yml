@@ -87,6 +87,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ needs.target.outputs.ref }}
+          fetch-depth: 2 # the parent commit, for release commits (below)
 
       - uses: actions/setup-node@v4
         with:
@@ -104,6 +105,13 @@ jobs:
         run: |
           set -euo pipefail
           sha="$(git rev-parse HEAD)"
+          # A release commit (Release workflow) only changes the version and changelog:
+          # check the commit it was made on, which went through CI and the development site.
+          if git rev-parse -q --verify HEAD~1 > /dev/null \
+             && [ -z "$(git diff --name-only HEAD~1 HEAD | grep -vxE 'package.json|package-lock.json|CHANGELOG.md' || true)" ]; then
+            sha="$(git rev-parse HEAD~1)"
+            echo "Release commit $(git rev-parse --short HEAD) only changes the version; checking $sha instead."
+          fi
           echo "Commit: $sha"
           deadline=$((SECONDS + 1500))
           while :; do
@@ -216,8 +224,10 @@ jobs:
         run: |
           set -euo pipefail
           install -m 700 -d ~/.ssh
-          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/deploy_key
+          # Windows line endings (from pasting the key) make ssh reject it ("error in libcrypto").
+          printf '%s\n' "$VPS_SSH_KEY" | tr -d '\r' > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
+          ssh-keygen -y -P "" -f ~/.ssh/deploy_key > /dev/null || { echo "::error::Secret VPS_SSH_KEY isn't a valid private key. Set it again (docs/setup/deploy.md)."; exit 1; }
           # Pinned host key (ssh-keyscan output saved as a secret): no trust-on-first-use.
           printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
@@ -254,7 +264,7 @@ jobs:
           exit 1
 
       - name: GitHub Release
-        if: needs.target.outputs.environment == 'production' && startsWith(github.ref, 'refs/tags/v')
+        if: needs.target.outputs.environment == 'production' && startsWith(needs.target.outputs.ref, 'v')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

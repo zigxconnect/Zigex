@@ -1,0 +1,123 @@
+name: Release
+
+# One button for a production release (Actions → Release → Run workflow):
+#   1. checks that zigex's latest commit passed CI and is running on the development site,
+#   2. sets the version (package.json) and dates its section of CHANGELOG.md,
+#   3. commits that to zigex and tags it (v1.2.3),
+#   4. starts Deploy for production with that tag (zigexconnect.com).
+# The next release keeps 1.1.0 ("keep", package.json is already 1.1.0); after that choose patch, minor or major.
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version: keep package.json's (next release, 1.1.0), or patch (fixes), minor (new features), major (breaking)"
+        type: choice
+        options: [keep, patch, minor, major]
+        default: patch
+
+permissions:
+  contents: write # commit the version and push the tag
+  actions: write # start the Deploy workflow
+  checks: read # see CI's result
+  deployments: read # see the development deploy's result
+
+env:
+  # How this repository's CHANGELOG.md writes a version heading (version, date).
+  CHANGELOG_HEADING: "## %s (%s)"
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Release to production
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: zigex
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Require CI and the development site to have passed on zigex
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          sha="$(git rev-parse HEAD)"
+          ci="$(gh api "repos/$REPO/commits/$sha/check-runs?check_name=Type%20check%2C%20build%2C%20audit" \
+                  --jq '[.check_runs[] | (.conclusion // .status)] | first // "missing"')"
+          dev="missing"
+          for id in $(gh api "repos/$REPO/deployments?sha=$sha&environment=development&per_page=5" --jq '.[].id'); do
+            dev="$(gh api "repos/$REPO/deployments/$id/statuses?per_page=100" --jq 'map(.state) | if index("success") then "success" else (.[0] // "pending") end')"
+            [ "$dev" = success ] && break
+          done
+          echo "zigex is at $sha. CI: $ci   development site: $dev"
+          if [ "$ci" != success ] || [ "$dev" != success ]; then
+            echo "::error::zigex's latest commit hasn't passed CI and the development deploy yet (CI: $ci, development: $dev). Wait for both (Actions tab), test dev.zigexconnect.com, then run Release again."
+            exit 1
+          fi
+
+      - name: Set the version
+        id: version
+        run: |
+          set -euo pipefail
+          if [ "${{ inputs.bump }}" != keep ]; then
+            npm version "${{ inputs.bump }}" --no-git-tag-version > /dev/null
+          fi
+          v="$(node -p "require('./package.json').version")"
+          if git rev-parse -q --verify "refs/tags/v$v" > /dev/null; then
+            echo "::error::v$v is already released. Choose patch, minor or major."
+            exit 1
+          fi
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "Releasing v$v"
+
+      - name: Date the changelog
+        env:
+          V: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          today="$(TZ=Africa/Douala date +%F)"
+          heading="$(printf "$CHANGELOG_HEADING" "$V" "$today")"
+          # The first "## " section: "Unreleased" / "not released yet" becomes this version;
+          # a section already named after this version gets today's date.
+          line="$(grep -nE '^## ' CHANGELOG.md | head -1 | cut -d: -f1)"
+          first="$(sed -n "${line}p" CHANGELOG.md)"
+          if echo "$first" | grep -qE 'Unreleased|not released yet' || echo "$first" | grep -qF "$V"; then
+            sed -i "${line}s/.*/$heading/" CHANGELOG.md
+          else
+            # Nothing written for this version: add a heading so the history stays complete.
+            sed -i "$((line - 1))a $heading\n\n- Fixes and small improvements.\n" CHANGELOG.md
+          fi
+          grep -nE '^## ' CHANGELOG.md | head -3
+
+      - name: Commit, tag and push
+        env:
+          V: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json CHANGELOG.md
+          git diff --cached --quiet || git commit -m "release: v$V"
+          git tag -a "v$V" -m "v$V"
+          git push origin HEAD:zigex "v$V"
+
+      # A tag pushed by this workflow doesn't start other workflows, so start Deploy here.
+      # Deploy accepts this release commit because it only changes the version and changelog
+      # of a commit that passed CI and the development site.
+      - name: Deploy to production
+        env:
+          GH_TOKEN: ${{ github.token }}
+          V: ${{ steps.version.outputs.version }}
+        run: |
+          gh workflow run deploy.yml -R "${{ github.repository }}" -f environment=production -f ref="v$V"
+          echo "### v$V released" >> "$GITHUB_STEP_SUMMARY"
+          echo "Deploy to production started: see the Deploy workflow in the Actions tab." >> "$GITHUB_STEP_SUMMARY"
