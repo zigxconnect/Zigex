@@ -23,6 +23,7 @@ import { applicationKind, targetId, toApplicationStatus } from "@/lib/api/applic
 import { toBoardItem, type BoardItem } from "@/components/feed/board/board-types";
 import { listPublicFeed, type FeedKind } from "@/lib/api/services/feed";
 import { pageMetadata } from "@/lib/seo";
+import { DigestRailCard } from "@/components/digest/DigestRailCard";
 import { getOptionalAuth } from "@/lib/utils/auth-context";
 
 export const metadata: Metadata = pageMetadata({
@@ -163,12 +164,23 @@ export default async function FeedPage() {
 
       <div className="grid gap-8 lg:grid-cols-12">
         <section aria-label="Opportunities" className="min-w-0 lg:col-span-9">
+          {/* Phones: the week's picks before the long board; desktop shows them in the rail. */}
+          {isAuthenticated && (
+            <Suspense fallback={null}>
+              <DigestRailCard id="digest-top" className="mb-6 lg:hidden" />
+            </Suspense>
+          )}
           <Suspense fallback={<BoardSkeleton />}>
             <Board searchInHeader={isAuthenticated} />
           </Suspense>
         </section>
         <aside className="lg:col-span-3">
           <div className="lg:sticky lg:top-24">
+            {isAuthenticated && (
+              <Suspense fallback={null}>
+                <DigestRailCard id="digest-rail" className="mb-4 hidden lg:block" />
+              </Suspense>
+            )}
             {isAuthenticated ? (
               <StudentRail applications={applications} profile={profile} workspaces={workspaces} />
             ) : (

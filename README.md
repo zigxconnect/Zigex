@@ -68,6 +68,7 @@ Keep port **3000**: the API only accepts browser requests from `localhost:3000`,
 | `NEXT_PUBLIC_SANITY_PROJECT_ID`, `NEXT_PUBLIC_SANITY_DATASET`, `SANITY_WEBHOOK_SECRET` | | Blog and its revalidation |
 | `GMAIL_USER`, `GMAIL_APP_PASSWORD`, `ADMIN_EMAIL`, `EMAILJS_*`, `NEXT_PUBLIC_EMAILJS_*` | | Email ([docs/setup/email.md](./docs/setup/email.md)) |
 | `GEMINI_API_KEY`, `GOOGLE_API_KEY` | | AI features |
+| `AI_SERVICE_URL`, `AI_SERVICE_API_KEY` | | Weekly "For you" picks and workspace handbook search ([AI service](https://ai.zigexconnect.com/docs)). URL defaults to `https://ai.zigexconnect.com`; without the key both features stay hidden |
 | `NEXT_PUBLIC_APP_ENV` | | `production` or `development`; set by the pipeline (development is `noindex`) |
 
 Secrets go in `.env.local`, which git ignores. Never give a secret a `NEXT_PUBLIC_` name: those values are sent to every browser. On the server, runtime settings live in `~/apps/<site>/shared/.env`, and build-time values are GitHub variables ([docs/setup/server.md](./docs/setup/server.md)).

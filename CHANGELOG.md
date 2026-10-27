@@ -4,6 +4,11 @@ What changed for students in each release. Newest first. Versions follow [semant
 
 New changes go under a top section `## Unreleased`. Releasing (GitHub Actions → Release) turns it into the version and date; see [docs/setup/deploy.md](./docs/setup/deploy.md).
 
+## Unreleased
+
+- **For you:** every Monday, internships, hackathons, scholarships, jobs and events found on the web for students in your field and city, each with why it fits, its deadline or date, and a link to the organiser's site. Find it under **For you** in the menu; the top three also show on the Opportunities page (above the list on phones). Needs `AI_SERVICE_API_KEY` on the server; without it, nothing changes.
+- **Ask your handbook:** a new **Ask** tab in the intern workspace searches the documents your company shared (rules, schedules, guides) and quotes the passage with its document, page and section. Your own placement's documents only; limited to 15 searches a minute.
+
 ## 1.1.0 (2026-10-12)
 
 The first version to reach `zigexconnect.com` (1.0.0 was tagged but never deployed). On the development site since 9 October 2026; tested with the QA plan in `docs/qa/2026-10-12-student-app-qa.md`.

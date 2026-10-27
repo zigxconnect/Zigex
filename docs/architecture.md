@@ -19,6 +19,7 @@ flowchart LR
   end
 
   api["Zigex backend API<br/>api.zigexconnect.com<br/>(Express + Prisma + Postgres)"]
+  ai["Zigex AI service<br/>ai.zigexconnect.com<br/>(digests + document search)"]
   admin["Admin app<br/>(companies & supervisors, separate repo)"]
   r2["Cloudflare R2<br/>photos, covers, CVs"]
   supa["Supabase Storage (legacy)<br/>opportunity flyers, logos"]
@@ -33,6 +34,8 @@ flowchart LR
   nginx --> dev
   prod -- "REST + JWT (server side)" --> api
   admin -- "REST" --> api
+  prod -- "x-api-key (server side)" --> ai
+  ai -- "student profiles" --> api
   admin -- "X-Internal-Key: push trigger" --> api
   api --> r2
   api -- "Web Push (VAPID)" --> push
@@ -50,6 +53,7 @@ flowchart LR
 | **Student app** (this repo) | Next.js 16 (App Router, React 19, Tailwind v4). Renders every page, keeps the session cookie, forwards API calls. **No database of its own.** | Frontend team |
 | **Backend API** | `https://api.zigexconnect.com`, Swagger at `/api-docs`. All data: students, opportunities, applications, notifications, uploads, push. | Backend team |
 | **Admin app** | Separate repo (`zigex-admin`). Companies post opportunities and review applications; supervisors manage interns. Talks to the same backend. | Frontend team |
+| **AI service** | `https://ai.zigexconnect.com`, Swagger at `/docs`, repo `zigxconnect/zila-knowledge-base-with-search` (FastAPI + Celery + Redis + Qdrant, Gemini for embeddings and the LLM, Tavily for web search). Weekly opportunity digests per student segment (department + location, opportunities found on the web, every Monday 06:00 Douala), and search over documents uploaded per `department` slug + `cohort_id` (convention: the internship or program id). This app calls `GET /v1/digests/student/{id}` (the **For you** page and the picks card on `/feed`) and `POST /v1/search` (the workspace **Ask handbook** tab, via `/api/ai/handbook/search`). Its API key stays on the server (`lib/api/ai-service.ts`). | Backend team |
 | **Cloudflare R2** | File storage behind the backend. Public files (avatars, covers) by URL; private files (CVs) through signed URLs. | Backend team |
 | **Supabase Storage** | Legacy storage still holding older opportunity images and company logos. Read-only from this app. | Legacy |
 | **Sanity** | CMS for announcements/blog. Studio at `/studio`. | Content team |
@@ -222,7 +226,7 @@ Build output is Next.js **standalone** (`server.js` + traced `node_modules`); re
 ## 9. Configuration and secrets
 
 - **Build-time, public:** `NEXT_PUBLIC_*` values are baked into the browser bundle. Set in GitHub Variables (per environment). Never put a secret behind `NEXT_PUBLIC_`.
-- **Runtime, private:** everything else (`JWT_SECRET`, `GMAIL_*`, `EMAILJS_PRIVATE_KEY`, `RESEND_API_KEY`, `SANITY_WEBHOOK_SECRET`…) lives only in each site's `shared/.env` on the VPS, loaded by Node's `--env-file`.
+- **Runtime, private:** everything else (`JWT_SECRET`, `AI_SERVICE_API_KEY`, `GMAIL_*`, `EMAILJS_PRIVATE_KEY`, `RESEND_API_KEY`, `SANITY_WEBHOOK_SECRET`…) lives only in each site's `shared/.env` on the VPS, loaded by Node's `--env-file`.
 - **Shared with other systems:** `JWT_SECRET` must match the admin app (attendance QR codes are signed there and checked here). The VAPID public key must match the backend's pair.
 - Full list with meanings: `.env.example` and [README](../README.md).
 

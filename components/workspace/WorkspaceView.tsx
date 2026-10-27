@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BookOpen, Building2, CalendarDays, Download, ExternalLink, FileText, LayoutGrid, ListChecks, Mail, MapPin, Megaphone, MessageCircle, NotebookPen, Play, Receipt } from "lucide-react";
+import { BookOpen, Building2, FileSearch, CalendarDays, Download, ExternalLink, FileText, LayoutGrid, ListChecks, Mail, MapPin, Megaphone, MessageCircle, NotebookPen, Play, Receipt } from "lucide-react";
 import { toast } from "sonner";
 import { cn, slugifyUsername } from "@/lib/utils";
 import { StudentAvatar } from "@/components/students/student-ui";
@@ -14,6 +14,7 @@ import { LogbookPreviewModal } from "@/components/sections/intern/LogbookPreview
 import { getProgramCurriculum, type LevelCurriculum } from "@/lib/data/curriculum";
 import { TodayPanel } from "./TodayPanel";
 import { AttendanceCard } from "./AttendanceCard";
+import { HandbookSearch } from "./HandbookSearch";
 import { EmptyNote, ListFilters, Panel, ReportRow, TaskDialog, TaskRow, TextLink } from "./WorkspaceLists";
 import {
   attendanceCalendar,
@@ -39,7 +40,7 @@ type WorkspaceData = {
   [key: string]: any;
 };
 
-type TabId = "overview" | "tasks" | "reports" | "updates" | "learning" | "payments";
+type TabId = "overview" | "tasks" | "reports" | "updates" | "learning" | "ask" | "payments";
 
 const REFRESH_MS = 45_000;
 const ink = "text-[#0B1B3F]";
@@ -72,7 +73,7 @@ export function WorkspaceView({ data }: { data: WorkspaceData }) {
   // Remember the tab in the address (#tasks), so refresh and back keep the place.
   useEffect(() => {
     const fromHash = window.location.hash.slice(1) as TabId;
-    if (["overview", "tasks", "reports", "updates", "learning", "payments"].includes(fromHash)) setTab(fromHash);
+    if (["overview", "tasks", "reports", "updates", "learning", "ask", "payments"].includes(fromHash)) setTab(fromHash);
   }, []);
   const go = (next: TabId) => {
     setTab(next);
@@ -144,6 +145,7 @@ export function WorkspaceView({ data }: { data: WorkspaceData }) {
     { id: "reports", label: "Reports", short: "Reports", icon: NotebookPen },
     { id: "updates", label: "Updates", short: "Updates", icon: Megaphone, count: unread || undefined },
     { id: "learning", label: "Learning", short: "Learn", icon: BookOpen },
+    ...(data.handbookSearch ? [{ id: "ask" as TabId, label: "Ask handbook", short: "Ask", icon: FileSearch }] : []),
     ...(hasPayments ? [{ id: "payments" as TabId, label: "Payments", short: "Fees", icon: Receipt }] : []),
   ];
 
@@ -334,6 +336,7 @@ export function WorkspaceView({ data }: { data: WorkspaceData }) {
         {tab === "reports" && <ReportsTab logs={reports} onWrite={() => setReportOpen(true)} canWrite={!today.reported && !locked && phase === "current"} />}
         {tab === "updates" && <UpdatesTab announcements={announcements} />}
         {tab === "learning" && <LearningTab domain={application?.domain || opportunity.category || opportunity.title || ""} level={application?.experience_level ?? application?.level} />}
+        {tab === "ask" && data.handbookSearch && <HandbookSearch applicationId={application.id} companyName={company?.company_name} />}
         {tab === "payments" && hasPayments && (
           <PaymentsTab applicationId={application.id} monthlyRate={monthlyRate} ledger={ledger} companyName={company?.company_name} />
         )}
