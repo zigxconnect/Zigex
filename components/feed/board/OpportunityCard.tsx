@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { BadgeCheck, Briefcase, CalendarClock, CalendarDays, GraduationCap } from "lucide-react";
 import { isClosed, type BoardItem } from "./board-types";
-import { daysUntil } from "@/lib/utils/deadline";
+import { daysUntil, deadlineDay } from "@/lib/utils/deadline";
 import { CoverImage } from "@/components/CoverImage";
 
 const KIND = {
@@ -20,7 +20,8 @@ const fmt = (d: string, o: Intl.DateTimeFormatOptions) => new Date(d).toLocaleDa
 function when(item: BoardItem) {
   const { startsAt: s, endsAt: e } = item;
   if (!s) return null;
-  if (item.kind === "events" || !e) {
+  // One-day programs and internships: one date, not "31 Oct – 31 Oct".
+  if (item.kind === "events" || !e || deadlineDay(s) === deadlineDay(e)) {
     const date = fmt(s, { weekday: "short", day: "numeric", month: "short", year: "numeric" });
     const time = new Date(s).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
     return item.kind === "events" && time !== "00:00" ? `${date}, ${time}` : date;
@@ -91,9 +92,10 @@ export function OpportunityCard({ item, headingLevel = 3 }: { item: BoardItem; h
             {span && <span className="text-sm text-[#7B869C]">{span}</span>}
           </p>
         )}
-        <p className="mt-1 flex min-w-0 items-center gap-2 text-sm text-[#4A5670]">
-          {where && <span className="truncate">{where}</span>}
-          <span className={`shrink-0 ${item.hasFee ? "" : "font-medium text-[#067647]"}`}>
+        {/* Place on the left, cost against the right edge, so they never read as one phrase. */}
+        <p className="mt-1 flex min-w-0 items-baseline gap-4 text-sm text-[#4A5670]">
+          {where && <span className="min-w-0 truncate">{where}</span>}
+          <span className={`ml-auto shrink-0 whitespace-nowrap font-medium ${item.hasFee ? "text-[#0B1B3F]" : "text-[#067647]"}`}>
             {item.hasFee ? (item.priceXaf ? `${item.priceXaf.toLocaleString("en-US")} XAF` : "Fee applies") : "Free"}
           </span>
         </p>
