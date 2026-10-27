@@ -35,7 +35,8 @@ export const DashboardHeader = ({ user, onMenuClick }: DashboardHeaderProps) => 
       const params = new URLSearchParams(window.location.search);
       if (value.trim()) params.set("q", value.trim());
       else params.delete("q");
-      router.replace(`/feed${params.size ? `?${params}` : ""}`, { scroll: false });
+      // Same page, filtered in the browser: no server round trip (see OpportunityBoard).
+      window.history.replaceState(null, "", `/feed${params.size ? `?${params}` : ""}`);
     }, 250);
   };
 

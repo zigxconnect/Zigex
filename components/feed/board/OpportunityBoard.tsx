@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useMemo, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import * as SwitchPrimitive from "@radix-ui/react-switch";
 import { Check, ChevronDown, Search, X } from "lucide-react";
@@ -44,7 +44,6 @@ const matches = (item: BoardItem, query: string) => {
 };
 
 export function OpportunityBoard({ items, searchInHeader = false }: { items: BoardItem[]; searchInHeader?: boolean }) {
-  const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
 
@@ -62,13 +61,15 @@ export function OpportunityBoard({ items, searchInHeader = false }: { items: Boa
   const [showClosed, setShowClosed] = useState(false);
   const uid = useId();
 
+  // Filtering happens here, on the items already loaded, so the URL is updated
+  // with the browser's history API: Next.js keeps useSearchParams in sync but
+  // doesn't re-render the page on the server. router.replace() refetched every
+  // opportunity, the applications and the profile on each tap.
   const setParam = (key: string, value: string | null) => {
     const next = new URLSearchParams(params.toString());
     if (value) next.set(key, value);
     else next.delete(key);
-    router.replace(`${pathname}${next.size ? `?${next}` : ""}`, {
-      scroll: false,
-    });
+    window.history.replaceState(null, "", `${pathname}${next.size ? `?${next}` : ""}`);
     setVisible(PAGE_SIZE);
   };
 
@@ -122,7 +123,7 @@ export function OpportunityBoard({ items, searchInHeader = false }: { items: Boa
 
   const clearAll = () => {
     setQuery("");
-    router.replace(pathname, { scroll: false });
+    window.history.replaceState(null, "", pathname);
     setVisible(PAGE_SIZE);
   };
 
