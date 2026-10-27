@@ -83,7 +83,12 @@ export async function proxy(request: NextRequest) {
   // Share images must load for link-preview bots (WhatsApp, X…), which are never signed in.
   const isShareImage = /\/(opengraph|twitter)-image(-[\w]+)?$/.test(pathname);
   const isPublic =
-    isShareImage || PUBLIC_PAGES.includes(pathname) || pathname.startsWith("/feed/") || pathname.startsWith("/company/");
+    isShareImage ||
+    PUBLIC_PAGES.includes(pathname) ||
+    pathname.startsWith("/feed/") ||
+    pathname.startsWith("/company/") ||
+    // Students share their profile with companies and on WhatsApp: it opens for anyone.
+    pathname.startsWith("/profile/");
 
   if (!session) {
     // /programs/<id> is the in-app view of a public opportunity page; visitors get the public one.

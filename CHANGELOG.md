@@ -4,6 +4,16 @@ What changed for students in each release. Newest first. Versions follow [semant
 
 New changes go under a top section `## Unreleased`. Releasing (GitHub Actions → Release) turns it into the version and date; see [docs/setup/deploy.md](./docs/setup/deploy.md).
 
+## Unreleased
+
+- **Profile:** fields Zigex can't store yet now say "Not saved yet" instead of "Saved"; removing a link, graduation year, GPA or cover photo is really sent; a field with a mistake says so instead of "All changes saved".
+- **Shared profiles open for everyone:** companies and people without an account can open a student's profile link (kept out of Google). Phone, email, date of birth and GPA are never shown.
+- **Apply again after withdrawing**, while the opportunity is open (needs the backend change; until then the app says so and keeps your answers). Withdrawing is possible while in review too, and the confirmation says you can apply again.
+- **Deadlines:** the last day to apply shows "Last day" everywhere and stays open until midnight in Cameroon (the list used to say "Closed").
+- **Workspace:** a failed connection shows "Try again" instead of "Your workspace opens when you're accepted"; the fee message says what the server said; a skipped day rating is no longer saved as 3/5.
+- **Sign out** also stops this phone's notifications (for shared phones) and shows "Signing out…".
+- **Removed** old test and sample pages; old /internships and /events links open the opportunity on /feed.
+
 ## 1.1.0 (2026-10-12)
 
 The first version to reach `zigexconnect.com` (1.0.0 was tagged but never deployed). On the development site since 9 October 2026; tested with the QA plan in `docs/qa/2026-10-12-student-app-qa.md`.

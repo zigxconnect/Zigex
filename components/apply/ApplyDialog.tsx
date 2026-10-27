@@ -262,7 +262,8 @@ export function ApplyDialog({
         const message = typeof body.error === "string" ? body.error : "";
         if (res.status === 409 || /already|duplicate/i.test(message)) {
           setAlready(true);
-          onSubmitted();
+          // Refused after a withdrawal: nothing was sent, so the page mustn't switch to "applied".
+          if (!withdrawn) onSubmitted();
           return;
         }
         setError(describeError(res.status, message, verb));
@@ -358,9 +359,9 @@ export function ApplyDialog({
             <div className="flex flex-1 flex-col px-5 py-8">
               {withdrawn ? (
                 <>
-                  <h2 className="font-heading text-xl font-semibold text-[#0B1B3F]">You can&apos;t apply again here</h2>
+                  <h2 className="font-heading text-xl font-semibold text-[#0B1B3F]">Applying again isn&apos;t open yet</h2>
                   <p className="mt-2 text-base text-[#4A5670]">
-                    You withdrew your earlier application, and Zigex keeps one application per opportunity. If you&apos;d like to be considered again, contact {company || "the company"} directly.
+                    Zigex couldn&apos;t send it a second time after your withdrawal. Your answers are saved on this phone: try again in a few days, or contact {company || "the company"} directly.
                   </p>
                 </>
               ) : (

@@ -18,7 +18,7 @@ export const ProfileDropdown = ({ user }: { user: any }) => {
   const email: string | undefined = user?.email || user?.profile?.email;
   const avatar: string | undefined = user?.avatar || user?.profile?.avatar_url || user?.avatarUrl;
   const username: string = user?.profile?.username || user?.username || "";
-  const profileUrl = username ? `/profile/${slugifyUsername(username)}` : "/profile";
+  const profileUrl = username ? `/profile/${slugifyUsername(username)}` : "/dashboard/edit-profile";
 
   useEffect(() => {
     if (!open) return;

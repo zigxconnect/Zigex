@@ -46,7 +46,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose, user 
   const userName: string = user?.name || user?.profile?.name || "Student";
   const userAvatar: string | undefined = user?.avatar || user?.profile?.avatar_url || user?.avatarUrl;
   const username: string = user?.profile?.username || user?.username || "";
-  const profileLink = username ? `/profile/${slugifyUsername(username)}` : "/profile";
+  const profileLink = username ? `/profile/${slugifyUsername(username)}` : "/dashboard/edit-profile";
 
   const groups: { label: string; items: NavItem[] }[] = [
     {

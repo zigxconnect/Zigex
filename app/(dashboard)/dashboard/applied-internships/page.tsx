@@ -266,7 +266,7 @@ function ApplicationRowView({ item, onWithdrawn }: { item: Item; onWithdrawn: ()
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const st = statusOf(item.rawStatus, item.kind);
-  const canWithdraw = item.rawStatus === "pending" || item.rawStatus === "reviewed";
+  const canWithdraw = item.rawStatus === "pending" || item.rawStatus === "reviewing" || item.rawStatus === "reviewed";
   const postingHref = item.postingId ? (item.kind === "program" ? `/programs/${item.postingId}` : `/feed/${item.postingId}`) : null;
 
   const next =
@@ -386,7 +386,7 @@ function ApplicationRowView({ item, onWithdrawn }: { item: Item; onWithdrawn: ()
             <div className="mt-5 border-t border-[#EEF2FA] pt-4">
               {confirming ? (
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="mr-2 text-sm text-[#0B1B3F]">Withdraw this application? The company will no longer consider it.</p>
+                  <p className="mr-2 text-sm text-[#0B1B3F]">Withdraw this application? The company will no longer consider it. You can apply again while it&apos;s open.</p>
                   <button
                     type="button"
                     onClick={withdraw}
