@@ -16,7 +16,6 @@ import {
   MoreHorizontal,
   Settings,
   ShieldCheck,
-  Sparkles,
   User,
   Users,
   X,
@@ -54,7 +53,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose, user 
       label: "Discover",
       items: [
         { href: "/feed", label: "Opportunities", icon: Compass, match: ["/feed"] },
-        { href: "/dashboard/for-you", label: "For you", icon: Sparkles },
         { href: "/dashboard/programs", label: "Programs", icon: GraduationCap, match: ["/dashboard/programs", "/programs"] },
         { href: "/dashboard/blog", label: "Announcements", icon: Megaphone },
       ],

@@ -33,6 +33,8 @@ export const DashboardHeader = ({ user, onMenuClick }: DashboardHeaderProps) => 
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => {
       const params = new URLSearchParams(window.location.search);
+      // Search filters Zigex's own list, so it leaves "Picked for you".
+      params.delete("view");
       if (value.trim()) params.set("q", value.trim());
       else params.delete("q");
       router.replace(`/feed${params.size ? `?${params}` : ""}`, { scroll: false });

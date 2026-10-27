@@ -6,7 +6,7 @@ New changes go under a top section `## Unreleased`. Releasing (GitHub Actions â†
 
 ## Unreleased
 
-- **For you:** every Monday, internships, hackathons, scholarships, jobs and events found on the web for students in your field and city, each with why it fits, its deadline or date, and a link to the organiser's site. Find it under **For you** in the menu; the top three also show on the Opportunities page (above the list on phones). Needs `AI_SERVICE_API_KEY` on the server; without it, nothing changes.
+- **Picked for you:** a second tab on Opportunities, next to **All on Zigex**. Every Monday, internships, hackathons, scholarships, jobs and events found on the web for students in your course and city, each with why it fits, its deadline or date, and a link to apply on the organiser's site. Kept apart from Zigex's own opportunities because you apply on another website and it doesn't appear in My applications. Needs `AI_SERVICE_API_KEY` on the server; without it, nothing changes.
 - **Ask your handbook:** a new **Ask** tab in the intern workspace searches the documents your company shared (rules, schedules, guides) and quotes the passage with its document, page and section. Your own placement's documents only; limited to 15 searches a minute.
 
 ## 1.1.0 (2026-10-12)
