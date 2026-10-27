@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { BadgeCheck, Briefcase, CalendarClock, CalendarDays, GraduationCap } from "lucide-react";
 import { isClosed, type BoardItem } from "./board-types";
+import { daysUntil } from "@/lib/utils/deadline";
 import { CoverImage } from "@/components/CoverImage";
 
 const KIND = {
@@ -50,7 +51,7 @@ export function OpportunityCard({ item, headingLevel = 3 }: { item: BoardItem; h
   const dates = when(item);
   const span = length(item);
   const where = [item.workMode && item.workMode[0].toUpperCase() + item.workMode.slice(1), item.location].filter(Boolean).join(", ");
-  const daysLeft = item.closesAt ? Math.ceil((new Date(item.closesAt).getTime() - Date.now()) / DAY) : null;
+  const daysLeft = daysUntil(item.closesAt);
   const urgent = !closed && daysLeft !== null && daysLeft <= 7;
   const href = item.kind === "programs" ? `/programs/${item.id}` : `/feed/${item.id}`;
 

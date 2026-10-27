@@ -53,8 +53,15 @@ export async function proxy(request: NextRequest) {
   }
 
   // Friendly aliases (the backend's notification links use these).
-  const alias: Record<string, string> = { "/dashboard/applications": "/dashboard/applied-internships" };
-  if (alias[pathname]) return redirectTo(request, alias[pathname] + request.nextUrl.search);
+  const alias: Record<string, string> = {
+    "/dashboard/applications": "/dashboard/applied-internships",
+    // The old /internships and /events pages are gone; everything lives on /feed.
+    "/internships": "/feed?type=internships",
+    "/events": "/feed?type=events",
+  };
+  if (alias[pathname]) return redirectTo(request, alias[pathname].includes("?") ? alias[pathname] : alias[pathname] + request.nextUrl.search);
+  const oldDetail = /^\/(internships|events)\/([^/]+)\/?$/.exec(pathname);
+  if (oldDetail) return redirectTo(request, `/feed/${oldDetail[2]}`);
 
   // Old notification links (/notifications/<opportunity id>) showed placeholder
   // data; the opportunity page resolves any internship, program or event id.

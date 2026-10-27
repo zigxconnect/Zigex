@@ -4,6 +4,7 @@
 import { cache } from "react";
 import { findFeedItemBySlug, getFeedItem, getPublicFeedItem, listCompanyFeed, type FeedKind, type FeedRow } from "@/lib/api/services/feed";
 import { findApplicationFor } from "@/lib/api/services/applications";
+import { isPast } from "@/lib/utils/deadline";
 
 export type FeedType = "internships" | "programs" | "events" | "announcements";
 
@@ -115,18 +116,12 @@ export async function isOpportunityOpen(
   item: any,
   type: FeedType
 ): Promise<{ isOpen: boolean; reason?: string }> {
-  const now = new Date();
-
   try {
     if (type === "internships") {
       // Check if there's a deadline (database column is 'deadline')
       const deadlineField = item.deadline || item.application_deadline;
       if (deadlineField) {
-        const deadline = new Date(deadlineField);
-        // Set deadline to end of day to be generous
-        deadline.setHours(23, 59, 59, 999);
-
-        if (now > deadline) {
+        if (isPast(deadlineField)) {
           return {
             isOpen: false,
             reason: "Application deadline has passed",
@@ -136,9 +131,7 @@ export async function isOpportunityOpen(
 
       // Check if internship has ended (if end_date exists)
       if (item.end_date) {
-        const endDate = new Date(item.end_date);
-        endDate.setHours(23, 59, 59, 999);
-        if (now > endDate) {
+        if (isPast(item.end_date)) {
           return {
             isOpen: false,
             reason: "Internship has already ended",
@@ -152,9 +145,7 @@ export async function isOpportunityOpen(
     if (type === "programs") {
       // Check application deadline
       if (item.application_deadline) {
-        const deadline = new Date(item.application_deadline);
-        deadline.setHours(23, 59, 59, 999);
-        if (now > deadline) {
+        if (isPast(item.application_deadline)) {
           return {
             isOpen: false,
             reason: "Application deadline has passed",
@@ -164,9 +155,7 @@ export async function isOpportunityOpen(
 
       // Check if program has ended
       if (item.end_date) {
-        const endDate = new Date(item.end_date);
-        endDate.setHours(23, 59, 59, 999);
-        if (now > endDate) {
+        if (isPast(item.end_date)) {
           return { isOpen: false, reason: "Program has ended" };
         }
       }
@@ -185,18 +174,14 @@ export async function isOpportunityOpen(
     if (type === "events") {
       // Check if event has ended
       if (item.end_date) {
-        const endDate = new Date(item.end_date);
-        endDate.setHours(23, 59, 59, 999);
-        if (now > endDate) {
+        if (isPast(item.end_date)) {
           return { isOpen: false, reason: "Event has ended" };
         }
       }
 
       // Check registration deadline
       if (item.registration_deadline) {
-        const deadline = new Date(item.registration_deadline);
-        deadline.setHours(23, 59, 59, 999);
-        if (now > deadline) {
+        if (isPast(item.registration_deadline)) {
           return {
             isOpen: false,
             reason: "Registration deadline has passed",

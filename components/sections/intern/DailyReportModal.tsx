@@ -89,7 +89,8 @@ export function DailyReportModal({ isOpen, onClose, internshipId, taskSuggestion
         log_date: today(),
         learning_log: summary.trim(),
         tasks_completed: allTasks,
-        experience_rating: rating ?? 3,
+        // Skipped rating: send none, rather than a "3 of 5" the intern never chose.
+        experience_rating: rating ?? undefined,
       });
       if (result.success) {
         try {

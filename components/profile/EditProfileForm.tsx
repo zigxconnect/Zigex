@@ -11,7 +11,27 @@ import { PhotoCropDialog } from "@/components/profile/PhotoCropDialog";
 import { ApiClientError } from "@/lib/api/errors";
 import { usableImageUrl } from "@/lib/images";
 
-const SavedContext = createContext<Set<string>>(new Set());
+const SavedContext = createContext<{ saved: Set<string>; notSaved: Set<string> }>({ saved: new Set(), notSaved: new Set() });
+
+type SaveState = "idle" | "pending" | "saving" | "saved" | "partial" | "fix" | "error";
+
+// Names for the save note, for fields the backend may refuse.
+const FIELD_NAMES: Record<string, string> = {
+  username: "Username",
+  languages: "Languages",
+  previous_roles: "Previous roles",
+  preferred_industries: "Industries",
+  work_mode: "Work mode",
+  interests: "Interests",
+  achievements: "Achievements",
+  accommodations: "Accommodations",
+  linkedin_url: "LinkedIn",
+  github_url: "GitHub",
+  portfolio_url: "Portfolio",
+  graduation_year: "Graduation year",
+  gpa: "GPA",
+  cover_image_url: "Cover photo",
+};
 
 export type ProfileValues = {
   avatar_url: string;
@@ -109,12 +129,16 @@ export function EditProfileForm({ initial, email, profileHref }: { initial: Prof
   const [v, setV] = useState<ProfileValues>(initial);
   const savedRef = useRef<ProfileValues>(initial);
   const [touched, setTouched] = useState<Partial<Record<keyof ProfileValues, boolean>>>({});
-  const [state, setState] = useState<"idle" | "pending" | "saving" | "saved" | "error">("idle");
+  const [state, setState] = useState<SaveState>("idle");
   const [note, setNote] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [more, setMore] = useState(false);
   // Fields saved in the last few seconds get a small check next to their label.
   const [justSaved, setJustSaved] = useState<Set<string>>(new Set());
+  // Fields the backend refused (not stored yet), with the value it refused, so
+  // they show "Not saved yet" and aren't re-sent until the student changes them.
+  const [notSaved, setNotSaved] = useState<Set<string>>(new Set());
+  const refusedRef = useRef<Partial<Record<keyof ProfileValues, string>>>({});
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const errors = useMemo(() => validate(v), [v]);
@@ -126,23 +150,39 @@ export function EditProfileForm({ initial, email, profileHref }: { initial: Prof
   /** Send changed, valid fields; invalid ones wait until they're fixed. */
   const flush = async (current: ProfileValues) => {
     const e = validate(current);
-    const changed = (Object.keys(current) as (keyof ProfileValues)[]).filter(
-      (k) => k !== "avatar_url" && !e[k] && JSON.stringify(current[k]) !== JSON.stringify(savedRef.current[k])
-    );
+    const differs = (k: keyof ProfileValues) => JSON.stringify(current[k]) !== JSON.stringify(savedRef.current[k]);
+    const keys = (Object.keys(current) as (keyof ProfileValues)[]).filter((k) => k !== "avatar_url");
+    const changed = keys.filter((k) => !e[k] && differs(k) && refusedRef.current[k] !== JSON.stringify(current[k]));
+    // Changed but invalid: held back until fixed, and the status says so.
+    const waiting = keys.filter((k) => e[k] && differs(k));
+    const settled = () => {
+      // Show the error on the field itself, even if the student hasn't left it yet.
+      if (waiting.length) setTouched((t) => ({ ...t, ...Object.fromEntries(waiting.map((k) => [k, true])) }));
+      setState(waiting.length ? "fix" : Object.keys(refusedRef.current).length ? "partial" : "saved");
+    };
     if (!changed.length) {
-      setState(Object.keys(e).length ? "idle" : "saved");
+      settled();
       return;
     }
     setState("saving");
     try {
       const result = await saveMyProfile(Object.fromEntries(changed.map((k) => [k, current[k]])));
       if (!result.success) throw new Error(result.error);
-      savedRef.current = { ...savedRef.current, ...Object.fromEntries(changed.map((k) => [k, current[k]])) };
-      setJustSaved(new Set(changed));
+      const refused = new Set((result.unsupported ?? []).filter((k) => k in current));
+      const stored = changed.filter((k) => !refused.has(k));
+      savedRef.current = { ...savedRef.current, ...Object.fromEntries(stored.map((k) => [k, current[k]])) };
+      for (const k of stored) delete refusedRef.current[k];
+      for (const k of changed.filter((k) => refused.has(k))) refusedRef.current[k] = JSON.stringify(current[k]);
+      const stillRefused = Object.keys(refusedRef.current);
+      setNotSaved(new Set(stillRefused));
+      setJustSaved(new Set(stored));
       setTimeout(() => setJustSaved(new Set()), 2500);
-      const notSaved = (result.unsupported ?? []).filter((k) => k in current);
-      setNote(notSaved.length ? "A few fields will save after a Zigex update." : null);
-      setState("saved");
+      setNote(
+        stillRefused.length
+          ? `Not saved yet: ${stillRefused.map((k) => FIELD_NAMES[k] ?? k).join(", ")}. Zigex can't store ${stillRefused.length === 1 ? "this" : "these"} yet; everything else is saved.`
+          : null
+      );
+      settled();
       router.refresh();
     } catch (error) {
       const msg = error instanceof Error ? error.message : "";
@@ -387,7 +427,7 @@ export function EditProfileForm({ initial, email, profileHref }: { initial: Prof
         }}
       />
 
-      <SavedContext.Provider value={justSaved}>
+      <SavedContext.Provider value={{ saved: justSaved, notSaved }}>
       <form noValidate onSubmit={(e) => e.preventDefault()} className="mt-6 divide-y divide-[#EEF2FA] rounded-2xl bg-white ring-1 ring-[#DCE5F5]">
         <Section id="basics" title="About you" note="Who you are and where you study.">
           <div className="grid gap-5 sm:grid-cols-2">
@@ -513,13 +553,20 @@ export function EditProfileForm({ initial, email, profileHref }: { initial: Prof
 }
 
 /** The one save indicator: no Save button to forget. */
-function SaveStatus({ state, onRetry }: { state: "idle" | "pending" | "saving" | "saved" | "error"; onRetry: () => void }) {
+function SaveStatus({ state, onRetry }: { state: SaveState; onRetry: () => void }) {
   if (state === "idle") return <span className="whitespace-nowrap pb-1 text-sm text-[#7B869C]">Saves automatically</span>;
   if (state === "pending" || state === "saving")
     return (
       <span className="inline-flex items-center gap-1.5 pb-1 text-sm text-[#4A5670] whitespace-nowrap" role="status">
         <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
         Saving…
+      </span>
+    );
+  if (state === "partial" || state === "fix")
+    return (
+      <span className="inline-flex items-center gap-1.5 pb-1 text-sm text-[#B54708] whitespace-nowrap" role="status">
+        <AlertCircle className="h-4 w-4" aria-hidden="true" />
+        {state === "fix" ? "Fix the field marked in red to save it" : "Some changes not saved"}
       </span>
     );
   if (state === "saved")
@@ -606,7 +653,14 @@ function Message({ id, error, hint }: { id: string; error?: string; hint?: strin
 }
 
 function SavedTick({ k }: { k: string }) {
-  const saved = useContext(SavedContext);
+  const { saved, notSaved } = useContext(SavedContext);
+  if (notSaved.has(k))
+    return (
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-[#B54708]">
+        <AlertCircle className="h-3.5 w-3.5" aria-hidden="true" />
+        Not saved yet
+      </span>
+    );
   return saved.has(k) ? (
     <span className="inline-flex items-center gap-1 text-xs font-medium text-[#067647]" role="status">
       <Check className="h-3.5 w-3.5" aria-hidden="true" />

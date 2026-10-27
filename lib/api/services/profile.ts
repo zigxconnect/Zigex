@@ -3,7 +3,7 @@ import { usableImageUrl } from "@/lib/images";
 import { cache } from "react";
 import { serverApi } from "../server-client";
 import { ApiClientError } from "../errors";
-import { toProfilePatch, withoutSpecFields } from "../profile-shape";
+import { formKeysFor, toProfilePatch, withoutSpecFields } from "../profile-shape";
 
 /**
  * The signed-in student's profile (GET /students/me).
@@ -40,7 +40,7 @@ export const getMyProfile = cache(async (): Promise<StudentProfileRow | null> =>
 
 /**
  * PATCH /students/me from snake_case form fields. Returns the updated profile
- * and the fields that were not saved.
+ * and the fields that were not saved, as form (snake_case) keys.
  *
  * Sends the spec'd fields (username, languages, ...) too. If the backend
  * rejects the request as invalid (it has not shipped them yet), retries once
@@ -61,6 +61,6 @@ export async function updateMyProfile(updates: Record<string, unknown>) {
 
     console.warn(`[profile] backend rejected spec'd fields, retrying without: ${fallback.dropped.join(", ")}`);
     const res = await serverApi.patch<StudentProfileRow>("/students/me", fallback.body);
-    return { profile: res.data ?? null, unsupported: [...unsupported, ...fallback.dropped] };
+    return { profile: res.data ?? null, unsupported: [...unsupported, ...fallback.dropped.flatMap(formKeysFor)] };
   }
 }

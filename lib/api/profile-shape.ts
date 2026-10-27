@@ -80,7 +80,16 @@ export function toProfilePatch(updates: Record<string, unknown>): { body: Profil
       if (!IGNORED.has(key)) unsupported.push(key);
       continue;
     }
-    if (raw === null || raw === undefined) continue;
+    if (raw === undefined) continue;
+
+    // A cleared field is sent as cleared, not skipped: skipping it made the
+    // form say "Saved" while the old value stayed on the profile.
+    if (raw === null || (typeof raw === "string" && !raw.trim())) {
+      if (LIST_FIELDS.has(field)) body[field] = [];
+      else if (field in NUMBER_FIELDS || URL_FIELDS.has(field) || field === "coverImage" || field === "avatarUrl") body[field] = null;
+      else body[field] = "";
+      continue;
+    }
 
     if (field in NUMBER_FIELDS) {
       const value = typeof raw === "number" ? raw : NUMBER_FIELDS[field](String(raw));
@@ -105,12 +114,20 @@ export function toProfilePatch(updates: Record<string, unknown>): { body: Profil
   return { body, unsupported };
 }
 
+/** Backend field → the form fields that write it, so refusals can be shown on the right inputs. */
+export function formKeysFor(backendField: string): string[] {
+  const keys = Object.entries(FIELD_MAP)
+    .filter(([, field]) => field === backendField)
+    .map(([key]) => key);
+  return keys.length ? keys : [backendField];
+}
+
 /** The body without spec'd-but-maybe-undeployed fields, for the retry. */
 export function withoutSpecFields(body: ProfilePatch): { body: ProfilePatch; dropped: string[] } {
   const kept: ProfilePatch = {};
   const dropped: string[] = [];
   for (const [key, value] of Object.entries(body)) {
-    // Cleared URLs (null) are also part of the spec; the old backend rejects them.
+    // Cleared values (null: links, year, GPA, cover) are also part of the spec; the old backend rejects them.
     if (SPEC_FIELDS.has(key) || value === null) dropped.push(key);
     else kept[key] = value;
   }

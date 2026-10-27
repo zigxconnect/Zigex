@@ -24,7 +24,7 @@ import {
 import NameInitials from "@/components/NameInitials";
 import { usableImageUrl } from "@/lib/images";
 import { slugifyUsername, cn } from "@/lib/utils";
-import { api } from "@/lib/api/browser-client";
+import { signOut } from "@/lib/utils/sign-out";
 import { ADMIN_APP_URL } from "@/lib/app-urls";
 
 interface SidebarProps {
@@ -180,9 +180,11 @@ function AccountMenu({
     };
   }, [open]);
 
-  const signOut = async () => {
-    await api.post("/auth/logout").catch(() => {});
-    window.location.href = "/";
+  // One sign-out for every menu: also stops this phone's push notifications.
+  const [leaving, setLeaving] = useState(false);
+  const onSignOut = () => {
+    setLeaving(true);
+    signOut();
   };
 
   const item = "flex h-10 w-full items-center gap-3 rounded-lg px-3 text-sm font-medium text-[#0B1B3F] hover:bg-[#F3F7FF]";
@@ -198,8 +200,8 @@ function AccountMenu({
             <Settings className="h-4 w-4 text-[#7B869C]" aria-hidden="true" /> Settings
           </Link>
           <div className="my-1 h-px bg-[#EEF2FA]" />
-          <button role="menuitem" type="button" onClick={signOut} className={`${item} text-[#B42318] hover:bg-[#FEF3F2]`}>
-            <LogOut className="h-4 w-4" aria-hidden="true" /> Sign out
+          <button role="menuitem" type="button" onClick={onSignOut} disabled={leaving} className={`${item} text-[#B42318] hover:bg-[#FEF3F2] disabled:opacity-70`}>
+            <LogOut className="h-4 w-4" aria-hidden="true" /> {leaving ? "Signing out…" : "Sign out"}
           </button>
         </div>
       )}

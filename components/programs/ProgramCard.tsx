@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BadgeCheck, CalendarClock } from "lucide-react";
 import type { FeedRow } from "@/lib/api/services/feed";
+import { daysUntil, isPast } from "@/lib/utils/deadline";
 import { CoverImage } from "@/components/CoverImage";
 
 const DAY = 86_400_000;
@@ -44,7 +45,7 @@ export function toProgramView(row: FeedRow, now = Date.now()): ProgramView {
     hasFee: Boolean(row.is_paid),
     priceXaf: typeof row.price_xaf === "number" ? row.price_xaf : null,
     skills: Array.isArray(row.required_skills) ? row.required_skills.filter(Boolean).slice(0, 3) : [],
-    open: cutoff ? new Date(cutoff).getTime() + DAY > now : true,
+    open: cutoff ? !isPast(cutoff, new Date(now)) : true,
   };
 }
 
@@ -62,7 +63,7 @@ function duration(start: string | null, end: string | null) {
 function registration(p: ProgramView) {
   if (!p.open) return { text: p.endsAt && new Date(p.endsAt).getTime() < Date.now() ? "Ended" : "Registration closed", tone: "muted" as const };
   if (!p.deadline) return { text: "Registration open", tone: "open" as const };
-  const days = Math.ceil((new Date(p.deadline).getTime() - Date.now()) / DAY);
+  const days = daysUntil(p.deadline) ?? 0;
   if (days <= 0) return { text: "Last day to register", tone: "urgent" as const };
   return { text: `Register within ${days} day${days === 1 ? "" : "s"}`, tone: days <= 7 ? ("urgent" as const) : ("open" as const) };
 }

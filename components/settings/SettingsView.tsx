@@ -11,6 +11,7 @@ import { subscriptionMatchesKey, urlBase64ToUint8Array } from "@/lib/push-keys";
 import { PasswordInput, PasswordStrength, passwordStrength } from "@/components/sections/auth/auth-ui";
 import { DeleteAccount } from "./DeleteAccount";
 import { InstallApp } from "@/components/settings/InstallApp";
+import { signOut } from "@/lib/utils/sign-out";
 
 function Row({ id, title, note, children }: { id: string; title: string; note: string; children: React.ReactNode }) {
   return (
@@ -307,8 +308,8 @@ function SignOut() {
       disabled={busy}
       onClick={async () => {
         setBusy(true);
-        await api.post("/auth/logout").catch(() => {});
-        window.location.href = "/";
+        // Shared sign-out: also stops this phone's push notifications.
+        await signOut();
       }}
       className="inline-flex h-11 items-center gap-2 rounded-xl border border-[#DCE5F5] bg-white px-5 text-[15px] font-semibold text-[#B42318] hover:bg-[#FEF3F2] disabled:opacity-60"
     >

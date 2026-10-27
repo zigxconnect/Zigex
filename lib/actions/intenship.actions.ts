@@ -40,8 +40,17 @@ async function orEmpty<T>(label: string, read: () => Promise<T>, fallback: T): P
  * Server Action to fetch all accepted internships for the student.
  * Used for the selection screen when multiple internships are active.
  */
-export async function getAcceptedInternships() {
-  return orEmpty("getAcceptedInternships", listPlacements, [] as Placement[]);
+export async function getAcceptedInternships(): Promise<Placement[]> {
+  try {
+    return await listPlacements();
+  } catch (error) {
+    if (error instanceof ApiClientError && error.status === 404) return [];
+    // Don't turn a failed request into "no placement": an accepted intern was
+    // told "Your workspace opens when you're accepted". The page's error
+    // screen offers Try again instead.
+    console.error("[Workspace] getAcceptedInternships failed:", error);
+    throw error;
+  }
 }
 
 /**
@@ -133,7 +142,7 @@ export async function submitInternshipLog(formData: {
   log_date: string;
   learning_log: string;
   tasks_completed: string[];
-  experience_rating: number;
+  experience_rating?: number;
 }) {
   try {
     const logs = await listLogs(formData.internship_id);

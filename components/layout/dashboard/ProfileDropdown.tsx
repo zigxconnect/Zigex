@@ -7,7 +7,7 @@ import { ChevronDown, ClipboardList, LogOut, Settings, User } from "lucide-react
 import { cn, slugifyUsername } from "@/lib/utils";
 import NameInitials from "@/components/NameInitials";
 import { usableImageUrl } from "@/lib/images";
-import { api } from "@/lib/api/browser-client";
+import { signOut } from "@/lib/utils/sign-out";
 
 /** Avatar button in the top bar with the account menu. */
 export const ProfileDropdown = ({ user }: { user: any }) => {
@@ -32,9 +32,11 @@ export const ProfileDropdown = ({ user }: { user: any }) => {
     };
   }, [open]);
 
-  const signOut = async () => {
-    await api.post("/auth/logout").catch(() => {});
-    window.location.href = "/";
+  // One sign-out for every menu: also stops this phone's push notifications.
+  const [leaving, setLeaving] = useState(false);
+  const onSignOut = () => {
+    setLeaving(true);
+    signOut();
   };
 
   const links = [
@@ -78,9 +80,9 @@ export const ProfileDropdown = ({ user }: { user: any }) => {
             </Link>
           ))}
           <div className="my-1 h-px bg-[#EEF2FA]" />
-          <button role="menuitem" type="button" onClick={signOut} className={`${item} text-[#B42318] hover:bg-[#FEF3F2]`}>
+          <button role="menuitem" type="button" onClick={onSignOut} disabled={leaving} className={`${item} text-[#B42318] hover:bg-[#FEF3F2] disabled:opacity-70`}>
             <LogOut className="h-4 w-4" aria-hidden="true" />
-            Sign out
+            {leaving ? "Signing out…" : "Sign out"}
           </button>
         </div>
       )}

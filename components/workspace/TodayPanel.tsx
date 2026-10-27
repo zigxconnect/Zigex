@@ -117,7 +117,7 @@ export function TodayPanel({
       )}
       {locked && (
         <p className="mt-3 rounded-xl bg-white/10 px-4 py-3 text-sm text-[#DCE5F5]">
-          Accept the program fee below to start checking in and sending reports.
+          Accept the program fee above to start checking in and sending reports.
         </p>
       )}
 

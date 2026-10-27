@@ -1,5 +1,6 @@
 import { usableImageUrl } from "@/lib/images";
 import type { FeedKind, FeedRow } from "@/lib/api/services/feed";
+import { daysUntil, isPast } from "@/lib/utils/deadline";
 
 /** One opportunity, flattened for the /feed board (no per-type branching in the UI). */
 export type BoardItem = {
@@ -57,27 +58,23 @@ export function toBoardItem(kind: FeedKind, row: FeedRow): BoardItem {
 
 /** Closed: applications ended, or the event/program already finished. */
 export function isClosed(item: BoardItem, now = Date.now()): boolean {
-  if (item.closesAt) return new Date(item.closesAt).getTime() < now;
+  if (item.closesAt) return isPast(item.closesAt, new Date(now));
   if (item.kind === "events" && item.startsAt) return new Date(item.startsAt).getTime() < now - 24 * 60 * 60 * 1000;
   return false;
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-function daysFromNow(date: string) {
-  return Math.ceil((new Date(date).getTime() - Date.now()) / DAY_MS);
-}
-
 /** The one date line a student cares about for this item. */
 export function timing(item: BoardItem): { text: string; urgent: boolean } | null {
   if (item.closesAt) {
-    const days = daysFromNow(item.closesAt);
+    const days = daysUntil(item.closesAt) ?? 0;
     if (days < 0) return { text: "Closed", urgent: false };
     return { text: days === 0 ? "Closes today" : `Closes in ${days} day${days === 1 ? "" : "s"}`, urgent: days <= 7 };
   }
   if (item.startsAt) {
     const date = new Date(item.startsAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-    return { text: daysFromNow(item.startsAt) < 0 ? `Started ${date}` : `Starts ${date}`, urgent: false };
+    return { text: (daysUntil(item.startsAt) ?? 0) < 0 ? `Started ${date}` : `Starts ${date}`, urgent: false };
   }
   return null;
 }

@@ -422,12 +422,16 @@ function AcceptFee({ applicationId, onDone }: { applicationId: string; onDone: (
       onClick={async () => {
         setBusy(true);
         const { acknowledgePaidInternship } = await import("@/lib/actions/intenship.actions");
-        const res = await acknowledgePaidInternship(applicationId).catch(() => ({ success: false }));
+        const res: { success: boolean; error?: string } = await acknowledgePaidInternship(applicationId).catch(() => ({
+          success: false,
+          error: "That didn't go through. Check your connection and try again.",
+        }));
         setBusy(false);
         if (res.success) {
           toast.success("Fee accepted. You can check in and send reports now.");
           onDone();
-        } else toast.error("That didn't go through. Check your connection and try again.");
+          // Say what the server said (e.g. "contact your supervisor"), not a guess about the connection.
+        } else toast.error(res.error ?? "That didn't go through. Try again in a minute.");
       }}
       className="h-11 shrink-0 rounded-xl bg-[#155DFC] px-5 text-[15px] font-semibold text-white hover:bg-[#0F3FB8] disabled:opacity-60"
     >
