@@ -42,7 +42,8 @@ export default async function ProgramUpdatesPage({ params }: PageProps) {
   const hasAccess = isQualifiedStatus && !!enrollment?.isPaid;
 
   // Process and sanitize content
-  const processedContent = rawContent.map((item: any) => {
+  // Drafts stay in the portal: only modules the company published reach students.
+  const processedContent = rawContent.filter((item: any) => item.is_published !== false).map((item: any) => {
       const canView = !item.payment_required || hasAccess;
       
       // Handle resources: normalize from JSON or fallback columns

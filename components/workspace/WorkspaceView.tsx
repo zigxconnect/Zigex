@@ -24,6 +24,8 @@ import {
   sortTasks,
   stripHtml,
   todayState,
+  toCourseModules,
+  type CourseModule,
   type LogLike,
 } from "./workspace-model";
 
@@ -130,6 +132,7 @@ export function WorkspaceView({ data }: { data: WorkspaceData }) {
   );
 
   const sortedTasks = useMemo(() => sortTasks(tasks), [tasks]);
+  const courseModules = useMemo(() => toCourseModules(data.curriculum), [data.curriculum]);
   const newTasks = tasks.filter((t) => !t.is_read).length;
   const reports = logs;
 
@@ -333,7 +336,23 @@ export function WorkspaceView({ data }: { data: WorkspaceData }) {
         {tab === "tasks" && <TasksTab tasks={sortedTasks} onOpen={openTaskDetails} />}
         {tab === "reports" && <ReportsTab logs={reports} onWrite={() => setReportOpen(true)} canWrite={!today.reported && !locked && phase === "current"} />}
         {tab === "updates" && <UpdatesTab announcements={announcements} />}
-        {tab === "learning" && <LearningTab domain={application?.domain || opportunity.category || opportunity.title || ""} level={application?.experience_level ?? application?.level} />}
+        {tab === "learning" && (
+          <div className="space-y-6">
+            {/* What the company wrote in the portal comes first; Zigex's general path is extra. */}
+            {courseModules.length > 0 && (
+              <CompanyCourse
+                modules={courseModules}
+                companyName={company?.company_name}
+                programHref={type === "program" && reportTargetId ? `/programs/${reportTargetId}/updates` : null}
+              />
+            )}
+            <LearningTab
+              domain={application?.domain || opportunity.category || opportunity.title || ""}
+              level={application?.experience_level ?? application?.level}
+              extra={courseModules.length > 0}
+            />
+          </div>
+        )}
         {tab === "payments" && hasPayments && (
           <PaymentsTab applicationId={application.id} monthlyRate={monthlyRate} ledger={ledger} companyName={company?.company_name} />
         )}
@@ -741,13 +760,64 @@ function UpdatesTab({ announcements }: { announcements: any[] }) {
 
 const LEVELS: LevelCurriculum["level"][] = ["Beginner", "Intermediate", "Advanced", "Expert"];
 
-function LearningTab({ domain, level }: { domain: string; level?: string }) {
+/**
+ * The course outline the company (or tutor) keeps up to date in the portal:
+ * weekly modules with their links. Paid-only modules open on the program page
+ * once the fee is confirmed.
+ */
+function CompanyCourse({ modules, companyName, programHref }: { modules: CourseModule[]; companyName?: string | null; programHref: string | null }) {
+  return (
+    <Panel
+      id="course"
+      title="Course outline"
+      note={`From ${companyName || "your company"}. Updated when they add or change a module.`}
+      action={programHref ? <a href={programHref} className="shrink-0 rounded-md text-sm font-semibold text-[#155DFC] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC]">Open program page</a> : undefined}
+    >
+      <ol className="divide-y divide-[#EEF2FA] border-t border-[#EEF2FA]">
+        {modules.map((m) => (
+          <li key={m.id} className="px-5 py-4 sm:px-6">
+            <p className="text-xs font-semibold text-[#155DFC]">{m.week ? `Week ${m.week}` : "Module"}</p>
+            <p className="mt-0.5 font-medium text-[#0B1B3F]">{m.title}</p>
+            {m.paidOnly ? (
+              <p className="mt-1 text-sm text-[#4A5670]">Opens on the program page once your fee is confirmed.</p>
+            ) : (
+              <>
+                {m.description && <p className="mt-1 line-clamp-3 text-[15px] leading-relaxed text-[#4A5670]">{m.description}</p>}
+                {m.links.length > 0 && (
+                  <ul className="mt-2 flex flex-wrap gap-2">
+                    {m.links.map((l) => (
+                      <li key={l.url}>
+                        <a
+                          href={l.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#F3F7FF] px-3 text-sm font-medium text-[#155DFC] ring-1 ring-[#DCE5F5] hover:bg-[#E8F0FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC]"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                          {l.label}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            )}
+          </li>
+        ))}
+      </ol>
+    </Panel>
+  );
+}
+
+function LearningTab({ domain, level, extra = false }: { domain: string; level?: string; extra?: boolean }) {
   const curriculum = getProgramCurriculum(domain);
   const start = LEVELS.find((l) => String(level ?? "").toLowerCase().includes(l.toLowerCase())) ?? "Beginner";
   const [selected, setSelected] = useState<LevelCurriculum["level"]>(start);
   const modules = curriculum?.levels.find((l) => l.level === selected)?.modules ?? [];
 
   if (!curriculum) {
+    // The company's outline above is enough; no empty box under it.
+    if (extra) return null;
     return (
       <Panel id="learning" title="Learning">
         <EmptyNote title="No learning path for this placement yet">Ask your supervisor what to read or practise; they can add resources to your tasks.</EmptyNote>
@@ -756,7 +826,11 @@ function LearningTab({ domain, level }: { domain: string; level?: string }) {
   }
 
   return (
-    <Panel id="learning" title={`Learning path: ${curriculum.program}`} note="Free lessons to build the skills this placement uses. Start at your level.">
+    <Panel
+      id="learning"
+      title={extra ? `Extra free lessons: ${curriculum.program}` : `Learning path: ${curriculum.program}`}
+      note={extra ? "Zigex's general lessons, on top of your company's outline. Start at your level." : "Free lessons to build the skills this placement uses. Start at your level."}
+    >
       <div className="px-5 sm:px-6">
         <div role="radiogroup" aria-label="Level" className="flex w-full gap-1 overflow-x-auto rounded-xl bg-[#F1F4FA] p-1 sm:w-fit">
           {LEVELS.map((l) => (

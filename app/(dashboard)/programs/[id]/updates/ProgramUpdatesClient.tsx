@@ -521,15 +521,17 @@ export default function ProgramUpdatesClient({
   const [showPaymentGuide, setShowPaymentGuide] = useState(false);
   const [showCrewModal, setShowCrewModal] = useState(false);
 
-  // Load curriculum modules
+  // Zigex's built-in outline only stands in while the company hasn't posted its
+  // own modules; once it has, those (below) are the course outline, so what a
+  // tutor changes in the portal is what students see.
   useEffect(() => {
-    if (enrollment) {
+    if (enrollment && content.length === 0) {
       const curriculum = getProgramCurriculum(id, enrollment.programTitle);
-      if (curriculum) {
-        setModules(curriculum.modules);
-      }
+      setModules(curriculum ? curriculum.modules : []);
+    } else {
+      setModules([]);
     }
-  }, [id, enrollment]);
+  }, [id, enrollment, content.length]);
 
   // Load progress from local storage
   useEffect(() => {
@@ -718,7 +720,7 @@ export default function ProgramUpdatesClient({
             <section>
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-1 h-6 bg-indigo-600 rounded-full" />
-                <h2 className="text-xl font-bold text-gray-900">Weekly Updates & Resources</h2>
+                <h2 className="text-xl font-bold text-gray-900">{content.length > 0 ? "Course outline" : "Weekly Updates & Resources"}</h2>
               </div>
               
               {/* Progress Tracker Widget */}
@@ -764,9 +766,12 @@ export default function ProgramUpdatesClient({
                 </Card>
               )}
 
-              {/* Curriculum Grid */}
+              {/* Curriculum Grid: Zigex's general guide, only until the company posts its own modules */}
               {modules.length > 0 && (
                 <div className="mb-8">
+                  <p className="mb-3 text-sm text-gray-500">
+                    A general guide for this kind of program. Your instructors&apos; own modules will replace it here when they post them.
+                  </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {modules.map((module) => (
                       <CurriculumModuleItem 

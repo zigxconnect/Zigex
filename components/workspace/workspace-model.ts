@@ -203,3 +203,51 @@ export function placementPhase(opportunity: { start_date?: string | null; end_da
   if (end && today > end) return "finished";
   return "current";
 }
+
+/* ---------- the company's course outline ---------- */
+
+export type CourseLink = { label: string; url: string };
+export type CourseModule = { id: string; week: number | null; title: string; description: string; links: CourseLink[]; paidOnly: boolean };
+
+const LINK_COLUMNS: [string, string][] = [
+  ["video_url", "Video"],
+  ["github_url", "Code"],
+  ["google_docs_url", "Document"],
+  ["content_url", "Material"],
+];
+
+/**
+ * The modules the company writes in the portal (program_content rows, or an
+ * internship's curriculum), in week order. Drafts are left out; links come
+ * from `resources` and the older one-link columns.
+ */
+export function toCourseModules(rows: unknown): CourseModule[] {
+  if (!Array.isArray(rows)) return [];
+  return rows
+    .filter((r): r is Record<string, any> => Boolean(r) && typeof r === "object" && r.is_published !== false && r.isPublished !== false)
+    .map((r, i) => {
+      let resources: any[] = [];
+      try {
+        resources = typeof r.resources === "string" ? JSON.parse(r.resources) : Array.isArray(r.resources) ? r.resources : [];
+      } catch {
+        resources = [];
+      }
+      const links: CourseLink[] = resources
+        .map((x) => ({ label: String(x?.title || x?.name || x?.type || "Link"), url: String(x?.url ?? x?.link ?? "") }))
+        .filter((l) => /^https?:\/\//i.test(l.url));
+      for (const [col, label] of LINK_COLUMNS) {
+        const url = typeof r[col] === "string" ? r[col].trim() : "";
+        if (/^https?:\/\//i.test(url) && !links.some((l) => l.url === url)) links.push({ label, url });
+      }
+      const week = Number(r.week_number ?? r.weekNumber ?? r.week);
+      return {
+        id: String(r.id ?? i),
+        week: Number.isFinite(week) && week > 0 ? week : null,
+        title: String(r.title ?? r.name ?? "").trim() || `Module ${i + 1}`,
+        description: stripHtml(r.description ?? r.assignment_details ?? r.content ?? ""),
+        links,
+        paidOnly: Boolean(r.payment_required ?? r.paymentRequired),
+      };
+    })
+    .sort((a, b) => (a.week ?? 999) - (b.week ?? 999));
+}

@@ -12,6 +12,7 @@ New changes go under a top section `## Unreleased`. Releasing (GitHub Actions �
 - **Deadlines:** the last day to apply shows "Last day" everywhere and stays open until midnight in Cameroon (the list used to say "Closed").
 - **Workspace:** a failed connection shows "Try again" instead of "Your workspace opens when you're accepted"; the fee message says what the server said; a skipped day rating is no longer saved as 3/5.
 - **Sign out** also stops this phone's notifications (for shared phones) and shows "Signing out…".
+- **Course outline from your company:** Workspace → Learning shows the modules your company or tutor posts (week, description, links), with Zigex's general lessons as extras; on the program page their modules replace the built-in outline. Drafts no longer show.
 - **Removed** old test and sample pages; old /internships and /events links open the opportunity on /feed.
 
 ## 1.1.0 (2026-10-12)

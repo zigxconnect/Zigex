@@ -25,6 +25,7 @@ import {
   placementTargetId,
   type Placement,
 } from "@/lib/api/services/workspace";
+import { getProgramContent } from "@/lib/api/services/programs";
 
 /** Runs a backend read, returning `fallback` (and logging) if it fails. */
 async function orEmpty<T>(label: string, read: () => Promise<T>, fallback: T): Promise<T> {
@@ -72,7 +73,7 @@ export async function getInternshipWorkspaceData(applicationId?: string) {
   const isProgram = application.application_type === "program";
   const internshipId = !isProgram ? referenceId : null;
 
-  const [logs, notes, studentProfile, userWorkspaces, tasks, curriculum, announcements, team] = await Promise.all([
+  const [logs, notes, studentProfile, userWorkspaces, tasks, curriculum, announcements, team, programContent] = await Promise.all([
     referenceId ? orEmpty("logs", () => listLogs(referenceId), []) : [],
     referenceId ? orEmpty("notes", () => listNotes(referenceId), []) : [],
     orEmpty(
@@ -92,12 +93,15 @@ export async function getInternshipWorkspaceData(applicationId?: string) {
     internshipId
       ? orEmpty("team", () => getInternshipTeam(internshipId), { fellowInterns: [], fellowSupervisors: [] })
       : { fellowInterns: [], fellowSupervisors: [] },
+    // The weekly modules the company writes in the portal (GET /programs/{id}/content).
+    isProgram && referenceId ? orEmpty("program content", () => getProgramContent(referenceId), []) : [],
   ]);
 
   return {
     application,
-    // GET /internships/{id}/curriculum; until deployed, the curriculum embedded in the internship detail.
-    curriculum: curriculum ?? opportunity?.curriculum ?? opportunity?.internship_curriculum ?? [],
+    // What the company wrote: programs → their weekly modules; internships →
+    // GET /internships/{id}/curriculum, until deployed the one embedded in the internship.
+    curriculum: isProgram ? programContent : curriculum ?? opportunity?.curriculum ?? opportunity?.internship_curriculum ?? [],
     logs,
     tasks,
     notes,
