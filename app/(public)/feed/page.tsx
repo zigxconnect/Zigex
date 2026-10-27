@@ -23,6 +23,9 @@ import { applicationKind, targetId, toApplicationStatus } from "@/lib/api/applic
 import { toBoardItem, type BoardItem } from "@/components/feed/board/board-types";
 import { listPublicFeed, type FeedKind } from "@/lib/api/services/feed";
 import { pageMetadata } from "@/lib/seo";
+import { FeedViewTabs } from "@/components/digest/FeedViewTabs";
+import { PicksSkeleton, PicksView } from "@/components/digest/PicksView";
+import { aiServiceConfigured } from "@/lib/api/ai-service";
 import { getOptionalAuth } from "@/lib/utils/auth-context";
 
 export const metadata: Metadata = pageMetadata({
@@ -132,8 +135,11 @@ function statusLine(apps: ApplicationsSummary | null): string {
   return "Here's what's open right now.";
 }
 
-export default async function FeedPage() {
-  const { user, isAuthenticated } = await getOptionalAuth();
+export default async function FeedPage(props: { searchParams: Promise<{ view?: string }> }) {
+  const [{ user, isAuthenticated }, { view: viewParam }] = await Promise.all([getOptionalAuth(), props.searchParams]);
+  // Weekly picks: signed-in students only, and only when the AI service is set up.
+  const hasPicks = isAuthenticated && aiServiceConfigured();
+  const view = hasPicks && viewParam === "for-you" ? "for-you" : "all";
   const [workspaces, applications, profile] = isAuthenticated
     ? await Promise.all([
         import("@/lib/actions/intenship.actions").then((m) => m.getUserWorkspaces()).catch(() => []),
@@ -163,9 +169,21 @@ export default async function FeedPage() {
 
       <div className="grid gap-8 lg:grid-cols-12">
         <section aria-label="Opportunities" className="min-w-0 lg:col-span-9">
-          <Suspense fallback={<BoardSkeleton />}>
-            <Board searchInHeader={isAuthenticated} />
-          </Suspense>
+          {hasPicks && (
+            // Appears when the picks are known; the board below never waits for it.
+            <Suspense fallback={null}>
+              <FeedViewTabs view={view} />
+            </Suspense>
+          )}
+          {view === "for-you" ? (
+            <Suspense fallback={<PicksSkeleton />}>
+              <PicksView />
+            </Suspense>
+          ) : (
+            <Suspense fallback={<BoardSkeleton />}>
+              <Board searchInHeader={isAuthenticated} />
+            </Suspense>
+          )}
         </section>
         <aside className="lg:col-span-3">
           <div className="lg:sticky lg:top-24">

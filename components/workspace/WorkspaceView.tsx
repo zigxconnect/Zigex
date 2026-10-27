@@ -14,6 +14,7 @@ import { LogbookPreviewModal } from "@/components/sections/intern/LogbookPreview
 import { getProgramCurriculum, type LevelCurriculum } from "@/lib/data/curriculum";
 import { TodayPanel } from "./TodayPanel";
 import { AttendanceCard } from "./AttendanceCard";
+import { HandbookSearch } from "./HandbookSearch";
 import { EmptyNote, ListFilters, Panel, ReportRow, TaskDialog, TaskRow, TextLink } from "./WorkspaceLists";
 import {
   attendanceCalendar,
@@ -338,7 +339,7 @@ export function WorkspaceView({ data }: { data: WorkspaceData }) {
         {tab === "updates" && <UpdatesTab announcements={announcements} />}
         {tab === "learning" && (
           <div className="space-y-6">
-            {/* What the company wrote in the portal comes first; Zigex's general path is extra. */}
+            {/* What the company wrote in the portal comes first, then its documents; Zigex's general path is extra. */}
             {courseModules.length > 0 && (
               <CompanyCourse
                 modules={courseModules}
@@ -346,6 +347,7 @@ export function WorkspaceView({ data }: { data: WorkspaceData }) {
                 programHref={type === "program" && reportTargetId ? `/programs/${reportTargetId}/updates` : null}
               />
             )}
+            {data.handbookSearch && <HandbookSearch applicationId={application.id} companyName={company?.company_name} />}
             <LearningTab
               domain={application?.domain || opportunity.category || opportunity.title || ""}
               level={application?.experience_level ?? application?.level}

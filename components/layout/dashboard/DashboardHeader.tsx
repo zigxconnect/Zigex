@@ -33,10 +33,16 @@ export const DashboardHeader = ({ user, onMenuClick }: DashboardHeaderProps) => 
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => {
       const params = new URLSearchParams(window.location.search);
+      // Search filters Zigex's own list, so it leaves "Picked for you".
+      const fromPicks = params.has("view");
+      params.delete("view");
       if (value.trim()) params.set("q", value.trim());
       else params.delete("q");
-      // Same page, filtered in the browser: no server round trip (see OpportunityBoard).
-      window.history.replaceState(null, "", `/feed${params.size ? `?${params}` : ""}`);
+      const url = `/feed${params.size ? `?${params}` : ""}`;
+      // On the board: filtered in the browser, no server round trip (see OpportunityBoard).
+      // From the picks tab the server has to render the board, so navigate for real.
+      if (fromPicks) router.replace(url, { scroll: false });
+      else window.history.replaceState(null, "", url);
     }, 250);
   };
 

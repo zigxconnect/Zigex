@@ -3,6 +3,7 @@ import {
   getInternshipWorkspaceData 
 } from "@/lib/actions/intenship.actions";
 import { WorkspaceView } from "@/components/workspace/WorkspaceView";
+import { aiServiceConfigured } from "@/lib/api/ai-service";
 
 export const metadata = {
   title: "Workspace",
@@ -31,5 +32,6 @@ export default async function StudentWorkspacePage(props: {
     redirect("/student/workspace");
   }
 
-  return <WorkspaceView data={data} />;
+  // Document search (Learning tab) only shows when the AI service is set up for this deployment.
+  return <WorkspaceView data={{ ...data, handbookSearch: aiServiceConfigured() }} />;
 }

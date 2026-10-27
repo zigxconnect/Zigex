@@ -6,6 +6,8 @@ New changes go under a top section `## Unreleased`. Releasing (GitHub Actions â†
 
 ## Unreleased
 
+- **Picked for you:** a second tab on Opportunities, next to **All on Zigex**. Every Monday, internships, hackathons, scholarships, jobs and events found on the web for students in your course and city, each with why it fits, its deadline or date, and a link to apply on the organiser's site. Kept apart from Zigex's own opportunities because you apply on another website and it doesn't appear in My applications. Needs `AI_SERVICE_API_KEY` on the server; without it, nothing changes.
+- **Search your company's documents:** at the top of the **Learning** tab in the intern workspace, search the course notes, rules and guides your company shared, and get the exact passage with its document, page and section. Your own placement's documents only; limited to 15 searches a minute.
 - **Profile:** fields Zigex can't store yet now say "Not saved yet" instead of "Saved"; removing a link, graduation year, GPA or cover photo is really sent; a field with a mistake says so instead of "All changes saved".
 - **Shared profiles open for everyone:** companies and people without an account can open a student's profile link (kept out of Google). Phone, email, date of birth and GPA are never shown.
 - **Apply again after withdrawing**, while the opportunity is open (needs the backend change; until then the app says so and keeps your answers). Withdrawing is possible while in review too, and the confirmation says you can apply again.
