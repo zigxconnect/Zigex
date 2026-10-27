@@ -4,6 +4,8 @@ What the student app still needs from the backend. Update this file as items are
 
 **New (27 October 2026):** [2026-10-27-student-ux-requests.md](./2026-10-27-student-ux-requests.md): applying again after withdrawing, public profiles, profile saving, workspace, push on sign-out, deadlines.
 
+**Push notifications (27 October 2026):** [2026-10-27-push-notifications.md](./2026-10-27-push-notifications.md): the admin API never asks for the push (`push: true` missing), `reference_id` vs `referenceId`, silent missing settings.
+
 **AI service (27 October 2026):** what the AI service and the student API need for the weekly picks and document search is in the company portal repo: `Zigex-admin/docs/backend/2026-10-27-ai-handbook-and-digest.md` (items A1–A6, B1–B3).
 
 **Last checked:** 8 October 2026, with live calls and public DNS lookups after the backend's third reply. Items below still fail on the live API.
