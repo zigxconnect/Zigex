@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { loadMyDigest } from "@/lib/api/services/digest";
 import { landingButton } from "@/components/sections/landing/landing-ui";
+import { isClosed } from "@/lib/api/digest-shape";
 import { DigestItemCard, DigestItemSkeleton } from "./DigestParts";
 
 const fmtDay = (iso: string | null) => {
@@ -21,11 +22,11 @@ export async function PicksView() {
     return (
       <section className="rounded-2xl bg-white px-6 py-10 ring-1 ring-[#DCE5F5] sm:px-10">
         <h2 className="font-heading text-xl font-semibold text-[#0B1B3F]">
-          {none ? "Your first picks arrive on Monday morning" : "Your picks couldn't load"}
+          {none ? "No picks for you yet" : "Your picks couldn't load"}
         </h2>
         <p className="mt-2 max-w-[60ch] text-[15px] leading-relaxed text-[#4A5670]">
           {none
-            ? "Every week we look across the web for internships, hackathons, scholarships and events that suit students in your course and city. Your course, city, skills and interests decide what you get."
+            ? "Once a week we look across the web for internships, hackathons, scholarships and events for students in each course and city. Fill in your course, city, skills and interests so you're included."
             : "The service that picks them isn't answering. Try again in a few minutes; everything on Zigex is still open to apply."}
         </p>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -44,6 +45,8 @@ export async function PicksView() {
 
   const { digest } = state;
   const updated = fmtDay(digest.generatedAt);
+  // A digest is up to a week old: what closed since goes last, greyed out.
+  const items = [...digest.items].sort((a, b) => Number(isClosed(a)) - Number(isClosed(b)));
 
   return (
     <section aria-labelledby="picks-title">
@@ -58,9 +61,9 @@ export async function PicksView() {
         {digest.intro && <p className="mt-2 text-base leading-relaxed text-[#4A5670]">{digest.intro}</p>}
       </header>
 
-      <ul className="mt-6 grid gap-5 sm:grid-cols-2" aria-label={`${digest.items.length} picks`}>
-        {digest.items.map((item) => (
-          <li key={item.key}>
+      <ul className="mt-6 grid gap-5 sm:grid-cols-2" aria-label={`${items.length} picks`}>
+        {items.map((item) => (
+          <li key={item.key} className={isClosed(item) ? "opacity-60" : undefined}>
             <DigestItemCard item={item} />
           </li>
         ))}
@@ -88,17 +91,5 @@ export function PicksSkeleton() {
         ))}
       </div>
     </div>
-  );
-}
-
-/** The number on the "Picked for you" tab; nothing until it's known. */
-export async function PicksCount() {
-  const state = await loadMyDigest();
-  if (state.status !== "ready") return null;
-  return (
-    <span className="ml-1.5 rounded-full bg-[#EEF3FF] px-1.5 py-px text-xs font-semibold tabular-nums text-[#155DFC]">
-      {state.digest.items.length}
-      <span className="sr-only"> picks</span>
-    </span>
   );
 }

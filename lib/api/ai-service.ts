@@ -66,7 +66,7 @@ export async function getStudentDigest(studentId: string): Promise<unknown | nul
       // Digests change weekly; a short cache keeps /feed fast.
       cache: undefined,
       next: { revalidate: 600 },
-      timeoutMs: 8_000,
+      timeoutMs: 5_000,
     });
   } catch (error) {
     if (error instanceof AiServiceError && error.status === 404) return null;

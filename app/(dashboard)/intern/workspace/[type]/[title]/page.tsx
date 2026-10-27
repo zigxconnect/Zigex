@@ -29,6 +29,6 @@ export default async function InternWorkspacePage(props: {
     redirect("/intern/workspace");
   }
 
-  // The Ask tab only shows when the AI service is set up for this deployment.
+  // Document search (Learning tab) only shows when the AI service is set up for this deployment.
   return <WorkspaceView data={{ ...data, handbookSearch: aiServiceConfigured() }} />;
 }

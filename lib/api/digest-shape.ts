@@ -106,14 +106,25 @@ export function toDigest(raw: unknown): Digest | null {
   };
 }
 
-const shortDate = (d: Date) => d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+const shortDate = (d: Date) => d.toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
+
+/** Calendar days from today in Cameroon (the digest's timezone) to a YYYY-MM-DD date; null if unreadable. */
+export function daysUntil(isoDate: string, now = new Date()): number | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(isoDate);
+  if (!m) return null;
+  const [y, mo, d] = new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Douala", year: "numeric", month: "2-digit", day: "2-digit" })
+    .format(now)
+    .split("-")
+    .map(Number);
+  return Math.round((Date.UTC(+m[1], +m[2] - 1, +m[3]) - Date.UTC(y, mo - 1, d)) / 86_400_000);
+}
 
 /** "Closes 3 Nov" / "Closes tomorrow" / "Closed" from the item's ISO deadline. */
 export function deadlineLabel(deadline: string | null, now = new Date()): { text: string; urgent: boolean; past: boolean } | null {
   if (!deadline) return null;
-  const date = new Date(deadline);
-  if (Number.isNaN(date.getTime())) return { text: deadline, urgent: false, past: false };
-  const days = Math.ceil((date.getTime() - now.getTime()) / 86_400_000);
+  const days = daysUntil(deadline, now);
+  if (days === null) return { text: deadline, urgent: false, past: false };
+  const date = new Date(`${deadline.slice(0, 10)}T00:00:00Z`);
   if (days < 0) return { text: "Closed", urgent: false, past: true };
   if (days === 0) return { text: "Closes today", urgent: true, past: false };
   if (days === 1) return { text: "Closes tomorrow", urgent: true, past: false };
@@ -123,6 +134,13 @@ export function deadlineLabel(deadline: string | null, now = new Date()): { text
 /** "On 12 Nov" for events, conferences and hackathons. */
 export function eventDateLabel(eventDate: string | null): string | null {
   if (!eventDate) return null;
-  const date = new Date(eventDate);
-  return Number.isNaN(date.getTime()) ? eventDate : `On ${shortDate(date)}`;
+  if (daysUntil(eventDate) === null) return eventDate;
+  return `On ${shortDate(new Date(`${eventDate.slice(0, 10)}T00:00:00Z`))}`;
 }
+
+/** Closed since the digest went out: the deadline, or for events the date, has passed. */
+export const isClosed = (item: DigestItem, now = new Date()) => {
+  const date = item.deadline ?? item.eventDate;
+  const days = date ? daysUntil(date, now) : null;
+  return days !== null && days < 0;
+};

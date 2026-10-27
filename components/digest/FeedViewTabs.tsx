@@ -1,8 +1,7 @@
-import { Suspense } from "react";
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PicksCount } from "./PicksView";
+import { loadMyDigest } from "@/lib/api/services/digest";
 
 export type FeedView = "all" | "for-you";
 
@@ -14,8 +13,15 @@ const tab =
  * profile) and the weekly picks from the web (apply on the organiser's
  * site). Page-level underline tabs, so they don't read as one more filter
  * like the board's pill tabs below them.
+ *
+ * Shows only when the student has picks (or opened a picks link), so no one
+ * meets an empty tab week after week.
  */
-export function FeedViewTabs({ view, allCount }: { view: FeedView; allCount?: number }) {
+export async function FeedViewTabs({ view }: { view: FeedView }) {
+  const state = await loadMyDigest();
+  const count = state.status === "ready" ? state.digest.items.length : null;
+  if (count === null && view !== "for-you") return null;
+
   return (
     <nav aria-label="Opportunity lists" className="mb-6 border-b border-[#DCE5F5]">
       <ul className="-mb-px flex gap-6">
@@ -26,7 +32,6 @@ export function FeedViewTabs({ view, allCount }: { view: FeedView; allCount?: nu
             className={cn(tab, view === "all" ? "text-[#0B1B3F]" : "text-[#4A5670] hover:text-[#0B1B3F]")}
           >
             All on Zigex
-            {allCount != null && <span className="ml-1.5 text-sm font-normal tabular-nums text-[#7B869C]">{allCount}</span>}
             {view === "all" && <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-[#155DFC]" />}
           </Link>
         </li>
@@ -38,9 +43,12 @@ export function FeedViewTabs({ view, allCount }: { view: FeedView; allCount?: nu
           >
             <Sparkles className="mr-1.5 h-4 w-4 text-[#155DFC]" aria-hidden="true" />
             Picked for you
-            <Suspense fallback={null}>
-              <PicksCount />
-            </Suspense>
+            {count !== null && (
+              <span className="ml-1.5 rounded-full bg-[#EEF3FF] px-1.5 py-px text-xs font-semibold tabular-nums text-[#155DFC]">
+                {count}
+                <span className="sr-only"> picks</span>
+              </span>
+            )}
             {view === "for-you" && <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-[#155DFC]" />}
           </Link>
         </li>

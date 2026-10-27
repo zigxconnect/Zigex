@@ -169,7 +169,12 @@ export default async function FeedPage(props: { searchParams: Promise<{ view?: s
 
       <div className="grid gap-8 lg:grid-cols-12">
         <section aria-label="Opportunities" className="min-w-0 lg:col-span-9">
-          {hasPicks && <FeedViewTabs view={view} />}
+          {hasPicks && (
+            // Appears when the picks are known; the board below never waits for it.
+            <Suspense fallback={null}>
+              <FeedViewTabs view={view} />
+            </Suspense>
+          )}
           {view === "for-you" ? (
             <Suspense fallback={<PicksSkeleton />}>
               <PicksView />

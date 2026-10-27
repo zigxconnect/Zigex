@@ -23,18 +23,12 @@ type State =
 
 const SUGGESTIONS = ["Working hours", "Dress code", "What to do if I'm absent", "How to write the daily report", "Who to contact for help"];
 
-const MATCH = [
-  { min: 0.6, label: "Strong match", style: "bg-[#ECFDF3] text-[#067647]" },
-  { min: 0.45, label: "Good match", style: "bg-[#F3F7FF] text-[#155DFC]" },
-  { min: -Infinity, label: "Possible match", style: "bg-[#F2F4F7] text-[#4A5670]" },
-];
-const matchOf = (score: number) => MATCH.find((m) => score >= m.min)!;
-
 /**
- * "Ask" tab of the workspace: search the documents the company uploaded for
- * this placement (rules, schedules, guides). Results quote the passage and
- * say where it is (document, page, section), so the student can trust and
- * check it.
+ * Top of the workspace's Learning tab: search the documents the company
+ * uploaded for this placement (course notes, rules, guides). Results quote
+ * the passage and say where it is (document, page, section), so the student
+ * can trust and check it. Results come in relevance order; the service's
+ * scores aren't calibrated enough to show as labels.
  */
 export function HandbookSearch({ applicationId, companyName }: { applicationId: string; companyName?: string | null }) {
   const [query, setQuery] = useState("");
@@ -73,9 +67,9 @@ export function HandbookSearch({ applicationId, companyName }: { applicationId: 
 
   return (
     <Panel
-      id="ask"
-      title="Ask your handbook"
-      note={`Search the documents ${companyName || "your company"} shared for this placement: rules, schedules and guides.`}
+      id="docs"
+      title={`Search ${companyName ? `${companyName}'s` : "your company's"} documents`}
+      note="Course notes, rules and guides shared for this placement. You get the exact passage and the page it's on."
     >
       <div className="px-5 pb-4 sm:px-6">
         <form
@@ -115,7 +109,7 @@ export function HandbookSearch({ applicationId, companyName }: { applicationId: 
           </button>
         </form>
         <p id={hintId} className="mt-2 text-xs text-[#7B869C]">
-          Answers are quoted from your company&apos;s documents. If something matters, confirm it with your supervisor.
+          Passages are quoted from the documents as written. If something matters, confirm it with your supervisor.
         </p>
 
         {state.status === "idle" && (
@@ -181,7 +175,6 @@ export function HandbookSearch({ applicationId, companyName }: { applicationId: 
 
 function HitCard({ hit, query }: { hit: Hit; query: string }) {
   const [open, setOpen] = useState(false);
-  const match = matchOf(hit.score);
   const long = hit.text.length > 420;
   const where = [hit.page != null ? `Page ${hit.page}` : null, hit.section].filter(Boolean).join(" · ");
   const link = /^https?:\/\//i.test(hit.source) ? hit.source : null;
@@ -208,7 +201,6 @@ function HitCard({ hit, query }: { hit: Hit; query: string }) {
             {where && <p className="mt-0.5 text-xs text-[#7B869C]">{where}</p>}
           </div>
         </div>
-        <span className={cn("shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold", match.style)}>{match.label}</span>
       </div>
 
       <blockquote className={cn("mt-3 whitespace-pre-line border-l-2 border-[#B9CCFB] pl-3 text-sm leading-relaxed text-[#0B1B3F]", !open && long && "line-clamp-5")}>
@@ -255,7 +247,7 @@ function NoResults({ query, onPick }: { query: string; onPick: (q: string) => vo
       <SearchX className="mx-auto h-6 w-6 text-[#7B869C]" aria-hidden="true" />
       <p className="mt-2 font-medium text-[#0B1B3F]">Nothing in your documents answers &ldquo;{query}&rdquo;</p>
       <p className="mx-auto mt-1 max-w-sm text-sm leading-relaxed text-[#4A5670]">
-        Try fewer or different words, or ask your supervisor; it may not be written down yet.
+        Try fewer or different words. If nothing ever comes up, your company may not have added documents yet: ask your supervisor.
       </p>
       <div className="mt-3 flex flex-wrap justify-center gap-2">
         {others.map((s) => (
