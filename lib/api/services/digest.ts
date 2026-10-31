@@ -7,6 +7,7 @@ import { getMyProfile } from "./profile";
 export type DigestState =
   | { status: "ready"; digest: Digest }
   | { status: "preparing" }
+  | { status: "profile-needed" }
   | { status: "none" } // no published digest for this student's segment yet (the service 404s)
   | { status: "unavailable" }; // service not configured, down or slow
 
@@ -32,13 +33,21 @@ export const loadMyDigest = cache(async (): Promise<DigestState> => {
   if (!aiServiceConfigured()) return { status: "unavailable" };
   try {
     const profile = await getMyProfile();
-    if (!profile?.id) return { status: "none" };
+    if (!profile?.id) return { status: "profile-needed" };
+
+    const department = text(profile.field_of_study ?? profile.fieldOfStudy ?? profile.department ?? profile.track) ?? null;
+    const skills = list(profile.hard_skills, profile.hardSkills, profile.soft_skills, profile.softSkills, profile.skills);
+    const location = text(profile.location ?? profile.city ?? profile.country) ?? null;
+
+    const hasProfile = Boolean(department && skills.length > 0 && location);
+    if (!hasProfile) return { status: "profile-needed" };
+
     const result = await getStudentRecommendation(profile.id, {
-      department: text(profile.field_of_study ?? profile.fieldOfStudy ?? profile.department ?? profile.track) ?? "general",
-      skills: list(profile.hard_skills, profile.hardSkills, profile.soft_skills, profile.softSkills, profile.skills),
+      department,
+      skills,
       interests: list(profile.interests, profile.preferred_industries, profile.preferredIndustries),
       level: text(profile.level ?? profile.education_level ?? profile.educationLevel ?? profile.degree),
-      location: text(profile.location ?? profile.city ?? profile.country),
+      location,
     });
     if (result.status === "queued") return { status: "preparing" };
     if (result.status === "empty") return { status: "none" };

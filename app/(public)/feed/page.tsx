@@ -145,7 +145,7 @@ export default async function FeedPage() {
     : [[], null, null];
 
   return (
-    <div className="mx-auto w-full max-w-6xl pb-16">
+    <div className="mx-auto w-full max-w-[1600px] px-4 pb-16 sm:px-6 lg:px-8">
       {isAuthenticated ? (
         <header className="mb-6">
           <h1 className="font-heading text-[28px] font-bold leading-tight tracking-tight text-[#0B1B3F]">
@@ -163,8 +163,8 @@ export default async function FeedPage() {
       )}
 
 
-      <div className="grid gap-8 lg:grid-cols-12">
-        <section aria-label="Opportunities" className="min-w-0 lg:col-span-9">
+      <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1fr)_260px]">
+        <section aria-label="Opportunities" className="min-w-0">
           {isAuthenticated && (
             <Suspense fallback={<PicksSkeleton />}>
               <RecommendedPicks />
@@ -174,7 +174,7 @@ export default async function FeedPage() {
             <Board searchInHeader={isAuthenticated} />
           </Suspense>
         </section>
-        <aside className="lg:col-span-3">
+        <aside className="min-w-0">
           <div className="lg:sticky lg:top-24">
             {isAuthenticated ? (
               <StudentRail applications={applications} profile={profile} workspaces={workspaces} />

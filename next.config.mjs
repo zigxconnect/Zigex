@@ -36,6 +36,7 @@ const nextConfig = {
       bodySizeLimit: '500mb', // Increased to 500MB for video uploads
     },
     optimizeCss: true,
+    agentUpgrade: false,
     // Removed forceSwcTransforms - not supported by Turbopack
   },
 

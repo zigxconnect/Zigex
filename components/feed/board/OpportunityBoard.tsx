@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import * as SwitchPrimitive from "@radix-ui/react-switch";
-import { Check, ChevronDown, Search, X } from "lucide-react";
+import { Check, ChevronDown, ChevronLeft, ChevronRight, Search, X } from "lucide-react";
 import { landingButton } from "@/components/sections/landing/landing-ui";
 import { isClosed, type BoardItem } from "./board-types";
 import { OpportunityCard } from "./OpportunityCard";
@@ -61,6 +61,11 @@ export function OpportunityBoard({ items, searchInHeader = false }: { items: Boa
   const [visible, setVisible] = useState(PAGE_SIZE);
   const [showClosed, setShowClosed] = useState(false);
   const uid = useId();
+  const typeFiltersRef = useRef<HTMLDivElement>(null);
+
+  const scrollTypeFilters = (direction: -1 | 1) => {
+    typeFiltersRef.current?.scrollBy({ left: direction * 180, behavior: "smooth" });
+  };
 
   const setParam = (key: string, value: string | null) => {
     const next = new URLSearchParams(params.toString());
@@ -231,38 +236,46 @@ export function OpportunityBoard({ items, searchInHeader = false }: { items: Boa
             <span id={`${uid}-type`} className={fieldLabel}>
               Type
             </span>
-            <div
-              role="tablist"
-              aria-labelledby={`${uid}-type`}
-              className="flex h-12 gap-1 rounded-xl border border-[#DCE5F5] bg-white p-1"
-            >
-              {TABS.map((t) => {
-                const active = tab === t.id;
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    role="tab"
-                    aria-selected={active}
-                    onClick={() =>
-                      setParam("type", t.id === "all" ? null : t.id)
-                    }
-                    className={`flex flex-auto items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] ${
-                      active
-                        ? "bg-[#0B1B3F] text-white"
-                        : "text-[#4A5670] hover:bg-[#F3F7FF] hover:text-[#0B1B3F]"
-                    }`}
-                  >
-                    {t.label}
-                    {/* Counts hidden on phones so four tabs fit; the total is shown below. */}
-                    <span
-                      className={`hidden text-xs tabular-nums sm:inline ${active ? "text-white/70" : "text-[#7B869C]"}`}
+            <div className="flex h-12 min-w-0 items-center gap-1 rounded-xl border border-[#DCE5F5] bg-white p-1">
+              <button type="button" onClick={() => scrollTypeFilters(-1)} aria-label="Scroll opportunity categories left" className="hidden h-9 w-8 shrink-0 items-center justify-center rounded-lg text-[#7B869C] hover:bg-[#F3F7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] sm:flex">
+                <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+              </button>
+              <div
+                ref={typeFiltersRef}
+                role="tablist"
+                aria-labelledby={`${uid}-type`}
+                className="flex h-full min-w-0 flex-1 gap-1 overflow-x-auto overscroll-x-contain scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              >
+                {TABS.map((t) => {
+                  const active = tab === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={active}
+                      onClick={() =>
+                        setParam("type", t.id === "all" ? null : t.id)
+                      }
+                      className={`flex flex-none items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] ${
+                        active
+                          ? "bg-[#0B1B3F] text-white"
+                          : "text-[#4A5670] hover:bg-[#F3F7FF] hover:text-[#0B1B3F]"
+                      }`}
                     >
-                      {counts[t.id]}
-                    </span>
-                  </button>
-                );
-              })}
+                      {t.label}
+                      <span
+                        className={`hidden text-xs tabular-nums sm:inline ${active ? "text-white/70" : "text-[#7B869C]"}`}
+                      >
+                        {counts[t.id]}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <button type="button" onClick={() => scrollTypeFilters(1)} aria-label="Scroll opportunity categories right" className="hidden h-9 w-8 shrink-0 items-center justify-center rounded-lg text-[#7B869C] hover:bg-[#F3F7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] sm:flex">
+                <ChevronRight className="h-4 w-4" aria-hidden="true" />
+              </button>
             </div>
           </div>
 
@@ -325,7 +338,7 @@ export function OpportunityBoard({ items, searchInHeader = false }: { items: Boa
           </div>
         )
       ) : (
-        <ul className="mt-3 grid gap-5 sm:grid-cols-2">
+          <ul className="mt-3 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {results.slice(0, visible).map((item) => (
             <li key={`${item.kind}-${item.id}`}>
               <OpportunityCard item={item} />
@@ -341,7 +354,7 @@ export function OpportunityBoard({ items, searchInHeader = false }: { items: Boa
             onClick={() => setVisible((v) => v + PAGE_SIZE)}
             className={landingButton("secondary", "md")}
           >
-            Show {Math.min(PAGE_SIZE, results.length - visible)} more
+            Load more opportunities
           </button>
         </div>
       )}
@@ -366,7 +379,7 @@ export function OpportunityBoard({ items, searchInHeader = false }: { items: Boa
           </button>
           {/* Expanded by default when nothing is open, so the page is never empty. */}
           {(showClosed || open.length === 0) && (
-            <ul className="mt-3 grid gap-5 sm:grid-cols-2">
+            <ul className="mt-3 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
               {closed.map((item) => (
                 <li key={`closed-${item.kind}-${item.id}`}>
                   <OpportunityCard item={item} />
