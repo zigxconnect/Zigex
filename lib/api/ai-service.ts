@@ -74,6 +74,30 @@ export async function getStudentDigest(studentId: string): Promise<unknown | nul
   }
 }
 
+export type StudentRecommendationProfile = {
+  department: string;
+  skills: string[];
+  interests: string[];
+  level: string | null;
+  location: string | null;
+};
+
+export type StudentRecommendationResult =
+  | { status: "ready"; digest: unknown }
+  | { status: "queued"; week: string }
+  | { status: "empty" };
+
+/** Queue or read recommendations for the signed-in student's current profile. */
+export function getStudentRecommendation(
+  studentId: string,
+  profile: StudentRecommendationProfile
+): Promise<StudentRecommendationResult> {
+  return request<StudentRecommendationResult>(
+    `/v1/digests/student/${encodeURIComponent(studentId)}/recommendation`,
+    { method: "POST", body: profile, timeoutMs: 10_000 }
+  );
+}
+
 /* ---------- document search (RAG) ---------- */
 
 export type SearchHit = {
