@@ -13,6 +13,27 @@ function categoryName(category: string | null) {
   return category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
 }
 
+export function RecommendationIntro({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const canExpand = text.length > 100;
+
+  return (
+    <div className="mt-1 max-w-[62ch] text-[15px] leading-relaxed text-[#4A5670]">
+      <p className={expanded ? undefined : "line-clamp-1"}>{text}</p>
+      {canExpand && (
+        <button
+          type="button"
+          aria-expanded={expanded}
+          onClick={() => setExpanded((value) => !value)}
+          className="mt-1 font-semibold text-[#155DFC] hover:text-[#0B48D9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC]"
+        >
+          {expanded ? "Read less" : "Read more"}
+        </button>
+      )}
+    </div>
+  );
+}
+
 function RecommendationCard({ item }: { item: DigestItem }) {
   const [imageFailed, setImageFailed] = useState(false);
   const [expanded, setExpanded] = useState(false);

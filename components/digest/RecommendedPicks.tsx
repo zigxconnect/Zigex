@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { SafeImg } from "@/components/SafeImg";
 import { loadMyDigest } from "@/lib/api/services/digest";
-import { RecommendationBrowser } from "./RecommendationBrowser";
+import { RecommendationBrowser, RecommendationIntro } from "./RecommendationBrowser";
 import { RefreshWhilePreparing } from "./RefreshWhilePreparing";
 
 function BlurredOpportunityCard({
@@ -123,7 +123,7 @@ export async function RecommendedPicks() {
           <h2 id="recommended-title" className="mt-1 font-heading text-xl font-bold leading-tight text-[#155DFC] sm:text-2xl">
             Recommended for you
           </h2>
-          {digest.intro && <p className="mt-1 max-w-[62ch] text-[15px] leading-relaxed text-[#4A5670]">{digest.intro}</p>}
+          {digest.intro && <RecommendationIntro text={digest.intro} />}
         </div>
       </header>
       <RecommendationBrowser items={digest.items} />
