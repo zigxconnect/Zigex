@@ -39,8 +39,7 @@ export const loadMyDigest = cache(async (): Promise<DigestState> => {
     const skills = list(profile.hard_skills, profile.hardSkills, profile.soft_skills, profile.softSkills, profile.skills);
     const location = text(profile.location ?? profile.city ?? profile.country) ?? null;
 
-    const hasProfile = Boolean(department && skills.length > 0 && location);
-    if (!hasProfile) return { status: "profile-needed" };
+    if (!department || skills.length === 0 || !location) return { status: "profile-needed" };
 
     const result = await getStudentRecommendation(profile.id, {
       department,
