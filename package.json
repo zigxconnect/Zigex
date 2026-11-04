@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "node --max-http-header-size=128000 node_modules/next/dist/bin/next dev --webpack",
+    "dev:local-ai": "node scripts/dev-local-ai.mjs",
     "build": "next build --webpack",
     "start": "next start",
     "lint": "next lint"
