@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowUpRight, CalendarClock, CalendarDays, ChevronLeft, ChevronRight, MapPin } from "lucide-react";
+import { ArrowUpRight, Award, BookOpen, Briefcase, CalendarClock, CalendarDays, ChevronLeft, ChevronRight, Code, GraduationCap, MapPin, Mic, Presentation, Sparkles, Trophy } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { SafeImg } from "@/components/SafeImg";
 import { eventDateLabel, type DigestItem } from "@/lib/api/digest-shape";
 import { ProUpgradeDialog } from "./ProUpgradeDialog";
@@ -11,6 +12,34 @@ const PAGE_SIZE = 3;
 function categoryName(category: string | null) {
   if (!category) return "Other";
   return category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
+}
+
+// Cover for an opportunity whose page has no usable image: brand colours, an icon for the kind of
+// opportunity and the source site, so the card still looks finished.
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  hackathon: Code,
+  competition: Trophy,
+  scholarship: GraduationCap,
+  fellowship: Award,
+  internship: Briefcase,
+  job: Briefcase,
+  workshop: Presentation,
+  bootcamp: Presentation,
+  course: BookOpen,
+  conference: Mic,
+  event: CalendarDays,
+};
+
+function CategoryCover({ category, domain }: { category: string | null; domain: string }) {
+  const Icon = CATEGORY_ICONS[(category ?? "").toLowerCase()] ?? Sparkles;
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[linear-gradient(135deg,#0B1B3F_0%,#12306E_55%,#155DFC_100%)] px-6 text-white">
+      <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/20">
+        <Icon className="h-7 w-7" aria-hidden="true" />
+      </span>
+      <span className="max-w-full truncate text-xs font-semibold uppercase tracking-[0.14em] text-white/75">{domain}</span>
+    </div>
+  );
 }
 
 export function RecommendationIntro({ text }: { text: string }) {
@@ -55,9 +84,7 @@ function RecommendationCard({ item }: { item: DigestItem }) {
             className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_top,_#dfe9ff,_#eef3ff_55%,_#e7efff)] text-sm font-medium text-[#7B869C]">
-            {categoryName(item.category)}
-          </div>
+          <CategoryCover category={item.category} domain={item.domain} />
         )}
       </a>
 

@@ -29,7 +29,8 @@ export function ProUpgradeDialog({
 
   return (
     <>
-      {!open && (
+      {/* Its own button only when nothing else opens the dialog (the feed uses "Load more recommendations"). */}
+      {open === undefined && (
         <button
           type="button"
           onClick={() => setOpen(true)}
