@@ -12,6 +12,7 @@ import { SpeedInsights } from "@vercel/speed-insights/react";
 import { IS_PRODUCTION } from "@/lib/app-env";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL, jsonLdScript, organizationLd, websiteLd } from "@/lib/seo";
 import { InstallPromptCatcher } from "@/components/providers/InstallPromptCatcher";
+import { InstallAppBanner } from "@/components/providers/InstallAppBanner";
 
 const inter = Inter({
 
@@ -97,6 +98,7 @@ export default function RootLayout({
         </ThemeProvider>
 
         <InstallPromptCatcher />
+        <InstallAppBanner />
         <Toaster position="top-center" reverseOrder={false} />
         <Analytics />
         <SpeedInsights />

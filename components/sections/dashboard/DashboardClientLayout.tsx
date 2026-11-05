@@ -8,6 +8,7 @@ import { UserProfile } from "@/app/types/type";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { PushNotificationManager } from "@/components/providers/PushNotificationManager";
+import { EnableNotificationsPrompt } from "@/components/providers/EnableNotificationsPrompt";
 
 interface DashboardClientLayoutProps {
   children: React.ReactNode;
@@ -60,6 +61,7 @@ export function DashboardClientLayout({
   return (
     <>
       <PushNotificationManager />
+      <EnableNotificationsPrompt />
       {/* Header with user data and menu click handler */}
       <DashboardHeader
         user={user}

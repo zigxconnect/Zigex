@@ -6,8 +6,9 @@ import * as SwitchPrimitive from "@radix-ui/react-switch";
 import { AlertCircle, CheckCircle2, ExternalLink, Loader2, LogOut } from "lucide-react";
 import { api } from "@/lib/api/browser-client";
 import { ApiClientError } from "@/lib/api/errors";
-import { subscribeToPushNotifications, unsubscribeFromPushNotifications } from "@/lib/actions/push.actions";
-import { subscriptionMatchesKey, urlBase64ToUint8Array } from "@/lib/push-keys";
+import { unsubscribeFromPushNotifications } from "@/lib/actions/push.actions";
+import { subscriptionMatchesKey } from "@/lib/push-keys";
+import { enableDevicePush } from "@/lib/push-subscribe";
 import { PasswordInput, PasswordStrength, passwordStrength } from "@/components/sections/auth/auth-ui";
 import { DeleteAccount } from "./DeleteAccount";
 import { InstallApp } from "@/components/settings/InstallApp";
@@ -215,26 +216,7 @@ function DeviceNotifications() {
     setBusy(true);
     setError(null);
     try {
-      const permission = await Notification.requestPermission();
-      if (permission !== "granted") {
-        setState(permission === "denied" ? "blocked" : "off");
-        return;
-      }
-      const reg = await navigator.serviceWorker.register(process.env.NODE_ENV === "production" ? "/sw.js" : "/push-sw.js");
-      await navigator.serviceWorker.ready;
-      // Subscribing with a new key fails while an old-key subscription exists.
-      const stale = await reg.pushManager.getSubscription();
-      if (stale && !subscriptionMatchesKey(stale, key!)) {
-        await unsubscribeFromPushNotifications(stale.endpoint).catch(() => {});
-        await stale.unsubscribe();
-      }
-      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(key!) });
-      const res = await subscribeToPushNotifications(sub.toJSON(), window.location.origin);
-      if (!res.success) {
-        await sub.unsubscribe();
-        throw new Error(res.pending ? "Notifications aren't available on Zigex yet." : "Notifications couldn't be turned on. Try again.");
-      }
-      setState("on");
+      setState(await enableDevicePush(key!));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Notifications couldn't be turned on. Try again.");
     } finally {
