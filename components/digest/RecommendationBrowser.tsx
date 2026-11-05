@@ -14,8 +14,8 @@ function categoryName(category: string | null) {
   return category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
 }
 
-// Cover for an opportunity whose page has no usable image: brand colours, an icon for the kind of
-// opportunity and the source site, so the card still looks finished.
+// Cover for an opportunity whose page has no usable image: brand colours, an icon and the kind of
+// opportunity, so the card still looks finished.
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
   hackathon: Code,
   competition: Trophy,
@@ -30,14 +30,14 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
   event: CalendarDays,
 };
 
-function CategoryCover({ category, domain }: { category: string | null; domain: string }) {
+function CategoryCover({ category }: { category: string | null }) {
   const Icon = CATEGORY_ICONS[(category ?? "").toLowerCase()] ?? Sparkles;
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[linear-gradient(135deg,#0B1B3F_0%,#12306E_55%,#155DFC_100%)] px-6 text-white">
       <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/20">
         <Icon className="h-7 w-7" aria-hidden="true" />
       </span>
-      <span className="max-w-full truncate text-xs font-semibold uppercase tracking-[0.14em] text-white/75">{domain}</span>
+      <span className="max-w-full truncate text-xs font-semibold uppercase tracking-[0.14em] text-white/75">{categoryName(category)}</span>
     </div>
   );
 }
@@ -72,7 +72,7 @@ function RecommendationCard({ item }: { item: DigestItem }) {
 
   return (
     <article className="group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl bg-white ring-1 ring-[#DCE5F5] transition-shadow hover:shadow-[0_18px_40px_-20px_rgba(11,27,63,0.35)]">
-      <a href={item.url} target="_blank" rel="noopener noreferrer nofollow" className="relative aspect-[4/3] overflow-hidden bg-[#F3F7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#155DFC]" aria-label={`${item.title}, opens ${item.domain} in a new tab`}>
+      <a href={item.url} target="_blank" rel="noopener noreferrer nofollow" className="relative aspect-[4/3] overflow-hidden bg-[#F3F7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#155DFC]" aria-label={`${item.title}, opens in a new tab`}>
         {item.image && !imageFailed ? (
           <SafeImg
             src={item.image.url}
@@ -84,14 +84,13 @@ function RecommendationCard({ item }: { item: DigestItem }) {
             className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
           />
         ) : (
-          <CategoryCover category={item.category} domain={item.domain} />
+          <CategoryCover category={item.category} />
         )}
       </a>
 
       <div className="flex flex-1 flex-col p-4">
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="rounded-full bg-[#EAF0FF] px-2 py-1 text-xs font-semibold text-[#155DFC]">{categoryName(item.category)}</span>
-          <span className="min-w-0 truncate text-xs font-medium text-[#667085]">{item.domain}</span>
         </div>
         <h3 className="mt-2 line-clamp-2 min-h-[2.75rem] font-heading text-lg font-semibold leading-snug text-[#155DFC] group-hover:text-[#0B48D9]">
           <a href={item.url} target="_blank" rel="noopener noreferrer nofollow" className="focus-visible:outline-none focus-visible:underline">
