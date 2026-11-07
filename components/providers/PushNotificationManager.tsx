@@ -3,6 +3,7 @@
 import { useEffect, useCallback } from "react";
 import { subscribeToPushNotifications, unsubscribeFromPushNotifications } from "@/lib/actions/push.actions";
 import { subscriptionMatchesKey, urlBase64ToUint8Array } from "@/lib/push-keys";
+import { pushTurnedOffHere } from "@/lib/push-subscribe";
 
 export function PushNotificationManager() {
     const registerServiceWorkerAndSubscribe = useCallback(async () => {
@@ -36,6 +37,12 @@ export function PushNotificationManager() {
                     ? await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(key) })
                     : null;
             }
+            // Permission was given but this browser lost its subscription (browser data
+            // cleared, new site address): subscribe again without asking, unless the
+            // student turned notifications off here.
+            if (!existingSubscription && key && Notification.permission === "granted" && !pushTurnedOffHere()) {
+                existingSubscription = await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(key) });
+            }
             if (existingSubscription) {
                 // Re-send it at most once a day (or when it changes), not on every page:
                 // each sync is a backend round trip of up to a few seconds.
@@ -59,8 +66,8 @@ export function PushNotificationManager() {
                 return;
             }
 
-            // No subscription yet: don't ask for permission on page load. Students
-            // turn notifications on in Settings, where they understand why.
+            // No subscription yet: don't ask for permission on page load. Students turn
+            // notifications on from the prompt or in Settings, where they understand why.
             return;
         } catch (err) {
             console.error("[PUSH_MANAGER] Setup failed:", err);

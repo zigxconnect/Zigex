@@ -4,6 +4,12 @@ What changed for students in each release. Newest first. Versions follow [semant
 
 New changes go under a top section `## Unreleased`. Releasing (GitHub Actions → Release) turns it into the version and date; see [docs/setup/deploy.md](./docs/setup/deploy.md).
 
+## Unreleased
+
+- **Personalized feed:** a redesigned feed with recommendations picked for your course and city.
+- **Install the app:** phones get "Install Zigex on your phone", with the steps for iPhone.
+- **Phone notifications:** Zigex now asks you to turn on notifications, and they come back by themselves after you sign out and in again or clear your browser data. New opportunities arrive straight away instead of waiting until the phone wakes up.
+
 ## 1.1.0 (2026-11-06)
 
 - **Picked for you:** a second tab on Opportunities, next to **All on Zigex**. Every Monday, internships, hackathons, scholarships, jobs and events found on the web for students in your course and city, each with why it fits, its deadline or date, and a link to apply on the organiser's site. Kept apart from Zigex's own opportunities because you apply on another website and it doesn't appear in My applications. Needs `AI_SERVICE_API_KEY` on the server; without it, nothing changes.

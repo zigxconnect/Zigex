@@ -8,7 +8,7 @@ import { api } from "@/lib/api/browser-client";
 import { ApiClientError } from "@/lib/api/errors";
 import { unsubscribeFromPushNotifications } from "@/lib/actions/push.actions";
 import { subscriptionMatchesKey } from "@/lib/push-keys";
-import { enableDevicePush } from "@/lib/push-subscribe";
+import { enableDevicePush, rememberPushChoice } from "@/lib/push-subscribe";
 import { PasswordInput, PasswordStrength, passwordStrength } from "@/components/sections/auth/auth-ui";
 import { DeleteAccount } from "./DeleteAccount";
 import { InstallApp } from "@/components/settings/InstallApp";
@@ -234,6 +234,7 @@ function DeviceNotifications() {
         await unsubscribeFromPushNotifications(sub.endpoint);
         await sub.unsubscribe();
       }
+      rememberPushChoice(true);
       setState("off");
     } catch {
       setError("Notifications couldn't be turned off. Try again.");

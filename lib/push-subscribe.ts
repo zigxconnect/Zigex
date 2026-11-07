@@ -3,6 +3,26 @@ import { subscriptionMatchesKey, urlBase64ToUint8Array } from "@/lib/push-keys";
 
 export type DevicePushState = "on" | "off" | "blocked";
 
+/** Set when a student turns notifications off here, so we don't subscribe them again by ourselves. */
+const PUSH_OFF_KEY = "zigex_push_off";
+
+export function pushTurnedOffHere() {
+  try {
+    return localStorage.getItem(PUSH_OFF_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function rememberPushChoice(off: boolean) {
+  try {
+    if (off) localStorage.setItem(PUSH_OFF_KEY, "1");
+    else localStorage.removeItem(PUSH_OFF_KEY);
+  } catch {
+    // Storage blocked: nothing to remember.
+  }
+}
+
 /**
  * Asks the browser for permission, subscribes this device with the site's VAPID key
  * and saves the subscription for the signed-in student. Used by Settings and by the
@@ -26,6 +46,7 @@ export async function enableDevicePush(key: string): Promise<DevicePushState> {
     await sub.unsubscribe();
     throw new Error(res.pending ? "Notifications aren't available on Zigex yet." : "Notifications couldn't be turned on. Try again.");
   }
+  rememberPushChoice(false);
   return "on";
 }
 
