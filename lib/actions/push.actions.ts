@@ -45,3 +45,16 @@ export async function unsubscribeFromPushNotifications(endpoint: string): Promis
         return { success: false };
     }
 }
+
+export type TestPushResult = { sent: number; devices: number };
+
+/** Sends "Test notification from Zigex" to the student's own devices (POST /push/test). */
+export async function sendTestPush(): Promise<TestPushResult | null> {
+    try {
+        const res = await serverApi.post<{ sent: number; subscriptions: number }>("/push/test");
+        return { sent: res.data?.sent ?? 0, devices: res.data?.subscriptions ?? 0 };
+    } catch (err) {
+        if (!isEndpointMissing(err)) console.error("[PUSH] Test push failed", err);
+        return null;
+    }
+}

@@ -9,6 +9,7 @@ import { ApiClientError } from "@/lib/api/errors";
 import { unsubscribeFromPushNotifications } from "@/lib/actions/push.actions";
 import { subscriptionMatchesKey } from "@/lib/push-keys";
 import { enableDevicePush, rememberPushChoice } from "@/lib/push-subscribe";
+import { confirmPushOn } from "@/lib/push-feedback";
 import { PasswordInput, PasswordStrength, passwordStrength } from "@/components/sections/auth/auth-ui";
 import { DeleteAccount } from "./DeleteAccount";
 import { InstallApp } from "@/components/settings/InstallApp";
@@ -216,7 +217,9 @@ function DeviceNotifications() {
     setBusy(true);
     setError(null);
     try {
-      setState(await enableDevicePush(key!));
+      const next = await enableDevicePush(key!);
+      setState(next);
+      if (next === "on") void confirmPushOn();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Notifications couldn't be turned on. Try again.");
     } finally {
@@ -274,6 +277,20 @@ function DeviceNotifications() {
           </SwitchPrimitive.Root>
         </span>
       </label>
+      {state === "on" && (
+        <button
+          type="button"
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            await confirmPushOn();
+            setBusy(false);
+          }}
+          className="mt-3 text-sm font-semibold text-[#155DFC] hover:underline disabled:opacity-60"
+        >
+          Send a test notification
+        </button>
+      )}
       {error && (
         <div className="mt-3 max-w-md">
           <Notice tone="error">{error}</Notice>

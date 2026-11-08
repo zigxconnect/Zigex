@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { BellRing, Loader2, X } from "lucide-react";
 import { devicePushIsOn, enableDevicePush } from "@/lib/push-subscribe";
+import { confirmPushOn } from "@/lib/push-feedback";
 import {
   INSTALL_DISMISSED_KEY,
   NOTIFY_DISMISSED_KEY,
@@ -53,6 +54,7 @@ export function EnableNotificationsPrompt() {
       const state = await enableDevicePush(key!);
       if (state !== "on") rememberDismissed(NOTIFY_DISMISSED_KEY);
       setShow(false);
+      if (state === "on") void confirmPushOn();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Notifications couldn't be turned on. Try again.");
     } finally {

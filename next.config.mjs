@@ -13,6 +13,18 @@ const withPWA = withPWAInit({
   aggressiveFrontEndNavCaching: false, // Disabled for stability
   reloadOnOnline: false, // Prevent reloads on network changes
   swMinify: true,
+  // The app keeps only what the offline page needs. Pictures (course art, badges,
+  // photos: 5.6 MB) load when a page shows them; precaching them made the first
+  // visit download 9 MB before notifications could even turn on.
+  publicExcludes: [
+    "!noprecache/**/*",
+    "!badges/**/*",
+    "!curriculum/**/*",
+    "!images/**/*",
+    "!screenshots/**/*",
+    "!*.png",
+    "!*.jpg",
+  ],
   workboxOptions: {
     disableDevLogs: true,
     maximumFileSizeToCacheInBytes: 5000000,

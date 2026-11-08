@@ -2,7 +2,12 @@
 
 What changed for students in each release. Newest first. Versions follow [semantic versioning](https://semver.org): patch for fixes, minor for new features, major for breaking changes.
 
-New changes go under a top section `## 1.3.0 (2026-11-08)
+New changes go under a top section `## Unreleased
+
+- **Turning on notifications** is quick, says "Notifications are on" and sends a test notification to your phone. If something is slow it tells you what to do instead of spinning. Settings has "Send a test notification".
+- **Less data:** installing Zigex no longer downloads 9 MB of pictures up front; they load when you open the page that shows them.
+
+## 1.3.0 (2026-11-08)
 
 - **More opportunities:** summits, competitions, foreign programs and fellowships shared by Zigex, with Cameroon first. You apply on the organiser's site.
 - **Images:** pictures that were stored with a private address now load, and any image that can't load is replaced instead of showing a broken icon.
