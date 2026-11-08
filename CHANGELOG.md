@@ -2,7 +2,11 @@
 
 What changed for students in each release. Newest first. Versions follow [semantic versioning](https://semver.org): patch for fixes, minor for new features, major for breaking changes.
 
-New changes go under a top section `## 1.7.0 (2026-11-08)
+New changes go under a top section `## Unreleased
+
+- **Apply button:** opportunities run by other organisers just say "Apply" (it still opens their site).
+
+## 1.7.0 (2026-11-08)
 
 - **Everything in one place:** summits, foreign programs and fellowships Zigex shares now appear on Opportunities and the home page with everything else, under All and a Worldwide tab. More opportunities keeps its detailed filters.
 - **Safer site:** browsers are told to use HTTPS only, and the site no longer announces the software it runs on.

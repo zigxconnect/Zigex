@@ -70,9 +70,8 @@ export default async function OutsourcedDetailPage({ params }: Props) {
               rel="noopener noreferrer"
               className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#155DFC] px-6 font-semibold text-white hover:bg-[#0F3FB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] focus-visible:ring-offset-2 sm:w-auto"
             >
-              Apply on the organiser&apos;s site <ExternalLink className="h-4 w-4" aria-hidden="true" />
+              Apply <ExternalLink className="h-4 w-4" aria-hidden="true" />
             </a>
-            <p className="mt-2 text-sm text-[#4A5670]">This opens the organiser&apos;s website. Zigex doesn&apos;t handle these applications.</p>
           </>
         ) : (
           <p className="rounded-xl bg-[#F3F7FF] px-4 py-3 font-semibold text-[#4A5670] ring-1 ring-[#DCE5F5]">
