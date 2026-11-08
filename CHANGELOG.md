@@ -2,7 +2,7 @@
 
 What changed for students in each release. Newest first. Versions follow [semantic versioning](https://semver.org): patch for fixes, minor for new features, major for breaking changes.
 
-New changes go under a top section `## Unreleased
+New changes go under a top section `## 1.5.1 (2026-11-08)
 
 - **Found by your full name:** your profile in search results uses your full registered name (for example "Mazwewoh John Brindi"), so searching for it finds you.
 
