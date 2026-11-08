@@ -2,7 +2,12 @@
 
 What changed for students in each release. Newest first. Versions follow [semantic versioning](https://semver.org): patch for fixes, minor for new features, major for breaking changes.
 
-New changes go under a top section `## 1.7.3 (2026-11-08)
+New changes go under a top section `## Unreleased
+
+- **Pictures shown whole:** flyers are never cut off. On an opportunity's page the picture takes its own shape and size; on cards the whole flyer shows on a soft blurred background.
+- **Shared opportunities** show their funding on cards ("Fully funded", "Paid") instead of "Free".
+
+## 1.7.3 (2026-11-08)
 
 - **Reminders:** "Not now" on "Install Zigex" or "Turn on notifications" now waits 3 days before asking again (was 2 weeks), until the app is installed and notifications are on.
 

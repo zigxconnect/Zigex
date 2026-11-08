@@ -7,7 +7,7 @@ import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { isUuid } from "@/lib/postings";
 import { ArrowLeft, ExternalLink } from "lucide-react";
-import { OutsourcedCover } from "@/components/outsourced/OutsourcedCover";
+import { HeroImage } from "@/components/feed/details/HeroImage";
 import { dayLabel, fundingLabel, placeLabel, typeLabel } from "@/components/outsourced/outsourced-labels";
 import { getOutsourced } from "@/lib/api/services/outsourced";
 import { pageMetadata } from "@/lib/seo";
@@ -48,9 +48,11 @@ export default async function OutsourcedDetailPage({ params }: Props) {
       <p className="mt-4 text-sm font-medium text-[#7B869C]">{typeLabel(o.type)}</p>
       <h1 className="mt-1 font-heading text-2xl font-bold leading-tight text-[#0B1B3F] [overflow-wrap:anywhere] sm:text-3xl">{o.title}</h1>
 
-      <div className="relative mt-4 aspect-[16/9] overflow-hidden rounded-2xl bg-[#F3F7FF] ring-1 ring-[#EEF2FA]">
-        <OutsourcedCover src={o.cover_image_url} sizes="(min-width: 768px) 720px, 100vw" priority />
-      </div>
+      {o.cover_image_url && (
+        <div className="mt-4">
+          <HeroImage src={o.cover_image_url} alt={o.title} />
+        </div>
+      )}
 
       <dl className="mt-5 grid grid-cols-1 gap-3 rounded-2xl bg-white p-4 ring-1 ring-[#DCE5F5] sm:grid-cols-2">
         {facts.map(([label, value]) => (

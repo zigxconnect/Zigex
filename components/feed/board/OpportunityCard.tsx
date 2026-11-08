@@ -81,7 +81,7 @@ export function OpportunityCard({ item, headingLevel = 3 }: { item: BoardItem; h
       </div>
       <Heading className="mt-2 line-clamp-2 min-h-[2.75rem] [overflow-wrap:anywhere] font-heading text-lg font-semibold leading-snug text-[#0B1B3F]">{item.title}</Heading>
 
-      {/* Middle: the image as uploaded, top-anchored so a flyer's headline stays visible */}
+      {/* Middle: the image as uploaded, whole */}
       <div className="relative mt-3 aspect-[4/3] overflow-hidden rounded-xl bg-[#F3F7FF] ring-1 ring-[#EEF2FA]">
         <CardImage src={item.image} closed={closed} Icon={kind.icon} />
       </div>
@@ -97,9 +97,13 @@ export function OpportunityCard({ item, headingLevel = 3 }: { item: BoardItem; h
         {/* Place on the left, cost against the right edge, so they never read as one phrase. */}
         <p className="mt-1 flex min-w-0 items-baseline gap-4 text-sm text-[#4A5670]">
           {where && <span className="min-w-0 truncate">{where}</span>}
-          <span className={`ml-auto shrink-0 whitespace-nowrap font-medium ${item.hasFee ? "text-[#0B1B3F]" : "text-[#067647]"}`}>
-            {item.hasFee ? (item.priceXaf ? `${item.priceXaf.toLocaleString("en-US")} XAF` : "Fee applies") : "Free"}
-          </span>
+          {item.kind === "outsourced" ? (
+            item.fundingLabel && <span className="ml-auto shrink-0 whitespace-nowrap font-medium text-[#067647]">{item.fundingLabel}</span>
+          ) : (
+            <span className={`ml-auto shrink-0 whitespace-nowrap font-medium ${item.hasFee ? "text-[#0B1B3F]" : "text-[#067647]"}`}>
+              {item.hasFee ? (item.priceXaf ? `${item.priceXaf.toLocaleString("en-US")} XAF` : "Fee applies") : "Free"}
+            </span>
+          )}
         </p>
       </div>
 
@@ -137,13 +141,18 @@ function CardImage({ src, closed, Icon }: { src: string | null; closed: boolean;
       </div>
     );
   }
+  // The whole picture (flyers carry their dates and prices), on a blurred copy of itself.
+  const sizes = "(min-width: 1280px) 360px, (min-width: 640px) 45vw, 100vw";
   return (
-    <CoverImage
-      src={src}
-      sizes="(min-width: 1280px) 360px, (min-width: 640px) 45vw, 100vw"
-      onFail={() => setFailed(true)}
-      className={`object-cover object-top ${closed ? "saturate-[0.6]" : ""}`}
-    />
+    <>
+      <CoverImage src={src} sizes={sizes} className="scale-110 object-cover opacity-50 blur-xl" />
+      <CoverImage
+        src={src}
+        sizes={sizes}
+        onFail={() => setFailed(true)}
+        className={`object-contain ${closed ? "saturate-[0.6]" : ""}`}
+      />
+    </>
   );
 }
 

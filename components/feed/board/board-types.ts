@@ -2,7 +2,7 @@ import { usableImageUrl } from "@/lib/images";
 import { externalUrl } from "@/lib/postings";
 import type { FeedKind, FeedRow } from "@/lib/api/services/feed";
 import type { OutsourcedOpportunity } from "@/lib/api/services/outsourced";
-import { placeLabel, typeLabel } from "@/components/outsourced/outsourced-labels";
+import { fundingLabel, placeLabel, typeLabel } from "@/components/outsourced/outsourced-labels";
 
 /** Zigex postings by type, plus opportunities Zigex shares from other organisers. */
 export type BoardKind = FeedKind | "outsourced";
@@ -16,6 +16,8 @@ export type BoardItem = {
   kind: BoardKind;
   /** What it is, when the kind alone doesn't say ("Fellowship", "Summit or conference"). */
   typeLabel?: string;
+  /** Shared opportunities: their funding ("Fully funded"), shown instead of Zigex's fee; null when not stated. */
+  fundingLabel?: string | null;
   title: string;
   companyName: string;
   companyLogo: string | null;
@@ -83,6 +85,7 @@ export function fromOutsourced(o: OutsourcedOpportunity): BoardItem {
     slug: o.slug,
     kind: "outsourced",
     typeLabel: typeLabel(o.type) || undefined,
+    fundingLabel: fundingLabel(o.funding),
     title: o.title,
     companyName: o.organization,
     companyLogo: null,

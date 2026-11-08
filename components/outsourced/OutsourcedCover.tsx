@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Globe2 } from "lucide-react";
 import { CoverImage } from "@/components/CoverImage";
 
-/** The cover, or a branded tile when there is none or it fails to load. */
+/** The whole cover on a blurred copy of itself (nothing cropped), or a branded tile when there is none or it fails. */
 export function OutsourcedCover({ src, sizes, priority }: { src: string | null; sizes: string; priority?: boolean }) {
   const [failed, setFailed] = useState(false);
   if (!src || failed) {
@@ -14,5 +14,10 @@ export function OutsourcedCover({ src, sizes, priority }: { src: string | null; 
       </div>
     );
   }
-  return <CoverImage src={src} sizes={sizes} priority={priority} onFail={() => setFailed(true)} className="object-cover object-top" />;
+  return (
+    <>
+      <CoverImage src={src} sizes={sizes} className="scale-110 object-cover opacity-50 blur-xl" />
+      <CoverImage src={src} sizes={sizes} priority={priority} onFail={() => setFailed(true)} className="object-contain" />
+    </>
+  );
 }
