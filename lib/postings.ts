@@ -1,4 +1,4 @@
-import type { FeedKind } from "@/lib/api/services/feed";
+import type { BoardKind } from "@/components/feed/board/board-types";
 
 /**
  * Addresses of opportunities. They use the readable name the backend stores
@@ -19,9 +19,13 @@ export const postingKey = (p: Posting) => (typeof p.slug === "string" && p.slug.
 /** The shareable address, the one search engines index (programs too live under /feed). */
 export const publicPostingPath = (p: Posting) => `/feed/${encodeURIComponent(postingKey(p))}`;
 
-/** Where the app opens it: programs inside the app at /programs, the rest at /feed. */
-export const postingPath = (kind: FeedKind, p: Posting) =>
-  kind === "programs" ? `/programs/${encodeURIComponent(postingKey(p))}` : publicPostingPath(p);
+/** Where the app opens it: programs inside the app at /programs, shared ones at /opportunities, the rest at /feed. */
+export const postingPath = (kind: BoardKind, p: Posting) =>
+  kind === "programs"
+    ? `/programs/${encodeURIComponent(postingKey(p))}`
+    : kind === "outsourced"
+      ? `/opportunities/${encodeURIComponent(postingKey(p))}`
+      : publicPostingPath(p);
 
 /** An outside link students may follow (http or https only), or null. */
 export function externalUrl(value: unknown): string | null {

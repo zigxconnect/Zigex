@@ -9,7 +9,7 @@ import { landingButton } from "@/components/sections/landing/landing-ui";
 import { isClosed, type BoardItem } from "./board-types";
 import { OpportunityCard } from "./OpportunityCard";
 
-type Tab = "all" | "internships" | "programs" | "events";
+type Tab = "all" | "internships" | "programs" | "events" | "outsourced";
 type Sort = "newest" | "closing";
 
 const TABS: { id: Tab; label: string }[] = [
@@ -17,6 +17,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "internships", label: "Internships" },
   { id: "programs", label: "Programs" },
   { id: "events", label: "Events" },
+  { id: "outsourced", label: "Worldwide" },
 ];
 
 const SORTS: { id: Sort; label: string }[] = [
@@ -110,6 +111,7 @@ export function OpportunityBoard({ items, searchInHeader = false }: { items: Boa
       internships: searched.filter((i) => i.kind === "internships").length,
       programs: searched.filter((i) => i.kind === "programs").length,
       events: searched.filter((i) => i.kind === "events").length,
+      outsourced: searched.filter((i) => i.kind === "outsourced").length,
     }),
     [searched],
   );

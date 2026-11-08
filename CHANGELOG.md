@@ -2,7 +2,12 @@
 
 What changed for students in each release. Newest first. Versions follow [semantic versioning](https://semver.org): patch for fixes, minor for new features, major for breaking changes.
 
-New changes go under a top section `## 1.6.0 (2026-11-08)
+New changes go under a top section `## Unreleased
+
+- **Everything in one place:** summits, foreign programs and fellowships Zigex shares now appear on Opportunities and the home page with everything else, under All and a Worldwide tab. More opportunities keeps its detailed filters.
+- **Safer site:** browsers are told to use HTTPS only, and the site no longer announces the software it runs on.
+
+## 1.6.0 (2026-11-08, not deployed; shipped in 1.7.0)
 
 - **Readable addresses:** opportunities open at their name, like zigexconnect.com/feed/cern-short-term-internship-in-switzerland, instead of a long code. Old links and notifications still work and move to the new address.
 - **Apply on the organiser's site:** when a company takes applications on its own website (an event's registration link, every outsourced opportunity), the button says so and opens that site. Zigex's own postings still use the in-app application.

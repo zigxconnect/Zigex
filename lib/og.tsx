@@ -94,8 +94,8 @@ export async function siteImage() {
   );
 }
 
-const KIND_LABEL = { internships: "Internship", programs: "Program", events: "Event" } as const;
-const DEADLINE_VERB = { internships: "Apply by", programs: "Register by", events: "RSVP by" } as const;
+const KIND_LABEL = { internships: "Internship", programs: "Program", events: "Event", outsourced: "Opportunity" } as const;
+const DEADLINE_VERB = { internships: "Apply by", programs: "Register by", events: "RSVP by", outsourced: "Apply by" } as const;
 
 const shortDate = (iso: string | null) =>
   iso ? new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "Africa/Douala" }) : null;

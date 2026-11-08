@@ -22,7 +22,8 @@ import { StudentRail, type ApplicationsSummary, type ProfileStrength } from "@/c
 import { listApplications } from "@/lib/api/services/applications";
 import { getMyProfile } from "@/lib/api/services/profile";
 import { applicationKind, targetId, toApplicationStatus } from "@/lib/api/applications-shape";
-import { toBoardItem, type BoardItem } from "@/components/feed/board/board-types";
+import { fromOutsourced, toBoardItem, type BoardItem } from "@/components/feed/board/board-types";
+import { listAllOutsourced } from "@/lib/api/services/outsourced";
 import { listPublicFeed, type FeedKind } from "@/lib/api/services/feed";
 import { pageMetadata } from "@/lib/seo";
 import { PicksSkeleton } from "@/components/digest/PicksView";
@@ -38,10 +39,18 @@ export const metadata: Metadata = pageMetadata({
 const KINDS: FeedKind[] = ["internships", "programs", "events"];
 
 async function loadBoardItems(): Promise<{ items: BoardItem[]; failed: boolean }> {
-  const results = await Promise.allSettled(KINDS.map((kind) => listPublicFeed(kind)));
-  const items = results.flatMap((result, i) =>
-    result.status === "fulfilled" ? result.value.map((row) => toBoardItem(KINDS[i], row)) : []
-  );
+  const [results, shared] = await Promise.all([
+    Promise.allSettled(KINDS.map((kind) => listPublicFeed(kind))),
+    // Opportunities Zigex shares from other organisers sit on the same board.
+    listAllOutsourced().catch((error) => {
+      console.error("[feed] outsourced failed:", error);
+      return [];
+    }),
+  ]);
+  const items = [
+    ...results.flatMap((result, i) => (result.status === "fulfilled" ? result.value.map((row) => toBoardItem(KINDS[i], row)) : [])),
+    ...shared.map(fromOutsourced),
+  ];
   results.forEach((result, i) => {
     if (result.status === "rejected") console.error(`[feed] ${KINDS[i]} failed:`, result.reason);
   });

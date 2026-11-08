@@ -10,6 +10,9 @@ const SECURITY_HEADERS: Record<string, string> = {
   "Referrer-Policy": "strict-origin-when-cross-origin",
   // camera: the workspace check-in scanner; geolocation: check-in location.
   "Permissions-Policy": "camera=(self), microphone=(), geolocation=(self), payment=()",
+  // HTTPS only, for a year, subdomains included (every Zigex site is HTTPS).
+  "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+  "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
 };
 
 // Pages anyone can open. Signed-in students are bounced off the auth pages.

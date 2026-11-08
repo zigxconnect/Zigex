@@ -1,6 +1,11 @@
 import { usableImageUrl } from "@/lib/images";
 import { externalUrl } from "@/lib/postings";
 import type { FeedKind, FeedRow } from "@/lib/api/services/feed";
+import type { OutsourcedOpportunity } from "@/lib/api/services/outsourced";
+import { placeLabel, typeLabel } from "@/components/outsourced/outsourced-labels";
+
+/** Zigex postings by type, plus opportunities Zigex shares from other organisers. */
+export type BoardKind = FeedKind | "outsourced";
 import { daysUntil, isPast } from "@/lib/utils/deadline";
 
 /** One opportunity, flattened for the /feed board (no per-type branching in the UI). */
@@ -8,7 +13,9 @@ export type BoardItem = {
   id: string;
   /** Readable address ("cern-short-term-internship-in-switzerland"); null until the backend has one. */
   slug: string | null;
-  kind: FeedKind;
+  kind: BoardKind;
+  /** What it is, when the kind alone doesn't say ("Fellowship", "Summit or conference"). */
+  typeLabel?: string;
   title: string;
   companyName: string;
   companyLogo: string | null;
@@ -63,6 +70,34 @@ export function toBoardItem(kind: FeedKind, row: FeedRow): BoardItem {
     postedAt: row.created_at ?? null,
     skills: Array.isArray(row.required_skills) ? row.required_skills.filter(Boolean).slice(0, 3) : [],
     applyUrl: externalUrl(row.application_url ?? row.apply_url ?? row.external_apply_url ?? (kind === "events" ? row.registration_link : null)),
+  };
+}
+
+/**
+ * An opportunity another organiser runs, shown with Zigex's own: it opens at
+ * /opportunities/<name>, and Apply goes to the organiser's site.
+ */
+export function fromOutsourced(o: OutsourcedOpportunity): BoardItem {
+  return {
+    id: o.id,
+    slug: o.slug,
+    kind: "outsourced",
+    typeLabel: typeLabel(o.type) || undefined,
+    title: o.title,
+    companyName: o.organization,
+    companyLogo: null,
+    companyVerified: false,
+    image: o.cover_image_url,
+    location: placeLabel(o) || null,
+    workMode: null,
+    closesAt: o.deadline,
+    startsAt: o.start_date,
+    endsAt: o.end_date,
+    hasFee: false,
+    priceXaf: null,
+    postedAt: o.created_at ?? null,
+    skills: [],
+    applyUrl: o.apply_url || null,
   };
 }
 

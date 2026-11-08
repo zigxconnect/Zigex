@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 import Link from "next/link";
-import { Briefcase, CalendarClock, CalendarDays, GraduationCap } from "lucide-react";
+import { Briefcase, CalendarClock, CalendarDays, Globe2, GraduationCap } from "lucide-react";
 import { isClosed, type BoardItem } from "./board-types";
 import { daysUntil, deadlineDay } from "@/lib/utils/deadline";
 import { CoverImage } from "@/components/CoverImage";
@@ -14,6 +14,7 @@ const KIND = {
   internships: { label: "Internship", noun: "internship", verb: "Apply", icon: Briefcase },
   programs: { label: "Program", noun: "program", verb: "Register", icon: GraduationCap },
   events: { label: "Event", noun: "event", verb: "RSVP", icon: CalendarDays },
+  outsourced: { label: "Opportunity", noun: "opportunity", verb: "Apply", icon: Globe2 },
 } as const;
 
 const DAY = 86_400_000;
@@ -75,7 +76,7 @@ export function OpportunityCard({ item, headingLevel = 3 }: { item: BoardItem; h
         {item.companyVerified && <VerifiedBadge className="text-base" />}
         <span className="ml-auto inline-flex shrink-0 items-center gap-1 text-xs font-medium text-[#7B869C]">
           <kind.icon className="h-3.5 w-3.5" aria-hidden="true" />
-          {kind.label}
+          {item.typeLabel ?? kind.label}
         </span>
       </div>
       <Heading className="mt-2 line-clamp-2 min-h-[2.75rem] [overflow-wrap:anywhere] font-heading text-lg font-semibold leading-snug text-[#0B1B3F]">{item.title}</Heading>

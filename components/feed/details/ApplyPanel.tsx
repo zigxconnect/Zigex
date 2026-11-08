@@ -8,7 +8,7 @@ import { publicPostingPath } from "@/lib/postings";
 
 type ApplicationStatus = { hasApplied: boolean; status: string | null; paymentCompleted?: boolean; applicationId?: string };
 
-const ACTION = { internships: "Apply", programs: "Register", events: "RSVP" } as const;
+const ACTION = { internships: "Apply", programs: "Register", events: "RSVP", outsourced: "Apply" } as const;
 
 /** "9 weeks", "2 months" from the start and end dates. */
 function length(item: BoardItem) {

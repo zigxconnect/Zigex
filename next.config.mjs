@@ -37,6 +37,8 @@ const withPWA = withPWAInit({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Don't announce the framework and version in every response.
+  poweredByHeader: false,
   // TypeScript settings
   typescript: {
     ignoreBuildErrors: true,

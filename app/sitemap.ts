@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { listPublicFeed, type FeedKind } from "@/lib/api/services/feed";
 import { SITE_URL } from "@/lib/seo";
 import { listPublicProfileUsernames } from "@/lib/api/services/public-profile";
+import { listAllOutsourced } from "@/lib/api/services/outsourced";
 import { slugifyUsername } from "@/lib/utils";
 import { publicPostingPath } from "@/lib/postings";
 
@@ -45,6 +46,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
   for (const id of companies) {
     pages.push({ url: `${SITE_URL}/company/${encodeURIComponent(id)}`, changeFrequency: "weekly", priority: 0.5 });
+  }
+  // Opportunities Zigex shares from other organisers.
+  for (const o of await listAllOutsourced().catch(() => [])) {
+    pages.push({ url: `${SITE_URL}/opportunities/${encodeURIComponent(o.slug || o.id)}`, changeFrequency: "weekly", priority: 0.7 });
   }
   // Students who made their profile public, so a search for their name finds it.
   for (const p of await listPublicProfileUsernames()) {

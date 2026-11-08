@@ -48,12 +48,19 @@ check "Health" "/api/health" '"status":"ok"'
 check "Sign in" "/sign-in" "Sign in"
 check "Explore" "/feed" "Opportunities"
 
-# A real opportunity, taken from the public feed.
-ID="$(curl -s --max-time 30 "$BACKEND/api/v1/feed/internships?page=1&limit=1" | grep -o '"id":"[0-9a-f-]\{36\}"' | head -n 1 | cut -d'"' -f4)"
-if [[ -n "$ID" ]]; then
+# A real opportunity, taken from the public feed. Pages live at its name
+# (/feed/<slug>); its id address must send people there with a 308.
+ROW="$(curl -s --max-time 30 "$BACKEND/api/v1/feed/internships?page=1&limit=1")"
+ID="$(printf '%s' "$ROW" | grep -o '"id":"[0-9a-f-]\{36\}"' | head -n 1 | cut -d'"' -f4)"
+SLUG="$(printf '%s' "$ROW" | grep -o '"slug":"[a-z0-9-]*"' | head -n 1 | cut -d'"' -f4)"
+if [[ -n "$SLUG" ]]; then
+  check "Opportunity page" "/feed/$SLUG"
+  code="$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' --max-time 45 "$BASE/feed/$ID")" || true
+  [[ "$code" == "308 "*"/feed/$SLUG" ]] && pass "Old id address moves to the name" || miss "Old id address (/feed/$ID) → $code, expected 308 to /feed/$SLUG"
+elif [[ -n "$ID" ]]; then
   check "Opportunity page" "/feed/$ID"
 else
-  echo "  - Opportunity page: skipped (no opportunity id from the backend)"
+  echo "  - Opportunity page: skipped (no opportunity from the backend)"
 fi
 
 if [[ -n "${CSS:-}" ]]; then

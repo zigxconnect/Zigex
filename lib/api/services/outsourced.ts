@@ -33,6 +33,7 @@ export type OutsourcedOpportunity = {
   end_date: string | null;
   cover_image_url: string | null;
   is_open: boolean;
+  created_at?: string | null;
 };
 
 export type OutsourcedCounts = Record<OutsourcedSection, number>;
@@ -79,6 +80,17 @@ export async function listOutsourced(filters: OutsourcedFilters): Promise<Outsou
   if (filters.q) params.set("q", filters.q);
   const data = await get<OutsourcedPage>(`?${params}`);
   return { ...data, items: data.items.map(clean) };
+}
+
+/** Every open one (at most 150), for the main opportunities board and the landing page. */
+export async function listAllOutsourced(): Promise<OutsourcedOpportunity[]> {
+  const items: OutsourcedOpportunity[] = [];
+  for (let page = 1; page <= 3; page++) {
+    const data = await get<OutsourcedPage>(`?page=${page}&pageSize=50`);
+    items.push(...data.items.map(clean));
+    if (page >= data.total_pages) break;
+  }
+  return items;
 }
 
 export async function getOutsourced(id: string): Promise<OutsourcedOpportunity | null> {

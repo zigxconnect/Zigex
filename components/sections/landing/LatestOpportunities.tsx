@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { latestFeed, type FeedKind } from "@/lib/api/services/feed";
-import { isClosed, toBoardItem, type BoardItem } from "@/components/feed/board/board-types";
+import { fromOutsourced, isClosed, toBoardItem, type BoardItem } from "@/components/feed/board/board-types";
+import { listAllOutsourced } from "@/lib/api/services/outsourced";
 import { OpportunityCard, OpportunityCardSkeleton } from "@/components/feed/board/OpportunityCard";
 import { landingButton, landingContainer, landingSectionLead, landingSectionTitle } from "./landing-ui";
 
@@ -16,9 +17,15 @@ import { landingButton, landingContainer, landingSectionLead, landingSectionTitl
 
 async function loadLatest(): Promise<{ items: BoardItem[]; failed: boolean }> {
   const kinds: FeedKind[] = ["internships", "programs", "events"];
-  const results = await Promise.allSettled(kinds.map((kind) => latestFeed(kind, 6)));
+  const [results, shared] = await Promise.all([
+    Promise.allSettled(kinds.map((kind) => latestFeed(kind, 6))),
+    listAllOutsourced().catch(() => []),
+  ]);
   const newestFirst = (a: BoardItem, b: BoardItem) => new Date(b.postedAt ?? 0).getTime() - new Date(a.postedAt ?? 0).getTime();
-  const all = results.flatMap((result, i) => (result.status === "fulfilled" ? result.value.map((row) => toBoardItem(kinds[i], row)) : []));
+  const all = [
+    ...results.flatMap((result, i) => (result.status === "fulfilled" ? result.value.map((row) => toBoardItem(kinds[i], row)) : [])),
+    ...shared.slice(0, 6).map(fromOutsourced),
+  ];
   // A homepage full of "Closed on…" looks abandoned: open ones first, and only
   // recently closed ones (last 60 days) to fill the row when few are open.
   const open = all.filter((item) => !isClosed(item)).sort(newestFirst);
