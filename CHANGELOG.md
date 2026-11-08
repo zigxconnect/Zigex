@@ -2,7 +2,7 @@
 
 What changed for students in each release. Newest first. Versions follow [semantic versioning](https://semver.org): patch for fixes, minor for new features, major for breaking changes.
 
-New changes go under a top section `## Unreleased
+New changes go under a top section `## 1.4.0 (2026-11-08)
 
 - **Turning on notifications** is quick, says "Notifications are on" and sends a test notification to your phone. If something is slow it tells you what to do instead of spinning. Settings has "Send a test notification".
 - **Less data:** installing Zigex no longer downloads 9 MB of pictures up front; they load when you open the page that shows them.
