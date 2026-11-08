@@ -2,7 +2,7 @@
 
 What changed for students in each release. Newest first. Versions follow [semantic versioning](https://semver.org): patch for fixes, minor for new features, major for breaking changes.
 
-New changes go under a top section `## Unreleased
+New changes go under a top section `## 1.5.0 (2026-11-08)
 
 - **Your profile on Google:** public profiles can now be found by searching your name, with your school, course and skills. Profiles set to "Zigex members only" stay out of search results.
 - **Profile links work again** for older accounts whose username has a space or capitals (zigexconnect.com/profile/John_Brindi).
