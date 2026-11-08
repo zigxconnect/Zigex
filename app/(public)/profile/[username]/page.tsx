@@ -5,6 +5,7 @@ import { StudentProfile } from "@/components/students/StudentProfile";
 import { landingButton } from "@/components/sections/landing/landing-ui";
 import { getSession } from "@/lib/api/auth";
 import { pageMetadata, SITE_URL } from "@/lib/seo";
+import { IS_PRODUCTION } from "@/lib/app-env";
 import { slugifyUsername } from "@/lib/utils";
 
 type Props = { params: Promise<{ username: string }> };
@@ -23,10 +24,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const school = [data.field_of_study, data.university].map(cleanName).filter(Boolean).join(", ");
   const about = cleanName(data.about);
   const description = (about || `${name}${school ? `, ${school}` : ""}. Student profile on Zigex.`).slice(0, 160);
-  // Search engines may list a profile only when the student chose "public".
+  // Search engines may list a profile only when the student chose "public", and
+  // never on the development site.
+  const listable = IS_PRODUCTION && Boolean(data.is_public);
   return {
     ...pageMetadata({ title: school ? `${name} – ${school}` : name, description, path: profilePath(data), type: "profile" }),
-    robots: data.is_public ? { index: true, follow: true } : { index: false, follow: false },
+    robots: listable ? { index: true, follow: true } : { index: false, follow: false },
   };
 }
 
