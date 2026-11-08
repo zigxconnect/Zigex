@@ -172,21 +172,21 @@ export function WorkspaceView({ data }: { data: WorkspaceData }) {
             </h1>
             <ul className={cn("mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-sm", body)}>
               {company?.company_name && (
-                <li className="inline-flex items-center gap-1.5">
-                  <Building2 className="h-4 w-4 text-[#7B869C]" aria-hidden="true" />
-                  {company.company_name}
+                <li className="flex min-w-0 items-center gap-1.5">
+                  <Building2 className="h-4 w-4 shrink-0 text-[#7B869C]" aria-hidden="true" />
+                  <span className="min-w-0">{company.company_name}</span>
                 </li>
               )}
               {opportunity.location && (
-                <li className="inline-flex items-center gap-1.5">
-                  <MapPin className="h-4 w-4 text-[#7B869C]" aria-hidden="true" />
-                  {opportunity.location}
+                <li className="flex min-w-0 items-center gap-1.5">
+                  <MapPin className="h-4 w-4 shrink-0 text-[#7B869C]" aria-hidden="true" />
+                  <span className="min-w-0">{opportunity.location}</span>
                 </li>
               )}
               {dates && (
-                <li className="inline-flex items-center gap-1.5">
-                  <CalendarDays className="h-4 w-4 text-[#7B869C]" aria-hidden="true" />
-                  {dates}
+                <li className="flex min-w-0 items-center gap-1.5">
+                  <CalendarDays className="h-4 w-4 shrink-0 text-[#7B869C]" aria-hidden="true" />
+                  <span className="min-w-0">{dates}</span>
                 </li>
               )}
             </ul>

@@ -1,3 +1,4 @@
+import { publicStorageUrls } from "@/lib/images";
 export class ApiClientError extends Error {
   status: number;
   code: string;
@@ -26,7 +27,9 @@ export type ApiResponse<T> = {
  */
 export async function parseResponse<T>(res: Response): Promise<ApiResponse<T>> {
   const contentType = res.headers.get("content-type") ?? "";
-  const payload = contentType.includes("application/json") ? await res.json() : await res.text();
+  const text = await res.text();
+  // Every API answer passes here, so stored image links are repaired whichever field holds them.
+  const payload = contentType.includes("application/json") && text ? JSON.parse(publicStorageUrls(text)) : text;
 
   if (!res.ok) {
     const error = typeof payload === "object" ? payload?.error : undefined;

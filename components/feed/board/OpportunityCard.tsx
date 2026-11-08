@@ -6,6 +6,7 @@ import { BadgeCheck, Briefcase, CalendarClock, CalendarDays, GraduationCap } fro
 import { isClosed, type BoardItem } from "./board-types";
 import { daysUntil, deadlineDay } from "@/lib/utils/deadline";
 import { CoverImage } from "@/components/CoverImage";
+import { SafeImg } from "@/components/SafeImg";
 
 const KIND = {
   internships: { label: "Internship", noun: "internship", verb: "Apply", icon: Briefcase },
@@ -59,17 +60,15 @@ export function OpportunityCard({ item, headingLevel = 3 }: { item: BoardItem; h
   return (
     <Link
       href={href}
-      className="group flex h-full flex-col rounded-2xl bg-white p-4 ring-1 ring-[#DCE5F5] transition-shadow hover:shadow-[0_18px_40px_-20px_rgba(11,27,63,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC]"
+      className="group flex h-full min-w-0 flex-col rounded-2xl bg-white p-4 ring-1 ring-[#DCE5F5] transition-shadow hover:shadow-[0_18px_40px_-20px_rgba(11,27,63,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC]"
     >
       {/* Top: who and what */}
       <div className="flex items-center gap-2 text-sm text-[#4A5670]">
-        {item.companyLogo ? (
-          <img src={item.companyLogo} alt="" className="h-6 w-6 shrink-0 rounded-md bg-white object-cover ring-1 ring-[#EEF2FA]" />
-        ) : (
-          <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[#155DFC] text-xs font-bold text-white">
-            {item.companyName.charAt(0)}
-          </span>
-        )}
+        {/* The initial sits behind the logo, so a logo that fails to load leaves the initial. */}
+        <span aria-hidden="true" className="relative flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-md bg-[#155DFC] text-xs font-bold text-white">
+          {item.companyName.charAt(0)}
+          {item.companyLogo && <SafeImg src={item.companyLogo} alt="" className="absolute inset-0 h-full w-full bg-white object-cover" />}
+        </span>
         <span className="min-w-0 truncate font-medium">{item.companyName}</span>
         {item.companyVerified && <BadgeCheck className="h-4 w-4 shrink-0 text-[#155DFC]" aria-label="Verified company" />}
         <span className="ml-auto inline-flex shrink-0 items-center gap-1 text-xs font-medium text-[#7B869C]">
@@ -77,7 +76,7 @@ export function OpportunityCard({ item, headingLevel = 3 }: { item: BoardItem; h
           {kind.label}
         </span>
       </div>
-      <Heading className="mt-2 line-clamp-2 min-h-[2.75rem] font-heading text-lg font-semibold leading-snug text-[#0B1B3F]">{item.title}</Heading>
+      <Heading className="mt-2 line-clamp-2 min-h-[2.75rem] [overflow-wrap:anywhere] font-heading text-lg font-semibold leading-snug text-[#0B1B3F]">{item.title}</Heading>
 
       {/* Middle: the image as uploaded, top-anchored so a flyer's headline stays visible */}
       <div className="relative mt-3 aspect-[4/3] overflow-hidden rounded-xl bg-[#F3F7FF] ring-1 ring-[#EEF2FA]">
@@ -103,7 +102,7 @@ export function OpportunityCard({ item, headingLevel = 3 }: { item: BoardItem; h
 
       {/* Footer: the deadline and the way in */}
       <div className="mt-auto pt-4">
-        <div className="flex items-center justify-between gap-3 whitespace-nowrap border-t border-[#EEF2FA] pt-3 text-sm">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-[#EEF2FA] pt-3 text-sm">
           {closed ? (
             <span className="text-[#7B869C]">
               {item.closesAt ? `Closed on ${fmt(item.closesAt, { day: "numeric", month: "short" })}` : "Ended"}

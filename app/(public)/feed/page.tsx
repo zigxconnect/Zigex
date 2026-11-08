@@ -13,6 +13,7 @@
 
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { OpportunityBoard } from "@/components/feed/board/OpportunityBoard";
 import { OpportunityCardSkeleton } from "@/components/feed/board/OpportunityCard";
 import { BoardRail } from "@/components/feed/board/BoardRail";
@@ -158,6 +159,13 @@ export default async function FeedPage() {
           <h1 className="font-heading text-3xl font-bold tracking-tight text-[#0B1B3F] sm:text-4xl">Opportunities</h1>
           <p className="mt-2 text-lg text-[#4A5670]">
             Open internships, programs and events from companies in Bamenda and across Cameroon.
+          </p>
+          <p className="mt-1 text-[15px] text-[#4A5670]">
+            Summits, foreign programs and fellowships are in{" "}
+            <Link href="/opportunities" className="font-semibold text-[#155DFC] hover:underline">
+              More opportunities
+            </Link>
+            .
           </p>
         </header>
       )}

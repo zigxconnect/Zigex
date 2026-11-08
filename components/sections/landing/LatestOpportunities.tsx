@@ -56,7 +56,7 @@ function SectionShell({ children }: { children: React.ReactNode }) {
 export function LatestOpportunitiesSkeleton() {
   return (
     <SectionShell>
-      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true" aria-label="Loading opportunities">
+      <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true" aria-label="Loading opportunities">
         {Array.from({ length: 6 }, (_, i) => (
           <li key={i}>
             <OpportunityCardSkeleton />
@@ -89,9 +89,9 @@ export async function LatestOpportunities() {
 
   return (
     <SectionShell>
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item) => (
-            <li key={`${item.kind}-${item.id}`}>
+            <li key={`${item.kind}-${item.id}`} className="min-w-0">
               <OpportunityCard item={item} />
             </li>
           ))}

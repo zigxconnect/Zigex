@@ -2,7 +2,13 @@
 
 What changed for students in each release. Newest first. Versions follow [semantic versioning](https://semver.org): patch for fixes, minor for new features, major for breaking changes.
 
-New changes go under a top section `## 1.2.0 (2026-11-07)`. Releasing (GitHub Actions → Release) turns it into the version and date; see [docs/setup/deploy.md](./docs/setup/deploy.md).
+New changes go under a top section `## Unreleased
+
+- **More opportunities:** summits, competitions, foreign programs and fellowships shared by Zigex, with Cameroon first. You apply on the organiser's site.
+- **Images:** pictures that were stored with a private address now load, and any image that can't load is replaced instead of showing a broken icon.
+- **Phones and tablets:** nothing pushes the screen sideways any more, even with very long names or titles, down to the smallest phones.
+
+## 1.2.0 (2026-11-07)`. Releasing (GitHub Actions → Release) turns it into the version and date; see [docs/setup/deploy.md](./docs/setup/deploy.md).
 
 ## Unreleased
 

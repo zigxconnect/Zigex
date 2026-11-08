@@ -10,7 +10,7 @@ export const metadata: Metadata = pageMetadata({
 });
 
 const EMAIL = "zigexconnect.com@gmail.com";
-const Mail = () => <a href={`mailto:${EMAIL}`}>{EMAIL}</a>;
+const Mail = () => <a href={`mailto:${EMAIL}`} className="break-all">{EMAIL}</a>;
 
 const sections: LegalSection[] = [
   {

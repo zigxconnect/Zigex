@@ -8,6 +8,7 @@ import {
   Bot,
   ClipboardList,
   Compass,
+  Globe2,
   GraduationCap,
   LayoutDashboard,
   LogOut,
@@ -53,6 +54,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose, user 
       label: "Discover",
       items: [
         { href: "/feed", label: "Opportunities", icon: Compass, match: ["/feed"] },
+        { href: "/opportunities", label: "More opportunities", icon: Globe2, match: ["/opportunities"] },
         { href: "/dashboard/programs", label: "Programs", icon: GraduationCap, match: ["/dashboard/programs", "/programs"] },
         { href: "/dashboard/blog", label: "Announcements", icon: Megaphone },
       ],

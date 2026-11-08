@@ -101,8 +101,8 @@ export default function ContactPage() {
             className="relative"
           >
             {/* Background decorative elements */}
-            <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#155DFC]/10 rounded-full blur-3xl" />
-            <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl" />
+            <div className="absolute -top-10 right-0 w-40 h-40 bg-[#155DFC]/10 rounded-full blur-3xl" />
+            <div className="absolute -bottom-10 left-0 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl" />
 
             <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white dark:border-slate-800 rounded-[3rem] p-8 md:p-10 shadow-2xl shadow-blue-500/5 relative">
               <form onSubmit={handleSubmit} className="space-y-6">

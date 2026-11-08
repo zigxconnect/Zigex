@@ -13,6 +13,7 @@ import { IS_PRODUCTION } from "@/lib/app-env";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL, jsonLdScript, organizationLd, websiteLd } from "@/lib/seo";
 import { InstallPromptCatcher } from "@/components/providers/InstallPromptCatcher";
 import { InstallAppBanner } from "@/components/providers/InstallAppBanner";
+import { BrokenImageGuard } from "@/components/providers/BrokenImageGuard";
 
 const inter = Inter({
 
@@ -99,9 +100,15 @@ export default function RootLayout({
 
         <InstallPromptCatcher />
         <InstallAppBanner />
+        <BrokenImageGuard />
         <Toaster position="top-center" reverseOrder={false} />
-        <Analytics />
-        <SpeedInsights />
+        {/* Vercel's analytics only exist on Vercel; on our server their scripts are 404s. */}
+        {process.env.VERCEL && (
+          <>
+            <Analytics />
+            <SpeedInsights />
+          </>
+        )}
         {/* Some screens report with sonner (daily report, fee, program progress, contact); both kinds of message show. */}
         <SonnerToaster position="top-center" richColors closeButton />
         <script src="https://accounts.google.com/gsi/client" async defer></script>

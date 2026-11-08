@@ -291,3 +291,11 @@
     scrollbar-color: #155DFC transparent;
   }
 }
+/* Nothing may push a phone screen sideways: a grid item can shrink below its longest
+   word, and a very long word in text breaks instead of overflowing. */
+.grid > * {
+  min-width: 0;
+}
+body {
+  overflow-wrap: break-word;
+}

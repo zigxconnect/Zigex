@@ -43,7 +43,7 @@ export function toBoardItem(kind: FeedKind, row: FeedRow): BoardItem {
     companyName: company?.company_name ?? "Zigex partner",
     companyLogo: usableImageUrl(company?.logo_url),
     companyVerified: Boolean(company?.is_verified),
-    image: typeof row[IMAGE_COLUMN[kind]] === "string" && row[IMAGE_COLUMN[kind]] ? row[IMAGE_COLUMN[kind]] : null,
+    image: usableImageUrl(row[IMAGE_COLUMN[kind]]),
     location: row.location ?? row.venue ?? null,
     workMode: mode && WORK_MODES.has(mode) ? (mode as BoardItem["workMode"]) : null,
     closesAt: row.deadline ?? row.application_deadline ?? null,
