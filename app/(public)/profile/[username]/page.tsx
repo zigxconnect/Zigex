@@ -16,11 +16,22 @@ const profilePath = (data: { username?: string | null; id: string }) =>
 
 const cleanName = (value: unknown) => String(value ?? "").replace(/\s+/g, " ").trim();
 
+/**
+ * The name people search for: the full registered name ("Mazwewoh John Brindi")
+ * when it contains the shown first and last name ("John Brindi"), else the shown one.
+ */
+function searchName(data: Record<string, any>) {
+  const shown = cleanName(data.full_name);
+  const registered = cleanName(data.registered_name);
+  const words = (v: string) => v.toLowerCase().split(" ").filter(Boolean);
+  return registered && words(shown).every((w) => words(registered).includes(w)) ? registered : shown;
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { username } = await params;
   const data = await getPublicProfileRow(decodeURIComponent(username)).catch(() => null);
   if (!data) return { title: "Student not found", robots: { index: false, follow: false } };
-  const name = cleanName(data.full_name) || "Zigex student";
+  const name = searchName(data) || "Zigex student";
   const school = [data.field_of_study, data.university].map(cleanName).filter(Boolean).join(", ");
   const about = cleanName(data.about);
   const description = (about || `${name}${school ? `, ${school}` : ""}. Student profile on Zigex.`).slice(0, 160);
@@ -31,6 +42,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     ...pageMetadata({ title: school ? `${name} – ${school}` : name, description, path: profilePath(data), type: "profile" }),
     robots: listable ? { index: true, follow: true } : { index: false, follow: false },
   };
+}
+
+/** Other names the student goes by: the shown name and the username, without repeats. */
+function alternateNames(data: Record<string, any>) {
+  const main = searchName(data).toLowerCase();
+  const names = [cleanName(data.full_name), cleanName(data.username)].filter((n) => n && n.toLowerCase() !== main);
+  return Array.from(new Set(names));
 }
 
 /** Lets search engines know the page is about this person (schema.org Person). */
@@ -44,8 +62,8 @@ function personJsonLd(data: Record<string, any> & { id: string }) {
     url: `${SITE_URL}${profilePath(data)}`,
     mainEntity: {
       "@type": "Person",
-      name: cleanName(data.full_name),
-      ...(data.username && { alternateName: data.username }),
+      name: searchName(data),
+      ...(alternateNames(data).length > 0 && { alternateName: alternateNames(data) }),
       ...(data.avatar_url && { image: data.avatar_url }),
       ...(cleanName(data.about) && { description: cleanName(data.about).slice(0, 500) }),
       ...(cleanName(data.university) && { affiliation: { "@type": "EducationalOrganization", name: cleanName(data.university) } }),
