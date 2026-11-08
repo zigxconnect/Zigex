@@ -3,6 +3,7 @@ import { listPublicFeed, type FeedKind } from "@/lib/api/services/feed";
 import { SITE_URL } from "@/lib/seo";
 import { listPublicProfileUsernames } from "@/lib/api/services/public-profile";
 import { slugifyUsername } from "@/lib/utils";
+import { publicPostingPath } from "@/lib/postings";
 
 // Rebuilt at most once an hour; the feed lists it reads are cached anyway.
 export const revalidate = 3600;
@@ -11,7 +12,7 @@ const KINDS: FeedKind[] = ["internships", "programs", "events"];
 
 /**
  * Public pages only: home, Explore, privacy, every open opportunity
- * (/feed/<id>, the shareable address), every company with one and every
+ * (/feed/<name>, the shareable address), every company with one and every
  * student profile its owner made public.
  * Signed-in pages aren't listed; robots.txt keeps crawlers out of them.
  */
@@ -33,7 +34,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       if (!row?.id) continue;
       const updated = row.updated_at ?? row.created_at;
       pages.push({
-        url: `${SITE_URL}/feed/${encodeURIComponent(row.id)}`,
+        url: `${SITE_URL}${publicPostingPath(row)}`,
         ...(updated && { lastModified: new Date(updated) }),
         changeFrequency: "weekly",
         priority: 0.8,

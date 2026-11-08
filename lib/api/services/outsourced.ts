@@ -16,6 +16,8 @@ const TIMEOUT_MS = 10_000;
 
 export type OutsourcedOpportunity = {
   id: string;
+  /** Readable address ("cern-short-term-internship-in-switzerland"). */
+  slug: string | null;
   section: OutsourcedSection;
   type: string;
   title: string;

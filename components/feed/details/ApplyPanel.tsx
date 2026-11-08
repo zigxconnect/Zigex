@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { CalendarClock, CircleDollarSign, Clock, MapPin, Monitor, Users } from "lucide-react";
+import { CalendarClock, ExternalLink, CircleDollarSign, Clock, MapPin, Monitor, Users } from "lucide-react";
 import { landingButton } from "@/components/sections/landing/landing-ui";
 import { ApplyActions } from "@/components/apply/ApplyActions";
 import type { ApplyPrefill } from "@/components/apply/ApplyDialog";
 import type { BoardItem } from "@/components/feed/board/board-types";
+import { publicPostingPath } from "@/lib/postings";
 
 type ApplicationStatus = { hasApplied: boolean; status: string | null; paymentCompleted?: boolean; applicationId?: string };
 
@@ -50,7 +51,8 @@ export function ApplyPanel({
   browse?: { href: string; label: string };
 }) {
   const action = ACTION[item.kind];
-  const next = encodeURIComponent(`/feed/${item.id}`);
+  const next = encodeURIComponent(publicPostingPath(item));
+  const outsideHost = item.applyUrl ? new URL(item.applyUrl).hostname.replace(/^www\./, "") : null;
   const days = item.closesAt ? Math.ceil((new Date(item.closesAt).getTime() - Date.now()) / 86_400_000) : null;
 
   const facts = [
@@ -81,7 +83,22 @@ export function ApplyPanel({
 
       {/* Action */}
       <div id="getStarted" className="mt-4 scroll-mt-28">
-        {isAuthenticated && (isOpen || applicationStatus.hasApplied) ? (
+        {/* The organiser takes applications on its own site: send students there. */}
+        {item.applyUrl && isOpen ? (
+          <div className="grid gap-2">
+            <a
+              href={item.applyUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`${landingButton("primary", "lg")} w-full gap-2`}
+            >
+              {action} on {outsideHost} <ExternalLink className="h-4 w-4" aria-hidden="true" />
+            </a>
+            <p className="text-center text-[13px] text-[#7B869C]">
+              Opens the organiser&apos;s website. They handle applications, not Zigex.
+            </p>
+          </div>
+        ) : isAuthenticated && (isOpen || applicationStatus.hasApplied) ? (
           <ApplyActions
             kind={item.kind.slice(0, -1) as "internship" | "program" | "event"}
             id={item.id}

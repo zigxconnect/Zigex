@@ -30,6 +30,11 @@ export const getFeedItemById = cache(async (idOrSlug: string): Promise<{ data: F
         return { data: { ...items[index]!, _type: FEED_KINDS[index] as FeedType }, error: null };
       }
     } else {
+      // The backend stores each post's readable address: ask every feed for it exactly.
+      const bySlug = await Promise.all(FEED_KINDS.map((kind) => getPublicFeedItem(kind, idOrSlug).catch(() => null)));
+      const found = bySlug.findIndex(Boolean);
+      if (found !== -1) return { data: { ...bySlug[found]!, _type: FEED_KINDS[found] as FeedType }, error: null };
+      // Older links made up from the title before slugs were stored.
       const match = await findFeedItemBySlug(idOrSlug);
       if (match) {
         // List rows can be trimmed; fetch the full detail object.

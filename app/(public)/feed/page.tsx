@@ -14,6 +14,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { publicPostingPath } from "@/lib/postings";
 import { OpportunityBoard } from "@/components/feed/board/OpportunityBoard";
 import { OpportunityCardSkeleton } from "@/components/feed/board/OpportunityCard";
 import { BoardRail } from "@/components/feed/board/BoardRail";
@@ -93,7 +94,7 @@ async function loadApplications(): Promise<ApplicationsSummary | null> {
           ? {
               title: latestRow[kind]?.title ?? "Your application",
               status: toApplicationStatus(latestRow.status) as "pending" | "accepted" | "rejected",
-              href: id ? `/feed/${id}` : null,
+              href: id ? publicPostingPath({ id, slug: latestRow[kind]?.slug }) : null,
             }
           : null,
     };

@@ -1,10 +1,13 @@
 import { usableImageUrl } from "@/lib/images";
+import { externalUrl } from "@/lib/postings";
 import type { FeedKind, FeedRow } from "@/lib/api/services/feed";
 import { daysUntil, isPast } from "@/lib/utils/deadline";
 
 /** One opportunity, flattened for the /feed board (no per-type branching in the UI). */
 export type BoardItem = {
   id: string;
+  /** Readable address ("cern-short-term-internship-in-switzerland"); null until the backend has one. */
+  slug: string | null;
   kind: FeedKind;
   title: string;
   companyName: string;
@@ -23,6 +26,11 @@ export type BoardItem = {
   priceXaf: number | null;
   postedAt: string | null;
   skills: string[];
+  /**
+   * Set when students apply on the organiser's own site: Apply opens it, and
+   * Zigex doesn't take or manage the application.
+   */
+  applyUrl: string | null;
 };
 
 const IMAGE_COLUMN: Record<FeedKind, string> = {
@@ -38,6 +46,7 @@ export function toBoardItem(kind: FeedKind, row: FeedRow): BoardItem {
   const mode = typeof row.type === "string" ? row.type.toLowerCase() : null;
   return {
     id: row.id,
+    slug: typeof row.slug === "string" && row.slug ? row.slug : null,
     kind,
     title: row.title,
     companyName: company?.company_name ?? "Zigex partner",
@@ -53,6 +62,7 @@ export function toBoardItem(kind: FeedKind, row: FeedRow): BoardItem {
     priceXaf: typeof row.price_xaf === "number" ? row.price_xaf : null,
     postedAt: row.created_at ?? null,
     skills: Array.isArray(row.required_skills) ? row.required_skills.filter(Boolean).slice(0, 3) : [],
+    applyUrl: externalUrl(row.application_url ?? row.apply_url ?? row.external_apply_url ?? (kind === "events" ? row.registration_link : null)),
   };
 }
 

@@ -92,7 +92,7 @@ export default async function OpportunitiesPage({ searchParams }: Props) {
             return (
               <li key={o.id}>
                 <Link
-                  href={`/opportunities/${o.id}`}
+                  href={`/opportunities/${encodeURIComponent(o.slug || o.id)}`}
                   className="group flex h-full flex-col rounded-2xl bg-white p-4 ring-1 ring-[#DCE5F5] transition-shadow hover:shadow-[0_18px_40px_-20px_rgba(11,27,63,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC]"
                 >
                   <div className="flex items-center justify-between gap-2 text-sm text-[#4A5670]">

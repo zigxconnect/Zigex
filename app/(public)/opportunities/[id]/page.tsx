@@ -4,7 +4,8 @@
  */
 
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
+import { isUuid } from "@/lib/postings";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { OutsourcedCover } from "@/components/outsourced/OutsourcedCover";
 import { dayLabel, fundingLabel, placeLabel, typeLabel } from "@/components/outsourced/outsourced-labels";
@@ -17,12 +18,15 @@ export async function generateMetadata({ params }: Props) {
   const { id } = await params;
   const o = await getOutsourced(id);
   if (!o) return { title: "Opportunity not found" };
-  return pageMetadata({ title: o.title, description: `${typeLabel(o.type) || "Opportunity"} by ${o.organization}, ${placeLabel(o)}.`, path: `/opportunities/${o.id}` });
+  return pageMetadata({ title: o.title, description: `${typeLabel(o.type) || "Opportunity"} by ${o.organization}, ${placeLabel(o)}.`, path: `/opportunities/${encodeURIComponent(o.slug || o.id)}` });
 }
 
 export default async function OutsourcedDetailPage({ params }: Props) {
-  const o = await getOutsourced((await params).id);
+  const { id } = await params;
+  const o = await getOutsourced(id);
   if (!o) notFound();
+  // Opened by id (an old link or notification): move to the readable address.
+  if (isUuid(id) && o.slug) permanentRedirect(`/opportunities/${encodeURIComponent(o.slug)}`);
 
   const deadline = dayLabel(o.deadline);
   const starts = dayLabel(o.start_date);

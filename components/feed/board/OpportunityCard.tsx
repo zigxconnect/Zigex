@@ -7,6 +7,7 @@ import { Briefcase, CalendarClock, CalendarDays, GraduationCap } from "lucide-re
 import { isClosed, type BoardItem } from "./board-types";
 import { daysUntil, deadlineDay } from "@/lib/utils/deadline";
 import { CoverImage } from "@/components/CoverImage";
+import { postingPath } from "@/lib/postings";
 import { SafeImg } from "@/components/SafeImg";
 
 const KIND = {
@@ -56,7 +57,7 @@ export function OpportunityCard({ item, headingLevel = 3 }: { item: BoardItem; h
   const where = [item.workMode && item.workMode[0].toUpperCase() + item.workMode.slice(1), item.location].filter(Boolean).join(", ");
   const daysLeft = daysUntil(item.closesAt);
   const urgent = !closed && daysLeft !== null && daysLeft <= 7;
-  const href = item.kind === "programs" ? `/programs/${item.id}` : `/feed/${item.id}`;
+  const href = postingPath(item.kind, item);
 
   return (
     <Link

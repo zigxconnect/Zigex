@@ -11,7 +11,8 @@
 import { Suspense } from "react";
 import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
+import { isUuid, postingPath, publicPostingPath } from "@/lib/postings";
 import { ArrowLeft, Briefcase, CalendarDays, GraduationCap } from "lucide-react";
 import {
   getApplicationStatus,
@@ -53,8 +54,8 @@ export async function opportunityMetadata(id: string) {
   // Company texts often open by repeating the title; drop that so the description adds information.
   const body = seoText((item as { description?: string }).description, 400).replace(new RegExp(`^${item.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*`, "i"), "");
   const description = seoText(`${lead} ${body}`) || `Apply for ${item.title} on Zigex.`;
-  // /programs/<id> shows the same page inside the app; the public /feed/<id> address is the one to index and share.
-  return pageMetadata({ title: item.title, description, path: `/feed/${encodeURIComponent(item.id)}`, type: "article" });
+  // /programs/<name> shows the same page inside the app; the public /feed/<name> address is the one to index and share.
+  return pageMetadata({ title: item.title, description, path: publicPostingPath(item), type: "article" });
 }
 
 /** The company's description often opens with its own <h1> repeating the title; the page already has one. */
@@ -69,7 +70,7 @@ export async function OpportunityDetail({ id, back }: { id: string; back: BackLi
         <h1 className="font-heading text-2xl font-bold text-[#0B1B3F]">This page didn&apos;t load</h1>
         <p className="mt-2 text-base text-[#4A5670]">Zigex is slow to respond right now. Try again in a moment.</p>
         <div className="mt-6 flex justify-center gap-2">
-          <a href={back.href === "/feed" ? `/feed/${id}` : `/programs/${id}`} className="inline-flex h-11 items-center rounded-xl bg-[#155DFC] px-5 text-[15px] font-semibold text-white hover:bg-[#0F3FB8]">
+          <a href={back.href === "/feed" ? `/feed/${encodeURIComponent(id)}` : `/programs/${encodeURIComponent(id)}`} className="inline-flex h-11 items-center rounded-xl bg-[#155DFC] px-5 text-[15px] font-semibold text-white hover:bg-[#0F3FB8]">
             Try again
           </a>
           <Link href={back.href} className="inline-flex h-11 items-center rounded-xl border border-[#DCE5F5] bg-white px-5 text-[15px] font-semibold text-[#0B1B3F] hover:bg-[#F3F7FF]">
@@ -83,6 +84,8 @@ export async function OpportunityDetail({ id, back }: { id: string; back: BackLi
 
   const kind = raw._type as FeedKind;
   const item = toBoardItem(kind, raw);
+  // Opened by id (an old link, a notification): move to the readable address.
+  if (isUuid(id) && item.slug) permanentRedirect(back.href === "/feed" ? publicPostingPath(item) : postingPath(kind, item));
   const meta = KIND_META[kind];
   const company = typeof raw.company_profiles === "object" ? raw.company_profiles : raw.company ?? null;
   const companyId: string | undefined = company?.id || raw.company_id;
@@ -108,7 +111,7 @@ export async function OpportunityDetail({ id, back }: { id: string; back: BackLi
   ]);
 
   // JobPosting / Event / Course for search engines (null when key facts are missing).
-  const structuredData = opportunityLd(item, String((raw as { description?: string }).description ?? ""), `/feed/${raw.id}`);
+  const structuredData = opportunityLd(item, String((raw as { description?: string }).description ?? ""), publicPostingPath(item));
 
   const opportunityData = {
     title: raw.title,

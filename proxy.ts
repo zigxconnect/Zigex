@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { ACCESS_TOKEN_COOKIE } from "@/lib/api/config";
+import { ACCESS_TOKEN_COOKIE, API_PREFIX, BACKEND_URL } from "@/lib/api/config";
 import { readSession } from "@/lib/api/jwt";
 import { sanitizeRedirectUrl } from "@/lib/utils/redirect";
 
@@ -25,6 +25,28 @@ const PUBLIC_API_PREFIXES = ["/api/v1/", "/api/health"];
 // Not "/company": /company/[id] is the student-facing company page.
 const ADMIN_APP_PREFIXES = ["/admin", "/company/sign-up", "/verify-otp", "/supervisor"];
 const ADMIN_APP_URL = (process.env.NEXT_PUBLIC_ADMIN_APP_URL ?? "https://admin.zigexconnect.com").replace(/\/$/, "");
+
+// Opportunity pages opened by id (/feed/<id>, /programs/<id>/updates): the
+// readable address. Old links, shares and notifications use ids.
+const ID_ADDRESS = /^\/(feed|programs)\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(\/updates)?\/?$/i;
+
+/** The slug of the post with this id, or null (unknown, no slug yet, or the backend didn't answer). */
+async function slugForId(section: string, id: string): Promise<string | null> {
+  const kinds = section === "programs" ? ["programs"] : ["internships", "events", "programs"];
+  const slugs = await Promise.all(
+    kinds.map(async (kind) => {
+      try {
+        const res = await fetch(`${BACKEND_URL}${API_PREFIX}/feed/${kind}/${id}`, { signal: AbortSignal.timeout(3000) });
+        if (!res.ok) return null;
+        const slug = (await res.json())?.data?.slug;
+        return typeof slug === "string" && slug ? slug : null;
+      } catch {
+        return null;
+      }
+    })
+  );
+  return slugs.find(Boolean) ?? null;
+}
 
 function withSecurityHeaders(response: NextResponse) {
   for (const [name, value] of Object.entries(SECURITY_HEADERS)) response.headers.set(name, value);
@@ -67,6 +89,16 @@ export async function proxy(request: NextRequest) {
   // data; the opportunity page resolves any internship, program or event id.
   const oldNotification = pathname.match(/^\/notifications\/([^/]+)$/);
   if (oldNotification) return redirectTo(request, `/feed/${oldNotification[1]}`);
+
+  // A page opened by id moves, permanently, to the address made from its title.
+  const byId = ID_ADDRESS.exec(pathname);
+  if (byId) {
+    const slug = await slugForId(byId[1], byId[2]);
+    if (slug) {
+      const url = new URL(`/${byId[1]}/${encodeURIComponent(slug)}${byId[3] ?? ""}${request.nextUrl.search}`, request.url);
+      return withSecurityHeaders(NextResponse.redirect(url, 308));
+    }
+  }
 
   const session = readSession(request.cookies.get(ACCESS_TOKEN_COOKIE)?.value);
   const isApi = pathname.startsWith("/api/");

@@ -3,6 +3,7 @@ import { Clock, MapPin } from "lucide-react";
 import { latestFeed, type FeedKind } from "@/lib/api/services/feed";
 import { isClosed, toBoardItem, type BoardItem } from "@/components/feed/board/board-types";
 import { usableImageUrl } from "@/lib/images";
+import { publicPostingPath } from "@/lib/postings";
 import { SafeImg } from "@/components/SafeImg";
 
 const KINDS: FeedKind[] = ["internships", "programs", "events"];
@@ -39,7 +40,7 @@ export async function HeroOpportunity() {
 
   return (
     <Link
-      href={`/feed/${item.id}`}
+      href={publicPostingPath(item)}
       className="relative -mt-10 ml-4 mr-4 block rounded-2xl border border-[#DCE5F5] bg-white p-3.5 shadow-[0_12px_32px_-12px_rgba(11,27,63,0.25)] transition-shadow hover:shadow-[0_16px_36px_-12px_rgba(11,27,63,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] sm:ml-auto sm:mr-6 sm:max-w-[320px] lg:absolute lg:-bottom-14 lg:left-6 lg:m-0 lg:w-[300px]"
     >
       <div className="flex items-start gap-3">

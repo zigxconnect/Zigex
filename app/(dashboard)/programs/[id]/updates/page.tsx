@@ -1,10 +1,12 @@
 // Program Updates Page - Server Component
 import { Metadata } from "next";
-import { redirect } from "next/navigation";
+import { permanentRedirect, redirect } from "next/navigation";
 import ProgramUpdatesClient from "./ProgramUpdatesClient";
 import { getProgramContentCached, getStudentEnrollment } from "@/lib/actions/program-content.actions";
 import { getSession } from "@/lib/api/auth";
 import { getProgramMembers, resolveProgramId } from "@/lib/api/services/programs";
+import { getPublicFeedItem } from "@/lib/api/services/feed";
+import { isUuid } from "@/lib/postings";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -24,6 +26,12 @@ export default async function ProgramUpdatesPage({ params }: PageProps) {
   const session = await getSession();
   if (!session) {
     redirect(`/sign-in?next=/programs/${id}/updates`);
+  }
+
+  // Opened by id (an old link, a notification): move to the program's readable address.
+  if (isUuid(id)) {
+    const program = await getPublicFeedItem("programs", id).catch(() => null);
+    if (typeof program?.slug === "string" && program.slug) permanentRedirect(`/programs/${encodeURIComponent(program.slug)}/updates`);
   }
 
   const programId = (await resolveProgramId(id)) ?? id;

@@ -1,7 +1,7 @@
 import "server-only";
 import { serverApi } from "../server-client";
 import { whenAvailable } from "../errors";
-import { findFeedItemBySlug } from "./feed";
+import { findFeedItemBySlug, getPublicFeedItem } from "./feed";
 import { listApplications } from "./applications";
 import { getMyProfile } from "./profile";
 
@@ -15,6 +15,8 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 /** Program pages are linked by id or by a slug of the title. */
 export async function resolveProgramId(idOrSlug: string): Promise<string | null> {
   if (UUID_RE.test(idOrSlug)) return idOrSlug;
+  const program = await getPublicFeedItem("programs", idOrSlug).catch(() => null);
+  if (program?.id) return program.id;
   const match = await findFeedItemBySlug(idOrSlug);
   return match?.kind === "programs" ? match.item.id : null;
 }
