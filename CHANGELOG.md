@@ -2,7 +2,11 @@
 
 What changed for students in each release. Newest first. Versions follow [semantic versioning](https://semver.org): patch for fixes, minor for new features, major for breaking changes.
 
-New changes go under a top section `## 1.7.1 (2026-11-08)
+New changes go under a top section `## Unreleased
+
+- **Recommended for you:** when recommendations can't be reached, the section stays out of the way instead of showing an error; "being prepared" and "no new matches" read clearly.
+
+## 1.7.1 (2026-11-08)
 
 - **Apply button:** opportunities run by other organisers just say "Apply" (it still opens their site).
 

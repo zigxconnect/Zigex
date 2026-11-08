@@ -86,25 +86,22 @@ export async function RecommendedPicks() {
     );
   }
 
+  // The AI service is down or not set up: show nothing rather than an error, the
+  // opportunities board below is the page's main content anyway (logged in loadMyDigest).
+  if (state.status === "unavailable") return null;
+
   if (state.status !== "ready") {
-    const unavailable = state.status === "unavailable";
     const preparing = state.status === "preparing";
     return (
       <section aria-labelledby="recommended-title" className="mb-8 rounded-2xl bg-[#F3F7FF] px-5 py-5 ring-1 ring-[#DCE5F5]">
-        <p className="text-sm font-semibold text-[#155DFC]">Recommended opportunities</p>
+        <p className="text-sm font-semibold text-[#155DFC]">Recommended for you</p>
         <h2 id="recommended-title" className="mt-1 font-heading text-xl font-bold leading-tight text-[#0B1B3F]">
-          {unavailable
-            ? "Recommendations couldn’t load"
-            : preparing
-              ? "Your recommendations are being prepared"
-              : "No matching opportunities found yet"}
+          {preparing ? "We're finding opportunities for you" : "No new matches this week"}
         </h2>
         <p className="mt-1 max-w-[62ch] text-[15px] leading-relaxed text-[#4A5670]">
-          {unavailable
-            ? "Your personalized picks aren’t available right now. Try again later; all open Zigex opportunities are listed below."
-            : preparing
-              ? "We’re searching for opportunities based on your profile. This section will refresh automatically when they’re ready."
-              : "We couldn’t find suitable open opportunities for your profile right now. All open Zigex opportunities are listed below."}
+          {preparing
+            ? "We're searching for opportunities that fit your profile. They'll appear here in a few minutes, and we'll notify you."
+            : "We'll keep looking and add new matches here. In the meantime, everything open on Zigex is below."}
         </p>
         {preparing && <RefreshWhilePreparing />}
       </section>
