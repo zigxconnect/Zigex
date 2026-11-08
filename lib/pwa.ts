@@ -25,8 +25,12 @@ export function isIOSSafari() {
 
 const DAY = 24 * 60 * 60 * 1000;
 
-/** True when the student said "Not now" less than `days` ago. Storage may be blocked: then ask again. */
-export function dismissedRecently(key: string, days = 14) {
+/**
+ * True when the student said "Not now" less than `days` ago. Installing the app and
+ * turning on notifications keep a student reachable, so we ask again after 3 days.
+ * Storage may be blocked: then ask again.
+ */
+export function dismissedRecently(key: string, days = 3) {
   try {
     const at = Number(localStorage.getItem(key));
     return Boolean(at) && Date.now() - at < days * DAY;

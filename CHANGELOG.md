@@ -2,7 +2,11 @@
 
 What changed for students in each release. Newest first. Versions follow [semantic versioning](https://semver.org): patch for fixes, minor for new features, major for breaking changes.
 
-New changes go under a top section `## 1.7.2 (2026-11-08)
+New changes go under a top section `## Unreleased
+
+- **Reminders:** "Not now" on "Install Zigex" or "Turn on notifications" now waits 3 days before asking again (was 2 weeks), until the app is installed and notifications are on.
+
+## 1.7.2 (2026-11-08)
 
 - **Recommended for you:** when recommendations can't be reached, the section stays out of the way instead of showing an error; "being prepared" and "no new matches" read clearly.
 
