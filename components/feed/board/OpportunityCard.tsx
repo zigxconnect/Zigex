@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 import Link from "next/link";
-import { BadgeCheck, Briefcase, CalendarClock, CalendarDays, GraduationCap } from "lucide-react";
+import { Briefcase, CalendarClock, CalendarDays, GraduationCap } from "lucide-react";
 import { isClosed, type BoardItem } from "./board-types";
 import { daysUntil, deadlineDay } from "@/lib/utils/deadline";
 import { CoverImage } from "@/components/CoverImage";
@@ -70,7 +71,7 @@ export function OpportunityCard({ item, headingLevel = 3 }: { item: BoardItem; h
           {item.companyLogo && <SafeImg src={item.companyLogo} alt="" className="absolute inset-0 h-full w-full bg-white object-cover" />}
         </span>
         <span className="min-w-0 truncate font-medium">{item.companyName}</span>
-        {item.companyVerified && <BadgeCheck className="h-4 w-4 shrink-0 text-[#155DFC]" aria-label="Verified company" />}
+        {item.companyVerified && <VerifiedBadge className="text-base" />}
         <span className="ml-auto inline-flex shrink-0 items-center gap-1 text-xs font-medium text-[#7B869C]">
           <kind.icon className="h-3.5 w-3.5" aria-hidden="true" />
           {kind.label}

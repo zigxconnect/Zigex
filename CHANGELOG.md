@@ -2,7 +2,14 @@
 
 What changed for students in each release. Newest first. Versions follow [semantic versioning](https://semver.org): patch for fixes, minor for new features, major for breaking changes.
 
-New changes go under a top section `## 1.4.0 (2026-11-08)
+New changes go under a top section `## Unreleased
+
+- **Your profile on Google:** public profiles can now be found by searching your name, with your school, course and skills. Profiles set to "Zigex members only" stay out of search results.
+- **Profile links work again** for older accounts whose username has a space or capitals (zigexconnect.com/profile/John_Brindi).
+- **More opportunities filters:** search, In Cameroon or Abroad, funding and type, with counts on each tab. Filters stay in the address, so you can share a filtered list.
+- **Verified companies** show a solid blue verified badge next to their name.
+
+## 1.4.0 (2026-11-08)
 
 - **Turning on notifications** is quick, says "Notifications are on" and sends a test notification to your phone. If something is slow it tells you what to do instead of spinning. Settings has "Send a test notification".
 - **Less data:** installing Zigex no longer downloads 9 MB of pictures up front; they load when you open the page that shows them.

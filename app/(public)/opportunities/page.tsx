@@ -9,7 +9,9 @@ import Link from "next/link";
 import { CalendarClock, MapPin } from "lucide-react";
 import { OutsourcedCover } from "@/components/outsourced/OutsourcedCover";
 import { dayLabel, fundingLabel, placeLabel, typeLabel } from "@/components/outsourced/outsourced-labels";
-import { listOutsourced, OUTSOURCED_SECTIONS, type OutsourcedPage, type OutsourcedSection } from "@/lib/api/services/outsourced";
+import { OutsourcedFilterBar } from "@/components/outsourced/OutsourcedFilterBar";
+import { listOutsourced, type OutsourcedPage } from "@/lib/api/services/outsourced";
+import { outsourcedHref, readOutsourcedFilters, type OutsourcedSection } from "@/lib/outsourced-filters";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
@@ -25,24 +27,15 @@ const TABS: { id: OutsourcedSection | null; label: string }[] = [
   { id: "fellowship", label: "Fellowships" },
 ];
 
-const linkFor = (section: OutsourcedSection | null, page = 1) => {
-  const params = new URLSearchParams();
-  if (section) params.set("section", section);
-  if (page > 1) params.set("page", String(page));
-  const query = params.toString();
-  return query ? `/opportunities?${query}` : "/opportunities";
-};
-
-type Props = { searchParams: Promise<{ section?: string; page?: string }> };
+type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
 export default async function OpportunitiesPage({ searchParams }: Props) {
-  const query = await searchParams;
-  const section = OUTSOURCED_SECTIONS.find((s) => s === query.section) ?? null;
-  const page = Math.max(1, Number.parseInt(query.page ?? "1", 10) || 1);
+  const filters = readOutsourcedFilters(await searchParams);
+  const { section, page } = filters;
 
   let data: OutsourcedPage | null = null;
   try {
-    data = await listOutsourced(section, page);
+    data = await listOutsourced(filters);
   } catch (error) {
     console.error("[opportunities] list failed:", error);
   }
@@ -56,28 +49,43 @@ export default async function OpportunitiesPage({ searchParams }: Props) {
 
       <nav aria-label="Sections" className="-mx-4 mt-5 overflow-x-auto px-4 sm:mx-0 sm:px-0">
         <ul className="flex w-max gap-2">
-          {TABS.map((tab) => (
-            <li key={tab.label}>
-              <Link
-                href={linkFor(tab.id)}
-                aria-current={tab.id === section ? "page" : undefined}
-                className={`inline-flex h-10 items-center rounded-full px-4 text-sm font-semibold ring-1 ring-[#DCE5F5] ${
-                  tab.id === section ? "bg-[#0B1B3F] text-white" : "bg-white text-[#0B1B3F] hover:bg-[#F3F7FF]"
-                }`}
-              >
-                {tab.label}
-              </Link>
-            </li>
-          ))}
+          {TABS.map((tab) => {
+            const count = tab.id ? data?.counts?.[tab.id] : data?.counts && Object.values(data.counts).reduce((a, b) => a + b, 0);
+            const current = tab.id === section;
+            return (
+              <li key={tab.label}>
+                <Link
+                  href={outsourcedHref({ ...filters, section: tab.id, page: 1 })}
+                  scroll={false}
+                  aria-current={current ? "page" : undefined}
+                  className={`inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm font-semibold ring-1 ring-[#DCE5F5] ${
+                    current ? "bg-[#0B1B3F] text-white" : "bg-white text-[#0B1B3F] hover:bg-[#F3F7FF]"
+                  }`}
+                >
+                  {tab.label}
+                  {typeof count === "number" && (
+                    <span className={`text-xs tabular-nums ${current ? "text-white/70" : "text-[#7B869C]"}`}>{count}</span>
+                  )}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       </nav>
+
+      <OutsourcedFilterBar key={outsourcedHref({ ...filters, page: 1 })} filters={filters} />
+
+      {data && <p className="mt-5 text-sm text-[#4A5670]">{data.total === 1 ? "1 opportunity" : `${data.total} opportunities`}</p>}
 
       {!data ? (
         <Notice title="These opportunities couldn't load." body="Refresh the page in a moment." />
       ) : data.items.length === 0 ? (
-        <Notice title="Nothing here right now." body="New opportunities are added often, so check back soon." />
+        <Notice
+          title={filters.local !== null || filters.funding || filters.type || filters.q ? "Nothing matches these filters." : "Nothing here right now."}
+          body={filters.local !== null || filters.funding || filters.type || filters.q ? "Try fewer filters, or clear them." : "New opportunities are added often, so check back soon."}
+        />
       ) : (
-        <ul className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {data.items.map((o) => {
             const funding = fundingLabel(o.funding);
             const deadline = dayLabel(o.deadline);
@@ -118,9 +126,9 @@ export default async function OpportunitiesPage({ searchParams }: Props) {
 
       {data && data.total_pages > 1 && (
         <nav aria-label="Pages" className="mt-8 flex items-center justify-between gap-3 text-sm font-semibold">
-          {page > 1 ? <Link href={linkFor(section, page - 1)} className="text-[#155DFC] hover:underline">Previous</Link> : <span />}
+          {page > 1 ? <Link href={outsourcedHref({ ...filters, page: page - 1 })} className="text-[#155DFC] hover:underline">Previous</Link> : <span />}
           <span className="font-normal text-[#4A5670]">Page {page} of {data.total_pages}</span>
-          {page < data.total_pages ? <Link href={linkFor(section, page + 1)} className="text-[#155DFC] hover:underline">Next</Link> : <span />}
+          {page < data.total_pages ? <Link href={outsourcedHref({ ...filters, page: page + 1 })} className="text-[#155DFC] hover:underline">Next</Link> : <span />}
         </nav>
       )}
     </div>

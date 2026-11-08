@@ -1,6 +1,9 @@
 import "server-only";
 import { ApiClientError, parseResponse } from "../errors";
 import { usableImageUrl } from "@/lib/images";
+import type { OutsourcedFilters, OutsourcedSection } from "@/lib/outsourced-filters";
+
+export { OUTSOURCED_SECTIONS, type OutsourcedSection } from "@/lib/outsourced-filters";
 
 /**
  * Opportunities Zigex shares but doesn't manage (summits, foreign programs,
@@ -10,9 +13,6 @@ import { usableImageUrl } from "@/lib/images";
  */
 const ADMIN_API_URL = (process.env.ADMIN_API_URL ?? "https://adminapi.zigexconnect.com").replace(/\/$/, "");
 const TIMEOUT_MS = 10_000;
-
-export const OUTSOURCED_SECTIONS = ["general", "foreign", "fellowship"] as const;
-export type OutsourcedSection = (typeof OUTSOURCED_SECTIONS)[number];
 
 export type OutsourcedOpportunity = {
   id: string;
@@ -33,7 +33,15 @@ export type OutsourcedOpportunity = {
   is_open: boolean;
 };
 
-export type OutsourcedPage = { items: OutsourcedOpportunity[]; total: number; page: number; total_pages: number };
+export type OutsourcedCounts = Record<OutsourcedSection, number>;
+export type OutsourcedPage = {
+  items: OutsourcedOpportunity[];
+  total: number;
+  page: number;
+  total_pages: number;
+  /** How many match the other filters in each section, for the tab numbers. */
+  counts?: OutsourcedCounts;
+};
 
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${ADMIN_API_URL}/api/public/opportunities${path}`, {
@@ -60,9 +68,13 @@ const clean = (row: OutsourcedOpportunity): OutsourcedOpportunity => ({
 });
 
 /** The API sorts Cameroon first, then the soonest deadline: keep its order. */
-export async function listOutsourced(section: OutsourcedSection | null, page: number): Promise<OutsourcedPage> {
-  const params = new URLSearchParams({ page: String(page), pageSize: "24" });
-  if (section) params.set("section", section);
+export async function listOutsourced(filters: OutsourcedFilters): Promise<OutsourcedPage> {
+  const params = new URLSearchParams({ page: String(filters.page), pageSize: "24" });
+  if (filters.section) params.set("section", filters.section);
+  if (filters.local !== null) params.set("local", String(filters.local));
+  if (filters.funding) params.set("funding", filters.funding);
+  if (filters.type) params.set("type", filters.type);
+  if (filters.q) params.set("q", filters.q);
   const data = await get<OutsourcedPage>(`?${params}`);
   return { ...data, items: data.items.map(clean) };
 }

@@ -9,8 +9,9 @@ export default function robots(): MetadataRoute.Robots {
         rules: {
             userAgent: '*',
             allow: ['/', '/api/health'],
-            // Signed-in areas and the API: nothing for search engines there.
-            disallow: ['/api/', '/dashboard/', '/notifications', '/profile-settings', '/profile/', '/programs/', '/student/', '/intern/', '/create-profile', '/profile-complete', '/studio'],
+            // Signed-in areas and the API: nothing for search engines there. Public student
+            // profiles (/profile/…) stay open; each page says whether it may be listed.
+            disallow: ['/api/', '/dashboard/', '/notifications', '/profile-settings', '/programs/', '/student/', '/intern/', '/create-profile', '/profile-complete', '/studio'],
         },
         sitemap: `${SITE_URL}/sitemap.xml`,
         host: SITE_URL,

@@ -1,4 +1,5 @@
 import { pageMetadata, plainText } from "@/lib/seo";
+import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 /**
  * Company profile — app/(public)/company/[id]/page.tsx
  *
@@ -12,7 +13,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   ArrowLeft,
-  BadgeCheck,
   Building2,
   CalendarDays,
   ExternalLink,
@@ -126,12 +126,12 @@ export default async function CompanyPage({ params }: Props) {
             <div className="min-w-0">
               <h1 className="font-heading text-2xl font-bold tracking-tight text-[#0B1B3F] sm:text-3xl">
                 {company.company_name}
+                {verified && <VerifiedBadge className="ml-1.5" />}
               </h1>
               <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[#4A5670]">
                 {verified && (
                   <span className="inline-flex items-center gap-1 font-medium text-[#155DFC]">
-                    <BadgeCheck className="h-4 w-4" aria-hidden="true" />{" "}
-                    Verified by Zigex
+                    <VerifiedBadge label="" className="text-[15px]" /> Verified by Zigex
                   </span>
                 )}
                 {industry && <span>{industry}</span>}

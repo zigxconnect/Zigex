@@ -2,7 +2,8 @@ import "server-only";
 import { cache } from "react";
 import { usableImageUrl } from "@/lib/images";
 import { serverApi } from "../server-client";
-import { ApiClientError, whenAvailable } from "../errors";
+import { ApiClientError, parseResponse, whenAvailable } from "../errors";
+import { API_PREFIX, BACKEND_URL } from "../config";
 import { fetchAllUserProjects } from "@/lib/actions/getProjects.action";
 import { displayName, getMyProfile } from "./profile";
 
@@ -87,4 +88,21 @@ export async function getPublicProfile(username: string) {
     connectionStats: connectionStats ?? EMPTY_CONNECTIONS,
     badges: data.badges ?? [],
   };
+}
+
+/**
+ * Usernames of profiles the students made public, for the sitemap. Cached for an
+ * hour; an empty list when the backend doesn't answer (the sitemap still works).
+ */
+export async function listPublicProfileUsernames(): Promise<{ username: string; updated_at: string | null }[]> {
+  try {
+    const res = await fetch(`${BACKEND_URL}${API_PREFIX}/students/public-index`, {
+      next: { revalidate: 3600 },
+      signal: AbortSignal.timeout(10_000),
+    });
+    return (await parseResponse<{ username: string; updated_at: string | null }[]>(res)).data ?? [];
+  } catch (error) {
+    console.error("[sitemap] public profiles failed:", error);
+    return [];
+  }
 }

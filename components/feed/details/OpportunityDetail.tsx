@@ -9,9 +9,10 @@
  */
 
 import { Suspense } from "react";
+import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, BadgeCheck, Briefcase, CalendarDays, GraduationCap } from "lucide-react";
+import { ArrowLeft, Briefcase, CalendarDays, GraduationCap } from "lucide-react";
 import {
   getApplicationStatus,
   getCompanyRelatedItems,
@@ -157,7 +158,7 @@ export async function OpportunityDetail({ id, back }: { id: string; back: BackLi
               )}
               {item.companyVerified && (
                 <p className="flex items-center gap-1 text-[13px] text-[#4A5670]">
-                  <BadgeCheck className="h-4 w-4 text-[#155DFC]" aria-hidden="true" /> Verified company
+                  <VerifiedBadge label="" className="text-[15px]" /> Verified company
                 </p>
               )}
             </div>

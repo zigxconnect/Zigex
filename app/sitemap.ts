@@ -1,6 +1,8 @@
 import type { MetadataRoute } from "next";
 import { listPublicFeed, type FeedKind } from "@/lib/api/services/feed";
 import { SITE_URL } from "@/lib/seo";
+import { listPublicProfileUsernames } from "@/lib/api/services/public-profile";
+import { slugifyUsername } from "@/lib/utils";
 
 // Rebuilt at most once an hour; the feed lists it reads are cached anyway.
 export const revalidate = 3600;
@@ -9,7 +11,8 @@ const KINDS: FeedKind[] = ["internships", "programs", "events"];
 
 /**
  * Public pages only: home, Explore, privacy, every open opportunity
- * (/feed/<id>, the shareable address) and every company with one.
+ * (/feed/<id>, the shareable address), every company with one and every
+ * student profile its owner made public.
  * Signed-in pages aren't listed; robots.txt keeps crawlers out of them.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -41,6 +44,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
   for (const id of companies) {
     pages.push({ url: `${SITE_URL}/company/${encodeURIComponent(id)}`, changeFrequency: "weekly", priority: 0.5 });
+  }
+  // Students who made their profile public, so a search for their name finds it.
+  for (const p of await listPublicProfileUsernames()) {
+    pages.push({
+      url: `${SITE_URL}/profile/${encodeURIComponent(slugifyUsername(p.username))}`,
+      ...(p.updated_at && { lastModified: new Date(p.updated_at) }),
+      changeFrequency: "weekly",
+      priority: 0.4,
+    });
   }
   return pages;
 }

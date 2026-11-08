@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { BadgeCheck, CalendarClock } from "lucide-react";
+import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
+import { CalendarClock } from "lucide-react";
 import type { FeedRow } from "@/lib/api/services/feed";
 import { daysUntil, isPast } from "@/lib/utils/deadline";
 import { CoverImage } from "@/components/CoverImage";
@@ -109,7 +110,7 @@ export function ProgramCard({ program: p }: { program: ProgramView }) {
           </span>
         )}
         <span className="truncate font-medium">{p.company}</span>
-        {p.verified && <BadgeCheck className="h-4 w-4 shrink-0 text-[#155DFC]" aria-label="Verified company" />}
+        {p.verified && <VerifiedBadge className="text-base" />}
       </div>
       <h3 className="mt-2 line-clamp-2 min-h-[2.75rem] font-heading text-lg font-semibold leading-snug text-[#0B1B3F]">
         {p.title}
