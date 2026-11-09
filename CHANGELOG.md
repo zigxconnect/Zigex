@@ -2,7 +2,7 @@
 
 What changed for students in each release. Newest first. Versions follow [semantic versioning](https://semver.org): patch for fixes, minor for new features, major for breaking changes.
 
-New changes go under a top section `## Unreleased
+New changes go under a top section `## 1.8.2 (2026-11-09)
 
 - **Notifications repair themselves:** if a device's subscription stopped working, Zigex notices and renews it the next time the app opens, without asking.
 - **"Send a test notification"** now tests this exact device and says where to look if nothing appears.
