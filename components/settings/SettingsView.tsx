@@ -9,7 +9,7 @@ import { ApiClientError } from "@/lib/api/errors";
 import { unsubscribeFromPushNotifications } from "@/lib/actions/push.actions";
 import { subscriptionMatchesKey } from "@/lib/push-keys";
 import { enableDevicePush, rememberPushChoice } from "@/lib/push-subscribe";
-import { confirmPushOn } from "@/lib/push-feedback";
+import { confirmPushOn, testThisDevice } from "@/lib/push-feedback";
 import { PasswordInput, PasswordStrength, passwordStrength } from "@/components/sections/auth/auth-ui";
 import { DeleteAccount } from "./DeleteAccount";
 import { InstallApp } from "@/components/settings/InstallApp";
@@ -283,7 +283,7 @@ function DeviceNotifications() {
           disabled={busy}
           onClick={async () => {
             setBusy(true);
-            await confirmPushOn();
+            await testThisDevice();
             setBusy(false);
           }}
           className="mt-3 text-sm font-semibold text-[#155DFC] hover:underline disabled:opacity-60"

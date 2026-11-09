@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useCallback } from "react";
-import { subscribeToPushNotifications, unsubscribeFromPushNotifications } from "@/lib/actions/push.actions";
+import { pushSubscriptionRegistered, subscribeToPushNotifications, unsubscribeFromPushNotifications } from "@/lib/actions/push.actions";
 import { subscriptionMatchesKey, urlBase64ToUint8Array } from "@/lib/push-keys";
 import { pushTurnedOffHere } from "@/lib/push-subscribe";
 
@@ -55,6 +55,13 @@ export function PushNotificationManager() {
                 }
                 const fresh = last.endpoint === existingSubscription.endpoint && Date.now() - (last.at ?? 0) < 24 * 60 * 60 * 1000;
                 if (fresh) return;
+                // We saved this subscription before and the server no longer has it: the push
+                // service reported it dead. Saving it again wouldn't help, so get a new one.
+                if (key && Notification.permission === "granted" && last.endpoint === existingSubscription.endpoint && (await pushSubscriptionRegistered(existingSubscription.endpoint)) === false) {
+                    console.log("[PUSH_MANAGER] Subscription was removed as dead; renewing it.");
+                    await existingSubscription.unsubscribe().catch(() => {});
+                    existingSubscription = await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(key) });
+                }
                 const result = await subscribeToPushNotifications(existingSubscription.toJSON(), window.location.origin);
                 if (result.success) {
                     try {

@@ -48,13 +48,26 @@ export async function unsubscribeFromPushNotifications(endpoint: string): Promis
 
 export type TestPushResult = { sent: number; devices: number };
 
-/** Sends "Test notification from Zigex" to the student's own devices (POST /push/test). */
-export async function sendTestPush(): Promise<TestPushResult | null> {
+/** Sends "Test notification from Zigex" to this device (POST /push/test). */
+export async function sendTestPush(endpoint?: string): Promise<TestPushResult | null> {
     try {
-        const res = await serverApi.post<{ sent: number; subscriptions: number }>("/push/test");
+        const res = await serverApi.post<{ sent: number; subscriptions: number }>("/push/test", endpoint ? { endpoint } : {});
         return { sent: res.data?.sent ?? 0, devices: res.data?.subscriptions ?? 0 };
     } catch (err) {
         if (!isEndpointMissing(err)) console.error("[PUSH] Test push failed", err);
+        return null;
+    }
+}
+
+/**
+ * Whether this browser's subscription is still on record for the student (null: couldn't tell).
+ * The server deletes subscriptions the push service reports as dead; the browser doesn't know.
+ */
+export async function pushSubscriptionRegistered(endpoint: string): Promise<boolean | null> {
+    try {
+        const res = await serverApi.post<{ registered: boolean }>("/push/subscriptions/status", { endpoint });
+        return typeof res.data?.registered === "boolean" ? res.data.registered : null;
+    } catch {
         return null;
     }
 }
