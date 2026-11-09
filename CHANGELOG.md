@@ -2,7 +2,7 @@
 
 What changed for students in each release. Newest first. Versions follow [semantic versioning](https://semver.org): patch for fixes, minor for new features, major for breaking changes.
 
-New changes go under a top section `## Unreleased
+New changes go under a top section `## 1.8.0 (2026-11-09)
 
 - **Install Zigex:** offered from the first visit on every phone and computer that can install it, and never again once it's installed. "Not now" asks again the next day.
 - **Notifications reminder:** until your device receives Zigex notifications, a short bar at the top of the app says so, with Turn on. If they're blocked it explains how to allow them; on iPhone it shows how to install Zigex first, since iOS only allows notifications in the installed app.
