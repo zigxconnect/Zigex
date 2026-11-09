@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { rememberInstalled } from "@/lib/pwa";
 
 /** The browser's install offer (Chrome/Edge/Android); not in TypeScript's DOM types yet. */
 export type InstallPromptEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: "accepted" | "dismissed" }> };
@@ -25,6 +26,7 @@ export function InstallPromptCatcher() {
     };
     const onInstalled = () => {
       window.__zigexInstallPrompt = null;
+      rememberInstalled();
       window.dispatchEvent(new Event("zigex:installed"));
     };
     window.addEventListener("beforeinstallprompt", onPrompt);

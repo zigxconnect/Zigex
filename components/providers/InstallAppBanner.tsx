@@ -2,15 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { Download, Loader2, Share, SquarePlus, X } from "lucide-react";
-import { INSTALL_DISMISSED_KEY, dismissedRecently, isIOSSafari, isPhoneOrTablet, isStandalone, rememberDismissed } from "@/lib/pwa";
+import { INSTALL_DISMISSED_KEY, dismissedRecently, installedHere, isIOSSafari, isPhoneOrTablet, isStandalone, rememberDismissed } from "@/lib/pwa";
 
 type Mode = "hidden" | "prompt" | "ios";
 
 /**
- * First-visit banner on phones: "Install Zigex", so students get notifications on
- * their phone (iPhones only allow them in the installed app). Uses the browser's
- * own install dialog where there is one (Android, Chrome, Edge) and explains
- * Share → Add to Home Screen in Safari. "Not now" hides it for two weeks.
+ * "Install Zigex" from the first visit, on every device that can install it
+ * (phones and computers), so students get notifications (iPhones only allow them
+ * in the installed app). Uses the browser's own install dialog where there is one
+ * (Android, Chrome, Edge) and explains Share → Add to Home Screen in Safari.
+ * Never shown once Zigex is installed on the device; "Not now" asks again the next day.
  */
 export function InstallAppBanner() {
   const [mode, setMode] = useState<Mode>("hidden");
@@ -18,11 +19,12 @@ export function InstallAppBanner() {
   const [aboveTabBar, setAboveTabBar] = useState(false);
 
   useEffect(() => {
-    if (!isPhoneOrTablet() || isStandalone() || dismissedRecently(INSTALL_DISMISSED_KEY)) return;
+    if (installedHere() || dismissedRecently(INSTALL_DISMISSED_KEY)) return;
 
     const update = () => {
       if (isStandalone()) return setMode("hidden");
       if (window.__zigexInstallPrompt) return setMode("prompt");
+      // Computers only get the banner when the browser can install apps.
       if (isIOSSafari()) return setMode("ios");
     };
     // Give the page a moment first: the browser's install offer arrives shortly after load.
@@ -76,7 +78,9 @@ export function InstallAppBanner() {
           <Download className="h-5 w-5" aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">
-          <p id="install-banner-title" className="font-heading text-base font-semibold">Install Zigex on your phone</p>
+          <p id="install-banner-title" className="font-heading text-base font-semibold">
+            Install Zigex on your {isPhoneOrTablet() ? "phone" : "computer"}
+          </p>
           <p className="mt-0.5 text-sm text-white/75">
             Get notified about new opportunities and your recommendations, and open Zigex from your home screen.
           </p>

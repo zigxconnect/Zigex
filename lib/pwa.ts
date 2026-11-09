@@ -27,10 +27,10 @@ const DAY = 24 * 60 * 60 * 1000;
 
 /**
  * True when the student said "Not now" less than `days` ago. Installing the app and
- * turning on notifications keep a student reachable, so we ask again after 3 days.
+ * turning on notifications keep a student reachable, so we ask again the next day.
  * Storage may be blocked: then ask again.
  */
-export function dismissedRecently(key: string, days = 3) {
+export function dismissedRecently(key: string, days = 1) {
   try {
     const at = Number(localStorage.getItem(key));
     return Boolean(at) && Date.now() - at < days * DAY;
@@ -48,4 +48,30 @@ export function rememberDismissed(key: string) {
 }
 
 export const INSTALL_DISMISSED_KEY = "zigex_install_dismissed_at";
+const INSTALLED_KEY = "zigex_app_installed";
+
+/** Called when the browser reports the app was installed on this device. */
+export function rememberInstalled() {
+  try {
+    localStorage.setItem(INSTALLED_KEY, "1");
+  } catch {
+    // Storage blocked: the installed app itself is still recognised (isStandalone).
+  }
+}
+
+/**
+ * Zigex is installed on this device: we're in the installed app, or the browser
+ * reported installing it here (so a normal tab doesn't offer it again).
+ */
+export function installedHere() {
+  if (isStandalone()) return true;
+  try {
+    return localStorage.getItem(INSTALLED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+/** Sent whenever this device's notifications change (turned on or off), so every reminder updates. */
+export const PUSH_CHANGED_EVENT = "zigex:push-changed";
 export const NOTIFY_DISMISSED_KEY = "zigex_notify_dismissed_at";

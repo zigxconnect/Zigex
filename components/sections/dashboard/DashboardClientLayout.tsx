@@ -9,6 +9,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { PushNotificationManager } from "@/components/providers/PushNotificationManager";
 import { EnableNotificationsPrompt } from "@/components/providers/EnableNotificationsPrompt";
+import { NotificationsReminderBar } from "@/components/providers/NotificationsReminderBar";
 
 interface DashboardClientLayoutProps {
   children: React.ReactNode;
@@ -99,6 +100,7 @@ export function DashboardClientLayout({
               // Standard Dashboard Padding
               <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
                 <div className="mx-auto max-w-[1600px]">
+                  <NotificationsReminderBar />
                   {children}
                 </div>
               </div>

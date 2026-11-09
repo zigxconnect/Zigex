@@ -8,6 +8,7 @@ import {
   INSTALL_DISMISSED_KEY,
   NOTIFY_DISMISSED_KEY,
   dismissedRecently,
+  installedHere,
   isIOS,
   isPhoneOrTablet,
   isStandalone,
@@ -30,7 +31,7 @@ export function EnableNotificationsPrompt() {
   useEffect(() => {
     if (!key || !("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) return;
     if (Notification.permission !== "default" || dismissedRecently(NOTIFY_DISMISSED_KEY)) return;
-    const installedOrDeclined = isStandalone() || dismissedRecently(INSTALL_DISMISSED_KEY);
+    const installedOrDeclined = installedHere() || dismissedRecently(INSTALL_DISMISSED_KEY);
     if (isPhoneOrTablet() && !installedOrDeclined) return;
     if (isIOS() && !isStandalone()) return;
 

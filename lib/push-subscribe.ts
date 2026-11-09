@@ -1,5 +1,6 @@
 import { subscribeToPushNotifications, unsubscribeFromPushNotifications } from "@/lib/actions/push.actions";
 import { subscriptionMatchesKey, urlBase64ToUint8Array } from "@/lib/push-keys";
+import { PUSH_CHANGED_EVENT } from "@/lib/pwa";
 
 export type DevicePushState = "on" | "off" | "blocked";
 
@@ -20,6 +21,7 @@ export function pushTurnedOffHere() {
 }
 
 export function rememberPushChoice(off: boolean) {
+  window.dispatchEvent(new Event(PUSH_CHANGED_EVENT));
   try {
     if (off) localStorage.setItem(PUSH_OFF_KEY, "1");
     else localStorage.removeItem(PUSH_OFF_KEY);
