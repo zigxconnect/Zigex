@@ -22,7 +22,7 @@ const PUBLIC_PAGES = ["/", "/demo", "/feed", "/opportunities", "/privacy", "/ter
 
 // API routes that must work without a session: the passthrough to the
 // backend (which enforces its own auth) and the deploy health check.
-const PUBLIC_API_PREFIXES = ["/api/v1/", "/api/health"];
+const PUBLIC_API_PREFIXES = ["/api/v1/", "/api/health", "/api/push-key"];
 
 // Company and supervisor pages live in the admin app now.
 // Not "/company": /company/[id] is the student-facing company page.

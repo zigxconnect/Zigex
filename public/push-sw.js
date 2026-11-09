@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 
-const SW_VERSION = '1.1.0';
+const SW_VERSION = '1.2.0';
 console.log(`[PUSH_SW] Service Worker Version ${SW_VERSION} loaded.`);
 self.addEventListener('push', function (event) {
   if (event.data) {
@@ -48,6 +48,43 @@ self.addEventListener('notificationclick', function (event) {
         });
       }
       return clients.openWindow(target.href);
+    })
+  );
+});
+
+/**
+ * The browser dropped or replaced this device's subscription (it expired, or it
+ * was made with an old key). Subscribe again with Zigex's current key and save
+ * it for the signed-in student, so notifications keep arriving without the
+ * student having to open Zigex. Same-origin requests carry the session cookie.
+ */
+function base64UrlToBytes(value) {
+  const padded = (value + '='.repeat((4 - (value.length % 4)) % 4)).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(padded);
+  const bytes = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+  return bytes;
+}
+
+self.addEventListener('pushsubscriptionchange', function (event) {
+  event.waitUntil(
+    (async function () {
+      const res = await fetch('/api/push-key');
+      const key = res.ok ? (await res.json()).key : '';
+      if (!key) return;
+      const subscription = await self.registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: base64UrlToBytes(key),
+      });
+      const json = subscription.toJSON();
+      await fetch('/api/v1/push/subscriptions', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys, origin: self.location.origin }),
+      });
+    })().catch(function (error) {
+      console.warn('[PUSH_SW] Could not renew the subscription:', error);
     })
   );
 });
