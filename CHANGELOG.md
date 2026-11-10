@@ -2,7 +2,7 @@
 
 What changed for students in each release. Newest first. Versions follow [semantic versioning](https://semver.org): patch for fixes, minor for new features, major for breaking changes.
 
-New changes go under a top section `## Unreleased
+New changes go under a top section `## 1.8.3 (2026-11-10)
 
 - **Sign-up codes:** if your verification code can't be emailed, Zigex tells you straight away (with "Send a new code" and Google as options) instead of leaving you waiting. Signing in before verifying sends you a fresh code, once.
 
