@@ -25,7 +25,10 @@ export const VerifyEmailForm = () => {
   const errorId = useId();
 
   const [code, setCode] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  // The code couldn't be emailed on the way here (sign-up or sign-in): say so, and allow asking again at once.
+  const [error, setError] = useState<string | null>(
+    params.get("failed") === "1" ? "We couldn't send your code just now. Tap “Send a new code”, or continue with Google." : null
+  );
   const [notice, setNotice] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
   const [resending, setResending] = useState(false);
@@ -75,7 +78,9 @@ export const VerifyEmailForm = () => {
       setError(
         err instanceof ApiClientError && err.status === 429
           ? "You've asked for several codes. Wait a few minutes before asking again."
-          : "We couldn't send a new code. Try again in a moment."
+          : err instanceof ApiClientError && err.code === "CODE_EMAIL_FAILED"
+            ? err.message
+            : "We couldn't send a new code. Try again in a moment."
       );
     } finally {
       setResending(false);

@@ -121,10 +121,14 @@ function SignInForm() {
         setError("Too many sign-in attempts. Wait a minute, then try again.");
         return;
       }
-      // Account exists but the email code was never entered: send a fresh one.
+      // Right password, email not verified yet: the server just sent a fresh code.
       if (err.status === 401 && /verify your email/i.test(err.message)) {
-        await api.post("/auth/resend-otp", { email: data.email }).catch(() => {});
         router.push(href("/verify-email", { email: data.email, sent: "1" }));
+        return;
+      }
+      // The code couldn't be emailed: go to the code screen, where "Send a new code" works straight away.
+      if (err.status === 503 && err.code === "CODE_EMAIL_FAILED") {
+        router.push(href("/verify-email", { email: data.email, failed: "1" }));
         return;
       }
       // Generic on purpose: never reveal whether the email has an account.
@@ -233,6 +237,11 @@ function SignUpForm() {
       await api.post("/auth/register/student", data);
       router.push(href("/verify-email", { email: data.email, sent: "1" }));
     } catch (err) {
+      // Account saved, but the code couldn't be emailed: the code screen explains and lets them ask again.
+      if (err instanceof ApiClientError && err.status === 503 && err.code === "CODE_EMAIL_FAILED") {
+        router.push(href("/verify-email", { email: data.email, failed: "1" }));
+        return;
+      }
       if (err instanceof ApiClientError && err.status === 409) {
         setError(
           <>
