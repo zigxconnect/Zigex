@@ -68,7 +68,8 @@ export function ApplyPanel({
   ].filter(Boolean) as { icon: typeof Users; label: string; value: string }[];
 
   return (
-    <div className="rounded-2xl bg-white p-5 ring-1 ring-[#DCE5F5] sm:p-6">
+    // Phones: flat, inside the page's full-width band; a card from tablet up.
+    <div className="ring-[#DCE5F5] sm:rounded-2xl sm:bg-white sm:p-6 sm:ring-1">
       {/* Status line */}
       {isOpen ? (
         <p className={`text-sm font-semibold ${days !== null && days <= 7 ? "text-[#C2410C]" : "text-[#067647]"}`}>

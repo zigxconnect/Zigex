@@ -13,6 +13,7 @@ import { dayLabel, fundingLabel, placeLabel, typeLabel } from "@/components/outs
 import { getOutsourced } from "@/lib/api/services/outsourced";
 import { pageMetadata } from "@/lib/seo";
 import { getOptionalAuth } from "@/lib/utils/auth-context";
+import { DETAIL_BAND } from "@/components/feed/board/board-types";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -45,7 +46,9 @@ export default async function OutsourcedDetailPage({ params }: Props) {
   ].filter((fact): fact is [string, string] => Boolean(fact[1]));
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
+    // No side padding of its own on phones: the shell gives 16px, and the picture
+    // and DETAIL_BAND sections stretch past it to the screen edges.
+    <div className="mx-auto w-full max-w-3xl py-6 sm:px-6 sm:py-8">
       <Link href="/opportunities" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#155DFC] hover:underline">
         <ArrowLeft className="h-4 w-4" aria-hidden="true" /> More opportunities
       </Link>
@@ -59,7 +62,8 @@ export default async function OutsourcedDetailPage({ params }: Props) {
         </div>
       )}
 
-      <dl className="mt-5 grid grid-cols-1 gap-3 rounded-2xl bg-white p-4 ring-1 ring-[#DCE5F5] sm:grid-cols-2">
+      <section aria-label="Details and how to apply" className={`${DETAIL_BAND} mt-6 sm:mt-5`}>
+      <dl className="grid grid-cols-1 gap-3 ring-[#DCE5F5] sm:grid-cols-2 sm:rounded-2xl sm:bg-white sm:p-4 sm:ring-1">
         {facts.map(([label, value]) => (
           <div key={label}>
             <dt className="text-xs font-medium text-[#7B869C]">{label}</dt>
@@ -104,9 +108,12 @@ export default async function OutsourcedDetailPage({ params }: Props) {
           </p>
         )}
       </div>
+      </section>
 
-      <h2 className="mt-8 font-heading text-lg font-semibold text-[#0B1B3F]">About this opportunity</h2>
-      <p className="mt-2 whitespace-pre-line text-[15px] leading-relaxed text-[#1E2A44]">{o.description}</p>
+      <section aria-labelledby="about-title" className={`${DETAIL_BAND} sm:mt-8`}>
+        <h2 id="about-title" className="font-heading text-lg font-semibold text-[#0B1B3F]">About this opportunity</h2>
+        <p className="mt-2 whitespace-pre-line text-[15px] leading-relaxed text-[#1E2A44]">{o.description}</p>
+      </section>
     </div>
   );
 }

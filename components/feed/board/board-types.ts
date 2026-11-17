@@ -142,3 +142,10 @@ export function postedAgo(date: string | null) {
  */
 export const FEED_GRID =
   "-mx-4 grid gap-2 bg-[#EEF2FA] sm:mx-0 sm:grid-cols-2 sm:gap-5 sm:bg-transparent xl:grid-cols-3";
+
+/**
+ * A section of an opportunity page. Phones: a full-width band under a thick
+ * grey divider (like a social app's post page). Tablet and up: no extra styling.
+ */
+export const DETAIL_BAND =
+  "-mx-4 border-t-8 border-[#EEF2FA] px-4 py-6 sm:mx-0 sm:border-t-0 sm:px-0 sm:py-0";

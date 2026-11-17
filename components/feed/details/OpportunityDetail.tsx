@@ -26,7 +26,7 @@ import { HeroImage } from "@/components/feed/details/HeroImage";
 import { LocationMap } from "@/components/feed/details/LocationMap";
 import { RichContentRenderer } from "@/components/ui/RichContentRenderer";
 import { OpportunityCard, OpportunityCardSkeleton } from "@/components/feed/board/OpportunityCard";
-import { toBoardItem, type BoardItem } from "@/components/feed/board/board-types";
+import { DETAIL_BAND, FEED_GRID, toBoardItem, type BoardItem } from "@/components/feed/board/board-types";
 import type { FeedKind } from "@/lib/api/services/feed";
 import { getOptionalAuth } from "@/lib/utils/auth-context";
 import { getMyProfile } from "@/lib/api/services/profile";
@@ -134,9 +134,10 @@ export async function OpportunityDetail({ id, back }: { id: string; back: BackLi
         {back.label}
       </Link>
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-10">
+      {/* Phones: sections touch, split by DETAIL_BAND's grey dividers instead of gaps. */}
+      <div className="grid sm:gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-10">
         {/* Header: photo, type, title, company */}
-        <header className="min-w-0">
+        <header className="min-w-0 pb-6 sm:pb-0">
           {item.image && <HeroImage src={item.image} alt={item.title} />}
           <p className="mt-6 inline-flex items-center gap-1.5 rounded-full bg-[#F3F7FF] px-3 py-1 text-[13px] font-semibold text-[#0B1B3F] ring-1 ring-[#DCE5F5]">
             <meta.icon className="h-4 w-4 text-[#155DFC]" aria-hidden="true" />
@@ -169,7 +170,7 @@ export async function OpportunityDetail({ id, back }: { id: string; back: BackLi
         </header>
 
         {/* Apply panel: second on phones, sticky sidebar on desktop */}
-        <aside className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
+        <aside className={`${DETAIL_BAND} lg:col-start-2 lg:row-span-2 lg:row-start-1`}>
           <div className="lg:sticky lg:top-24">
             <ApplyPanel
               item={item}
@@ -185,8 +186,8 @@ export async function OpportunityDetail({ id, back }: { id: string; back: BackLi
         </aside>
 
         {/* Body */}
-        <div className="min-w-0 space-y-10 lg:col-start-1">
-          <section aria-labelledby="about-title">
+        <div className="min-w-0 sm:space-y-10 lg:col-start-1">
+          <section aria-labelledby="about-title" className={DETAIL_BAND}>
             <h2 id="about-title" className="font-heading text-xl font-semibold text-[#0B1B3F]">
               About this {meta.label.toLowerCase()}
             </h2>
@@ -200,7 +201,7 @@ export async function OpportunityDetail({ id, back }: { id: string; back: BackLi
           </section>
 
           {raw.location && (
-            <section aria-label="Location">
+            <section aria-label="Location" className={DETAIL_BAND}>
               <LocationMap location={raw.location} title={raw.title} />
             </section>
           )}
@@ -245,14 +246,14 @@ async function MoreFromCompany({
 
   if (items.length === 0) return null;
   return (
-    <section aria-labelledby="more-title">
+    <section aria-labelledby="more-title" className={`${DETAIL_BAND} pb-0`}>
       <h2 id="more-title" className="font-heading text-xl font-semibold text-[#0B1B3F]">
         More from {company.companyName}
       </h2>
-      <ul className="mt-4 grid gap-4 sm:grid-cols-2">
+      <ul className={`mt-4 ${FEED_GRID}`}>
         {items.map((it) => (
           <li key={`${it.kind}-${it.id}`}>
-            <OpportunityCard item={it} />
+            <OpportunityCard item={it} flushOnMobile />
           </li>
         ))}
       </ul>
@@ -262,9 +263,11 @@ async function MoreFromCompany({
 
 function RelatedSkeleton() {
   return (
-    <div className="grid gap-4 sm:grid-cols-2" aria-busy="true" aria-label="Loading more opportunities">
-      <OpportunityCardSkeleton />
-      <OpportunityCardSkeleton />
+    <div className={DETAIL_BAND} aria-busy="true" aria-label="Loading more opportunities">
+      <div className={FEED_GRID}>
+        <OpportunityCardSkeleton flushOnMobile />
+        <OpportunityCardSkeleton flushOnMobile />
+      </div>
     </div>
   );
 }

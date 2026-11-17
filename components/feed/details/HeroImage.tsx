@@ -26,7 +26,8 @@ export function HeroImage({ src, alt }: { src: string; alt: string }) {
 
   return (
     <div
-      className="relative w-full overflow-hidden rounded-2xl bg-[#EEF2FA] ring-1 ring-[#DCE5F5]"
+      // Phones: edge to edge (past the page's 16px padding), square corners.
+      className="relative -mx-4 overflow-hidden bg-[#EEF2FA] ring-[#DCE5F5] sm:mx-0 sm:rounded-2xl sm:ring-1"
       style={{ aspectRatio: ratio ? `${ratio}` : "16 / 9", maxHeight: "min(80vh, 900px)" }}
     >
       <img src={src} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full scale-110 object-cover opacity-50 blur-2xl" />
