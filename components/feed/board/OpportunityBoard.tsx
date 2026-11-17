@@ -6,7 +6,7 @@ import * as SelectPrimitive from "@radix-ui/react-select";
 import * as SwitchPrimitive from "@radix-ui/react-switch";
 import { Check, ChevronDown, ChevronLeft, ChevronRight, Search, X } from "lucide-react";
 import { landingButton } from "@/components/sections/landing/landing-ui";
-import { isClosed, type BoardItem } from "./board-types";
+import { FEED_GRID, isClosed, type BoardItem } from "./board-types";
 import { OpportunityCard } from "./OpportunityCard";
 
 type Tab = "all" | "internships" | "programs" | "events" | "outsourced";
@@ -341,10 +341,11 @@ export function OpportunityBoard({ items, searchInHeader = false }: { items: Boa
           </div>
         )
       ) : (
-          <ul className="mt-3 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        // Phones: full screen width, cards split by thin grey bands (like a social feed).
+        <ul className={`mt-3 ${FEED_GRID}`}>
           {results.slice(0, visible).map((item) => (
             <li key={`${item.kind}-${item.id}`}>
-              <OpportunityCard item={item} />
+              <OpportunityCard item={item} flushOnMobile />
             </li>
           ))}
         </ul>
@@ -382,10 +383,10 @@ export function OpportunityBoard({ items, searchInHeader = false }: { items: Boa
           </button>
           {/* Expanded by default when nothing is open, so the page is never empty. */}
           {(showClosed || open.length === 0) && (
-            <ul className="mt-3 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            <ul className={`mt-3 ${FEED_GRID}`}>
               {closed.map((item) => (
                 <li key={`closed-${item.kind}-${item.id}`}>
-                  <OpportunityCard item={item} />
+                  <OpportunityCard item={item} flushOnMobile />
                 </li>
               ))}
             </ul>

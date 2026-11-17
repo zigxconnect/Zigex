@@ -22,7 +22,7 @@ import { StudentRail, type ApplicationsSummary, type ProfileStrength } from "@/c
 import { listApplications } from "@/lib/api/services/applications";
 import { getMyProfile } from "@/lib/api/services/profile";
 import { applicationKind, targetId, toApplicationStatus } from "@/lib/api/applications-shape";
-import { fromOutsourced, toBoardItem, type BoardItem } from "@/components/feed/board/board-types";
+import { FEED_GRID, fromOutsourced, toBoardItem, type BoardItem } from "@/components/feed/board/board-types";
 import { listAllOutsourced } from "@/lib/api/services/outsourced";
 import { listPublicFeed, type FeedKind } from "@/lib/api/services/feed";
 import { pageMetadata } from "@/lib/seo";
@@ -77,9 +77,9 @@ function BoardSkeleton() {
     <div aria-busy="true" aria-label="Loading opportunities">
       <div className="h-[196px] rounded-2xl bg-[#F8FAFF] ring-1 ring-[#DCE5F5] motion-safe:animate-pulse" />
       <div className="mt-6 h-4 w-40 rounded bg-[#EEF2FA]" />
-      <div className="mt-3 grid gap-5 sm:grid-cols-2">
+      <div className={`mt-3 ${FEED_GRID}`}>
         {Array.from({ length: 6 }, (_, i) => (
-          <OpportunityCardSkeleton key={i} />
+          <OpportunityCardSkeleton key={i} flushOnMobile />
         ))}
       </div>
     </div>
@@ -156,7 +156,9 @@ export default async function FeedPage() {
     : [[], null, null];
 
   return (
-    <div className="mx-auto w-full max-w-[1600px] px-4 pb-16 sm:px-6 lg:px-8">
+    // No side padding of its own on phones: the shell already gives 16px, and the
+    // card grid stretches past it to the screen edges (FEED_GRID).
+    <div className="mx-auto w-full max-w-[1600px] pb-16 sm:px-6 lg:px-8">
       {isAuthenticated ? (
         <header className="mb-6">
           <h1 className="font-heading text-[28px] font-bold leading-tight tracking-tight text-[#0B1B3F]">

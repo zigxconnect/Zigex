@@ -71,7 +71,7 @@ function RecommendationCard({ item }: { item: DigestItem }) {
   const shouldClamp = summaryText.length > 45;
 
   return (
-    <article className="group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl bg-white ring-1 ring-[#DCE5F5] transition-shadow hover:shadow-[0_18px_40px_-20px_rgba(11,27,63,0.35)]">
+    <article className="group flex h-full min-w-0 flex-col overflow-hidden bg-white ring-[#DCE5F5] transition-shadow sm:rounded-2xl sm:ring-1 hover:shadow-[0_18px_40px_-20px_rgba(11,27,63,0.35)]">
       <a href={item.url} target="_blank" rel="noopener noreferrer nofollow" className="relative aspect-[4/3] overflow-hidden bg-[#F3F7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#155DFC]" aria-label={`${item.title}, opens in a new tab`}>
         {item.image && !imageFailed ? (
           <SafeImg
@@ -151,7 +151,8 @@ export function RecommendationBrowser({ items }: { items: DigestItem[] }) {
         </button>
       </div>
 
-      <ul className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-label={`${shown.length} recommended opportunities`}>
+      {/* Phones: full screen width with thin grey bands between cards, like the board below. */}
+      <ul className="-mx-4 grid min-w-0 gap-2 bg-[#EEF2FA] sm:mx-0 sm:grid-cols-2 sm:gap-4 sm:bg-transparent xl:grid-cols-3" aria-label={`${shown.length} recommended opportunities`}>
         {shown.map((item) => <li key={item.key} className="min-w-0"><RecommendationCard item={item} /></li>)}
       </ul>
       {visible < filtered.length && (

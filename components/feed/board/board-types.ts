@@ -135,3 +135,10 @@ export function postedAgo(date: string | null) {
   if (days < 30) return `Posted ${days} days ago`;
   return `Posted ${new Date(date).toLocaleDateString("en-GB", { month: "short", year: "numeric" })}`;
 }
+
+/**
+ * The feed's card grid. Phones: cancels the page's 16px side padding so cards
+ * run the full screen width, split by thin grey bands. Wider: the usual grid.
+ */
+export const FEED_GRID =
+  "-mx-4 grid gap-2 bg-[#EEF2FA] sm:mx-0 sm:grid-cols-2 sm:gap-5 sm:bg-transparent xl:grid-cols-3";

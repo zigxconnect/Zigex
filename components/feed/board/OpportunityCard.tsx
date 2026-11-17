@@ -49,7 +49,16 @@ function length(item: BoardItem) {
  * and flyers alike). Bottom: when, how, cost. Footer: the deadline and the
  * way in, only while it's open.
  */
-export function OpportunityCard({ item, headingLevel = 3 }: { item: BoardItem; headingLevel?: 2 | 3 }) {
+export function OpportunityCard({
+  item,
+  headingLevel = 3,
+  flushOnMobile = false,
+}: {
+  item: BoardItem;
+  headingLevel?: 2 | 3;
+  /** Phones: square corners, no side border and an edge-to-edge image, for lists that run the full screen width (the feed). */
+  flushOnMobile?: boolean;
+}) {
   const kind = KIND[item.kind];
   const closed = isClosed(item);
   const Heading = `h${headingLevel}` as const;
@@ -63,7 +72,9 @@ export function OpportunityCard({ item, headingLevel = 3 }: { item: BoardItem; h
   return (
     <Link
       href={href}
-      className="group flex h-full min-w-0 flex-col rounded-2xl bg-white p-4 ring-1 ring-[#DCE5F5] transition-shadow hover:shadow-[0_18px_40px_-20px_rgba(11,27,63,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC]"
+      className={`group flex h-full min-w-0 flex-col bg-white p-4 ring-[#DCE5F5] transition-shadow hover:shadow-[0_18px_40px_-20px_rgba(11,27,63,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] ${
+        flushOnMobile ? "sm:rounded-2xl sm:ring-1" : "rounded-2xl ring-1"
+      }`}
     >
       {/* Top: who and what */}
       <div className="flex items-center gap-2 text-sm text-[#4A5670]">
@@ -82,7 +93,11 @@ export function OpportunityCard({ item, headingLevel = 3 }: { item: BoardItem; h
       <Heading className="mt-2 line-clamp-2 min-h-[2.75rem] [overflow-wrap:anywhere] font-heading text-lg font-semibold leading-snug text-[#0B1B3F]">{item.title}</Heading>
 
       {/* Middle: the image as uploaded, whole */}
-      <div className="relative mt-3 aspect-[4/3] overflow-hidden rounded-xl bg-[#F3F7FF] ring-1 ring-[#EEF2FA]">
+      <div
+        className={`relative mt-3 aspect-[4/3] overflow-hidden bg-[#F3F7FF] ring-[#EEF2FA] ${
+          flushOnMobile ? "-mx-4 sm:mx-0 sm:rounded-xl sm:ring-1" : "rounded-xl ring-1"
+        }`}
+      >
         <CardImage src={item.image} closed={closed} Icon={kind.icon} />
       </div>
 
@@ -157,16 +172,16 @@ function CardImage({ src, closed, Icon }: { src: string | null; closed: boolean;
 }
 
 /** Loading placeholder with the card's footprint. */
-export function OpportunityCardSkeleton() {
+export function OpportunityCardSkeleton({ flushOnMobile = false }: { flushOnMobile?: boolean }) {
   return (
-    <div className="rounded-2xl bg-white p-4 ring-1 ring-[#DCE5F5]">
+    <div className={`bg-white p-4 ring-[#DCE5F5] ${flushOnMobile ? "sm:rounded-2xl sm:ring-1" : "rounded-2xl ring-1"}`}>
       <div className="flex items-center gap-2">
         <div className="h-6 w-6 rounded-md bg-[#EEF2FA]" />
         <div className="h-3 w-24 rounded bg-[#EEF2FA] motion-safe:animate-pulse" />
       </div>
       <div className="mt-3 h-4 w-4/5 rounded bg-[#EEF2FA] motion-safe:animate-pulse" />
       <div className="mt-2 h-4 w-3/5 rounded bg-[#EEF2FA] motion-safe:animate-pulse" />
-      <div className="mt-3 aspect-[4/3] rounded-xl bg-[#EEF2FA] motion-safe:animate-pulse" />
+      <div className={`mt-3 aspect-[4/3] bg-[#EEF2FA] motion-safe:animate-pulse ${flushOnMobile ? "-mx-4 sm:mx-0 sm:rounded-xl" : "rounded-xl"}`} />
       <div className="mt-4 h-4 w-1/2 rounded bg-[#EEF2FA] motion-safe:animate-pulse" />
       <div className="mt-2 h-3 w-2/3 rounded bg-[#EEF2FA] motion-safe:animate-pulse" />
       <div className="mt-4 border-t border-[#EEF2FA] pt-3">
