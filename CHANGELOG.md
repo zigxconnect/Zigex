@@ -6,6 +6,10 @@ New changes go under a top section `## 1.8.3 (2026-11-10)
 
 - **Sign-up codes:** if your verification code can't be emailed, Zigex tells you straight away (with "Send a new code" and Google as options) instead of leaving you waiting. Signing in before verifying sends you a fresh code, once.
 
+## 1.9.0 (2026-11-17)
+
+- Fixes and small improvements.
+
 ## 1.8.2 (2026-11-09)
 
 - **Notifications repair themselves:** if a device's subscription stopped working, Zigex notices and renews it the next time the app opens, without asking.
