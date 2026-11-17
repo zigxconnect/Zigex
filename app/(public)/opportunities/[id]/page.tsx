@@ -1,6 +1,7 @@
 /**
  * One shared opportunity — app/(public)/opportunities/[id]/page.tsx. Public and
- * shareable; a closed one still opens, without the apply button.
+ * shareable; a closed one still opens, without the apply button. Anyone can
+ * read it, but applying needs an account: signed-out visitors get sign-up.
  */
 
 import Link from "next/link";
@@ -11,6 +12,7 @@ import { HeroImage } from "@/components/feed/details/HeroImage";
 import { dayLabel, fundingLabel, placeLabel, typeLabel } from "@/components/outsourced/outsourced-labels";
 import { getOutsourced } from "@/lib/api/services/outsourced";
 import { pageMetadata } from "@/lib/seo";
+import { getOptionalAuth } from "@/lib/utils/auth-context";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -27,6 +29,9 @@ export default async function OutsourcedDetailPage({ params }: Props) {
   if (!o) notFound();
   // Opened by id (an old link or notification): move to the readable address.
   if (isUuid(id) && o.slug) permanentRedirect(`/opportunities/${encodeURIComponent(o.slug)}`);
+
+  const { isAuthenticated } = await getOptionalAuth();
+  const next = encodeURIComponent(`/opportunities/${encodeURIComponent(o.slug || o.id)}`);
 
   const deadline = dayLabel(o.deadline);
   const starts = dayLabel(o.start_date);
@@ -64,7 +69,25 @@ export default async function OutsourcedDetailPage({ params }: Props) {
       </dl>
 
       <div className="mt-5">
-        {o.is_open && o.apply_url ? (
+        {o.is_open && o.apply_url && !isAuthenticated ? (
+          // Shared links reach people without an account: they sign up first,
+          // then come back here. The organiser's link isn't sent to them at all.
+          <div className="grid gap-2 sm:max-w-sm">
+            <Link
+              href={`/sign-up?next=${next}`}
+              className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-[#155DFC] px-6 font-semibold text-white hover:bg-[#0F3FB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] focus-visible:ring-offset-2"
+            >
+              Create an account to apply
+            </Link>
+            <Link
+              href={`/sign-in?next=${next}`}
+              className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-white px-6 font-semibold text-[#0B1B3F] ring-1 ring-[#DCE5F5] hover:bg-[#F3F7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC]"
+            >
+              I have an account
+            </Link>
+            <p className="mt-1 text-center text-[13px] text-[#7B869C]">Free for students. You&apos;ll come back to this page.</p>
+          </div>
+        ) : o.is_open && o.apply_url ? (
           <>
             <a
               href={o.apply_url}

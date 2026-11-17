@@ -82,8 +82,9 @@ export function ApplyPanel({
 
       {/* Action */}
       <div id="getStarted" className="mt-4 scroll-mt-28">
-        {/* The organiser takes applications on its own site: send students there. */}
-        {item.applyUrl && isOpen ? (
+        {/* The organiser takes applications on its own site: send signed-in students
+            there. Signed-out visitors fall through to "Create an account" below. */}
+        {item.applyUrl && isOpen && isAuthenticated ? (
           <div className="grid gap-2">
             <a
               href={item.applyUrl}
