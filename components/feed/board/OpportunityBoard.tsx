@@ -31,7 +31,8 @@ const PAGE_SIZE = 12;
 const control =
   "h-12 rounded-xl border border-[#DCE5F5] bg-white text-base text-[#0B1B3F] transition-colors " +
   "hover:border-[#B9C8E6] focus-visible:outline-none focus-visible:border-[#155DFC] focus-visible:ring-4 focus-visible:ring-[#155DFC]/15";
-const fieldLabel = "mb-1.5 block text-sm font-medium text-[#0B1B3F]";
+// Phones: labels are for screen readers only, the controls explain themselves and space is short.
+const fieldLabel = "sr-only text-sm font-medium text-[#0B1B3F] sm:not-sr-only sm:mb-1.5 sm:block";
 
 const matches = (item: BoardItem, query: string) => {
   if (!query) return true;
@@ -136,9 +137,10 @@ export function OpportunityBoard({ items, searchInHeader = false }: { items: Boa
 
   return (
     <div>
-      {/* Filters: every control has a visible label, the same height and the same focus ring. */}
-      <div className="rounded-2xl bg-[#F8FAFF] p-3.5 ring-1 ring-[#DCE5F5] sm:p-5">
-        <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-x-3 gap-y-4 sm:gap-4 sm:grid-cols-[1fr_11rem] sm:items-end md:grid-cols-[1fr_11rem_11rem]">
+      {/* Filters: every control has a label, the same height and the same focus ring.
+          Phones: no panel around them and the type chips scroll to the screen edge. */}
+      <div className="ring-[#DCE5F5] sm:rounded-2xl sm:bg-[#F8FAFF] sm:p-5 sm:ring-1">
+        <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-x-3 gap-y-3 sm:gap-4 sm:grid-cols-[1fr_11rem] sm:items-end md:grid-cols-[1fr_11rem_11rem]">
           <form
             className={`order-1 col-span-2 sm:order-none sm:col-span-1 ${searchInHeader ? "md:hidden" : "md:col-span-3"}`}
             role="search"
@@ -239,7 +241,7 @@ export function OpportunityBoard({ items, searchInHeader = false }: { items: Boa
             <span id={`${uid}-type`} className={fieldLabel}>
               Type
             </span>
-            <div className="flex h-12 min-w-0 items-center gap-1 rounded-xl border border-[#DCE5F5] bg-white p-1">
+            <div className="-mx-4 flex min-w-0 items-center gap-1 sm:mx-0 sm:h-12 sm:rounded-xl sm:border sm:border-[#DCE5F5] sm:bg-white sm:p-1">
               <button type="button" onClick={() => scrollTypeFilters(-1)} aria-label="Scroll opportunity categories left" className="hidden h-9 w-8 shrink-0 items-center justify-center rounded-lg text-[#7B869C] hover:bg-[#F3F7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] sm:flex">
                 <ChevronLeft className="h-4 w-4" aria-hidden="true" />
               </button>
@@ -247,7 +249,7 @@ export function OpportunityBoard({ items, searchInHeader = false }: { items: Boa
                 ref={typeFiltersRef}
                 role="tablist"
                 aria-labelledby={`${uid}-type`}
-                className="flex h-full min-w-0 flex-1 gap-1 overflow-x-auto overscroll-x-contain scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                className="flex min-w-0 flex-1 gap-2 overflow-x-auto overscroll-x-contain scroll-smooth px-4 py-0.5 [scrollbar-width:none] sm:h-full sm:gap-1 sm:px-0 sm:py-0 [&::-webkit-scrollbar]:hidden"
               >
                 {TABS.map((t) => {
                   const active = tab === t.id;
@@ -260,10 +262,10 @@ export function OpportunityBoard({ items, searchInHeader = false }: { items: Boa
                       onClick={() =>
                         setParam("type", t.id === "all" ? null : t.id)
                       }
-                      className={`flex flex-none items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] ${
+                      className={`flex h-9 flex-none items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-4 text-sm font-semibold ring-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] sm:h-auto sm:rounded-lg sm:px-3 sm:ring-0 sm:focus-visible:ring-2 ${
                         active
-                          ? "bg-[#0B1B3F] text-white"
-                          : "text-[#4A5670] hover:bg-[#F3F7FF] hover:text-[#0B1B3F]"
+                          ? "bg-[#0B1B3F] text-white ring-[#0B1B3F]"
+                          : "bg-white text-[#4A5670] ring-[#DCE5F5] hover:bg-[#F3F7FF] hover:text-[#0B1B3F] sm:bg-transparent"
                       }`}
                     >
                       {t.label}
@@ -283,7 +285,7 @@ export function OpportunityBoard({ items, searchInHeader = false }: { items: Boa
           </div>
 
           <div className="order-4 min-w-0 sm:order-none md:order-3">
-            <span className={fieldLabel} aria-hidden="true">
+            <span className="mb-1.5 hidden text-sm font-medium text-[#0B1B3F] sm:block" aria-hidden="true">
               Price
             </span>
             <label

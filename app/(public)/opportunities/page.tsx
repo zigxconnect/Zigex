@@ -41,7 +41,9 @@ export default async function OpportunitiesPage({ searchParams }: Props) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
+    // No side padding of its own on phones: the shell already gives 16px, and the
+    // card grid stretches past it to the screen edges, as on /feed.
+    <div className="mx-auto w-full max-w-6xl py-6 sm:px-6 sm:py-8">
       <h1 className="font-heading text-2xl font-bold text-[#0B1B3F] sm:text-3xl">More opportunities</h1>
       <p className="mt-1 max-w-2xl text-[15px] text-[#4A5670]">
         Summits, competitions, foreign programs and fellowships we&apos;ve found for you. You apply on the organiser&apos;s own site.
@@ -85,7 +87,8 @@ export default async function OpportunitiesPage({ searchParams }: Props) {
           body={filters.local !== null || filters.funding || filters.type || filters.q ? "Try fewer filters, or clear them." : "New opportunities are added often, so check back soon."}
         />
       ) : (
-        <ul className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        // Phones: full screen width, cards split by thin grey bands.
+        <ul className="-mx-4 mt-3 grid grid-cols-1 gap-2 bg-[#EEF2FA] sm:mx-0 sm:grid-cols-2 sm:gap-4 sm:bg-transparent lg:grid-cols-3">
           {data.items.map((o) => {
             const funding = fundingLabel(o.funding);
             const deadline = dayLabel(o.deadline);
@@ -93,14 +96,14 @@ export default async function OpportunitiesPage({ searchParams }: Props) {
               <li key={o.id}>
                 <Link
                   href={`/opportunities/${encodeURIComponent(o.slug || o.id)}`}
-                  className="group flex h-full flex-col rounded-2xl bg-white p-4 ring-1 ring-[#DCE5F5] transition-shadow hover:shadow-[0_18px_40px_-20px_rgba(11,27,63,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC]"
+                  className="group flex h-full flex-col bg-white p-4 ring-[#DCE5F5] transition-shadow sm:rounded-2xl sm:ring-1 hover:shadow-[0_18px_40px_-20px_rgba(11,27,63,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC]"
                 >
                   <div className="flex items-center justify-between gap-2 text-sm text-[#4A5670]">
                     <span className="min-w-0 truncate font-medium">{o.organization}</span>
                     <span className="shrink-0 text-xs font-medium text-[#7B869C]">{typeLabel(o.type)}</span>
                   </div>
                   <h2 className="mt-2 line-clamp-2 min-h-[2.75rem] font-heading text-lg font-semibold leading-snug text-[#0B1B3F] [overflow-wrap:anywhere]">{o.title}</h2>
-                  <div className="relative mt-3 aspect-[4/3] overflow-hidden rounded-xl bg-[#F3F7FF] ring-1 ring-[#EEF2FA]">
+                  <div className="relative -mx-4 mt-3 aspect-[4/3] overflow-hidden bg-[#F3F7FF] ring-[#EEF2FA] sm:mx-0 sm:rounded-xl sm:ring-1">
                     <OutsourcedCover src={o.cover_image_url} sizes="(min-width: 1024px) 360px, (min-width: 640px) 45vw, 100vw" />
                   </div>
                   <p className="mt-3 flex min-w-0 items-center gap-1.5 text-sm text-[#4A5670]">
