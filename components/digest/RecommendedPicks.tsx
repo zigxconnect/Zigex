@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SafeImg } from "@/components/SafeImg";
 import { loadMyDigest } from "@/lib/api/services/digest";
+import { getMyProfile } from "@/lib/api/services/profile";
 import { RecommendationBrowser, RecommendationIntro } from "./RecommendationBrowser";
 import { RefreshWhilePreparing } from "./RefreshWhilePreparing";
 
@@ -109,6 +110,9 @@ export async function RecommendedPicks() {
   }
 
   const { digest } = state;
+  // Cached for this request (the digest already loaded it); is_pro comes from a paid Zigex Pro month
+  const profile = await getMyProfile().catch(() => null);
+  const isPro = Boolean((profile as { is_pro?: boolean } | null)?.is_pro);
 
   return (
     <section aria-labelledby="recommended-title" className="mb-8">
@@ -123,7 +127,7 @@ export async function RecommendedPicks() {
           {digest.intro && <RecommendationIntro text={digest.intro} />}
         </div>
       </header>
-      <RecommendationBrowser items={digest.items} />
+      <RecommendationBrowser items={digest.items} isPro={isPro} />
     </section>
   );
 }

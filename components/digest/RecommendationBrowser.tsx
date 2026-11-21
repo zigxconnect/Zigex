@@ -120,9 +120,11 @@ function RecommendationCard({ item }: { item: DigestItem }) {
   );
 }
 
-export function RecommendationBrowser({ items }: { items: DigestItem[] }) {
+/** Pro students see every pick; free accounts see the first three. */
+export function RecommendationBrowser({ items, isPro = false }: { items: DigestItem[]; isPro?: boolean }) {
+  const pageSize = isPro ? Number.POSITIVE_INFINITY : PAGE_SIZE;
   const [category, setCategory] = useState("All");
-  const [visible, setVisible] = useState(PAGE_SIZE);
+  const [visible, setVisible] = useState(pageSize);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const categories = useMemo(() => ["All", ...new Set(items.map((item) => categoryName(item.category)))], [items]);
   const filtered = category === "All" ? items : items.filter((item) => categoryName(item.category) === category);
@@ -141,7 +143,7 @@ export function RecommendationBrowser({ items }: { items: DigestItem[] }) {
         </button>
         <div id="recommendation-category-row" role="tablist" aria-label="Filter recommendations by category" className="flex min-w-0 flex-1 gap-2 overflow-x-auto overscroll-x-contain scroll-smooth py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {categories.map((option) => (
-            <button key={option} type="button" role="tab" aria-selected={category === option} onClick={() => { setCategory(option); setVisible(PAGE_SIZE); }} className={`min-h-10 shrink-0 rounded-full px-4 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] ${category === option ? "bg-[#0B1B3F] text-white" : "border border-[#DCE5F5] bg-white text-[#4A5670] hover:bg-[#F3F7FF]"}`}>
+            <button key={option} type="button" role="tab" aria-selected={category === option} onClick={() => { setCategory(option); setVisible(pageSize); }} className={`min-h-10 shrink-0 rounded-full px-4 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#155DFC] ${category === option ? "bg-[#0B1B3F] text-white" : "border border-[#DCE5F5] bg-white text-[#4A5670] hover:bg-[#F3F7FF]"}`}>
               {option}
             </button>
           ))}
