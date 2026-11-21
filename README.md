@@ -65,6 +65,7 @@ Keep port **3000**: the API only accepts browser requests from `localhost:3000`,
 | `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | | "Continue with Google" |
 | `JWT_SECRET` | | Checking attendance QR codes |
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | | Web push (must match the API's key pair) |
+| `NEXT_PUBLIC_PAYMENTS_ENABLED` | | `true` shows "Pay 3,000 XAF" (Fapshi: MTN Mobile Money, Orange Money) in the Pro dialog. Turn it on only once the API has `FAPSHI_ENABLED=true`; otherwise students are offered email |
 | `NEXT_PUBLIC_SANITY_PROJECT_ID`, `NEXT_PUBLIC_SANITY_DATASET`, `SANITY_WEBHOOK_SECRET` | | Blog and its revalidation |
 | `GMAIL_USER`, `GMAIL_APP_PASSWORD`, `ADMIN_EMAIL`, `EMAILJS_*`, `NEXT_PUBLIC_EMAILJS_*` | | Email ([docs/setup/email.md](./docs/setup/email.md)) |
 | `GEMINI_API_KEY`, `GOOGLE_API_KEY` | | AI features |
