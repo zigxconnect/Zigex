@@ -273,7 +273,7 @@ export function ProUpgradeDialog({
                     </button>
                   </div>
                   <p className="mt-3 text-center text-[13px] text-[#7B869C] sm:text-right">
-                    Secure payment by Fapshi.{" "}
+                    Secure payment with MTN Mobile Money.{" "}
                     <a href={mailto} className="font-semibold text-[#155DFC] hover:underline">
                       Prefer email?
                     </a>
