@@ -6,6 +6,10 @@ New changes go under a top section `## 1.8.3 (2026-11-10)
 
 - **Sign-up codes:** if your verification code can't be emailed, Zigex tells you straight away (with "Send a new code" and Google as options) instead of leaving you waiting. Signing in before verifying sends you a fresh code, once.
 
+## 1.10.2 (2026-11-22)
+
+- Fixes and small improvements.
+
 ## 1.10.1 (2026-11-22)
 
 - **Zigex Pro with MTN Mobile Money:** pay 3,000 XAF for a month of Pro right in the app. Enter your MTN number, approve the request on your phone, and all your recommended opportunities open straight away. Email still works if you prefer.
