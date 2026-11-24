@@ -6,6 +6,10 @@ New changes go under a top section `## 1.8.3 (2026-11-10)
 
 - **Sign-up codes:** if your verification code can't be emailed, Zigex tells you straight away (with "Send a new code" and Google as options) instead of leaving you waiting. Signing in before verifying sends you a fresh code, once.
 
+## 1.10.3 (2026-11-24)
+
+- **Opportunities:** a shared opportunity can now have several flyers. The page shows each one whole, with thumbnails to switch between them.
+
 ## 1.10.2 (2026-11-22)
 
 - Fixes and small improvements.
