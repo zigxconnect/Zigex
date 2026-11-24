@@ -8,7 +8,7 @@ import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { isUuid } from "@/lib/postings";
 import { ArrowLeft, ExternalLink } from "lucide-react";
-import { HeroImage } from "@/components/feed/details/HeroImage";
+import { OutsourcedGallery } from "@/components/outsourced/OutsourcedGallery";
 import { dayLabel, fundingLabel, placeLabel, typeLabel } from "@/components/outsourced/outsourced-labels";
 import { getOutsourced } from "@/lib/api/services/outsourced";
 import { pageMetadata } from "@/lib/seo";
@@ -56,9 +56,9 @@ export default async function OutsourcedDetailPage({ params }: Props) {
       <p className="mt-4 text-sm font-medium text-[#7B869C]">{typeLabel(o.type)}</p>
       <h1 className="mt-1 font-heading text-2xl font-bold leading-tight text-[#0B1B3F] [overflow-wrap:anywhere] sm:text-3xl">{o.title}</h1>
 
-      {o.cover_image_url && (
+      {o.images && o.images.length > 0 && (
         <div className="mt-4">
-          <HeroImage src={o.cover_image_url} alt={o.title} />
+          <OutsourcedGallery images={o.images} title={o.title} />
         </div>
       )}
 

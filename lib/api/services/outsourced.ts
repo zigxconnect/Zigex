@@ -32,6 +32,8 @@ export type OutsourcedOpportunity = {
   start_date: string | null;
   end_date: string | null;
   cover_image_url: string | null;
+  /** 1 to 5 images in order, the first being the cover. Missing from older API versions. */
+  images?: string[];
   is_open: boolean;
   created_at?: string | null;
 };
@@ -68,6 +70,7 @@ const clean = (row: OutsourcedOpportunity): OutsourcedOpportunity => ({
   ...row,
   apply_url: safeLink(row.apply_url),
   cover_image_url: usableImageUrl(row.cover_image_url),
+  images: (row.images?.length ? row.images : [row.cover_image_url]).map(usableImageUrl).filter((u): u is string => Boolean(u)),
 });
 
 /** The API sorts Cameroon first, then the soonest deadline: keep its order. */
